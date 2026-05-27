@@ -1,7 +1,7 @@
-<script>
+<script lang="ts">
 	import { getContext } from "svelte";
-	import checkOverlap from "$actions/checkOverlap.js";
-	import keepWithinBox from "$actions/keepWithinBox.js";
+	import checkOverlap from "$actions/checkOverlap";
+	import keepWithinBox from "$actions/keepWithinBox";
 
 	export let features;
 	export let fill = "#000";

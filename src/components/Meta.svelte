@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	let {
 		title = "Title TK",
 		description = "Description TK",

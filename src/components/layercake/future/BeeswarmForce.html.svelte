@@ -2,53 +2,49 @@
 	@component
 	Generates an HTML Beeswarm chart using a [d3-force simulation](https://github.com/d3/d3-force).
  -->
-<script>
-	import { getContext } from 'svelte';
-	import { forceSimulation, forceX, forceY, forceCollide } from 'd3-force';
+<script lang="ts">
+	import type { LayerCakeContext } from "$types/layercake";
+	import { getContext } from "svelte";
+	import { forceSimulation, forceX, forceY, forceCollide, type SimulationNodeDatum } from "d3-force";
 
-	const { data, xGet, height, zGet } = getContext('LayerCake');
+	const { data, xGet, height, zGet } = getContext<LayerCakeContext>("LayerCake");
+	let {
+		r = 4,
+		strokeWidth = 0.5,
+		stroke = "#fff",
+		xStrength = 0.95,
+		yStrength = 0.075,
+		getTitle = undefined
+	}: {
+		r?: number;
+		strokeWidth?: number;
+		stroke?: string;
+		xStrength?: number;
+		yStrength?: number;
+		getTitle?: (node: SimulationNodeDatum) => string;
+	} = $props();
 
-	const nodes = $data.map((d) => ({ ...d }));
+	type BeeNode = SimulationNodeDatum & Record<string, unknown>;
 
-	/** @type {Number} [r=4] - The circle radius size in pixels. */
-	export let r = 4;
+	const simulation = $derived.by(() => {
+		const nodes: BeeNode[] = $data.map((d: Record<string, unknown>) => ({ ...d }));
+		const sim = forceSimulation(nodes)
+			.force("x", forceX<BeeNode>().x((d) => $xGet(d)).strength(xStrength))
+			.force("y", forceY<BeeNode>().y($height / 2).strength(yStrength))
+			.force("collide", forceCollide(r + strokeWidth / 2))
+			.stop();
 
-	/** @type {Number} [strokeWidth=0.5] - The circle's stroke width in pixels. */
-	export let strokeWidth = 0.5;
-
-	/** @type {String} [stroke='#fff'] - The circle's stroke color. */
-	export let stroke = '#fff';
-
-	/** @type {Number} [xStrength=0.95] - The value passed into the `.strength` method on `forceX`, which is used as the `'x'` property on the simulation. See [the documentation](https://github.com/d3/d3-force#x_strength) for more. */
-	export let xStrength = 0.95;
-
-	/** @type {Number} [yStrength=0.075] - The value passed into the `.strength` method on `forceY`, which is used as the `'y'` property on the simulation. See [the documentation](https://github.com/d3/d3-force#y_strength) for more. */
-	export let yStrength = 0.075;
-
-	/** @type {Function} [getTitle] — An accessor function to get the field on the data element to display as a hover label. Mostly useful for debugging, needs better styling for production. */
-	export let getTitle = undefined;
-
-	$: simulation = forceSimulation(nodes)
-		.force('x', forceX().x(d => $xGet(d)).strength(xStrength))
-		.force('y', forceY().y($height / 2).strength(yStrength))
-		.force('collide', forceCollide(r + strokeWidth / 2))
-		.stop();
-
-	$: {
-		for ( let i = 0,
-			n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay()));
-			i < n;
-			++i ) {
-			simulation.tick();
-		}
-	}
+		const n = Math.ceil(Math.log(sim.alphaMin()) / Math.log(1 - sim.alphaDecay()));
+		for (let i = 0; i < n; i += 1) sim.tick();
+		return sim;
+	});
 </script>
 
-<div class='bee-group'>
+<div class="bee-group">
 	{#each simulation.nodes() as node}
 		<div
-			class='bee'
-			style='
+			class="bee"
+			style="
 				left:{node.x}px;
 				top: {node.y}px;
 				width: {r * 2}px;
@@ -56,7 +52,7 @@
 				background: {$zGet(node)};
 				border-width: {strokeWidth}px;
 				border-color: {stroke};
-				'
+				"
 		>
 			{#if getTitle}
 				<div class="title">{getTitle(node)}</div>
@@ -85,6 +81,6 @@
 		z-index: 9999;
 	}
 	.bee:hover .title {
-		display: block
+		display: block;
 	}
 </style>

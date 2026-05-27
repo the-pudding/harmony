@@ -1,9 +1,9 @@
-<script>
+<script lang="ts">
 	import { range } from "d3";
 	import { LayerCake, Svg } from "layercake";
-	import Scatter from "$components/layercake/Scatter.svg.svelte";
-	import AxisX from "$components/layercake/AxisX.svg.svelte";
-	import AxisY from "$components/layercake/AxisY.svg.svelte";
+	import Scatter from "$components/layercake/migrate/Scatter.svg.svelte";
+	import AxisX from "$components/layercake/migrate/AxisX.svg.svelte";
+	import AxisY from "$components/layercake/migrate/AxisY.svg.svelte";
 	import demoData from "$components/demo/demo-layercake.csv";
 
 	const data = range(100).map((d) => ({

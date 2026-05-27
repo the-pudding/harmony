@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { getContext, tick } from "svelte";
 
 	import { geoPath, geoAlbersUsa } from "d3";

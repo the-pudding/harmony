@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { getContext } from "svelte";
 	export let x = 0;
 	export let y = 0;

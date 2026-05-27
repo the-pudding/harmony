@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import copy from "$data/copy.json";
 	import raw from "$data/copy.json?raw";
 	import CMS from "$components/helpers/CMS.svelte";

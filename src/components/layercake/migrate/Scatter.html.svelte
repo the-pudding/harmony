@@ -1,15 +1,17 @@
-<script>
+<script lang="ts">
+	import type { LayerCakeContext, CanvasContext } from "$types/layercake";
 	import { getContext } from "svelte";
 
-	const { data, xGet, yGet, xScale, yScale } = getContext("LayerCake");
+	const { data, xGet, yGet, xScale, yScale } = getContext<LayerCakeContext>("LayerCake");
+	let { r = 4, fill = "#ccc", stroke = "#000", strokeWidth = 0 } = $props();
 
-	export let r = 4;
-	export let fill = "#ccc";
-	export let stroke = "#000";
-	export let strokeWidth = 0;
 
-	$: width = `${r * 2}px`;
-	$: height = width;
+
+
+
+
+	const width = $derived(`${r * 2}px`);
+	const height = $derived(width);
 </script>
 
 <div>

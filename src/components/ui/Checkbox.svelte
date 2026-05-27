@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { Checkbox, Label, useId } from "bits-ui";
 	let {
 		id = useId(),

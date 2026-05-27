@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import DollarSign from "@lucide/svelte/icons/dollar-sign";
 	import TextCenter from "@lucide/svelte/icons/text-align-center";
 	import TextEnd from "@lucide/svelte/icons/text-align-end";

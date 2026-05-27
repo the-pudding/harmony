@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	/**
 	 * This component manages which item is most in view for scroll triggering
 	 * example:

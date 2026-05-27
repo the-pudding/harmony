@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Tip from "$components/helpers/Tip.svelte";
 </script>
 

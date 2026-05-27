@@ -1,15 +1,26 @@
-<script>
+<script lang="ts">
 	import playSvg from "$svg/play.svg";
-	let { id, href, slug, short, tease, month, bgColor, resource, footer } =
-		$props();
+	import type { StoryProps } from "$types/footer";
+
+	let {
+		id,
+		href,
+		slug,
+		short = "",
+		tease = "",
+		month,
+		bgColor,
+		resource = false,
+		footer = false
+	}: StoryProps = $props();
 
 	// custom to starter
 	const base = "https://pudding.cool";
 
-	const youtube = href.includes("youtube") || href.includes("youtu.be");
-	const dir = resource ? "resources" : "screenshots";
-	const imagePath = `${base}/common/assets/thumbnails/${dir}`;
-	const style = bgColor ? `--story-bg: ${bgColor};` : "";
+	const youtube = $derived(href.includes("youtube") || href.includes("youtu.be"));
+	const dir = $derived(resource ? "resources" : "screenshots");
+	const imagePath = $derived(`${base}/common/assets/thumbnails/${dir}`);
+	const style = $derived(bgColor ? `--story-bg: ${bgColor};` : "");
 </script>
 
 <div class="story" {style} class:youtube class:resource class:footer>

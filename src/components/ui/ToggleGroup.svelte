@@ -1,10 +1,10 @@
-<script>
+<script lang="ts">
 	import { tick } from "svelte";
 	import { ToggleGroup } from "bits-ui";
 
 	let {
-		items = [], // Array of { value, label, icon? }
-		type = "single", // "single" | "multiple"
+		items = [] as { value: string; label: string; icon?: import("svelte").Component }[],
+		type = "single" as "single" | "multiple",
 		variant = "default", // "default" | "spaced",
 		required = false,
 		class: className,
@@ -19,7 +19,7 @@
 	);
 
 	// somewhat hacky way to reset the value if required is true and the user tries to deselect the current value
-	async function onValueChange(newValue) {
+	async function onValueChange(newValue: string | string[] | undefined) {
 		if (required && !newValue) {
 			const previousValue = internalValue;
 			internalValue = null;

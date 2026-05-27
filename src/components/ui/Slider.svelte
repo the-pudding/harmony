@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { Slider } from "bits-ui";
 	let { value = $bindable(), class: className, ...restProps } = $props();
 </script>

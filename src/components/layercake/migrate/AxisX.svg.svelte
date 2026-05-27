@@ -1,23 +1,36 @@
-<script>
+<script lang="ts">
+	import type { LayerCakeContext, LayerCakeTicks } from "$types/layercake";
 	import { getContext } from "svelte";
-	const { width, height, xScale, yRange } = getContext("LayerCake");
+	const { width, height, xScale, yRange } = getContext<LayerCakeContext>("LayerCake");
+	let {
+		gridlines = true,
+		tickMarks = false,
+		baseline = false,
+		snapTicks = false,
+		yTick = 16,
+		formatTick = (d: string | number) => String(d),
+		ticks = undefined as LayerCakeTicks
+	} = $props();
 
-	export let gridlines = true;
-	export let tickMarks = false;
-	export let baseline = false;
-	export let snapTicks = false;
-	export let yTick = 16;
-	export let formatTick = (d) => d;
-	export let ticks = undefined;
+
+
+
+
+
+
+
+
 	/** If this is a number, it passes that along to the [d3Scale.ticks](https://github.com/d3/d3-scale) function. If this is an array, hardcodes the ticks to those values. If it's a function, passes along the default tick values and expects an array of tick values in return. If nothing, it uses the default ticks supplied by the D3 function. */
 
-	$: tickVals = Array.isArray(ticks)
-		? ticks
-		: typeof ticks === "function"
-		? ticks($xScale.ticks())
-		: $xScale.ticks(ticks);
+	const tickVals = $derived(
+		Array.isArray(ticks)
+			? ticks
+			: typeof ticks === "function"
+				? ticks($xScale.ticks())
+				: $xScale.ticks(ticks)
+	);
 
-	const textAnchor = (i) => {
+	const textAnchor = (i: number) => {
 		if (snapTicks === true) {
 			if (i === 0) {
 				return "start";
@@ -34,10 +47,10 @@
 	{#each tickVals as tick, i}
 		<g
 			class="tick tick-{i}"
-			transform="translate({$xScale(tick)},{$yRange[0]})"
+			transform="translate({$xScale(tick)},{($yRange ?? [0, 0])[0]})"
 		>
 			{#if gridlines !== false}
-				<line class="gridline" y1={$height * -1} y2="0" x1="0" x2="0" />
+				<line class="gridline" y1={($height ?? 0) * -1} y2="0" x1="0" x2="0" />
 			{/if}
 			{#if tickMarks === true}
 				<line class="tick-mark" y1={0} y2={6} x1={0} x2={0} />
@@ -50,10 +63,10 @@
 	{#if baseline === true}
 		<line
 			class="baseline"
-			y1={$height + 0.5}
-			y2={$height + 0.5}
+			y1={($height ?? 0) + 0.5}
+			y2={($height ?? 0) + 0.5}
 			x1="0"
-			x2={$width}
+			x2={($width ?? 0)}
 		/>
 	{/if}
 </g>

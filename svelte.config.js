@@ -14,7 +14,19 @@ const config = {
 	},
 	preprocess,
 	kit: {
-		adapter: adapterStatic({ strict: false })
+		adapter: adapterStatic({ strict: false }),
+		alias: {
+			$actions: "src/actions",
+			$components: "src/components",
+			$data: "src/data",
+			$routes: "src/routes",
+			$runes: "src/runes",
+			$stores: "src/stores",
+			$styles: "src/styles",
+			$svg: "src/svg",
+			$utils: "src/utils",
+			$types: "src/types"
+		}
 	}
 };
 

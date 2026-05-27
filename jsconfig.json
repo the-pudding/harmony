@@ -9,10 +9,12 @@
 			"$styles/*": "./src/styles/*",
 			"$svg/*": "./src/svg/*",
 			"$utils/*": "./src/utils/*",
+			"$stores/*": "./src/stores/*"
 		}
 	},
 	"include": [
 		"src/**/*.js",
+		"src/**/*.ts",
 		"src/**/*.svelte"
 	],
 	"exclude": [

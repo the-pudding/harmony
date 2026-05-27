@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	let { summary, content, open, name } = $props();
 
 	let single = $derived(typeof content === "string");

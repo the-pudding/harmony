@@ -1,15 +1,16 @@
-<script>
+<script lang="ts">
+	import type { LayerCakeContext, CanvasContext } from "$types/layercake";
 	import { getContext } from "svelte";
 	import { line, curveLinear } from "d3";
 
-	const { data, xGet, yGet } = getContext("LayerCake");
+	const { data, xGet, yGet } = getContext<LayerCakeContext>("LayerCake");
+	let { stroke = "#ccc", curve = curveLinear } = $props();
 
-	export let stroke = "#ccc";
 
-	export let curve = curveLinear;
 
-	$: path = line().x($xGet).y($yGet).curve(curve);
-	$: pathD = path($data);
+
+	const path = $derived(line().x($xGet).y($yGet).curve(curve));
+	const pathD = $derived(path($data as unknown as [number, number][]));
 </script>
 
 <path d={pathD} {stroke} />

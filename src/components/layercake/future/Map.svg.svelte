@@ -2,45 +2,44 @@
 	@component
 	Generates an SVG map using the `geoPath` function from [d3-geo](https://github.com/d3/d3-geo).
  -->
-<script>
+<script lang="ts">
+	import type { LayerCakeContext } from "$types/layercake";
+	import type { FeatureCollection } from "geojson";
 	import { getContext, createEventDispatcher } from 'svelte';
 	import { geoPath } from 'd3-geo';
 	import { raise } from 'layercake';
 
-	const { data, width, height, zGet } = getContext('LayerCake');
+	const { data, width, height, zGet } = getContext<LayerCakeContext>("LayerCake");
+	let { projection, fixedAspectRatio = undefined, fill = undefined, stroke = '#333', strokeWidth = 0.5, features = undefined } = $props();
+
+	const geoData = $derived($data as unknown as FeatureCollection);
+
 
 	/** @type {Function} projection - A D3 projection function. Pass this in as an uncalled function, e.g. `projection={geoAlbersUsa}`. */
-	export let projection;
 
 	/** @type {Number} [fixedAspectRatio] - By default, the map fills to fit the $width and $height. If instead you want a fixed-aspect ratio, like for a server-side rendered map, set that here. */
-	export let fixedAspectRatio = undefined;
 
 	/** @type {String} [fill] - The shape's fill color. By default, the fill will be determined by the z-scale, unless this prop is set. */
-	export let fill = undefined;
 
 	/** @type {String} [stroke='#333'] - The shape's stroke color. */
-	export let stroke = '#333';
 
 	/** @type {Number} [strokeWidth=0.5] - The shape's stroke width. */
-	export let strokeWidth = 0.5;
 
 	/** @type {Array} [features] - A list of GeoJSON features. Use this if you want to draw a subset of the features in `$data` while keeping the zoom on the whole GeoJSON feature set. By default, it plots everything in `$data.features` if left unset. */
-	export let features = undefined;
 
 	/* --------------------------------------------
 	 * Here's how you would do cross-component hovers
 	 */
 	const dispatch = createEventDispatcher();
 
-	$: fitSizeRange = fixedAspectRatio ? [100, 100 / fixedAspectRatio] : [$width, $height];
+	const fitSizeRange = $derived(fixedAspectRatio ? [100, 100 / fixedAspectRatio] : [$width, $height]);
 
-	$: projectionFn = projection()
-		.fitSize(fitSizeRange, $data);
+	const projectionFn = $derived(projection().fitSize(fitSizeRange, geoData));
 
-	$: geoPathFn = geoPath(projectionFn);
+	const geoPathFn = $derived(geoPath(projectionFn));
 
-	function handleMousemove(feature) {
-		return function handleMousemoveFn(e) {
+	function handleMousemove(feature: import("geojson").Feature) {
+		return function handleMousemoveFn(this: SVGPathElement, e: MouseEvent) {
 			raise(this);
 			// When the element gets raised, it flashes 0,0 for a second so skip that
 			if (e.layerX !== 0 && e.layerY !== 0) {
@@ -55,10 +54,10 @@
 	on:mouseout={(e) => dispatch('mouseout')}
 	on:blur={(e) => dispatch('mouseout')}
 >
-	{#each (features || $data.features) as feature}
+	{#each (features || geoData.features) as feature}
 		<path
 			class="feature-path"
-			fill="{fill || $zGet(feature.properties)}"
+			fill="{fill || String($zGet(feature.properties))}"
 			stroke={stroke}
 			stroke-width={strokeWidth}
 			d="{geoPathFn(feature)}"

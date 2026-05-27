@@ -1,10 +1,10 @@
-<script>
+<script lang="ts">
 	import { setContext } from "svelte";
 	import { browser } from "$app/environment";
 	import Meta from "$components/Meta.svelte";
 	import Index from "$components/Index.svelte";
 	import copy from "$data/copy.json";
-	import version from "$utils/version.js";
+	import version from "$utils/version";
 
 	let { data } = $props();
 
@@ -17,7 +17,9 @@
 		"https://pudding.cool/assets/fonts/atlas/AtlasGrotesk-Bold-Web.woff2"
 	];
 
-	const { title, description, url, keywords } = copy;
+	const { title, description } = copy.meta;
+	const url = "https://pudding.cool";
+	const keywords = "";
 	setContext("copy", copy);
 	setContext("data", data);
 </script>

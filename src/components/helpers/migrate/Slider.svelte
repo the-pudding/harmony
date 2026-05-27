@@ -8,7 +8,7 @@ html, body, main {
 }
 
 Usage:
-<script>
+<script lang="ts">
 	import Slider from "$components/helpers/Slider.svelte";
 	import Slide from "$components/helpers/Slider.Slide.svelte";
 
@@ -23,7 +23,7 @@ Usage:
 	</Slide>
 </Slider>
 -->
-<script>
+<script lang="ts">
 	import { setContext, onMount } from "svelte";
 	import { writable } from "svelte/store";
 

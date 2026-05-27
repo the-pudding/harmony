@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { onMount } from "svelte";
 	import { base } from "$app/paths";
 	// import { copy } from "svelte-copy"; TODO: wait for svelte5 support

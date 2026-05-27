@@ -1,11 +1,3 @@
-/* USAGE:
-locate(test = false).then(data => {
-
-}).catch(err => {
-
-});
-*/
-
 const TEST_DATA = {
 	testing: "This is localhost testing data",
 	city: "Lee",
@@ -21,19 +13,14 @@ const TEST_DATA = {
 
 const MAX_TIME = 4000;
 
-async function lookup(test) {
-	if (test) return Promise.resolve(TEST_DATA);
-	try {
-		const request = await fetch("https://ipinfo.io/json?token=6f0f9c88db028a");
-		const json = await request.json();
-		return json;
-	} catch (err) {
-		throw new Error(err);
-	}
+async function lookup(test: boolean) {
+	if (test) return TEST_DATA;
+	const request = await fetch("https://ipinfo.io/json?token=6f0f9c88db028a");
+	return request.json();
 }
 
 function init(test = false) {
-	return new Promise((resolve, reject) => {
+	return new Promise<typeof TEST_DATA>((resolve, reject) => {
 		const timeout = setTimeout(() => reject(new Error("timeout")), MAX_TIME);
 		lookup(test)
 			.then((data) => {

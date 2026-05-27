@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	let {
 		name,
 		age = 30, // fallback value

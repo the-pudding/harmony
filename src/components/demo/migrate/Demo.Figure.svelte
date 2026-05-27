@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Figure from "$components/figure/Figure.svelte";
 </script>
 

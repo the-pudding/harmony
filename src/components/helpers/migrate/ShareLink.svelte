@@ -1,5 +1,5 @@
 <!-- TODO: wait for svelte5 support -->
-<!-- <script>
+<!-- <script lang="ts">
 	import { copy } from "svelte-copy";
 
 	export let buttonText = "Share";

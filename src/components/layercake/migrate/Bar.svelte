@@ -1,9 +1,11 @@
-<script>
+<script lang="ts">
+	import type { LayerCakeContext, CanvasContext } from "$types/layercake";
 	import { getContext } from "svelte";
 
-	const { data, xGet, yGet, xScale, yScale } = getContext("LayerCake");
+	const { data, xGet, yGet, xScale, yScale } = getContext<LayerCakeContext>("LayerCake");
+	let { fill = "#ccc" } = $props();
 
-	export let fill = "#ccc";
+
 </script>
 
 <g>
@@ -11,7 +13,7 @@
 		{@const x = $xScale.range()[0]}
 		{@const y = $yGet(d)}
 		{@const width = $xGet(d)}
-		{@const height = $yScale.bandwidth()}
+		{@const height = $yScale.bandwidth?.() ?? 0}
 		<rect data-id={i} {x} {y} {width} {height} {fill} />
 	{/each}
 </g>

@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import ChevronLeft from "lucide-svelte/icons/chevron-left";
 	import ChevronRight from "lucide-svelte/icons/chevron-right";
 	import { createEventDispatcher } from "svelte";

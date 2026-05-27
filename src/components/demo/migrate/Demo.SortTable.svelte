@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import SortTable from "$components/helpers/SortTable.svelte";
 
 	const columns = [

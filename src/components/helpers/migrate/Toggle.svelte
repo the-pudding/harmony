@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	export let label;
 	export let style = "inner";
 	export let options = ["on", "off"];

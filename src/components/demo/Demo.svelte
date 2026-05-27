@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import DemoLink from "$components/demo/Demo.Link.svelte";
 	import DemoImg from "$components/demo/Demo.Img.svelte";
 	import DemoSvelteElement from "$components/demo/Demo.SvelteElement.svelte";

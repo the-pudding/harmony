@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { getContext } from "svelte";
 
 	import { geoPath, geoAlbersUsa, zoom, select, pointer } from "d3";

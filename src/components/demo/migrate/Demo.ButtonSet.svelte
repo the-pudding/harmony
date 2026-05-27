@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import ButtonSet from "$components/helpers/ButtonSet.svelte";
 	const options = [
 		{ value: "penny" },

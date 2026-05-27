@@ -1,15 +1,14 @@
-<script>
-	// svelte event created via dispatch
-	export let evt = {};
-	export let offset = -35;
+<script lang="ts">
+	let top = $state<string | undefined>();
+	let left = $state<string | undefined>();
+	let { evt = {} as { detail?: { e: { layerY: number; layerX: number } } }, offset = -35 } = $props();
 
-	let top;
-	let left;
-
-	$: if (evt.detail) {
-		top = `${evt.detail.e.layerY + offset}px`;
-		left = `${evt.detail.e.layerX}px`;
-	}
+	$effect(() => {
+		if (evt.detail) {
+			top = `${evt.detail.e.layerY + offset}px`;
+			left = `${evt.detail.e.layerX}px`;
+		}
+	});
 </script>
 
 {#if evt.detail}

@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { groups, descending } from "d3";
 	import Sample from "$components/demo/Demo.Fonts.Sample.svelte";
 	import fontData from "$components/demo/demo-fonts.json";

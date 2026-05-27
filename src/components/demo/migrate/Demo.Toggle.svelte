@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Toggle from "$components/helpers/Toggle.svelte";
 	let valueInner;
 	let valueSlider;

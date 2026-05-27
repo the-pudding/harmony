@@ -2,82 +2,100 @@
 	@component
 	Generates an SVG Beeswarm chart.
  -->
-<script>
-	import { getContext } from 'svelte';
+<script lang="ts">
+	import type { LayerCakeContext } from "$types/layercake";
+	import { getContext } from "svelte";
 
-	const { data, xGet, zGet, height, config } = getContext('LayerCake');
+	const { data, xGet, zGet, height, config } = getContext<LayerCakeContext>("LayerCake");
+	let {
+		r = 3,
+		strokeWidth = 0,
+		stroke = "#fff",
+		spacing = 1.5,
+		getTitle = undefined
+	}: {
+		r?: number;
+		strokeWidth?: number;
+		stroke?: string;
+		spacing?: number;
+		getTitle?: (d: { data: unknown }) => string;
+	} = $props();
 
-	/** @type {Number} [r=3] - The circle radius size in pixels. */
-	export let r = 3;
+	type DodgeNode = {
+		x: number;
+		y: number;
+		next: DodgeNode | null;
+		data: Record<string, unknown>;
+		[key: string]: unknown;
+	};
 
-	/** @type {Number} [strokeWidth=0] - The circle's stroke width in pixels. */
-	export let strokeWidth = 0;
+	const zField = $derived($config.z ?? "z");
+	const yOffset = $derived($height - r - spacing - strokeWidth / 2);
 
-	/** @type {String} [stroke='#fff'] - The circle's stroke color. */
-	export let stroke = '#fff';
+	const circles = $derived(
+		dodge($data as Record<string, unknown>[], {
+			rds: r * 2 + spacing + strokeWidth,
+			x: $xGet,
+			zField
+		})
+	);
 
-	/** @type {Number} [spacing=1.5] - Whitespace padding between each circle, in pixels */
-	export let spacing = 1.5;
+	function dodge(
+		data: Record<string, unknown>[],
+		{
+			rds = 1,
+			x = () => 0,
+			zField
+		}: { rds?: number; x?: (d: unknown) => number; zField: string }
+	) {
+		const radius2 = rds ** 2;
+		const nodes: DodgeNode[] = data
+			.map((d) => ({ x: x(d), [zField]: d[zField], data: d, y: 0, next: null }))
+			.sort((a, b) => a.x - b.x);
+		const epsilon = 1e-3;
+		let head: DodgeNode | null = null;
+		let tail: DodgeNode | null = null;
 
-	/** @type {Function} [getTitle] — An accessor function to get the field on the data element to display as a hover label using a `<title>` tag. */
-	export let getTitle = undefined;
+		function intersects(x: number, y: number) {
+			let a = head;
+			while (a) {
+				if (radius2 - epsilon > (a.x - x) ** 2 + (a.y - y) ** 2) return true;
+				a = a.next;
+			}
+			return false;
+		}
 
-	$: circles = dodge($data, { rds: r * 2 + spacing + strokeWidth, x: $xGet });
+		for (const b of nodes) {
+			while (head && head.x < b.x - radius2) head = head.next;
 
-	function dodge(data, { rds = 1, x = d => d } = {}) {
-	  const radius2 = rds ** 2;
-	  const circles = data.map(d => ({ x: x(d), [$config.z]: d[$config.z], data: d })).sort((a, b) => a.x - b.x);
-	  const epsilon = 1e-3;
-	  let head = null, tail = null;
+			if (intersects(b.x, (b.y = 0))) {
+				let a = head;
+				b.y = Infinity;
+				do {
+					const y = a!.y + Math.sqrt(radius2 - (a!.x - b.x) ** 2);
+					if (y < b.y && !intersects(b.x, y)) b.y = y;
+					a = a!.next;
+				} while (a);
+			}
 
-	  // Returns true if circle ⟨x,y⟩ intersects with any circle in the queue.
-	  function intersects(x, y) {
-	    let a = head;
-	    while (a) {
-	      if (radius2 - epsilon > (a.x - x) ** 2 + (a.y - y) ** 2) {
-	        return true;
-	      }
-	      a = a.next;
-	    }
-	    return false;
-	  }
+			b.next = null;
+			if (head === null) head = tail = b;
+			else tail = tail!.next = b;
+		}
 
-	  // Place each circle sequentially.
-	  for (const b of circles) {
-
-	    // Remove circles from the queue that can’t intersect the new circle b.
-	    while (head && head.x < b.x - radius2) head = head.next;
-
-	    // Choose the minimum non-intersecting tangent.
-	    if (intersects(b.x, b.y = 0)) {
-	      let a = head;
-	      b.y = Infinity;
-	      do {
-	        let y = a.y + Math.sqrt(radius2 - (a.x - b.x) ** 2);
-	        if (y < b.y && !intersects(b.x, y)) b.y = y;
-	        a = a.next;
-	      } while (a);
-	    }
-
-	    // Add b to the queue.
-	    b.next = null;
-	    if (head === null) head = tail = b;
-	    else tail = tail.next = b;
-	  }
-
-	  return circles;
+		return nodes;
 	}
 </script>
 
-<g class='bee-group'>
+<g class="bee-group">
 	{#each circles as d}
 		<circle
-			fill={$zGet(d)}
-			stroke='{stroke}'
-			stroke-width='{strokeWidth}'
-			cx='{d.x}'
-			cy='{$height - r - spacing - strokeWidth / 2 - d.y}'
-			r='{r}'
+			fill={String($zGet(d))}
+			{stroke}
+			stroke-width={strokeWidth}
+			cx={d.x}
+			cy={yOffset - d.y}
+			{r}
 		>
 			{#if getTitle}
 				<title>{getTitle(d)}</title>

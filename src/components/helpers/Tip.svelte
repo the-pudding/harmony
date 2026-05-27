@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Button from "$components/ui/Button.svelte";
 	import DollarSign from "@lucide/svelte/icons/dollar-sign";
 	let { text = "Tip", href = "#" } = $props();

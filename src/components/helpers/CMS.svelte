@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import details from "$components/helpers/CMS.Details.svelte";
 	import ul from "$components/helpers/CMS.Ul.svelte";
 	import ol from "$components/helpers/CMS.Ol.svelte";

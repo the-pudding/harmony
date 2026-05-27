@@ -1,36 +1,49 @@
-<script>
+<script lang="ts">
+	import type { LayerCakeContext, LayerCakeTicks } from "$types/layercake";
 	import { getContext } from "svelte";
 
-	const { padding, xRange, yScale } = getContext("LayerCake");
+	const { padding, xRange, yScale } = getContext<LayerCakeContext>("LayerCake");
+	const pad = $derived($padding);
+	let {
+		gridlines = true,
+		tickMarks = false,
+		baseline = false,
+		yTick = -1,
+		formatTick = (d: string | number) => String(d),
+		ticks = 4 as LayerCakeTicks
+	} = $props();
 
-	export let gridlines = true;
-	export let tickMarks = false;
-	export let baseline = false;
-	export let yTick = -1;
-	export let formatTick = (d) => d;
-	export let ticks = 4;
+
+
+
+
+
+
+
 	/** If this is a number, it passes that along to the [d3Scale.ticks](https://github.com/d3/d3-scale) function. If this is an array, hardcodes the ticks to those values. If it's a function, passes along the default tick values and expects an array of tick values in return. */
 
-	$: tickVals = Array.isArray(ticks)
-		? ticks
-		: typeof ticks === "function"
-		? ticks($yScale.ticks())
-		: $yScale.ticks(ticks);
+	const tickVals = $derived(
+		Array.isArray(ticks)
+			? ticks
+			: typeof ticks === "function"
+				? ticks($yScale.ticks())
+				: $yScale.ticks(ticks)
+	);
 </script>
 
-<div class="axis y-axis" style="transform:translate(-{$padding.left}px, 0)">
+<div class="axis y-axis" style="transform:translate(-{pad.left ?? 0}px, 0)">
 	{#each tickVals as tick, i}
-		<div class="tick tick-{i}" style="top:{$yScale(tick)}%;left:{$xRange[0]}%;">
+		<div class="tick tick-{i}" style="top:{$yScale(tick)}%;left:{($xRange ?? [0, 0])[0]}%;">
 			{#if gridlines !== false}
 				<div
 					class="gridline"
-					style="top:0;left:0px;right:-{$padding.left + $padding.right}px;"
+					style="top:0;left:0px;right:-{(pad.left ?? 0) + (pad.right ?? 0)}px;"
 				/>
 			{/if}
 			{#if baseline !== false && i === 0}
 				<div
 					class="gridline baseline"
-					style="top:0;left:0;right:-{$padding.left + $padding.right}px;"
+					style="top:0;left:0;right:-{(pad.left ?? 0) + (pad.right ?? 0)}px;"
 				/>
 			{/if}
 			{#if tickMarks === true}

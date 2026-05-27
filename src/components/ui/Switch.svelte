@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { Label, Switch, useId } from "bits-ui";
 	let {
 		id = useId(),

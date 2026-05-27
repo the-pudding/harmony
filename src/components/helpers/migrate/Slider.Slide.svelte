@@ -1,6 +1,6 @@
-<script>
+<script lang="ts">
 	import { getContext } from "svelte";
-	import canTab from "$actions/canTab.js";
+	import canTab from "$actions/canTab";
 	const { dir, cur, w, h, count } = getContext("Slider");
 
 	export let index;

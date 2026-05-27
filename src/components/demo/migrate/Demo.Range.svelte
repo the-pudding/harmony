@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Range from "$components/helpers/Range.svelte";
 
 	let value;

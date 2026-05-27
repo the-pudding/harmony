@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	/**
 	 * This is a demonstration of how you might use Tap and Slider/Slide to make an IG story format.
 	 * - I'd recommend making `activeSlide` and `dir` into global stores in stores/misc.js.

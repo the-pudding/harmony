@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	export let activeSlide;
 	export let sections;
 	export let allSlides;

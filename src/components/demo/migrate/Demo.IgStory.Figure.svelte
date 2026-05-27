@@ -1,10 +1,10 @@
-<script>
+<script lang="ts">
 	/**
 	 * This component is a wrapper for the visual that appears beneath the text in your IG story.
 	 * It takes up the remaining space after the text + buffer.
 	 */
 	import { onMount, tick } from "svelte";
-	import viewport from "$stores/viewport.js";
+	import viewport from "$stores/viewport";
 
 	export let activeSlide;
 

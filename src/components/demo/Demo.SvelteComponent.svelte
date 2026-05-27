@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import A from "$components/demo/Demo.SvelteComponent.A.svelte";
 	import B from "$components/demo/Demo.SvelteComponent.B.svelte";
 	const components = { A, B };

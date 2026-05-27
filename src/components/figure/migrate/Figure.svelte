@@ -16,11 +16,11 @@ Props:
 	exclude: string (default "height") - exclude width or height from triggering resize event
 	custom: object (default {}) - custom data store to pass to children components
 -->
-<script>
+<script lang="ts">
 	import { writable } from "svelte/store";
 	import { onMount, setContext, tick } from "svelte";
 	import { browser } from "$app/environment";
-	import resize from "$actions/resize.js";
+	import resize from "$actions/resize";
 
 	export let debounce = 250;
 	export let exclude = "height";

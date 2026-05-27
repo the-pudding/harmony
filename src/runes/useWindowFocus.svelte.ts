@@ -10,6 +10,7 @@ export const useWindowFocus = () => {
 	onMount(() => {
 		document.addEventListener("visibilitychange", checkFocus);
 		checkFocus();
+		return () => document.removeEventListener("visibilitychange", checkFocus);
 	});
 
 	return {

@@ -1,6 +1,6 @@
-<script>
+<script lang="ts">
 	import { base } from "$app/paths";
-	import useFetcher from "$runes/useFetcher.svelte.js";
+	import useFetcher from "$runes/useFetcher.svelte";
 
 	const url = `${base}/assets/demo/test.csv`;
 	const response = useFetcher(url);

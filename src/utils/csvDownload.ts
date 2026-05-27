@@ -1,6 +1,6 @@
 import { csvFormat } from "d3";
 
-export default function csvDownload(data) {
+export default function csvDownload(data: Record<string, unknown>[]) {
 	const content = `data:text/csv;charset=utf-8,${csvFormat(data)}`;
 	return encodeURI(content);
 }

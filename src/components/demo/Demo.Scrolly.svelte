@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Scrolly from "$components/helpers/Scrolly.svelte";
 	let value = $state();
 </script>

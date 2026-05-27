@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Select from "$components/helpers/Select.svelte";
 
 	const options = [

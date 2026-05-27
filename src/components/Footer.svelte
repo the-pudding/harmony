@@ -1,13 +1,13 @@
-<script>
+<script lang="ts">
 	import { onMount } from "svelte";
 	import { shuffle } from "d3";
 	import wordmark from "$svg/wordmark-script-stacked-sticker.svg";
 	import linkOutArrow from "$svg/arrow-up-right.svg";
 	import Story from "$components/Footer.Story.svelte";
+	import type { StoryFeedItem, StoryRecirc } from "$types/footer";
 
-	// custom to starter
 	const base = "https://pudding.cool";
-	let stories = $state([]);
+	let stories = $state<StoryRecirc[]>([]);
 	let storyCount = $state(0);
 
 	let { recirc = false, recent = true, recircImages = false } = $props();
@@ -40,14 +40,14 @@
 		if (recirc) {
 			const localURL = window.location.href;
 			const response = await fetch(url);
-			const data = await response.json();
+			const data = (await response.json()) as StoryFeedItem[];
 
 			const filtered = data.filter((d) => !localURL.includes(d.url));
 
-			const withSlug = filtered.map((d) => ({
+			const withSlug: StoryRecirc[] = filtered.map((d) => ({
 				...d,
-				tease: d.hed,
-				slug: d.image,
+				tease: d.hed ?? d.short,
+				slug: d.image ?? "",
 				href: d.url.startsWith("http") ? d.url : `${base}/${d.url}`
 			}));
 

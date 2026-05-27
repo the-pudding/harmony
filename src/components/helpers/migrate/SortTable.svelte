@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { createEventDispatcher } from "svelte";
 	export let caption = "";
 	export let rows = []; // [{ class, style }]

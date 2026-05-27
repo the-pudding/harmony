@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Slider from "$components/helpers/Slider.svelte";
 	import Slide from "$components/helpers/Slider.Slide.svelte";
 	import Tap from "$components/helpers/Tap.svelte";

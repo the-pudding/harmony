@@ -1,23 +1,29 @@
-<script>
+<script lang="ts">
+	import type { LayerCakeContext } from "$types/layercake";
 	import { getContext, createEventDispatcher } from "svelte";
 	import { uniques } from "layercake";
 	import { Delaunay } from "d3";
 
-	const { data, xGet, yGet, width, height } = getContext("LayerCake");
+	const { data, xGet, yGet, width, height } = getContext<LayerCakeContext>("LayerCake");
+	let { stroke = undefined }: { stroke?: string } = $props();
 
-	export let stroke = undefined;
+	const dispatcher = createEventDispatcher();
 
-	let dispatcher = createEventDispatcher();
+	type VoronoiPoint = [number, number] & { data?: unknown };
 
-	const onEnter = (point) => dispatcher("voronoi-mouseover", point);
+	const onEnter = (point: VoronoiPoint) => dispatcher("voronoi-mouseover", point);
 
-	$: points = $data.map((d) => {
-		const point = [$xGet(d), $yGet(d)];
-		point.data = d;
-		return point;
-	});
-	$: uniquePoints = uniques(points, (d) => d.join(), false);
-	$: voronoi = Delaunay.from(uniquePoints).voronoi([0, 0, $width, $height]);
+	const points = $derived(
+		$data.map((d: Record<string, unknown>) => {
+			const point = [$xGet(d), $yGet(d)] as VoronoiPoint;
+			point.data = d;
+			return point;
+		})
+	);
+	const uniquePoints = $derived(uniques(points, (d: VoronoiPoint) => d.join(), false));
+	const voronoi = $derived(
+		Delaunay.from(uniquePoints).voronoi([0, 0, $width ?? 0, $height ?? 0])
+	);
 </script>
 
 {#each uniquePoints as point, i}

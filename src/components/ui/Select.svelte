@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { Select, useId } from "bits-ui";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
 	import Check from "@lucide/svelte/icons/check";

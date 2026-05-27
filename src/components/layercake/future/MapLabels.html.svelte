@@ -2,39 +2,39 @@
 	@component
 	Adds HTML text labels based features in the data or a custom GeoJSON Feature Collection.
  -->
-<script>
+<script lang="ts">
+	import type { LayerCakeContext } from "$types/layercake";
+	import type { FeatureCollection } from "geojson";
 	import { getContext } from 'svelte';
 
-	const { data, width, height } = getContext('LayerCake');
+	const { data, width, height } = getContext<LayerCakeContext>("LayerCake");
+	let { projection, fixedAspectRatio = undefined, getLabel, getCoordinates, features = undefined } = $props();
+
+	const geoData = $derived($data as unknown as FeatureCollection);
+
 
 	/** @type {Function} projection - A D3 projection function. Pass this in as an uncalled function, e.g. `projection={geoAlbersUsa}`. */
-	export let projection;
 
 	/** @type {Number} [fixedAspectRatio] - By default, the map fills to fit the $width and $height. If instead you want a fixed-aspect ratio, like for a server-side rendered map, set that here. */
-	export let fixedAspectRatio = undefined;
 
 	/** @type {Function} getLabel - An accessor function to get the field to display. */
-	export let getLabel;
 
 	/** @type {Function} [getCoordinates=d => d.geometry.coordinates] - An accessor function to get the `[x, y]` coordinate field. Defaults to a GeoJSON feature format. */
-	export let getCoordinates;
 
 	/** @type {Array} [features] - A list of labels as GeoJSON features. If unset, the plotted features will defaults to those in `$data.features`, assuming this field a list of GeoJSON features. */
-	export let features = undefined;
 
-	$: fitSizeRange = fixedAspectRatio ? [100, 100 / fixedAspectRatio] : [$width, $height];
+	const fitSizeRange = $derived(fixedAspectRatio ? [100, 100 / fixedAspectRatio] : [$width, $height]);
 
-	$: projectionFn = projection()
-		.fitSize(fitSizeRange, $data);
+	const projectionFn = $derived(projection().fitSize(fitSizeRange, $data));
 
-	$: units = fixedAspectRatio ? '%': 'px';
+	const units = $derived(fixedAspectRatio ? '%': 'px');
 </script>
 
 <div
 	class="map-labels"
 	style:aspect-ratio={fixedAspectRatio ? 1 : null}
 >
-{#each (features || $data.features) as d}
+{#each (features || geoData.features) as d}
 	{@const coords = projectionFn(getCoordinates(d))}
 	<div
 		class="map-label"

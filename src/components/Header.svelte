@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	// shadow, plain, line, bubble
 	import wordmark from "$svg/wordmark-script-stacked-plain.svg";
 </script>

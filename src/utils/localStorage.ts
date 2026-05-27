@@ -1,22 +1,20 @@
-let hasStorage;
+let hasStorage: boolean | undefined;
 
 const isReady = () => {
 	if (hasStorage !== undefined) return hasStorage;
-
 	try {
-		const storage = window["localStorage"];
+		const storage = window.localStorage;
 		const x = "__storage_test__";
 		storage.setItem(x, x);
 		storage.removeItem(x);
 		hasStorage = true;
-	} catch (e) {
+	} catch {
 		hasStorage = false;
-	} finally {
-		return hasStorage;
 	}
+	return hasStorage;
 };
 
-const remove = (key) => {
+const remove = (key: string) => {
 	if (!isReady()) return;
 	try {
 		localStorage.removeItem(key);
@@ -25,7 +23,7 @@ const remove = (key) => {
 	}
 };
 
-const set = (key, value) => {
+const set = (key: string, value: unknown) => {
 	if (!isReady()) return;
 	try {
 		localStorage.setItem(key, JSON.stringify(value));
@@ -34,18 +32,15 @@ const set = (key, value) => {
 	}
 };
 
-const get = (key) => {
-	if (!isReady()) return;
+const get = <T = unknown>(key: string): T | undefined => {
+	if (!isReady()) return undefined;
 	try {
-		return JSON.parse(localStorage.getItem(key));
+		const raw = localStorage.getItem(key);
+		return raw ? (JSON.parse(raw) as T) : undefined;
 	} catch (err) {
 		console.log(err);
 		return undefined;
 	}
 };
 
-export default {
-	set,
-	get,
-	remove
-};
+export default { set, get, remove };

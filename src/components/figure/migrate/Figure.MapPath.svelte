@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { getContext, createEventDispatcher } from "svelte";
 
 	export let features;
