@@ -1,0 +1,28 @@
+export { createChordDetector } from "./chord-detector.js";
+export { createMidiInput } from "./midi-input/index.js";
+export { createChordGater } from "./chord-gater/index.js";
+export {
+	bassIntervalFromRoot,
+	chordsAreEqual,
+	createChordClassifier,
+	formatChordName,
+	hasDistinctBass,
+	structuredChordFromClassification,
+	UNKNOWN_CHORD_NAME
+} from "./chord-classifier/index.js";
+export { CHORD_TEMPLATES } from "./chord-classifier/templates.js";
+export {
+	midiToNote,
+	noteToMidi,
+	coerceToMidi,
+	pitchClass,
+	noteNameToPitchClass
+} from "./chord-classifier/notes.js";
+export {
+	createProgressionSearch,
+	toAbstractProgression,
+	findSubProgressionMatches,
+	progressionContainsSubProgression
+} from "./match-chord-progressions/index.js";
+export { isPositionInMatch } from "./match-chord-progressions/match.js";
+export type * from "./types.js";
