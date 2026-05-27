@@ -2,15 +2,25 @@
 	import { getContext } from "svelte";
 	import checkOverlap from "$actions/checkOverlap";
 	import keepWithinBox from "$actions/keepWithinBox";
+	import type { FigureContext, FigureMapFeature } from "$types/figure";
 
-	export let features;
-	export let fill = "#000";
-	export let stroke = "none";
-	export let offsetX = 0;
-	export let offsetY = 0;
-	export let strokeWidth = 1;
+	let {
+		features,
+		fill = "#000",
+		stroke = "none",
+		offsetX = 0,
+		offsetY = 0,
+		strokeWidth = 1
+	}: {
+		features: FigureMapFeature[];
+		fill?: string;
+		stroke?: string;
+		offsetX?: number;
+		offsetY?: number;
+		strokeWidth?: number;
+	} = $props();
 
-	const { width, height, custom } = getContext("Figure");
+	const { width, height, custom } = getContext<FigureContext>("Figure");
 </script>
 
 <g
@@ -18,7 +28,7 @@
 	use:checkOverlap={{ query: "text.stroke", reverse: true }}
 >
 	{#each features as feature}
-		{@const coords = $custom.projectionFn(feature.geometry.coordinates)}
+		{@const coords = $custom.projectionFn?.(feature.geometry.coordinates)}
 		{@const hasCoords = coords}
 		{@const x = hasCoords ? coords[0] : 0}
 		{@const y = hasCoords ? coords[1] : 0}

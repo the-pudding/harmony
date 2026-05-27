@@ -29,9 +29,14 @@ const isOverlapping = (nodes: Element[]) => {
 	return !!matches;
 };
 
-const checkOverlap: Action<HTMLElement, CheckOverlapParams> = (node, params = {}) => {
+const checkOverlap: Action<Element, CheckOverlapParams> = (
+	node,
+	params = {}
+) => {
 	const check = ({ reverse, query }: CheckOverlapParams) => {
-		const elements = [...node.querySelectorAll(query || ":scope > *:not(iframe)")];
+		const elements = [
+			...node.querySelectorAll(query || ":scope > *:not(iframe)")
+		];
 		if (reverse) elements.reverse();
 		elements.forEach((el, i) => {
 			const overlap = isOverlapping(elements.slice(i));
