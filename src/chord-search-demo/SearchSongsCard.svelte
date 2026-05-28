@@ -2,7 +2,7 @@
 	import SearchProgression from "./SearchProgression.svelte";
 	import SongResultCard from "./SongResultCard.svelte";
 	import type { ParsedProgressionChord, SongSearchResult } from "../chord-processing/types.js";
-	import { NO_MATCH_MESSAGE } from "./constants.js";
+	import { NO_MATCH_MESSAGE, SEARCH_PLACEHOLDER } from "./constants.js";
 
 	let {
 		searchChords,
@@ -28,7 +28,9 @@
 	</p>
 	<SearchProgression chords={searchChords} />
 	<div class="results">
-		{#if hasSearch && results.length === 0}
+		{#if !hasSearch}
+			<p class="empty">{SEARCH_PLACEHOLDER}</p>
+		{:else if results.length === 0}
 			<p class="empty">{NO_MATCH_MESSAGE}</p>
 		{:else}
 			{#each results as result (result.song.title + result.song.artist)}

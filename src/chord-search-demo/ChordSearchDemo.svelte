@@ -19,17 +19,21 @@
 	import EventLogCard from "./EventLogCard.svelte";
 	import MidiConfigCard from "./MidiConfigCard.svelte";
 	import MidiInputsCard from "./MidiInputsCard.svelte";
-	import { SONGS } from "./songs.js";
 	import {
 		DEFAULT_SETTLE_MS,
 		DEFAULT_SPLIT_NOTE,
 		ESCAPE_KEY,
 		LIVE_STATE_ACTIVE,
 		LIVE_STATE_MUTED,
+		MAX_SEARCH_RESULTS,
 		MIDI_STATE_IDLE,
-		MIDI_STATE_LINKED
+		MIDI_STATE_LINKED,
+		SONGS_DATA_URL,
+		SONGS_LOAD_ERROR_PREFIX,
+		SONGS_LOADING_MESSAGE
 	} from "./constants.js";
 	import type { EventLogEntry, EventLogInput } from "./types.js";
+	import type { SongInput } from "../chord-processing/types.js";
 
 	type ChordDetectorInstance = ReturnType<typeof createChordDetector>;
 
@@ -43,8 +47,11 @@
 	let midiInputs = $state<MidiDeviceInfo[]>([]);
 	let selectedInputName = $state("");
 	let logEntries = $state<EventLogEntry[]>([]);
+	let songs = $state<SongInput[]>([]);
+	let songsLoading = $state(true);
+	let songsError = $state("");
 
-	const progressionSearch = createProgressionSearch({ songs: SONGS });
+	const progressionSearch = $derived(createProgressionSearch({ songs, limit: MAX_SEARCH_RESULTS }));
 
 	let searchChords = $state<ParsedProgressionChord[]>([]);
 	let searchResults = $state<SongSearchResult[]>([]);
@@ -159,7 +166,19 @@
 		if (event.key === ESCAPE_KEY) clearSearch();
 	};
 
-	onMount(() => {
+	onMount(async () => {
+		try {
+			const response = await fetch(SONGS_DATA_URL);
+			if (!response.ok) {
+				throw new Error(`${SONGS_LOAD_ERROR_PREFIX} HTTP ${response.status}`);
+			}
+			songs = await response.json();
+		} catch (err) {
+			songsError = err instanceof Error ? err.message : String(err);
+		} finally {
+			songsLoading = false;
+		}
+
 		syncSearch();
 		if (window.isSecureContext && typeof navigator.requestMIDIAccess === "function") {
 			attemptConnect();
@@ -171,6 +190,11 @@
 
 <div class="demo">
 	<Header />
+	{#if songsLoading}
+		<p class="dataset-status">{SONGS_LOADING_MESSAGE}</p>
+	{:else if songsError}
+		<p class="dataset-status error">{songsError}</p>
+	{/if}
 	<NoMidiBanner message={midiBanner} />
 
 	<div class="live-output" data-live-state={liveState}>
@@ -226,6 +250,16 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
+	}
+
+	.dataset-status {
+		font-size: 0.75rem;
+		color: #71717a;
+		margin: 0;
+	}
+
+	.dataset-status.error {
+		color: #fca5a5;
 	}
 
 	.live-output {

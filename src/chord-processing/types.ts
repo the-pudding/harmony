@@ -69,16 +69,31 @@ export type ProgressionChordInput = {
 	bassNoteName?: string;
 };
 
+export type PrecomputedAbstractProgression = {
+	suffixes: string[];
+	deltas: number[];
+	bassIntervals: (number | null)[];
+	wrapDelta: number;
+};
+
 export type SongInput = {
 	title: string;
 	artist: string;
+	inTop10?: boolean;
+	inTop40?: boolean;
+	inTop100?: boolean;
 	progression: ProgressionChordInput[];
+	suffixes?: string[];
+	deltas?: number[];
+	bassIntervals?: (number | null)[];
+	wrapDelta?: number;
 };
 
 export type ParsedProgressionChord = StructuredChord & { display: string };
 
 export type PreparedSong = SongInput & {
 	parsedProgression: ParsedProgressionChord[];
+	abstractProgression: PrecomputedAbstractProgression;
 };
 
 export type SubProgressionMatch = { start: number; length: number };

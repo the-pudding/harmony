@@ -3,10 +3,14 @@ import {
 	hasDistinctBass
 } from "../chord-classifier/index.js";
 import { noteNameToPitchClass } from "../chord-classifier/notes.js";
-import { findSubProgressionMatches } from "./match.js";
+import {
+	findSubProgressionMatchesPrecomputed,
+	toPrecomputedAbstractProgression
+} from "./match.js";
 import type {
 	ParsedProgressionChord,
 	PreparedSong,
+	PrecomputedAbstractProgression,
 	ProgressionChordInput,
 	SongInput,
 	SongSearchResult,
@@ -26,30 +30,74 @@ const parseProgressionChord = ({
 	return { ...chord, display: formatChordName(chord) };
 };
 
-const prepareSong = (song: SongInput): PreparedSong => ({
-	...song,
-	parsedProgression: song.progression.map(parseProgressionChord)
-});
+const buildAbstractProgression = (
+	song: SongInput,
+	parsedProgression: ParsedProgressionChord[]
+) => {
+	if (
+		song.suffixes &&
+		song.deltas &&
+		song.bassIntervals &&
+		song.wrapDelta !== undefined
+	) {
+		return {
+			suffixes: song.suffixes,
+			deltas: song.deltas,
+			bassIntervals: song.bassIntervals,
+			wrapDelta: song.wrapDelta
+		} satisfies PrecomputedAbstractProgression;
+	}
+
+	return toPrecomputedAbstractProgression(parsedProgression);
+};
+
+const prepareSong = (song: SongInput): PreparedSong => {
+	const parsedProgression = song.progression.map(parseProgressionChord);
+
+	return {
+		...song,
+		parsedProgression,
+		abstractProgression: buildAbstractProgression(song, parsedProgression)
+	};
+};
 
 const buildSongResult = (
 	preparedSong: PreparedSong,
 	searchProgression: ParsedProgressionChord[]
 ): SongSearchResult => {
-	const matches = findSubProgressionMatches(preparedSong.parsedProgression, searchProgression);
+	const matches = findSubProgressionMatchesPrecomputed(
+		preparedSong.abstractProgression,
+		searchProgression
+	);
+
 	return { song: preparedSong, matches };
 };
 
 const isMatched = ({ matches }: SongSearchResult): boolean => matches.length > 0;
 
-export const createProgressionSearch = ({ songs }: { songs: SongInput[] }) => {
+export const createProgressionSearch = ({
+	songs,
+	limit = Infinity
+}: {
+	songs: SongInput[];
+	limit?: number;
+}) => {
 	const preparedSongs = songs.map(prepareSong);
 
 	let searchProgression: ParsedProgressionChord[] = [];
 
 	const getResults = (): SongSearchResult[] => {
-		const allResults = preparedSongs.map((song) => buildSongResult(song, searchProgression));
-		if (searchProgression.length === 0) return allResults;
-		return allResults.filter(isMatched);
+		if (searchProgression.length === 0) return [];
+
+		const results: SongSearchResult[] = [];
+		for (const song of preparedSongs) {
+			const result = buildSongResult(song, searchProgression);
+			if (isMatched(result)) {
+				results.push(result);
+				if (results.length >= limit) break;
+			}
+		}
+		return results;
 	};
 
 	const append = (chord: StructuredChord) => {
@@ -73,7 +121,9 @@ export const createProgressionSearch = ({ songs }: { songs: SongInput[] }) => {
 
 export {
 	toAbstractProgression,
+	toPrecomputedAbstractProgression,
 	findSubProgressionMatches,
+	findSubProgressionMatchesPrecomputed,
 	progressionContainsSubProgression,
 	isPositionInMatch
 } from "./match.js";

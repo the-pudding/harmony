@@ -1,4 +1,33 @@
-# Svelte Starter
+# Harmony
+
+## Generating the song dataset locally
+
+Chord data lives in the sibling [`harmony-data`](../harmony-data) repo and is **not** committed to this project. The app reads a generated file at `static/data/songs.json` (gitignored).
+
+To build or refresh the dataset from `harmony-data`:
+
+```bash
+npm run songs
+```
+
+This runs [`tasks/build-songs.js`](tasks/build-songs.js), which:
+
+- reads scraped songs from `../harmony-data/songs/hooktheory/` and `../harmony-data/songs/ug/`
+- joins Billboard flags from `../harmony-data/data/tracker.csv`
+- converts HookTheory chord data into the format used by the chord-search matcher
+- writes `static/data/songs.json`
+
+When `harmony-data` is updated (e.g. after pulling fresh scrapes):
+
+```bash
+cd ../harmony-data && git pull
+cd ../harmony && npm run songs
+npm run dev
+```
+
+The `/demo/chord-search` route fetches `/data/songs.json` at runtime. If the file is missing, run `npm run songs` first.
+
+# Svelte Starter [default info from the pudding starter repo]
 
 This [starter template](https://github.com/the-pudding/svelte-starter) aims to quickly scaffold a [SvelteKit](https://kit.svelte.dev/) project, designed around data-driven, visual stories at [The Pudding](https://pudding.cool).
 
