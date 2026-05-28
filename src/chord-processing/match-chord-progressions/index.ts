@@ -51,11 +51,12 @@ const buildAbstractProgression = (
 	return toPrecomputedAbstractProgression(parsedProgression);
 };
 
-const prepareSong = (song: SongInput): PreparedSong => {
+const prepareSong = (song: SongInput, index: number): PreparedSong => {
 	const parsedProgression = song.progression.map(parseProgressionChord);
 
 	return {
 		...song,
+		id: song.id ?? `local-${index}`,
 		parsedProgression,
 		abstractProgression: buildAbstractProgression(song, parsedProgression)
 	};
@@ -82,7 +83,7 @@ export const createProgressionSearch = ({
 	songs: SongInput[];
 	limit?: number;
 }) => {
-	const preparedSongs = songs.map(prepareSong);
+	const preparedSongs = songs.map((song, index) => prepareSong(song, index));
 
 	let searchProgression: ParsedProgressionChord[] = [];
 

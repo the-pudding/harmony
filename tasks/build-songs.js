@@ -152,7 +152,7 @@ const toPrecomputedAbstractProgression = (progression) => {
 	return { suffixes, deltas, bassIntervals, wrapDelta };
 };
 
-const sectionToSongInput = (section, trackerEntry, artistSlug) => {
+const sectionToSongInput = (section, trackerEntry, artistSlug, songSlug) => {
 	const progression = (section.chords ?? [])
 		.map((chord) => chordToProgressionInput(chord, section.key, section.scale))
 		.filter(Boolean);
@@ -160,10 +160,14 @@ const sectionToSongInput = (section, trackerEntry, artistSlug) => {
 	if (progression.length === 0) return null;
 
 	const artist = trackerEntry?.artist ?? humanizeSlug(artistSlug);
-	const title = section.name ? `${section.songTitle} (${section.name})` : section.songTitle;
+	const title = section.name
+		? `${section.songTitle} (${section.name})`
+		: section.songTitle;
 	const abstractProgression = toPrecomputedAbstractProgression(progression);
+	const sectionId = section.id ?? section.name ?? title;
 
 	return {
+		id: `${artistSlug}__${songSlug}__${sectionId}`,
 		title,
 		artist,
 		...(trackerEntry
@@ -216,7 +220,12 @@ const buildSongs = () => {
 
 		return (songData.sections ?? []).flatMap((section) => {
 			const originalChordCount = section.chords?.length ?? 0;
-			const songInput = sectionToSongInput(section, trackerEntry, songData.artist);
+			const songInput = sectionToSongInput(
+				section,
+				trackerEntry,
+				songData.artist,
+				songData.song
+			);
 
 			if (!songInput) {
 				stats.sectionsSkipped += 1;

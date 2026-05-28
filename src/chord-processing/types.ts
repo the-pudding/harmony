@@ -77,6 +77,7 @@ export type PrecomputedAbstractProgression = {
 };
 
 export type SongInput = {
+	id?: string;
 	title: string;
 	artist: string;
 	inTop10?: boolean;

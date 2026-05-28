@@ -33,7 +33,7 @@
 		{:else if results.length === 0}
 			<p class="empty">{NO_MATCH_MESSAGE}</p>
 		{:else}
-			{#each results as result (result.song.title + result.song.artist)}
+			{#each results as result (result.song.id)}
 				<SongResultCard {result} />
 			{/each}
 		{/if}
