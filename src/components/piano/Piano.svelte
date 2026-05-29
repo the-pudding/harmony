@@ -34,8 +34,8 @@
 
 <div class="piano-container">
 	<div class="section-labels">
-		<div class="section-label bass-label" style="width: {bassWidth}%">Bass</div>
-		<div class="section-label treble-label" style="width: {trebleWidth}%">Treble</div>
+		<div class="section-label bass-label" style="width: {bassWidth}%">← Bass</div>
+		<div class="section-label treble-label" style="width: {trebleWidth}%">Treble →</div>
 	</div>
 	<div class="keys-wrapper">
 		{#each PIANO_KEYS as key (key.midi)}
@@ -75,11 +75,13 @@
 
 	.bass-label {
 		justify-content: flex-end;
+		padding-right: 8px;
 		color: #a78bfa;
 	}
 
 	.treble-label {
 		justify-content: flex-start;
+		padding-left: 8px;
 		color: #34d399;
 	}
 

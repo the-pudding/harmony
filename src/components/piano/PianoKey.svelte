@@ -115,7 +115,7 @@
 
 	/* ── Split marker ── */
 	.split {
-		border-left: 2px solid #f59e0b;
+		border-right: 2px solid #f59e0b;
 	}
 
 	/* ── Labels ── */
