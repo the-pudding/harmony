@@ -51,7 +51,7 @@
 		/>
 		<span class="track"></span>
 		<span class="thumb"></span>
-		<span class="toggle-label">Use bass note to determine chord</span>
+		<span class="toggle-label">When classifying, try first to treat the bass note as the root (rather assuming it's a slash chord)</span>
 	</label>
 </section>
 
@@ -146,8 +146,7 @@
 	}
 
 	.toggle-label {
-		font-size: 0.75rem;
+		font-size: 0.5rem;
 		color: #a1a1aa;
-		margin-left: 2.25rem;
 	}
 </style>
