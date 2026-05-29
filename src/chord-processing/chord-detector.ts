@@ -33,6 +33,8 @@ type ChordDetectorOptions = {
 	onChordStart?: (event: ChordEvent) => void;
 	onChordEnd?: (event: ChordEvent) => void;
 	onStateChange?: (inputs: MidiDeviceInfo[]) => void;
+	onNoteOn?: (midi: number) => void;
+	onNoteOff?: (midi: number) => void;
 	chordClassifierOptions?: { templates?: ChordTemplate[] };
 	getBassAsRoot?: () => boolean;
 };
@@ -43,6 +45,8 @@ export const createChordDetector = ({
 	onChordStart,
 	onChordEnd,
 	onStateChange,
+	onNoteOn,
+	onNoteOff,
 	chordClassifierOptions,
 	getBassAsRoot
 }: ChordDetectorOptions = {}) => {
@@ -71,8 +75,14 @@ export const createChordDetector = ({
 	});
 
 	const midiInput = createMidiInput({
-		onNoteOn: ({ midi }) => chordGater.handleNoteOn(midi),
-		onNoteOff: ({ midi }) => chordGater.handleNoteOff(midi),
+		onNoteOn: ({ midi }) => {
+			chordGater.handleNoteOn(midi);
+			onNoteOn?.(midi);
+		},
+		onNoteOff: ({ midi }) => {
+			chordGater.handleNoteOff(midi);
+			onNoteOff?.(midi);
+		},
 		onStateChange
 	});
 
@@ -88,7 +98,8 @@ export const createChordDetector = ({
 		onChordStart?.(activeChordEvent);
 	};
 
-	const connect = (options?: { inputName?: string }) => midiInput.connect(options);
+	const connect = (options?: { inputName?: string }) =>
+		midiInput.connect(options);
 	const disconnect = () => {
 		midiInput.disconnect();
 		chordGater.dispose();

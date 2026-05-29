@@ -12,6 +12,8 @@
 		SongSearchResult
 	} from "../chord-processing/types.js";
 	import generateId from "../utils/generateId.js";
+	import { midiToNote } from "../chord-processing/chord-classifier/notes.js";
+	import Piano from "$components/piano/Piano.svelte";
 	import Header from "./Header.svelte";
 	import NoMidiBanner from "./NoMidiBanner.svelte";
 	import CurrentChordCard from "./CurrentChordCard.svelte";
@@ -65,6 +67,9 @@
 	const liveState = $derived(isConnected ? LIVE_STATE_ACTIVE : LIVE_STATE_MUTED);
 	const midiSetupState = $derived(isConnected ? MIDI_STATE_LINKED : MIDI_STATE_IDLE);
 
+	let heldMidiNotes = $state(new Set<number>());
+	const heldNotes = $derived([...heldMidiNotes].map(midiToNote));
+
 	let detector: ChordDetectorInstance | null = null;
 
 	const prependLog = (entry: EventLogInput) => {
@@ -89,6 +94,12 @@
 			splitBassAndTrebleOn: splitNote.trim() || DEFAULT_SPLIT_NOTE,
 			settleMs: settleMs || DEFAULT_SETTLE_MS,
 			getBassAsRoot: () => bassAsRoot,
+			onNoteOn: (midi) => {
+				heldMidiNotes = new Set([...heldMidiNotes, midi]);
+			},
+			onNoteOff: (midi) => {
+				heldMidiNotes = new Set([...heldMidiNotes].filter((m) => m !== midi));
+			},
 			onChordStart: (chord) => {
 				activeChord = chord;
 				if (chord.chord) appendChordIfNew(chord.chord);
@@ -141,6 +152,7 @@
 		detector = null;
 		midiInputs = [];
 		activeChord = null;
+		heldMidiNotes = new Set();
 		isConnected = false;
 		prependLog({ kind: "disconnected" });
 	};
@@ -188,50 +200,56 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="demo">
-	<Header />
-	{#if songsLoading}
-		<p class="dataset-status">{SONGS_LOADING_MESSAGE}</p>
-	{:else if songsError}
-		<p class="dataset-status error">{songsError}</p>
-	{/if}
-	<NoMidiBanner message={midiBanner} />
-
-	<div class="live-output" data-live-state={liveState}>
-		<div class="search-group">
-			<CurrentChordCard
-				chord={activeChord}
-				{bassAsRoot}
-				onBassAsRootChange={onBassAsRootChange}
-			/>
-			<SearchSongsCard
-				{searchChords}
-				results={searchResults}
-				{hasSearch}
-				onClear={clearSearch}
-			/>
-		</div>
-		<EventLogCard entries={logEntries} onClear={() => (logEntries = [])} />
+<div class="page">
+	<div class="piano-strip">
+		<Piano activeNotes={heldNotes} splitNote={splitNote} />
 	</div>
 
-	<hr class="divider" />
+	<div class="demo">
+		<Header />
+		{#if songsLoading}
+			<p class="dataset-status">{SONGS_LOADING_MESSAGE}</p>
+		{:else if songsError}
+			<p class="dataset-status error">{songsError}</p>
+		{/if}
+		<NoMidiBanner message={midiBanner} />
 
-	<div class="midi-setup" data-midi-state={midiSetupState}>
-		<MidiConfigCard
-			{splitNote}
-			{settleMs}
-			{isConnected}
-			{connectError}
-			onSplitNoteChange={(v) => (splitNote = v)}
-			onSettleMsChange={(v) => (settleMs = v)}
-			onConnect={attemptConnect}
-			onDisconnect={disconnect}
-		/>
-		<MidiInputsCard
-			inputs={midiInputs}
-			{selectedInputName}
-			onInputChange={switchInput}
-		/>
+		<div class="live-output" data-live-state={liveState}>
+			<div class="search-group">
+				<CurrentChordCard
+					chord={activeChord}
+					{bassAsRoot}
+					onBassAsRootChange={onBassAsRootChange}
+				/>
+				<SearchSongsCard
+					{searchChords}
+					results={searchResults}
+					{hasSearch}
+					onClear={clearSearch}
+				/>
+			</div>
+			<EventLogCard entries={logEntries} onClear={() => (logEntries = [])} />
+		</div>
+
+		<hr class="divider" />
+
+		<div class="midi-setup" data-midi-state={midiSetupState}>
+			<MidiConfigCard
+				{splitNote}
+				{settleMs}
+				{isConnected}
+				{connectError}
+				onSplitNoteChange={(v) => (splitNote = v)}
+				onSettleMsChange={(v) => (settleMs = v)}
+				onConnect={attemptConnect}
+				onDisconnect={disconnect}
+			/>
+			<MidiInputsCard
+				inputs={midiInputs}
+				{selectedInputName}
+				onInputChange={switchInput}
+			/>
+		</div>
 	</div>
 </div>
 
@@ -240,13 +258,27 @@
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 	}
 
-	.demo {
+	.page {
 		background: #09090b;
 		color: #f4f4f5;
 		min-height: 100vh;
-		padding: 2rem;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.piano-strip {
+		width: 100%;
+		padding: 1rem 0 0.5rem;
+		background: #09090b;
+	}
+
+	.demo {
+		color: #f4f4f5;
+		padding: 1.5rem 2rem 2rem;
 		max-width: 48rem;
 		margin: 0 auto;
+		width: 100%;
+		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
