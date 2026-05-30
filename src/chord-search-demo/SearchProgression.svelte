@@ -76,9 +76,6 @@
 
 	.mini-chip {
 		font-size: 0.48rem;
-		background: transparent;
-		border: 1px solid rgba(99, 102, 241, 0.5);
-		border-radius: 0.2rem;
 		padding: 0.05rem 0.2rem;
 		color: #a5b4fc;
 		white-space: nowrap;
