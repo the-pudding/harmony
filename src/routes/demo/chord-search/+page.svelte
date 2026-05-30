@@ -11,3 +11,9 @@
 </svelte:head>
 
 <ChordSearchDemo />
+
+<style>
+	:global(body > header) {
+		display: none;
+	}
+</style>

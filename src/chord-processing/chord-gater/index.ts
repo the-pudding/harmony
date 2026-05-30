@@ -21,7 +21,7 @@ export const createChordGater = ({
 	onStableChordCandidate,
 	onStableChordRelease
 }: ChordGaterOptions = {}) => {
-	const splitMidi = coerceToMidi(splitBassAndTrebleOn);
+	let splitMidi = coerceToMidi(splitBassAndTrebleOn);
 
 	let heldNotes = new Set<number>();
 	let activeStableMidi: StableChordCandidate | null = null;
@@ -73,6 +73,11 @@ export const createChordGater = ({
 		scheduleSettle();
 	};
 
+	const setSplitBassAndTrebleOn = (next: MidiCoercible) => {
+		splitMidi = coerceToMidi(next);
+		scheduleSettle();
+	};
+
 	const dispose = () => {
 		if (settleTimer) clearTimeout(settleTimer);
 		settleTimer = null;
@@ -84,5 +89,5 @@ export const createChordGater = ({
 		heldNotes = new Set();
 	};
 
-	return { handleNoteOn, handleNoteOff, dispose };
+	return { handleNoteOn, handleNoteOff, dispose, setSplitBassAndTrebleOn };
 };

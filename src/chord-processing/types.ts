@@ -80,6 +80,7 @@ export type SongInput = {
 	id?: string;
 	title: string;
 	artist: string;
+	year?: number;
 	inTop10?: boolean;
 	inTop40?: boolean;
 	inTop100?: boolean;

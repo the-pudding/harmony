@@ -7,20 +7,14 @@
 	} from "../chord-processing/index.js";
 	import type {
 		ChordEvent,
-		MidiDeviceInfo,
 		ParsedProgressionChord,
 		SongSearchResult
 	} from "../chord-processing/types.js";
-	import generateId from "../utils/generateId.js";
 	import { midiToNote } from "../chord-processing/chord-classifier/notes.js";
 	import Piano from "$components/piano/Piano.svelte";
-	import Header from "./Header.svelte";
 	import NoMidiBanner from "./NoMidiBanner.svelte";
 	import CurrentChordCard from "./CurrentChordCard.svelte";
 	import SearchSongsCard from "./SearchSongsCard.svelte";
-	import EventLogCard from "./EventLogCard.svelte";
-	import MidiConfigCard from "./MidiConfigCard.svelte";
-	import MidiInputsCard from "./MidiInputsCard.svelte";
 	import {
 		DEFAULT_SETTLE_MS,
 		DEFAULT_SPLIT_NOTE,
@@ -28,13 +22,11 @@
 		LIVE_STATE_ACTIVE,
 		LIVE_STATE_MUTED,
 		MAX_SEARCH_RESULTS,
-		MIDI_STATE_IDLE,
-		MIDI_STATE_LINKED,
+		SPLIT_NOTE_EDIT_TOOLTIP,
 		SONGS_DATA_URL,
 		SONGS_LOAD_ERROR_PREFIX,
 		SONGS_LOADING_MESSAGE
 	} from "./constants.js";
-	import type { EventLogEntry, EventLogInput } from "./types.js";
 	import type { SongInput } from "../chord-processing/types.js";
 
 	type ChordDetectorInstance = ReturnType<typeof createChordDetector>;
@@ -42,13 +34,11 @@
 	let activeChord = $state<ChordEvent | null>(null);
 	let bassAsRoot = $state(false);
 	let splitNote = $state(DEFAULT_SPLIT_NOTE);
-	let settleMs = $state(DEFAULT_SETTLE_MS);
+	let splitNoteEditing = $state(false);
 	let isConnected = $state(false);
 	let connectError = $state("");
 	let midiBanner = $state("");
-	let midiInputs = $state<MidiDeviceInfo[]>([]);
 	let selectedInputName = $state("");
-	let logEntries = $state<EventLogEntry[]>([]);
 	let songs = $state<SongInput[]>([]);
 	let songsLoading = $state(true);
 	let songsError = $state("");
@@ -66,16 +56,11 @@
 	};
 
 	const liveState = $derived(isConnected ? LIVE_STATE_ACTIVE : LIVE_STATE_MUTED);
-	const midiSetupState = $derived(isConnected ? MIDI_STATE_LINKED : MIDI_STATE_IDLE);
 
 	let heldMidiNotes = $state(new Set<number>());
 	const heldNotes = $derived([...heldMidiNotes].map(midiToNote));
 
 	let detector: ChordDetectorInstance | null = null;
-
-	const prependLog = (entry: EventLogInput) => {
-		logEntries = [{ ...entry, id: generateId() }, ...logEntries];
-	};
 
 	const appendChordIfNew = (chord: NonNullable<ChordEvent["chord"]>) => {
 		const progression = progressionSearch.getSearchProgression();
@@ -90,10 +75,36 @@
 		syncSearch();
 	};
 
+	const formatSplitNote = (midi: number) => {
+		const { noteName, octave } = midiToNote(midi);
+		return `${noteName}${octave}`;
+	};
+
+	const cancelSplitNoteEdit = () => {
+		splitNoteEditing = false;
+		detector?.cancelNoteInterceptor();
+	};
+
+	const applySplitNote = (midi: number) => {
+		splitNote = formatSplitNote(midi);
+		detector?.setSplitBassAndTrebleOn(splitNote);
+		cancelSplitNoteEdit();
+	};
+
+	const toggleSplitNoteEdit = () => {
+		if (splitNoteEditing) {
+			cancelSplitNoteEdit();
+			return;
+		}
+
+		splitNoteEditing = true;
+		detector?.interceptNextNote(applySplitNote);
+	};
+
 	const buildDetector = (): ChordDetectorInstance =>
 		createChordDetector({
 			splitBassAndTrebleOn: splitNote.trim() || DEFAULT_SPLIT_NOTE,
-			settleMs: settleMs || DEFAULT_SETTLE_MS,
+			settleMs: DEFAULT_SETTLE_MS,
 			getBassAsRoot: () => bassAsRoot,
 			onNoteOn: (midi) => {
 				heldMidiNotes = new Set([...heldMidiNotes, midi]);
@@ -104,14 +115,11 @@
 			onChordStart: (chord) => {
 				activeChord = chord;
 				if (chord.chord) appendChordIfNew(chord.chord);
-				prependLog({ kind: "start", chordName: chord.chordName, chordEvent: chord });
 			},
-			onChordEnd: (chord) => {
+			onChordEnd: () => {
 				activeChord = null;
-				prependLog({ kind: "end", chordName: chord.chordName });
 			},
 			onStateChange: (inputs) => {
-				midiInputs = inputs;
 				const active = inputs.find((d) => d.isActive);
 				if (active) selectedInputName = active.name;
 			}
@@ -132,39 +140,16 @@
 		}
 
 		detector?.disconnect();
+		cancelSplitNoteEdit();
 		detector = buildDetector();
 
 		try {
 			await detector.connect(
 				selectedInputName ? { inputName: selectedInputName } : undefined
 			);
-			midiInputs = detector.listInputs();
-			const active = midiInputs.find((d) => d.isActive);
+			const active = detector.listInputs().find((d) => d.isActive);
 			if (active) selectedInputName = active.name;
 			isConnected = true;
-			prependLog({ kind: "connected" });
-		} catch (err) {
-			connectError = err instanceof Error ? err.message : String(err);
-		}
-	};
-
-	const disconnect = () => {
-		detector?.disconnect();
-		detector = null;
-		midiInputs = [];
-		activeChord = null;
-		heldMidiNotes = new Set();
-		isConnected = false;
-		prependLog({ kind: "disconnected" });
-	};
-
-	const switchInput = async (inputName: string) => {
-		if (!detector) return;
-		selectedInputName = inputName;
-		try {
-			await detector.connect({ inputName });
-			midiInputs = detector.listInputs();
-			prependLog({ kind: "switched", inputName });
 		} catch (err) {
 			connectError = err instanceof Error ? err.message : String(err);
 		}
@@ -176,7 +161,12 @@
 	};
 
 	const onKeydown = (event: KeyboardEvent) => {
-		if (event.key === ESCAPE_KEY) clearSearch();
+		if (event.key !== ESCAPE_KEY) return;
+		if (splitNoteEditing) {
+			cancelSplitNoteEdit();
+			return;
+		}
+		clearSearch();
 	};
 
 	onMount(async () => {
@@ -202,12 +192,29 @@
 <svelte:window onkeydown={onKeydown} />
 
 <div class="page">
+	<div class="midi-status">
+		{#if isConnected}
+			<span class="connected" title={selectedInputName}>connected</span>
+		{:else}
+			<button type="button" class="connect" onclick={attemptConnect}>connect</button>
+		{/if}
+		{#if connectError}
+			<span class="connect-error">{connectError}</span>
+		{/if}
+	</div>
+
 	<div class="piano-strip">
-		<Piano activeNotes={heldNotes} splitNote={splitNote} />
+		<Piano
+			activeNotes={heldNotes}
+			{splitNote}
+			{splitNoteEditing}
+			splitNoteEditTooltip={SPLIT_NOTE_EDIT_TOOLTIP}
+			onSplitEditToggle={toggleSplitNoteEdit}
+			onSplitNotePick={applySplitNote}
+		/>
 	</div>
 
 	<div class="demo">
-		<Header />
 		{#if songsLoading}
 			<p class="dataset-status">{SONGS_LOADING_MESSAGE}</p>
 		{:else if songsError}
@@ -234,27 +241,6 @@
 					}}
 				/>
 			</div>
-			<EventLogCard entries={logEntries} onClear={() => (logEntries = [])} />
-		</div>
-
-		<hr class="divider" />
-
-		<div class="midi-setup" data-midi-state={midiSetupState}>
-			<MidiConfigCard
-				{splitNote}
-				{settleMs}
-				{isConnected}
-				{connectError}
-				onSplitNoteChange={(v) => (splitNote = v)}
-				onSettleMsChange={(v) => (settleMs = v)}
-				onConnect={attemptConnect}
-				onDisconnect={disconnect}
-			/>
-			<MidiInputsCard
-				inputs={midiInputs}
-				{selectedInputName}
-				onInputChange={switchInput}
-			/>
 		</div>
 	</div>
 </div>
@@ -270,6 +256,51 @@
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
+		position: relative;
+	}
+
+	.midi-status {
+		position: fixed;
+		top: 1rem;
+		right: 1.5rem;
+		z-index: 10;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 0.375rem;
+	}
+
+	.connected {
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: #4ade80;
+		text-transform: lowercase;
+		cursor: default;
+	}
+
+	.connect {
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: #a1a1aa;
+		background: transparent;
+		border: 1px solid rgba(63, 63, 70, 0.8);
+		border-radius: 0.25rem;
+		padding: 0.25rem 0.625rem;
+		cursor: pointer;
+		font-family: inherit;
+		text-transform: lowercase;
+	}
+
+	.connect:hover {
+		color: #e4e4e7;
+		border-color: #52525b;
+	}
+
+	.connect-error {
+		font-size: 0.625rem;
+		color: #f87171;
+		max-width: 12rem;
+		text-align: right;
 	}
 
 	.piano-strip {
@@ -324,26 +355,5 @@
 		flex-direction: column;
 		gap: 1rem;
 		box-shadow: inset 0 0 0 1px rgba(49, 46, 129, 0.25);
-	}
-
-	.divider {
-		border: none;
-		border-top: 1px solid rgba(63, 63, 70, 0.6);
-		margin: 0;
-	}
-
-	.midi-setup {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
-		transition: opacity 0.3s ease-out;
-	}
-
-	.midi-setup[data-midi-state="idle"] {
-		opacity: 1;
-	}
-
-	.midi-setup[data-midi-state="linked"] {
-		opacity: 0.4;
 	}
 </style>

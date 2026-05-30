@@ -9,6 +9,12 @@ export const PIANO_MIDI_START = 21; // A0
 export const PIANO_MIDI_END = 108; // C8
 export const TOTAL_WHITE_KEYS = 52;
 export const BLACK_KEY_WIDTH_RATIO = 0.6; // relative to white key width
+export const BASS_LABEL_COLOR = "#a78bfa";
+export const SPLIT_KEY_BORDER_BASE_WIDTH_PX = 2;
+export const SPLIT_KEY_BORDER_EXTRA_WIDTH_PX = 3;
+export const SPLIT_KEY_BORDER_WIDTH_PX =
+	SPLIT_KEY_BORDER_BASE_WIDTH_PX + SPLIT_KEY_BORDER_EXTRA_WIDTH_PX;
+export const SPLIT_KEY_BORDER_COLOR = BASS_LABEL_COLOR;
 
 const BLACK_PITCH_CLASSES = new Set([1, 3, 6, 8, 10]); // C#, Eb, F#, Ab, Bb
 

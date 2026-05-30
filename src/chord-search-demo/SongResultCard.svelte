@@ -1,17 +1,33 @@
 <script lang="ts">
 	import { isPositionInMatch } from "../chord-processing/match-chord-progressions/match.js";
 	import type { SongSearchResult } from "../chord-processing/types.js";
+	import { buildYouTubeSearchUrl } from "./youtubeSearch.js";
 
 	let { result }: { result: SongSearchResult } = $props();
 
 	const songLength = $derived(result.song.parsedProgression.length);
 	const isMatched = $derived(result.matches.length > 0);
+	const youtubeSearchUrl = $derived(
+		buildYouTubeSearchUrl({
+			title: result.song.title,
+			artist: result.song.artist,
+			year: result.song.year
+		})
+	);
 </script>
 
 <div class="card" class:matched={isMatched}>
 	<div class="title">
 		<span class="song-title">{result.song.title}</span>
 		<span class="artist"> — {result.song.artist}</span>
+		<a
+			class="youtube-search"
+			href={youtubeSearchUrl}
+			target="_blank"
+			rel="noopener noreferrer"
+			aria-label="Search on YouTube"
+			title="Search on YouTube"
+		>🎵</a>
 	</div>
 	<div class="chords">
 		{#each result.song.parsedProgression as chord, position}
@@ -41,6 +57,13 @@
 		border-color: rgba(49, 46, 129, 0.4);
 	}
 
+	.title {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.125rem;
+	}
+
 	.song-title {
 		color: #fff;
 		font-weight: 500;
@@ -48,6 +71,18 @@
 
 	.artist {
 		color: #71717a;
+	}
+
+	.youtube-search {
+		font-size: 0.625rem;
+		line-height: 1;
+		text-decoration: none;
+		opacity: 0.55;
+		transition: opacity 0.15s;
+	}
+
+	.youtube-search:hover {
+		opacity: 1;
 	}
 
 	.chords {

@@ -53,6 +53,7 @@ export const createChordDetector = ({
 	const classifier = createChordClassifier(chordClassifierOptions);
 
 	let activeChordEvent: ChordEvent | null = null;
+	let noteInterceptor: ((midi: number) => void) | null = null;
 
 	const chordGater = createChordGater({
 		splitBassAndTrebleOn,
@@ -76,6 +77,13 @@ export const createChordDetector = ({
 
 	const midiInput = createMidiInput({
 		onNoteOn: ({ midi }) => {
+			if (noteInterceptor) {
+				const intercept = noteInterceptor;
+				noteInterceptor = null;
+				intercept(midi);
+				onNoteOn?.(midi);
+				return;
+			}
 			chordGater.handleNoteOn(midi);
 			onNoteOn?.(midi);
 		},
@@ -98,6 +106,17 @@ export const createChordDetector = ({
 		onChordStart?.(activeChordEvent);
 	};
 
+	const setSplitBassAndTrebleOn = (next: MidiCoercible) =>
+		chordGater.setSplitBassAndTrebleOn(next);
+
+	const interceptNextNote = (handler: (midi: number) => void) => {
+		noteInterceptor = handler;
+	};
+
+	const cancelNoteInterceptor = () => {
+		noteInterceptor = null;
+	};
+
 	const connect = (options?: { inputName?: string }) =>
 		midiInput.connect(options);
 	const disconnect = () => {
@@ -110,6 +129,9 @@ export const createChordDetector = ({
 		connect,
 		disconnect,
 		reclassify,
+		setSplitBassAndTrebleOn,
+		interceptNextNote,
+		cancelNoteInterceptor,
 		listInputs: midiInput.listInputs,
 		getActiveInput: midiInput.getActiveInput
 	};

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PianoKeyData } from "./pianoKeys.js";
+	import { SPLIT_KEY_BORDER_COLOR, SPLIT_KEY_BORDER_WIDTH_PX } from "./pianoKeys.js";
 
 	type Props = {
 		keyData: PianoKeyData;
@@ -7,9 +8,11 @@
 		isSplit: boolean;
 		totalWhiteKeys: number;
 		blackKeyWidthRatio: number;
+		onSelect?: () => void;
 	};
 
-	const { keyData, isActive, isSplit, totalWhiteKeys, blackKeyWidthRatio }: Props = $props();
+	const { keyData, isActive, isSplit, totalWhiteKeys, blackKeyWidthRatio, onSelect }: Props =
+		$props();
 
 	type KeyState = "idle" | "active";
 
@@ -31,8 +34,13 @@
 			`--white-pos: ${keyData.whitePosition}`,
 			`--total-white-keys: ${totalWhiteKeys}`,
 			`--black-key-ratio: ${blackKeyWidthRatio}`,
-			`--is-black: ${keyData.isBlack ? 1 : 0}`
-		].join("; ")
+			`--is-black: ${keyData.isBlack ? 1 : 0}`,
+			isSplit
+				? `--split-border-width: ${SPLIT_KEY_BORDER_WIDTH_PX}px; --split-border-color: ${SPLIT_KEY_BORDER_COLOR}`
+				: null
+		]
+			.filter(Boolean)
+			.join("; ")
 	);
 </script>
 
@@ -41,8 +49,11 @@
 	class:black={keyData.isBlack}
 	class:white={!keyData.isBlack}
 	class:split={isSplit}
+	class:selectable={Boolean(onSelect)}
 	data-state={keyState}
 	style={inlineStyle}
+	onclick={() => onSelect?.()}
+	role={onSelect ? "button" : undefined}
 >
 	<span class="label">{keyData.label}</span>
 </div>
@@ -52,8 +63,12 @@
 		position: absolute;
 		top: 0;
 		box-sizing: border-box;
-		cursor: pointer;
+		cursor: default;
 		user-select: none;
+	}
+
+	.piano-key.selectable {
+		cursor: pointer;
 	}
 
 	/* ── White keys ── */
@@ -115,7 +130,8 @@
 
 	/* ── Split marker ── */
 	.split {
-		border-right: 2px solid #f59e0b;
+		border-right: var(--split-border-width) solid var(--split-border-color);
+		border-bottom: var(--split-border-width) solid var(--split-border-color);
 	}
 
 	/* ── Labels ── */

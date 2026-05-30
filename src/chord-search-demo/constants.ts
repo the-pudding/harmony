@@ -1,13 +1,11 @@
 export const DEFAULT_SPLIT_NOTE = "C4";
 export const DEFAULT_SETTLE_MS = 60;
-export const SETTLE_MS_MIN = 10;
-export const SETTLE_MS_MAX = 500;
 export const ESCAPE_KEY = "Escape";
+export const SPLIT_NOTE_EDIT_TOOLTIP =
+	"Click or play the new note you want to be the highest bass note before treble begins";
 
 export const LIVE_STATE_MUTED = "muted";
 export const LIVE_STATE_ACTIVE = "active";
-export const MIDI_STATE_IDLE = "idle";
-export const MIDI_STATE_LINKED = "linked";
 
 export const SEARCH_PLACEHOLDER = "Play a chord to start searching…";
 export const NO_MATCH_MESSAGE =
