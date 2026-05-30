@@ -1,5 +1,8 @@
 import { createMidiInput } from "./midi-input/index.js";
-import { createChordGater } from "./chord-gater/index.js";
+import {
+	createChordGater,
+	DEFAULT_SPLIT_BASS_NOTE
+} from "./chord-gater/index.js";
 import {
 	createChordClassifier,
 	formatChordName,
@@ -40,7 +43,7 @@ type ChordDetectorOptions = {
 };
 
 export const createChordDetector = ({
-	splitBassAndTrebleOn = "C4",
+	splitBassAndTrebleOn = DEFAULT_SPLIT_BASS_NOTE,
 	settleMs,
 	onChordStart,
 	onChordEnd,

@@ -4,7 +4,10 @@
 	import {
 		BLACK_KEY_WIDTH_RATIO,
 		BASS_LABEL_COLOR,
+		DEFAULT_SPLIT_NOTE,
 		PIANO_KEYS,
+		SPLIT_EDIT_ICON_SIZE_PX,
+		SPLIT_EDIT_ICON_STROKE_WIDTH,
 		TOTAL_WHITE_KEYS,
 		splitNoteToMidi,
 		noteToMidiNumber
@@ -22,7 +25,7 @@
 
 	const {
 		activeNotes,
-		splitNote = "C4",
+		splitNote = DEFAULT_SPLIT_NOTE,
 		splitNoteEditing = false,
 		splitNoteEditTooltip = "",
 		onSplitEditToggle,
@@ -57,7 +60,7 @@
 				aria-pressed={splitNoteEditing}
 				onclick={() => onSplitEditToggle?.()}
 			>
-				<Pencil size={10} strokeWidth={2} />
+				<Pencil size={SPLIT_EDIT_ICON_SIZE_PX} strokeWidth={SPLIT_EDIT_ICON_STROKE_WIDTH} />
 			</button>
 			{#if splitNoteEditing}
 				<p class="split-tooltip" role="status">{splitNoteEditTooltip}</p>
@@ -108,20 +111,16 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 18px;
-		height: 18px;
 		padding: 0;
-		border: 1px solid rgba(113, 113, 122, 0.6);
-		border-radius: 999px;
-		background: rgba(24, 24, 27, 0.9);
-		color: #a1a1aa;
+		border: none;
+		background: transparent;
+		color: #71717a;
 		cursor: pointer;
 	}
 
 	.split-edit-button:hover,
 	.split-edit-button.active {
-		color: #fbbf24;
-		border-color: rgba(251, 191, 36, 0.6);
+		color: var(--bass-label-color);
 	}
 
 	.split-tooltip {

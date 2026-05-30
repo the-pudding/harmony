@@ -1,4 +1,4 @@
-export const DEFAULT_SPLIT_NOTE = "C4";
+export { DEFAULT_SPLIT_BASS_NOTE as DEFAULT_SPLIT_NOTE } from "../chord-processing/chord-gater/index.js";
 export const DEFAULT_SETTLE_MS = 60;
 export const ESCAPE_KEY = "Escape";
 export const SPLIT_NOTE_EDIT_TOOLTIP =

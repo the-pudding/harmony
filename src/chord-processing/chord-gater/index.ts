@@ -2,6 +2,7 @@ import { coerceToMidi, type MidiCoercible } from "../chord-classifier/notes.js";
 import type { StableChordCandidate } from "../types.js";
 
 const DEFAULT_SETTLE_MS = 60;
+export const DEFAULT_SPLIT_BASS_NOTE = "Eb3";
 
 const sortedMidiArray = (set: Set<number>): number[] => [...set].sort((a, b) => a - b);
 
@@ -16,7 +17,7 @@ type ChordGaterOptions = {
 };
 
 export const createChordGater = ({
-	splitBassAndTrebleOn = "C4",
+	splitBassAndTrebleOn = DEFAULT_SPLIT_BASS_NOTE,
 	settleMs = DEFAULT_SETTLE_MS,
 	onStableChordCandidate,
 	onStableChordRelease
