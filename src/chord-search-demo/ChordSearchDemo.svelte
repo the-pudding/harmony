@@ -16,12 +16,16 @@
 	import CurrentChordCard from "./CurrentChordCard.svelte";
 	import SearchSongsCard from "./SearchSongsCard.svelte";
 	import {
+		CLEAR_SENTINEL_LABEL,
+		CLEAR_SENTINEL_MIDIS,
 		DEFAULT_SETTLE_MS,
 		DEFAULT_SPLIT_NOTE,
 		ESCAPE_KEY,
 		LIVE_STATE_ACTIVE,
 		LIVE_STATE_MUTED,
 		MAX_SEARCH_RESULTS,
+		PAUSE_SENTINEL_LABEL,
+		PAUSE_SENTINEL_MIDIS,
 		SPLIT_NOTE_EDIT_TOOLTIP,
 		SONGS_DATA_URL,
 		SONGS_LOAD_ERROR_PREFIX,
@@ -49,6 +53,7 @@
 	let searchResults = $state<SongSearchResult[]>([]);
 	let ignoreSlashBassNotes = $state(false);
 	let fuzzySearch = $state(false);
+	let searchInputActive = $state(true);
 	const hasSearch = $derived(searchChords.length > 0);
 
 	const syncSearch = () => {
@@ -78,6 +83,14 @@
 		progressionSearch.clear();
 		syncSearch();
 	};
+
+	const matchesSentinel = (held: Set<number>, sentinel: Set<number>) =>
+		held.size === sentinel.size && [...sentinel].every((midi) => held.has(midi));
+
+	const pianoSentinels = [
+		{ midis: CLEAR_SENTINEL_MIDIS, label: CLEAR_SENTINEL_LABEL },
+		{ midis: PAUSE_SENTINEL_MIDIS, label: PAUSE_SENTINEL_LABEL }
+	];
 
 	const formatSplitNote = (midi: number) => {
 		const { noteName, octave } = midiToNote(midi);
@@ -111,13 +124,18 @@
 			settleMs: DEFAULT_SETTLE_MS,
 			getBassAsRoot: () => bassAsRoot,
 			onNoteOn: (midi) => {
-				heldMidiNotes = new Set([...heldMidiNotes, midi]);
+				const nextHeld = new Set([...heldMidiNotes, midi]);
+				heldMidiNotes = nextHeld;
+				if (matchesSentinel(nextHeld, CLEAR_SENTINEL_MIDIS)) clearSearch();
+				else if (matchesSentinel(nextHeld, PAUSE_SENTINEL_MIDIS))
+					searchInputActive = !searchInputActive;
 			},
 			onNoteOff: (midi) => {
 				heldMidiNotes = new Set([...heldMidiNotes].filter((m) => m !== midi));
 			},
 			onChordStart: (chord) => {
 				activeChord = chord;
+				if (!searchInputActive) return;
 				if (chord.chord) appendChordIfNew(chord.chord);
 			},
 			onChordEnd: () => {
@@ -213,6 +231,7 @@
 			{splitNote}
 			{splitNoteEditing}
 			splitNoteEditTooltip={SPLIT_NOTE_EDIT_TOOLTIP}
+			sentinels={pianoSentinels}
 			onSplitEditToggle={toggleSplitNoteEdit}
 			onSplitNotePick={applySplitNote}
 		/>
@@ -237,6 +256,7 @@
 					{searchChords}
 					results={searchResults}
 					{hasSearch}
+					{searchInputActive}
 					onClear={clearSearch}
 					{ignoreSlashBassNotes}
 					onIgnoreSlashBassNotesChange={(checked) => {

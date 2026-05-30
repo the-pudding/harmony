@@ -6,11 +6,17 @@
 		BASS_LABEL_COLOR,
 		DEFAULT_SPLIT_NOTE,
 		PIANO_KEYS,
+		SENTINEL_LABEL_COLOR,
+		SENTINEL_LABEL_FONT_SIZE_PX,
+		SENTINEL_LABEL_STROKE_COLOR,
+		SENTINEL_LABEL_STROKE_WIDTH_PX,
 		SPLIT_EDIT_ICON_SIZE_PX,
 		SPLIT_EDIT_ICON_STROKE_WIDTH,
 		TOTAL_WHITE_KEYS,
+		getSentinelBounds,
 		splitNoteToMidi,
-		noteToMidiNumber
+		noteToMidiNumber,
+		type PianoSentinel
 	} from "./pianoKeys.js";
 	import PianoKey from "./PianoKey.svelte";
 
@@ -19,6 +25,7 @@
 		splitNote?: string;
 		splitNoteEditing?: boolean;
 		splitNoteEditTooltip?: string;
+		sentinels?: PianoSentinel[];
 		onSplitEditToggle?: () => void;
 		onSplitNotePick?: (midi: number) => void;
 	};
@@ -28,6 +35,7 @@
 		splitNote = DEFAULT_SPLIT_NOTE,
 		splitNoteEditing = false,
 		splitNoteEditTooltip = "",
+		sentinels = [],
 		onSplitEditToggle,
 		onSplitNotePick
 	}: Props = $props();
@@ -46,9 +54,22 @@
 	});
 
 	const trebleWidth = $derived(100 - bassWidth);
+
+	const sentinelLabels = $derived(
+		sentinels
+			.map((sentinel) => getSentinelBounds(sentinel.midis, sentinel.label))
+			.filter((bounds): bounds is NonNullable<typeof bounds> => bounds !== null)
+	);
 </script>
 
-<div class="piano-container" style:--bass-label-color={BASS_LABEL_COLOR}>
+<div
+	class="piano-container"
+	style:--bass-label-color={BASS_LABEL_COLOR}
+	style:--sentinel-label-color={SENTINEL_LABEL_COLOR}
+	style:--sentinel-label-font-size="{SENTINEL_LABEL_FONT_SIZE_PX}px"
+	style:--sentinel-label-stroke-width="{SENTINEL_LABEL_STROKE_WIDTH_PX}px"
+	style:--sentinel-label-stroke-color={SENTINEL_LABEL_STROKE_COLOR}
+>
 	<div class="section-labels">
 		<div class="section-label bass-label" style="width: {bassWidth}%">← Bass</div>
 		<div class="split-edit" style="left: {bassWidth}%">
@@ -69,6 +90,15 @@
 		<div class="section-label treble-label" style="width: {trebleWidth}%">Treble →</div>
 	</div>
 	<div class="keys-wrapper" class:split-editing={splitNoteEditing}>
+		{#each sentinelLabels as bounds (bounds.label)}
+			<span
+				class="sentinel-label"
+				style:left="{bounds.leftPercent}%"
+				style:width="{bounds.widthPercent}%"
+			>
+				{bounds.label}
+			</span>
+		{/each}
 		{#each PIANO_KEYS as key (key.midi)}
 			<PianoKey
 				keyData={key}
@@ -172,5 +202,19 @@
 		position: relative;
 		height: 130px;
 		width: 100%;
+	}
+
+	.sentinel-label {
+		position: absolute;
+		top: 4px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: var(--sentinel-label-font-size);
+		color: var(--sentinel-label-color);
+		-webkit-text-stroke: var(--sentinel-label-stroke-width) var(--sentinel-label-stroke-color);
+		pointer-events: none;
+		z-index: 3;
+		text-transform: lowercase;
 	}
 </style>

@@ -1,4 +1,25 @@
+import { noteToMidi } from "../chord-processing/chord-classifier/notes.js";
+import type { Note } from "../chord-processing/types.js";
+
 export { DEFAULT_SPLIT_BASS_NOTE as DEFAULT_SPLIT_NOTE } from "../chord-processing/chord-gater/index.js";
+
+const SENTINEL_HALF_STEP_COUNT = 3;
+
+const buildHalfStepSentinel = (noteName: Note["noteName"], octave: number) =>
+	new Set(
+		[...Array(SENTINEL_HALF_STEP_COUNT)].map(
+			(_, offset) => noteToMidi({ noteName, octave }) + offset
+		)
+	);
+
+export const CLEAR_SENTINEL_MIDIS = buildHalfStepSentinel("C", 2);
+export const CLEAR_SENTINEL_LABEL = "delete";
+
+export const PAUSE_SENTINEL_MIDIS = buildHalfStepSentinel("Bb", 4);
+export const PAUSE_SENTINEL_LABEL = "pause";
+
+export const SEARCH_INPUT_ACTIVE_LABEL = "taking search input";
+export const SEARCH_INPUT_PAUSED_LABEL = "search input paused";
 export const DEFAULT_SETTLE_MS = 60;
 export const ESCAPE_KEY = "Escape";
 export const SPLIT_NOTE_EDIT_TOOLTIP =

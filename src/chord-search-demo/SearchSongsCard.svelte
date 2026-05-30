@@ -3,12 +3,13 @@
 	import SongResultCard from "./SongResultCard.svelte";
 	import ToggleSwitch from "./ToggleSwitch.svelte";
 	import type { ParsedProgressionChord, SongSearchResult } from "../chord-processing/types.js";
-	import { NO_MATCH_MESSAGE, SEARCH_PLACEHOLDER } from "./constants.js";
+	import { NO_MATCH_MESSAGE, SEARCH_PLACEHOLDER, SEARCH_INPUT_ACTIVE_LABEL, SEARCH_INPUT_PAUSED_LABEL } from "./constants.js";
 
 	let {
 		searchChords,
 		results,
 		hasSearch,
+		searchInputActive,
 		onClear,
 		ignoreSlashBassNotes,
 		onIgnoreSlashBassNotesChange,
@@ -18,6 +19,7 @@
 		searchChords: ParsedProgressionChord[];
 		results: SongSearchResult[];
 		hasSearch: boolean;
+		searchInputActive: boolean;
 		onClear: () => void;
 		ignoreSlashBassNotes: boolean;
 		onIgnoreSlashBassNotesChange: (checked: boolean) => void;
@@ -28,7 +30,16 @@
 
 <section class="card">
 	<div class="head">
-		<h2>Search Songs by Chord</h2>
+		<div class="title-row">
+			<h2>Search Songs by Chord</h2>
+			<span
+				class="input-status"
+				class:active={searchInputActive}
+				class:paused={!searchInputActive}
+			>
+				{searchInputActive ? SEARCH_INPUT_ACTIVE_LABEL : SEARCH_INPUT_PAUSED_LABEL}
+			</span>
+		</div>
 		<button type="button" class="clear" onclick={onClear}>Clear search (or hit escape)</button>
 	</div>
 	<p class="hint">
@@ -77,6 +88,14 @@
 		gap: 0.75rem;
 	}
 
+	.title-row {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		flex-wrap: wrap;
+		min-width: 0;
+	}
+
 	h2 {
 		font-size: 0.75rem;
 		font-weight: 600;
@@ -84,6 +103,29 @@
 		letter-spacing: 0.1em;
 		color: #a1a1aa;
 		margin: 0;
+	}
+
+	.input-status {
+		font-size: 0.625rem;
+		font-weight: 500;
+		text-transform: lowercase;
+		letter-spacing: 0.02em;
+		padding: 0.125rem 0.375rem;
+		border-radius: 9999px;
+		border: 1px solid transparent;
+		white-space: nowrap;
+	}
+
+	.input-status.active {
+		color: #4ade80;
+		border-color: rgba(74, 222, 128, 0.35);
+		background: rgba(74, 222, 128, 0.08);
+	}
+
+	.input-status.paused {
+		color: #a1a1aa;
+		border-color: rgba(161, 161, 170, 0.35);
+		background: rgba(161, 161, 170, 0.08);
 	}
 
 	.clear {

@@ -18,11 +18,26 @@ export const SPLIT_KEY_BORDER_EXTRA_WIDTH_PX = 3;
 export const SPLIT_KEY_BORDER_WIDTH_PX =
 	SPLIT_KEY_BORDER_BASE_WIDTH_PX + SPLIT_KEY_BORDER_EXTRA_WIDTH_PX;
 export const SPLIT_KEY_BORDER_COLOR = BASS_LABEL_COLOR;
+export const SENTINEL_LABEL_COLOR = "#52525b";
+export const SENTINEL_LABEL_FONT_SIZE_PX = 7;
+export const SENTINEL_LABEL_STROKE_WIDTH_PX = 0.5;
+export const SENTINEL_LABEL_STROKE_COLOR = "rgba(255, 255, 255, 0.35)";
 
 const BLACK_PITCH_CLASSES = new Set([1, 3, 6, 8, 10]); // C#, Eb, F#, Ab, Bb
 
 export const isPitchClassBlack = (pitchClass: number): boolean =>
 	BLACK_PITCH_CLASSES.has(pitchClass);
+
+export type PianoSentinel = {
+	midis: Set<number>;
+	label: string;
+};
+
+export type SentinelBounds = {
+	leftPercent: number;
+	widthPercent: number;
+	label: string;
+};
 
 export type PianoKeyData = {
 	midi: number;
@@ -75,3 +90,28 @@ export const splitNoteToMidi = (splitNote: MidiCoercible): number => {
 };
 
 export const PIANO_KEYS = generatePianoKeys();
+
+export const getSentinelBounds = (
+	sentinelMidis: Set<number>,
+	label: string
+): SentinelBounds | null => {
+	if (sentinelMidis.size === 0) return null;
+
+	const sentinelWhiteKeys = PIANO_KEYS.filter(
+		(key) => sentinelMidis.has(key.midi) && !key.isBlack
+	);
+	if (sentinelWhiteKeys.length === 0) return null;
+
+	const leftWhitePosition = Math.min(
+		...sentinelWhiteKeys.map((key) => key.whitePosition)
+	);
+	const rightWhitePosition =
+		Math.max(...sentinelWhiteKeys.map((key) => key.whitePosition)) + 1;
+
+	return {
+		leftPercent: (leftWhitePosition / TOTAL_WHITE_KEYS) * 100,
+		widthPercent:
+			((rightWhitePosition - leftWhitePosition) / TOTAL_WHITE_KEYS) * 100,
+		label
+	};
+};
