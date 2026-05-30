@@ -53,14 +53,16 @@
 	let searchResults = $state<SongSearchResult[]>([]);
 	let ignoreSlashBassNotes = $state(false);
 	let fuzzySearch = $state(false);
+	let titleArtistFilter = $state("");
 	let searchInputActive = $state(true);
-	const hasSearch = $derived(searchChords.length > 0);
+	const hasSearch = $derived(searchChords.length > 0 || titleArtistFilter.length > 0);
 
 	const syncSearch = () => {
 		searchChords = progressionSearch.getSearchProgression();
 		searchResults = progressionSearch.getResults({
 			ignoreSlashBass: ignoreSlashBassNotes,
-			fuzzySearch
+			fuzzySearch,
+			titleArtistFilter
 		});
 	};
 
@@ -268,6 +270,11 @@
 						fuzzySearch = checked;
 						syncSearch();
 					}}
+				{titleArtistFilter}
+				onTitleArtistFilterChange={(value) => {
+					titleArtistFilter = value;
+					syncSearch();
+				}}
 				/>
 			</div>
 		</div>

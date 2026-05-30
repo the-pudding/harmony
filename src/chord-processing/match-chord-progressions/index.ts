@@ -107,14 +107,28 @@ export const createProgressionSearch = ({
 
 	let searchProgression: ParsedProgressionChord[] = [];
 
+	const matchesTitleOrArtist = (
+		song: PreparedSong,
+		filter: string
+	): boolean => {
+		const q = filter.toLowerCase();
+		return (
+			song.title.toLowerCase().includes(q) ||
+			song.artist.toLowerCase().includes(q)
+		);
+	};
+
 	const getResults = ({
 		ignoreSlashBass = false,
-		fuzzySearch = false
+		fuzzySearch = false,
+		titleArtistFilter = ""
 	}: {
 		ignoreSlashBass?: boolean;
 		fuzzySearch?: boolean;
+		titleArtistFilter?: string;
 	} = {}): SongSearchResult[] => {
-		if (searchProgression.length === 0) return [];
+		const hasChords = searchProgression.length > 0;
+		if (!hasChords && !titleArtistFilter) return [];
 
 		const effectiveProgression = ignoreSlashBass
 			? searchProgression.map(
@@ -125,11 +139,18 @@ export const createProgressionSearch = ({
 
 		const results: SongSearchResult[] = [];
 		for (const song of preparedSongs) {
-			const result = buildSongResult(song, effectiveProgression, {
-				fuzzySearch
-			});
-			if (isMatched(result)) {
-				results.push(result);
+			if (titleArtistFilter && !matchesTitleOrArtist(song, titleArtistFilter))
+				continue;
+			if (hasChords) {
+				const result = buildSongResult(song, effectiveProgression, {
+					fuzzySearch
+				});
+				if (isMatched(result)) {
+					results.push(result);
+					if (results.length >= limit) break;
+				}
+			} else {
+				results.push({ song, matches: [] });
 				if (results.length >= limit) break;
 			}
 		}
