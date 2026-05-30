@@ -87,12 +87,21 @@ export const createProgressionSearch = ({
 
 	let searchProgression: ParsedProgressionChord[] = [];
 
-	const getResults = (): SongSearchResult[] => {
+	const getResults = ({
+		ignoreSlashBass = false
+	}: { ignoreSlashBass?: boolean } = {}): SongSearchResult[] => {
 		if (searchProgression.length === 0) return [];
+
+		const effectiveProgression = ignoreSlashBass
+			? searchProgression.map(
+					({ bassPitchClass: _bass, ...chord }) =>
+						chord as ParsedProgressionChord
+				)
+			: searchProgression;
 
 		const results: SongSearchResult[] = [];
 		for (const song of preparedSongs) {
-			const result = buildSongResult(song, searchProgression);
+			const result = buildSongResult(song, effectiveProgression);
 			if (isMatched(result)) {
 				results.push(result);
 				if (results.length >= limit) break;

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import SearchProgression from "./SearchProgression.svelte";
 	import SongResultCard from "./SongResultCard.svelte";
+	import ToggleSwitch from "./ToggleSwitch.svelte";
 	import type { ParsedProgressionChord, SongSearchResult } from "../chord-processing/types.js";
 	import { NO_MATCH_MESSAGE, SEARCH_PLACEHOLDER } from "./constants.js";
 
@@ -8,12 +9,16 @@
 		searchChords,
 		results,
 		hasSearch,
-		onClear
+		onClear,
+		ignoreSlashBassNotes,
+		onIgnoreSlashBassNotesChange
 	}: {
 		searchChords: ParsedProgressionChord[];
 		results: SongSearchResult[];
 		hasSearch: boolean;
 		onClear: () => void;
+		ignoreSlashBassNotes: boolean;
+		onIgnoreSlashBassNotesChange: (checked: boolean) => void;
 	} = $props();
 </script>
 
@@ -27,6 +32,11 @@
 		pitch.
 	</p>
 	<SearchProgression chords={searchChords} />
+	<ToggleSwitch
+		checked={ignoreSlashBassNotes}
+		onchange={onIgnoreSlashBassNotesChange}
+		label="Ignore slash bass notes and just match only on the chord"
+	/>
 	<div class="results">
 		{#if !hasSearch}
 			<p class="empty">{SEARCH_PLACEHOLDER}</p>

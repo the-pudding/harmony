@@ -57,11 +57,12 @@
 
 	let searchChords = $state<ParsedProgressionChord[]>([]);
 	let searchResults = $state<SongSearchResult[]>([]);
+	let ignoreSlashBassNotes = $state(false);
 	const hasSearch = $derived(searchChords.length > 0);
 
 	const syncSearch = () => {
 		searchChords = progressionSearch.getSearchProgression();
-		searchResults = progressionSearch.getResults();
+		searchResults = progressionSearch.getResults({ ignoreSlashBass: ignoreSlashBassNotes });
 	};
 
 	const liveState = $derived(isConnected ? LIVE_STATE_ACTIVE : LIVE_STATE_MUTED);
@@ -226,6 +227,11 @@
 					results={searchResults}
 					{hasSearch}
 					onClear={clearSearch}
+					{ignoreSlashBassNotes}
+					onIgnoreSlashBassNotesChange={(checked) => {
+						ignoreSlashBassNotes = checked;
+						syncSearch();
+					}}
 				/>
 			</div>
 			<EventLogCard entries={logEntries} onClear={() => (logEntries = [])} />
