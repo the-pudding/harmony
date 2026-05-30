@@ -84,24 +84,30 @@ const trackerKey = (artist, song) => `${kebabCase(artist)}__${kebabCase(song)}`;
 const qualityExtensionToSuffix = ({ quality, extension, suspensions }) => {
 	const suspension = suspensions?.[0] ?? null;
 
-	if (quality === "maj" && !extension && suspension === 2) return "sus2";
-	if (quality === "maj" && !extension && suspension === 4) return "sus4";
+	if (!extension && suspension === 2) return "sus2";
+	if (!extension && suspension === 4) return "sus4";
+	if (quality === "maj" && extension === "7" && suspension === 4)
+		return "7sus4";
+
 	if (quality === "maj" && extension === "maj7") return "maj7";
 	if (quality === "maj" && extension === "7") return "7";
+	if (quality === "maj" && extension === "9") return "9";
 	if (quality === "maj" && !extension) return "major";
+
 	if (quality === "min" && extension === "7") return "minor7";
+	if (quality === "min" && extension === "9") return "minor9";
 	if (quality === "min" && !extension) return "minor";
+
 	if (quality === "dim" && extension === "hdim7") return "m7b5";
 	if (quality === "dim" && extension === "dim7") return "dim7";
 	if (quality === "dim" && !extension) return "diminished";
+
 	if (quality === "aug" && !extension) return "augmented";
 
-	if (extension === "9" || extension === "11" || extension === "13") {
-		if (quality === "maj") return "major";
-		if (quality === "min") return "minor";
-		if (quality === "dim") return "diminished";
-		if (quality === "aug") return "augmented";
-	}
+	if (quality === "maj") return "major";
+	if (quality === "min") return "minor";
+	if (quality === "dim") return "diminished";
+	if (quality === "aug") return "augmented";
 
 	return null;
 };

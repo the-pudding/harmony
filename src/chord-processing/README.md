@@ -1,6 +1,8 @@
 # chord-processing
 
-TypeScript port of [**midi-chord-detector**](https://github.com/davidnmora/midi-chord-detector): connects to a USB MIDI keyboard via the **Web MIDI API**, buffers held notes, and emits `onChordStart` / `onChordEnd` callbacks with structured chord info.
+A suite of stand alone modules aimed at connecting MIDI, interpreting its inputs, classifying chords, and searching and matching chord progressions.
+
+(spu off of David's [**midi-chord-detector** repo](https://github.com/davidnmora/midi-chord-detector))
 
 ### Demo
 

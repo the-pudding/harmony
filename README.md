@@ -27,6 +27,13 @@ npm run dev
 
 The `/demo/chord-search` route fetches `/data/songs.json` at runtime. If the file is missing, run `npm run songs` first.
 
+
+## MIDI input, classification, search
+
+See `harmony/src/chord-processing/README.md`
+
+------------------
+
 # Svelte Starter [default info from the pudding starter repo]
 
 This [starter template](https://github.com/the-pudding/svelte-starter) aims to quickly scaffold a [SvelteKit](https://kit.svelte.dev/) project, designed around data-driven, visual stories at [The Pudding](https://pudding.cool).
