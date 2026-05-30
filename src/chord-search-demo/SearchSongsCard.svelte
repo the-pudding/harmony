@@ -66,7 +66,7 @@
 	<ToggleSwitch
 		checked={fuzzySearch}
 		onchange={onFuzzySearchChange}
-		label="Fuzzy search: simplify to major & minor"
+		label="Fuzzy search (match on simplest version of chords, see FUZZY_SUFFIX_MAP)"
 	/>
 </section>
 
