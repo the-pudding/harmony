@@ -46,7 +46,7 @@
 		Play chords in any key — matches by chord type and intervals between roots, not absolute
 		pitch.
 	</p>
-	<SearchProgression chords={searchChords} />
+	<SearchProgression chords={searchChords} {fuzzySearch} {ignoreSlashBassNotes} />
 	<div class="results">
 		{#if !hasSearch}
 			<p class="empty">{SEARCH_PLACEHOLDER}</p>
