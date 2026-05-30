@@ -18,8 +18,6 @@
 
 <div class="card" class:matched={isMatched}>
 	<div class="title">
-		<span class="song-title">{result.song.title}</span>
-		<span class="artist"> — {result.song.artist}</span>
 		<a
 			class="youtube-search"
 			href={youtubeSearchUrl}
@@ -28,6 +26,8 @@
 			aria-label="Search on YouTube"
 			title="Search on YouTube"
 		>🎵</a>
+		<span class="song-title">{result.song.title}</span>
+		<span class="artist"> — {result.song.artist}</span>
 	</div>
 	<div class="chords">
 		{#each result.song.parsedProgression as chord, position}
