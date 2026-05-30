@@ -31,10 +31,8 @@
 	{:else}
 		{#each chords as chord, i (i)}
 			{#if i > 0}<span class="arrow">→</span>{/if}
-			<span class="chip-wrapper" class:has-mini={isFuzzified(chord)}>
-				{#if isFuzzified(chord)}
-					<span class="mini-chip">{chord.display}</span>
-				{/if}
+			<span class="chip-wrapper">
+				<span class="mini-chip" class:hidden={!isFuzzified(chord)}>{chord.display}</span>
 				<span class="chip">{displayChordName(chord)}</span>
 			</span>
 		{/each}
@@ -54,7 +52,7 @@
 		font-style: normal;
 		display: flex;
 		flex-wrap: wrap;
-		align-items: center;
+		align-items: flex-end;
 		gap: 0.5rem;
 	}
 
@@ -72,24 +70,23 @@
 	.chip-wrapper {
 		position: relative;
 		display: inline-flex;
-	}
-
-	.chip-wrapper.has-mini {
-		margin-top: 0.625rem;
+		flex-direction: column;
+		align-items: flex-start;
 	}
 
 	.mini-chip {
-		position: absolute;
-		top: 0;
-		left: 0.25rem;
-		transform: translateY(-100%);
-		font-size: 0.55rem;
-		background: rgba(67, 56, 202, 0.35);
+		font-size: 0.48rem;
+		background: transparent;
 		border: 1px solid rgba(99, 102, 241, 0.5);
 		border-radius: 0.2rem;
-		padding: 0.05rem 0.25rem;
+		padding: 0.05rem 0.2rem;
 		color: #a5b4fc;
 		white-space: nowrap;
 		line-height: 1.3;
+		margin-bottom: -2px;
+	}
+
+	.mini-chip.hidden {
+		visibility: hidden;
 	}
 </style>
