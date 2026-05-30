@@ -30,7 +30,15 @@ The `/demo/chord-search` route fetches `/data/songs.json` at runtime. If the fil
 
 ## MIDI input, classification, search
 
-See `harmony/src/chord-processing/README.md`
+### Quick start to use your keyboard
+
+Designed for Reface CP MIDI input set to the keyboard's second octave on the octave slider (next to volume).
+
+You can do common actions directly from the keyboard:
+- Clear search: hit lowest three notes
+- Toggle search on/off (ie so you can play chords without them scrambling your current results): highest 3 notes
+
+### Implementation details: `harmony/src/chord-processing/README.md`
 
 ------------------
 
