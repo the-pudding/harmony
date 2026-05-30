@@ -88,7 +88,7 @@ const windowMatchesPrecomputed = (
 export const findSubProgressionMatchesPrecomputed = (
 	songAbstract: PrecomputedAbstractProgression,
 	searchProgression: ParsedProgressionChord[],
-	{ wrap = true }: { wrap?: boolean } = {}
+	{ wrap = false }: { wrap?: boolean } = {}
 ): SubProgressionMatch[] => {
 	if (searchProgression.length === 0) return [];
 	if (searchProgression.length > songAbstract.suffixes.length) return [];
@@ -118,7 +118,7 @@ export const findSubProgressionMatchesPrecomputed = (
 export const findSubProgressionMatches = (
 	songProgression: ParsedProgressionChord[],
 	searchProgression: ParsedProgressionChord[],
-	{ wrap = true }: { wrap?: boolean } = {}
+	{ wrap = false }: { wrap?: boolean } = {}
 ): SubProgressionMatch[] => {
 	if (searchProgression.length === 0) return [];
 	if (searchProgression.length > songProgression.length) return [];
@@ -128,12 +128,21 @@ export const findSubProgressionMatches = (
 		? songProgression.length - 1
 		: songProgression.length - searchProgression.length;
 
-	return Array.from({ length: lastStart + 1 }, (_, start) => start).flatMap((start) => {
-		const window = sliceCyclic(songProgression, start, searchProgression.length);
-		return abstractProgressionsMatch(toAbstractProgression(window), searchAbstract)
-			? [{ start, length: searchProgression.length }]
-			: [];
-	});
+	return Array.from({ length: lastStart + 1 }, (_, start) => start).flatMap(
+		(start) => {
+			const window = sliceCyclic(
+				songProgression,
+				start,
+				searchProgression.length
+			);
+			return abstractProgressionsMatch(
+				toAbstractProgression(window),
+				searchAbstract
+			)
+				? [{ start, length: searchProgression.length }]
+				: [];
+		}
+	);
 };
 
 export const progressionContainsSubProgression = (
