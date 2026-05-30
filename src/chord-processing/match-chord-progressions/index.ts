@@ -2,6 +2,7 @@ import {
 	formatChordName,
 	hasDistinctBass
 } from "../chord-classifier/index.js";
+import { simplifySuffix } from "../chord-classifier/fuzzySuffixMap.js";
 import { noteNameToPitchClass } from "../chord-classifier/notes.js";
 import {
 	findSubProgressionMatchesPrecomputed,
@@ -62,13 +63,32 @@ const prepareSong = (song: SongInput, index: number): PreparedSong => {
 	};
 };
 
+const withSimplifiedSuffixes = <T extends { suffix: string }>(
+	chords: T[]
+): T[] =>
+	chords.map((chord) => ({ ...chord, suffix: simplifySuffix(chord.suffix) }));
+
+const withSimplifiedAbstractSuffixes = (
+	abstractProgression: PrecomputedAbstractProgression
+): PrecomputedAbstractProgression => ({
+	...abstractProgression,
+	suffixes: abstractProgression.suffixes.map(simplifySuffix)
+});
+
 const buildSongResult = (
 	preparedSong: PreparedSong,
-	searchProgression: ParsedProgressionChord[]
+	searchProgression: ParsedProgressionChord[],
+	{ fuzzySearch = false }: { fuzzySearch?: boolean } = {}
 ): SongSearchResult => {
+	const songAbstract = fuzzySearch
+		? withSimplifiedAbstractSuffixes(preparedSong.abstractProgression)
+		: preparedSong.abstractProgression;
+	const effectiveSearchProgression = fuzzySearch
+		? withSimplifiedSuffixes(searchProgression)
+		: searchProgression;
 	const matches = findSubProgressionMatchesPrecomputed(
-		preparedSong.abstractProgression,
-		searchProgression
+		songAbstract,
+		effectiveSearchProgression
 	);
 
 	return { song: preparedSong, matches };
@@ -88,8 +108,12 @@ export const createProgressionSearch = ({
 	let searchProgression: ParsedProgressionChord[] = [];
 
 	const getResults = ({
-		ignoreSlashBass = false
-	}: { ignoreSlashBass?: boolean } = {}): SongSearchResult[] => {
+		ignoreSlashBass = false,
+		fuzzySearch = false
+	}: {
+		ignoreSlashBass?: boolean;
+		fuzzySearch?: boolean;
+	} = {}): SongSearchResult[] => {
 		if (searchProgression.length === 0) return [];
 
 		const effectiveProgression = ignoreSlashBass
@@ -101,7 +125,9 @@ export const createProgressionSearch = ({
 
 		const results: SongSearchResult[] = [];
 		for (const song of preparedSongs) {
-			const result = buildSongResult(song, effectiveProgression);
+			const result = buildSongResult(song, effectiveProgression, {
+				fuzzySearch
+			});
 			if (isMatched(result)) {
 				results.push(result);
 				if (results.length >= limit) break;

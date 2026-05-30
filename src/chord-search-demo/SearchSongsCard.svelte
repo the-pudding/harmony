@@ -11,7 +11,9 @@
 		hasSearch,
 		onClear,
 		ignoreSlashBassNotes,
-		onIgnoreSlashBassNotesChange
+		onIgnoreSlashBassNotesChange,
+		fuzzySearch,
+		onFuzzySearchChange
 	}: {
 		searchChords: ParsedProgressionChord[];
 		results: SongSearchResult[];
@@ -19,6 +21,8 @@
 		onClear: () => void;
 		ignoreSlashBassNotes: boolean;
 		onIgnoreSlashBassNotesChange: (checked: boolean) => void;
+		fuzzySearch: boolean;
+		onFuzzySearchChange: (checked: boolean) => void;
 	} = $props();
 </script>
 
@@ -32,11 +36,6 @@
 		pitch.
 	</p>
 	<SearchProgression chords={searchChords} />
-	<ToggleSwitch
-		checked={ignoreSlashBassNotes}
-		onchange={onIgnoreSlashBassNotesChange}
-		label="Ignore slash bass notes and just match only on the chord"
-	/>
 	<div class="results">
 		{#if !hasSearch}
 			<p class="empty">{SEARCH_PLACEHOLDER}</p>
@@ -48,6 +47,16 @@
 			{/each}
 		{/if}
 	</div>
+	<ToggleSwitch
+		checked={ignoreSlashBassNotes}
+		onchange={onIgnoreSlashBassNotesChange}
+		label="Ignore slash bass notes and just match only on the chord"
+	/>
+	<ToggleSwitch
+		checked={fuzzySearch}
+		onchange={onFuzzySearchChange}
+		label="Fuzzy search: simplify to major & minor"
+	/>
 </section>
 
 <style>

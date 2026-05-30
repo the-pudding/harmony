@@ -48,11 +48,15 @@
 	let searchChords = $state<ParsedProgressionChord[]>([]);
 	let searchResults = $state<SongSearchResult[]>([]);
 	let ignoreSlashBassNotes = $state(false);
+	let fuzzySearch = $state(false);
 	const hasSearch = $derived(searchChords.length > 0);
 
 	const syncSearch = () => {
 		searchChords = progressionSearch.getSearchProgression();
-		searchResults = progressionSearch.getResults({ ignoreSlashBass: ignoreSlashBassNotes });
+		searchResults = progressionSearch.getResults({
+			ignoreSlashBass: ignoreSlashBassNotes,
+			fuzzySearch
+		});
 	};
 
 	const liveState = $derived(isConnected ? LIVE_STATE_ACTIVE : LIVE_STATE_MUTED);
@@ -237,6 +241,11 @@
 					{ignoreSlashBassNotes}
 					onIgnoreSlashBassNotesChange={(checked) => {
 						ignoreSlashBassNotes = checked;
+						syncSearch();
+					}}
+					{fuzzySearch}
+					onFuzzySearchChange={(checked) => {
+						fuzzySearch = checked;
 						syncSearch();
 					}}
 				/>
