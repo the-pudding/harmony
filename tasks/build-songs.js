@@ -85,12 +85,16 @@ const humanizeSlug = (slug) =>
 const trackerKey = (artist, song) => `${kebabCase(artist)}__${kebabCase(song)}`;
 
 const ARTIST_COLLAB_SPLIT_PATTERN =
-	/\s*(?:,\s*|\s+(?:Featuring|FEATURING|Feat\.|FEAT\.|Ft\.|FT\.|Duet With|DUET WITH|Presents|Meets|Vs\.|VS\.)\s+|\s+With\s+|\s+with\s+|\s*&\s*|\s+[xX]\s+|\s+\/\s+|\s+\+\s+|\s+Or\s+|\s+or\s+|\s+And\s+(?!The\b|[Ii]\b))/g;
+	/\s*(?:,\s*|\s+(?:feat\.?|ft\.?|featuring|duet with|presents|meets|vs\.?|introducing)\s+|\s+with\s+|\s*&\s*|\s+[xX]\s+|\s+\/\s+|\s+\+\s+|\s+or\s+|\s+and\s+(?!the\b|i\b))/gi;
 
 const COLLAB_PREFIX_PATTERN =
-	/^(?:Featuring|FEATURING|Feat\.|FEAT\.|Ft\.|FT\.|With|with|Duet With|DUET WITH)\s+/i;
+	/^(?:feat\.?|ft\.?|featuring|with|duet with|introducing)\s+/i;
 
-const PAREN_ARTIST_PATTERN = /\(([^)]+)\)/g;
+const NESTED_ARTIST_PATTERN = /[\[(]([^\])]+)[\])]/g;
+
+const SLUG_COLLAB_SPLIT_PATTERN = /-(?:featuring|feat|ft|with|introducing)-/i;
+
+const SLUG_AND_SPLIT_PATTERN = /-and-/i;
 
 const trimArtistPart = (part) =>
 	part.replace(COLLAB_PREFIX_PATTERN, "").replace(/\s+/g, " ").trim();
@@ -99,23 +103,51 @@ const splitOnCollabMarkers = (value) =>
 	value.split(ARTIST_COLLAB_SPLIT_PATTERN).map(trimArtistPart).filter(Boolean);
 
 const parseArtists = (artistString) => {
-	const parenArtists = [];
-	const withoutParens = artistString.replace(
-		PAREN_ARTIST_PATTERN,
+	const nestedArtists = [];
+	const withoutBrackets = artistString.replace(
+		NESTED_ARTIST_PATTERN,
 		(_, inner) => {
-			if (/[&,\/]|Featuring|Feat\.|With| x | X /i.test(inner)) {
-				parseArtists(inner).forEach((artist) => parenArtists.push(artist));
+			if (/[&,\/]|feat|ft\.|with| x | X /i.test(inner)) {
+				parseArtists(inner).forEach((artist) => nestedArtists.push(artist));
 			}
 			return " ";
 		}
 	);
 
-	const colonParts = withoutParens.includes(":")
-		? withoutParens.split(/\s*:\s*/).flatMap(splitOnCollabMarkers)
-		: splitOnCollabMarkers(withoutParens);
+	const colonParts = withoutBrackets.includes(":")
+		? withoutBrackets.split(/\s*:\s*/).flatMap(splitOnCollabMarkers)
+		: splitOnCollabMarkers(withoutBrackets);
 
-	return [...colonParts, ...parenArtists].map(trimArtistPart).filter(Boolean);
+	return [...colonParts, ...nestedArtists].map(trimArtistPart).filter(Boolean);
 };
+
+const parseArtistsFromSlug = (artistSlug) => {
+	const slugParenArtists = [];
+	const withoutSlugParens = artistSlug.replace(/\(([^)]+)\)/g, (_, inner) => {
+		parseArtistsFromSlug(inner).forEach((artist) =>
+			slugParenArtists.push(artist)
+		);
+		return "-";
+	});
+	const segments = withoutSlugParens
+		.split(SLUG_COLLAB_SPLIT_PATTERN)
+		.filter(Boolean);
+
+	const artists = segments.flatMap((segment, index) => {
+		const slugParts =
+			index === 0 ? [segment] : segment.split(SLUG_AND_SPLIT_PATTERN);
+		return slugParts.map((slugPart) => humanizeSlug(slugPart));
+	});
+
+	return [...artists, ...slugParenArtists]
+		.flatMap((artist) => parseArtists(artist))
+		.filter(Boolean);
+};
+
+const resolveArtists = (trackerEntry, artistSlug) =>
+	trackerEntry?.artist
+		? parseArtists(trackerEntry.artist)
+		: parseArtistsFromSlug(artistSlug);
 
 const billboardPopularityPoints = (rank) => BILLBOARD_TOP_RANK + 1 - rank;
 
@@ -248,9 +280,7 @@ const sectionToSongInput = (
 
 	if (progression.length === 0) return null;
 
-	const artists = trackerEntry?.artist
-		? parseArtists(trackerEntry.artist)
-		: [humanizeSlug(artistSlug)];
+	const artists = resolveArtists(trackerEntry, artistSlug);
 	const title = section.name
 		? `${section.songTitle} (${section.name})`
 		: section.songTitle;

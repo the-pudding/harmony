@@ -156,7 +156,6 @@ export const createProgressionSearch = ({
 		resultLimit?: number;
 	} = {}): SongSearchResult[] => {
 		const hasChords = searchProgression.length > 0;
-		if (!hasChords && !titleFilter && !selectedArtist) return [];
 
 		const effectiveProgression = ignoreSlashBass
 			? searchProgression.map(

@@ -33,10 +33,10 @@
 		Key agnostic, just matches intervals
 	</p>
 	<div class="results">
-		{#if !chordSearchDemoStore.hasSearch}
-			<p class="empty">{SEARCH_PLACEHOLDER}</p>
-		{:else if chordSearchDemoStore.searchResults.length === 0}
-			<p class="empty">{NO_MATCH_MESSAGE}</p>
+		{#if chordSearchDemoStore.searchResults.length === 0}
+			<p class="empty">
+				{chordSearchDemoStore.hasSearch ? NO_MATCH_MESSAGE : SEARCH_PLACEHOLDER}
+			</p>
 		{:else}
 			<p class="results-label">
 				Sorted by popularity:
