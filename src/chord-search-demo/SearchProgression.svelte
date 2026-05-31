@@ -3,6 +3,7 @@
 	import type { ParsedProgressionChord } from "../chord-processing/types.js";
 	import { simplifySuffix } from "../chord-processing/chord-classifier/fuzzySuffixMap.js";
 	import { SEARCH_PLACEHOLDER } from "./constants.js";
+	import ProgressionChordChip from "./ProgressionChordChip.svelte";
 
 	let {
 		chords,
@@ -31,10 +32,11 @@
 	{:else}
 		{#each chords as chord, i (i)}
 			{#if i > 0}<span class="arrow">→</span>{/if}
-			<span class="chip-wrapper">
-				<span class="mini-chip" class:hidden={!isFuzzified(chord)}>{chord.display}</span>
-				<span class="chip">{displayChordName(chord)}</span>
-			</span>
+			<ProgressionChordChip
+				name={displayChordName(chord)}
+				originalDisplay={chord.display}
+				showOriginal={isFuzzified(chord)}
+			/>
 		{/each}
 	{/if}
 </div>
@@ -58,32 +60,5 @@
 
 	.arrow {
 		color: #52525b;
-	}
-
-	.chip {
-		background: rgba(30, 27, 75, 0.6);
-		border: 1px solid rgba(67, 56, 202, 0.6);
-		border-radius: 0.25rem;
-		padding: 0.125rem 0.5rem;
-	}
-
-	.chip-wrapper {
-		position: relative;
-		display: inline-flex;
-		flex-direction: column;
-		align-items: flex-start;
-	}
-
-	.mini-chip {
-		font-size: 0.48rem;
-		padding: 0.05rem 0.2rem;
-		color: #a5b4fc;
-		white-space: nowrap;
-		line-height: 1.3;
-		margin-bottom: -2px;
-	}
-
-	.mini-chip.hidden {
-		visibility: hidden;
 	}
 </style>
