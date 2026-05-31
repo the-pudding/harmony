@@ -1,6 +1,6 @@
 export const MAJOR = "major";
 export const MINOR = "minor";
-export const DOM7 = "dom7";
+export const DOM7 = "7";
 export const DIM = "dim";
 export const AUG = "aug";
 
