@@ -17,6 +17,10 @@
 		onIgnoreSlashBassNotesChange,
 		fuzzySearch,
 		onFuzzySearchChange,
+		matchAtBeginningOnly,
+		onMatchAtBeginningOnlyChange,
+		matchAtLeastTwice,
+		onMatchAtLeastTwiceChange,
 		artistOptions,
 		selectedArtist,
 		onSelectedArtistChange,
@@ -32,6 +36,10 @@
 		onIgnoreSlashBassNotesChange: (checked: boolean) => void;
 		fuzzySearch: boolean;
 		onFuzzySearchChange: (checked: boolean) => void;
+		matchAtBeginningOnly: boolean;
+		onMatchAtBeginningOnlyChange: (checked: boolean) => void;
+		matchAtLeastTwice: boolean;
+		onMatchAtLeastTwiceChange: (checked: boolean) => void;
 		artistOptions: ArtistOption[];
 		selectedArtist: string;
 		onSelectedArtistChange: (value: string) => void;
@@ -79,6 +87,7 @@
 		{:else if results.length === 0}
 			<p class="empty">{NO_MATCH_MESSAGE}</p>
 		{:else}
+			<p class="results-label">Top {results.length} most popular matching songs:</p>
 			{#each results as result (result.song.id)}
 				<SongResultCard {result} />
 			{/each}
@@ -93,6 +102,16 @@
 		checked={fuzzySearch}
 		onchange={onFuzzySearchChange}
 		label="Fuzzy search (match on simplest version of chords, see FUZZY_SUFFIX_MAP)"
+	/>
+	<ToggleSwitch
+		checked={matchAtBeginningOnly}
+		onchange={onMatchAtBeginningOnlyChange}
+		label="Match only progressions that begin this way"
+	/>
+	<ToggleSwitch
+		checked={matchAtLeastTwice}
+		onchange={onMatchAtLeastTwiceChange}
+		label="Match only progressions where the search progression appears at least twice"
 	/>
 </section>
 
@@ -210,6 +229,14 @@
 
 	.name-filter:focus {
 		border-color: rgba(99, 102, 241, 0.6);
+	}
+
+	.results-label {
+		font-size: 0.625rem;
+		color: #52525b;
+		margin: 0;
+		text-transform: lowercase;
+		letter-spacing: 0.02em;
 	}
 
 	.results {

@@ -7,6 +7,14 @@ import type {
 	SubProgressionMatch
 } from "../types.js";
 
+export const MIN_OCCURRENCES_DEFAULT = 1;
+export const MIN_OCCURRENCES_AT_LEAST_TWICE = 2;
+
+export type ProgressionMatchFilterOptions = {
+	matchAtBeginningOnly?: boolean;
+	minOccurrences?: number;
+};
+
 const intervalBetweenRoots = (fromRootPitchClass: number, toRootPitchClass: number): number =>
 	(toRootPitchClass - fromRootPitchClass + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE;
 
@@ -112,6 +120,19 @@ export const findSubProgressionMatchesPrecomputed = (
 		}
 	}
 
+	return matches;
+};
+
+export const applyProgressionMatchFilters = (
+	matches: SubProgressionMatch[],
+	{
+		matchAtBeginningOnly = false,
+		minOccurrences = MIN_OCCURRENCES_DEFAULT
+	}: ProgressionMatchFilterOptions = {}
+): SubProgressionMatch[] => {
+	if (matches.length < minOccurrences) return [];
+	if (matchAtBeginningOnly && !matches.some(({ start }) => start === 0))
+		return [];
 	return matches;
 };
 

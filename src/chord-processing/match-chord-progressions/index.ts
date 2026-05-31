@@ -5,8 +5,12 @@ import {
 import { simplifySuffix } from "../chord-classifier/fuzzySuffixMap.js";
 import { noteNameToPitchClass } from "../chord-classifier/notes.js";
 import {
+	applyProgressionMatchFilters,
 	findSubProgressionMatchesPrecomputed,
-	toPrecomputedAbstractProgression
+	MIN_OCCURRENCES_AT_LEAST_TWICE,
+	MIN_OCCURRENCES_DEFAULT,
+	toPrecomputedAbstractProgression,
+	type ProgressionMatchFilterOptions
 } from "./match.js";
 import type {
 	ParsedProgressionChord,
@@ -78,7 +82,15 @@ const withSimplifiedAbstractSuffixes = (
 const buildSongResult = (
 	preparedSong: PreparedSong,
 	searchProgression: ParsedProgressionChord[],
-	{ fuzzySearch = false }: { fuzzySearch?: boolean } = {}
+	{
+		fuzzySearch = false,
+		matchAtBeginningOnly = false,
+		matchAtLeastTwice = false
+	}: {
+		fuzzySearch?: boolean;
+		matchAtBeginningOnly?: boolean;
+		matchAtLeastTwice?: boolean;
+	} = {}
 ): SongSearchResult => {
 	const songAbstract = fuzzySearch
 		? withSimplifiedAbstractSuffixes(preparedSong.abstractProgression)
@@ -86,9 +98,18 @@ const buildSongResult = (
 	const effectiveSearchProgression = fuzzySearch
 		? withSimplifiedSuffixes(searchProgression)
 		: searchProgression;
-	const matches = findSubProgressionMatchesPrecomputed(
-		songAbstract,
-		effectiveSearchProgression
+	const matchFilters: ProgressionMatchFilterOptions = {
+		matchAtBeginningOnly,
+		minOccurrences: matchAtLeastTwice
+			? MIN_OCCURRENCES_AT_LEAST_TWICE
+			: MIN_OCCURRENCES_DEFAULT
+	};
+	const matches = applyProgressionMatchFilters(
+		findSubProgressionMatchesPrecomputed(
+			songAbstract,
+			effectiveSearchProgression
+		),
+		matchFilters
 	);
 
 	return { song: preparedSong, matches };
@@ -124,11 +145,15 @@ export const createProgressionSearch = ({
 	const getResults = ({
 		ignoreSlashBass = false,
 		fuzzySearch = false,
+		matchAtBeginningOnly = false,
+		matchAtLeastTwice = false,
 		titleArtistFilter = "",
 		selectedArtist = ""
 	}: {
 		ignoreSlashBass?: boolean;
 		fuzzySearch?: boolean;
+		matchAtBeginningOnly?: boolean;
+		matchAtLeastTwice?: boolean;
 		titleArtistFilter?: string;
 		selectedArtist?: string;
 	} = {}): SongSearchResult[] => {
@@ -150,7 +175,9 @@ export const createProgressionSearch = ({
 				continue;
 			if (hasChords) {
 				const result = buildSongResult(song, effectiveProgression, {
-					fuzzySearch
+					fuzzySearch,
+					matchAtBeginningOnly,
+					matchAtLeastTwice
 				});
 				if (isMatched(result)) {
 					results.push(result);
@@ -188,6 +215,10 @@ export {
 	toPrecomputedAbstractProgression,
 	findSubProgressionMatches,
 	findSubProgressionMatchesPrecomputed,
+	applyProgressionMatchFilters,
 	progressionContainsSubProgression,
-	isPositionInMatch
+	isPositionInMatch,
+	MIN_OCCURRENCES_DEFAULT,
+	MIN_OCCURRENCES_AT_LEAST_TWICE,
+	type ProgressionMatchFilterOptions
 } from "./match.js";

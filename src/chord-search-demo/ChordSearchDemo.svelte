@@ -54,6 +54,8 @@
 	let searchResults = $state<SongSearchResult[]>([]);
 	let ignoreSlashBassNotes = $state(false);
 	let fuzzySearch = $state(false);
+	let matchAtBeginningOnly = $state(false);
+	let matchAtLeastTwice = $state(false);
 	let titleArtistFilter = $state("");
 	let selectedArtist = $state("");
 	let searchInputActive = $state(true);
@@ -67,6 +69,8 @@
 		searchResults = progressionSearch.getResults({
 			ignoreSlashBass: ignoreSlashBassNotes,
 			fuzzySearch,
+			matchAtBeginningOnly,
+			matchAtLeastTwice,
 			titleArtistFilter,
 			selectedArtist
 		});
@@ -274,6 +278,16 @@
 					{fuzzySearch}
 					onFuzzySearchChange={(checked) => {
 						fuzzySearch = checked;
+						syncSearch();
+					}}
+					{matchAtBeginningOnly}
+					onMatchAtBeginningOnlyChange={(checked) => {
+						matchAtBeginningOnly = checked;
+						syncSearch();
+					}}
+					{matchAtLeastTwice}
+					onMatchAtLeastTwiceChange={(checked) => {
+						matchAtLeastTwice = checked;
 						syncSearch();
 					}}
 				{artistOptions}
