@@ -10,10 +10,11 @@ import { MAX_SEARCH_RESULTS } from "./constants.js";
 let songs = $state<SongInput[]>([]);
 let searchChords = $state<ParsedProgressionChord[]>([]);
 let searchResults = $state<SongSearchResult[]>([]);
-let ignoreSlashBassNotes = $state(false);
-let fuzzySearch = $state(false);
-let matchAtBeginningOnly = $state(false);
-let matchAtLeastTwice = $state(false);
+let bassAsRoot = $state(true);
+let ignoreSlashBassNotes = $state(true);
+let fuzzySearch = $state(true);
+let matchAtBeginningOnly = $state(true);
+let matchAtLeastTwice = $state(true);
 let titleFilter = $state("");
 let selectedArtist = $state("");
 let searchInputActive = $state(true);
@@ -60,6 +61,10 @@ const setTitleFilter = (value: string) => {
 	syncSearch();
 };
 
+const setBassAsRoot = (checked: boolean) => {
+	bassAsRoot = checked;
+};
+
 const setIgnoreSlashBassNotes = (checked: boolean) => {
 	ignoreSlashBassNotes = checked;
 	syncSearch();
@@ -96,6 +101,9 @@ export const chordSearchDemoStore = {
 	get searchResults() {
 		return searchResults;
 	},
+	get bassAsRoot() {
+		return bassAsRoot;
+	},
 	get ignoreSlashBassNotes() {
 		return ignoreSlashBassNotes;
 	},
@@ -128,6 +136,7 @@ export const chordSearchDemoStore = {
 	clearSearch,
 	setSelectedArtist,
 	setTitleFilter,
+	setBassAsRoot,
 	setIgnoreSlashBassNotes,
 	setFuzzySearch,
 	setMatchAtBeginningOnly,

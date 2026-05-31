@@ -5,7 +5,7 @@
 	import { midiToNote } from "../chord-processing/chord-classifier/notes.js";
 	import Piano from "$components/piano/Piano.svelte";
 	import NoMidiBanner from "./NoMidiBanner.svelte";
-	import CurrentChordCard from "./CurrentChordCard.svelte";
+	import ChordProgressionCriteria from "./ChordProgressionCriteria.svelte";
 	import SearchSongsCard from "./SearchSongsCard.svelte";
 	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
@@ -26,7 +26,6 @@
 	} from "./constants.js";
 	type ChordDetectorInstance = ReturnType<typeof createChordDetector>;
 
-	let bassAsRoot = $state(false);
 	let splitNote = $state(DEFAULT_SPLIT_NOTE);
 	let splitNoteEditing = $state(false);
 	let isConnected = $state(false);
@@ -90,7 +89,7 @@
 		createChordDetector({
 			splitBassAndTrebleOn: splitNote.trim() || DEFAULT_SPLIT_NOTE,
 			settleMs: DEFAULT_SETTLE_MS,
-			getBassAsRoot: () => bassAsRoot,
+			getBassAsRoot: () => chordSearchDemoStore.bassAsRoot,
 			onNoteOn: (midi) => {
 				const nextHeld = new Set([...heldMidiNotes, midi]);
 				heldMidiNotes = nextHeld;
@@ -141,11 +140,6 @@
 		}
 	};
 
-	const onBassAsRootChange = (checked: boolean) => {
-		bassAsRoot = checked;
-		detector?.reclassify();
-	};
-
 	const onKeydown = (event: KeyboardEvent) => {
 		if (event.key !== ESCAPE_KEY) return;
 		if (splitNoteEditing) {
@@ -154,6 +148,11 @@
 		}
 		chordSearchDemoStore.clearSearch();
 	};
+
+	$effect(() => {
+		chordSearchDemoStore.bassAsRoot;
+		detector?.reclassify();
+	});
 
 	onMount(async () => {
 		try {
@@ -210,7 +209,7 @@
 
 		<div class="live-output" data-live-state={liveState}>
 			<div class="search-group">
-				<CurrentChordCard {bassAsRoot} onBassAsRootChange={onBassAsRootChange} />
+				<ChordProgressionCriteria />
 				<SearchSongsCard />
 			</div>
 		</div>

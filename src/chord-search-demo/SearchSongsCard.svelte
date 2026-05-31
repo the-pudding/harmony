@@ -1,6 +1,5 @@
 <script lang="ts">
 	import SongResultCard from "./SongResultCard.svelte";
-	import ToggleSwitch from "./ToggleSwitch.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import { NO_MATCH_MESSAGE, SEARCH_PLACEHOLDER, SEARCH_INPUT_ACTIVE_LABEL, SEARCH_INPUT_PAUSED_LABEL } from "./constants.js";
 </script>
@@ -41,26 +40,6 @@
 			{/each}
 		{/if}
 	</div>
-	<ToggleSwitch
-		checked={chordSearchDemoStore.ignoreSlashBassNotes}
-		onchange={chordSearchDemoStore.setIgnoreSlashBassNotes}
-		label="Ignore slash bass notes and just match only on the chord"
-	/>
-	<ToggleSwitch
-		checked={chordSearchDemoStore.fuzzySearch}
-		onchange={chordSearchDemoStore.setFuzzySearch}
-		label="Fuzzy search (match on simplest version of chords, see FUZZY_SUFFIX_MAP)"
-	/>
-	<ToggleSwitch
-		checked={chordSearchDemoStore.matchAtBeginningOnly}
-		onchange={chordSearchDemoStore.setMatchAtBeginningOnly}
-		label="Match only progressions that begin this way"
-	/>
-	<ToggleSwitch
-		checked={chordSearchDemoStore.matchAtLeastTwice}
-		onchange={chordSearchDemoStore.setMatchAtLeastTwice}
-		label="Match only progressions where the search progression appears at least twice"
-	/>
 </section>
 
 <style>
