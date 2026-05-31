@@ -1,21 +1,14 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import {
-		chordsAreEqual,
-		createChordDetector,
-		createProgressionSearch
-	} from "../chord-processing/index.js";
-	import type {
-		ChordEvent,
-		ParsedProgressionChord,
-		SongSearchResult
-	} from "../chord-processing/types.js";
+	import { chordsAreEqual, createChordDetector } from "../chord-processing/index.js";
+	import type { ChordEvent } from "../chord-processing/types.js";
 	import { midiToNote } from "../chord-processing/chord-classifier/notes.js";
 	import Piano from "$components/piano/Piano.svelte";
 	import NoMidiBanner from "./NoMidiBanner.svelte";
 	import CurrentChordCard from "./CurrentChordCard.svelte";
 	import SearchSongsCard from "./SearchSongsCard.svelte";
-	import { buildArtistOptions } from "./buildArtistOptions.js";
+	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
+	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import {
 		CLEAR_SENTINEL_LABEL,
 		CLEAR_SENTINEL_MIDIS,
@@ -24,7 +17,6 @@
 		ESCAPE_KEY,
 		LIVE_STATE_ACTIVE,
 		LIVE_STATE_MUTED,
-		MAX_SEARCH_RESULTS,
 		PAUSE_SENTINEL_LABEL,
 		PAUSE_SENTINEL_MIDIS,
 		SPLIT_NOTE_EDIT_TOOLTIP,
@@ -32,11 +24,8 @@
 		SONGS_LOAD_ERROR_PREFIX,
 		SONGS_LOADING_MESSAGE
 	} from "./constants.js";
-	import type { SongInput } from "../chord-processing/types.js";
-
 	type ChordDetectorInstance = ReturnType<typeof createChordDetector>;
 
-	let activeChord = $state<ChordEvent | null>(null);
 	let bassAsRoot = $state(false);
 	let splitNote = $state(DEFAULT_SPLIT_NOTE);
 	let splitNoteEditing = $state(false);
@@ -44,37 +33,8 @@
 	let connectError = $state("");
 	let midiBanner = $state("");
 	let selectedInputName = $state("");
-	let songs = $state<SongInput[]>([]);
 	let songsLoading = $state(true);
 	let songsError = $state("");
-
-	const progressionSearch = $derived(createProgressionSearch({ songs, limit: MAX_SEARCH_RESULTS }));
-
-	let searchChords = $state<ParsedProgressionChord[]>([]);
-	let searchResults = $state<SongSearchResult[]>([]);
-	let ignoreSlashBassNotes = $state(false);
-	let fuzzySearch = $state(false);
-	let matchAtBeginningOnly = $state(false);
-	let matchAtLeastTwice = $state(false);
-	let titleArtistFilter = $state("");
-	let selectedArtist = $state("");
-	let searchInputActive = $state(true);
-	const artistOptions = $derived.by(() => buildArtistOptions(songs));
-	const hasSearch = $derived(
-		searchChords.length > 0 || titleArtistFilter.length > 0 || selectedArtist.length > 0
-	);
-
-	const syncSearch = () => {
-		searchChords = progressionSearch.getSearchProgression();
-		searchResults = progressionSearch.getResults({
-			ignoreSlashBass: ignoreSlashBassNotes,
-			fuzzySearch,
-			matchAtBeginningOnly,
-			matchAtLeastTwice,
-			titleArtistFilter,
-			selectedArtist
-		});
-	};
 
 	const liveState = $derived(isConnected ? LIVE_STATE_ACTIVE : LIVE_STATE_MUTED);
 
@@ -84,16 +44,12 @@
 	let detector: ChordDetectorInstance | null = null;
 
 	const appendChordIfNew = (chord: NonNullable<ChordEvent["chord"]>) => {
+		const progressionSearch = chordSearchDemoStore.getProgressionSearch();
 		const progression = progressionSearch.getSearchProgression();
 		const lastChord = progression[progression.length - 1];
 		if (lastChord && chordsAreEqual(chord, lastChord)) return;
 		progressionSearch.append(chord);
-		syncSearch();
-	};
-
-	const clearSearch = () => {
-		progressionSearch.clear();
-		syncSearch();
+		chordSearchDemoStore.syncSearch();
 	};
 
 	const matchesSentinel = (held: Set<number>, sentinel: Set<number>) =>
@@ -138,20 +94,16 @@
 			onNoteOn: (midi) => {
 				const nextHeld = new Set([...heldMidiNotes, midi]);
 				heldMidiNotes = nextHeld;
-				if (matchesSentinel(nextHeld, CLEAR_SENTINEL_MIDIS)) clearSearch();
+				if (matchesSentinel(nextHeld, CLEAR_SENTINEL_MIDIS)) chordSearchDemoStore.clearSearch();
 				else if (matchesSentinel(nextHeld, PAUSE_SENTINEL_MIDIS))
-					searchInputActive = !searchInputActive;
+					chordSearchDemoStore.setSearchInputActive(!chordSearchDemoStore.searchInputActive);
 			},
 			onNoteOff: (midi) => {
 				heldMidiNotes = new Set([...heldMidiNotes].filter((m) => m !== midi));
 			},
 			onChordStart: (chord) => {
-				activeChord = chord;
-				if (!searchInputActive) return;
+				if (!chordSearchDemoStore.searchInputActive) return;
 				if (chord.chord) appendChordIfNew(chord.chord);
-			},
-			onChordEnd: () => {
-				activeChord = null;
 			},
 			onStateChange: (inputs) => {
 				const active = inputs.find((d) => d.isActive);
@@ -200,7 +152,7 @@
 			cancelSplitNoteEdit();
 			return;
 		}
-		clearSearch();
+		chordSearchDemoStore.clearSearch();
 	};
 
 	onMount(async () => {
@@ -209,14 +161,12 @@
 			if (!response.ok) {
 				throw new Error(`${SONGS_LOAD_ERROR_PREFIX} HTTP ${response.status}`);
 			}
-			songs = await response.json();
+			chordSearchDemoStore.setSongs(await response.json());
 		} catch (err) {
 			songsError = err instanceof Error ? err.message : String(err);
 		} finally {
 			songsLoading = false;
 		}
-
-		syncSearch();
 		if (window.isSecureContext && typeof navigator.requestMIDIAccess === "function") {
 			attemptConnect();
 		}
@@ -226,6 +176,7 @@
 <svelte:window onkeydown={onKeydown} />
 
 <div class="page">
+	<TopNavBar />
 	<div class="midi-status">
 		{#if isConnected}
 			<span class="connected" title={selectedInputName}>connected</span>
@@ -259,49 +210,8 @@
 
 		<div class="live-output" data-live-state={liveState}>
 			<div class="search-group">
-				<CurrentChordCard
-					chord={activeChord}
-					{bassAsRoot}
-					onBassAsRootChange={onBassAsRootChange}
-				/>
-				<SearchSongsCard
-					{searchChords}
-					results={searchResults}
-					{hasSearch}
-					{searchInputActive}
-					onClear={clearSearch}
-					{ignoreSlashBassNotes}
-					onIgnoreSlashBassNotesChange={(checked) => {
-						ignoreSlashBassNotes = checked;
-						syncSearch();
-					}}
-					{fuzzySearch}
-					onFuzzySearchChange={(checked) => {
-						fuzzySearch = checked;
-						syncSearch();
-					}}
-					{matchAtBeginningOnly}
-					onMatchAtBeginningOnlyChange={(checked) => {
-						matchAtBeginningOnly = checked;
-						syncSearch();
-					}}
-					{matchAtLeastTwice}
-					onMatchAtLeastTwiceChange={(checked) => {
-						matchAtLeastTwice = checked;
-						syncSearch();
-					}}
-				{artistOptions}
-				{selectedArtist}
-				onSelectedArtistChange={(value) => {
-					selectedArtist = value;
-					syncSearch();
-				}}
-				{titleArtistFilter}
-				onTitleArtistFilterChange={(value) => {
-					titleArtistFilter = value;
-					syncSearch();
-				}}
-				/>
+				<CurrentChordCard {bassAsRoot} onBassAsRootChange={onBassAsRootChange} />
+				<SearchSongsCard />
 			</div>
 		</div>
 	</div>
@@ -319,11 +229,12 @@
 		display: flex;
 		flex-direction: column;
 		position: relative;
+		padding-top: 3.25rem;
 	}
 
 	.midi-status {
 		position: fixed;
-		top: 1rem;
+		top: 3.75rem;
 		right: 1.5rem;
 		z-index: 10;
 		display: flex;

@@ -1,51 +1,8 @@
 <script lang="ts">
-	import ArtistFilterDropdown from "./ArtistFilterDropdown.svelte";
-	import SearchProgression from "./SearchProgression.svelte";
 	import SongResultCard from "./SongResultCard.svelte";
 	import ToggleSwitch from "./ToggleSwitch.svelte";
-	import type { ArtistOption } from "./buildArtistOptions.js";
-	import type { ParsedProgressionChord, SongSearchResult } from "../chord-processing/types.js";
+	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import { NO_MATCH_MESSAGE, SEARCH_PLACEHOLDER, SEARCH_INPUT_ACTIVE_LABEL, SEARCH_INPUT_PAUSED_LABEL } from "./constants.js";
-
-	let {
-		searchChords,
-		results,
-		hasSearch,
-		searchInputActive,
-		onClear,
-		ignoreSlashBassNotes,
-		onIgnoreSlashBassNotesChange,
-		fuzzySearch,
-		onFuzzySearchChange,
-		matchAtBeginningOnly,
-		onMatchAtBeginningOnlyChange,
-		matchAtLeastTwice,
-		onMatchAtLeastTwiceChange,
-		artistOptions,
-		selectedArtist,
-		onSelectedArtistChange,
-		titleArtistFilter,
-		onTitleArtistFilterChange
-	}: {
-		searchChords: ParsedProgressionChord[];
-		results: SongSearchResult[];
-		hasSearch: boolean;
-		searchInputActive: boolean;
-		onClear: () => void;
-		ignoreSlashBassNotes: boolean;
-		onIgnoreSlashBassNotesChange: (checked: boolean) => void;
-		fuzzySearch: boolean;
-		onFuzzySearchChange: (checked: boolean) => void;
-		matchAtBeginningOnly: boolean;
-		onMatchAtBeginningOnlyChange: (checked: boolean) => void;
-		matchAtLeastTwice: boolean;
-		onMatchAtLeastTwiceChange: (checked: boolean) => void;
-		artistOptions: ArtistOption[];
-		selectedArtist: string;
-		onSelectedArtistChange: (value: string) => void;
-		titleArtistFilter: string;
-		onTitleArtistFilterChange: (value: string) => void;
-	} = $props();
 </script>
 
 <section class="card">
@@ -54,63 +11,54 @@
 			<h2>Search Songs by Chord</h2>
 			<span
 				class="input-status"
-				class:active={searchInputActive}
-				class:paused={!searchInputActive}
+				class:active={chordSearchDemoStore.searchInputActive}
+				class:paused={!chordSearchDemoStore.searchInputActive}
 			>
-				{searchInputActive ? SEARCH_INPUT_ACTIVE_LABEL : SEARCH_INPUT_PAUSED_LABEL}
+				{chordSearchDemoStore.searchInputActive
+					? SEARCH_INPUT_ACTIVE_LABEL
+					: SEARCH_INPUT_PAUSED_LABEL}
 			</span>
 		</div>
-		<button type="button" class="clear" onclick={onClear}>Clear search (or hit escape)</button>
+		<button type="button" class="clear" onclick={chordSearchDemoStore.clearSearch}>
+			Clear search (or hit escape)
+		</button>
 	</div>
 	<p class="hint">
 		Play chords in any key — matches by chord type and intervals between roots, not absolute
 		pitch.
 	</p>
-	<div class="filter-row">
-		<ArtistFilterDropdown
-			{artistOptions}
-			{selectedArtist}
-			onSelectedArtistChange={onSelectedArtistChange}
-		/>
-		<input
-			class="name-filter"
-			type="text"
-			placeholder="Filter by song or artist name…"
-			value={titleArtistFilter}
-			oninput={(e) => onTitleArtistFilterChange((e.target as HTMLInputElement).value)}
-		/>
-	</div>
-	<SearchProgression chords={searchChords} {fuzzySearch} {ignoreSlashBassNotes} />
 	<div class="results">
-		{#if !hasSearch}
+		{#if !chordSearchDemoStore.hasSearch}
 			<p class="empty">{SEARCH_PLACEHOLDER}</p>
-		{:else if results.length === 0}
+		{:else if chordSearchDemoStore.searchResults.length === 0}
 			<p class="empty">{NO_MATCH_MESSAGE}</p>
 		{:else}
-			<p class="results-label">Top {results.length} most popular matching songs:</p>
-			{#each results as result (result.song.id)}
+			<p class="results-label">
+				Top {chordSearchDemoStore.searchResults.length} most popular matching songs:
+			</p>
+			{#each chordSearchDemoStore.searchResults as result (result.song.id)}
 				<SongResultCard {result} />
 			{/each}
 		{/if}
 	</div>
 	<ToggleSwitch
-		checked={ignoreSlashBassNotes}
-		onchange={onIgnoreSlashBassNotesChange}
+		checked={chordSearchDemoStore.ignoreSlashBassNotes}
+		onchange={chordSearchDemoStore.setIgnoreSlashBassNotes}
 		label="Ignore slash bass notes and just match only on the chord"
 	/>
 	<ToggleSwitch
-		checked={fuzzySearch}
-		onchange={onFuzzySearchChange}
+		checked={chordSearchDemoStore.fuzzySearch}
+		onchange={chordSearchDemoStore.setFuzzySearch}
 		label="Fuzzy search (match on simplest version of chords, see FUZZY_SUFFIX_MAP)"
 	/>
 	<ToggleSwitch
-		checked={matchAtBeginningOnly}
-		onchange={onMatchAtBeginningOnlyChange}
+		checked={chordSearchDemoStore.matchAtBeginningOnly}
+		onchange={chordSearchDemoStore.setMatchAtBeginningOnly}
 		label="Match only progressions that begin this way"
 	/>
 	<ToggleSwitch
-		checked={matchAtLeastTwice}
-		onchange={onMatchAtLeastTwiceChange}
+		checked={chordSearchDemoStore.matchAtLeastTwice}
+		onchange={chordSearchDemoStore.setMatchAtLeastTwice}
 		label="Match only progressions where the search progression appears at least twice"
 	/>
 </section>
@@ -200,35 +148,6 @@
 		color: #71717a;
 		line-height: 1.5;
 		margin: 0;
-	}
-
-	.filter-row {
-		display: flex;
-		gap: 0.5rem;
-		align-items: stretch;
-	}
-
-	.name-filter {
-		flex: 1;
-		min-width: 0;
-		background: rgba(24, 24, 27, 0.6);
-		border: 1px solid rgba(63, 63, 70, 0.8);
-		border-radius: 0.25rem;
-		color: #f4f4f5;
-		font-family: inherit;
-		font-size: 0.75rem;
-		padding: 0.375rem 0.625rem;
-		box-sizing: border-box;
-		outline: none;
-		transition: border-color 0.15s;
-	}
-
-	.name-filter::placeholder {
-		color: #52525b;
-	}
-
-	.name-filter:focus {
-		border-color: rgba(99, 102, 241, 0.6);
 	}
 
 	.results-label {
