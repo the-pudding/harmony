@@ -23,8 +23,9 @@ export const CLEAR_SENTINEL_LABEL = "delete";
 export const PAUSE_SENTINEL_MIDIS = buildHalfStepSentinel("Bb", 4);
 export const PAUSE_SENTINEL_LABEL = "pause";
 
-export const SEARCH_INPUT_ACTIVE_LABEL = "taking search input";
-export const SEARCH_INPUT_PAUSED_LABEL = "search input paused";
+export const SEARCH_INPUT_ACTIVE_LABEL = "taking chord input";
+export const SEARCH_INPUT_PAUSED_LABEL = "chord input paused";
+export const CLEAR_CHORDS_LABEL = "clear chords";
 export const DEFAULT_SETTLE_MS = 60;
 export const ESCAPE_KEY = "Escape";
 export const SPLIT_NOTE_EDIT_TOOLTIP =

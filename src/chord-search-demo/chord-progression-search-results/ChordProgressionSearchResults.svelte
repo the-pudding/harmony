@@ -1,27 +1,36 @@
 <script lang="ts">
-	import SongResultCard from "./SongResultCard.svelte";
-	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
-	import { NO_MATCH_MESSAGE, SEARCH_PLACEHOLDER, SEARCH_INPUT_ACTIVE_LABEL, SEARCH_INPUT_PAUSED_LABEL } from "./constants.js";
+	import ChordProgressionSearchResult from "./ChordProgressionSearchResult.svelte";
+	import { chordSearchDemoStore } from "../chordSearchDemoStore.svelte.js";
+	import {
+		CLEAR_CHORDS_LABEL,
+		CLEAR_SENTINEL_LABEL,
+		NO_MATCH_MESSAGE,
+		PAUSE_SENTINEL_LABEL,
+		SEARCH_INPUT_ACTIVE_LABEL,
+		SEARCH_INPUT_PAUSED_LABEL,
+		SEARCH_PLACEHOLDER
+	} from "../constants.js";
 </script>
 
 <section class="card">
 	<div class="head">
 		<span
-			class="input-status"
+			class="action-pill"
 			class:active={chordSearchDemoStore.searchInputActive}
 			class:paused={!chordSearchDemoStore.searchInputActive}
 		>
 			{chordSearchDemoStore.searchInputActive
 				? SEARCH_INPUT_ACTIVE_LABEL
 				: SEARCH_INPUT_PAUSED_LABEL}
+			<span class="shortcut">· play {PAUSE_SENTINEL_LABEL}</span>
 		</span>
-		<button type="button" class="clear" onclick={chordSearchDemoStore.clearSearch}>
-			Clear search (or hit escape)
+		<button type="button" class="action-pill clear" onclick={chordSearchDemoStore.clearSearch}>
+			{CLEAR_CHORDS_LABEL}
+			<span class="shortcut">· play {CLEAR_SENTINEL_LABEL} or <kbd>esc</kbd></span>
 		</button>
 	</div>
 	<p class="hint">
-		Play chords in any key — matches by chord type and intervals between roots, not absolute
-		pitch.
+		Key agnostic, just matches intervals
 	</p>
 	<div class="results">
 		{#if !chordSearchDemoStore.hasSearch}
@@ -33,7 +42,7 @@
 				Top {chordSearchDemoStore.searchResults.length} most popular matching songs:
 			</p>
 			{#each chordSearchDemoStore.searchResults as result (result.song.id)}
-				<SongResultCard {result} />
+				<ChordProgressionSearchResult {result} />
 			{/each}
 		{/if}
 	</div>
@@ -57,7 +66,8 @@
 		gap: 0.75rem;
 	}
 
-	.input-status {
+	.action-pill {
+		flex-shrink: 0;
 		font-size: 0.625rem;
 		font-weight: 500;
 		text-transform: lowercase;
@@ -66,40 +76,52 @@
 		border-radius: 9999px;
 		border: 1px solid transparent;
 		white-space: nowrap;
+		font-family: inherit;
+		line-height: inherit;
 	}
 
-	.input-status.active {
+	.action-pill.active {
 		color: #4ade80;
 		border-color: rgba(74, 222, 128, 0.35);
 		background: rgba(74, 222, 128, 0.08);
 	}
 
-	.input-status.paused {
+	.action-pill.paused {
 		color: #a1a1aa;
 		border-color: rgba(161, 161, 170, 0.35);
 		background: rgba(161, 161, 170, 0.08);
 	}
 
-	.clear {
-		flex-shrink: 0;
-		background: #27272a;
-		border: 1px solid rgba(127, 29, 29, 0.6);
-		color: #fca5a5;
-		font-size: 0.75rem;
-		font-weight: 500;
-		padding: 0.375rem 0.75rem;
-		border-radius: 0.25rem;
+	.action-pill.clear {
 		cursor: pointer;
+		color: #fca5a5;
+		border-color: rgba(252, 165, 165, 0.35);
+		background: rgba(252, 165, 165, 0.08);
 		transition:
-			background 0.15s,
+			color 0.15s,
 			border-color 0.15s,
-			color 0.15s;
+			background 0.15s;
 	}
 
-	.clear:hover {
-		background: rgba(69, 10, 10, 0.8);
-		border-color: #dc2626;
+	.action-pill.clear:hover {
 		color: #fecaca;
+		border-color: rgba(254, 202, 202, 0.45);
+		background: rgba(252, 165, 165, 0.14);
+	}
+
+	.shortcut {
+		opacity: 0.75;
+	}
+
+	.action-pill kbd {
+		font-family: inherit;
+		font-size: inherit;
+		font-weight: inherit;
+		text-transform: inherit;
+		letter-spacing: inherit;
+		padding: 0;
+		border: none;
+		background: none;
 	}
 
 	.hint {

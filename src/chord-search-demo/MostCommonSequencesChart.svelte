@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { scaleBand, scaleLinear } from "d3";
+	import { buildSearchAbstract } from "./buildSearchAbstract.js";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
+	import { isRomanTokenPositionHighlighted } from "./searchMatchesInRomanTokens.js";
 	import {
 		FOUR_CHORDS_PROGRESSION_LABEL,
 		SEQUENCE_CHART_AXIS_HEIGHT_PX,
@@ -25,6 +27,15 @@
 	const chartData = $derived(chordSearchDemoStore.sequenceChartData);
 	const chartStatus = $derived(chordSearchDemoStore.sequenceChartStatus);
 	const chartError = $derived(chordSearchDemoStore.sequenceChartError);
+	const searchChords = $derived(chordSearchDemoStore.searchChords);
+	const fuzzySearch = $derived(chordSearchDemoStore.fuzzySearch);
+	const ignoreSlashBassNotes = $derived(chordSearchDemoStore.ignoreSlashBassNotes);
+	const matchAtBeginningOnly = $derived(chordSearchDemoStore.matchAtBeginningOnly);
+	const matchAtLeastTwice = $derived(chordSearchDemoStore.matchAtLeastTwice);
+	const searchAbstract = $derived(
+		buildSearchAbstract(searchChords, { ignoreSlashBassNotes, fuzzySearch })
+	);
+	const hasSearchChords = $derived(searchChords.length > 0);
 	const minNumChordsToCountAsAProgression = $derived(
 		chordSearchDemoStore.minNumChordsToCountAsAProgression
 	);
@@ -188,10 +199,29 @@
 					{@const chords = parseLabelChords(row.label)}
 					<g class="row-label-group">
 						{#each chords as chord, chordIndex (chordIndex)}
+							{@const highlighted =
+								hasSearchChords &&
+								isRomanTokenPositionHighlighted(
+									chordIndex,
+									chords,
+									searchAbstract,
+									{ fuzzySearch, matchAtBeginningOnly, matchAtLeastTwice }
+								)}
+							{#if highlighted}
+								<rect
+									x={chordIndex * SEQUENCE_CHART_CHORD_CELL_WIDTH_PX - 2}
+									y={y - 9}
+									width={SEQUENCE_CHART_CHORD_CELL_WIDTH_PX - 4}
+									height={18}
+									rx={4}
+									class="chord-highlight-bg"
+								/>
+							{/if}
 							<text
 								x={chordIndex * SEQUENCE_CHART_CHORD_CELL_WIDTH_PX}
 								{y}
 								class="chord-token"
+								class:highlighted
 								text-anchor="start"
 								dominant-baseline="middle"
 							>
@@ -310,10 +340,19 @@
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 	}
 
+	.chord-highlight-bg {
+		fill: #4338ca;
+	}
+
 	.chord-token {
 		fill: #cccccc;
 		font-size: 0.6875rem;
 		font-family: inherit;
+	}
+
+	.chord-token.highlighted {
+		fill: #fff;
+		font-weight: 500;
 	}
 
 	.chord-separator {

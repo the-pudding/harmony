@@ -6,7 +6,7 @@
 	import Piano from "$components/piano/Piano.svelte";
 	import NoMidiBanner from "./NoMidiBanner.svelte";
 	import ChordProgressionCriteria from "./ChordProgressionCriteria.svelte";
-	import ChordProgressionSearchResults from "./ChordProgressionSearchResults.svelte";
+	import ChordProgressionSearchResults from "./chord-progression-search-results/ChordProgressionSearchResults.svelte";
 	import MostCommonSequencesChart from "./MostCommonSequencesChart.svelte";
 	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";

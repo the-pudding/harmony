@@ -1,13 +1,11 @@
 import debounce from "lodash.debounce";
-import {
-	createProgressionSearch,
-	toAbstractProgression
-} from "../chord-processing/index.js";
+import { createProgressionSearch } from "../chord-processing/index.js";
 import type {
 	ParsedProgressionChord,
 	SongInput,
 	SongSearchResult
 } from "../chord-processing/types.js";
+import { buildSearchAbstract } from "./buildSearchAbstract.js";
 import { buildArtistOptions } from "./buildArtistOptions.js";
 import {
 	MAX_SEARCH_RESULTS,
@@ -68,18 +66,6 @@ const hasSearch = $derived(
 	searchChords.length > 0 || titleFilter.length > 0 || selectedArtist.length > 0
 );
 
-const buildSearchAbstract = (chords: ParsedProgressionChord[]) => {
-	const effectiveChords = ignoreSlashBassNotes
-		? chords.map(
-				({ bassPitchClass: _bass, ...chord }) => chord as ParsedProgressionChord
-			)
-		: chords;
-
-	return effectiveChords.length > 0
-		? toAbstractProgression(effectiveChords)
-		: null;
-};
-
 const runSequenceChartCompute = async () => {
 	if (!chartWorkerPoolReady) return;
 
@@ -98,7 +84,10 @@ const runSequenceChartCompute = async () => {
 				matchAtBeginningOnly,
 				matchAtLeastTwice
 			},
-			searchAbstract: buildSearchAbstract(searchChords),
+			searchAbstract: buildSearchAbstract(searchChords, {
+				ignoreSlashBassNotes,
+				fuzzySearch
+			}),
 			options: {
 				topN: SEQUENCE_CHART_TOP_N,
 				minNumChordsToCountAsAProgression,

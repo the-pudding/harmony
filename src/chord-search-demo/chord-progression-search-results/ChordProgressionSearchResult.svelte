@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { isPositionInMatch } from "../chord-processing/match-chord-progressions/match.js";
-	import type { SongSearchResult } from "../chord-processing/types.js";
-	import { SONG_DATA_SOURCE_TITLE } from "./constants.js";
-	import { buildYouTubeSearchUrl } from "./youtubeSearch.js";
+	import { isPositionInMatch } from "../../chord-processing/match-chord-progressions/match.js";
+	import type { SongSearchResult } from "../../chord-processing/types.js";
+	import { SONG_DATA_SOURCE_TITLE } from "../constants.js";
+	import { buildYouTubeSearchUrl } from "../youtubeSearch.js";
 
 	let { result }: { result: SongSearchResult } = $props();
 
