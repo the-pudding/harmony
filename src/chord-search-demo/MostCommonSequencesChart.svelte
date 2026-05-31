@@ -3,18 +3,23 @@
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import {
 		FOUR_CHORDS_PROGRESSION_LABEL,
+		SEQUENCE_CHART_AXIS_HEIGHT_PX,
+		SEQUENCE_CHART_AXIS_TICK_Y_PX,
 		SEQUENCE_CHART_BAR_HEIGHT_PX,
+		SEQUENCE_CHART_CHORD_CELL_WIDTH_PX,
+		SEQUENCE_CHART_CHORD_SEPARATOR,
 		SEQUENCE_CHART_EMPTY_MESSAGE,
 		SEQUENCE_CHART_FALLBACK_BAR_COLOR,
 		SEQUENCE_CHART_HIGHLIGHT_COLOR,
-		SEQUENCE_CHART_LABEL_WIDTH_PX,
 		SEQUENCE_CHART_LENGTH_COLORS,
 		SEQUENCE_CHART_LOADING_MESSAGE,
 		SEQUENCE_CHART_MARGIN_BOTTOM_PX,
 		SEQUENCE_CHART_MARGIN_LEFT_PX,
 		SEQUENCE_CHART_MARGIN_RIGHT_PX,
 		SEQUENCE_CHART_MARGIN_TOP_PX,
-		SEQUENCE_CHART_TOP_N
+		SEQUENCE_CHART_PLOT_WIDTH_PX,
+		SEQUENCE_CHART_VIEWPORT_HEIGHT_PX,
+		VARIABLE_GRAM_MAX_LENGTH
 	} from "./constants.js";
 
 	const chartData = $derived(chordSearchDemoStore.sequenceChartData);
@@ -31,16 +36,24 @@
 	const showEmpty = $derived(chartStatus === "ready" && !hasData);
 	const showChart = $derived(hasData);
 
+	const parseLabelChords = (label: string) => label.split(SEQUENCE_CHART_CHORD_SEPARATOR);
+
+	const labelWidth = $derived(
+		VARIABLE_GRAM_MAX_LENGTH * SEQUENCE_CHART_CHORD_CELL_WIDTH_PX
+	);
+
 	const chartHeight = $derived(
-		SEQUENCE_CHART_TOP_N * SEQUENCE_CHART_BAR_HEIGHT_PX +
+		chartData.length * SEQUENCE_CHART_BAR_HEIGHT_PX +
 			SEQUENCE_CHART_MARGIN_TOP_PX +
 			SEQUENCE_CHART_MARGIN_BOTTOM_PX
 	);
-	const chartWidth = $derived(SEQUENCE_CHART_LABEL_WIDTH_PX + 480);
-
-	const plotWidth = $derived(
-		chartWidth - SEQUENCE_CHART_LABEL_WIDTH_PX - SEQUENCE_CHART_MARGIN_LEFT_PX - SEQUENCE_CHART_MARGIN_RIGHT_PX
+	const chartWidth = $derived(
+		labelWidth + SEQUENCE_CHART_MARGIN_LEFT_PX + SEQUENCE_CHART_PLOT_WIDTH_PX + SEQUENCE_CHART_MARGIN_RIGHT_PX
 	);
+
+	const plotWidth = $derived(SEQUENCE_CHART_PLOT_WIDTH_PX);
+
+	const plotOriginX = $derived(labelWidth + SEQUENCE_CHART_MARGIN_LEFT_PX);
 
 	const yScale = $derived(
 		scaleBand<string>()
@@ -106,7 +119,11 @@
 	{:else if showEmpty}
 		<p class="empty">{SEQUENCE_CHART_EMPTY_MESSAGE}</p>
 	{:else if showChart}
-		<div class="chart-wrap" class:is-loading={isLoading} style:height="{chartHeight}px">
+		<div
+			class="chart-wrap"
+			class:is-loading={isLoading}
+			style:height="{SEQUENCE_CHART_VIEWPORT_HEIGHT_PX}px"
+		>
 			<svg
 				class="chart"
 				width={chartWidth}
@@ -115,7 +132,15 @@
 				aria-label="Horizontal bar chart of most common chord sequences"
 				aria-busy={isLoading}
 			>
-				<g transform="translate({SEQUENCE_CHART_LABEL_WIDTH_PX + SEQUENCE_CHART_MARGIN_LEFT_PX}, 0)">
+				<g transform="translate({plotOriginX}, 0)">
+					<line
+						x1={0}
+						x2={plotWidth}
+						y1={SEQUENCE_CHART_AXIS_HEIGHT_PX}
+						y2={SEQUENCE_CHART_AXIS_HEIGHT_PX}
+						class="axis-line"
+					/>
+
 					{#each xTicks as tick (tick)}
 						<g transform="translate({xScale(tick)}, 0)">
 							<line
@@ -124,7 +149,7 @@
 								class="grid-line"
 							/>
 							<text
-								y={chartHeight - SEQUENCE_CHART_MARGIN_BOTTOM_PX + 16}
+								y={SEQUENCE_CHART_AXIS_TICK_Y_PX}
 								class="axis-label"
 								text-anchor="middle"
 							>
@@ -160,15 +185,31 @@
 
 				{#each chartData as row (row.label)}
 					{@const y = (yScale(row.label) ?? 0) + yScale.bandwidth() / 2}
-					<text
-						x={SEQUENCE_CHART_LABEL_WIDTH_PX - 8}
-						{y}
-						class="row-label"
-						text-anchor="end"
-						dominant-baseline="middle"
-					>
-						{row.label}
-					</text>
+					{@const chords = parseLabelChords(row.label)}
+					<g class="row-label-group">
+						{#each chords as chord, chordIndex (chordIndex)}
+							<text
+								x={chordIndex * SEQUENCE_CHART_CHORD_CELL_WIDTH_PX}
+								{y}
+								class="chord-token"
+								text-anchor="start"
+								dominant-baseline="middle"
+							>
+								{chord}
+							</text>
+							{#if chordIndex < chords.length - 1}
+								<text
+									x={(chordIndex + 1) * SEQUENCE_CHART_CHORD_CELL_WIDTH_PX - 10}
+									{y}
+									class="chord-separator"
+									text-anchor="end"
+									dominant-baseline="middle"
+								>
+									{SEQUENCE_CHART_CHORD_SEPARATOR}
+								</text>
+							{/if}
+						{/each}
+					</g>
 				{/each}
 			</svg>
 
@@ -195,6 +236,7 @@
 		flex-direction: column;
 		gap: 1rem;
 		width: 100%;
+		min-width: 0;
 	}
 
 	.chart-title {
@@ -222,7 +264,10 @@
 	.chart-wrap {
 		position: relative;
 		width: 100%;
-		overflow-x: auto;
+		overflow: auto;
+		border: 1px solid rgba(39, 39, 42, 0.8);
+		border-radius: 0.5rem;
+		background: rgba(24, 24, 27, 0.4);
 	}
 
 	.chart-wrap.is-loading .chart {
@@ -245,6 +290,11 @@
 		pointer-events: none;
 	}
 
+	.axis-line {
+		stroke: rgba(255, 255, 255, 0.12);
+		stroke-width: 1;
+	}
+
 	.grid-line {
 		stroke: rgba(255, 255, 255, 0.06);
 		stroke-width: 1;
@@ -253,12 +303,22 @@
 	.axis-label {
 		fill: #555555;
 		font-size: 0.6875rem;
+		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+	}
+
+	.row-label-group {
+		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+	}
+
+	.chord-token {
+		fill: #cccccc;
+		font-size: 0.6875rem;
 		font-family: inherit;
 	}
 
-	.row-label {
-		fill: #cccccc;
-		font-size: 0.6875rem;
+	.chord-separator {
+		fill: #666666;
+		font-size: 0.625rem;
 		font-family: inherit;
 	}
 
@@ -277,5 +337,6 @@
 		color: #e4e4e7;
 		white-space: nowrap;
 		z-index: 2;
+		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 	}
 </style>

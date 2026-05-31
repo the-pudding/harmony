@@ -11,6 +11,7 @@
 	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import {
+		CHORD_SEARCH_DEMO_HORIZONTAL_MARGIN_PX,
 		CLEAR_SENTINEL_LABEL,
 		CLEAR_SENTINEL_MIDIS,
 		DEFAULT_SETTLE_MS,
@@ -210,7 +211,10 @@
 		/>
 	</div>
 
-	<div class="demo">
+	<div
+		class="demo"
+		style="--demo-horizontal-margin: {CHORD_SEARCH_DEMO_HORIZONTAL_MARGIN_PX}px;"
+	>
 		{#if songsLoading}
 			<p class="dataset-status">{SONGS_LOADING_MESSAGE}</p>
 		{:else if songsError}
@@ -221,17 +225,15 @@
 		<div class="live-output" data-live-state={liveState}>
 			<div class="demo-columns">
 				<div class="column">
-					<h1 class="column-title">
-						Define... <span class="column-title-emphasis">'chord progression'</span>
-					</h1>
+					<h1 class="column-title">Define... 'chord progression'</h1>
 					<ChordProgressionCriteria />
+					<MostCommonSequencesChart />
 				</div>
 				<div class="column">
 					<h1 class="column-title">Song results</h1>
 					<ChordProgressionSearchResults />
 				</div>
 			</div>
-			<MostCommonSequencesChart />
 		</div>
 	</div>
 </div>
@@ -303,9 +305,7 @@
 
 	.demo {
 		color: #f4f4f5;
-		padding: 1.5rem 2rem 2rem;
-		max-width: 72rem;
-		margin: 0 auto;
+		padding: 1.5rem var(--demo-horizontal-margin) 2rem;
 		width: 100%;
 		box-sizing: border-box;
 		display: flex;
@@ -361,7 +361,4 @@
 		letter-spacing: -0.02em;
 	}
 
-	.column-title-emphasis {
-		color: #a5b4fc;
-	}
 </style>

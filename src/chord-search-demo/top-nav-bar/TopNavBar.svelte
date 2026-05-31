@@ -19,11 +19,11 @@
 
 <style>
 	.top-nav {
-		position: absolute;
+		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
-		z-index: 5;
+		z-index: 20;
 		display: flex;
 		align-items: stretch;
 		gap: 0.5rem;
