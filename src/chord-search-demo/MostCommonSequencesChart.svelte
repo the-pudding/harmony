@@ -20,6 +20,12 @@
 	const chartData = $derived(chordSearchDemoStore.sequenceChartData);
 	const chartStatus = $derived(chordSearchDemoStore.sequenceChartStatus);
 	const chartError = $derived(chordSearchDemoStore.sequenceChartError);
+	const minNumChordsToCountAsAProgression = $derived(
+		chordSearchDemoStore.minNumChordsToCountAsAProgression
+	);
+	const chartTitle = $derived(
+		`Most common chord sequences (min length ${minNumChordsToCountAsAProgression})`
+	);
 	const isLoading = $derived(chartStatus === "loading");
 	const hasData = $derived(chartData.length > 0);
 	const showEmpty = $derived(chartStatus === "ready" && !hasData);
@@ -89,7 +95,7 @@
 </script>
 
 <section class="chart-section">
-	<h2 class="chart-title">Most common chord sequences (any length)</h2>
+	<h2 class="chart-title">{chartTitle}</h2>
 
 	{#if chartError}
 		<p class="error">{chartError}</p>

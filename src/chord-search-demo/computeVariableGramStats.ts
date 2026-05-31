@@ -14,7 +14,7 @@ export type VariableGramStat = {
 
 export type ComputeVariableGramStatsOptions = {
 	topN: number;
-	minLen: number;
+	minNumChordsToCountAsAProgression: number;
 	maxLen: number;
 };
 
@@ -43,7 +43,13 @@ const finalizeTopGramStats = (
 
 export const computePartialGramStats = (
 	sections: ChartSection[],
-	{ minLen, maxLen }: Pick<ComputeVariableGramStatsOptions, "minLen" | "maxLen">
+	{
+		minNumChordsToCountAsAProgression,
+		maxLen
+	}: Pick<
+		ComputeVariableGramStatsOptions,
+		"minNumChordsToCountAsAProgression" | "maxLen"
+	>
 ): PartialGramStats => {
 	const gramCounts = new Map<string, number>();
 	const gramSongs = new Map<string, Set<string>>();
@@ -51,7 +57,7 @@ export const computePartialGramStats = (
 	for (const { romanTokens, songKey } of sections) {
 		const seenInSection = new Set<string>();
 
-		for (let len = minLen; len <= maxLen; len++) {
+		for (let len = minNumChordsToCountAsAProgression; len <= maxLen; len++) {
 			for (let index = 0; index + len <= romanTokens.length; index++) {
 				const gram = romanTokens.slice(index, index + len).join(",");
 				gramCounts.set(gram, (gramCounts.get(gram) ?? 0) + 1);

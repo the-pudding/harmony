@@ -20,7 +20,7 @@ export type SequenceChartWorkerComputeMessage = {
 	searchAbstract: AbstractProgression | null;
 	options: {
 		topN: number;
-		minLen: number;
+		minNumChordsToCountAsAProgression: number;
 		maxLen: number;
 	};
 };

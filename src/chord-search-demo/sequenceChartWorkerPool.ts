@@ -23,7 +23,7 @@ import type {
 
 export type ChartComputeOptions = {
 	topN: number;
-	minLen: number;
+	minNumChordsToCountAsAProgression: number;
 	maxLen: number;
 };
 

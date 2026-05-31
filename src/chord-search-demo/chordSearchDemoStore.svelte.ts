@@ -11,10 +11,12 @@ import type {
 import { buildArtistOptions } from "./buildArtistOptions.js";
 import {
 	MAX_SEARCH_RESULTS,
+	MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_DEFAULT,
+	MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_MAX,
+	MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_MIN,
 	SEQUENCE_CHART_DEBOUNCE_MS,
 	SEQUENCE_CHART_TOP_N,
-	VARIABLE_GRAM_MAX_LENGTH,
-	VARIABLE_GRAM_MIN_LENGTH
+	VARIABLE_GRAM_MAX_LENGTH
 } from "./constants.js";
 import type { VariableGramStat } from "./computeVariableGramStats.js";
 import {
@@ -29,8 +31,11 @@ let searchResults = $state<SongSearchResult[]>([]);
 let bassAsRoot = $state(true);
 let ignoreSlashBassNotes = $state(true);
 let fuzzySearch = $state(true);
-let matchAtBeginningOnly = $state(true);
-let matchAtLeastTwice = $state(true);
+let matchAtBeginningOnly = $state(false);
+let matchAtLeastTwice = $state(false);
+let minNumChordsToCountAsAProgression = $state(
+	MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_DEFAULT
+);
 let titleFilter = $state("");
 let debouncedTitleFilter = $state("");
 let selectedArtist = $state("");
@@ -46,6 +51,12 @@ let chartRequestId = 0;
 const debouncedSetTitleFilter = debounce((value: string) => {
 	debouncedTitleFilter = value;
 }, SEQUENCE_CHART_DEBOUNCE_MS);
+
+const clampMinNumChordsToCountAsAProgression = (value: number) =>
+	Math.min(
+		MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_MAX,
+		Math.max(MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_MIN, Math.round(value))
+	);
 
 const progressionSearch = $derived(
 	createProgressionSearch({ songs, limit: MAX_SEARCH_RESULTS })
@@ -90,7 +101,7 @@ const runSequenceChartCompute = async () => {
 			searchAbstract: buildSearchAbstract(searchChords),
 			options: {
 				topN: SEQUENCE_CHART_TOP_N,
-				minLen: VARIABLE_GRAM_MIN_LENGTH,
+				minNumChordsToCountAsAProgression,
 				maxLen: VARIABLE_GRAM_MAX_LENGTH
 			}
 		});
@@ -115,6 +126,7 @@ $effect.root(() => {
 		fuzzySearch;
 		matchAtBeginningOnly;
 		matchAtLeastTwice;
+		minNumChordsToCountAsAProgression;
 		ignoreSlashBassNotes;
 		searchChords;
 		chartWorkerPoolReady;
@@ -193,6 +205,11 @@ const setMatchAtLeastTwice = (checked: boolean) => {
 	syncSearch();
 };
 
+const setMinNumChordsToCountAsAProgression = (value: number) => {
+	minNumChordsToCountAsAProgression =
+		clampMinNumChordsToCountAsAProgression(value);
+};
+
 const setSearchInputActive = (active: boolean) => {
 	searchInputActive = active;
 };
@@ -231,6 +248,9 @@ export const chordSearchDemoStore = {
 	get matchAtLeastTwice() {
 		return matchAtLeastTwice;
 	},
+	get minNumChordsToCountAsAProgression() {
+		return minNumChordsToCountAsAProgression;
+	},
 	get titleFilter() {
 		return titleFilter;
 	},
@@ -265,6 +285,7 @@ export const chordSearchDemoStore = {
 	setFuzzySearch,
 	setMatchAtBeginningOnly,
 	setMatchAtLeastTwice,
+	setMinNumChordsToCountAsAProgression,
 	setSearchInputActive,
 	getProgressionSearch,
 	disposeSequenceChartWorkers
