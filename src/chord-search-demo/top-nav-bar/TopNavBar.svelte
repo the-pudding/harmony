@@ -1,13 +1,20 @@
 <script lang="ts">
+	import SearchProgression from "../SearchProgression.svelte";
+	import { chordSearchDemoStore } from "../chordSearchDemoStore.svelte.js";
 	import ArtistFilter from "./ArtistFilter.svelte";
-	import SearchProgressionDisplay from "./SearchProgressionDisplay.svelte";
 	import TitleArtistFilter from "./TitleArtistFilter.svelte";
 </script>
 
 <nav class="top-nav" aria-label="Search filters and current progression">
 	<ArtistFilter />
 	<TitleArtistFilter />
-	<SearchProgressionDisplay />
+	<div class="progression-wrap">
+		<SearchProgression
+			chords={chordSearchDemoStore.searchChords}
+			fuzzySearch={chordSearchDemoStore.fuzzySearch}
+			ignoreSlashBassNotes={chordSearchDemoStore.ignoreSlashBassNotes}
+		/>
+	</div>
 </nav>
 
 <style>
@@ -25,5 +32,12 @@
 		border-bottom: 1px solid rgba(39, 39, 42, 0.8);
 		backdrop-filter: blur(8px);
 		box-sizing: border-box;
+	}
+
+	.progression-wrap {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		align-items: center;
 	}
 </style>
