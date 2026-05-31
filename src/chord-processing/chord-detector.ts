@@ -5,9 +5,9 @@ import {
 } from "./chord-gater/index.js";
 import {
 	createChordClassifier,
-	formatChordName,
 	structuredChordFromClassification
 } from "./chord-classifier/index.js";
+import { formatChordName } from "./formatChordDisplay.js";
 import { midiToNote, type MidiCoercible } from "./chord-classifier/notes.js";
 import type { ChordEvent, ChordTemplate, MidiDeviceInfo } from "./types.js";
 

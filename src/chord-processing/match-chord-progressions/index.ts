@@ -1,7 +1,5 @@
-import {
-	formatChordName,
-	hasDistinctBass
-} from "../chord-classifier/index.js";
+import { hasDistinctBass } from "../chord-classifier/index.js";
+import { formatChordName } from "../formatChordDisplay.js";
 import { simplifySuffix } from "../chord-classifier/fuzzySuffixMap.js";
 import { noteNameToPitchClass } from "../chord-classifier/notes.js";
 import {
@@ -28,8 +26,13 @@ const parseProgressionChord = ({
 	bassNoteName
 }: ProgressionChordInput): ParsedProgressionChord => {
 	const rootPitchClass = noteNameToPitchClass(noteName);
-	const bassPitchClass = bassNoteName ? noteNameToPitchClass(bassNoteName) : undefined;
-	const chord: StructuredChord = hasDistinctBass({ rootPitchClass, bassPitchClass })
+	const bassPitchClass = bassNoteName
+		? noteNameToPitchClass(bassNoteName)
+		: undefined;
+	const chord: StructuredChord = hasDistinctBass({
+		rootPitchClass,
+		bassPitchClass
+	})
 		? { rootPitchClass, suffix, bassPitchClass }
 		: { rootPitchClass, suffix };
 	return { ...chord, display: formatChordName(chord) };
@@ -115,7 +118,8 @@ const buildSongResult = (
 	return { song: preparedSong, matches };
 };
 
-const isMatched = ({ matches }: SongSearchResult): boolean => matches.length > 0;
+const isMatched = ({ matches }: SongSearchResult): boolean =>
+	matches.length > 0;
 
 export const createProgressionSearch = ({
 	songs,

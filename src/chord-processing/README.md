@@ -48,8 +48,8 @@ detector.disconnect();
     { noteName: "G",  octave: 4 },
     { noteName: "C",  octave: 5 },
   ],
-  chordName: "C minor",   // e.g. "C major", "G sus4", "C dim7 / Bb", "unknown"
-  chord: { rootPitchClass: 0, suffix: "minor" }, // structured form; bassPitchClass when slash (e.g. C major / G), or null when unknown
+  chordName: "Cm",   // e.g. "C", "G sus4", "C dim7 / Bb", "unknown"
+  chord: { rootPitchClass: 0, suffix: "minor" }, // structured form; bassPitchClass when slash (e.g. C / G), or null when unknown
 }
 ```
 
@@ -77,13 +77,14 @@ The bass pitch class is added to the treble set and the whole group is matched a
 src/chord-processing/
   index.ts                  public re-exports
   types.ts                  shared TypeScript types
+  formatChordDisplay.ts     UI display names (formatChordName)
   chord-detector.ts         wires: midi-input → chord-gater → chord-classifier
   midi-input/
     index.ts                createMidiInput
   chord-gater/
     index.ts                createChordGater
   chord-classifier/
-    index.ts                createChordClassifier + classify() + formatChordName
+    index.ts                createChordClassifier + classify()
     templates.ts            chord templates (major, minor, …)
     notes.ts                pitch-class arithmetic + note ↔ MIDI helpers
   match-chord-progressions/
@@ -121,7 +122,8 @@ gate.dispose(); // clears timer and notifies release if a chord was active
 Import `chord-classifier` on its own when you already have a bass note and treble notes — no MIDI required:
 
 ```ts
-import { createChordClassifier, formatChordName } from "../chord-processing/chord-classifier/index.js";
+import { createChordClassifier } from "../chord-processing/chord-classifier/index.js";
+import { formatChordName } from "../chord-processing/formatChordDisplay.js";
 
 const classifier = createChordClassifier();
 
@@ -138,8 +140,9 @@ classifier.classify({
 });
 // → { rootPitchClass: 0, suffix: "maj7" }  (bass included as a chord tone, rooted on C)
 
-formatChordName({ rootPitchClass: 0, suffix: "minor" });        // → "C minor"
-formatChordName({ rootPitchClass: 0, suffix: "major", bassPitchClass: 4 }); // → "C major / E"
+formatChordName({ rootPitchClass: 0, suffix: "minor" });        // → "Cm"
+formatChordName({ rootPitchClass: 0, suffix: "major" });        // → "C"
+formatChordName({ rootPitchClass: 0, suffix: "major", bassPitchClass: 4 }); // → "C / E"
 formatChordName(null);                                   // → "unknown"
 ```
 

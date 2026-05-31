@@ -5,11 +5,10 @@ export {
 	bassIntervalFromRoot,
 	chordsAreEqual,
 	createChordClassifier,
-	formatChordName,
 	hasDistinctBass,
-	structuredChordFromClassification,
-	UNKNOWN_CHORD_NAME
+	structuredChordFromClassification
 } from "./chord-classifier/index.js";
+export { formatChordName, UNKNOWN_CHORD_NAME } from "./formatChordDisplay.js";
 export { CHORD_TEMPLATES } from "./chord-classifier/templates.js";
 export {
 	midiToNote,
