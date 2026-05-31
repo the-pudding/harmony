@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { ARTIST_FILTER_OPTION_LIMIT } from "./constants.js";
+	import {
+		ARTIST_FILTER_OPTION_LIMIT,
+		TOP_NAV_ARTIST_FILTER_WIDTH,
+		TOP_NAV_FILTER_INPUT_HEIGHT
+	} from "./constants.js";
 	import type { ArtistOption } from "./buildArtistOptions.js";
 
 	let {
@@ -65,7 +69,10 @@
 	};
 </script>
 
-<div class="artist-filter">
+<div
+	class="artist-filter"
+	style="--artist-filter-width: {TOP_NAV_ARTIST_FILTER_WIDTH}; --filter-input-height: {TOP_NAV_FILTER_INPUT_HEIGHT};"
+>
 	<input
 		class="artist-input"
 		type="text"
@@ -114,7 +121,8 @@
 <style>
 	.artist-filter {
 		position: relative;
-		flex: 0 0 11rem;
+		flex: 0 0 var(--artist-filter-width);
+		width: var(--artist-filter-width);
 		min-width: 0;
 	}
 
@@ -125,7 +133,8 @@
 		color: #f4f4f5;
 		font-family: inherit;
 		font-size: 0.75rem;
-		padding: 0.375rem 1.75rem 0.375rem 0.625rem;
+		height: var(--filter-input-height);
+		padding: 0 1.75rem 0 0.625rem;
 		width: 100%;
 		box-sizing: border-box;
 		outline: none;

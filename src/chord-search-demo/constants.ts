@@ -1,5 +1,10 @@
 import { noteToMidi } from "../chord-processing/chord-classifier/notes.js";
-import type { Note } from "../chord-processing/types.js";
+import type { Note, SongDataSource } from "../chord-processing/types.js";
+
+export const SONG_DATA_SOURCE_TITLE: Record<SongDataSource, string> = {
+	UG: "Ultimate Guitar",
+	HT: "Hook Theory"
+};
 
 export { DEFAULT_SPLIT_BASS_NOTE as DEFAULT_SPLIT_NOTE } from "../chord-processing/chord-gater/index.js";
 
@@ -35,5 +40,8 @@ export const SONGS_DATA_URL = "/data/songs.json";
 export const SONGS_LOADING_MESSAGE = "Loading song dataset…";
 export const MAX_SEARCH_RESULTS = 10;
 export const ARTIST_FILTER_OPTION_LIMIT = 10;
+export const TOP_NAV_FILTER_INPUT_HEIGHT = "1.875rem";
+export const TOP_NAV_ARTIST_FILTER_WIDTH = "11rem";
+export const TOP_NAV_SONG_FILTER_WIDTH = "8rem";
 export const SONGS_LOAD_ERROR_PREFIX = "Could not load song dataset:";
 export const EVENT_LOG_EMPTY = "Waiting for events…";

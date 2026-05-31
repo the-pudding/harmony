@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { isPositionInMatch } from "../chord-processing/match-chord-progressions/match.js";
 	import type { SongSearchResult } from "../chord-processing/types.js";
+	import { SONG_DATA_SOURCE_TITLE } from "./constants.js";
 	import { buildYouTubeSearchUrl } from "./youtubeSearch.js";
 
 	let { result }: { result: SongSearchResult } = $props();
@@ -15,10 +16,17 @@
 		})
 	);
 	const artistLabel = $derived(result.song.artists.join(", "));
+	const source = $derived(result.song.source);
+	const sourceTitle = $derived(
+		source ? SONG_DATA_SOURCE_TITLE[source] : undefined
+	);
 </script>
 
 <div class="card" class:matched={isMatched}>
 	<div class="title">
+		{#if source}
+			<span class="source" title={sourceTitle}>{source}</span>
+		{/if}
 		<a
 			class="youtube-search"
 			href={youtubeSearchUrl}
@@ -31,7 +39,7 @@
 		<span class="artist"> — {artistLabel}</span>
 	</div>
 	<div class="chords">
-		{#each result.song.parsedProgression as chord, position}
+		{#each result.song.parsedProgression as chord, position (position)}
 			{@const highlighted = result.matches.some((match) =>
 				isPositionInMatch(position, match, songLength)
 			)}
@@ -72,6 +80,14 @@
 
 	.artist {
 		color: #71717a;
+	}
+
+	.source {
+		font-size: 0.5625rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		color: #52525b;
+		line-height: 1;
 	}
 
 	.youtube-search {

@@ -76,8 +76,11 @@ export type PrecomputedAbstractProgression = {
 	wrapDelta: number;
 };
 
+export type SongDataSource = "UG" | "HT";
+
 export type SongInput = {
 	id?: string;
+	source?: SongDataSource;
 	title: string;
 	artists: string[];
 	year?: number;

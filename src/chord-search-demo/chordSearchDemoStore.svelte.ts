@@ -14,7 +14,7 @@ let ignoreSlashBassNotes = $state(false);
 let fuzzySearch = $state(false);
 let matchAtBeginningOnly = $state(false);
 let matchAtLeastTwice = $state(false);
-let titleArtistFilter = $state("");
+let titleFilter = $state("");
 let selectedArtist = $state("");
 let searchInputActive = $state(true);
 
@@ -25,7 +25,7 @@ const progressionSearch = $derived(
 const artistOptions = $derived.by(() => buildArtistOptions(songs));
 
 const hasSearch = $derived(
-	searchChords.length > 0 || titleArtistFilter.length > 0 || selectedArtist.length > 0
+	searchChords.length > 0 || titleFilter.length > 0 || selectedArtist.length > 0
 );
 
 const syncSearch = () => {
@@ -35,7 +35,7 @@ const syncSearch = () => {
 		fuzzySearch,
 		matchAtBeginningOnly,
 		matchAtLeastTwice,
-		titleArtistFilter,
+		titleFilter,
 		selectedArtist
 	});
 };
@@ -55,8 +55,8 @@ const setSelectedArtist = (value: string) => {
 	syncSearch();
 };
 
-const setTitleArtistFilter = (value: string) => {
-	titleArtistFilter = value;
+const setTitleFilter = (value: string) => {
+	titleFilter = value;
 	syncSearch();
 };
 
@@ -108,8 +108,8 @@ export const chordSearchDemoStore = {
 	get matchAtLeastTwice() {
 		return matchAtLeastTwice;
 	},
-	get titleArtistFilter() {
-		return titleArtistFilter;
+	get titleFilter() {
+		return titleFilter;
 	},
 	get selectedArtist() {
 		return selectedArtist;
@@ -127,7 +127,7 @@ export const chordSearchDemoStore = {
 	syncSearch,
 	clearSearch,
 	setSelectedArtist,
-	setTitleArtistFilter,
+	setTitleFilter,
 	setIgnoreSlashBassNotes,
 	setFuzzySearch,
 	setMatchAtBeginningOnly,
