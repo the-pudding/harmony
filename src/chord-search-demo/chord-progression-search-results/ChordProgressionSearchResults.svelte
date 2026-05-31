@@ -3,9 +3,9 @@
 	import { chordSearchDemoStore } from "../chordSearchDemoStore.svelte.js";
 	import {
 		CLEAR_CHORDS_LABEL,
-		CLEAR_SENTINEL_LABEL,
+		CLEAR_SENTINEL_NOTES,
 		NO_MATCH_MESSAGE,
-		PAUSE_SENTINEL_LABEL,
+		PAUSE_SENTINEL_NOTES,
 		SEARCH_INPUT_ACTIVE_LABEL,
 		SEARCH_INPUT_PAUSED_LABEL,
 		SEARCH_PLACEHOLDER
@@ -22,11 +22,11 @@
 			{chordSearchDemoStore.searchInputActive
 				? SEARCH_INPUT_ACTIVE_LABEL
 				: SEARCH_INPUT_PAUSED_LABEL}
-			<span class="shortcut">· play {PAUSE_SENTINEL_LABEL}</span>
+			<span class="shortcut">· play {PAUSE_SENTINEL_NOTES}</span>
 		</span>
 		<button type="button" class="action-pill clear" onclick={chordSearchDemoStore.clearSearch}>
 			{CLEAR_CHORDS_LABEL}
-			<span class="shortcut">· play {CLEAR_SENTINEL_LABEL} or <kbd>esc</kbd></span>
+			<span class="shortcut">· play {CLEAR_SENTINEL_NOTES} or <kbd>esc</kbd></span>
 		</button>
 	</div>
 	<p class="hint">
@@ -39,7 +39,7 @@
 			<p class="empty">{NO_MATCH_MESSAGE}</p>
 		{:else}
 			<p class="results-label">
-				Top {chordSearchDemoStore.searchResults.length} most popular matching songs:
+				Sorted by popularity:
 			</p>
 			{#each chordSearchDemoStore.searchResults as result (result.song.id)}
 				<ChordProgressionSearchResult {result} />
@@ -111,6 +111,7 @@
 
 	.shortcut {
 		opacity: 0.75;
+		text-transform: none;
 	}
 
 	.action-pill kbd {

@@ -12,15 +12,15 @@
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import {
 		CHORD_SEARCH_DEMO_HORIZONTAL_MARGIN_PX,
-		CLEAR_SENTINEL_LABEL,
 		CLEAR_SENTINEL_MIDIS,
+		CLEAR_SENTINEL_NOTES,
 		DEFAULT_SETTLE_MS,
 		DEFAULT_SPLIT_NOTE,
 		ESCAPE_KEY,
 		LIVE_STATE_ACTIVE,
 		LIVE_STATE_MUTED,
-		PAUSE_SENTINEL_LABEL,
 		PAUSE_SENTINEL_MIDIS,
+		PAUSE_SENTINEL_NOTES,
 		SPLIT_NOTE_EDIT_TOOLTIP,
 		SONGS_DATA_URL,
 		SONGS_LOAD_ERROR_PREFIX,
@@ -57,8 +57,8 @@
 		held.size === sentinel.size && [...sentinel].every((midi) => held.has(midi));
 
 	const pianoSentinels = [
-		{ midis: CLEAR_SENTINEL_MIDIS, label: CLEAR_SENTINEL_LABEL },
-		{ midis: PAUSE_SENTINEL_MIDIS, label: PAUSE_SENTINEL_LABEL }
+		{ midis: CLEAR_SENTINEL_MIDIS, label: CLEAR_SENTINEL_NOTES },
+		{ midis: PAUSE_SENTINEL_MIDIS, label: PAUSE_SENTINEL_NOTES }
 	];
 
 	const formatSplitNote = (midi: number) => {
@@ -187,17 +187,12 @@
 <svelte:window onkeydown={onKeydown} />
 
 <div class="page">
-	<TopNavBar />
-	<div class="midi-status">
-		{#if isConnected}
-			<span class="connected" title={selectedInputName}>connected</span>
-		{:else}
-			<button type="button" class="connect" onclick={attemptConnect}>connect</button>
-		{/if}
-		{#if connectError}
-			<span class="connect-error">{connectError}</span>
-		{/if}
-	</div>
+	<TopNavBar
+		{isConnected}
+		{selectedInputName}
+		{connectError}
+		onConnect={attemptConnect}
+	/>
 
 	<div class="piano-strip">
 		<Piano
@@ -225,7 +220,6 @@
 		<div class="live-output" data-live-state={liveState}>
 			<div class="demo-columns">
 				<div class="column">
-					<h1 class="column-title">Define... 'chord progression'</h1>
 					<ChordProgressionCriteria />
 					<MostCommonSequencesChart />
 				</div>
@@ -251,50 +245,6 @@
 		flex-direction: column;
 		position: relative;
 		padding-top: 3.25rem;
-	}
-
-	.midi-status {
-		position: fixed;
-		top: 3.75rem;
-		right: 1.5rem;
-		z-index: 10;
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 0.375rem;
-	}
-
-	.connected {
-		font-size: 0.75rem;
-		font-weight: 500;
-		color: #4ade80;
-		text-transform: lowercase;
-		cursor: default;
-	}
-
-	.connect {
-		font-size: 0.75rem;
-		font-weight: 500;
-		color: #a1a1aa;
-		background: transparent;
-		border: 1px solid rgba(63, 63, 70, 0.8);
-		border-radius: 0.25rem;
-		padding: 0.25rem 0.625rem;
-		cursor: pointer;
-		font-family: inherit;
-		text-transform: lowercase;
-	}
-
-	.connect:hover {
-		color: #e4e4e7;
-		border-color: #52525b;
-	}
-
-	.connect-error {
-		font-size: 0.625rem;
-		color: #f87171;
-		max-width: 12rem;
-		text-align: right;
 	}
 
 	.piano-strip {

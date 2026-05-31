@@ -1,4 +1,7 @@
-import { noteToMidi } from "../chord-processing/chord-classifier/notes.js";
+import {
+	midiToNote,
+	noteToMidi
+} from "../chord-processing/chord-classifier/notes.js";
 import type { Note, SongDataSource } from "../chord-processing/types.js";
 
 export const SONG_DATA_SOURCE_TITLE: Record<SongDataSource, string> = {
@@ -9,6 +12,7 @@ export const SONG_DATA_SOURCE_TITLE: Record<SongDataSource, string> = {
 export { DEFAULT_SPLIT_BASS_NOTE as DEFAULT_SPLIT_NOTE } from "../chord-processing/chord-gater/index.js";
 
 const SENTINEL_HALF_STEP_COUNT = 3;
+const SENTINEL_NOTE_SEPARATOR = ",";
 
 const buildHalfStepSentinel = (noteName: Note["noteName"], octave: number) =>
 	new Set(
@@ -17,11 +21,20 @@ const buildHalfStepSentinel = (noteName: Note["noteName"], octave: number) =>
 		)
 	);
 
+const formatSentinelNotes = (midis: Set<number>) =>
+	[...midis]
+		.sort((a, b) => a - b)
+		.map((midi) => {
+			const { noteName, octave } = midiToNote(midi);
+			return `${noteName}${octave}`;
+		})
+		.join(SENTINEL_NOTE_SEPARATOR);
+
 export const CLEAR_SENTINEL_MIDIS = buildHalfStepSentinel("C", 2);
-export const CLEAR_SENTINEL_LABEL = "delete";
+export const CLEAR_SENTINEL_NOTES = formatSentinelNotes(CLEAR_SENTINEL_MIDIS);
 
 export const PAUSE_SENTINEL_MIDIS = buildHalfStepSentinel("Bb", 4);
-export const PAUSE_SENTINEL_LABEL = "pause";
+export const PAUSE_SENTINEL_NOTES = formatSentinelNotes(PAUSE_SENTINEL_MIDIS);
 
 export const SEARCH_INPUT_ACTIVE_LABEL = "taking chord input";
 export const SEARCH_INPUT_PAUSED_LABEL = "chord input paused";
