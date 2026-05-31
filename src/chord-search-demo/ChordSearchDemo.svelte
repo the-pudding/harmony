@@ -155,21 +155,31 @@
 		detector?.reclassify();
 	});
 
-	onMount(async () => {
-		try {
-			const response = await fetch(SONGS_DATA_URL);
-			if (!response.ok) {
-				throw new Error(`${SONGS_LOAD_ERROR_PREFIX} HTTP ${response.status}`);
+	onMount(() => {
+		const loadSongs = async () => {
+			try {
+				const response = await fetch(SONGS_DATA_URL);
+				if (!response.ok) {
+					throw new Error(`${SONGS_LOAD_ERROR_PREFIX} HTTP ${response.status}`);
+				}
+				await chordSearchDemoStore.setSongs(await response.json());
+			} catch (err) {
+				songsError = err instanceof Error ? err.message : String(err);
+			} finally {
+				songsLoading = false;
 			}
-			chordSearchDemoStore.setSongs(await response.json());
-		} catch (err) {
-			songsError = err instanceof Error ? err.message : String(err);
-		} finally {
-			songsLoading = false;
-		}
+		};
+
+		void loadSongs();
+
 		if (window.isSecureContext && typeof navigator.requestMIDIAccess === "function") {
-			attemptConnect();
+			void attemptConnect();
 		}
+
+		return () => {
+			chordSearchDemoStore.disposeSequenceChartWorkers();
+			detector?.disconnect();
+		};
 	});
 </script>
 

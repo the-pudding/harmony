@@ -9,6 +9,7 @@
 		SEQUENCE_CHART_HIGHLIGHT_COLOR,
 		SEQUENCE_CHART_LABEL_WIDTH_PX,
 		SEQUENCE_CHART_LENGTH_COLORS,
+		SEQUENCE_CHART_LOADING_MESSAGE,
 		SEQUENCE_CHART_MARGIN_BOTTOM_PX,
 		SEQUENCE_CHART_MARGIN_LEFT_PX,
 		SEQUENCE_CHART_MARGIN_RIGHT_PX,
@@ -17,7 +18,12 @@
 	} from "./constants.js";
 
 	const chartData = $derived(chordSearchDemoStore.sequenceChartData);
+	const chartStatus = $derived(chordSearchDemoStore.sequenceChartStatus);
+	const chartError = $derived(chordSearchDemoStore.sequenceChartError);
+	const isLoading = $derived(chartStatus === "loading");
 	const hasData = $derived(chartData.length > 0);
+	const showEmpty = $derived(chartStatus === "ready" && !hasData);
+	const showChart = $derived(hasData);
 
 	const chartHeight = $derived(
 		SEQUENCE_CHART_TOP_N * SEQUENCE_CHART_BAR_HEIGHT_PX +
@@ -85,16 +91,23 @@
 <section class="chart-section">
 	<h2 class="chart-title">Most common chord sequences (any length)</h2>
 
-	{#if !hasData}
+	{#if chartError}
+		<p class="error">{chartError}</p>
+	{/if}
+
+	{#if isLoading && !showChart}
+		<p class="status">{SEQUENCE_CHART_LOADING_MESSAGE}</p>
+	{:else if showEmpty}
 		<p class="empty">{SEQUENCE_CHART_EMPTY_MESSAGE}</p>
-	{:else}
-		<div class="chart-wrap" style:height="{chartHeight}px">
+	{:else if showChart}
+		<div class="chart-wrap" class:is-loading={isLoading} style:height="{chartHeight}px">
 			<svg
 				class="chart"
 				width={chartWidth}
 				height={chartHeight}
 				role="img"
 				aria-label="Horizontal bar chart of most common chord sequences"
+				aria-busy={isLoading}
 			>
 				<g transform="translate({SEQUENCE_CHART_LABEL_WIDTH_PX + SEQUENCE_CHART_MARGIN_LEFT_PX}, 0)">
 					{#each xTicks as tick (tick)}
@@ -153,6 +166,10 @@
 				{/each}
 			</svg>
 
+			{#if isLoading}
+				<div class="loading-overlay">{SEQUENCE_CHART_LOADING_MESSAGE}</div>
+			{/if}
+
 			{#if tooltip}
 				<div
 					class="tooltip"
@@ -183,9 +200,16 @@
 		letter-spacing: -0.02em;
 	}
 
+	.status,
 	.empty {
 		font-size: 0.875rem;
 		color: #71717a;
+		margin: 0;
+	}
+
+	.error {
+		font-size: 0.875rem;
+		color: #fca5a5;
 		margin: 0;
 	}
 
@@ -195,8 +219,24 @@
 		overflow-x: auto;
 	}
 
+	.chart-wrap.is-loading .chart {
+		opacity: 0.45;
+	}
+
 	.chart {
 		display: block;
+		transition: opacity 0.2s ease-out;
+	}
+
+	.loading-overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.875rem;
+		color: #a1a1aa;
+		pointer-events: none;
 	}
 
 	.grid-line {

@@ -1,5 +1,8 @@
 import debounce from "lodash.debounce";
-import { createProgressionSearch } from "../chord-processing/index.js";
+import {
+	createProgressionSearch,
+	toAbstractProgression
+} from "../chord-processing/index.js";
 import type {
 	ParsedProgressionChord,
 	SongInput,
@@ -13,8 +16,12 @@ import {
 	VARIABLE_GRAM_MAX_LENGTH,
 	VARIABLE_GRAM_MIN_LENGTH
 } from "./constants.js";
-import { computeVariableGramStats } from "./computeVariableGramStats.js";
-import { resolveChartCorpus } from "./resolveChartCorpus.js";
+import type { VariableGramStat } from "./computeVariableGramStats.js";
+import {
+	computeSequenceChartStats,
+	initSequenceChartWorkerPoolFromSongs,
+	terminateSequenceChartWorkerPool
+} from "./sequenceChartWorkerPool.js";
 
 let songs = $state<SongInput[]>([]);
 let searchChords = $state<ParsedProgressionChord[]>([]);
@@ -28,6 +35,13 @@ let titleFilter = $state("");
 let debouncedTitleFilter = $state("");
 let selectedArtist = $state("");
 let searchInputActive = $state(true);
+let sequenceChartData = $state<VariableGramStat[]>([]);
+let sequenceChartStatus = $state<"idle" | "loading" | "ready" | "error">(
+	"idle"
+);
+let sequenceChartError = $state("");
+let chartWorkerPoolReady = $state(false);
+let chartRequestId = 0;
 
 const debouncedSetTitleFilter = debounce((value: string) => {
 	debouncedTitleFilter = value;
@@ -43,36 +57,71 @@ const hasSearch = $derived(
 	searchChords.length > 0 || titleFilter.length > 0 || selectedArtist.length > 0
 );
 
-const sequenceChartData = $derived.by(() => {
-	const hasSearchChords = searchChords.length > 0;
-	const matchingResults = hasSearchChords
-		? progressionSearch.getResults({
-				ignoreSlashBass: ignoreSlashBassNotes,
-				fuzzySearch,
-				matchAtBeginningOnly,
-				matchAtLeastTwice,
+const buildSearchAbstract = (chords: ParsedProgressionChord[]) => {
+	const effectiveChords = ignoreSlashBassNotes
+		? chords.map(
+				({ bassPitchClass: _bass, ...chord }) => chord as ParsedProgressionChord
+			)
+		: chords;
+
+	return effectiveChords.length > 0
+		? toAbstractProgression(effectiveChords)
+		: null;
+};
+
+const runSequenceChartCompute = async () => {
+	if (!chartWorkerPoolReady) return;
+
+	const requestId = chartRequestId + 1;
+	chartRequestId = requestId;
+	sequenceChartStatus = "loading";
+
+	try {
+		const result = await computeSequenceChartStats({
+			requestId,
+			filters: {
+				hasSearchChords: searchChords.length > 0,
 				titleFilter: debouncedTitleFilter,
 				selectedArtist,
-				resultLimit: Infinity
-			})
-		: [];
+				fuzzySearch,
+				matchAtBeginningOnly,
+				matchAtLeastTwice
+			},
+			searchAbstract: buildSearchAbstract(searchChords),
+			options: {
+				topN: SEQUENCE_CHART_TOP_N,
+				minLen: VARIABLE_GRAM_MIN_LENGTH,
+				maxLen: VARIABLE_GRAM_MAX_LENGTH
+			}
+		});
 
-	const corpus = resolveChartCorpus(songs, {
-		hasSearchChords,
-		titleFilter: debouncedTitleFilter,
-		selectedArtist,
-		getMatchingSongIds: () =>
-			new Set(
-				matchingResults
-					.map(({ song }) => song.id)
-					.filter((id): id is string => id !== undefined)
-			)
-	});
+		if (requestId !== chartRequestId) return;
 
-	return computeVariableGramStats(corpus, {
-		topN: SEQUENCE_CHART_TOP_N,
-		minLen: VARIABLE_GRAM_MIN_LENGTH,
-		maxLen: VARIABLE_GRAM_MAX_LENGTH
+		sequenceChartData = result;
+		sequenceChartStatus = "ready";
+		sequenceChartError = "";
+	} catch (error) {
+		if (requestId !== chartRequestId) return;
+
+		sequenceChartStatus = "error";
+		sequenceChartError = error instanceof Error ? error.message : String(error);
+	}
+};
+
+$effect.root(() => {
+	$effect(() => {
+		debouncedTitleFilter;
+		selectedArtist;
+		fuzzySearch;
+		matchAtBeginningOnly;
+		matchAtLeastTwice;
+		ignoreSlashBassNotes;
+		searchChords;
+		chartWorkerPoolReady;
+
+		if (!chartWorkerPoolReady) return;
+
+		void runSequenceChartCompute();
 	});
 });
 
@@ -93,9 +142,20 @@ const clearSearch = () => {
 	syncSearch();
 };
 
-const setSongs = (nextSongs: SongInput[]) => {
+const setSongs = async (nextSongs: SongInput[]) => {
 	songs = nextSongs;
 	syncSearch();
+	sequenceChartStatus = "loading";
+	chartWorkerPoolReady = false;
+
+	try {
+		await initSequenceChartWorkerPoolFromSongs(nextSongs);
+		chartWorkerPoolReady = true;
+	} catch (error) {
+		chartWorkerPoolReady = false;
+		sequenceChartStatus = "error";
+		sequenceChartError = error instanceof Error ? error.message : String(error);
+	}
 };
 
 const setSelectedArtist = (value: string) => {
@@ -138,6 +198,13 @@ const setSearchInputActive = (active: boolean) => {
 };
 
 const getProgressionSearch = () => progressionSearch;
+
+const disposeSequenceChartWorkers = () => {
+	terminateSequenceChartWorkerPool();
+	chartWorkerPoolReady = false;
+	chartRequestId += 1;
+	sequenceChartStatus = "idle";
+};
 
 export const chordSearchDemoStore = {
 	get songs() {
@@ -182,6 +249,12 @@ export const chordSearchDemoStore = {
 	get sequenceChartData() {
 		return sequenceChartData;
 	},
+	get sequenceChartStatus() {
+		return sequenceChartStatus;
+	},
+	get sequenceChartError() {
+		return sequenceChartError;
+	},
 	setSongs,
 	syncSearch,
 	clearSearch,
@@ -193,5 +266,6 @@ export const chordSearchDemoStore = {
 	setMatchAtBeginningOnly,
 	setMatchAtLeastTwice,
 	setSearchInputActive,
-	getProgressionSearch
+	getProgressionSearch,
+	disposeSequenceChartWorkers
 };

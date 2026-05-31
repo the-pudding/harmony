@@ -99,11 +99,23 @@ export const findSubProgressionMatchesPrecomputed = (
 	{ wrap = false }: { wrap?: boolean } = {}
 ): SubProgressionMatch[] => {
 	if (searchProgression.length === 0) return [];
-	if (searchProgression.length > songAbstract.suffixes.length) return [];
+	return findSubProgressionMatchesPrecomputedFromAbstract(
+		songAbstract,
+		toAbstractProgression(searchProgression),
+		{ wrap }
+	);
+};
 
-	const searchAbstract = toAbstractProgression(searchProgression);
+export const findSubProgressionMatchesPrecomputedFromAbstract = (
+	songAbstract: PrecomputedAbstractProgression,
+	searchAbstract: AbstractProgression,
+	{ wrap = false }: { wrap?: boolean } = {}
+): SubProgressionMatch[] => {
+	const searchLength = searchAbstract.suffixes.length;
+	if (searchLength === 0) return [];
+	if (searchLength > songAbstract.suffixes.length) return [];
+
 	const songLength = songAbstract.suffixes.length;
-	const searchLength = searchProgression.length;
 	const lastStart = wrap ? songLength - 1 : songLength - searchLength;
 	const matches: SubProgressionMatch[] = [];
 

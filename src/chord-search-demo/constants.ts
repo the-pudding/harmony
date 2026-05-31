@@ -51,6 +51,8 @@ export const SEQUENCE_CHART_MARGIN_RIGHT_PX = 24;
 export const SEQUENCE_CHART_MARGIN_TOP_PX = 8;
 export const SEQUENCE_CHART_MARGIN_BOTTOM_PX = 32;
 export const SEQUENCE_CHART_DEBOUNCE_MS = 200;
+export const SEQUENCE_CHART_WORKER_POOL_MAX = 8;
+export const SEQUENCE_CHART_WORKER_CHUNK_MIN_SECTIONS = 500;
 export const SEQUENCE_CHART_EMPTY_MESSAGE =
 	"No sections match the current filters.";
 export const SEQUENCE_CHART_LOADING_MESSAGE = "Computing sequence statistics…";

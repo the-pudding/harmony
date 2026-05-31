@@ -212,6 +212,7 @@ export {
 	toPrecomputedAbstractProgression,
 	findSubProgressionMatches,
 	findSubProgressionMatchesPrecomputed,
+	findSubProgressionMatchesPrecomputedFromAbstract,
 	applyProgressionMatchFilters,
 	progressionContainsSubProgression,
 	isPositionInMatch,
