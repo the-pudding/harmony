@@ -93,6 +93,8 @@ export type SongInput = {
 	deltas?: number[];
 	bassIntervals?: (number | null)[];
 	wrapDelta?: number;
+	romanTokens?: string[];
+	songKey?: string;
 };
 
 export type ParsedProgressionChord = StructuredChord & { display: string };

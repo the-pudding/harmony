@@ -1,3 +1,4 @@
+import debounce from "lodash.debounce";
 import { createProgressionSearch } from "../chord-processing/index.js";
 import type {
 	ParsedProgressionChord,
@@ -5,7 +6,15 @@ import type {
 	SongSearchResult
 } from "../chord-processing/types.js";
 import { buildArtistOptions } from "./buildArtistOptions.js";
-import { MAX_SEARCH_RESULTS } from "./constants.js";
+import {
+	MAX_SEARCH_RESULTS,
+	SEQUENCE_CHART_DEBOUNCE_MS,
+	SEQUENCE_CHART_TOP_N,
+	VARIABLE_GRAM_MAX_LENGTH,
+	VARIABLE_GRAM_MIN_LENGTH
+} from "./constants.js";
+import { computeVariableGramStats } from "./computeVariableGramStats.js";
+import { resolveChartCorpus } from "./resolveChartCorpus.js";
 
 let songs = $state<SongInput[]>([]);
 let searchChords = $state<ParsedProgressionChord[]>([]);
@@ -16,8 +25,13 @@ let fuzzySearch = $state(true);
 let matchAtBeginningOnly = $state(true);
 let matchAtLeastTwice = $state(true);
 let titleFilter = $state("");
+let debouncedTitleFilter = $state("");
 let selectedArtist = $state("");
 let searchInputActive = $state(true);
+
+const debouncedSetTitleFilter = debounce((value: string) => {
+	debouncedTitleFilter = value;
+}, SEQUENCE_CHART_DEBOUNCE_MS);
 
 const progressionSearch = $derived(
 	createProgressionSearch({ songs, limit: MAX_SEARCH_RESULTS })
@@ -28,6 +42,39 @@ const artistOptions = $derived.by(() => buildArtistOptions(songs));
 const hasSearch = $derived(
 	searchChords.length > 0 || titleFilter.length > 0 || selectedArtist.length > 0
 );
+
+const sequenceChartData = $derived.by(() => {
+	const hasSearchChords = searchChords.length > 0;
+	const matchingResults = hasSearchChords
+		? progressionSearch.getResults({
+				ignoreSlashBass: ignoreSlashBassNotes,
+				fuzzySearch,
+				matchAtBeginningOnly,
+				matchAtLeastTwice,
+				titleFilter: debouncedTitleFilter,
+				selectedArtist,
+				resultLimit: Infinity
+			})
+		: [];
+
+	const corpus = resolveChartCorpus(songs, {
+		hasSearchChords,
+		titleFilter: debouncedTitleFilter,
+		selectedArtist,
+		getMatchingSongIds: () =>
+			new Set(
+				matchingResults
+					.map(({ song }) => song.id)
+					.filter((id): id is string => id !== undefined)
+			)
+	});
+
+	return computeVariableGramStats(corpus, {
+		topN: SEQUENCE_CHART_TOP_N,
+		minLen: VARIABLE_GRAM_MIN_LENGTH,
+		maxLen: VARIABLE_GRAM_MAX_LENGTH
+	});
+});
 
 const syncSearch = () => {
 	searchChords = progressionSearch.getSearchProgression();
@@ -58,6 +105,7 @@ const setSelectedArtist = (value: string) => {
 
 const setTitleFilter = (value: string) => {
 	titleFilter = value;
+	debouncedSetTitleFilter(value);
 	syncSearch();
 };
 
@@ -130,6 +178,9 @@ export const chordSearchDemoStore = {
 	},
 	get hasSearch() {
 		return hasSearch;
+	},
+	get sequenceChartData() {
+		return sequenceChartData;
 	},
 	setSongs,
 	syncSearch,

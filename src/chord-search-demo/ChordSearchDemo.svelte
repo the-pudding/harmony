@@ -6,7 +6,8 @@
 	import Piano from "$components/piano/Piano.svelte";
 	import NoMidiBanner from "./NoMidiBanner.svelte";
 	import ChordProgressionCriteria from "./ChordProgressionCriteria.svelte";
-	import SearchSongsCard from "./SearchSongsCard.svelte";
+	import ChordProgressionSearchResults from "./ChordProgressionSearchResults.svelte";
+	import MostCommonSequencesChart from "./MostCommonSequencesChart.svelte";
 	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import {
@@ -208,10 +209,19 @@
 		<NoMidiBanner message={midiBanner} />
 
 		<div class="live-output" data-live-state={liveState}>
-			<div class="search-group">
-				<ChordProgressionCriteria />
-				<SearchSongsCard />
+			<div class="demo-columns">
+				<div class="column">
+					<h1 class="column-title">
+						Define... <span class="column-title-emphasis">'chord progression'</span>
+					</h1>
+					<ChordProgressionCriteria />
+				</div>
+				<div class="column">
+					<h1 class="column-title">Song results</h1>
+					<ChordProgressionSearchResults />
+				</div>
 			</div>
+			<MostCommonSequencesChart />
 		</div>
 	</div>
 </div>
@@ -284,7 +294,7 @@
 	.demo {
 		color: #f4f4f5;
 		padding: 1.5rem 2rem 2rem;
-		max-width: 48rem;
+		max-width: 72rem;
 		margin: 0 auto;
 		width: 100%;
 		box-sizing: border-box;
@@ -318,14 +328,30 @@
 		opacity: 1;
 	}
 
-	.search-group {
-		border-radius: 0.75rem;
-		border: 1px solid rgba(67, 56, 202, 0.4);
-		background: rgba(30, 27, 75, 0.1);
-		padding: 1rem;
+	.demo-columns {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 2rem;
+		align-items: start;
+	}
+
+	.column {
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-		box-shadow: inset 0 0 0 1px rgba(49, 46, 129, 0.25);
+		min-width: 0;
+	}
+
+	.column-title {
+		font-size: 1.75rem;
+		font-weight: 600;
+		line-height: 1.2;
+		color: #f4f4f5;
+		margin: 0;
+		letter-spacing: -0.02em;
+	}
+
+	.column-title-emphasis {
+		color: #a5b4fc;
 	}
 </style>

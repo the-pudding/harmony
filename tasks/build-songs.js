@@ -127,6 +127,31 @@ const compareSongsByPopularity = (a, b) => {
 	return a.title.localeCompare(b.title);
 };
 
+const ROMAN_BASE = ["I", "II", "III", "IV", "V", "VI", "VII"];
+
+const degreeQualityToRoman = (degree, quality) => {
+	if (degree < 1 || degree > ROMAN_BASE.length) return null;
+
+	const base = ROMAN_BASE[degree - 1];
+
+	if (quality === "maj") return base;
+	if (quality === "min") return base.toLowerCase();
+	if (quality === "dim") return `${base.toLowerCase()}°`;
+	if (quality === "aug") return `${base}+`;
+
+	return null;
+};
+
+const dedupeAdjacentTokens = (tokens) =>
+	tokens.filter((token, index) => index === 0 || token !== tokens[index - 1]);
+
+const chordsToRomanTokens = (chords) =>
+	dedupeAdjacentTokens(
+		(chords ?? [])
+			.map(({ degree, quality }) => degreeQualityToRoman(degree, quality))
+			.filter(Boolean)
+	);
+
 const qualityExtensionToSuffix = ({ quality, extension, suspensions }) => {
 	const suspension = suspensions?.[0] ?? null;
 
@@ -212,9 +237,14 @@ const sectionToSongInput = (
 	popularityScore,
 	source
 ) => {
-	const progression = (section.chords ?? [])
+	const keptChords = (section.chords ?? []).filter(
+		(chord) =>
+			chordToProgressionInput(chord, section.key, section.scale) !== null
+	);
+	const progression = keptChords
 		.map((chord) => chordToProgressionInput(chord, section.key, section.scale))
 		.filter(Boolean);
+	const romanTokens = chordsToRomanTokens(keptChords);
 
 	if (progression.length === 0) return null;
 
@@ -229,6 +259,7 @@ const sectionToSongInput = (
 
 	return {
 		id: `${artistSlug}__${songSlug}__${sectionId}`,
+		songKey: trackerKey(artistSlug, songSlug),
 		source,
 		title,
 		artists,
@@ -241,6 +272,7 @@ const sectionToSongInput = (
 				}
 			: {}),
 		progression,
+		romanTokens,
 		...abstractProgression
 	};
 };

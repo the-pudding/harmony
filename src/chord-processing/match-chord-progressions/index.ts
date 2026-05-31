@@ -144,7 +144,8 @@ export const createProgressionSearch = ({
 		matchAtBeginningOnly = false,
 		matchAtLeastTwice = false,
 		titleFilter = "",
-		selectedArtist = ""
+		selectedArtist = "",
+		resultLimit = limit
 	}: {
 		ignoreSlashBass?: boolean;
 		fuzzySearch?: boolean;
@@ -152,6 +153,7 @@ export const createProgressionSearch = ({
 		matchAtLeastTwice?: boolean;
 		titleFilter?: string;
 		selectedArtist?: string;
+		resultLimit?: number;
 	} = {}): SongSearchResult[] => {
 		const hasChords = searchProgression.length > 0;
 		if (!hasChords && !titleFilter && !selectedArtist) return [];
@@ -176,11 +178,11 @@ export const createProgressionSearch = ({
 				});
 				if (isMatched(result)) {
 					results.push(result);
-					if (results.length >= limit) break;
+					if (results.length >= resultLimit) break;
 				}
 			} else {
 				results.push({ song, matches: [] });
-				if (results.length >= limit) break;
+				if (results.length >= resultLimit) break;
 			}
 		}
 		return results;

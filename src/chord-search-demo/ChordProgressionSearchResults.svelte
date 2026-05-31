@@ -6,18 +6,15 @@
 
 <section class="card">
 	<div class="head">
-		<div class="title-row">
-			<h2>Search Songs by Chord</h2>
-			<span
-				class="input-status"
-				class:active={chordSearchDemoStore.searchInputActive}
-				class:paused={!chordSearchDemoStore.searchInputActive}
-			>
-				{chordSearchDemoStore.searchInputActive
-					? SEARCH_INPUT_ACTIVE_LABEL
-					: SEARCH_INPUT_PAUSED_LABEL}
-			</span>
-		</div>
+		<span
+			class="input-status"
+			class:active={chordSearchDemoStore.searchInputActive}
+			class:paused={!chordSearchDemoStore.searchInputActive}
+		>
+			{chordSearchDemoStore.searchInputActive
+				? SEARCH_INPUT_ACTIVE_LABEL
+				: SEARCH_INPUT_PAUSED_LABEL}
+		</span>
 		<button type="button" class="clear" onclick={chordSearchDemoStore.clearSearch}>
 			Clear search (or hit escape)
 		</button>
@@ -58,23 +55,6 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.75rem;
-	}
-
-	.title-row {
-		display: flex;
-		align-items: center;
-		gap: 0.625rem;
-		flex-wrap: wrap;
-		min-width: 0;
-	}
-
-	h2 {
-		font-size: 0.75rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: #a1a1aa;
-		margin: 0;
 	}
 
 	.input-status {

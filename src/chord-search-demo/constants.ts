@@ -39,6 +39,32 @@ export const NO_MATCH_MESSAGE =
 export const SONGS_DATA_URL = "/data/songs.json";
 export const SONGS_LOADING_MESSAGE = "Loading song dataset…";
 export const MAX_SEARCH_RESULTS = 10;
+
+export const VARIABLE_GRAM_MIN_LENGTH = 2;
+export const VARIABLE_GRAM_MAX_LENGTH = 6;
+export const SEQUENCE_CHART_TOP_N = 20;
+export const FOUR_CHORDS_PROGRESSION_LABEL = "I→V→vi→IV";
+export const SEQUENCE_CHART_BAR_HEIGHT_PX = 30;
+export const SEQUENCE_CHART_LABEL_WIDTH_PX = 220;
+export const SEQUENCE_CHART_MARGIN_LEFT_PX = 8;
+export const SEQUENCE_CHART_MARGIN_RIGHT_PX = 24;
+export const SEQUENCE_CHART_MARGIN_TOP_PX = 8;
+export const SEQUENCE_CHART_MARGIN_BOTTOM_PX = 32;
+export const SEQUENCE_CHART_DEBOUNCE_MS = 200;
+export const SEQUENCE_CHART_EMPTY_MESSAGE =
+	"No sections match the current filters.";
+export const SEQUENCE_CHART_LOADING_MESSAGE = "Computing sequence statistics…";
+
+export const SEQUENCE_CHART_LENGTH_COLORS: Record<number, string> = {
+	2: "#89b4fa",
+	3: "#a6e3a1",
+	4: "#f5a97f",
+	5: "#f38ba8",
+	6: "#cba6f7"
+};
+
+export const SEQUENCE_CHART_HIGHLIGHT_COLOR = "#ffffff";
+export const SEQUENCE_CHART_FALLBACK_BAR_COLOR = "#888888";
 export const ARTIST_FILTER_OPTION_LIMIT = 10;
 export const TOP_NAV_FILTER_INPUT_HEIGHT = "1.875rem";
 export const TOP_NAV_ARTIST_FILTER_WIDTH = "11rem";
