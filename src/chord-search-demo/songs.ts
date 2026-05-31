@@ -3,7 +3,7 @@ import type { SongInput } from "../chord-processing/types.js";
 export const SONGS: SongInput[] = [
 	{
 		title: "Hey, Soul Sister",
-		artist: "Train",
+		artists: ["Train"],
 		progression: [
 			{ noteName: "C", suffix: "major" },
 			{ noteName: "G", suffix: "major" },
@@ -13,7 +13,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "Let It Be",
-		artist: "The Beatles",
+		artists: ["The Beatles"],
 		progression: [
 			{ noteName: "C", suffix: "major" },
 			{ noteName: "G", suffix: "major" },
@@ -23,7 +23,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "No Woman No Cry",
-		artist: "Bob Marley",
+		artists: ["Bob Marley"],
 		progression: [
 			{ noteName: "C", suffix: "major" },
 			{ noteName: "G", suffix: "major" },
@@ -33,7 +33,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "Don't Stop Believin'",
-		artist: "Journey",
+		artists: ["Journey"],
 		progression: [
 			{ noteName: "E", suffix: "major" },
 			{ noteName: "B", suffix: "major" },
@@ -43,7 +43,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "Sunday Morning",
-		artist: "Maroon 5",
+		artists: ["Maroon 5"],
 		progression: [
 			{ noteName: "D", suffix: "minor7" },
 			{ noteName: "G", suffix: "7" },
@@ -52,7 +52,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "Fly Me To The Moon",
-		artist: "Frank Sinatra",
+		artists: ["Frank Sinatra"],
 		progression: [
 			{ noteName: "A", suffix: "minor7" },
 			{ noteName: "D", suffix: "minor7" },
@@ -62,7 +62,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "Autumn Leaves",
-		artist: "Jazz Standard",
+		artists: ["Jazz Standard"],
 		progression: [
 			{ noteName: "A", suffix: "minor7" },
 			{ noteName: "D", suffix: "7" },
@@ -75,7 +75,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "What Goes Around... Comes Around",
-		artist: "Justin Timberlake",
+		artists: ["Justin Timberlake"],
 		progression: [
 			{ noteName: "A", suffix: "minor" },
 			{ noteName: "C", suffix: "major" },
@@ -85,7 +85,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "Zombie",
-		artist: "The Cranberries",
+		artists: ["The Cranberries"],
 		progression: [
 			{ noteName: "E", suffix: "minor" },
 			{ noteName: "C", suffix: "major" },
@@ -95,7 +95,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "Country Roads",
-		artist: "John Denver",
+		artists: ["John Denver"],
 		progression: [
 			{ noteName: "G", suffix: "major" },
 			{ noteName: "E", suffix: "minor" },
@@ -105,7 +105,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "Stand By Me",
-		artist: "Ben E. King",
+		artists: ["Ben E. King"],
 		progression: [
 			{ noteName: "A", suffix: "major" },
 			{ noteName: "F#", suffix: "minor" },
@@ -115,7 +115,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "Despacito",
-		artist: "Luis Fonsi",
+		artists: ["Luis Fonsi"],
 		progression: [
 			{ noteName: "B", suffix: "minor" },
 			{ noteName: "G", suffix: "major" },
@@ -125,7 +125,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "Creep",
-		artist: "Radiohead",
+		artists: ["Radiohead"],
 		progression: [
 			{ noteName: "G", suffix: "major" },
 			{ noteName: "B", suffix: "major" },
@@ -135,7 +135,7 @@ export const SONGS: SongInput[] = [
 	},
 	{
 		title: "Wonderful Tonight",
-		artist: "Eric Clapton",
+		artists: ["Eric Clapton"],
 		progression: [
 			{ noteName: "G", suffix: "major" },
 			{ noteName: "D", suffix: "major" },

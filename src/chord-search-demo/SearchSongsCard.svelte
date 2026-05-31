@@ -1,7 +1,9 @@
 <script lang="ts">
+	import ArtistFilterDropdown from "./ArtistFilterDropdown.svelte";
 	import SearchProgression from "./SearchProgression.svelte";
 	import SongResultCard from "./SongResultCard.svelte";
 	import ToggleSwitch from "./ToggleSwitch.svelte";
+	import type { ArtistOption } from "./buildArtistOptions.js";
 	import type { ParsedProgressionChord, SongSearchResult } from "../chord-processing/types.js";
 	import { NO_MATCH_MESSAGE, SEARCH_PLACEHOLDER, SEARCH_INPUT_ACTIVE_LABEL, SEARCH_INPUT_PAUSED_LABEL } from "./constants.js";
 
@@ -15,6 +17,9 @@
 		onIgnoreSlashBassNotesChange,
 		fuzzySearch,
 		onFuzzySearchChange,
+		artistOptions,
+		selectedArtist,
+		onSelectedArtistChange,
 		titleArtistFilter,
 		onTitleArtistFilterChange
 	}: {
@@ -27,6 +32,9 @@
 		onIgnoreSlashBassNotesChange: (checked: boolean) => void;
 		fuzzySearch: boolean;
 		onFuzzySearchChange: (checked: boolean) => void;
+		artistOptions: ArtistOption[];
+		selectedArtist: string;
+		onSelectedArtistChange: (value: string) => void;
 		titleArtistFilter: string;
 		onTitleArtistFilterChange: (value: string) => void;
 	} = $props();
@@ -50,13 +58,20 @@
 		Play chords in any key — matches by chord type and intervals between roots, not absolute
 		pitch.
 	</p>
-	<input
-		class="name-filter"
-		type="text"
-		placeholder="Filter by song or artist name…"
-		value={titleArtistFilter}
-		oninput={(e) => onTitleArtistFilterChange((e.target as HTMLInputElement).value)}
-	/>
+	<div class="filter-row">
+		<ArtistFilterDropdown
+			{artistOptions}
+			{selectedArtist}
+			onSelectedArtistChange={onSelectedArtistChange}
+		/>
+		<input
+			class="name-filter"
+			type="text"
+			placeholder="Filter by song or artist name…"
+			value={titleArtistFilter}
+			oninput={(e) => onTitleArtistFilterChange((e.target as HTMLInputElement).value)}
+		/>
+	</div>
 	<SearchProgression chords={searchChords} {fuzzySearch} {ignoreSlashBassNotes} />
 	<div class="results">
 		{#if !hasSearch}
@@ -168,7 +183,15 @@
 		margin: 0;
 	}
 
+	.filter-row {
+		display: flex;
+		gap: 0.5rem;
+		align-items: stretch;
+	}
+
 	.name-filter {
+		flex: 1;
+		min-width: 0;
 		background: rgba(24, 24, 27, 0.6);
 		border: 1px solid rgba(63, 63, 70, 0.8);
 		border-radius: 0.25rem;
@@ -176,7 +199,6 @@
 		font-family: inherit;
 		font-size: 0.75rem;
 		padding: 0.375rem 0.625rem;
-		width: 100%;
 		box-sizing: border-box;
 		outline: none;
 		transition: border-color 0.15s;

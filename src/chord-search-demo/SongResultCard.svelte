@@ -10,10 +10,11 @@
 	const youtubeSearchUrl = $derived(
 		buildYouTubeSearchUrl({
 			title: result.song.title,
-			artist: result.song.artist,
+			artists: result.song.artists,
 			year: result.song.year
 		})
 	);
+	const artistLabel = $derived(result.song.artists.join(", "));
 </script>
 
 <div class="card" class:matched={isMatched}>
@@ -27,7 +28,7 @@
 			title="Search on YouTube"
 		>🎵</a>
 		<span class="song-title">{result.song.title}</span>
-		<span class="artist"> — {result.song.artist}</span>
+		<span class="artist"> — {artistLabel}</span>
 	</div>
 	<div class="chords">
 		{#each result.song.parsedProgression as chord, position}

@@ -15,6 +15,7 @@
 	import NoMidiBanner from "./NoMidiBanner.svelte";
 	import CurrentChordCard from "./CurrentChordCard.svelte";
 	import SearchSongsCard from "./SearchSongsCard.svelte";
+	import { buildArtistOptions } from "./buildArtistOptions.js";
 	import {
 		CLEAR_SENTINEL_LABEL,
 		CLEAR_SENTINEL_MIDIS,
@@ -54,15 +55,20 @@
 	let ignoreSlashBassNotes = $state(false);
 	let fuzzySearch = $state(false);
 	let titleArtistFilter = $state("");
+	let selectedArtist = $state("");
 	let searchInputActive = $state(true);
-	const hasSearch = $derived(searchChords.length > 0 || titleArtistFilter.length > 0);
+	const artistOptions = $derived.by(() => buildArtistOptions(songs));
+	const hasSearch = $derived(
+		searchChords.length > 0 || titleArtistFilter.length > 0 || selectedArtist.length > 0
+	);
 
 	const syncSearch = () => {
 		searchChords = progressionSearch.getSearchProgression();
 		searchResults = progressionSearch.getResults({
 			ignoreSlashBass: ignoreSlashBassNotes,
 			fuzzySearch,
-			titleArtistFilter
+			titleArtistFilter,
+			selectedArtist
 		});
 	};
 
@@ -270,6 +276,12 @@
 						fuzzySearch = checked;
 						syncSearch();
 					}}
+				{artistOptions}
+				{selectedArtist}
+				onSelectedArtistChange={(value) => {
+					selectedArtist = value;
+					syncSearch();
+				}}
 				{titleArtistFilter}
 				onTitleArtistFilterChange={(value) => {
 					titleArtistFilter = value;

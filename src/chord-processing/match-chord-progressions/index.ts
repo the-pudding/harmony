@@ -114,21 +114,26 @@ export const createProgressionSearch = ({
 		const q = filter.toLowerCase();
 		return (
 			song.title.toLowerCase().includes(q) ||
-			song.artist.toLowerCase().includes(q)
+			song.artists.some((artist) => artist.toLowerCase().includes(q))
 		);
 	};
+
+	const matchesSelectedArtist = (song: PreparedSong, artist: string): boolean =>
+		song.artists.includes(artist);
 
 	const getResults = ({
 		ignoreSlashBass = false,
 		fuzzySearch = false,
-		titleArtistFilter = ""
+		titleArtistFilter = "",
+		selectedArtist = ""
 	}: {
 		ignoreSlashBass?: boolean;
 		fuzzySearch?: boolean;
 		titleArtistFilter?: string;
+		selectedArtist?: string;
 	} = {}): SongSearchResult[] => {
 		const hasChords = searchProgression.length > 0;
-		if (!hasChords && !titleArtistFilter) return [];
+		if (!hasChords && !titleArtistFilter && !selectedArtist) return [];
 
 		const effectiveProgression = ignoreSlashBass
 			? searchProgression.map(
@@ -139,6 +144,8 @@ export const createProgressionSearch = ({
 
 		const results: SongSearchResult[] = [];
 		for (const song of preparedSongs) {
+			if (selectedArtist && !matchesSelectedArtist(song, selectedArtist))
+				continue;
 			if (titleArtistFilter && !matchesTitleOrArtist(song, titleArtistFilter))
 				continue;
 			if (hasChords) {

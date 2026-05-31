@@ -6,6 +6,9 @@ const HARMONY_ROOT = process.cwd();
 const DATA_ROOT = path.join(HARMONY_ROOT, "../harmony-data");
 const OUTPUT_PATH = path.join(HARMONY_ROOT, "static/data/songs.json");
 const TRACKER_PATH = path.join(DATA_ROOT, "data/tracker.csv");
+const BILLBOARD_PATH = path.join(DATA_ROOT, "data/billboard.csv");
+const BILLBOARD_TOP_RANK = 100;
+const MISSING_POPULARITY_SCORE = 0;
 const SONG_DIRS = [
 	path.join(DATA_ROOT, "songs/hooktheory"),
 	path.join(DATA_ROOT, "songs/ug")
@@ -80,6 +83,49 @@ const humanizeSlug = (slug) =>
 		.join(" ");
 
 const trackerKey = (artist, song) => `${kebabCase(artist)}__${kebabCase(song)}`;
+
+const ARTIST_COLLAB_SPLIT_PATTERN =
+	/\s*(?:,\s*|\s+(?:Featuring|FEATURING|Feat\.|FEAT\.|Ft\.|FT\.|Duet With|DUET WITH|Presents|Meets|Vs\.|VS\.)\s+|\s+With\s+|\s+with\s+|\s*&\s*|\s+[xX]\s+|\s+\/\s+|\s+\+\s+|\s+Or\s+|\s+or\s+|\s+And\s+(?!The\b|[Ii]\b))/g;
+
+const COLLAB_PREFIX_PATTERN =
+	/^(?:Featuring|FEATURING|Feat\.|FEAT\.|Ft\.|FT\.|With|with|Duet With|DUET WITH)\s+/i;
+
+const PAREN_ARTIST_PATTERN = /\(([^)]+)\)/g;
+
+const trimArtistPart = (part) =>
+	part.replace(COLLAB_PREFIX_PATTERN, "").replace(/\s+/g, " ").trim();
+
+const splitOnCollabMarkers = (value) =>
+	value.split(ARTIST_COLLAB_SPLIT_PATTERN).map(trimArtistPart).filter(Boolean);
+
+const parseArtists = (artistString) => {
+	const parenArtists = [];
+	const withoutParens = artistString.replace(
+		PAREN_ARTIST_PATTERN,
+		(_, inner) => {
+			if (/[&,\/]|Featuring|Feat\.|With| x | X /i.test(inner)) {
+				parseArtists(inner).forEach((artist) => parenArtists.push(artist));
+			}
+			return " ";
+		}
+	);
+
+	const colonParts = withoutParens.includes(":")
+		? withoutParens.split(/\s*:\s*/).flatMap(splitOnCollabMarkers)
+		: splitOnCollabMarkers(withoutParens);
+
+	return [...colonParts, ...parenArtists].map(trimArtistPart).filter(Boolean);
+};
+
+const billboardPopularityPoints = (rank) => BILLBOARD_TOP_RANK + 1 - rank;
+
+const compareSongsByPopularity = (a, b) => {
+	const scoreDelta =
+		(b.popularityScore ?? MISSING_POPULARITY_SCORE) -
+		(a.popularityScore ?? MISSING_POPULARITY_SCORE);
+	if (scoreDelta !== 0) return scoreDelta;
+	return a.title.localeCompare(b.title);
+};
 
 const qualityExtensionToSuffix = ({ quality, extension, suspensions }) => {
 	const suspension = suspensions?.[0] ?? null;
@@ -158,14 +204,22 @@ const toPrecomputedAbstractProgression = (progression) => {
 	return { suffixes, deltas, bassIntervals, wrapDelta };
 };
 
-const sectionToSongInput = (section, trackerEntry, artistSlug, songSlug) => {
+const sectionToSongInput = (
+	section,
+	trackerEntry,
+	artistSlug,
+	songSlug,
+	popularityScore
+) => {
 	const progression = (section.chords ?? [])
 		.map((chord) => chordToProgressionInput(chord, section.key, section.scale))
 		.filter(Boolean);
 
 	if (progression.length === 0) return null;
 
-	const artist = trackerEntry?.artist ?? humanizeSlug(artistSlug);
+	const artists = trackerEntry?.artist
+		? parseArtists(trackerEntry.artist)
+		: [humanizeSlug(artistSlug)];
 	const title = section.name
 		? `${section.songTitle} (${section.name})`
 		: section.songTitle;
@@ -175,7 +229,8 @@ const sectionToSongInput = (section, trackerEntry, artistSlug, songSlug) => {
 	return {
 		id: `${artistSlug}__${songSlug}__${sectionId}`,
 		title,
-		artist,
+		artists,
+		...(popularityScore !== undefined ? { popularityScore } : {}),
 		...(trackerEntry
 			? {
 					inTop10: trackerEntry.inTop10 === "true",
@@ -208,8 +263,31 @@ const loadTrackerIndex = () => {
 	}, new Map());
 };
 
+const loadBillboardPopularityIndex = () => {
+	if (!fs.existsSync(BILLBOARD_PATH)) {
+		console.warn(
+			`Billboard not found at ${BILLBOARD_PATH}; skipping popularity scores`
+		);
+		return new Map();
+	}
+
+	return csvParse(fs.readFileSync(BILLBOARD_PATH, "utf-8")).reduce(
+		(index, row) => {
+			const key = trackerKey(row.artist, row.song);
+			const rank = Number(row.rank);
+			if (!Number.isFinite(rank) || rank < 1 || rank > BILLBOARD_TOP_RANK)
+				return index;
+
+			const points = billboardPopularityPoints(rank);
+			return index.set(key, (index.get(key) ?? 0) + points);
+		},
+		new Map()
+	);
+};
+
 const buildSongs = () => {
 	const trackerIndex = loadTrackerIndex();
+	const popularityIndex = loadBillboardPopularityIndex();
 	const stats = {
 		filesRead: 0,
 		sectionsWritten: 0,
@@ -223,6 +301,7 @@ const buildSongs = () => {
 		const songData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
 		const lookupKey = trackerKey(songData.artist, songData.song);
 		const trackerEntry = trackerIndex.get(lookupKey);
+		const popularityScore = popularityIndex.get(lookupKey);
 
 		return (songData.sections ?? []).flatMap((section) => {
 			const originalChordCount = section.chords?.length ?? 0;
@@ -230,7 +309,8 @@ const buildSongs = () => {
 				section,
 				trackerEntry,
 				songData.artist,
-				songData.song
+				songData.song,
+				popularityScore
 			);
 
 			if (!songInput) {
@@ -252,6 +332,8 @@ const buildSongs = () => {
 			return [songInput];
 		});
 	});
+
+	songs.sort(compareSongsByPopularity);
 
 	return { songs, stats };
 };
