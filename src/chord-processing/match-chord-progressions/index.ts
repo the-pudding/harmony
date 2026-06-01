@@ -46,7 +46,7 @@ const parseProgressionChord = ({
 	return { ...chord, display: formatChordName(chord) };
 };
 
-const prepareSong = (song: SongInput, index: number): PreparedSong => {
+export const prepareSong = (song: SongInput, index: number): PreparedSong => {
 	const parsedProgression = dedupeAdjacentParsedProgression(
 		song.progression.map(parseProgressionChord)
 	);
@@ -59,7 +59,7 @@ const prepareSong = (song: SongInput, index: number): PreparedSong => {
 	};
 };
 
-const toEffectiveSearchProgression = (
+export const toEffectiveSearchProgression = (
 	searchProgression: ParsedProgressionChord[],
 	ignoreSlashBass: boolean
 ): ParsedProgressionChord[] =>
@@ -123,7 +123,7 @@ const buildSongResult = (
 const isMatched = ({ matches }: SongSearchResult): boolean =>
 	matches.length > 0;
 
-const buildSectionsBySongKey = (
+export const buildSectionsBySongKey = (
 	preparedSongs: PreparedSong[]
 ): Map<string, PreparedSong[]> => {
 	const sectionsBySongKey = new Map<string, PreparedSong[]>();
@@ -137,7 +137,7 @@ const buildSectionsBySongKey = (
 	return sectionsBySongKey;
 };
 
-const buildGroupedSongResult = (
+export const buildGroupedSongResult = (
 	songKey: string,
 	sections: PreparedSong[],
 	hasChords: boolean,

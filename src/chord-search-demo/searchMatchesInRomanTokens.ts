@@ -48,6 +48,16 @@ export const findSearchMatchesInRomanTokens = (
 	);
 };
 
+export const romanTokenSequenceMatchesSearch = (
+	romanTokens: string[],
+	searchAbstract: AbstractProgression,
+	options: RomanTokenSearchMatchOptions
+): boolean =>
+	findSearchMatchesInRomanTokens(romanTokens, searchAbstract, {
+		...options,
+		minOccurrences: MIN_OCCURRENCES_DEFAULT
+	}).length > 0;
+
 export const isRomanTokenPositionHighlighted = (
 	position: number,
 	romanTokens: string[],

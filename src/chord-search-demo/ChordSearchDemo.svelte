@@ -192,7 +192,7 @@
 		}
 
 		return () => {
-			chordSearchDemoStore.disposeSequenceChartWorkers();
+			chordSearchDemoStore.disposeWorkers();
 			detector?.disconnect();
 		};
 	});

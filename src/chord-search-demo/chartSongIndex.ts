@@ -45,16 +45,13 @@ export const buildChartSongIndex = (songs: SongInput[]): ChartSongIndexEntry[] =
 		];
 	});
 
-export const splitChartSongIndexIntoChunks = (
-	index: ChartSongIndexEntry[],
+export const splitIndexIntoChunks = <T>(
+	index: T[],
 	chunkCount: number
-): ChartSongIndexEntry[][] => {
+): T[][] => {
 	if (index.length === 0 || chunkCount <= 1) return [index];
 
-	const chunks: ChartSongIndexEntry[][] = Array.from(
-		{ length: chunkCount },
-		() => []
-	);
+	const chunks: T[][] = Array.from({ length: chunkCount }, () => []);
 	const chunkSize = Math.ceil(index.length / chunkCount);
 
 	index.forEach((entry, entryIndex) => {
@@ -67,3 +64,8 @@ export const splitChartSongIndexIntoChunks = (
 
 	return chunks.filter((chunk) => chunk.length > 0);
 };
+
+export const splitChartSongIndexIntoChunks = (
+	index: ChartSongIndexEntry[],
+	chunkCount: number
+): ChartSongIndexEntry[][] => splitIndexIntoChunks(index, chunkCount);

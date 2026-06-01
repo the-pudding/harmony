@@ -3,6 +3,7 @@ import type { ChartChunkFilters } from "./matchChartCorpusChunk.js";
 import {
 	computePartialGramStats,
 	type PartialGramStats,
+	type SearchGramFilter,
 	type VariableGramStat
 } from "./computeVariableGramStats.js";
 import { matchChartCorpusChunk } from "./matchChartCorpusChunk.js";
@@ -61,7 +62,19 @@ self.onmessage = (event: MessageEvent<SequenceChartWorkerMessage>) => {
 			message.filters,
 			message.searchAbstract
 		);
-		const partial = computePartialGramStats(corpus, message.options);
+		const searchGramFilter: SearchGramFilter | null =
+			message.filters.hasSearchChords && message.searchAbstract
+				? {
+						searchAbstract: message.searchAbstract,
+						fuzzySearch: message.filters.fuzzySearch,
+						matchAtBeginningOnly: message.filters.matchAtBeginningOnly
+					}
+				: null;
+		const partial = computePartialGramStats(
+			corpus,
+			message.options,
+			searchGramFilter
+		);
 		const response: SequenceChartWorkerPartialMessage = {
 			type: "PARTIAL",
 			requestId: message.requestId,

@@ -27,6 +27,11 @@ import {
 	initSequenceChartWorkerPoolFromSongs,
 	terminateSequenceChartWorkerPool
 } from "./sequenceChartWorkerPool.js";
+import {
+	computeSongResults,
+	initSongResultsWorkerPool,
+	terminateSongResultsWorkerPool
+} from "./songResultsWorkerPool.js";
 
 let songs = $state<SongInput[]>([]);
 let searchChords = $state<ParsedProgressionChord[]>([]);
@@ -50,7 +55,11 @@ let sequenceChartStatus = $state<"idle" | "loading" | "ready" | "error">(
 );
 let sequenceChartError = $state("");
 let chartWorkerPoolReady = $state(false);
+let songResultsWorkerPoolReady = $state(false);
 let chartRequestId = 0;
+
+let songResultsComputeChain: Promise<void> = Promise.resolve();
+let songResultsComputeVersion = 0;
 
 const debouncedSetTitleFilter = debounce((value: string) => {
 	debouncedTitleFilter = value;
@@ -117,6 +126,52 @@ const runSequenceChartCompute = async () => {
 	}
 };
 
+const applySongResults = (groupedResults: GroupedSongSearchResult[]) => {
+	searchResults = groupedResults.slice(0, MAX_SEARCH_RESULTS);
+	annualMatchCounts = buildAnnualMatchCounts(groupedResults);
+};
+
+const runSongResultsCompute = async (version: number) => {
+	const output = await computeSongResults(version, {
+		filters: {
+			hasSearchChords: searchChords.length > 0,
+			titleFilter: debouncedTitleFilter,
+			selectedArtist,
+			fuzzySearch,
+			matchAtBeginningOnly,
+			matchAtLeastTwice
+		},
+		searchAbstract: buildSearchAbstract(searchChords, {
+			ignoreSlashBassNotes,
+			fuzzySearch
+		}),
+		searchProgression: searchChords,
+		ignoreSlashBass: ignoreSlashBassNotes,
+		matchOptions: {
+			fuzzySearch,
+			matchAtBeginningOnly,
+			matchAtLeastTwice
+		}
+	});
+
+	return output;
+};
+
+const enqueueSongResultsCompute = () => {
+	if (!songResultsWorkerPoolReady) return;
+
+	const version = ++songResultsComputeVersion;
+
+	songResultsComputeChain = songResultsComputeChain.then(async () => {
+		try {
+			const { groupedResults } = await runSongResultsCompute(version);
+			applySongResults(groupedResults);
+		} catch {
+			// Keep prior results on worker failure
+		}
+	});
+};
+
 $effect.root(() => {
 	$effect(() => {
 		debouncedTitleFilter;
@@ -133,39 +188,53 @@ $effect.root(() => {
 
 		void runSequenceChartCompute();
 	});
+
+	$effect(() => {
+		debouncedTitleFilter;
+		selectedArtist;
+		fuzzySearch;
+		matchAtBeginningOnly;
+		matchAtLeastTwice;
+		ignoreSlashBassNotes;
+		searchChords;
+		songResultsWorkerPoolReady;
+
+		if (!songResultsWorkerPoolReady) return;
+
+		enqueueSongResultsCompute();
+	});
 });
 
-const syncSearch = () => {
+const syncSearchChords = () => {
 	searchChords = progressionSearch.getSearchProgression();
-	const allResults = progressionSearch.getGroupedResults({
-		ignoreSlashBass: ignoreSlashBassNotes,
-		fuzzySearch,
-		matchAtBeginningOnly,
-		matchAtLeastTwice,
-		titleFilter,
-		selectedArtist,
-		resultLimit: Infinity
-	});
-	searchResults = allResults.slice(0, MAX_SEARCH_RESULTS);
-	annualMatchCounts = buildAnnualMatchCounts(allResults);
 };
 
 const clearSearch = () => {
 	progressionSearch.clear();
-	syncSearch();
+	syncSearchChords();
 };
 
 const setSongs = async (nextSongs: SongInput[]) => {
 	songs = nextSongs;
-	syncSearch();
+	searchChords = [];
+	searchResults = [];
+	annualMatchCounts = [];
 	sequenceChartStatus = "loading";
 	chartWorkerPoolReady = false;
+	songResultsWorkerPoolReady = false;
+	songResultsComputeChain = Promise.resolve();
+	songResultsComputeVersion = 0;
 
 	try {
-		await initSequenceChartWorkerPoolFromSongs(nextSongs);
+		await Promise.all([
+			initSequenceChartWorkerPoolFromSongs(nextSongs),
+			initSongResultsWorkerPool(nextSongs)
+		]);
 		chartWorkerPoolReady = true;
+		songResultsWorkerPoolReady = true;
 	} catch (error) {
 		chartWorkerPoolReady = false;
+		songResultsWorkerPoolReady = false;
 		sequenceChartStatus = "error";
 		sequenceChartError = error instanceof Error ? error.message : String(error);
 	}
@@ -173,13 +242,11 @@ const setSongs = async (nextSongs: SongInput[]) => {
 
 const setSelectedArtist = (value: string) => {
 	selectedArtist = value;
-	syncSearch();
 };
 
 const setTitleFilter = (value: string) => {
 	titleFilter = value;
 	debouncedSetTitleFilter(value);
-	syncSearch();
 };
 
 const setBassAsRoot = (checked: boolean) => {
@@ -188,22 +255,18 @@ const setBassAsRoot = (checked: boolean) => {
 
 const setIgnoreSlashBassNotes = (checked: boolean) => {
 	ignoreSlashBassNotes = checked;
-	syncSearch();
 };
 
 const setFuzzySearch = (checked: boolean) => {
 	fuzzySearch = checked;
-	syncSearch();
 };
 
 const setMatchAtBeginningOnly = (checked: boolean) => {
 	matchAtBeginningOnly = checked;
-	syncSearch();
 };
 
 const setMatchAtLeastTwice = (checked: boolean) => {
 	matchAtLeastTwice = checked;
-	syncSearch();
 };
 
 const setMinNumChordsToCountAsAProgression = (value: number) => {
@@ -217,10 +280,14 @@ const setSearchInputActive = (active: boolean) => {
 
 const getProgressionSearch = () => progressionSearch;
 
-const disposeSequenceChartWorkers = () => {
+const disposeWorkers = () => {
 	terminateSequenceChartWorkerPool();
+	terminateSongResultsWorkerPool();
 	chartWorkerPoolReady = false;
+	songResultsWorkerPoolReady = false;
 	chartRequestId += 1;
+	songResultsComputeChain = Promise.resolve();
+	songResultsComputeVersion = 0;
 	sequenceChartStatus = "idle";
 };
 
@@ -280,7 +347,7 @@ export const chordSearchDemoStore = {
 		return sequenceChartError;
 	},
 	setSongs,
-	syncSearch,
+	syncSearch: syncSearchChords,
 	clearSearch,
 	setSelectedArtist,
 	setTitleFilter,
@@ -292,5 +359,6 @@ export const chordSearchDemoStore = {
 	setMinNumChordsToCountAsAProgression,
 	setSearchInputActive,
 	getProgressionSearch,
-	disposeSequenceChartWorkers
+	disposeWorkers,
+	disposeSequenceChartWorkers: disposeWorkers
 };

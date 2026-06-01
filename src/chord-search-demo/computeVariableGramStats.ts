@@ -1,4 +1,6 @@
 import { gramLabel } from "../chord-processing/romanNumerals.js";
+import type { AbstractProgression } from "../chord-processing/types.js";
+import { romanTokenSequenceMatchesSearch } from "./searchMatchesInRomanTokens.js";
 
 export type ChartSection = {
 	romanTokens: string[];
@@ -28,6 +30,12 @@ export type PartialGramStats = {
 	gramCounts: [string, number][];
 	gramSongKeys: [string, string[]][];
 	gramSongChordStats: [string, [string, number, number][]][];
+};
+
+export type SearchGramFilter = {
+	searchAbstract: AbstractProgression;
+	fuzzySearch: boolean;
+	matchAtBeginningOnly: boolean;
 };
 
 const avgPctOfSongForGram = (
@@ -78,7 +86,8 @@ export const computePartialGramStats = (
 	}: Pick<
 		ComputeVariableGramStatsOptions,
 		"minNumChordsToCountAsAProgression" | "maxLen"
-	>
+	>,
+	searchGramFilter: SearchGramFilter | null = null
 ): PartialGramStats => {
 	const gramCounts = new Map<string, number>();
 	const gramSongs = new Map<string, Set<string>>();
@@ -94,7 +103,18 @@ export const computePartialGramStats = (
 
 		for (let len = minNumChordsToCountAsAProgression; len <= maxLen; len++) {
 			for (let index = 0; index + len <= totalChordCount; index++) {
-				const gram = romanTokens.slice(index, index + len).join(",");
+				const gramTokens = romanTokens.slice(index, index + len);
+				if (
+					searchGramFilter &&
+					!romanTokenSequenceMatchesSearch(
+						gramTokens,
+						searchGramFilter.searchAbstract,
+						searchGramFilter
+					)
+				) {
+					continue;
+				}
+				const gram = gramTokens.join(",");
 				gramCounts.set(gram, (gramCounts.get(gram) ?? 0) + 1);
 				seenInSection.add(gram);
 				const matchingIndices =
@@ -177,6 +197,10 @@ export const mergePartialGramStats = (
 
 export const computeVariableGramStats = (
 	sections: ChartSection[],
-	options: ComputeVariableGramStatsOptions
+	options: ComputeVariableGramStatsOptions,
+	searchGramFilter: SearchGramFilter | null = null
 ): VariableGramStat[] =>
-	mergePartialGramStats([computePartialGramStats(sections, options)], options);
+	mergePartialGramStats(
+		[computePartialGramStats(sections, options, searchGramFilter)],
+		options
+	);
