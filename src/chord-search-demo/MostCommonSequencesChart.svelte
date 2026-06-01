@@ -14,10 +14,12 @@
 		SEQUENCE_CHART_HIGHLIGHT_COLOR,
 		SEQUENCE_CHART_LENGTH_COLORS,
 		SEQUENCE_CHART_LOADING_MESSAGE,
-		SEQUENCE_CHART_AVG_PCT_COL_MIN_WIDTH_PX,
-		SEQUENCE_CHART_PLOT_WIDTH_PX,
-		SEQUENCE_CHART_RANK_COL_MIN_WIDTH_PX,
+		SEQUENCE_CHART_COL_WEIGHTS,
+		sequenceChartColWidthPercent,
+		formatSequenceChartOccurrences,
 		SEQUENCE_CHART_TABLE_MARGIN_PX,
+		SEQUENCE_CHART_TITLE,
+		sequenceChartMinLengthSubtitle,
 		SEQUENCE_CHART_VIEWPORT_HEIGHT_PX
 	} from "./constants.js";
 
@@ -36,8 +38,8 @@
 	const minNumChordsToCountAsAProgression = $derived(
 		chordSearchDemoStore.minNumChordsToCountAsAProgression
 	);
-	const chartTitle = $derived(
-		`Most common chord sequences (min length ${minNumChordsToCountAsAProgression})`
+	const chartSubtitle = $derived(
+		sequenceChartMinLengthSubtitle(minNumChordsToCountAsAProgression)
 	);
 	const isLoading = $derived(chartStatus === "loading");
 	const hasData = $derived(chartData.length > 0);
@@ -53,11 +55,7 @@
 	const barWidthPercent = (occurrences: number) =>
 		(occurrences / maxOccurrences) * 100;
 
-	const formatAvgPctOfSong = (row: VariableGramStat) =>
-		`${row.avgPctOfSong.toLocaleString(undefined, {
-			minimumFractionDigits: 1,
-			maximumFractionDigits: 1
-		})}%`;
+	const formatAvgPctOfSong = (row: VariableGramStat) => `${Math.round(row.avgPctOfSong)}%`;
 
 	const barColor = (label: string, length: number) =>
 		label === FOUR_CHORDS_PROGRESSION_LABEL
@@ -92,10 +90,20 @@
 	const hideTooltip = () => {
 		tooltip = null;
 	};
+
+	const rankColWidth = sequenceChartColWidthPercent(SEQUENCE_CHART_COL_WEIGHTS.rank);
+	const sequenceColWidth = sequenceChartColWidthPercent(
+		SEQUENCE_CHART_COL_WEIGHTS.sequence
+	);
+	const avgPctColWidth = sequenceChartColWidthPercent(SEQUENCE_CHART_COL_WEIGHTS.avgPct);
+	const barColWidth = sequenceChartColWidthPercent(SEQUENCE_CHART_COL_WEIGHTS.bar);
 </script>
 
 <section class="chart-section">
-	<h2 class="chart-title">{chartTitle}</h2>
+	<div class="chart-heading">
+		<h2 class="chart-title">{SEQUENCE_CHART_TITLE}</h2>
+		<p class="chart-subtitle">{chartSubtitle}</p>
+	</div>
 
 	{#if chartError}
 		<p class="error">{chartError}</p>
@@ -111,19 +119,22 @@
 			class:is-loading={isLoading}
 			style:height="{SEQUENCE_CHART_VIEWPORT_HEIGHT_PX}px"
 			style:margin="{SEQUENCE_CHART_TABLE_MARGIN_PX}px"
-			style:--rank-col-min-width="{SEQUENCE_CHART_RANK_COL_MIN_WIDTH_PX}px"
-			style:--avg-pct-col-min-width="{SEQUENCE_CHART_AVG_PCT_COL_MIN_WIDTH_PX}px"
 			style:--bar-height="{SEQUENCE_CHART_BAR_HEIGHT_PX}px"
 			style:--bar-track-height-ratio="{SEQUENCE_CHART_BAR_TRACK_HEIGHT_RATIO}"
 			style:--bar-min-width="{SEQUENCE_CHART_BAR_MIN_WIDTH_PX}px"
-			style:--bar-col-width="{SEQUENCE_CHART_PLOT_WIDTH_PX}px"
 		>
 			<table class="sequence-table" aria-busy={isLoading}>
+				<colgroup>
+					<col class="rank-col" style:width={rankColWidth} />
+					<col class="sequence-col" style:width={sequenceColWidth} />
+					<col class="avg-pct-col" style:width={avgPctColWidth} />
+					<col class="bar-col" style:width={barColWidth} />
+				</colgroup>
 				<thead>
 					<tr>
 						<th class="rank-col" scope="col">Rank</th>
 						<th class="sequence-col" scope="col">Sequence</th>
-						<th class="avg-pct-col" scope="col">Avg %</th>
+						<th class="avg-pct-col" scope="col">Avg % of song</th>
 						<th class="bar-col" scope="col">Occurrences</th>
 					</tr>
 				</thead>
@@ -157,12 +168,11 @@
 							<td class="avg-pct-col">{formatAvgPctOfSong(row)}</td>
 							<td class="bar-col">
 								<div class="bar-cell">
-									<span class="occurrence-count">{row.occurrences.toLocaleString()}</span>
+									<span class="occurrence-count">{formatSequenceChartOccurrences(row.occurrences)}</span>
 									<div
 										class="bar-track"
-										style:width="{SEQUENCE_CHART_PLOT_WIDTH_PX}px"
 										role="img"
-										aria-label="{row.occurrences.toLocaleString()} occurrences in {row.songCount.toLocaleString()} songs (length {row.length})"
+										aria-label="{formatSequenceChartOccurrences(row.occurrences)} occurrences in {row.songCount.toLocaleString()} songs (length {row.length})"
 									>
 										<div
 											class="bar-fill"
@@ -187,7 +197,7 @@
 					style:left="{tooltip.x + 12}px"
 					style:top="{tooltip.y - 8}px"
 				>
-					{tooltip.occurrences.toLocaleString()} occurrences in {tooltip.songCount.toLocaleString()} songs · avg {tooltip.avgPctOfSong.toFixed(1)}% of song (length {tooltip.length})
+					{formatSequenceChartOccurrences(tooltip.occurrences)} occurrences in {tooltip.songCount.toLocaleString()} songs · avg {Math.round(tooltip.avgPctOfSong)}% of song (length {tooltip.length})
 				</div>
 			{/if}
 		</div>
@@ -203,6 +213,12 @@
 		min-width: 0;
 	}
 
+	.chart-heading {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
 	.chart-title {
 		font-size: 1.75rem;
 		font-weight: 600;
@@ -210,6 +226,14 @@
 		color: #f4f4f5;
 		margin: 0;
 		letter-spacing: -0.02em;
+	}
+
+	.chart-subtitle {
+		font-size: 0.875rem;
+		font-weight: 400;
+		color: #71717a;
+		margin: 0;
+		line-height: 1.4;
 	}
 
 	.status,
@@ -240,6 +264,7 @@
 
 	.sequence-table {
 		width: 100%;
+		table-layout: fixed;
 		border-collapse: collapse;
 		transition: opacity 0.2s ease-out;
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
@@ -270,33 +295,25 @@
 	}
 
 	.rank-col {
-		min-width: var(--rank-col-min-width);
-		width: var(--rank-col-min-width);
 		color: #71717a;
 		font-size: 0.6875rem;
 		text-align: left;
 	}
 
 	.sequence-col {
+		max-width: 0;
+		overflow-x: auto;
 		white-space: nowrap;
 	}
 
 	.avg-pct-col {
-		min-width: var(--avg-pct-col-min-width);
-		width: var(--avg-pct-col-min-width);
 		color: #a1a1aa;
 		font-size: 0.6875rem;
-		text-align: right;
 		white-space: nowrap;
 	}
 
-	.sequence-table th.avg-pct-col {
-		text-align: right;
-	}
-
 	.bar-col {
-		width: var(--bar-col-width);
-		max-width: var(--bar-col-width);
+		overflow: hidden;
 	}
 
 	.chord-sequence {
@@ -341,6 +358,7 @@
 	}
 
 	.bar-track {
+		width: 100%;
 		height: calc(var(--bar-height) * var(--bar-track-height-ratio));
 		background: rgba(255, 255, 255, 0.04);
 		border-radius: 0.1875rem;

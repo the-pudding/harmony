@@ -64,20 +64,37 @@ export const MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_MAX =
 export const MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_INPUT_WIDTH = "3.5rem";
 export const CHORD_SEARCH_DEMO_HORIZONTAL_MARGIN_PX = 12;
 export const SEQUENCE_CHART_TOP_N = 50;
+export const SEQUENCE_CHART_TITLE = "Most common progressions";
+export const SEQUENCE_CHART_OCCURRENCE_SIGNIFICANT_FIGURES = 3;
+export const sequenceChartMinLengthSubtitle = (minLength: number): string =>
+	`${minLength} chords long or more`;
+
+export const formatSequenceChartOccurrences = (count: number): string =>
+	new Intl.NumberFormat(undefined, {
+		maximumSignificantDigits: SEQUENCE_CHART_OCCURRENCE_SIGNIFICANT_FIGURES
+	}).format(count);
+
 export const FOUR_CHORDS_PROGRESSION_LABEL = "I→V→vi→IV";
 export const SEQUENCE_CHART_TABLE_MARGIN_PX = 4;
-export const SEQUENCE_CHART_RANK_COL_MIN_WIDTH_PX = 40;
-export const SEQUENCE_CHART_AVG_PCT_COL_RANK_WIDTH_RATIO = 1.35;
-export const SEQUENCE_CHART_AVG_PCT_COL_MIN_WIDTH_PX = Math.round(
-	SEQUENCE_CHART_RANK_COL_MIN_WIDTH_PX *
-		SEQUENCE_CHART_AVG_PCT_COL_RANK_WIDTH_RATIO
-);
+export const SEQUENCE_CHART_COL_WEIGHTS = {
+	rank: 0.3,
+	sequence: 2,
+	avgPct: 1.35,
+	bar: 2
+} as const;
+
+export const SEQUENCE_CHART_COL_WEIGHT_SUM = Object.values(
+	SEQUENCE_CHART_COL_WEIGHTS
+).reduce((sum, weight) => sum + weight, 0);
+
+export const sequenceChartColWidthPercent = (weight: number): string =>
+	`${(weight / SEQUENCE_CHART_COL_WEIGHT_SUM) * 100}%`;
+
 export const SEQUENCE_CHART_BAR_HEIGHT_PX = 30;
 export const SEQUENCE_CHART_BAR_TRACK_HEIGHT_RATIO = 0.55;
 export const SEQUENCE_CHART_BAR_MIN_WIDTH_PX = 2;
 export const SEQUENCE_CHART_CHORD_CELL_WIDTH_PX = 32;
 export const SEQUENCE_CHART_CHORD_SEPARATOR = "→";
-export const SEQUENCE_CHART_PLOT_WIDTH_PX = 240;
 export const SEQUENCE_CHART_VIEWPORT_HEIGHT_PX = 720;
 export const SEQUENCE_CHART_AXIS_HEIGHT_PX = 24;
 export const SEQUENCE_CHART_MARGIN_LEFT_PX = 8;
