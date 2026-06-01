@@ -12,6 +12,7 @@ import type { AbstractProgression } from "../chord-processing/types.js";
 
 export type RomanTokenSearchMatchOptions = ProgressionMatchFilterOptions & {
 	fuzzySearch: boolean;
+	matchAtLeastTwice?: boolean;
 };
 
 const withSimplifiedAbstractSuffixes = (

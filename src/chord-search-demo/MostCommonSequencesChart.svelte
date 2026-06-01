@@ -132,7 +132,7 @@
 				</colgroup>
 				<thead>
 					<tr>
-						<th class="rank-col" scope="col">Rank</th>
+						<th class="rank-col" scope="col"></th>
 						<th class="sequence-col" scope="col">Sequence</th>
 						<th class="avg-pct-col" scope="col">Avg % of song</th>
 						<th class="bar-col" scope="col">Occurrences</th>
