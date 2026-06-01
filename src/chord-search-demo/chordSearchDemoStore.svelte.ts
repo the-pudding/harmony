@@ -14,6 +14,7 @@ import {
 	MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_MIN,
 	SEQUENCE_CHART_DEBOUNCE_MS,
 	SEQUENCE_CHART_TOP_N,
+	sequenceChartEffectiveMinLength,
 	VARIABLE_GRAM_MAX_LENGTH
 } from "./constants.js";
 import type { VariableGramStat } from "./computeVariableGramStats.js";
@@ -95,7 +96,10 @@ const runSequenceChartCompute = async () => {
 			}),
 			options: {
 				topN: SEQUENCE_CHART_TOP_N,
-				minNumChordsToCountAsAProgression,
+				minNumChordsToCountAsAProgression: sequenceChartEffectiveMinLength(
+					minNumChordsToCountAsAProgression,
+					searchChords.length
+				),
 				maxLen: VARIABLE_GRAM_MAX_LENGTH
 			}
 		});

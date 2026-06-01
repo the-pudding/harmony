@@ -20,14 +20,25 @@
 		formatSequenceChartOccurrences,
 		SEQUENCE_CHART_TABLE_MARGIN_PX,
 		SEQUENCE_CHART_TITLE,
+		sequenceChartEffectiveMinLength,
 		sequenceChartMinLengthSubtitle,
 		SEQUENCE_CHART_VIEWPORT_HEIGHT_PX
 	} from "./constants.js";
 
-	const chartData = $derived(chordSearchDemoStore.sequenceChartData);
+	const searchChords = $derived(chordSearchDemoStore.searchChords);
+	const effectiveMinLength = $derived(
+		sequenceChartEffectiveMinLength(
+			chordSearchDemoStore.minNumChordsToCountAsAProgression,
+			searchChords.length
+		)
+	);
+	const chartData = $derived(
+		chordSearchDemoStore.sequenceChartData.filter(
+			(row) => row.length >= effectiveMinLength
+		)
+	);
 	const chartStatus = $derived(chordSearchDemoStore.sequenceChartStatus);
 	const chartError = $derived(chordSearchDemoStore.sequenceChartError);
-	const searchChords = $derived(chordSearchDemoStore.searchChords);
 	const fuzzySearch = $derived(chordSearchDemoStore.fuzzySearch);
 	const ignoreSlashBassNotes = $derived(chordSearchDemoStore.ignoreSlashBassNotes);
 	const matchAtBeginningOnly = $derived(chordSearchDemoStore.matchAtBeginningOnly);
@@ -36,12 +47,7 @@
 		buildSearchAbstract(searchChords, { ignoreSlashBassNotes, fuzzySearch })
 	);
 	const hasSearchChords = $derived(searchChords.length > 0);
-	const minNumChordsToCountAsAProgression = $derived(
-		chordSearchDemoStore.minNumChordsToCountAsAProgression
-	);
-	const chartSubtitle = $derived(
-		sequenceChartMinLengthSubtitle(minNumChordsToCountAsAProgression)
-	);
+	const chartSubtitle = $derived(sequenceChartMinLengthSubtitle(effectiveMinLength));
 	const isLoading = $derived(chartStatus === "loading");
 	const hasData = $derived(chartData.length > 0);
 	const showEmpty = $derived(chartStatus === "ready" && !hasData);

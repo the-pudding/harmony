@@ -69,6 +69,14 @@ export const SEQUENCE_CHART_OCCURRENCE_SIGNIFICANT_FIGURES = 3;
 export const sequenceChartMinLengthSubtitle = (minLength: number): string =>
 	`${minLength} chords long or more`;
 
+export const sequenceChartEffectiveMinLength = (
+	minNumChordsToCountAsAProgression: number,
+	searchChordCount: number
+): number =>
+	searchChordCount > 0
+		? Math.max(minNumChordsToCountAsAProgression, searchChordCount)
+		: minNumChordsToCountAsAProgression;
+
 export const formatSequenceChartOccurrences = (count: number): string =>
 	new Intl.NumberFormat(undefined, {
 		maximumSignificantDigits: SEQUENCE_CHART_OCCURRENCE_SIGNIFICANT_FIGURES
