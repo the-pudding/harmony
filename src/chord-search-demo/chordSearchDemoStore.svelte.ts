@@ -18,6 +18,10 @@ import {
 } from "./constants.js";
 import type { VariableGramStat } from "./computeVariableGramStats.js";
 import {
+	buildAnnualMatchCounts,
+	type AnnualMatchCount
+} from "./chord-progression-search-results/buildAnnualMatchCounts.js";
+import {
 	computeSequenceChartStats,
 	initSequenceChartWorkerPoolFromSongs,
 	terminateSequenceChartWorkerPool
@@ -26,6 +30,7 @@ import {
 let songs = $state<SongInput[]>([]);
 let searchChords = $state<ParsedProgressionChord[]>([]);
 let searchResults = $state<SongSearchResult[]>([]);
+let annualMatchCounts = $state<AnnualMatchCount[]>([]);
 let bassAsRoot = $state(true);
 let ignoreSlashBassNotes = $state(true);
 let fuzzySearch = $state(true);
@@ -128,14 +133,17 @@ $effect.root(() => {
 
 const syncSearch = () => {
 	searchChords = progressionSearch.getSearchProgression();
-	searchResults = progressionSearch.getResults({
+	const allResults = progressionSearch.getResults({
 		ignoreSlashBass: ignoreSlashBassNotes,
 		fuzzySearch,
 		matchAtBeginningOnly,
 		matchAtLeastTwice,
 		titleFilter,
-		selectedArtist
+		selectedArtist,
+		resultLimit: Infinity
 	});
+	searchResults = allResults.slice(0, MAX_SEARCH_RESULTS);
+	annualMatchCounts = buildAnnualMatchCounts(allResults);
 };
 
 const clearSearch = () => {
@@ -221,6 +229,9 @@ export const chordSearchDemoStore = {
 	},
 	get searchResults() {
 		return searchResults;
+	},
+	get annualMatchCounts() {
+		return annualMatchCounts;
 	},
 	get bassAsRoot() {
 		return bassAsRoot;

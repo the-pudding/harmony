@@ -266,7 +266,7 @@ const sectionToSongInput = (
 	trackerEntry,
 	artistSlug,
 	songSlug,
-	popularityScore,
+	billboardEntry,
 	source
 ) => {
 	const keptChords = (section.chords ?? []).filter(
@@ -286,6 +286,8 @@ const sectionToSongInput = (
 		: section.songTitle;
 	const abstractProgression = toPrecomputedAbstractProgression(progression);
 	const sectionId = section.id ?? section.name ?? title;
+	const popularityScore = billboardEntry?.popularityScore;
+	const year = billboardEntry?.year;
 
 	return {
 		id: `${artistSlug}__${songSlug}__${sectionId}`,
@@ -294,6 +296,7 @@ const sectionToSongInput = (
 		title,
 		artists,
 		...(popularityScore !== undefined ? { popularityScore } : {}),
+		...(year !== undefined ? { year } : {}),
 		...(trackerEntry
 			? {
 					inTop10: trackerEntry.inTop10 === "true",
@@ -327,7 +330,12 @@ const loadTrackerIndex = () => {
 	}, new Map());
 };
 
-const loadBillboardPopularityIndex = () => {
+const parseBillboardChartYear = (date) => {
+	const year = Number(String(date).slice(0, 4));
+	return Number.isFinite(year) ? year : undefined;
+};
+
+const loadBillboardIndex = () => {
 	if (!fs.existsSync(BILLBOARD_PATH)) {
 		console.warn(
 			`Billboard not found at ${BILLBOARD_PATH}; skipping popularity scores`
@@ -339,11 +347,23 @@ const loadBillboardPopularityIndex = () => {
 		(index, row) => {
 			const key = trackerKey(row.artist, row.song);
 			const rank = Number(row.rank);
+			const chartYear = parseBillboardChartYear(row.date);
 			if (!Number.isFinite(rank) || rank < 1 || rank > BILLBOARD_TOP_RANK)
 				return index;
 
 			const points = billboardPopularityPoints(rank);
-			return index.set(key, (index.get(key) ?? 0) + points);
+			const prev = index.get(key) ?? {
+				popularityScore: 0,
+				bestRank: Infinity,
+				year: undefined
+			};
+			const isBestRank = rank < prev.bestRank;
+
+			return index.set(key, {
+				popularityScore: prev.popularityScore + points,
+				bestRank: isBestRank ? rank : prev.bestRank,
+				year: isBestRank && chartYear !== undefined ? chartYear : prev.year
+			});
 		},
 		new Map()
 	);
@@ -351,7 +371,7 @@ const loadBillboardPopularityIndex = () => {
 
 const buildSongs = () => {
 	const trackerIndex = loadTrackerIndex();
-	const popularityIndex = loadBillboardPopularityIndex();
+	const billboardIndex = loadBillboardIndex();
 	const stats = {
 		filesRead: 0,
 		sectionsWritten: 0,
@@ -366,7 +386,7 @@ const buildSongs = () => {
 			const songData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
 			const lookupKey = trackerKey(songData.artist, songData.song);
 			const trackerEntry = trackerIndex.get(lookupKey);
-			const popularityScore = popularityIndex.get(lookupKey);
+			const billboardEntry = billboardIndex.get(lookupKey);
 
 			return (songData.sections ?? []).flatMap((section) => {
 				const originalChordCount = section.chords?.length ?? 0;
@@ -375,7 +395,7 @@ const buildSongs = () => {
 					trackerEntry,
 					songData.artist,
 					songData.song,
-					popularityScore,
+					billboardEntry,
 					source
 				);
 
