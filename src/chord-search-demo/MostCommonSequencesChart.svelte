@@ -1,15 +1,13 @@
 <script lang="ts">
-	import { buildSearchAbstract } from "./buildSearchAbstract.js";
-	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import { isRomanTokenPositionHighlighted } from "./searchMatchesInRomanTokens.js";
 	import type { VariableGramStat } from "./computeVariableGramStats.js";
+	import type { AbstractProgression } from "../chord-processing/types.js";
 	import {
 		FOUR_CHORDS_PROGRESSION_LABEL,
 		SEQUENCE_CHART_BAR_HEIGHT_PX,
 		SEQUENCE_CHART_BAR_MIN_WIDTH_PX,
 		SEQUENCE_CHART_BAR_TRACK_HEIGHT_RATIO,
 		SEQUENCE_CHART_CHORD_SEPARATOR,
-		SEQUENCE_CHART_EMPTY_MESSAGE,
 		SEQUENCE_CHART_AVG_PCT_BAR_COLOR,
 		SEQUENCE_CHART_FALLBACK_BAR_COLOR,
 		SEQUENCE_CHART_HIGHLIGHT_COLOR,
@@ -19,58 +17,63 @@
 		sequenceChartColWidthPercent,
 		formatSequenceChartOccurrences,
 		SEQUENCE_CHART_TABLE_MARGIN_PX,
-		SEQUENCE_CHART_TITLE,
-		sequenceChartEffectiveMinLength,
-		sequenceChartMinLengthSubtitle,
 		SEQUENCE_CHART_VIEWPORT_HEIGHT_PX
 	} from "./constants.js";
 
-	const searchChords = $derived(chordSearchDemoStore.searchChords);
-	const effectiveMinLength = $derived(
-		sequenceChartEffectiveMinLength(
-			chordSearchDemoStore.minNumChordsToCountAsAProgression,
-			searchChords.length
-		)
-	);
-	const chartData = $derived(
-		chordSearchDemoStore.sequenceChartData.filter(
-			(row) => row.length >= effectiveMinLength
-		)
-	);
-	const chartStatus = $derived(chordSearchDemoStore.sequenceChartStatus);
-	const chartError = $derived(chordSearchDemoStore.sequenceChartError);
-	const fuzzySearch = $derived(chordSearchDemoStore.fuzzySearch);
-	const ignoreSlashBassNotes = $derived(chordSearchDemoStore.ignoreSlashBassNotes);
-	const matchAtBeginningOnly = $derived(chordSearchDemoStore.matchAtBeginningOnly);
-	const matchAtLeastTwice = $derived(chordSearchDemoStore.matchAtLeastTwice);
-	const searchAbstract = $derived(
-		buildSearchAbstract(searchChords, { ignoreSlashBassNotes, fuzzySearch })
-	);
-	const hasSearchChords = $derived(searchChords.length > 0);
-	const chartSubtitle = $derived(sequenceChartMinLengthSubtitle(effectiveMinLength));
-	const isLoading = $derived(chartStatus === "loading");
-	const hasData = $derived(chartData.length > 0);
-	const showEmpty = $derived(chartStatus === "ready" && !hasData);
-	const showChart = $derived(hasData);
+	type Props = {
+		chartData: VariableGramStat[];
+		isLoading: boolean;
+		hasSearchChords: boolean;
+		searchAbstract: AbstractProgression | null;
+		fuzzySearch: boolean;
+		matchAtBeginningOnly: boolean;
+		matchAtLeastTwice: boolean;
+	};
+
+	let {
+		chartData,
+		isLoading,
+		hasSearchChords,
+		searchAbstract,
+		fuzzySearch,
+		matchAtBeginningOnly,
+		matchAtLeastTwice
+	}: Props = $props();
+
+	const MIN_BAR_WIDTH_PERCENT = 0;
+	const MAX_BAR_WIDTH_PERCENT = 100;
+	const MAX_OCCURRENCES_FALLBACK = 1;
+	const ONE_BASED_RANK_OFFSET = 1;
+	const TOOLTIP_X_OFFSET_PX = 12;
+	const TOOLTIP_Y_OFFSET_PX = -8;
 
 	const maxOccurrences = $derived(
-		Math.max(...chartData.map((row) => row.occurrences), 1)
+		Math.max(
+			...chartData.map((row) => row.occurrences),
+			MAX_OCCURRENCES_FALLBACK
+		)
 	);
 
-	const parseLabelChords = (label: string) => label.split(SEQUENCE_CHART_CHORD_SEPARATOR);
+	const parseLabelChords = (label: string) =>
+		label.split(SEQUENCE_CHART_CHORD_SEPARATOR);
 
 	const barWidthPercent = (occurrences: number) =>
 		(occurrences / maxOccurrences) * 100;
 
 	const avgPctBarWidthPercent = (avgPctOfSong: number) =>
-		Math.min(100, Math.max(0, avgPctOfSong));
+		Math.min(
+			MAX_BAR_WIDTH_PERCENT,
+			Math.max(MIN_BAR_WIDTH_PERCENT, avgPctOfSong)
+		);
 
-	const formatAvgPctOfSong = (row: VariableGramStat) => `${Math.round(row.avgPctOfSong)}%`;
+	const formatAvgPctOfSong = (row: VariableGramStat) =>
+		`${Math.round(row.avgPctOfSong)}%`;
 
 	const barColor = (label: string, length: number) =>
 		label === FOUR_CHORDS_PROGRESSION_LABEL
 			? SEQUENCE_CHART_HIGHLIGHT_COLOR
-			: (SEQUENCE_CHART_LENGTH_COLORS[length] ?? SEQUENCE_CHART_FALLBACK_BAR_COLOR);
+			: (SEQUENCE_CHART_LENGTH_COLORS[length] ??
+				SEQUENCE_CHART_FALLBACK_BAR_COLOR);
 
 	let tooltip = $state<{
 		label: string;
@@ -82,10 +85,7 @@
 		y: number;
 	} | null>(null);
 
-	const showTooltip = (
-		event: MouseEvent,
-		row: VariableGramStat
-	) => {
+	const showTooltip = (event: MouseEvent, row: VariableGramStat) => {
 		tooltip = {
 			label: row.label,
 			occurrences: row.occurrences,
@@ -101,179 +101,135 @@
 		tooltip = null;
 	};
 
-	const rankColWidth = sequenceChartColWidthPercent(SEQUENCE_CHART_COL_WEIGHTS.rank);
+	const rankColWidth = sequenceChartColWidthPercent(
+		SEQUENCE_CHART_COL_WEIGHTS.rank
+	);
 	const sequenceColWidth = sequenceChartColWidthPercent(
 		SEQUENCE_CHART_COL_WEIGHTS.sequence
 	);
-	const avgPctColWidth = sequenceChartColWidthPercent(SEQUENCE_CHART_COL_WEIGHTS.avgPct);
-	const barColWidth = sequenceChartColWidthPercent(SEQUENCE_CHART_COL_WEIGHTS.bar);
+	const avgPctColWidth = sequenceChartColWidthPercent(
+		SEQUENCE_CHART_COL_WEIGHTS.avgPct
+	);
+	const barColWidth = sequenceChartColWidthPercent(
+		SEQUENCE_CHART_COL_WEIGHTS.bar
+	);
 </script>
 
-<section class="chart-section">
-	<div class="chart-heading">
-		<h2 class="chart-title">{SEQUENCE_CHART_TITLE}</h2>
-		<p class="chart-subtitle">{chartSubtitle}</p>
-	</div>
+<div
+	class="chart-wrap"
+	class:is-loading={isLoading}
+	style:height="{SEQUENCE_CHART_VIEWPORT_HEIGHT_PX}px"
+	style:margin="{SEQUENCE_CHART_TABLE_MARGIN_PX}px"
+	style:--bar-height="{SEQUENCE_CHART_BAR_HEIGHT_PX}px"
+	style:--bar-track-height-ratio={SEQUENCE_CHART_BAR_TRACK_HEIGHT_RATIO}
+	style:--bar-min-width="{SEQUENCE_CHART_BAR_MIN_WIDTH_PX}px"
+>
+	<table class="sequence-table" aria-busy={isLoading}>
+		<colgroup>
+			<col class="rank-col" style:width={rankColWidth} />
+			<col class="sequence-col" style:width={sequenceColWidth} />
+			<col class="avg-pct-col" style:width={avgPctColWidth} />
+			<col class="bar-col" style:width={barColWidth} />
+		</colgroup>
+		<thead>
+			<tr>
+				<th class="rank-col" scope="col"></th>
+				<th class="sequence-col" scope="col">Sequence</th>
+				<th class="avg-pct-col" scope="col">Avg % of song</th>
+				<th class="bar-col" scope="col">Occurrences</th>
+			</tr>
+		</thead>
+		<tbody>
+			{#each chartData as row, rankIndex (row.label)}
+				{@const chords = parseLabelChords(row.label)}
+				<tr
+					onmouseenter={(event) => showTooltip(event, row)}
+					onmousemove={(event) => showTooltip(event, row)}
+					onmouseleave={hideTooltip}
+				>
+					<td class="rank-col">{rankIndex + ONE_BASED_RANK_OFFSET}</td>
+					<td class="sequence-col">
+						<span class="chord-sequence">
+							{#each chords as chord, chordIndex (chordIndex)}
+								{@const highlighted =
+									hasSearchChords &&
+									isRomanTokenPositionHighlighted(
+										chordIndex,
+										chords,
+										searchAbstract,
+										{
+											fuzzySearch,
+											matchAtBeginningOnly,
+											matchAtLeastTwice
+										}
+									)}
+								<span class="chord-token" class:highlighted>{chord}</span>
+								{#if chordIndex < chords.length - 1}
+									<span class="chord-separator"
+										>{SEQUENCE_CHART_CHORD_SEPARATOR}</span
+									>
+								{/if}
+							{/each}
+						</span>
+					</td>
+					<td class="avg-pct-col">
+						<div class="bar-cell">
+							<span class="occurrence-count">{formatAvgPctOfSong(row)}</span>
+							<div
+								class="bar-track"
+								role="img"
+								aria-label="Average {formatAvgPctOfSong(row)} of song length"
+							>
+								<div
+									class="bar-fill"
+									style:width="{avgPctBarWidthPercent(row.avgPctOfSong)}%"
+									style:background-color={SEQUENCE_CHART_AVG_PCT_BAR_COLOR}
+								></div>
+							</div>
+						</div>
+					</td>
+					<td class="bar-col">
+						<div class="bar-cell">
+							<span class="occurrence-count"
+								>{formatSequenceChartOccurrences(row.occurrences)}</span
+							>
+							<div
+								class="bar-track"
+								role="img"
+								aria-label="{formatSequenceChartOccurrences(
+									row.occurrences
+								)} occurrences in {row.songCount.toLocaleString()} songs (length {row.length})"
+							>
+								<div
+									class="bar-fill"
+									style:width="{barWidthPercent(row.occurrences)}%"
+									style:background-color={barColor(row.label, row.length)}
+								></div>
+							</div>
+						</div>
+					</td>
+				</tr>
+			{/each}
+		</tbody>
+	</table>
 
-	{#if chartError}
-		<p class="error">{chartError}</p>
+	{#if isLoading}
+		<div class="loading-overlay">{SEQUENCE_CHART_LOADING_MESSAGE}</div>
 	{/if}
 
-	{#if isLoading && !showChart}
-		<p class="status">{SEQUENCE_CHART_LOADING_MESSAGE}</p>
-	{:else if showEmpty}
-		<p class="empty">{SEQUENCE_CHART_EMPTY_MESSAGE}</p>
-	{:else if showChart}
+	{#if tooltip}
 		<div
-			class="chart-wrap"
-			class:is-loading={isLoading}
-			style:height="{SEQUENCE_CHART_VIEWPORT_HEIGHT_PX}px"
-			style:margin="{SEQUENCE_CHART_TABLE_MARGIN_PX}px"
-			style:--bar-height="{SEQUENCE_CHART_BAR_HEIGHT_PX}px"
-			style:--bar-track-height-ratio="{SEQUENCE_CHART_BAR_TRACK_HEIGHT_RATIO}"
-			style:--bar-min-width="{SEQUENCE_CHART_BAR_MIN_WIDTH_PX}px"
+			class="tooltip"
+			style:left="{tooltip.x + TOOLTIP_X_OFFSET_PX}px"
+			style:top="{tooltip.y + TOOLTIP_Y_OFFSET_PX}px"
 		>
-			<table class="sequence-table" aria-busy={isLoading}>
-				<colgroup>
-					<col class="rank-col" style:width={rankColWidth} />
-					<col class="sequence-col" style:width={sequenceColWidth} />
-					<col class="avg-pct-col" style:width={avgPctColWidth} />
-					<col class="bar-col" style:width={barColWidth} />
-				</colgroup>
-				<thead>
-					<tr>
-						<th class="rank-col" scope="col"></th>
-						<th class="sequence-col" scope="col">Sequence</th>
-						<th class="avg-pct-col" scope="col">Avg % of song</th>
-						<th class="bar-col" scope="col">Occurrences</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each chartData as row, rankIndex (row.label)}
-						{@const chords = parseLabelChords(row.label)}
-						<tr
-							onmouseenter={(event) => showTooltip(event, row)}
-							onmousemove={(event) => showTooltip(event, row)}
-							onmouseleave={hideTooltip}
-						>
-							<td class="rank-col">{rankIndex + 1}</td>
-							<td class="sequence-col">
-								<span class="chord-sequence">
-									{#each chords as chord, chordIndex (chordIndex)}
-										{@const highlighted =
-											hasSearchChords &&
-											isRomanTokenPositionHighlighted(
-												chordIndex,
-												chords,
-												searchAbstract,
-												{ fuzzySearch, matchAtBeginningOnly, matchAtLeastTwice }
-											)}
-										<span class="chord-token" class:highlighted>{chord}</span>
-										{#if chordIndex < chords.length - 1}
-											<span class="chord-separator">{SEQUENCE_CHART_CHORD_SEPARATOR}</span>
-										{/if}
-									{/each}
-								</span>
-							</td>
-							<td class="avg-pct-col">
-								<div class="bar-cell">
-									<span class="occurrence-count">{formatAvgPctOfSong(row)}</span>
-									<div
-										class="bar-track"
-										role="img"
-										aria-label="Average {formatAvgPctOfSong(row)} of song length"
-									>
-										<div
-											class="bar-fill"
-											style:width="{avgPctBarWidthPercent(row.avgPctOfSong)}%"
-											style:background-color={SEQUENCE_CHART_AVG_PCT_BAR_COLOR}
-										></div>
-									</div>
-								</div>
-							</td>
-							<td class="bar-col">
-								<div class="bar-cell">
-									<span class="occurrence-count">{formatSequenceChartOccurrences(row.occurrences)}</span>
-									<div
-										class="bar-track"
-										role="img"
-										aria-label="{formatSequenceChartOccurrences(row.occurrences)} occurrences in {row.songCount.toLocaleString()} songs (length {row.length})"
-									>
-										<div
-											class="bar-fill"
-											style:width="{barWidthPercent(row.occurrences)}%"
-											style:background-color={barColor(row.label, row.length)}
-										></div>
-									</div>
-								</div>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-
-			{#if isLoading}
-				<div class="loading-overlay">{SEQUENCE_CHART_LOADING_MESSAGE}</div>
-			{/if}
-
-			{#if tooltip}
-				<div
-					class="tooltip"
-					style:left="{tooltip.x + 12}px"
-					style:top="{tooltip.y - 8}px"
-				>
-					{formatSequenceChartOccurrences(tooltip.occurrences)} occurrences in {tooltip.songCount.toLocaleString()} songs · avg {Math.round(tooltip.avgPctOfSong)}% of song (length {tooltip.length})
-				</div>
-			{/if}
+			{formatSequenceChartOccurrences(tooltip.occurrences)} occurrences in {tooltip.songCount.toLocaleString()}
+			songs · avg {Math.round(tooltip.avgPctOfSong)}% of song (length {tooltip.length})
 		</div>
 	{/if}
-</section>
+</div>
 
 <style>
-	.chart-section {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		width: 100%;
-		min-width: 0;
-	}
-
-	.chart-heading {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.chart-title {
-		font-size: 1.75rem;
-		font-weight: 600;
-		line-height: 1.2;
-		color: #f4f4f5;
-		margin: 0;
-		letter-spacing: -0.02em;
-	}
-
-	.chart-subtitle {
-		font-size: 0.875rem;
-		font-weight: 400;
-		color: #71717a;
-		margin: 0;
-		line-height: 1.4;
-	}
-
-	.status,
-	.empty {
-		font-size: 0.875rem;
-		color: #71717a;
-		margin: 0;
-	}
-
-	.error {
-		font-size: 0.875rem;
-		color: #fca5a5;
-		margin: 0;
-	}
-
 	.chart-wrap {
 		position: relative;
 		width: 100%;

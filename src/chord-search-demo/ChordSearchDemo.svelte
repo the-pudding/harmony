@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { chordsAreEqual, createChordDetector } from "../chord-processing/index.js";
+	import {
+		chordsAreEqual,
+		createChordDetector
+	} from "../chord-processing/index.js";
 	import type { ChordEvent } from "../chord-processing/types.js";
 	import { midiToNote } from "../chord-processing/chord-classifier/notes.js";
 	import Piano from "$components/piano/Piano.svelte";
@@ -8,7 +11,7 @@
 	import ChordProgressionCriteria from "./ChordProgressionCriteria.svelte";
 	import ChordProgressionSearchResults from "./chord-progression-search-results/ChordProgressionSearchResults.svelte";
 	import MatchingSongsTimeSeriesChart from "./chord-progression-search-results/MatchingSongsTimeSeriesChart.svelte";
-	import MostCommonSequencesChart from "./MostCommonSequencesChart.svelte";
+	import MostCommonSequences from "./MostCommonSequences.svelte";
 	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import {
@@ -38,7 +41,9 @@
 	let songsLoading = $state(true);
 	let songsError = $state("");
 
-	const liveState = $derived(isConnected ? LIVE_STATE_ACTIVE : LIVE_STATE_MUTED);
+	const liveState = $derived(
+		isConnected ? LIVE_STATE_ACTIVE : LIVE_STATE_MUTED
+	);
 
 	let heldMidiNotes = $state(new Set<number>());
 	const heldNotes = $derived([...heldMidiNotes].map(midiToNote));
@@ -55,7 +60,8 @@
 	};
 
 	const matchesSentinel = (held: Set<number>, sentinel: Set<number>) =>
-		held.size === sentinel.size && [...sentinel].every((midi) => held.has(midi));
+		held.size === sentinel.size &&
+		[...sentinel].every((midi) => held.has(midi));
 
 	const pianoSentinels = [
 		{ midis: CLEAR_SENTINEL_MIDIS, label: CLEAR_SENTINEL_NOTES },
@@ -96,9 +102,12 @@
 			onNoteOn: (midi) => {
 				const nextHeld = new Set([...heldMidiNotes, midi]);
 				heldMidiNotes = nextHeld;
-				if (matchesSentinel(nextHeld, CLEAR_SENTINEL_MIDIS)) chordSearchDemoStore.clearSearch();
+				if (matchesSentinel(nextHeld, CLEAR_SENTINEL_MIDIS))
+					chordSearchDemoStore.clearSearch();
 				else if (matchesSentinel(nextHeld, PAUSE_SENTINEL_MIDIS))
-					chordSearchDemoStore.setSearchInputActive(!chordSearchDemoStore.searchInputActive);
+					chordSearchDemoStore.setSearchInputActive(
+						!chordSearchDemoStore.searchInputActive
+					);
 			},
 			onNoteOff: (midi) => {
 				heldMidiNotes = new Set([...heldMidiNotes].filter((m) => m !== midi));
@@ -123,7 +132,8 @@
 		}
 
 		if (typeof navigator.requestMIDIAccess !== "function") {
-			midiBanner = "Web MIDI API is not supported in this browser. Try Chrome or Edge.";
+			midiBanner =
+				"Web MIDI API is not supported in this browser. Try Chrome or Edge.";
 			return;
 		}
 
@@ -174,7 +184,10 @@
 
 		void loadSongs();
 
-		if (window.isSecureContext && typeof navigator.requestMIDIAccess === "function") {
+		if (
+			window.isSecureContext &&
+			typeof navigator.requestMIDIAccess === "function"
+		) {
 			void attemptConnect();
 		}
 
@@ -222,7 +235,7 @@
 			<div class="demo-columns">
 				<div class="column">
 					<ChordProgressionCriteria />
-					<MostCommonSequencesChart />
+					<MostCommonSequences />
 				</div>
 				<div class="column">
 					<h1 class="column-title">Song results</h1>
@@ -312,5 +325,4 @@
 		margin: 0;
 		letter-spacing: -0.02em;
 	}
-
 </style>
