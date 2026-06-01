@@ -14,7 +14,7 @@
 		SEQUENCE_CHART_HIGHLIGHT_COLOR,
 		SEQUENCE_CHART_LENGTH_COLORS,
 		SEQUENCE_CHART_LOADING_MESSAGE,
-		SEQUENCE_CHART_OCC_PER_SONG_COL_MIN_WIDTH_PX,
+		SEQUENCE_CHART_AVG_PCT_COL_MIN_WIDTH_PX,
 		SEQUENCE_CHART_PLOT_WIDTH_PX,
 		SEQUENCE_CHART_RANK_COL_MIN_WIDTH_PX,
 		SEQUENCE_CHART_TABLE_MARGIN_PX,
@@ -53,14 +53,11 @@
 	const barWidthPercent = (occurrences: number) =>
 		(occurrences / maxOccurrences) * 100;
 
-	const occurrencesPerSong = (row: VariableGramStat) =>
-		row.songCount > 0 ? row.occurrences / row.songCount : 0;
-
-	const formatOccurrencesPerSong = (row: VariableGramStat) =>
-		occurrencesPerSong(row).toLocaleString(undefined, {
+	const formatAvgPctOfSong = (row: VariableGramStat) =>
+		`${row.avgPctOfSong.toLocaleString(undefined, {
 			minimumFractionDigits: 1,
 			maximumFractionDigits: 1
-		});
+		})}%`;
 
 	const barColor = (label: string, length: number) =>
 		label === FOUR_CHORDS_PROGRESSION_LABEL
@@ -71,6 +68,7 @@
 		label: string;
 		occurrences: number;
 		songCount: number;
+		avgPctOfSong: number;
 		length: number;
 		x: number;
 		y: number;
@@ -84,6 +82,7 @@
 			label: row.label,
 			occurrences: row.occurrences,
 			songCount: row.songCount,
+			avgPctOfSong: row.avgPctOfSong,
 			length: row.length,
 			x: event.offsetX,
 			y: event.offsetY
@@ -113,7 +112,7 @@
 			style:height="{SEQUENCE_CHART_VIEWPORT_HEIGHT_PX}px"
 			style:margin="{SEQUENCE_CHART_TABLE_MARGIN_PX}px"
 			style:--rank-col-min-width="{SEQUENCE_CHART_RANK_COL_MIN_WIDTH_PX}px"
-			style:--occ-per-song-col-min-width="{SEQUENCE_CHART_OCC_PER_SONG_COL_MIN_WIDTH_PX}px"
+			style:--avg-pct-col-min-width="{SEQUENCE_CHART_AVG_PCT_COL_MIN_WIDTH_PX}px"
 			style:--bar-height="{SEQUENCE_CHART_BAR_HEIGHT_PX}px"
 			style:--bar-track-height-ratio="{SEQUENCE_CHART_BAR_TRACK_HEIGHT_RATIO}"
 			style:--bar-min-width="{SEQUENCE_CHART_BAR_MIN_WIDTH_PX}px"
@@ -124,7 +123,7 @@
 					<tr>
 						<th class="rank-col" scope="col">Rank</th>
 						<th class="sequence-col" scope="col">Sequence</th>
-						<th class="occ-per-song-col" scope="col">Occurrences/Song</th>
+						<th class="avg-pct-col" scope="col">Avg %</th>
 						<th class="bar-col" scope="col">Occurrences</th>
 					</tr>
 				</thead>
@@ -155,7 +154,7 @@
 									{/each}
 								</span>
 							</td>
-							<td class="occ-per-song-col">{formatOccurrencesPerSong(row)}</td>
+							<td class="avg-pct-col">{formatAvgPctOfSong(row)}</td>
 							<td class="bar-col">
 								<div class="bar-cell">
 									<span class="occurrence-count">{row.occurrences.toLocaleString()}</span>
@@ -188,7 +187,7 @@
 					style:left="{tooltip.x + 12}px"
 					style:top="{tooltip.y - 8}px"
 				>
-					{tooltip.occurrences.toLocaleString()} occurrences in {tooltip.songCount.toLocaleString()} songs (length {tooltip.length})
+					{tooltip.occurrences.toLocaleString()} occurrences in {tooltip.songCount.toLocaleString()} songs · avg {tooltip.avgPctOfSong.toFixed(1)}% of song (length {tooltip.length})
 				</div>
 			{/if}
 		</div>
@@ -282,16 +281,16 @@
 		white-space: nowrap;
 	}
 
-	.occ-per-song-col {
-		min-width: var(--occ-per-song-col-min-width);
-		width: var(--occ-per-song-col-min-width);
+	.avg-pct-col {
+		min-width: var(--avg-pct-col-min-width);
+		width: var(--avg-pct-col-min-width);
 		color: #a1a1aa;
 		font-size: 0.6875rem;
 		text-align: right;
 		white-space: nowrap;
 	}
 
-	.sequence-table th.occ-per-song-col {
+	.sequence-table th.avg-pct-col {
 		text-align: right;
 	}
 
