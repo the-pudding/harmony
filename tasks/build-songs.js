@@ -174,15 +174,15 @@ const degreeQualityToRoman = (degree, quality) => {
 	return null;
 };
 
-const dedupeAdjacentTokens = (tokens) =>
-	tokens.filter((token, index) => index === 0 || token !== tokens[index - 1]);
+const progressionChordInputsAreEqual = (a, b) =>
+	a.noteName === b.noteName &&
+	a.suffix === b.suffix &&
+	(a.bassNoteName ?? undefined) === (b.bassNoteName ?? undefined);
 
 const chordsToRomanTokens = (chords) =>
-	dedupeAdjacentTokens(
-		(chords ?? [])
-			.map(({ degree, quality }) => degreeQualityToRoman(degree, quality))
-			.filter(Boolean)
-	);
+	(chords ?? [])
+		.map(({ degree, quality }) => degreeQualityToRoman(degree, quality))
+		.filter(Boolean);
 
 const qualityExtensionToSuffix = ({ quality, extension, suspensions }) => {
 	const suspension = suspensions?.[0] ?? null;
@@ -273,10 +273,21 @@ const sectionToSongInput = (
 		(chord) =>
 			chordToProgressionInput(chord, section.key, section.scale) !== null
 	);
-	const progression = keptChords
-		.map((chord) => chordToProgressionInput(chord, section.key, section.scale))
-		.filter(Boolean);
-	const romanTokens = chordsToRomanTokens(keptChords);
+	const progressionWithChords = keptChords.flatMap((chord) => {
+		const input = chordToProgressionInput(chord, section.key, section.scale);
+		return input ? [{ input, chord }] : [];
+	});
+	const normalizedPairs = progressionWithChords.filter(
+		({ input }, index) =>
+			index === 0 ||
+			!progressionChordInputsAreEqual(
+				input,
+				progressionWithChords[index - 1].input
+			)
+	);
+	const progression = normalizedPairs.map(({ input }) => input);
+	const normalizedChords = normalizedPairs.map(({ chord }) => chord);
+	const romanTokens = chordsToRomanTokens(normalizedChords);
 
 	if (progression.length === 0) return null;
 

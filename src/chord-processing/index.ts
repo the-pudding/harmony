@@ -21,7 +21,10 @@ export {
 	createProgressionSearch,
 	toAbstractProgression,
 	findSubProgressionMatches,
-	progressionContainsSubProgression
+	progressionContainsSubProgression,
+	dedupeAdjacentParsedProgression,
+	dedupeAdjacentProgressionInputs,
+	progressionChordInputsAreEqual
 } from "./match-chord-progressions/index.js";
 export { isPositionInMatch } from "./match-chord-progressions/match.js";
 export type * from "./types.js";

@@ -192,6 +192,8 @@ search.clear();
 
 A match is any contiguous window in the song's progression (with wrap-around for looped songs) whose chord suffixes, root-to-root semitone deltas, and bass-to-root intervals (for slash chords) match the search. Songs may specify an optional `bassNoteName` per chord (e.g. `{ noteName: "C", suffix: "major", bassNoteName: "G" }`).
 
+**Adjacent repeated chords** (same root, suffix, and slash bass as the previous step) are collapsed to a single chord when songs are built (`npm run songs`), when songs are loaded for search, and when building a search query. Harmonic rhythm duplicates from chart sources are treated as noise, so a progression stored as `C → F → F → D` matches a search for `C → F → D`.
+
 ## Extending chord types
 
 Add entries to `chord-classifier/templates.ts`. Each template is a **pitch-class set** relative to a candidate root, not a voicing or note order.

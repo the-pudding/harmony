@@ -1,4 +1,5 @@
 import { simplifySuffix } from "../chord-processing/chord-classifier/fuzzySuffixMap.js";
+import { dedupeAdjacentParsedProgression } from "../chord-processing/match-chord-progressions/dedupe.js";
 import { toAbstractProgression } from "../chord-processing/match-chord-progressions/match.js";
 import type { AbstractProgression, ParsedProgressionChord } from "../chord-processing/types.js";
 
@@ -19,7 +20,9 @@ export const buildSearchAbstract = (
 
 	if (effectiveChords.length === 0) return null;
 
-	const abstract = toAbstractProgression(effectiveChords);
+	const abstract = toAbstractProgression(
+		dedupeAdjacentParsedProgression(effectiveChords)
+	);
 
 	return fuzzySearch
 		? {

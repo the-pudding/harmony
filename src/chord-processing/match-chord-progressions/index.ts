@@ -2,6 +2,7 @@ import { hasDistinctBass } from "../chord-classifier/index.js";
 import { formatChordName } from "../formatChordDisplay.js";
 import { simplifySuffix } from "../chord-classifier/fuzzySuffixMap.js";
 import { noteNameToPitchClass } from "../chord-classifier/notes.js";
+import { dedupeAdjacentParsedProgression } from "./dedupe.js";
 import {
 	applyProgressionMatchFilters,
 	findSubProgressionMatchesPrecomputed,
@@ -45,37 +46,31 @@ const parseProgressionChord = ({
 	return { ...chord, display: formatChordName(chord) };
 };
 
-const buildAbstractProgression = (
-	song: SongInput,
-	parsedProgression: ParsedProgressionChord[]
-) => {
-	if (
-		song.suffixes &&
-		song.deltas &&
-		song.bassIntervals &&
-		song.wrapDelta !== undefined
-	) {
-		return {
-			suffixes: song.suffixes,
-			deltas: song.deltas,
-			bassIntervals: song.bassIntervals,
-			wrapDelta: song.wrapDelta
-		} satisfies PrecomputedAbstractProgression;
-	}
-
-	return toPrecomputedAbstractProgression(parsedProgression);
-};
-
 const prepareSong = (song: SongInput, index: number): PreparedSong => {
-	const parsedProgression = song.progression.map(parseProgressionChord);
+	const parsedProgression = dedupeAdjacentParsedProgression(
+		song.progression.map(parseProgressionChord)
+	);
 
 	return {
 		...song,
 		id: song.id ?? `local-${index}`,
 		parsedProgression,
-		abstractProgression: buildAbstractProgression(song, parsedProgression)
+		abstractProgression: toPrecomputedAbstractProgression(parsedProgression)
 	};
 };
+
+const toEffectiveSearchProgression = (
+	searchProgression: ParsedProgressionChord[],
+	ignoreSlashBass: boolean
+): ParsedProgressionChord[] =>
+	dedupeAdjacentParsedProgression(
+		ignoreSlashBass
+			? searchProgression.map(
+					({ bassPitchClass: _bass, ...chord }) =>
+						chord as ParsedProgressionChord
+				)
+			: searchProgression
+	);
 
 const withSimplifiedSuffixes = <T extends { suffix: string }>(
 	chords: T[]
@@ -235,12 +230,10 @@ export const createProgressionSearch = ({
 	} = {}): SongSearchResult[] => {
 		const hasChords = searchProgression.length > 0;
 
-		const effectiveProgression = ignoreSlashBass
-			? searchProgression.map(
-					({ bassPitchClass: _bass, ...chord }) =>
-						chord as ParsedProgressionChord
-				)
-			: searchProgression;
+		const effectiveProgression = toEffectiveSearchProgression(
+			searchProgression,
+			ignoreSlashBass
+		);
 
 		const results: SongSearchResult[] = [];
 		for (const song of preparedSongs) {
@@ -284,12 +277,10 @@ export const createProgressionSearch = ({
 	} = {}): GroupedSongSearchResult[] => {
 		const hasChords = searchProgression.length > 0;
 
-		const effectiveProgression = ignoreSlashBass
-			? searchProgression.map(
-					({ bassPitchClass: _bass, ...chord }) =>
-						chord as ParsedProgressionChord
-				)
-			: searchProgression;
+		const effectiveProgression = toEffectiveSearchProgression(
+			searchProgression,
+			ignoreSlashBass
+		);
 
 		const matchOptions = {
 			fuzzySearch,
@@ -357,6 +348,11 @@ export const createProgressionSearch = ({
 	};
 };
 
+export {
+	dedupeAdjacentParsedProgression,
+	dedupeAdjacentProgressionInputs,
+	progressionChordInputsAreEqual
+} from "./dedupe.js";
 export {
 	toAbstractProgression,
 	toPrecomputedAbstractProgression,
