@@ -10,6 +10,7 @@
 		SEQUENCE_CHART_BAR_TRACK_HEIGHT_RATIO,
 		SEQUENCE_CHART_CHORD_SEPARATOR,
 		SEQUENCE_CHART_EMPTY_MESSAGE,
+		SEQUENCE_CHART_AVG_PCT_BAR_COLOR,
 		SEQUENCE_CHART_FALLBACK_BAR_COLOR,
 		SEQUENCE_CHART_HIGHLIGHT_COLOR,
 		SEQUENCE_CHART_LENGTH_COLORS,
@@ -54,6 +55,9 @@
 
 	const barWidthPercent = (occurrences: number) =>
 		(occurrences / maxOccurrences) * 100;
+
+	const avgPctBarWidthPercent = (avgPctOfSong: number) =>
+		Math.min(100, Math.max(0, avgPctOfSong));
 
 	const formatAvgPctOfSong = (row: VariableGramStat) => `${Math.round(row.avgPctOfSong)}%`;
 
@@ -165,7 +169,22 @@
 									{/each}
 								</span>
 							</td>
-							<td class="avg-pct-col">{formatAvgPctOfSong(row)}</td>
+							<td class="avg-pct-col">
+								<div class="bar-cell">
+									<span class="occurrence-count">{formatAvgPctOfSong(row)}</span>
+									<div
+										class="bar-track"
+										role="img"
+										aria-label="Average {formatAvgPctOfSong(row)} of song length"
+									>
+										<div
+											class="bar-fill"
+											style:width="{avgPctBarWidthPercent(row.avgPctOfSong)}%"
+											style:background-color={SEQUENCE_CHART_AVG_PCT_BAR_COLOR}
+										></div>
+									</div>
+								</div>
+							</td>
 							<td class="bar-col">
 								<div class="bar-cell">
 									<span class="occurrence-count">{formatSequenceChartOccurrences(row.occurrences)}</span>
@@ -307,9 +326,7 @@
 	}
 
 	.avg-pct-col {
-		color: #a1a1aa;
-		font-size: 0.6875rem;
-		white-space: nowrap;
+		overflow: hidden;
 	}
 
 	.bar-col {
