@@ -1,9 +1,9 @@
 import debounce from "lodash.debounce";
 import { createProgressionSearch } from "../chord-processing/index.js";
 import type {
+	GroupedSongSearchResult,
 	ParsedProgressionChord,
-	SongInput,
-	SongSearchResult
+	SongInput
 } from "../chord-processing/types.js";
 import { buildSearchAbstract } from "./buildSearchAbstract.js";
 import { buildArtistOptions } from "./buildArtistOptions.js";
@@ -29,7 +29,7 @@ import {
 
 let songs = $state<SongInput[]>([]);
 let searchChords = $state<ParsedProgressionChord[]>([]);
-let searchResults = $state<SongSearchResult[]>([]);
+let searchResults = $state<GroupedSongSearchResult[]>([]);
 let annualMatchCounts = $state<AnnualMatchCount[]>([]);
 let bassAsRoot = $state(true);
 let ignoreSlashBassNotes = $state(true);
@@ -133,7 +133,7 @@ $effect.root(() => {
 
 const syncSearch = () => {
 	searchChords = progressionSearch.getSearchProgression();
-	const allResults = progressionSearch.getResults({
+	const allResults = progressionSearch.getGroupedResults({
 		ignoreSlashBass: ignoreSlashBassNotes,
 		fuzzySearch,
 		matchAtBeginningOnly,

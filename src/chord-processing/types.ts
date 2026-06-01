@@ -111,6 +111,25 @@ export type SongSearchResult = {
 	matches: SubProgressionMatch[];
 };
 
+export type SongSectionSearchResult = {
+	sectionLabel: string | null;
+	parsedProgression: ParsedProgressionChord[];
+	matches: SubProgressionMatch[];
+};
+
+export type GroupedSongSearchResult = {
+	songKey: string;
+	title: string;
+	artists: string[];
+	year?: number;
+	source?: SongDataSource;
+	popularityScore?: number;
+	inTop10?: boolean;
+	inTop40?: boolean;
+	inTop100?: boolean;
+	sections: SongSectionSearchResult[];
+};
+
 export type AbstractProgression = {
 	suffixes: string[];
 	deltas: number[];

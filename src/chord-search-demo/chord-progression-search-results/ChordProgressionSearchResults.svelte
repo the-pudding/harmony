@@ -41,7 +41,7 @@
 			<p class="results-label">
 				Sorted by popularity:
 			</p>
-			{#each chordSearchDemoStore.searchResults as result (result.song.id)}
+			{#each chordSearchDemoStore.searchResults as result (result.songKey)}
 				<ChordProgressionSearchResult {result} />
 			{/each}
 		{/if}
@@ -145,7 +145,7 @@
 		flex-direction: column;
 		gap: 0.375rem;
 		font-size: 0.75rem;
-		max-height: 18rem;
+		max-height: 24rem;
 		overflow-y: auto;
 	}
 

@@ -1,4 +1,4 @@
-import type { SongSearchResult } from "../../chord-processing/types.js";
+import type { GroupedSongSearchResult } from "../../chord-processing/types.js";
 
 export type AnnualMatchCount = {
 	year: number;
@@ -6,12 +6,12 @@ export type AnnualMatchCount = {
 };
 
 export const buildAnnualMatchCounts = (
-	results: SongSearchResult[]
+	results: GroupedSongSearchResult[]
 ): AnnualMatchCount[] => {
 	const countsByYear = new Map<number, number>();
 
 	for (const result of results) {
-		const { year } = result.song;
+		const { year } = result;
 		if (year === undefined) continue;
 		countsByYear.set(year, (countsByYear.get(year) ?? 0) + 1);
 	}
