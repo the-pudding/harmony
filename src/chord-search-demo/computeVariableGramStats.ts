@@ -20,10 +20,68 @@ export type VariableGramStat = {
 	avgPctOfSong: number;
 };
 
+export type GramNormalizationOptions = {
+	aggregateRepeats: boolean;
+	canonicalizeRotations: boolean;
+};
+
 export type ComputeVariableGramStatsOptions = {
 	topN: number;
 	minNumChordsToCountAsAProgression: number;
 	maxLen: number;
+} & GramNormalizationOptions;
+
+const tokensJoinKey = (tokens: string[]): string => tokens.join(",");
+
+const isPeriodicWithPeriod = (
+	tokens: string[],
+	periodLength: number
+): boolean =>
+	tokens.every((token, index) => token === tokens[index % periodLength]);
+
+export const minimalPeriod = (tokens: string[]): string[] => {
+	if (tokens.length <= 1) return [...tokens];
+
+	for (let periodLength = 1; periodLength < tokens.length; periodLength++) {
+		if (isPeriodicWithPeriod(tokens, periodLength)) {
+			return tokens.slice(0, periodLength);
+		}
+	}
+
+	return [...tokens];
+};
+
+export const canonicalRotation = (tokens: string[]): string[] => {
+	if (tokens.length <= 1) return [...tokens];
+
+	let best = [...tokens];
+	for (
+		let rotationOffset = 1;
+		rotationOffset < tokens.length;
+		rotationOffset++
+	) {
+		const rotated = [
+			...tokens.slice(rotationOffset),
+			...tokens.slice(0, rotationOffset)
+		];
+		if (tokensJoinKey(rotated) < tokensJoinKey(best)) {
+			best = rotated;
+		}
+	}
+
+	return best;
+};
+
+export const normalizeGramTokens = (
+	tokens: string[],
+	{ aggregateRepeats, canonicalizeRotations }: GramNormalizationOptions
+): string[] => {
+	const afterRepeats = aggregateRepeats ? minimalPeriod(tokens) : [...tokens];
+	const shouldCanonicalizeRotation = canonicalizeRotations || aggregateRepeats;
+
+	return shouldCanonicalizeRotation
+		? canonicalRotation(afterRepeats)
+		: afterRepeats;
 };
 
 export type PartialGramStats = {
@@ -84,15 +142,16 @@ const finalizeTopGramStats = (
 
 export const computePartialGramStats = (
 	sections: ChartSection[],
-	{
-		minNumChordsToCountAsAProgression,
-		maxLen
-	}: Pick<
+	options: Pick<
 		ComputeVariableGramStatsOptions,
-		"minNumChordsToCountAsAProgression" | "maxLen"
+		| "minNumChordsToCountAsAProgression"
+		| "maxLen"
+		| "aggregateRepeats"
+		| "canonicalizeRotations"
 	>,
 	searchGramFilter: SearchGramFilter | null = null
 ): PartialGramStats => {
+	const { minNumChordsToCountAsAProgression, maxLen } = options;
 	const gramCounts = new Map<string, number>();
 	const gramSongs = new Map<string, Set<string>>();
 	const gramSongChordStats = new Map<
@@ -118,7 +177,11 @@ export const computePartialGramStats = (
 				) {
 					continue;
 				}
-				const gram = gramTokens.join(",");
+				const normalizedTokens = normalizeGramTokens(gramTokens, options);
+				if (normalizedTokens.length < minNumChordsToCountAsAProgression) {
+					continue;
+				}
+				const gram = tokensJoinKey(normalizedTokens);
 				gramCounts.set(gram, (gramCounts.get(gram) ?? 0) + 1);
 				seenInSection.add(gram);
 				const matchingIndices =

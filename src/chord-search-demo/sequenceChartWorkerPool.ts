@@ -25,6 +25,8 @@ export type ChartComputeOptions = {
 	topN: number;
 	minNumChordsToCountAsAProgression: number;
 	maxLen: number;
+	aggregateRepeats: boolean;
+	canonicalizeRotations: boolean;
 };
 
 export type ChartComputeRequest = {

@@ -23,6 +23,8 @@ export type SequenceChartWorkerComputeMessage = {
 		topN: number;
 		minNumChordsToCountAsAProgression: number;
 		maxLen: number;
+		aggregateRepeats: boolean;
+		canonicalizeRotations: boolean;
 	};
 };
 

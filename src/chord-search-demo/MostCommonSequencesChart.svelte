@@ -146,7 +146,7 @@
 		<thead>
 			<tr>
 				<th class="rank-col" scope="col"></th>
-				<th class="sequence-col" scope="col">Sequence</th>
+				<th class="sequence-col" scope="col">Progression</th>
 				<th class="avg-pct-col" scope="col">Avg % of song</th>
 				<th class="bar-col" scope="col">{SEQUENCE_CHART_SONG_APPEARANCES_COL_HEADER}</th>
 			</tr>

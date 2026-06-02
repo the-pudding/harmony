@@ -33,6 +33,11 @@
 			label="🧸 Fuzzy search (match on simplest version of chords, see FUZZY_SUFFIX_MAP)"
 		/>
 		<ToggleSwitch
+			checked={chordSearchDemoStore.aggregateRepeats}
+			onchange={chordSearchDemoStore.setAggregateRepeats}
+			label="♻️ Aggregate progressions that are repetitions of a shorter motif (e.g. V→I→V→I shown as V→I)"
+		/>
+		<ToggleSwitch
 			checked={chordSearchDemoStore.matchAtBeginningOnly}
 			onchange={chordSearchDemoStore.setMatchAtBeginningOnly}
 			label="▶️ Match only progressions that begin this way"
@@ -41,6 +46,11 @@
 			checked={chordSearchDemoStore.matchAtLeastTwice}
 			onchange={chordSearchDemoStore.setMatchAtLeastTwice}
 			label="🔁 Match only progressions where the search progression appears at least twice"
+		/>
+		<ToggleSwitch
+			checked={chordSearchDemoStore.canonicalizeRotations}
+			onchange={chordSearchDemoStore.setCanonicalizeRotations}
+			label="🔄 Treat rotations as equivalent (e.g. V→I and I→V shown as one)"
 		/>
 		<label class="number-field">
 			A progression must have at least

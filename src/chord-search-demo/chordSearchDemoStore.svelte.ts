@@ -49,6 +49,8 @@ let ignoreSlashBassNotes = $state(true);
 let fuzzySearch = $state(true);
 let matchAtBeginningOnly = $state(false);
 let matchAtLeastTwice = $state(false);
+let aggregateRepeats = $state(true);
+let canonicalizeRotations = $state(false);
 let minNumChordsToCountAsAProgression = $state(
 	MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_DEFAULT
 );
@@ -123,7 +125,9 @@ const runSequenceChartCompute = async () => {
 					minNumChordsToCountAsAProgression,
 					searchChords.length
 				),
-				maxLen: VARIABLE_GRAM_MAX_LENGTH
+				maxLen: VARIABLE_GRAM_MAX_LENGTH,
+				aggregateRepeats,
+				canonicalizeRotations
 			}
 		});
 
@@ -205,6 +209,8 @@ $effect.root(() => {
 		fuzzySearch;
 		matchAtBeginningOnly;
 		matchAtLeastTwice;
+		aggregateRepeats;
+		canonicalizeRotations;
 		minNumChordsToCountAsAProgression;
 		ignoreSlashBassNotes;
 		searchChords;
@@ -316,6 +322,14 @@ const setMatchAtLeastTwice = (checked: boolean) => {
 	matchAtLeastTwice = checked;
 };
 
+const setAggregateRepeats = (checked: boolean) => {
+	aggregateRepeats = checked;
+};
+
+const setCanonicalizeRotations = (checked: boolean) => {
+	canonicalizeRotations = checked;
+};
+
 const setMinNumChordsToCountAsAProgression = (value: number) => {
 	minNumChordsToCountAsAProgression =
 		clampMinNumChordsToCountAsAProgression(value);
@@ -370,6 +384,12 @@ export const chordSearchDemoStore = {
 	get matchAtLeastTwice() {
 		return matchAtLeastTwice;
 	},
+	get aggregateRepeats() {
+		return aggregateRepeats;
+	},
+	get canonicalizeRotations() {
+		return canonicalizeRotations;
+	},
 	get minNumChordsToCountAsAProgression() {
 		return minNumChordsToCountAsAProgression;
 	},
@@ -413,6 +433,8 @@ export const chordSearchDemoStore = {
 	setFuzzySearch,
 	setMatchAtBeginningOnly,
 	setMatchAtLeastTwice,
+	setAggregateRepeats,
+	setCanonicalizeRotations,
 	setMinNumChordsToCountAsAProgression,
 	setSearchInputActive,
 	toggleSearchInput,
