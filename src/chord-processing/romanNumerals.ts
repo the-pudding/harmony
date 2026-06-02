@@ -1,5 +1,9 @@
 import { NOTES_PER_OCTAVE } from "./chord-classifier/notes.js";
-import type { PrecomputedAbstractProgression } from "./types.js";
+import { formatChordName } from "./formatChordDisplay.js";
+import type {
+	ParsedProgressionChord,
+	PrecomputedAbstractProgression
+} from "./types.js";
 
 const ROMAN_BASE = ["I", "II", "III", "IV", "V", "VI", "VII"] as const;
 
@@ -103,4 +107,25 @@ export const romanTokensToPrecomputedAbstract = (
 		bassIntervals: suffixes.map(() => null),
 		wrapDelta
 	};
+};
+
+export const romanTokensToParsedProgression = (
+	tokens: string[]
+): ParsedProgressionChord[] | null => {
+	const parsed = tokens.map(parseRomanToken);
+	if (parsed.some((entry) => entry === null)) return null;
+
+	const chords = parsed.map((entry) => {
+		const { degree, quality } = entry!;
+		const rootPitchClass = MAJOR_SCALE_INTERVALS[degree - 1];
+		const suffix = ROMAN_QUALITY_TO_SUFFIX[quality];
+		if (!suffix) return null;
+
+		const chord = { rootPitchClass, suffix };
+		return { ...chord, display: formatChordName(chord) };
+	});
+
+	if (chords.some((chord) => chord === null)) return null;
+
+	return chords as ParsedProgressionChord[];
 };

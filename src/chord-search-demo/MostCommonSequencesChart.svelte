@@ -14,6 +14,7 @@
 		SEQUENCE_CHART_HIGHLIGHT_COLOR,
 		SEQUENCE_CHART_LENGTH_COLORS,
 		SEQUENCE_CHART_LOADING_MESSAGE,
+		SEQUENCE_CHART_ROW_FILTER_TOOLTIP,
 		SEQUENCE_CHART_COL_WEIGHTS,
 		SEQUENCE_CHART_SONG_APPEARANCES_COL_HEADER,
 		sequenceChartColWidthPercent,
@@ -98,30 +99,18 @@
 			: (SEQUENCE_CHART_LENGTH_COLORS[length] ??
 				SEQUENCE_CHART_FALLBACK_BAR_COLOR);
 
-	let tooltip = $state<{
-		label: string;
-		songCount: number;
-		pctOfAllSongs: number;
-		avgPctOfSong: number;
-		length: number;
-		x: number;
-		y: number;
-	} | null>(null);
+	let tooltip = $state<{ x: number; y: number } | null>(null);
 
-	const showTooltip = (event: MouseEvent, row: VariableGramStat) => {
-		tooltip = {
-			label: row.label,
-			songCount: row.songCount,
-			pctOfAllSongs: pctOfAllSongs(row.songCount),
-			avgPctOfSong: row.avgPctOfSong,
-			length: row.length,
-			x: event.offsetX,
-			y: event.offsetY
-		};
+	const showTooltip = (event: MouseEvent) => {
+		tooltip = { x: event.offsetX, y: event.offsetY };
 	};
 
 	const hideTooltip = () => {
 		tooltip = null;
+	};
+
+	const selectSequence = (label: string) => {
+		chordSearchDemoStore.setSearchFromSequenceLabel(label);
 	};
 
 	const rankColWidth = sequenceChartColWidthPercent(
@@ -166,8 +155,10 @@
 			{#each chartData as row, rankIndex (row.label)}
 				{@const chords = parseLabelChords(row.label)}
 				<tr
-					onmouseenter={(event) => showTooltip(event, row)}
-					onmousemove={(event) => showTooltip(event, row)}
+					class="sequence-row"
+					onclick={() => selectSequence(row.label)}
+					onmouseenter={showTooltip}
+					onmousemove={showTooltip}
 					onmouseleave={hideTooltip}
 				>
 					<td class="rank-col">{rankIndex + ONE_BASED_RANK_OFFSET}</td>
@@ -247,11 +238,7 @@
 			style:left="{tooltip.x + TOOLTIP_X_OFFSET_PX}px"
 			style:top="{tooltip.y + TOOLTIP_Y_OFFSET_PX}px"
 		>
-			{formatSequenceChartPercent(tooltip.pctOfAllSongs)}% ({formatSequenceChartOccurrences(
-				tooltip.songCount
-			)}) of {totalUnfilteredSongCount.toLocaleString()} songs · avg {Math.round(
-				tooltip.avgPctOfSong
-			)}% of song (length {tooltip.length})
+			{SEQUENCE_CHART_ROW_FILTER_TOOLTIP}
 		</div>
 	{/if}
 </div>
@@ -296,6 +283,10 @@
 		text-align: left;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
+	}
+
+	.sequence-table tbody tr.sequence-row {
+		cursor: pointer;
 	}
 
 	.sequence-table tbody tr:hover {

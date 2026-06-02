@@ -1,5 +1,6 @@
 import debounce from "lodash.debounce";
 import { createProgressionSearch } from "../chord-processing/index.js";
+import { romanTokensToParsedProgression } from "../chord-processing/romanNumerals.js";
 import type {
 	GroupedSongSearchResult,
 	ParsedProgressionChord,
@@ -12,6 +13,7 @@ import {
 	MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_DEFAULT,
 	MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_MAX,
 	MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_MIN,
+	SEQUENCE_CHART_CHORD_SEPARATOR,
 	SEQUENCE_CHART_DEBOUNCE_MS,
 	SEQUENCE_CHART_TOP_N,
 	sequenceChartEffectiveMinLength,
@@ -214,6 +216,15 @@ const clearSearch = () => {
 	syncSearchChords();
 };
 
+const setSearchFromSequenceLabel = (label: string) => {
+	const tokens = label.split(SEQUENCE_CHART_CHORD_SEPARATOR);
+	const progression = romanTokensToParsedProgression(tokens);
+	if (!progression) return;
+
+	progressionSearch.setProgression(progression);
+	syncSearchChords();
+};
+
 const setSongs = async (nextSongs: SongInput[]) => {
 	songs = nextSongs;
 	searchChords = [];
@@ -353,6 +364,7 @@ export const chordSearchDemoStore = {
 	setSongs,
 	syncSearch: syncSearchChords,
 	clearSearch,
+	setSearchFromSequenceLabel,
 	setSelectedArtist,
 	setTitleFilter,
 	setBassAsRoot,

@@ -339,9 +339,14 @@ export const createProgressionSearch = ({
 		searchProgression = [];
 	};
 
+	const setProgression = (chords: ParsedProgressionChord[]) => {
+		searchProgression = dedupeAdjacentParsedProgression(chords);
+	};
+
 	return {
 		append,
 		clear,
+		setProgression,
 		getSearchProgression: () => searchProgression,
 		getResults,
 		getGroupedResults

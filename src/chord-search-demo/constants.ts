@@ -68,6 +68,8 @@ export const SEQUENCE_CHART_TOP_N = 50;
 export const SEQUENCE_CHART_TITLE = "Most common progressions";
 export const SEQUENCE_CHART_SONG_APPEARANCES_COL_HEADER =
 	"song appearance % and count";
+export const SEQUENCE_CHART_ROW_FILTER_TOOLTIP =
+	"Click the row to filter to it";
 export const SEQUENCE_CHART_OCCURRENCE_SIGNIFICANT_FIGURES = 3;
 export const SEQUENCE_CHART_PERCENT_SIGNIFICANT_FIGURES = 2;
 export const sequenceChartMinLengthSubtitle = (minLength: number): string =>
