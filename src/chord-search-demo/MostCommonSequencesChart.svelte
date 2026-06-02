@@ -69,11 +69,25 @@
 	const songAppearancesAriaLabel = (row: VariableGramStat) =>
 		`${formatPctOfAllSongs(row.songCount)}% (${formatSequenceChartOccurrences(row.songCount)}) of all songs`;
 
-	const barWidthFromPercent = (percent: number) =>
-		Math.min(
+	const maxAvgPctOfSong = $derived(
+		chartData.length > 0
+			? Math.max(...chartData.map((row) => row.avgPctOfSong))
+			: PERCENT_SCALE
+	);
+
+	const maxPctOfAllSongs = $derived(
+		chartData.length > 0
+			? Math.max(...chartData.map((row) => pctOfAllSongs(row.songCount)))
+			: PERCENT_SCALE
+	);
+
+	const barWidthFromMax = (value: number, max: number) => {
+		const scaleMax = max > 0 ? max : PERCENT_SCALE;
+		return Math.min(
 			MAX_BAR_WIDTH_PERCENT,
-			Math.max(MIN_BAR_WIDTH_PERCENT, percent)
+			Math.max(MIN_BAR_WIDTH_PERCENT, (value / scaleMax) * PERCENT_SCALE)
 		);
+	};
 
 	const formatAvgPctOfSong = (row: VariableGramStat) =>
 		`${Math.round(row.avgPctOfSong)}%`;
@@ -191,7 +205,7 @@
 							>
 								<div
 									class="bar-fill"
-									style:width="{barWidthFromPercent(row.avgPctOfSong)}%"
+									style:width="{barWidthFromMax(row.avgPctOfSong, maxAvgPctOfSong)}%"
 									style:background-color={SEQUENCE_CHART_AVG_PCT_BAR_COLOR}
 								></div>
 							</div>
@@ -212,7 +226,7 @@
 							>
 								<div
 									class="bar-fill"
-									style:width="{barWidthFromPercent(pctOfAllSongs(row.songCount))}%"
+									style:width="{barWidthFromMax(pctOfAllSongs(row.songCount), maxPctOfAllSongs)}%"
 									style:background-color={barColor(row.label, row.length)}
 								></div>
 							</div>
