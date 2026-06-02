@@ -151,6 +151,7 @@ export const MATCHING_SONGS_TIME_SERIES_STROKE_COLOR = "#6366f1";
 export const MATCHING_SONGS_TIME_SERIES_EMPTY_MESSAGE =
 	"No matching songs with release years in the current results.";
 export const MATCHING_SONGS_TIME_SERIES_AXIS_TICK_COUNT = 5;
+export const MATCHING_SONGS_TIME_SERIES_SINGLE_YEAR_DOMAIN_PADDING = 1;
 export const MATCHING_SONGS_TIME_SERIES_BRUSH_FILL = "rgba(99, 102, 241, 0.2)";
 export const MATCHING_SONGS_TIME_SERIES_BRUSH_STROKE =
 	"rgba(99, 102, 241, 0.65)";

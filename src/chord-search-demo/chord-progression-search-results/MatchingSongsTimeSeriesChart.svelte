@@ -14,6 +14,7 @@
 		MATCHING_SONGS_TIME_SERIES_MARGIN_LEFT_PX,
 		MATCHING_SONGS_TIME_SERIES_MARGIN_RIGHT_PX,
 		MATCHING_SONGS_TIME_SERIES_MARGIN_TOP_PX,
+		MATCHING_SONGS_TIME_SERIES_SINGLE_YEAR_DOMAIN_PADDING,
 		MATCHING_SONGS_TIME_SERIES_STROKE_COLOR
 	} from "../constants.js";
 	import type { YearRangeFilter } from "../yearRangeFilter.js";
@@ -29,18 +30,28 @@
 	const TOOLTIP_PERCENT_MAX_FRACTION_DIGITS = 2;
 
 	const songs = $derived(chordSearchDemoStore.songs);
-	const hasSearchChords = $derived(chordSearchDemoStore.searchChords.length > 0);
 	const { totalSongsByYear, fullDatasetYearExtent } = $derived.by(() => {
-		const totals = new SvelteMap<number, number>();
+		const uniqueSongKeysByYear = new Map<number, Set<string>>();
 		let minYear = Infinity;
 		let maxYear = -Infinity;
+
 		for (const song of songs) {
-			const { year } = song;
+			const { year, songKey, id, title } = song;
 			if (year === undefined) continue;
-			totals.set(year, (totals.get(year) ?? 0) + 1);
+
+			const uniqueKey = songKey ?? id ?? title;
+			const keysForYear = uniqueSongKeysByYear.get(year) ?? new Set<string>();
+			keysForYear.add(uniqueKey);
+			uniqueSongKeysByYear.set(year, keysForYear);
 			minYear = Math.min(minYear, year);
 			maxYear = Math.max(maxYear, year);
 		}
+
+		const totals = new SvelteMap<number, number>();
+		for (const [year, keys] of uniqueSongKeysByYear) {
+			totals.set(year, keys.size);
+		}
+
 		const yearExtent = Number.isFinite(minYear)
 			? ([minYear, maxYear] as const)
 			: ([0, 0] as const);
@@ -49,11 +60,28 @@
 	const chartData = $derived.by(() =>
 		chordSearchDemoStore.annualMatchCounts.map<AnnualMatchPercentage>((row) => {
 			const totalSongs = totalSongsByYear.get(row.year) ?? 0;
-			const denominator = hasSearchChords ? totalSongs : row.count;
-			const percentage = denominator > 0 ? row.count / denominator : 0;
+			const percentage = totalSongs > 0 ? row.count / totalSongs : 0;
 			return { year: row.year, count: row.count, percentage };
 		})
 	);
+	const plotSeries = $derived.by((): AnnualMatchPercentage[] => {
+		if (chartData.length >= 2) return chartData;
+		if (chartData.length === 1) {
+			const row = chartData[0];
+			return [
+				{
+					...row,
+					year: row.year - MATCHING_SONGS_TIME_SERIES_SINGLE_YEAR_DOMAIN_PADDING
+				},
+				{
+					...row,
+					year: row.year + MATCHING_SONGS_TIME_SERIES_SINGLE_YEAR_DOMAIN_PADDING
+				}
+			];
+		}
+
+		return chartData;
+	});
 	const hasData = $derived(chartData.length > 0);
 
 	let containerWidth = $state(0);
@@ -101,7 +129,7 @@
 			.x((row) => xScale(row.year))
 			.y0(plotHeight)
 			.y1((row) => yScale(row.percentage))
-			.curve(curveMonotoneX)(chartData);
+			.curve(curveMonotoneX)(plotSeries);
 	});
 
 	const linePath = $derived.by(() => {
@@ -110,7 +138,7 @@
 		return line<AnnualMatchPercentage>()
 			.x((row) => xScale(row.year))
 			.y((row) => yScale(row.percentage))
-			.curve(curveMonotoneX)(chartData);
+			.curve(curveMonotoneX)(plotSeries);
 	});
 
 	const yearTicks = $derived.by(() => {
