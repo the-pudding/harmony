@@ -37,6 +37,9 @@
 			title="Search on YouTube"
 		>🎵</a>
 		<span class="song-title">{result.title}</span>
+		{#if result.year !== undefined}
+			<span class="year"> ({result.year})</span>
+		{/if}
 		<span class="artist"> — {artistLabel}</span>
 	</div>
 	<div class="sections">
@@ -89,7 +92,8 @@
 		font-weight: 500;
 	}
 
-	.artist {
+	.artist,
+	.year {
 		color: #71717a;
 	}
 
