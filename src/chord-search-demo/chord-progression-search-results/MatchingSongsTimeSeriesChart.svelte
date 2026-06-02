@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { area, curveMonotoneX, line, max, scaleLinear, tickStep } from "d3";
+	import { SvelteMap } from "svelte/reactivity";
 	import { chordSearchDemoStore } from "../chordSearchDemoStore.svelte.js";
-	import type { AnnualMatchCount } from "./buildAnnualMatchCounts.js";
 	import {
 		MATCHING_SONGS_TIME_SERIES_AXIS_TICK_COUNT,
 		MATCHING_SONGS_TIME_SERIES_EMPTY_MESSAGE,
@@ -14,13 +14,45 @@
 		MATCHING_SONGS_TIME_SERIES_STROKE_COLOR
 	} from "../constants.js";
 
-	const chartData = $derived(chordSearchDemoStore.annualMatchCounts);
+	type AnnualMatchPercentage = {
+		year: number;
+		count: number;
+		percentage: number;
+	};
+
+	const PERCENT_BASELINE_MAX = 0.01;
+	const AXIS_PERCENT_MAX_FRACTION_DIGITS = 1;
+	const TOOLTIP_PERCENT_MAX_FRACTION_DIGITS = 2;
+
+	const songs = $derived(chordSearchDemoStore.songs);
+	const hasSearchChords = $derived(chordSearchDemoStore.searchChords.length > 0);
+	const totalSongsByYear = $derived.by(() => {
+		const totals = new SvelteMap<number, number>();
+		for (const song of songs) {
+			const { year } = song;
+			if (year === undefined) continue;
+			totals.set(year, (totals.get(year) ?? 0) + 1);
+		}
+		return totals;
+	});
+	const chartData = $derived.by(() =>
+		chordSearchDemoStore.annualMatchCounts.map<AnnualMatchPercentage>((row) => {
+			const totalSongs = totalSongsByYear.get(row.year) ?? 0;
+			const denominator = hasSearchChords ? totalSongs : row.count;
+			const percentage = denominator > 0 ? row.count / denominator : 0;
+			return { year: row.year, count: row.count, percentage };
+		})
+	);
 	const hasData = $derived(chartData.length > 0);
 
 	let containerWidth = $state(0);
-	let tooltip = $state<{ year: number; count: number; x: number; y: number } | null>(
-		null
-	);
+	let tooltip = $state<{
+		year: number;
+		count: number;
+		percentage: number;
+		x: number;
+		y: number;
+	} | null>(null);
 
 	const plotWidth = $derived(
 		Math.max(
@@ -41,38 +73,34 @@
 		return [chartData[0].year, chartData[chartData.length - 1].year] as const;
 	});
 
-	const maxCount = $derived(
-		Math.max(max(chartData, (row) => row.count) ?? 0, 1)
+	const maxPercentage = $derived(
+		Math.max(max(chartData, (row) => row.percentage) ?? 0, PERCENT_BASELINE_MAX)
 	);
 
 	const xScale = $derived.by(() =>
-		scaleLinear()
-			.domain(yearExtent)
-			.range([0, plotWidth])
+		scaleLinear().domain(yearExtent).range([0, plotWidth])
 	);
 
 	const yScale = $derived.by(() =>
-		scaleLinear()
-			.domain([0, maxCount])
-			.range([plotHeight, 0])
+		scaleLinear().domain([0, maxPercentage]).range([plotHeight, 0])
 	);
 
 	const areaPath = $derived.by(() => {
 		if (!hasData || plotWidth <= 0 || plotHeight <= 0) return "";
 
-		return area<AnnualMatchCount>()
+		return area<AnnualMatchPercentage>()
 			.x((row) => xScale(row.year))
 			.y0(plotHeight)
-			.y1((row) => yScale(row.count))
+			.y1((row) => yScale(row.percentage))
 			.curve(curveMonotoneX)(chartData);
 	});
 
 	const linePath = $derived.by(() => {
 		if (!hasData || plotWidth <= 0 || plotHeight <= 0) return "";
 
-		return line<AnnualMatchCount>()
+		return line<AnnualMatchPercentage>()
 			.x((row) => xScale(row.year))
-			.y((row) => yScale(row.count))
+			.y((row) => yScale(row.percentage))
 			.curve(curveMonotoneX)(chartData);
 	});
 
@@ -98,28 +126,45 @@
 		return ticks;
 	});
 
-	const countTicks = $derived.by(() => {
-		const step = tickStep(0, maxCount, MATCHING_SONGS_TIME_SERIES_AXIS_TICK_COUNT);
+	const percentAxisLabelFormatter = new Intl.NumberFormat("en-US", {
+		style: "percent",
+		maximumFractionDigits: AXIS_PERCENT_MAX_FRACTION_DIGITS
+	});
+	const tooltipPercentFormatter = new Intl.NumberFormat("en-US", {
+		style: "percent",
+		maximumFractionDigits: TOOLTIP_PERCENT_MAX_FRACTION_DIGITS
+	});
+
+	const percentageTicks = $derived.by(() => {
+		const step = tickStep(
+			0,
+			maxPercentage,
+			MATCHING_SONGS_TIME_SERIES_AXIS_TICK_COUNT
+		);
 		const ticks: number[] = [];
 
-		for (let count = 0; count <= maxCount; count += step) {
-			ticks.push(count);
+		for (let percentage = 0; percentage <= maxPercentage; percentage += step) {
+			ticks.push(percentage);
 		}
 
-		if (ticks[ticks.length - 1] !== maxCount) {
-			ticks.push(maxCount);
+		if (ticks[ticks.length - 1] !== maxPercentage) {
+			ticks.push(maxPercentage);
 		}
 
 		return ticks;
 	});
 
-	const nearestRow = (clientX: number, svgLeft: number): AnnualMatchCount | null => {
+	const nearestRow = (
+		clientX: number,
+		svgLeft: number
+	): AnnualMatchPercentage | null => {
 		if (!hasData || plotWidth <= 0) return null;
 
-		const relativeX = clientX - svgLeft - MATCHING_SONGS_TIME_SERIES_MARGIN_LEFT_PX;
+		const relativeX =
+			clientX - svgLeft - MATCHING_SONGS_TIME_SERIES_MARGIN_LEFT_PX;
 		const year = xScale.invert(Math.min(Math.max(relativeX, 0), plotWidth));
 
-		return chartData.reduce<AnnualMatchCount | null>((closest, row) => {
+		return chartData.reduce<AnnualMatchPercentage | null>((closest, row) => {
 			if (!closest) return row;
 			return Math.abs(row.year - year) < Math.abs(closest.year - year)
 				? row
@@ -139,6 +184,7 @@
 		tooltip = {
 			year: row.year,
 			count: row.count,
+			percentage: row.percentage,
 			x: event.clientX - bounds.left,
 			y: event.clientY - bounds.top
 		};
@@ -169,20 +215,29 @@
 					<g
 						transform="translate({MATCHING_SONGS_TIME_SERIES_MARGIN_LEFT_PX}, {MATCHING_SONGS_TIME_SERIES_MARGIN_TOP_PX})"
 					>
-						{#each countTicks as count (count)}
+						{#each percentageTicks as percentage (percentage)}
 							<line
 								class="grid-line"
 								x1="0"
 								x2={plotWidth}
-								y1={yScale(count)}
-								y2={yScale(count)}
+								y1={yScale(percentage)}
+								y2={yScale(percentage)}
 							/>
-							<text class="axis-label y-axis-label" x="-8" y={yScale(count)} text-anchor="end">
-								{count.toLocaleString()}
+							<text
+								class="axis-label y-axis-label"
+								x="-8"
+								y={yScale(percentage)}
+								text-anchor="end"
+							>
+								{percentAxisLabelFormatter.format(percentage)}
 							</text>
 						{/each}
 
-						<path class="area" d={areaPath} fill={MATCHING_SONGS_TIME_SERIES_FILL_COLOR} />
+						<path
+							class="area"
+							d={areaPath}
+							fill={MATCHING_SONGS_TIME_SERIES_FILL_COLOR}
+						/>
 						<path
 							class="line"
 							d={linePath}
@@ -209,7 +264,7 @@
 						style:left="{tooltip.x + 12}px"
 						style:top="{tooltip.y - 8}px"
 					>
-						{tooltip.year}: {tooltip.count.toLocaleString()} songs
+						{tooltip.year}: {tooltipPercentFormatter.format(tooltip.percentage)}
 					</div>
 				{/if}
 			{/if}

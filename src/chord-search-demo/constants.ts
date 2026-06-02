@@ -48,6 +48,7 @@ export const LIVE_STATE_MUTED = "muted";
 export const LIVE_STATE_ACTIVE = "active";
 
 export const SEARCH_PLACEHOLDER = "Play a chord to start searching…";
+export const SEARCH_PLACEHOLDER_PAUSED = "Input paused. Enable input -->";
 export const NO_MATCH_MESSAGE =
 	"No songs match this progression. Clear to start over.";
 export const SONGS_DATA_URL = "/data/songs.json";
@@ -140,7 +141,10 @@ export const MATCHING_SONGS_TIME_SERIES_EMPTY_MESSAGE =
 export const MATCHING_SONGS_TIME_SERIES_AXIS_TICK_COUNT = 5;
 
 export const ARTIST_FILTER_OPTION_LIMIT = 10;
-export const TOP_NAV_FILTER_INPUT_HEIGHT = "1.875rem";
+export const TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y = "0.375rem";
+export const TOP_NAV_CHORD_SEARCH_GROUP_CONTENT_MIN_HEIGHT = "1.5rem";
+export const TOP_NAV_CHORD_SEARCH_GROUP_HEIGHT = `calc(2 * ${TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y} + ${TOP_NAV_CHORD_SEARCH_GROUP_CONTENT_MIN_HEIGHT})`;
+export const TOP_NAV_FILTER_INPUT_HEIGHT = TOP_NAV_CHORD_SEARCH_GROUP_HEIGHT;
 export const TOP_NAV_ARTIST_FILTER_WIDTH = "11rem";
 export const TOP_NAV_SONG_FILTER_WIDTH = "8rem";
 export const SONGS_LOAD_ERROR_PREFIX = "Could not load song dataset:";

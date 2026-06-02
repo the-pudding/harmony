@@ -278,6 +278,10 @@ const setSearchInputActive = (active: boolean) => {
 	searchInputActive = active;
 };
 
+const toggleSearchInput = () => {
+	searchInputActive = !searchInputActive;
+};
+
 const getProgressionSearch = () => progressionSearch;
 
 const disposeWorkers = () => {
@@ -358,6 +362,7 @@ export const chordSearchDemoStore = {
 	setMatchAtLeastTwice,
 	setMinNumChordsToCountAsAProgression,
 	setSearchInputActive,
+	toggleSearchInput,
 	getProgressionSearch,
 	disposeWorkers,
 	disposeSequenceChartWorkers: disposeWorkers
