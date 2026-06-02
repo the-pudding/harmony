@@ -311,12 +311,15 @@
 			overlay.releasePointerCapture(event.pointerId);
 		}
 
-		const nextRange = yearRangeFromPlotXs(
-			brushDrag.startPlotX,
-			brushDrag.currentPlotX
-		);
-		brushDrag = null;
-		chordSearchDemoStore.setYearRangeFilter(nextRange);
+	const { startPlotX, currentPlotX } = brushDrag;
+	brushDrag = null;
+
+	if (startPlotX === currentPlotX) {
+		chordSearchDemoStore.clearYearRangeFilter();
+		return;
+	}
+
+	chordSearchDemoStore.setYearRangeFilter(yearRangeFromPlotXs(startPlotX, currentPlotX));
 	};
 
 	const onBrushPointerCancel = (event: PointerEvent) => {
