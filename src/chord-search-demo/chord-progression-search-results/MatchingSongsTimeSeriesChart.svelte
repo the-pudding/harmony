@@ -26,14 +26,21 @@
 
 	const songs = $derived(chordSearchDemoStore.songs);
 	const hasSearchChords = $derived(chordSearchDemoStore.searchChords.length > 0);
-	const totalSongsByYear = $derived.by(() => {
+	const { totalSongsByYear, fullDatasetYearExtent } = $derived.by(() => {
 		const totals = new SvelteMap<number, number>();
+		let minYear = Infinity;
+		let maxYear = -Infinity;
 		for (const song of songs) {
 			const { year } = song;
 			if (year === undefined) continue;
 			totals.set(year, (totals.get(year) ?? 0) + 1);
+			minYear = Math.min(minYear, year);
+			maxYear = Math.max(maxYear, year);
 		}
-		return totals;
+		const yearExtent = Number.isFinite(minYear)
+			? ([minYear, maxYear] as const)
+			: ([0, 0] as const);
+		return { totalSongsByYear: totals, fullDatasetYearExtent: yearExtent };
 	});
 	const chartData = $derived.by(() =>
 		chordSearchDemoStore.annualMatchCounts.map<AnnualMatchPercentage>((row) => {
@@ -68,17 +75,12 @@
 			MATCHING_SONGS_TIME_SERIES_MARGIN_BOTTOM_PX
 	);
 
-	const yearExtent = $derived.by(() => {
-		if (!hasData) return [0, 0] as const;
-		return [chartData[0].year, chartData[chartData.length - 1].year] as const;
-	});
-
 	const maxPercentage = $derived(
 		Math.max(max(chartData, (row) => row.percentage) ?? 0, PERCENT_BASELINE_MAX)
 	);
 
 	const xScale = $derived.by(() =>
-		scaleLinear().domain(yearExtent).range([0, plotWidth])
+		scaleLinear().domain(fullDatasetYearExtent).range([0, plotWidth])
 	);
 
 	const yScale = $derived.by(() =>
@@ -107,7 +109,7 @@
 	const yearTicks = $derived.by(() => {
 		if (!hasData) return [] as number[];
 
-		const [minYear, maxYear] = yearExtent;
+		const [minYear, maxYear] = fullDatasetYearExtent;
 		const yearSpan = maxYear - minYear;
 		const step = Math.max(
 			1,

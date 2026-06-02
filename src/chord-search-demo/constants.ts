@@ -32,9 +32,11 @@ const formatSentinelNotes = (midis: Set<number>) =>
 
 export const CLEAR_SENTINEL_MIDIS = buildHalfStepSentinel("C", 2);
 export const CLEAR_SENTINEL_NOTES = formatSentinelNotes(CLEAR_SENTINEL_MIDIS);
+export const CLEAR_SENTINEL_PIANO_LABEL = "clear";
 
 export const PAUSE_SENTINEL_MIDIS = buildHalfStepSentinel("Bb", 4);
 export const PAUSE_SENTINEL_NOTES = formatSentinelNotes(PAUSE_SENTINEL_MIDIS);
+export const PAUSE_SENTINEL_PIANO_LABEL = "toggle input";
 
 export const SEARCH_INPUT_ACTIVE_LABEL = "listening";
 export const SEARCH_INPUT_PAUSED_LABEL = "input paused";
