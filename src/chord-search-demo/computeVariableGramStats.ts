@@ -22,7 +22,7 @@ export type VariableGramStat = {
 
 export type GramNormalizationOptions = {
 	aggregateRepeats: boolean;
-	canonicalizeRotations: boolean;
+	treatRotationsAsEquivalent: boolean;
 };
 
 export type ComputeVariableGramStatsOptions = {
@@ -51,7 +51,7 @@ export const minimalPeriod = (tokens: string[]): string[] => {
 	return [...tokens];
 };
 
-export const canonicalRotation = (tokens: string[]): string[] => {
+export const smallestLexRotation = (tokens: string[]): string[] => {
 	if (tokens.length <= 1) return [...tokens];
 
 	let best = [...tokens];
@@ -74,13 +74,13 @@ export const canonicalRotation = (tokens: string[]): string[] => {
 
 export const normalizeGramTokens = (
 	tokens: string[],
-	{ aggregateRepeats, canonicalizeRotations }: GramNormalizationOptions
+	{ aggregateRepeats, treatRotationsAsEquivalent }: GramNormalizationOptions
 ): string[] => {
 	const afterRepeats = aggregateRepeats ? minimalPeriod(tokens) : [...tokens];
-	const shouldCanonicalizeRotation = canonicalizeRotations || aggregateRepeats;
+	const shouldAlignRotations = treatRotationsAsEquivalent || aggregateRepeats;
 
-	return shouldCanonicalizeRotation
-		? canonicalRotation(afterRepeats)
+	return shouldAlignRotations
+		? smallestLexRotation(afterRepeats)
 		: afterRepeats;
 };
 
@@ -147,7 +147,7 @@ export const computePartialGramStats = (
 		| "minNumChordsToCountAsAProgression"
 		| "maxLen"
 		| "aggregateRepeats"
-		| "canonicalizeRotations"
+		| "treatRotationsAsEquivalent"
 	>,
 	searchGramFilter: SearchGramFilter | null = null
 ): PartialGramStats => {

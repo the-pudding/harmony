@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { romanTokensToPrecomputedAbstract } from "../chord-processing/romanNumerals.js";
 import {
-	canonicalRotation,
+	smallestLexRotation,
 	computePartialGramStats,
 	computeVariableGramStats,
 	minimalPeriod,
@@ -10,12 +10,12 @@ import {
 
 const noNormalization = {
 	aggregateRepeats: false,
-	canonicalizeRotations: false
+	treatRotationsAsEquivalent: false
 };
 
 const defaultNormalization = {
 	aggregateRepeats: true,
-	canonicalizeRotations: false
+	treatRotationsAsEquivalent: false
 };
 
 const gramKeysFromPartial = (
@@ -50,18 +50,18 @@ describe("minimalPeriod", () => {
 	});
 });
 
-describe("canonicalRotation", () => {
-	it("V→I and I→V share one canonical starting point (I→V)", () => {
-		expect(canonicalRotation(["V", "I"])).toEqual(["I", "V"]);
-		expect(canonicalRotation(["I", "V"])).toEqual(["I", "V"]);
+describe("smallestLexRotation", () => {
+	it("V→I and I→V share one aligned starting point (I→V)", () => {
+		expect(smallestLexRotation(["V", "I"])).toEqual(["I", "V"]);
+		expect(smallestLexRotation(["I", "V"])).toEqual(["I", "V"]);
 	});
 
 	it("all four rotations of I→V→vi→IV map to the same key", () => {
-		const canonical = ["I", "V", "vi", "IV"];
-		expect(canonicalRotation(["I", "V", "vi", "IV"])).toEqual(canonical);
-		expect(canonicalRotation(["V", "vi", "IV", "I"])).toEqual(canonical);
-		expect(canonicalRotation(["vi", "IV", "I", "V"])).toEqual(canonical);
-		expect(canonicalRotation(["IV", "I", "V", "vi"])).toEqual(canonical);
+		const aligned = ["I", "V", "vi", "IV"];
+		expect(smallestLexRotation(["I", "V", "vi", "IV"])).toEqual(aligned);
+		expect(smallestLexRotation(["V", "vi", "IV", "I"])).toEqual(aligned);
+		expect(smallestLexRotation(["vi", "IV", "I", "V"])).toEqual(aligned);
+		expect(smallestLexRotation(["IV", "I", "V", "vi"])).toEqual(aligned);
 	});
 });
 
@@ -91,17 +91,17 @@ describe("normalizeGramTokens", () => {
 		).toEqual(["I", "IV"]);
 	});
 
-	it("canonicalize rotations only: two-chord order merges, four-chord loops do not", () => {
+	it("treat rotations as equivalent only: two-chord order merges, four-chord loops do not", () => {
 		expect(
 			normalizeGramTokens(["V", "I"], {
 				aggregateRepeats: false,
-				canonicalizeRotations: true
+				treatRotationsAsEquivalent: true
 			})
 		).toEqual(["I", "V"]);
 		expect(
 			normalizeGramTokens(["I", "V", "vi", "IV"], {
 				aggregateRepeats: false,
-				canonicalizeRotations: true
+				treatRotationsAsEquivalent: true
 			})
 		).toEqual(["I", "V", "vi", "IV"]);
 	});
@@ -310,7 +310,7 @@ describe("computePartialGramStats normalization", () => {
 		);
 	});
 
-	it("with canonicalize rotations on, I→V→vi→IV and V→vi→IV→I count as one progression", () => {
+	it("with treat rotations as equivalent on, I→V→vi→IV and V→vi→IV→I count as one progression", () => {
 		const partial = computePartialGramStats(
 			[
 				{ romanTokens: ["I", "V", "vi", "IV"], songKey: "song-a" },
@@ -320,7 +320,7 @@ describe("computePartialGramStats normalization", () => {
 				minNumChordsToCountAsAProgression: 4,
 				maxLen: 4,
 				aggregateRepeats: false,
-				canonicalizeRotations: true
+				treatRotationsAsEquivalent: true
 			},
 			null
 		);
@@ -333,7 +333,7 @@ describe("computePartialGramStats normalization", () => {
 		);
 	});
 
-	it("with canonicalize rotations on, V→I and I→V in different songs count as one two-chord progression", () => {
+	it("with treat rotations as equivalent on, V→I and I→V in different songs count as one two-chord progression", () => {
 		const partial = computePartialGramStats(
 			[
 				{ romanTokens: ["V", "I"], songKey: "song-a" },
@@ -343,7 +343,7 @@ describe("computePartialGramStats normalization", () => {
 				minNumChordsToCountAsAProgression: 2,
 				maxLen: 2,
 				aggregateRepeats: false,
-				canonicalizeRotations: true
+				treatRotationsAsEquivalent: true
 			},
 			null
 		);

@@ -24,7 +24,7 @@ export type SequenceChartWorkerComputeMessage = {
 		minNumChordsToCountAsAProgression: number;
 		maxLen: number;
 		aggregateRepeats: boolean;
-		canonicalizeRotations: boolean;
+		treatRotationsAsEquivalent: boolean;
 	};
 };
 

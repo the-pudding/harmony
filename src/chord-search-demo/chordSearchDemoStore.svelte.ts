@@ -50,7 +50,7 @@ let fuzzySearch = $state(true);
 let matchAtBeginningOnly = $state(false);
 let matchAtLeastTwice = $state(false);
 let aggregateRepeats = $state(true);
-let canonicalizeRotations = $state(false);
+let treatRotationsAsEquivalent = $state(false);
 let minNumChordsToCountAsAProgression = $state(
 	MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_DEFAULT
 );
@@ -127,7 +127,7 @@ const runSequenceChartCompute = async () => {
 				),
 				maxLen: VARIABLE_GRAM_MAX_LENGTH,
 				aggregateRepeats,
-				canonicalizeRotations
+				treatRotationsAsEquivalent
 			}
 		});
 
@@ -210,7 +210,7 @@ $effect.root(() => {
 		matchAtBeginningOnly;
 		matchAtLeastTwice;
 		aggregateRepeats;
-		canonicalizeRotations;
+		treatRotationsAsEquivalent;
 		minNumChordsToCountAsAProgression;
 		ignoreSlashBassNotes;
 		searchChords;
@@ -326,8 +326,8 @@ const setAggregateRepeats = (checked: boolean) => {
 	aggregateRepeats = checked;
 };
 
-const setCanonicalizeRotations = (checked: boolean) => {
-	canonicalizeRotations = checked;
+const setTreatRotationsAsEquivalent = (checked: boolean) => {
+	treatRotationsAsEquivalent = checked;
 };
 
 const setMinNumChordsToCountAsAProgression = (value: number) => {
@@ -387,8 +387,8 @@ export const chordSearchDemoStore = {
 	get aggregateRepeats() {
 		return aggregateRepeats;
 	},
-	get canonicalizeRotations() {
-		return canonicalizeRotations;
+	get treatRotationsAsEquivalent() {
+		return treatRotationsAsEquivalent;
 	},
 	get minNumChordsToCountAsAProgression() {
 		return minNumChordsToCountAsAProgression;
@@ -434,7 +434,7 @@ export const chordSearchDemoStore = {
 	setMatchAtBeginningOnly,
 	setMatchAtLeastTwice,
 	setAggregateRepeats,
-	setCanonicalizeRotations,
+	setTreatRotationsAsEquivalent,
 	setMinNumChordsToCountAsAProgression,
 	setSearchInputActive,
 	toggleSearchInput,

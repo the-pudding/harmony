@@ -48,9 +48,9 @@
 			label="🔁 Match only progressions where the search progression appears at least twice"
 		/>
 		<ToggleSwitch
-			checked={chordSearchDemoStore.canonicalizeRotations}
-			onchange={chordSearchDemoStore.setCanonicalizeRotations}
-			label="🔄 Treat rotations as equivalent (e.g. V→I and I→V shown as one)"
+			checked={chordSearchDemoStore.treatRotationsAsEquivalent}
+			onchange={chordSearchDemoStore.setTreatRotationsAsEquivalent}
+			label="🔄 Treat rotations as equivalent — same chords, different starting point (e.g. V→I and I→V count as one)"
 		/>
 		<label class="number-field">
 			A progression must have at least
