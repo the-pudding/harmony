@@ -11,11 +11,13 @@ import type {
 	SubProgressionMatch
 } from "../chord-processing/types.js";
 import type { SongResultsWorkerEntry } from "./songResultsIndex.js";
+import { matchesYearRange, type YearRangeFilter } from "./yearRangeFilter.js";
 
 export type SongResultsChunkFilters = {
 	hasSearchChords: boolean;
 	titleFilter: string;
 	selectedArtist: string;
+	yearRange: YearRangeFilter | null;
 	fuzzySearch: boolean;
 	matchAtBeginningOnly: boolean;
 	matchAtLeastTwice: boolean;
@@ -94,6 +96,7 @@ export const matchSongResultsChunk = (
 	for (const entry of chunk) {
 		if (filters.selectedArtist && !matchesSelectedArtist(entry.artists, filters.selectedArtist))
 			continue;
+		if (!matchesYearRange(entry.year, filters.yearRange)) continue;
 		if (normalizedTitle && !matchesTitle(entry.titleLower, normalizedTitle)) continue;
 
 		if (filters.hasSearchChords) {

@@ -11,11 +11,13 @@ import type {
 } from "../chord-processing/types.js";
 import type { ChartSongIndexEntry } from "./chartSongIndex.js";
 import type { ChartSection } from "./computeVariableGramStats.js";
+import { matchesYearRange, type YearRangeFilter } from "./yearRangeFilter.js";
 
 export type ChartChunkFilters = {
 	hasSearchChords: boolean;
 	titleFilter: string;
 	selectedArtist: string;
+	yearRange: YearRangeFilter | null;
 	fuzzySearch: boolean;
 	matchAtBeginningOnly: boolean;
 	matchAtLeastTwice: boolean;
@@ -86,6 +88,7 @@ export const matchChartCorpusChunk = (
 		.filter((entry) => {
 			if (filters.selectedArtist && !matchesSelectedArtist(entry.artists, filters.selectedArtist))
 				return false;
+			if (!matchesYearRange(entry.year, filters.yearRange)) return false;
 			if (normalizedTitle && !matchesTitle(entry.title, normalizedTitle)) return false;
 			if (filters.hasSearchChords) {
 				if (!searchAbstract) return false;

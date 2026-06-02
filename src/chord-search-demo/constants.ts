@@ -151,6 +151,11 @@ export const MATCHING_SONGS_TIME_SERIES_STROKE_COLOR = "#6366f1";
 export const MATCHING_SONGS_TIME_SERIES_EMPTY_MESSAGE =
 	"No matching songs with release years in the current results.";
 export const MATCHING_SONGS_TIME_SERIES_AXIS_TICK_COUNT = 5;
+export const MATCHING_SONGS_TIME_SERIES_BRUSH_FILL = "rgba(99, 102, 241, 0.2)";
+export const MATCHING_SONGS_TIME_SERIES_BRUSH_STROKE =
+	"rgba(99, 102, 241, 0.65)";
+export const MATCHING_SONGS_TIME_SERIES_BRUSH_HINT =
+	"Drag to filter by release year. Double-click to clear year filter.";
 
 export const ARTIST_FILTER_OPTION_LIMIT = 10;
 export const TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y = "0.375rem";

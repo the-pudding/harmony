@@ -11,6 +11,7 @@ export type SongResultsWorkerEntry = {
 	songKey: string;
 	titleLower: string;
 	artists: string[];
+	year?: number;
 	suffixes: string[];
 	deltas: number[];
 	bassIntervals: (number | null)[];
@@ -29,6 +30,7 @@ export const buildSongResultsWorkerEntry = (
 	songKey: resolveSongKey(prepared),
 	titleLower: prepared.title.toLowerCase(),
 	artists: prepared.artists,
+	...(prepared.year !== undefined ? { year: prepared.year } : {}),
 	suffixes: prepared.abstractProgression.suffixes,
 	deltas: prepared.abstractProgression.deltas,
 	bassIntervals: prepared.abstractProgression.bassIntervals,

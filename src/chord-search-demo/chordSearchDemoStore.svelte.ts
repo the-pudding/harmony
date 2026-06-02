@@ -34,6 +34,11 @@ import {
 	initSongResultsWorkerPool,
 	terminateSongResultsWorkerPool
 } from "./songResultsWorkerPool.js";
+import {
+	matchesYearRange,
+	toPlainYearRange,
+	type YearRangeFilter
+} from "./yearRangeFilter.js";
 
 let songs = $state<SongInput[]>([]);
 let searchChords = $state<ParsedProgressionChord[]>([]);
@@ -50,6 +55,7 @@ let minNumChordsToCountAsAProgression = $state(
 let titleFilter = $state("");
 let debouncedTitleFilter = $state("");
 let selectedArtist = $state("");
+let yearRangeFilter = $state.raw<YearRangeFilter | null>(null);
 let searchInputActive = $state(true);
 let sequenceChartData = $state<VariableGramStat[]>([]);
 let sequenceChartStatus = $state<"idle" | "loading" | "ready" | "error">(
@@ -80,8 +86,21 @@ const progressionSearch = $derived(
 const artistOptions = $derived.by(() => buildArtistOptions(songs));
 
 const hasSearch = $derived(
-	searchChords.length > 0 || titleFilter.length > 0 || selectedArtist.length > 0
+	searchChords.length > 0 ||
+		titleFilter.length > 0 ||
+		selectedArtist.length > 0 ||
+		yearRangeFilter !== null
 );
+
+const workerChunkFilters = () => ({
+	hasSearchChords: searchChords.length > 0,
+	titleFilter: debouncedTitleFilter,
+	selectedArtist,
+	yearRange: toPlainYearRange(yearRangeFilter),
+	fuzzySearch,
+	matchAtBeginningOnly,
+	matchAtLeastTwice
+});
 
 const runSequenceChartCompute = async () => {
 	if (!chartWorkerPoolReady) return;
@@ -93,14 +112,7 @@ const runSequenceChartCompute = async () => {
 	try {
 		const result = await computeSequenceChartStats({
 			requestId,
-			filters: {
-				hasSearchChords: searchChords.length > 0,
-				titleFilter: debouncedTitleFilter,
-				selectedArtist,
-				fuzzySearch,
-				matchAtBeginningOnly,
-				matchAtLeastTwice
-			},
+			filters: workerChunkFilters(),
 			searchAbstract: buildSearchAbstract(searchChords, {
 				ignoreSlashBassNotes,
 				fuzzySearch
@@ -128,21 +140,25 @@ const runSequenceChartCompute = async () => {
 	}
 };
 
+const filterGroupedResultsByYear = (
+	groupedResults: GroupedSongSearchResult[]
+): GroupedSongSearchResult[] => {
+	if (!yearRangeFilter) return groupedResults;
+
+	return groupedResults.filter((result) =>
+		matchesYearRange(result.year, yearRangeFilter)
+	);
+};
+
 const applySongResults = (groupedResults: GroupedSongSearchResult[]) => {
-	searchResults = groupedResults.slice(0, MAX_SEARCH_RESULTS);
-	annualMatchCounts = buildAnnualMatchCounts(groupedResults);
+	const filteredResults = filterGroupedResultsByYear(groupedResults);
+	searchResults = filteredResults.slice(0, MAX_SEARCH_RESULTS);
+	annualMatchCounts = buildAnnualMatchCounts(filteredResults);
 };
 
 const runSongResultsCompute = async (version: number) => {
 	const output = await computeSongResults(version, {
-		filters: {
-			hasSearchChords: searchChords.length > 0,
-			titleFilter: debouncedTitleFilter,
-			selectedArtist,
-			fuzzySearch,
-			matchAtBeginningOnly,
-			matchAtLeastTwice
-		},
+		filters: workerChunkFilters(),
 		searchAbstract: buildSearchAbstract(searchChords, {
 			ignoreSlashBassNotes,
 			fuzzySearch
@@ -167,6 +183,7 @@ const enqueueSongResultsCompute = () => {
 	songResultsComputeChain = songResultsComputeChain.then(async () => {
 		try {
 			const { groupedResults } = await runSongResultsCompute(version);
+			if (version !== songResultsComputeVersion) return;
 			applySongResults(groupedResults);
 		} catch {
 			// Keep prior results on worker failure
@@ -174,10 +191,17 @@ const enqueueSongResultsCompute = () => {
 	});
 };
 
+const scheduleFilteredRecompute = () => {
+	if (songResultsWorkerPoolReady) enqueueSongResultsCompute();
+	if (chartWorkerPoolReady) void runSequenceChartCompute();
+};
+
 $effect.root(() => {
 	$effect(() => {
 		debouncedTitleFilter;
 		selectedArtist;
+		yearRangeFilter?.[0];
+		yearRangeFilter?.[1];
 		fuzzySearch;
 		matchAtBeginningOnly;
 		matchAtLeastTwice;
@@ -194,6 +218,8 @@ $effect.root(() => {
 	$effect(() => {
 		debouncedTitleFilter;
 		selectedArtist;
+		yearRangeFilter?.[0];
+		yearRangeFilter?.[1];
 		fuzzySearch;
 		matchAtBeginningOnly;
 		matchAtLeastTwice;
@@ -253,6 +279,16 @@ const setSongs = async (nextSongs: SongInput[]) => {
 
 const setSelectedArtist = (value: string) => {
 	selectedArtist = value;
+};
+
+const setYearRangeFilter = (range: YearRangeFilter | null) => {
+	yearRangeFilter = toPlainYearRange(range);
+	scheduleFilteredRecompute();
+};
+
+const clearYearRangeFilter = () => {
+	yearRangeFilter = null;
+	scheduleFilteredRecompute();
 };
 
 const setTitleFilter = (value: string) => {
@@ -343,6 +379,9 @@ export const chordSearchDemoStore = {
 	get selectedArtist() {
 		return selectedArtist;
 	},
+	get yearRangeFilter() {
+		return yearRangeFilter;
+	},
 	get searchInputActive() {
 		return searchInputActive;
 	},
@@ -366,6 +405,8 @@ export const chordSearchDemoStore = {
 	clearSearch,
 	setSearchFromSequenceLabel,
 	setSelectedArtist,
+	setYearRangeFilter,
+	clearYearRangeFilter,
 	setTitleFilter,
 	setBassAsRoot,
 	setIgnoreSlashBassNotes,

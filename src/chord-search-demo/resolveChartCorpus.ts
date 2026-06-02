@@ -1,5 +1,6 @@
 import type { SongInput } from "../chord-processing/types.js";
 import type { ChartSection } from "./computeVariableGramStats.js";
+import { matchesYearRange, type YearRangeFilter } from "./yearRangeFilter.js";
 
 const songKeyFromId = (id: string | undefined): string => {
 	if (!id) return "unknown";
@@ -20,6 +21,7 @@ export type ChartCorpusFilters = {
 	hasSearchChords: boolean;
 	titleFilter: string;
 	selectedArtist: string;
+	yearRange: YearRangeFilter | null;
 	getMatchingSongIds: () => Set<string>;
 };
 
@@ -29,6 +31,7 @@ export const resolveChartCorpus = (
 		hasSearchChords,
 		titleFilter,
 		selectedArtist,
+		yearRange,
 		getMatchingSongIds
 	}: ChartCorpusFilters
 ): ChartSection[] => {
@@ -38,8 +41,13 @@ export const resolveChartCorpus = (
 	return songs
 		.filter((song) => {
 			if (matchingIds && !matchingIds.has(song.id ?? "")) return false;
-			if (selectedArtist && !song.artists.includes(selectedArtist)) return false;
-			if (normalizedTitle && !song.title.toLowerCase().includes(normalizedTitle))
+			if (selectedArtist && !song.artists.includes(selectedArtist))
+				return false;
+			if (!matchesYearRange(song.year, yearRange)) return false;
+			if (
+				normalizedTitle &&
+				!song.title.toLowerCase().includes(normalizedTitle)
+			)
 				return false;
 			return true;
 		})

@@ -11,6 +11,7 @@ export const TOTAL_WHITE_KEYS = 52;
 export const BLACK_KEY_WIDTH_RATIO = 0.6; // relative to white key width
 export { DEFAULT_SPLIT_BASS_NOTE as DEFAULT_SPLIT_NOTE } from "../../chord-processing/chord-gater/index.js";
 export const BASS_LABEL_COLOR = "#a78bfa";
+export const TREBLE_LABEL_COLOR = "#60a5fa";
 export const SPLIT_EDIT_ICON_SIZE_PX = 8;
 export const SPLIT_EDIT_ICON_STROKE_WIDTH = 1.75;
 export const SPLIT_KEY_BORDER_BASE_WIDTH_PX = 2;

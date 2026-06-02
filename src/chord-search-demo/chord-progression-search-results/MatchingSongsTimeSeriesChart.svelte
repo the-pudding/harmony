@@ -4,6 +4,9 @@
 	import { chordSearchDemoStore } from "../chordSearchDemoStore.svelte.js";
 	import {
 		MATCHING_SONGS_TIME_SERIES_AXIS_TICK_COUNT,
+		MATCHING_SONGS_TIME_SERIES_BRUSH_FILL,
+		MATCHING_SONGS_TIME_SERIES_BRUSH_HINT,
+		MATCHING_SONGS_TIME_SERIES_BRUSH_STROKE,
 		MATCHING_SONGS_TIME_SERIES_EMPTY_MESSAGE,
 		MATCHING_SONGS_TIME_SERIES_FILL_COLOR,
 		MATCHING_SONGS_TIME_SERIES_HEIGHT_PX,
@@ -13,6 +16,7 @@
 		MATCHING_SONGS_TIME_SERIES_MARGIN_TOP_PX,
 		MATCHING_SONGS_TIME_SERIES_STROKE_COLOR
 	} from "../constants.js";
+	import type { YearRangeFilter } from "../yearRangeFilter.js";
 
 	type AnnualMatchPercentage = {
 		year: number;
@@ -53,6 +57,7 @@
 	const hasData = $derived(chartData.length > 0);
 
 	let containerWidth = $state(0);
+	let brushDrag = $state<{ startPlotX: number; currentPlotX: number } | null>(null);
 	let tooltip = $state<{
 		year: number;
 		count: number;
@@ -60,6 +65,8 @@
 		x: number;
 		y: number;
 	} | null>(null);
+
+	const activeYearRange = $derived(chordSearchDemoStore.yearRangeFilter);
 
 	const plotWidth = $derived(
 		Math.max(
@@ -137,6 +144,31 @@
 		maximumFractionDigits: TOOLTIP_PERCENT_MAX_FRACTION_DIGITS
 	});
 
+	const selectionRect = $derived.by(() => {
+		if (brushDrag) {
+			const leftPlotX = Math.min(brushDrag.startPlotX, brushDrag.currentPlotX);
+			const rightPlotX = Math.max(brushDrag.startPlotX, brushDrag.currentPlotX);
+			return { x: leftPlotX, width: rightPlotX - leftPlotX };
+		}
+
+		if (!activeYearRange) return null;
+
+		const [minYear, maxYear] = activeYearRange;
+		return {
+			x: xScale(minYear),
+			width: Math.max(xScale(maxYear) - xScale(minYear), 0)
+		};
+	});
+
+	const chartAriaLabel = $derived.by(() => {
+		if (!activeYearRange) return "Matching songs by release year";
+
+		const [minYear, maxYear] = activeYearRange;
+		return minYear === maxYear
+			? `Matching songs by release year, filtered to ${minYear}`
+			: `Matching songs by release year, filtered to ${minYear} through ${maxYear}`;
+	});
+
 	const percentageTicks = $derived.by(() => {
 		const step = tickStep(
 			0,
@@ -156,15 +188,30 @@
 		return ticks;
 	});
 
+	const plotXFromClientX = (clientX: number, svgLeft: number): number => {
+		const relativeX =
+			clientX - svgLeft - MATCHING_SONGS_TIME_SERIES_MARGIN_LEFT_PX;
+		return Math.min(Math.max(relativeX, 0), plotWidth);
+	};
+
+	const yearRangeFromPlotXs = (
+		leftPlotX: number,
+		rightPlotX: number
+	): YearRangeFilter => {
+		const loPlotX = Math.min(leftPlotX, rightPlotX);
+		const hiPlotX = Math.max(leftPlotX, rightPlotX);
+		const minYear = Math.round(xScale.invert(loPlotX));
+		const maxYear = Math.round(xScale.invert(hiPlotX));
+		return [Math.min(minYear, maxYear), Math.max(minYear, maxYear)] as const;
+	};
+
 	const nearestRow = (
 		clientX: number,
 		svgLeft: number
 	): AnnualMatchPercentage | null => {
 		if (!hasData || plotWidth <= 0) return null;
 
-		const relativeX =
-			clientX - svgLeft - MATCHING_SONGS_TIME_SERIES_MARGIN_LEFT_PX;
-		const year = xScale.invert(Math.min(Math.max(relativeX, 0), plotWidth));
+		const year = xScale.invert(plotXFromClientX(clientX, svgLeft));
 
 		return chartData.reduce<AnnualMatchPercentage | null>((closest, row) => {
 			if (!closest) return row;
@@ -175,6 +222,8 @@
 	};
 
 	const onPointerMove = (event: PointerEvent) => {
+		if (brushDrag) return;
+
 		const svg = event.currentTarget as SVGSVGElement;
 		const bounds = svg.getBoundingClientRect();
 		const row = nearestRow(event.clientX, bounds.left);
@@ -195,6 +244,65 @@
 	const hideTooltip = () => {
 		tooltip = null;
 	};
+
+	const brushOverlay = (event: PointerEvent): SVGRectElement =>
+		event.currentTarget as SVGRectElement;
+
+	const onBrushPointerDown = (event: PointerEvent) => {
+		if (plotWidth <= 0) return;
+
+		const overlay = brushOverlay(event);
+		const svg = overlay.ownerSVGElement;
+		if (!svg) return;
+
+		const bounds = svg.getBoundingClientRect();
+		const plotX = plotXFromClientX(event.clientX, bounds.left);
+		brushDrag = { startPlotX: plotX, currentPlotX: plotX };
+		tooltip = null;
+		overlay.setPointerCapture(event.pointerId);
+	};
+
+	const onBrushPointerMove = (event: PointerEvent) => {
+		if (!brushDrag) return;
+
+		const svg = brushOverlay(event).ownerSVGElement;
+		if (!svg) return;
+
+		const bounds = svg.getBoundingClientRect();
+		brushDrag = {
+			...brushDrag,
+			currentPlotX: plotXFromClientX(event.clientX, bounds.left)
+		};
+	};
+
+	const onBrushPointerUp = (event: PointerEvent) => {
+		if (!brushDrag) return;
+
+		const overlay = brushOverlay(event);
+		if (overlay.hasPointerCapture(event.pointerId)) {
+			overlay.releasePointerCapture(event.pointerId);
+		}
+
+		const nextRange = yearRangeFromPlotXs(
+			brushDrag.startPlotX,
+			brushDrag.currentPlotX
+		);
+		brushDrag = null;
+		chordSearchDemoStore.setYearRangeFilter(nextRange);
+	};
+
+	const onBrushPointerCancel = (event: PointerEvent) => {
+		const overlay = brushOverlay(event);
+		if (overlay.hasPointerCapture(event.pointerId)) {
+			overlay.releasePointerCapture(event.pointerId);
+		}
+		brushDrag = null;
+	};
+
+	const onBrushDoubleClick = () => {
+		brushDrag = null;
+		chordSearchDemoStore.clearYearRangeFilter();
+	};
 </script>
 
 <section class="time-series-section">
@@ -203,14 +311,16 @@
 			class="chart-wrap"
 			bind:clientWidth={containerWidth}
 			style:height="{MATCHING_SONGS_TIME_SERIES_HEIGHT_PX}px"
+			title={MATCHING_SONGS_TIME_SERIES_BRUSH_HINT}
 		>
 			{#if plotWidth > 0}
 				<svg
 					class="chart"
+					class:chart-brushing={brushDrag !== null}
 					width={containerWidth}
 					height={MATCHING_SONGS_TIME_SERIES_HEIGHT_PX}
 					role="img"
-					aria-label="Matching songs by release year"
+					aria-label={chartAriaLabel}
 					onpointermove={onPointerMove}
 					onpointerleave={hideTooltip}
 				>
@@ -257,6 +367,35 @@
 								{year}
 							</text>
 						{/each}
+
+						{#if selectionRect}
+							<rect
+								class="brush-selection"
+								x={selectionRect.x}
+								y="0"
+								width={selectionRect.width}
+								height={plotHeight}
+								fill={MATCHING_SONGS_TIME_SERIES_BRUSH_FILL}
+								stroke={MATCHING_SONGS_TIME_SERIES_BRUSH_STROKE}
+							/>
+						{/if}
+
+						<rect
+							class="brush-overlay"
+							role="button"
+							aria-label={MATCHING_SONGS_TIME_SERIES_BRUSH_HINT}
+							tabindex="0"
+							x="0"
+							y="0"
+							width={plotWidth}
+							height={plotHeight}
+							fill="transparent"
+							onpointerdown={onBrushPointerDown}
+							onpointermove={onBrushPointerMove}
+							onpointerup={onBrushPointerUp}
+							onpointercancel={onBrushPointerCancel}
+							ondblclick={onBrushDoubleClick}
+						/>
 					</g>
 				</svg>
 
@@ -293,6 +432,19 @@
 
 	.chart {
 		display: block;
+	}
+
+	.chart-brushing {
+		cursor: crosshair;
+	}
+
+	.brush-overlay {
+		cursor: crosshair;
+	}
+
+	.brush-selection {
+		pointer-events: none;
+		stroke-width: 1;
 	}
 
 	.grid-line {

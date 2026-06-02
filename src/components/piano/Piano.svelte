@@ -4,6 +4,7 @@
 	import {
 		BLACK_KEY_WIDTH_RATIO,
 		BASS_LABEL_COLOR,
+		TREBLE_LABEL_COLOR,
 		DEFAULT_SPLIT_NOTE,
 		PIANO_KEYS,
 		SENTINEL_LABEL_COLOR,
@@ -65,6 +66,7 @@
 <div
 	class="piano-container"
 	style:--bass-label-color={BASS_LABEL_COLOR}
+	style:--treble-label-color={TREBLE_LABEL_COLOR}
 	style:--sentinel-label-color={SENTINEL_LABEL_COLOR}
 	style:--sentinel-label-font-size="{SENTINEL_LABEL_FONT_SIZE_PX}px"
 	style:--sentinel-label-stroke-width="{SENTINEL_LABEL_STROKE_WIDTH_PX}px"
@@ -195,7 +197,7 @@
 	.treble-label {
 		justify-content: flex-start;
 		padding-left: 8px;
-		color: #34d399;
+		color: var(--treble-label-color);
 	}
 
 	.keys-wrapper {

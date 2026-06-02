@@ -5,6 +5,7 @@ export type ChartSongIndexEntry = {
 	songKey: string;
 	title: string;
 	artists: string[];
+	year?: number;
 	romanTokens: string[];
 	suffixes: string[];
 	deltas: number[];
@@ -36,6 +37,7 @@ export const buildChartSongIndex = (songs: SongInput[]): ChartSongIndexEntry[] =
 				songKey: song.songKey ?? songKeyFromId(song.id),
 				title: song.title,
 				artists: song.artists,
+				...(song.year !== undefined ? { year: song.year } : {}),
 				romanTokens: song.romanTokens,
 				suffixes: song.suffixes,
 				deltas: song.deltas,
