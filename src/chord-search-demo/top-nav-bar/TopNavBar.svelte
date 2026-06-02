@@ -58,11 +58,11 @@
 				{chordSearchDemoStore.searchInputActive
 					? SEARCH_INPUT_ACTIVE_LABEL
 					: SEARCH_INPUT_PAUSED_LABEL}
-				<span class="shortcut">· play {PAUSE_SENTINEL_NOTES}</span>
+				<span class="shortcut">· toggle: {PAUSE_SENTINEL_NOTES}</span>
 			</button>
 			<button type="button" class="action-pill clear" onclick={chordSearchDemoStore.clearSearch}>
 				{CLEAR_CHORDS_LABEL}
-				<span class="shortcut">· play {CLEAR_SENTINEL_NOTES} or <kbd>esc</kbd></span>
+				<span class="shortcut">· {CLEAR_SENTINEL_NOTES}</span>
 			</button>
 		</div>
 	</div>

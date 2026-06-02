@@ -36,8 +36,8 @@ export const CLEAR_SENTINEL_NOTES = formatSentinelNotes(CLEAR_SENTINEL_MIDIS);
 export const PAUSE_SENTINEL_MIDIS = buildHalfStepSentinel("Bb", 4);
 export const PAUSE_SENTINEL_NOTES = formatSentinelNotes(PAUSE_SENTINEL_MIDIS);
 
-export const SEARCH_INPUT_ACTIVE_LABEL = "taking chord input";
-export const SEARCH_INPUT_PAUSED_LABEL = "chord input paused";
+export const SEARCH_INPUT_ACTIVE_LABEL = "listening";
+export const SEARCH_INPUT_PAUSED_LABEL = "input paused";
 export const CLEAR_CHORDS_LABEL = "clear chords";
 export const DEFAULT_SETTLE_MS = 60;
 export const ESCAPE_KEY = "Escape";
