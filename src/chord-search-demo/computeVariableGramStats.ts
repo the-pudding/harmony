@@ -61,22 +61,26 @@ const finalizeTopGramStats = (
 	topN: number
 ): VariableGramStat[] =>
 	[...gramCounts.entries()]
-		.sort(([, aCount], [, bCount]) => bCount - aCount)
-		.slice(0, topN)
 		.map(([gram, occurrences]) => {
 			const tokens = gram.split(",");
 			const songKeys = gramSongs.get(gram);
+			const songCount = songKeys?.size ?? 0;
 			return {
 				label: gramLabel(tokens),
 				length: tokens.length,
 				occurrences,
-				songCount: songKeys?.size ?? 0,
+				songCount,
 				avgPctOfSong: avgPctOfSongForGram(
 					songKeys,
 					gramSongChordStats.get(gram)
 				)
 			};
-		});
+		})
+		.sort((a, b) => {
+			if (b.songCount !== a.songCount) return b.songCount - a.songCount;
+			return b.occurrences - a.occurrences;
+		})
+		.slice(0, topN);
 
 export const computePartialGramStats = (
 	sections: ChartSection[],

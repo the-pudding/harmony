@@ -1,13 +1,15 @@
 <script lang="ts">
 	import ChordProgressionSearchResult from "./ChordProgressionSearchResult.svelte";
+	import SearchInputToggle from "../top-nav-bar/SearchInputToggle.svelte";
 	import { chordSearchDemoStore } from "../chordSearchDemoStore.svelte.js";
 	import { NO_MATCH_MESSAGE, SEARCH_PLACEHOLDER } from "../constants.js";
 </script>
 
 <section class="card">
-	<p class="hint">
-		Key agnostic, just matches intervals
-	</p>
+	<div class="card-header">
+		<p class="hint">Key agnostic, just matches intervals</p>
+		<SearchInputToggle />
+	</div>
 	<div class="results">
 		{#if chordSearchDemoStore.searchResults.length === 0}
 			<p class="empty">
@@ -35,11 +37,19 @@
 		gap: 0.75rem;
 	}
 
+	.card-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+	}
+
 	.hint {
 		font-size: 0.75rem;
 		color: #71717a;
 		line-height: 1.5;
 		margin: 0;
+		min-width: 0;
 	}
 
 	.results-label {

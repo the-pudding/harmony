@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { romanTokensToPrecomputedAbstract } from "../chord-processing/romanNumerals.js";
-import { computePartialGramStats } from "./computeVariableGramStats.js";
+import {
+	computePartialGramStats,
+	computeVariableGramStats
+} from "./computeVariableGramStats.js";
 
 describe("computePartialGramStats search filter", () => {
 	const searchAbstract = romanTokensToPrecomputedAbstract(["I", "V"]);
@@ -40,6 +43,30 @@ describe("computePartialGramStats search filter", () => {
 		expect(gramKeys).toContain("I,V");
 		expect(gramKeys).not.toContain("vi,IV");
 		expect(gramKeys).not.toContain("vi,IV,I,V");
+	});
+
+	it("ranks top grams by unique song count before total occurrences", () => {
+		const stats = computeVariableGramStats(
+			[
+				{
+					romanTokens: ["vi", "IV", "vi", "IV", "vi", "IV", "vi", "IV"],
+					songKey: "song-a"
+				},
+				{ romanTokens: ["I", "V"], songKey: "song-b" },
+				{ romanTokens: ["I", "V"], songKey: "song-c" },
+				{ romanTokens: ["I", "V"], songKey: "song-d" }
+			],
+			{ topN: 10, minNumChordsToCountAsAProgression: 2, maxLen: 2 },
+			null
+		);
+
+		const viIv = stats.find((row) => row.label === "vi→IV");
+		const iV = stats.find((row) => row.label === "I→V");
+
+		expect(viIv?.songCount).toBe(1);
+		expect(viIv?.occurrences).toBeGreaterThan(iV?.occurrences ?? 0);
+		expect(iV?.songCount).toBe(3);
+		expect(stats[0].label).toBe("I→V");
 	});
 
 	it("counts all grams when no search filter is provided", () => {

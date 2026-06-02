@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import { isRomanTokenPositionHighlighted } from "./searchMatchesInRomanTokens.js";
 	import type { VariableGramStat } from "./computeVariableGramStats.js";
 	import type { AbstractProgression } from "../chord-processing/types.js";
@@ -14,11 +15,16 @@
 		SEQUENCE_CHART_LENGTH_COLORS,
 		SEQUENCE_CHART_LOADING_MESSAGE,
 		SEQUENCE_CHART_COL_WEIGHTS,
+		SEQUENCE_CHART_SONG_APPEARANCES_COL_HEADER,
 		sequenceChartColWidthPercent,
 		formatSequenceChartOccurrences,
+		formatSequenceChartPercent,
 		SEQUENCE_CHART_TABLE_MARGIN_PX,
 		SEQUENCE_CHART_VIEWPORT_HEIGHT_PX
 	} from "./constants.js";
+
+	const CORPUS_SONG_COUNT_FALLBACK = 1;
+	const PERCENT_SCALE = 100;
 
 	type Props = {
 		chartData: VariableGramStat[];
@@ -42,28 +48,31 @@
 
 	const MIN_BAR_WIDTH_PERCENT = 0;
 	const MAX_BAR_WIDTH_PERCENT = 100;
-	const MAX_OCCURRENCES_FALLBACK = 1;
 	const ONE_BASED_RANK_OFFSET = 1;
 	const TOOLTIP_X_OFFSET_PX = 12;
 	const TOOLTIP_Y_OFFSET_PX = -8;
 
-	const maxOccurrences = $derived(
-		Math.max(
-			...chartData.map((row) => row.occurrences),
-			MAX_OCCURRENCES_FALLBACK
-		)
+	const songs = $derived(chordSearchDemoStore.songs);
+	const totalUnfilteredSongCount = $derived(
+		Math.max(songs.length, CORPUS_SONG_COUNT_FALLBACK)
 	);
 
 	const parseLabelChords = (label: string) =>
 		label.split(SEQUENCE_CHART_CHORD_SEPARATOR);
 
-	const barWidthPercent = (occurrences: number) =>
-		(occurrences / maxOccurrences) * 100;
+	const pctOfAllSongs = (songCount: number) =>
+		(songCount / totalUnfilteredSongCount) * PERCENT_SCALE;
 
-	const avgPctBarWidthPercent = (avgPctOfSong: number) =>
+	const formatPctOfAllSongs = (songCount: number) =>
+		formatSequenceChartPercent(pctOfAllSongs(songCount));
+
+	const songAppearancesAriaLabel = (row: VariableGramStat) =>
+		`${formatPctOfAllSongs(row.songCount)}% (${formatSequenceChartOccurrences(row.songCount)}) of all songs`;
+
+	const barWidthFromPercent = (percent: number) =>
 		Math.min(
 			MAX_BAR_WIDTH_PERCENT,
-			Math.max(MIN_BAR_WIDTH_PERCENT, avgPctOfSong)
+			Math.max(MIN_BAR_WIDTH_PERCENT, percent)
 		);
 
 	const formatAvgPctOfSong = (row: VariableGramStat) =>
@@ -77,8 +86,8 @@
 
 	let tooltip = $state<{
 		label: string;
-		occurrences: number;
 		songCount: number;
+		pctOfAllSongs: number;
 		avgPctOfSong: number;
 		length: number;
 		x: number;
@@ -88,8 +97,8 @@
 	const showTooltip = (event: MouseEvent, row: VariableGramStat) => {
 		tooltip = {
 			label: row.label,
-			occurrences: row.occurrences,
 			songCount: row.songCount,
+			pctOfAllSongs: pctOfAllSongs(row.songCount),
 			avgPctOfSong: row.avgPctOfSong,
 			length: row.length,
 			x: event.offsetX,
@@ -136,7 +145,7 @@
 				<th class="rank-col" scope="col"></th>
 				<th class="sequence-col" scope="col">Sequence</th>
 				<th class="avg-pct-col" scope="col">Avg % of song</th>
-				<th class="bar-col" scope="col">Occurrences</th>
+				<th class="bar-col" scope="col">{SEQUENCE_CHART_SONG_APPEARANCES_COL_HEADER}</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -182,7 +191,7 @@
 							>
 								<div
 									class="bar-fill"
-									style:width="{avgPctBarWidthPercent(row.avgPctOfSong)}%"
+									style:width="{barWidthFromPercent(row.avgPctOfSong)}%"
 									style:background-color={SEQUENCE_CHART_AVG_PCT_BAR_COLOR}
 								></div>
 							</div>
@@ -190,19 +199,20 @@
 					</td>
 					<td class="bar-col">
 						<div class="bar-cell">
-							<span class="occurrence-count"
-								>{formatSequenceChartOccurrences(row.occurrences)}</span
-							>
+							<span class="occurrence-count">
+								{formatPctOfAllSongs(row.songCount)}%
+								<span class="song-appearance-count"
+									>({formatSequenceChartOccurrences(row.songCount)})</span
+								>
+							</span>
 							<div
 								class="bar-track"
 								role="img"
-								aria-label="{formatSequenceChartOccurrences(
-									row.occurrences
-								)} occurrences in {row.songCount.toLocaleString()} songs (length {row.length})"
+								aria-label="{songAppearancesAriaLabel(row)} (length {row.length})"
 							>
 								<div
 									class="bar-fill"
-									style:width="{barWidthPercent(row.occurrences)}%"
+									style:width="{barWidthFromPercent(pctOfAllSongs(row.songCount))}%"
 									style:background-color={barColor(row.label, row.length)}
 								></div>
 							</div>
@@ -223,8 +233,11 @@
 			style:left="{tooltip.x + TOOLTIP_X_OFFSET_PX}px"
 			style:top="{tooltip.y + TOOLTIP_Y_OFFSET_PX}px"
 		>
-			{formatSequenceChartOccurrences(tooltip.occurrences)} occurrences in {tooltip.songCount.toLocaleString()}
-			songs · avg {Math.round(tooltip.avgPctOfSong)}% of song (length {tooltip.length})
+			{formatSequenceChartPercent(tooltip.pctOfAllSongs)}% ({formatSequenceChartOccurrences(
+				tooltip.songCount
+			)}) of {totalUnfilteredSongCount.toLocaleString()} songs · avg {Math.round(
+				tooltip.avgPctOfSong
+			)}% of song (length {tooltip.length})
 		</div>
 	{/if}
 </div>
@@ -334,6 +347,11 @@
 		color: #e4e4e7;
 		line-height: 1;
 		text-align: left;
+	}
+
+	.song-appearance-count {
+		color: #71717a;
+		font-weight: 400;
 	}
 
 	.bar-track {

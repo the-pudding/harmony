@@ -66,7 +66,10 @@ export const MIN_NUM_CHORDS_TO_COUNT_AS_A_PROGRESSION_INPUT_WIDTH = "3.5rem";
 export const CHORD_SEARCH_DEMO_HORIZONTAL_MARGIN_PX = 12;
 export const SEQUENCE_CHART_TOP_N = 50;
 export const SEQUENCE_CHART_TITLE = "Most common progressions";
+export const SEQUENCE_CHART_SONG_APPEARANCES_COL_HEADER =
+	"song appearance % and count";
 export const SEQUENCE_CHART_OCCURRENCE_SIGNIFICANT_FIGURES = 3;
+export const SEQUENCE_CHART_PERCENT_SIGNIFICANT_FIGURES = 2;
 export const sequenceChartMinLengthSubtitle = (minLength: number): string =>
 	`${minLength} chords long or more`;
 
@@ -82,6 +85,11 @@ export const formatSequenceChartOccurrences = (count: number): string =>
 	new Intl.NumberFormat(undefined, {
 		maximumSignificantDigits: SEQUENCE_CHART_OCCURRENCE_SIGNIFICANT_FIGURES
 	}).format(count);
+
+export const formatSequenceChartPercent = (percent: number): string =>
+	new Intl.NumberFormat(undefined, {
+		maximumSignificantDigits: SEQUENCE_CHART_PERCENT_SIGNIFICANT_FIGURES
+	}).format(percent);
 
 export const FOUR_CHORDS_PROGRESSION_LABEL = "I→V→vi→IV";
 export const SEQUENCE_CHART_TABLE_MARGIN_PX = 4;
