@@ -15,7 +15,8 @@
 		MATCHING_SONGS_TIME_SERIES_MARGIN_RIGHT_PX,
 		MATCHING_SONGS_TIME_SERIES_MARGIN_TOP_PX,
 		MATCHING_SONGS_TIME_SERIES_SINGLE_YEAR_DOMAIN_PADDING,
-		MATCHING_SONGS_TIME_SERIES_STROKE_COLOR
+		MATCHING_SONGS_TIME_SERIES_STROKE_COLOR,
+		MATCHING_SONGS_TIME_SERIES_TITLE
 	} from "../constants.js";
 	import type { YearRangeFilter } from "../yearRangeFilter.js";
 
@@ -337,6 +338,7 @@
 </script>
 
 <section class="time-series-section">
+	<p class="chart-title">{MATCHING_SONGS_TIME_SERIES_TITLE}</p>
 	{#if hasData}
 		<div
 			class="chart-wrap"
@@ -448,8 +450,18 @@
 
 <style>
 	.time-series-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.375rem;
 		width: 100%;
 		min-width: 0;
+	}
+
+	.chart-title {
+		font-size: 0.6875rem;
+		color: #71717a;
+		margin: 0;
+		line-height: 1.4;
 	}
 
 	.chart-wrap {

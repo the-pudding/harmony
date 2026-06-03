@@ -141,6 +141,8 @@ export const SEQUENCE_CHART_LENGTH_COLORS: Record<number, string> = {
 export const SEQUENCE_CHART_HIGHLIGHT_COLOR = "#ffffff";
 export const SEQUENCE_CHART_FALLBACK_BAR_COLOR = "#888888";
 export const SEQUENCE_CHART_AVG_PCT_BAR_COLOR = "#52525b";
+export const MATCHING_SONGS_TIME_SERIES_TITLE =
+	"Percentage of songs that match over time";
 export const MATCHING_SONGS_TIME_SERIES_HEIGHT_PX = 120;
 export const MATCHING_SONGS_TIME_SERIES_MARGIN_TOP_PX = 8;
 export const MATCHING_SONGS_TIME_SERIES_MARGIN_RIGHT_PX = 8;
@@ -158,6 +160,8 @@ export const MATCHING_SONGS_TIME_SERIES_BRUSH_STROKE =
 export const MATCHING_SONGS_TIME_SERIES_BRUSH_HINT =
 	"Drag to filter by release year. Double-click to clear year filter.";
 
+export const PROGRESSION_PCT_HISTOGRAM_TITLE =
+	"Distribution: What percent of chords in a song match the searched chords?";
 export const PROGRESSION_PCT_HISTOGRAM_HEIGHT_PX = 100;
 export const PROGRESSION_PCT_HISTOGRAM_MARGIN_TOP_PX = 8;
 export const PROGRESSION_PCT_HISTOGRAM_MARGIN_RIGHT_PX = 8;

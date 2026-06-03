@@ -21,7 +21,8 @@
 		PROGRESSION_PCT_HISTOGRAM_MARGIN_BOTTOM_PX,
 		PROGRESSION_PCT_HISTOGRAM_MARGIN_LEFT_PX,
 		PROGRESSION_PCT_HISTOGRAM_MARGIN_RIGHT_PX,
-		PROGRESSION_PCT_HISTOGRAM_MARGIN_TOP_PX
+		PROGRESSION_PCT_HISTOGRAM_MARGIN_TOP_PX,
+		PROGRESSION_PCT_HISTOGRAM_TITLE
 	} from "../constants.js";
 
 	const PERCENT_BASELINE_MAX = 1;
@@ -237,6 +238,7 @@
 </script>
 
 <section class="histogram-section">
+	<p class="chart-title">{PROGRESSION_PCT_HISTOGRAM_TITLE}</p>
 	<div
 		class="chart-wrap"
 		bind:clientWidth={containerWidth}
@@ -337,8 +339,18 @@
 
 <style>
 	.histogram-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.375rem;
 		width: 100%;
 		min-width: 0;
+	}
+
+	.chart-title {
+		font-size: 0.6875rem;
+		color: #71717a;
+		margin: 0;
+		line-height: 1.4;
 	}
 
 	.chart-wrap {
