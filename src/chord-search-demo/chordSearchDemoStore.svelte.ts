@@ -35,6 +35,13 @@ import {
 	terminateSongResultsWorkerPool
 } from "./songResultsWorkerPool.js";
 import {
+	matchesPctOfSongRange,
+	pctOfSongFromGroupedResult,
+	toPlainPctOfSongRange,
+	clampPctOfSongRange,
+	type PctOfSongRangeFilter
+} from "./pctOfSong.js";
+import {
 	matchesYearRange,
 	toPlainYearRange,
 	type YearRangeFilter
@@ -42,6 +49,7 @@ import {
 
 let songs = $state<SongInput[]>([]);
 let searchChords = $state<ParsedProgressionChord[]>([]);
+let allGroupedSearchResults = $state<GroupedSongSearchResult[]>([]);
 let searchResults = $state<GroupedSongSearchResult[]>([]);
 let annualMatchCounts = $state<AnnualMatchCount[]>([]);
 let bassAsRoot = $state(true);
@@ -58,6 +66,7 @@ let titleFilter = $state("");
 let debouncedTitleFilter = $state("");
 let selectedArtist = $state("");
 let yearRangeFilter = $state.raw<YearRangeFilter | null>(null);
+let pctOfSongRangeFilter = $state.raw<PctOfSongRangeFilter | null>(null);
 let searchInputActive = $state(true);
 let sequenceChartData = $state<VariableGramStat[]>([]);
 let sequenceChartStatus = $state<"idle" | "loading" | "ready" | "error">(
@@ -94,7 +103,15 @@ const hasSearch = $derived(
 		yearRangeFilter !== null
 );
 
-const workerChunkFilters = () => ({
+const pctFilteredSongKeys = $derived.by((): readonly string[] | null => {
+	if (!pctOfSongRangeFilter || searchChords.length === 0) return null;
+
+	return filterGroupedResultsByPct(allGroupedSearchResults).map(
+		(result) => result.songKey
+	);
+});
+
+const songResultsChunkFilters = () => ({
 	hasSearchChords: searchChords.length > 0,
 	titleFilter: debouncedTitleFilter,
 	selectedArtist,
@@ -102,6 +119,11 @@ const workerChunkFilters = () => ({
 	fuzzySearch,
 	matchAtBeginningOnly,
 	matchAtLeastTwice
+});
+
+const chartChunkFilters = () => ({
+	...songResultsChunkFilters(),
+	allowedSongKeys: pctFilteredSongKeys
 });
 
 const runSequenceChartCompute = async () => {
@@ -114,7 +136,7 @@ const runSequenceChartCompute = async () => {
 	try {
 		const result = await computeSequenceChartStats({
 			requestId,
-			filters: workerChunkFilters(),
+			filters: chartChunkFilters(),
 			searchAbstract: buildSearchAbstract(searchChords, {
 				ignoreSlashBassNotes,
 				fuzzySearch
@@ -154,15 +176,35 @@ const filterGroupedResultsByYear = (
 	);
 };
 
+const filterGroupedResultsByPct = (
+	groupedResults: GroupedSongSearchResult[]
+): GroupedSongSearchResult[] => {
+	if (!pctOfSongRangeFilter || searchChords.length === 0) return groupedResults;
+
+	return groupedResults.filter((result) =>
+		matchesPctOfSongRange(
+			pctOfSongFromGroupedResult(result),
+			pctOfSongRangeFilter
+		)
+	);
+};
+
 const applySongResults = (groupedResults: GroupedSongSearchResult[]) => {
-	const filteredResults = filterGroupedResultsByYear(groupedResults);
+	allGroupedSearchResults = groupedResults;
+	const filteredResults = filterGroupedResultsByPct(
+		filterGroupedResultsByYear(groupedResults)
+	);
 	searchResults = filteredResults.slice(0, MAX_SEARCH_RESULTS);
 	annualMatchCounts = buildAnnualMatchCounts(filteredResults);
 };
 
+const reapplyPctFilter = () => {
+	applySongResults(allGroupedSearchResults);
+};
+
 const runSongResultsCompute = async (version: number) => {
 	const output = await computeSongResults(version, {
-		filters: workerChunkFilters(),
+		filters: songResultsChunkFilters(),
 		searchAbstract: buildSearchAbstract(searchChords, {
 			ignoreSlashBassNotes,
 			fuzzySearch
@@ -206,6 +248,8 @@ $effect.root(() => {
 		selectedArtist;
 		yearRangeFilter?.[0];
 		yearRangeFilter?.[1];
+		pctOfSongRangeFilter?.[0];
+		pctOfSongRangeFilter?.[1];
 		fuzzySearch;
 		matchAtBeginningOnly;
 		matchAtLeastTwice;
@@ -245,6 +289,7 @@ const syncSearchChords = () => {
 
 const clearSearch = () => {
 	progressionSearch.clear();
+	pctOfSongRangeFilter = null;
 	syncSearchChords();
 };
 
@@ -260,8 +305,10 @@ const setSearchFromSequenceLabel = (label: string) => {
 const setSongs = async (nextSongs: SongInput[]) => {
 	songs = nextSongs;
 	searchChords = [];
+	allGroupedSearchResults = [];
 	searchResults = [];
 	annualMatchCounts = [];
+	pctOfSongRangeFilter = null;
 	sequenceChartStatus = "loading";
 	chartWorkerPoolReady = false;
 	songResultsWorkerPoolReady = false;
@@ -295,6 +342,18 @@ const setYearRangeFilter = (range: YearRangeFilter | null) => {
 const clearYearRangeFilter = () => {
 	yearRangeFilter = null;
 	scheduleFilteredRecompute();
+};
+
+const setPctOfSongRangeFilter = (range: PctOfSongRangeFilter) => {
+	pctOfSongRangeFilter = toPlainPctOfSongRange(clampPctOfSongRange(range));
+	reapplyPctFilter();
+	if (chartWorkerPoolReady) void runSequenceChartCompute();
+};
+
+const clearPctOfSongRangeFilter = () => {
+	pctOfSongRangeFilter = null;
+	reapplyPctFilter();
+	if (chartWorkerPoolReady) void runSequenceChartCompute();
 };
 
 const setTitleFilter = (value: string) => {
@@ -366,6 +425,9 @@ export const chordSearchDemoStore = {
 	get searchResults() {
 		return searchResults;
 	},
+	get allGroupedSearchResults() {
+		return allGroupedSearchResults;
+	},
 	get annualMatchCounts() {
 		return annualMatchCounts;
 	},
@@ -402,6 +464,9 @@ export const chordSearchDemoStore = {
 	get yearRangeFilter() {
 		return yearRangeFilter;
 	},
+	get pctOfSongRangeFilter() {
+		return pctOfSongRangeFilter;
+	},
 	get searchInputActive() {
 		return searchInputActive;
 	},
@@ -427,6 +492,8 @@ export const chordSearchDemoStore = {
 	setSelectedArtist,
 	setYearRangeFilter,
 	clearYearRangeFilter,
+	setPctOfSongRangeFilter,
+	clearPctOfSongRangeFilter,
 	setTitleFilter,
 	setBassAsRoot,
 	setIgnoreSlashBassNotes,

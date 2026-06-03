@@ -1,15 +1,13 @@
 import { gramLabel } from "../chord-processing/romanNumerals.js";
 import type { AbstractProgression } from "../chord-processing/types.js";
+import { pctOfSongFromCounts, type SongChordMatchStats } from "./pctOfSong.js";
 import { romanTokenSequenceMatchesSearch } from "./searchMatchesInRomanTokens.js";
+
+export type { SongChordMatchStats };
 
 export type ChartSection = {
 	romanTokens: string[];
 	songKey: string;
-};
-
-export type SongChordMatchStats = {
-	matchingChordCount: number;
-	totalChordCount: number;
 };
 
 export type VariableGramStat = {
@@ -106,8 +104,7 @@ const avgPctOfSongForGram = (
 		const { matchingChordCount, totalChordCount } = chordStatsBySong?.get(
 			songKey
 		) ?? { matchingChordCount: 0, totalChordCount: 0 };
-		sumPct +=
-			totalChordCount > 0 ? (matchingChordCount / totalChordCount) * 100 : 0;
+		sumPct += pctOfSongFromCounts(matchingChordCount, totalChordCount);
 	}
 	return sumPct / songKeys.size;
 };

@@ -11,6 +11,7 @@
 	import ChordProgressionCriteria from "./ChordProgressionCriteria.svelte";
 	import ChordProgressionSearchResults from "./chord-progression-search-results/ChordProgressionSearchResults.svelte";
 	import MatchingSongsTimeSeriesChart from "./chord-progression-search-results/MatchingSongsTimeSeriesChart.svelte";
+	import ProgressionPctOfSongHistogram from "./chord-progression-search-results/ProgressionPctOfSongHistogram.svelte";
 	import MostCommonSequences from "./MostCommonSequences.svelte";
 	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
@@ -240,6 +241,7 @@
 				<div class="column">
 					<h1 class="column-title">Song results</h1>
 					<MatchingSongsTimeSeriesChart />
+					<ProgressionPctOfSongHistogram />
 					<ChordProgressionSearchResults />
 				</div>
 			</div>

@@ -158,6 +158,24 @@ export const MATCHING_SONGS_TIME_SERIES_BRUSH_STROKE =
 export const MATCHING_SONGS_TIME_SERIES_BRUSH_HINT =
 	"Drag to filter by release year. Double-click to clear year filter.";
 
+export const PROGRESSION_PCT_HISTOGRAM_HEIGHT_PX = 100;
+export const PROGRESSION_PCT_HISTOGRAM_MARGIN_TOP_PX = 8;
+export const PROGRESSION_PCT_HISTOGRAM_MARGIN_RIGHT_PX = 8;
+export const PROGRESSION_PCT_HISTOGRAM_MARGIN_BOTTOM_PX = 28;
+export const PROGRESSION_PCT_HISTOGRAM_MARGIN_LEFT_PX = 36;
+export const PROGRESSION_PCT_HISTOGRAM_BIN_COUNT = 40;
+export const PROGRESSION_PCT_HISTOGRAM_BAR_FILL = "#6366f1";
+export const PROGRESSION_PCT_HISTOGRAM_IDLE_MESSAGE =
+	"search chords to see the distribution of the percent they make up songs";
+export const PROGRESSION_PCT_HISTOGRAM_EMPTY_MESSAGE =
+	"No matching songs for the current progression.";
+export const PROGRESSION_PCT_HISTOGRAM_AXIS_TICK_COUNT = 5;
+export const PROGRESSION_PCT_HISTOGRAM_BRUSH_FILL = "rgba(99, 102, 241, 0.2)";
+export const PROGRESSION_PCT_HISTOGRAM_BRUSH_STROKE =
+	"rgba(99, 102, 241, 0.65)";
+export const PROGRESSION_PCT_HISTOGRAM_BRUSH_HINT =
+	"Drag to filter by % of song. Double-click to clear % of song filter.";
+
 export const ARTIST_FILTER_OPTION_LIMIT = 10;
 export const TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y = "0.375rem";
 export const TOP_NAV_CHORD_SEARCH_GROUP_CONTENT_MIN_HEIGHT = "1.5rem";

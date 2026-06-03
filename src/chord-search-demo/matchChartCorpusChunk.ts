@@ -18,6 +18,7 @@ export type ChartChunkFilters = {
 	titleFilter: string;
 	selectedArtist: string;
 	yearRange: YearRangeFilter | null;
+	allowedSongKeys: readonly string[] | null;
 	fuzzySearch: boolean;
 	matchAtBeginningOnly: boolean;
 	matchAtLeastTwice: boolean;
@@ -84,8 +85,13 @@ export const matchChartCorpusChunk = (
 ): ChartSection[] => {
 	const normalizedTitle = filters.titleFilter.trim();
 
+	const allowedSongKeys = filters.allowedSongKeys
+		? new Set(filters.allowedSongKeys)
+		: null;
+
 	return chunk
 		.filter((entry) => {
+			if (allowedSongKeys && !allowedSongKeys.has(entry.songKey)) return false;
 			if (filters.selectedArtist && !matchesSelectedArtist(entry.artists, filters.selectedArtist))
 				return false;
 			if (!matchesYearRange(entry.year, filters.yearRange)) return false;
