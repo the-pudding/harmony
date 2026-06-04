@@ -13,6 +13,7 @@
 	import MatchingSongsTimeSeriesChart from "./chord-progression-search-results/MatchingSongsTimeSeriesChart.svelte";
 	import ProgressionPctOfSongHistogram from "./chord-progression-search-results/ProgressionPctOfSongHistogram.svelte";
 	import MostCommonSequences from "./MostCommonSequences.svelte";
+	import MostLikelyNextChord from "./MostLikelyNextChord.svelte";
 	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import {
@@ -235,6 +236,7 @@
 		<div class="live-output" data-live-state={liveState}>
 			<div class="demo-columns">
 				<div class="column">
+					<MostLikelyNextChord />
 					<ChordProgressionCriteria />
 					<MostCommonSequences />
 				</div>
