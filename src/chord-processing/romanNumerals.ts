@@ -59,25 +59,42 @@ const romanBaseToDegree = (base: string): number | null => {
 	);
 };
 
-export const parseRomanToken = (
-	token: string
-): { degree: number; quality: string } | null => {
-	if (token.endsWith("°")) {
-		const degree = romanBaseToDegree(token.slice(0, -1));
-		return degree ? { degree, quality: "dim" } : null;
+type ParsedToken = { degree: number; quality: string; flat: boolean };
+
+export const parseRomanToken = (token: string): ParsedToken | null => {
+	// Strip a leading 'b' flat prefix if the rest is a valid roman numeral base
+	let t = token;
+	let flat = false;
+	if (t.startsWith("b") && t.length > 1) {
+		const rest = t.slice(1);
+		// Strip any trailing quality suffix before testing the base
+		const base = rest.replace(/[°+]$/, "");
+		if (romanBaseToDegree(base) !== null) {
+			flat = true;
+			t = rest;
+		}
 	}
 
-	if (token.endsWith("+")) {
-		const degree = romanBaseToDegree(token.slice(0, -1));
-		return degree ? { degree, quality: "aug" } : null;
+	if (t.endsWith("°")) {
+		const degree = romanBaseToDegree(t.slice(0, -1));
+		return degree ? { degree, quality: "dim", flat } : null;
 	}
 
-	const degree = romanBaseToDegree(token);
+	if (t.endsWith("+")) {
+		const degree = romanBaseToDegree(t.slice(0, -1));
+		return degree ? { degree, quality: "aug", flat } : null;
+	}
+
+	const degree = romanBaseToDegree(t);
 	if (!degree) return null;
 
-	const quality = token === token.toUpperCase() ? "maj" : "min";
-	return { degree, quality };
+	const quality = t === t.toUpperCase() ? "maj" : "min";
+	return { degree, quality, flat };
 };
+
+const pitchClassFromEntry = (entry: ParsedToken): number =>
+	(MAJOR_SCALE_INTERVALS[entry.degree - 1] - (entry.flat ? 1 : 0) + NOTES_PER_OCTAVE) %
+	NOTES_PER_OCTAVE;
 
 export const romanTokensToPrecomputedAbstract = (
 	tokens: string[]
@@ -85,20 +102,19 @@ export const romanTokensToPrecomputedAbstract = (
 	const parsed = tokens.map(parseRomanToken);
 	if (parsed.some((entry) => entry === null)) return null;
 
-	const degrees = parsed.map((entry) => entry!.degree);
 	const suffixes = parsed.map(
 		({ quality }) => ROMAN_QUALITY_TO_SUFFIX[quality] ?? null
 	);
 	if (suffixes.some((suffix) => suffix === null)) return null;
 
-	const deltas = degrees
+	const pitchClasses = parsed.map((entry) => pitchClassFromEntry(entry!));
+	const deltas = pitchClasses
 		.slice(1)
-		.map((toDegree, index) =>
-			intervalBetweenScaleDegrees(degrees[index], toDegree)
-		);
+		.map((pc, index) => (pc - pitchClasses[index] + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE);
 	const wrapDelta =
-		degrees.length > 1
-			? intervalBetweenScaleDegrees(degrees[degrees.length - 1], degrees[0])
+		pitchClasses.length > 1
+			? (pitchClasses[0] - pitchClasses[pitchClasses.length - 1] + NOTES_PER_OCTAVE) %
+				NOTES_PER_OCTAVE
 			: 0;
 
 	return {
@@ -116,11 +132,9 @@ export const romanTokensToParsedProgression = (
 	if (parsed.some((entry) => entry === null)) return null;
 
 	const chords = parsed.map((entry) => {
-		const { degree, quality } = entry!;
-		const rootPitchClass = MAJOR_SCALE_INTERVALS[degree - 1];
-		const suffix = ROMAN_QUALITY_TO_SUFFIX[quality];
+		const suffix = ROMAN_QUALITY_TO_SUFFIX[entry!.quality];
 		if (!suffix) return null;
-
+		const rootPitchClass = pitchClassFromEntry(entry!);
 		const chord = { rootPitchClass, suffix };
 		return { ...chord, display: formatChordName(chord) };
 	});

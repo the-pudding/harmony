@@ -14,6 +14,8 @@
 	import ProgressionPctOfSongHistogram from "./chord-progression-search-results/ProgressionPctOfSongHistogram.svelte";
 	import MostCommonSequences from "./MostCommonSequences.svelte";
 	import MostLikelyNextChord from "./MostLikelyNextChord.svelte";
+	import CoreProgressionButtons from "./CoreProgressionButtons.svelte";
+	import PercentOfAllSongs from "./PercentOfAllSongs.svelte";
 	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import {
@@ -234,17 +236,25 @@
 		<NoMidiBanner message={midiBanner} />
 
 		<div class="live-output" data-live-state={liveState}>
+			<CoreProgressionButtons />
 			<div class="demo-columns">
 				<div class="column">
-					<MostLikelyNextChord />
+					<!-- <MostLikelyNextChord /> -->
 					<ChordProgressionCriteria />
-					<MostCommonSequences />
-				</div>
-				<div class="column">
+					<!-- <MostCommonSequences /> -->
+
 					<h1 class="column-title">Song results</h1>
+					{#if chordSearchDemoStore.hasSearch}
+						<p class="result-count">
+							{chordSearchDemoStore.allGroupedSearchResults.length.toLocaleString()} songs
+						</p>
+					{/if}
 					<MatchingSongsTimeSeriesChart />
 					<ProgressionPctOfSongHistogram />
 					<ChordProgressionSearchResults />
+				</div>
+				<div class="column">
+					<PercentOfAllSongs />
 				</div>
 			</div>
 		</div>
@@ -319,6 +329,12 @@
 		flex-direction: column;
 		gap: 1rem;
 		min-width: 0;
+	}
+
+	.result-count {
+		font-size: 0.875rem;
+		color: #a1a1aa;
+		margin: -0.5rem 0 0;
 	}
 
 	.column-title {

@@ -1,14 +1,43 @@
 <script lang="ts">
 	import { isPositionInMatch } from "../../chord-processing/match-chord-progressions/match.js";
-	import type { GroupedSongSearchResult } from "../../chord-processing/types.js";
+	import type {
+		GroupedSongSearchResult,
+		SongSectionSearchResult
+	} from "../../chord-processing/types.js";
 	import { SONG_DATA_SOURCE_TITLE } from "../constants.js";
 	import { buildYouTubeSearchUrl } from "../youtubeSearch.js";
 
 	let { result }: { result: GroupedSongSearchResult } = $props();
 
-	const isMatched = $derived(
-		result.sections.some((section) => section.matches.length > 0)
+	// matchIndex: the index into section.matches that owns this segment, or -1 for unmatched
+	type Segment = { matchIndex: number; indices: number[] };
+
+	function buildSegments(section: SongSectionSearchResult): Segment[] {
+		const n = section.parsedProgression.length;
+
+		// Assign each position to the first match that covers it (-1 = no match)
+		const posToMatch = Array.from({ length: n }, (_, pos) =>
+			section.matches.findIndex((match) => isPositionInMatch(pos, match, n))
+		);
+
+		// Group consecutive positions that share the same matchIndex
+		const segments: Segment[] = [];
+		for (let i = 0; i < n; i++) {
+			const mi = posToMatch[i];
+			const last = segments[segments.length - 1];
+			if (last && last.matchIndex === mi) {
+				last.indices.push(i);
+			} else {
+				segments.push({ matchIndex: mi, indices: [i] });
+			}
+		}
+		return segments;
+	}
+
+	const totalMatchCount = $derived(
+		result.sections.reduce((sum, s) => sum + s.matches.length, 0)
 	);
+	const isMatched = $derived(totalMatchCount > 0);
 	const youtubeSearchUrl = $derived(
 		buildYouTubeSearchUrl({
 			title: result.title,
@@ -34,28 +63,53 @@
 			target="_blank"
 			rel="noopener noreferrer"
 			aria-label="Search on YouTube"
-			title="Search on YouTube"
-		>🎵</a>
+			title="Search on YouTube">🎵</a
+		>
 		<span class="song-title">{result.title}</span>
 		{#if result.year !== undefined}
 			<span class="year"> ({result.year})</span>
+		{/if}
+		{#if isMatched}
+			<span
+				class="match-count"
+				title="{totalMatchCount} occurrence{totalMatchCount === 1 ? '' : 's'}"
+			>
+				×{totalMatchCount}
+			</span>
 		{/if}
 		<span class="artist"> — {artistLabel}</span>
 	</div>
 	<div class="sections">
 		{#each result.sections as section, sectionIndex (sectionIndex)}
-			{@const sectionLength = section.parsedProgression.length}
+			{@const segments = buildSegments(section)}
 			<div class="section-row">
 				{#if section.sectionLabel}
 					<span class="section-label">{section.sectionLabel}</span>
 				{/if}
 				<div class="chords">
-					{#each section.parsedProgression as chord, position (position)}
-						{@const highlighted = section.matches.some((match) =>
-							isPositionInMatch(position, match, sectionLength)
-						)}
-						<span class="chord" class:highlighted>{chord.display}</span>
-						{#if position < sectionLength - 1}
+					{#each segments as segment, si}
+						{#if segment.matchIndex !== -1}
+							<span class="match-group">
+								{#each segment.indices as pos, i}
+									<span class="chord highlighted">
+										{section.parsedProgression[pos].display}
+									</span>
+									{#if i < segment.indices.length - 1}
+										<span class="dot">·</span>
+									{/if}
+								{/each}
+							</span>
+						{:else}
+							{#each segment.indices as pos, i}
+								<span class="chord"
+									>{section.parsedProgression[pos].display}</span
+								>
+								{#if i < segment.indices.length - 1}
+									<span class="dot">·</span>
+								{/if}
+							{/each}
+						{/if}
+						{#if si < segments.length - 1}
 							<span class="dot">·</span>
 						{/if}
 					{/each}
@@ -95,6 +149,17 @@
 	.artist,
 	.year {
 		color: #71717a;
+	}
+
+	.match-count {
+		font-size: 0.625rem;
+		font-weight: 600;
+		color: #818cf8;
+		background: rgba(99, 102, 241, 0.15);
+		border: 1px solid rgba(99, 102, 241, 0.3);
+		border-radius: 0.25rem;
+		padding: 0.0625rem 0.3125rem;
+		margin-left: 0.125rem;
 	}
 
 	.source {
@@ -158,6 +223,15 @@
 		color: #fff;
 		border-radius: 0.25rem;
 		font-weight: 500;
+	}
+
+	.match-group {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.125rem;
+		border: 1px solid rgba(99, 102, 241, 0.55);
+		border-radius: 0.375rem;
+		padding: 0.2rem;
 	}
 
 	.dot {

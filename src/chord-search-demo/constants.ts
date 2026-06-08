@@ -55,7 +55,7 @@ export const NO_MATCH_MESSAGE =
 	"No songs match this progression. Clear to start over.";
 export const SONGS_DATA_URL = "/data/songs.json";
 export const SONGS_LOADING_MESSAGE = "Loading song dataset…";
-export const MAX_SEARCH_RESULTS = 10;
+export const MAX_SEARCH_RESULTS = 20;
 
 export const VARIABLE_GRAM_MIN_LENGTH = 2;
 export const VARIABLE_GRAM_MAX_LENGTH = 6;

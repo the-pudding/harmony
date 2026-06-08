@@ -8,7 +8,10 @@
 	} from "./constants.js";
 
 	const handleMinNumChordsToCountAsAProgressionInput = (event: Event) => {
-		const value = Number.parseInt((event.currentTarget as HTMLInputElement).value, 10);
+		const value = Number.parseInt(
+			(event.currentTarget as HTMLInputElement).value,
+			10
+		);
 		if (Number.isNaN(value)) return;
 		chordSearchDemoStore.setMinNumChordsToCountAsAProgression(value);
 	};

@@ -16,6 +16,16 @@ const MAX_NEXT_CHORDS = 8;
 
 const MAJOR_SCALE_PITCH_CLASSES = [0, 2, 4, 5, 7, 9, 11] as const;
 
+// Chromatic pitch classes that are one semitone below a diatonic scale degree
+const FLAT_PITCH_CLASS_TO_DEGREE: Partial<Record<number, number>> = {
+	1: 2,  // bII  (C#/Db)
+	3: 3,  // bIII (D#/Eb)
+	8: 6,  // bVI  (G#/Ab)
+	10: 7, // bVII (A#/Bb)
+};
+
+const ROMAN_BASES = ["I", "II", "III", "IV", "V", "VI", "VII"] as const;
+
 const SUFFIX_TO_QUALITY: Record<string, string> = {
 	major: "maj",
 	minor: "min",
@@ -41,16 +51,25 @@ const SUFFIX_TO_QUALITY: Record<string, string> = {
 };
 
 export function chordToRomanToken(chord: ParsedProgressionChord): string | null {
-	const degreeIdx = MAJOR_SCALE_PITCH_CLASSES.indexOf(
-		chord.rootPitchClass as (typeof MAJOR_SCALE_PITCH_CLASSES)[number]
-	);
-	if (degreeIdx === -1) return null;
-
-	const degree = degreeIdx + 1;
 	const quality = SUFFIX_TO_QUALITY[chord.suffix] ?? null;
 	if (!quality) return null;
 
-	return degreeQualityToRoman(degree, quality);
+	const degreeIdx = MAJOR_SCALE_PITCH_CLASSES.indexOf(
+		chord.rootPitchClass as (typeof MAJOR_SCALE_PITCH_CLASSES)[number]
+	);
+	if (degreeIdx !== -1) {
+		return degreeQualityToRoman(degreeIdx + 1, quality);
+	}
+
+	// Borrowed (flat) chord — map chromatic pitch class to bII, bIII, bVI, bVII, etc.
+	const flatDegree = FLAT_PITCH_CLASS_TO_DEGREE[chord.rootPitchClass];
+	if (flatDegree === undefined) return null;
+	const base = ROMAN_BASES[flatDegree - 1];
+	if (quality === "maj") return `b${base}`;
+	if (quality === "min") return `b${base.toLowerCase()}`;
+	if (quality === "dim") return `b${base.toLowerCase()}°`;
+	if (quality === "aug") return `b${base}+`;
+	return null;
 }
 
 function countNextChords(songs: SongInput[], prefix: string[]): Map<string, number> {
