@@ -15,7 +15,6 @@
 	import MostCommonSequences from "./MostCommonSequences.svelte";
 	import MostLikelyNextChord from "./MostLikelyNextChord.svelte";
 	import CoreProgressionButtons from "./CoreProgressionButtons.svelte";
-	import PercentOfAllSongs from "./PercentOfAllSongs.svelte";
 	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import {
@@ -237,25 +236,20 @@
 
 		<div class="live-output" data-live-state={liveState}>
 			<CoreProgressionButtons />
-			<div class="demo-columns">
-				<div class="column">
-					<!-- <MostLikelyNextChord /> -->
-					<ChordProgressionCriteria />
-					<!-- <MostCommonSequences /> -->
+			<div class="column">
+				<!-- <MostLikelyNextChord /> -->
+				<ChordProgressionCriteria />
+				<!-- <MostCommonSequences /> -->
 
-					<h1 class="column-title">Song results</h1>
-					{#if chordSearchDemoStore.hasSearch}
-						<p class="result-count">
-							{chordSearchDemoStore.allGroupedSearchResults.length.toLocaleString()} songs
-						</p>
-					{/if}
-					<MatchingSongsTimeSeriesChart />
-					<ProgressionPctOfSongHistogram />
-					<ChordProgressionSearchResults />
-				</div>
-				<div class="column">
-					<PercentOfAllSongs />
-				</div>
+				<h1 class="column-title">Song results</h1>
+				{#if chordSearchDemoStore.hasSearch}
+					<p class="result-count">
+						{chordSearchDemoStore.allGroupedSearchResults.length.toLocaleString()} songs
+					</p>
+				{/if}
+				<MatchingSongsTimeSeriesChart />
+				<ProgressionPctOfSongHistogram />
+				<ChordProgressionSearchResults />
 			</div>
 		</div>
 	</div>
@@ -315,13 +309,6 @@
 
 	.live-output[data-live-state="active"] {
 		opacity: 1;
-	}
-
-	.demo-columns {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 2rem;
-		align-items: start;
 	}
 
 	.column {

@@ -11,51 +11,67 @@
 	import SearchInputToggle from "./SearchInputToggle.svelte";
 	import TitleArtistFilter from "./TitleArtistFilter.svelte";
 
+	import { page } from "$app/state";
+
 	type Props = {
-		isConnected: boolean;
-		selectedInputName: string;
-		connectError: string;
-		onConnect: () => void | Promise<void>;
+		isConnected?: boolean;
+		selectedInputName?: string;
+		connectError?: string;
+		onConnect?: () => void | Promise<void>;
+		showSearch?: boolean;
 	};
 
-	let { isConnected, selectedInputName, connectError, onConnect }: Props = $props();
+	let {
+		isConnected = false,
+		selectedInputName = "",
+		connectError = "",
+		onConnect,
+		showSearch = true
+	}: Props = $props();
 </script>
 
 <nav class="top-nav" aria-label="Search filters and current progression">
-	<ArtistFilter />
-	<TitleArtistFilter />
-	<div
-		class="chord-search-group"
-		style="--chord-search-group-height: {TOP_NAV_CHORD_SEARCH_GROUP_HEIGHT}; --chord-search-group-padding-y: {TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y};"
-	>
-		<div class="progression-wrap">
-			<SearchProgression
-				chords={chordSearchDemoStore.searchChords}
-				fuzzySearch={chordSearchDemoStore.fuzzySearch}
-				ignoreSlashBassNotes={chordSearchDemoStore.ignoreSlashBassNotes}
-				searchInputActive={chordSearchDemoStore.searchInputActive}
-			/>
-		</div>
-		<div class="search-actions">
-			<SearchInputToggle />
-			<button type="button" class="action-pill clear" onclick={chordSearchDemoStore.clearSearch}>
-				{CLEAR_CHORDS_LABEL}
-				<span class="shortcut">· {CLEAR_SENTINEL_NOTES}</span>
-			</button>
-		</div>
+	<span class="logo">harmony</span>
+	<div class="page-nav">
+		<a href="/demo/chord-search" class="page-link" class:active={page.url.pathname === "/demo/chord-search"}>chord search</a>
+		<a href="/demo/progressions" class="page-link" class:active={page.url.pathname === "/demo/progressions"}>progressions</a>
 	</div>
-	<div class="nav-trailing">
-		<div class="midi-status">
-			{#if isConnected}
-				<span class="connected" title={selectedInputName}>connected</span>
-			{:else}
-				<button type="button" class="connect" onclick={onConnect}>connect</button>
-			{/if}
-			{#if connectError}
-				<span class="connect-error">{connectError}</span>
-			{/if}
+	{#if showSearch}
+		<ArtistFilter />
+		<TitleArtistFilter />
+		<div
+			class="chord-search-group"
+			style="--chord-search-group-height: {TOP_NAV_CHORD_SEARCH_GROUP_HEIGHT}; --chord-search-group-padding-y: {TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y};"
+		>
+			<div class="progression-wrap">
+				<SearchProgression
+					chords={chordSearchDemoStore.searchChords}
+					fuzzySearch={chordSearchDemoStore.fuzzySearch}
+					ignoreSlashBassNotes={chordSearchDemoStore.ignoreSlashBassNotes}
+					searchInputActive={chordSearchDemoStore.searchInputActive}
+				/>
+			</div>
+			<div class="search-actions">
+				<SearchInputToggle />
+				<button type="button" class="action-pill clear" onclick={chordSearchDemoStore.clearSearch}>
+					{CLEAR_CHORDS_LABEL}
+					<span class="shortcut">· {CLEAR_SENTINEL_NOTES}</span>
+				</button>
+			</div>
 		</div>
-	</div>
+		<div class="nav-trailing">
+			<div class="midi-status">
+				{#if isConnected}
+					<span class="connected" title={selectedInputName}>connected</span>
+				{:else}
+					<button type="button" class="connect" onclick={onConnect}>connect</button>
+				{/if}
+				{#if connectError}
+					<span class="connect-error">{connectError}</span>
+				{/if}
+			</div>
+		</div>
+	{/if}
 </nav>
 
 <style>
@@ -73,6 +89,40 @@
 		border-bottom: 1px solid rgba(39, 39, 42, 0.8);
 		backdrop-filter: blur(8px);
 		box-sizing: border-box;
+	}
+
+	.logo {
+		font-size: 1rem;
+		font-weight: 600;
+		color: #f4f4f5;
+		letter-spacing: -0.02em;
+		flex-shrink: 0;
+	}
+
+	.page-nav {
+		display: flex;
+		gap: 0.25rem;
+		align-items: center;
+		flex-shrink: 0;
+	}
+
+	.page-link {
+		font-size: 0.75rem;
+		color: #71717a;
+		text-decoration: none;
+		padding: 0.25rem 0.625rem;
+		border-radius: 0.25rem;
+		transition: color 0.15s, background 0.15s;
+	}
+
+	.page-link:hover {
+		color: #e4e4e7;
+		background: rgba(255, 255, 255, 0.06);
+	}
+
+	.page-link.active {
+		color: #f4f4f5;
+		background: rgba(255, 255, 255, 0.08);
 	}
 
 	.chord-search-group {

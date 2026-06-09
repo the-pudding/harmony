@@ -6,16 +6,7 @@
 	import { buildSearchAbstract } from "./buildSearchAbstract.js";
 	import { matchSongResultsChunk, type SongResultsChunkFilters } from "./matchSongResultsChunk.js";
 	import { buildSongResultsCorpusState, type SongResultsWorkerEntry } from "./songResultsIndex.js";
-	import {
-		computeTopProgressions,
-		computeMinCoverageSet,
-		filterSubsumedProgressions,
-		type ProgressionStat,
-		type MinCoverageEntry
-	} from "./computeTopProgressions.js";
-	import ToggleSwitch from "./ToggleSwitch.svelte";
-	import { SEQUENCE_CHART_LENGTH_COLORS } from "./constants.js";
-
+	
 	const CELL = 5;
 	const GAP = 1;
 	const STEP = CELL + GAP;
@@ -41,9 +32,6 @@
 	const matchAtBeginningOnly = $derived(chordSearchDemoStore.matchAtBeginningOnly);
 	const matchAtLeastTwice = $derived(chordSearchDemoStore.matchAtLeastTwice);
 	const ignoreSlashBassNotes = $derived(chordSearchDemoStore.ignoreSlashBassNotes);
-	const aggregateRepeats = $derived(chordSearchDemoStore.aggregateRepeats);
-	const minNumChordsToCountAsAProgression = $derived(chordSearchDemoStore.minNumChordsToCountAsAProgression);
-
 	onMount(async () => {
 		try {
 			const res = await fetch("/data/core-progressions.csv");
@@ -218,8 +206,6 @@
 
 	const activeSet = $derived.by(() => {
 		if (activeIdx >= 0 && coverage) return coverage.progressionMatches[activeIdx];
-		const label = searchTokens.join("→");
-		if (label) return topProgressions.find((p) => p.label === label)?.songKeys ?? null;
 		return null;
 	});
 
@@ -237,51 +223,6 @@
 			: null
 	);
 	const activeName = $derived(activeIdx >= 0 ? progressionData[activeIdx]?.name : null);
-
-	// Top progressions + greedy coverage set — recompute when songs or toggle criteria change
-	let topProgressions = $state<ProgressionStat[]>([]);
-	let minCoverageSet = $state<MinCoverageEntry[]>([]);
-	let filterSubsumed = $state(false);
-	let topProgsVersion = 0;
-
-	const displayedTopProgressions = $derived(
-		filterSubsumed ? filterSubsumedProgressions(topProgressions) : topProgressions
-	);
-
-	$effect(() => {
-		const snap = songs;
-		const opts = { aggregateRepeats, matchAtBeginningOnly, matchAtLeastTwice, minLength: minNumChordsToCountAsAProgression };
-		if (snap.length === 0) return;
-		const ver = ++topProgsVersion;
-		setTimeout(() => {
-			if (ver !== topProgsVersion) return;
-			const top = computeTopProgressions(snap, opts, 30);
-			if (ver !== topProgsVersion) return;
-			topProgressions = top;
-			minCoverageSet = computeMinCoverageSet(top, coverage?.totalCount ?? snap.length, 0.7);
-		}, 20);
-	});
-
-	// Recompute min set when coverage total or filter changes
-	$effect(() => {
-		const total = coverage?.totalCount;
-		const pool = displayedTopProgressions;
-		if (!total || pool.length === 0) return;
-		minCoverageSet = computeMinCoverageSet(pool, total, 0.7);
-	});
-
-	const coreLabels = $derived(new Set(progressionData.map((p) => p.tokens.join("→"))));
-
-	function setProgressionFromTokens(tokens: string[]) {
-		const parsed = romanTokensToParsedProgression(tokens);
-		if (!parsed) return;
-		chordSearchDemoStore.getProgressionSearch().setProgression(parsed);
-		chordSearchDemoStore.syncSearch();
-	}
-
-	function lengthColor(len: number): string {
-		return SEQUENCE_CHART_LENGTH_COLORS[len] ?? "#888888";
-	}
 </script>
 
 <section class="section">
@@ -352,71 +293,6 @@
 		{/if}
 	{/if}
 
-	{#if topProgressions.length > 0}
-		<div class="list-section">
-			<h3 class="list-title">Top progressions by songs matched</h3>
-			<ToggleSwitch
-				checked={filterSubsumed}
-				onchange={(v) => { filterSubsumed = v; }}
-				label="🧩 Only show maximal progressions — hide sub-sequences that are fully contained within a longer one in this list (e.g. hides I→V when I→V→vi→IV is present)"
-			/>
-			<div class="prog-list">
-				{#each displayedTopProgressions as prog (prog.label)}
-					{@const pct = coverage ? prog.songKeys.size / coverage.totalCount : 0}
-					{@const isCore = coreLabels.has(prog.label)}
-					{@const isActive = searchTokens.join("→") === prog.label}
-					<button
-						class="prog-row"
-						class:prog-row-active={isActive}
-						onclick={() => setProgressionFromTokens(prog.tokens)}
-						title="Search for {prog.label}"
-					>
-						<span class="prog-label" style:color={lengthColor(prog.tokens.length)}>
-							{prog.label}
-						</span>
-						{#if isCore}<span class="core-badge">core</span>{/if}
-						<span class="prog-bar-wrap">
-							<span class="prog-bar" style:width="{pct * 100}%" style:background={lengthColor(prog.tokens.length)}></span>
-						</span>
-						<span class="prog-count">{prog.songKeys.size.toLocaleString()}</span>
-					</button>
-				{/each}
-			</div>
-		</div>
-
-		{#if minCoverageSet.length > 0}
-			{@const finalPct = minCoverageSet[minCoverageSet.length - 1].runningPct}
-			<div class="list-section">
-				<h3 class="list-title">
-					Minimum set for ~{Math.round(finalPct * 100)}% coverage
-					<span class="list-subtitle">({minCoverageSet.length} progressions)</span>
-				</h3>
-				<div class="prog-list">
-					{#each minCoverageSet as entry, i (entry.label)}
-						{@const isActive = searchTokens.join("→") === entry.label}
-						<button
-							class="prog-row"
-							class:prog-row-active={isActive}
-							onclick={() => setProgressionFromTokens(entry.tokens)}
-							title="Search for {entry.label}"
-						>
-							<span class="min-rank">{i + 1}</span>
-							<span class="prog-label" style:color={lengthColor(entry.tokens.length)}>
-								{entry.label}
-							</span>
-							<span class="prog-bar-wrap">
-								<span class="prog-bar running-bar" style:width="{entry.runningPct * 100}%"></span>
-							</span>
-							<span class="prog-count">
-								+{entry.addedSongs.toLocaleString()}
-								<span class="running-pct">→ {Math.round(entry.runningPct * 100)}%</span>
-							</span>
-						</button>
-					{/each}
-				</div>
-			</div>
-		{/if}
-	{/if}
 </section>
 
 <style>
@@ -539,117 +415,4 @@
 		line-height: 1.4;
 	}
 
-	.list-section {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
-	.list-title {
-		font-size: 0.75rem;
-		font-weight: 600;
-		color: #a1a1aa;
-		margin: 0;
-		letter-spacing: 0.01em;
-	}
-
-
-	.list-subtitle {
-		font-weight: 400;
-		color: #52525b;
-	}
-
-	.prog-list {
-		display: flex;
-		flex-direction: column;
-		gap: 1px;
-	}
-
-	.prog-row {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.25rem 0.375rem;
-		background: none;
-		border: none;
-		border-radius: 0.25rem;
-		cursor: pointer;
-		text-align: left;
-		color: inherit;
-		font-family: inherit;
-		font-size: 0.6875rem;
-		transition: background 0.12s ease;
-	}
-
-	.prog-row:hover {
-		background: rgba(255, 255, 255, 0.05);
-	}
-
-	.prog-row-active {
-		background: rgba(137, 180, 250, 0.1);
-	}
-
-	.prog-label {
-		flex: 1;
-		font-weight: 500;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		min-width: 0;
-	}
-
-	.core-badge {
-		font-size: 0.5625rem;
-		font-weight: 600;
-		color: #52525b;
-		border: 1px solid #3f3f46;
-		border-radius: 0.2rem;
-		padding: 0 0.25rem;
-		flex-shrink: 0;
-	}
-
-	.prog-bar-wrap {
-		position: relative;
-		flex-shrink: 0;
-		width: 5rem;
-		height: 4px;
-		background: rgba(255, 255, 255, 0.07);
-		border-radius: 2px;
-		overflow: hidden;
-	}
-
-	.prog-bar {
-		position: absolute;
-		left: 0;
-		top: 0;
-		height: 100%;
-		border-radius: 2px;
-		opacity: 0.7;
-		transition: width 0.3s ease;
-	}
-
-	.running-bar {
-		background: #89b4fa;
-	}
-
-	.prog-count {
-		flex-shrink: 0;
-		width: 5.5rem;
-		font-size: 0.625rem;
-		color: #71717a;
-		white-space: nowrap;
-		text-align: right;
-	}
-
-	.running-pct {
-		color: #52525b;
-	}
-
-	.min-rank {
-		font-size: 0.5625rem;
-		color: #3f3f46;
-		min-width: 1rem;
-		text-align: right;
-		flex-shrink: 0;
-	}
 </style>
