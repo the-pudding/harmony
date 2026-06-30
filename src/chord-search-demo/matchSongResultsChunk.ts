@@ -69,17 +69,14 @@ const findSectionMatches = (
 		? withSimplifiedSearchAbstract(searchAbstract)
 		: searchAbstract;
 
+	// matchAtLeastTwice is intentionally not applied here — it's enforced at the
+	// song level (across all sections) in matchSongResultsChunk below.
 	return applyProgressionMatchFilters(
 		findSubProgressionMatchesPrecomputedFromAbstract(
 			songAbstract,
 			effectiveSearchAbstract
 		),
-		{
-			matchAtBeginningOnly: filters.matchAtBeginningOnly,
-			minOccurrences: filters.matchAtLeastTwice
-				? MIN_OCCURRENCES_AT_LEAST_TWICE
-				: MIN_OCCURRENCES_DEFAULT
-		}
+		{ matchAtBeginningOnly: filters.matchAtBeginningOnly }
 	);
 };
 
@@ -89,9 +86,10 @@ export const matchSongResultsChunk = (
 	searchAbstract: AbstractProgression | null
 ): SongResultsPartial => {
 	const normalizedTitle = filters.titleFilter.trim();
-	const matchedSongKeys: string[] = [];
+	const orderedSongKeys: string[] = [];
 	const seenSongKeys = new Set<string>();
 	const sectionMatches: Array<{ id: string; matches: SubProgressionMatch[] }> = [];
+	const songTotalMatches = new Map<string, number>();
 
 	for (const entry of chunk) {
 		if (filters.selectedArtist && !matchesSelectedArtist(entry.artists, filters.selectedArtist))
@@ -104,14 +102,28 @@ export const matchSongResultsChunk = (
 
 			const matches = findSectionMatches(entry, searchAbstract, filters);
 			sectionMatches.push({ id: entry.id, matches });
-			if (matches.length === 0) continue;
+
+			if (matches.length > 0) {
+				songTotalMatches.set(
+					entry.songKey,
+					(songTotalMatches.get(entry.songKey) ?? 0) + matches.length
+				);
+			}
 		}
 
-		if (seenSongKeys.has(entry.songKey)) continue;
-
-		seenSongKeys.add(entry.songKey);
-		matchedSongKeys.push(entry.songKey);
+		if (!seenSongKeys.has(entry.songKey)) {
+			seenSongKeys.add(entry.songKey);
+			orderedSongKeys.push(entry.songKey);
+		}
 	}
+
+	const minOccurrences = filters.matchAtLeastTwice
+		? MIN_OCCURRENCES_AT_LEAST_TWICE
+		: MIN_OCCURRENCES_DEFAULT;
+
+	const matchedSongKeys = filters.hasSearchChords
+		? orderedSongKeys.filter((key) => (songTotalMatches.get(key) ?? 0) >= minOccurrences)
+		: orderedSongKeys;
 
 	return { matchedSongKeys, sectionMatches };
 };

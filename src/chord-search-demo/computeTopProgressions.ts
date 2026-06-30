@@ -28,8 +28,11 @@ function countOccurrences(tokens: string[], gram: string[]): number {
 	return count;
 }
 
-// Returns the longest prefix of `tokens` (between minLength and MAX_GRAM_LEN) that
-// appears at least minOccurrences times in the full token array. Returns null if none qualifies.
+// Returns the prefix of `tokens` (between minLength and MAX_GRAM_LEN) with the highest
+// occurrence count that still meets minOccurrences. Ties broken by preferring longer, so
+// if counts are monotonically equal we get the longest qualifying prefix as before.
+// This ensures a shorter, more-recurring pattern beats a longer, less-recurring one
+// (e.g. "I V vi IV" ×2 wins over "I V vi IV V I" ×1 in the same section).
 export function longestQualifyingPrefix(
 	tokens: string[],
 	opts: { minLength: number; matchAtLeastTwice: boolean }
@@ -37,9 +40,12 @@ export function longestQualifyingPrefix(
 	const minLen = Math.max(2, opts.minLength);
 	const minOccurrences = opts.matchAtLeastTwice ? 2 : 1;
 	let bestLen = 0;
+	let bestCount = 0;
 	for (let len = minLen; len <= Math.min(MAX_GRAM_LEN, tokens.length); len++) {
-		if (countOccurrences(tokens, tokens.slice(0, len)) >= minOccurrences) {
+		const count = countOccurrences(tokens, tokens.slice(0, len));
+		if (count >= minOccurrences && count >= bestCount) {
 			bestLen = len;
+			bestCount = count;
 		}
 	}
 	return bestLen > 0 ? tokens.slice(0, bestLen) : null;

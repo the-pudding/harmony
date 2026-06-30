@@ -48,7 +48,7 @@
 		<ToggleSwitch
 			checked={chordSearchDemoStore.matchAtLeastTwice}
 			onchange={chordSearchDemoStore.setMatchAtLeastTwice}
-			label="🔁 Match only progressions where the search progression appears at least twice"
+			label="🔁 Match only progressions where the search progression appears at least twice across the song"
 		/>
 		<ToggleSwitch
 			checked={chordSearchDemoStore.treatRotationsAsEquivalent}

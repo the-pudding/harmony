@@ -1,16 +1,94 @@
 <script lang="ts">
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
-	import { fundamentalAttribution } from "./computeTopProgressions.js";
 	import { isPositionInMatch } from "../chord-processing/match-chord-progressions/match.js";
 	import { buildYouTubeSearchUrl } from "./youtubeSearch.js";
-	import { SONG_DATA_SOURCE_TITLE, SEQUENCE_CHART_LENGTH_COLORS } from "./constants.js";
+	import { SONG_DATA_SOURCE_TITLE } from "./constants.js";
+
+	// One color per unique progression within a song (cycles if > 8 unique progressions).
+	const PROGRESSION_COLORS = [
+		"#f5a97f", // peach
+		"#89b4fa", // blue
+		"#a6e3a1", // green
+		"#f38ba8", // pink
+		"#cba6f7", // mauve
+		"#f9e2af", // yellow
+		"#94e2d5", // teal
+		"#eba0ac", // maroon
+	];
 	import type { SubProgressionMatch, SongDataSource } from "../chord-processing/types.js";
 
 	const PAGE_SIZE = 20;
+	const MAX_GRAM_LEN = 6;
 
 	type Segment = { matchIndex: number; indices: number[] };
 
 	type RawSection = { label: string | null; tokens: string[] };
+
+	function countOccurrences(tokens: string[], pattern: string[]): number {
+		let count = 0;
+		for (let i = 0; i <= tokens.length - pattern.length; i++) {
+			if (pattern.every((t, j) => t === tokens[i + j])) count++;
+		}
+		return count;
+	}
+
+	function periodByFirstRepeat(tokens: string[], minLen: number): string[] | null {
+		for (let L = minLen; L * 2 <= tokens.length && L <= MAX_GRAM_LEN; L++) {
+			if (tokens.slice(0, L).every((t, i) => t === tokens[L + i])) {
+				return tokens.slice(0, L);
+			}
+		}
+		return null;
+	}
+
+	// Like fundamentalAttribution, but when matchAtLeastTwice is true, the repetition
+	// threshold is checked across all sections of the song rather than within one section.
+	function fundamentalAttributionForSong(
+		section: RawSection,
+		allSections: RawSection[],
+		opts: { minLength: number; matchAtLeastTwice: boolean }
+	): string[] | null {
+		const minLen = Math.max(2, opts.minLength);
+		const period = periodByFirstRepeat(section.tokens, minLen);
+		if (period) return period;
+
+		const tokens = section.tokens;
+		const minOccurrences = opts.matchAtLeastTwice ? 2 : 1;
+		let bestLen = 0;
+		let bestCount = 0;
+
+		for (let len = minLen; len <= Math.min(MAX_GRAM_LEN, tokens.length); len++) {
+			const prefix = tokens.slice(0, len);
+			const total = opts.matchAtLeastTwice
+				? allSections.reduce((sum, sec) => sum + countOccurrences(sec.tokens, prefix), 0)
+				: countOccurrences(tokens, prefix);
+			if (total >= minOccurrences && total >= bestCount) {
+				bestLen = len;
+				bestCount = total;
+			}
+		}
+
+		return bestLen > 0 ? tokens.slice(0, bestLen) : null;
+	}
+
+	const SECTION_RANK_PATTERNS: Array<(s: string) => boolean> = [
+		(s) => s.startsWith("intro"),
+		(s) => s.startsWith("verse"),
+		(s) => s.startsWith("pre-chorus"),
+		(s) => s.startsWith("chorus"),
+		(s) => s.startsWith("bridge"),
+		(s) => s.startsWith("solo"),
+		(s) => s.startsWith("instrumental"),
+		(s) => s.startsWith("pre-outro"),
+		(s) => s.startsWith("outro")
+	];
+
+	function sectionRank(label: string | null): number {
+		if (!label) return SECTION_RANK_PATTERNS.length;
+		const lower = label.toLowerCase();
+		const idx = SECTION_RANK_PATTERNS.findIndex((fn) => fn(lower));
+		return idx === -1 ? SECTION_RANK_PATTERNS.length : idx;
+	}
 
 	type ProcessedSection = RawSection & {
 		pattern: string[] | null;
@@ -36,6 +114,7 @@
 		label: string;
 		tokens: string[];
 		count: number;
+		color: string;
 	};
 
 	type ProcessedSong = Omit<GroupedSong, "sections"> & {
@@ -111,12 +190,19 @@
 				tokens: song.romanTokens
 			});
 		}
-		return [...map.values()].sort((a, b) => {
-			const aRank = a.inTop10 ? 3 : a.inTop40 ? 2 : a.inTop100 ? 1 : 0;
-			const bRank = b.inTop10 ? 3 : b.inTop40 ? 2 : b.inTop100 ? 1 : 0;
-			if (bRank !== aRank) return bRank - aRank;
-			return (b.popularityScore ?? 0) - (a.popularityScore ?? 0);
-		});
+		return [...map.values()]
+			.map((song) => ({
+				...song,
+				sections: [...song.sections].sort(
+					(a, b) => sectionRank(a.label) - sectionRank(b.label)
+				)
+			}))
+			.sort((a, b) => {
+				const aRank = a.inTop10 ? 3 : a.inTop40 ? 2 : a.inTop100 ? 1 : 0;
+				const bRank = b.inTop10 ? 3 : b.inTop40 ? 2 : b.inTop100 ? 1 : 0;
+				if (bRank !== aRank) return bRank - aRank;
+				return (b.popularityScore ?? 0) - (a.popularityScore ?? 0);
+			});
 	});
 
 	const filteredSongs = $derived.by(() => {
@@ -136,15 +222,24 @@
 		const atBeginningOnly = matchAtBeginningOnly;
 		const start = page * PAGE_SIZE;
 		return filteredSongs.slice(start, start + PAGE_SIZE).map((song) => {
+			// First pass: assign a unique color to each distinct progression in this song.
+			const patternColorMap = new Map<string, string>();
+			for (const section of song.sections) {
+				const pattern = fundamentalAttributionForSong(section, song.sections, opts);
+				if (!pattern) continue;
+				const key = pattern.join("→");
+				if (!patternColorMap.has(key)) {
+					patternColorMap.set(key, PROGRESSION_COLORS[patternColorMap.size % PROGRESSION_COLORS.length]);
+				}
+			}
+
 			const sections: ProcessedSection[] = song.sections.map((section) => {
-				const pattern = fundamentalAttribution(section.tokens, opts);
+				const pattern = fundamentalAttributionForSong(section, song.sections, opts);
 				const matches = pattern
 					? findTokenMatches(section.tokens, pattern, atBeginningOnly)
 					: [];
 				const segments = buildSegments(section.tokens.length, matches);
-				const color = pattern
-					? (SEQUENCE_CHART_LENGTH_COLORS[pattern.length] ?? "#a1a1aa")
-					: null;
+				const color = pattern ? (patternColorMap.get(pattern.join("→")) ?? null) : null;
 				return { ...section, pattern, matches, segments, color };
 			});
 			const totalMatchCount = sections.reduce((s, sec) => s + sec.matches.length, 0);
@@ -152,12 +247,17 @@
 			const progMap = new Map<string, SongProgression>();
 			for (const sec of sections) {
 				if (!sec.pattern || sec.matches.length === 0) continue;
-				const label = sec.pattern.join("→");
-				const existing = progMap.get(label);
+				const key = sec.pattern.join("→");
+				const existing = progMap.get(key);
 				if (existing) {
 					existing.count += sec.matches.length;
 				} else {
-					progMap.set(label, { label, tokens: sec.pattern, count: sec.matches.length });
+					progMap.set(key, {
+						label: key,
+						tokens: sec.pattern,
+						count: sec.matches.length,
+						color: patternColorMap.get(key) ?? "#a1a1aa"
+					});
 				}
 			}
 			const progressions = [...progMap.values()].sort((a, b) => b.count - a.count);
@@ -270,7 +370,7 @@
 								<div class="prog-item">
 									<span
 										class="prog-label"
-										style:color={SEQUENCE_CHART_LENGTH_COLORS[prog.tokens.length] ?? "#a1a1aa"}
+										style:color={prog.color}
 									>{prog.label}</span>
 									<span class="prog-count">×{prog.count}</span>
 								</div>
