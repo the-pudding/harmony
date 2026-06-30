@@ -74,7 +74,7 @@
 
 <style>
 	.card {
-		background: rgba(24, 24, 27, 0.8);
+		background: rgba(24, 24, 27, 0.9);
 		border: 1px solid rgba(39, 39, 42, 0.8);
 		border-radius: 0.5rem;
 		padding: 1.25rem;
