@@ -16,6 +16,7 @@
 	import MostLikelyNextChord from "./MostLikelyNextChord.svelte";
 	import CoreProgressionButtons from "./CoreProgressionButtons.svelte";
 	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
+	import ChordSearchUrlSync from "./ChordSearchUrlSync.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 	import {
 		CHORD_SEARCH_DEMO_HORIZONTAL_MARGIN_PX,
@@ -202,6 +203,8 @@
 </script>
 
 <svelte:window onkeydown={onKeydown} />
+
+<ChordSearchUrlSync songsReady={!songsLoading && !songsError} />
 
 <div class="page">
 	<TopNavBar

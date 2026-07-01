@@ -1,5 +1,12 @@
 # Harmony
 
+## Off you go!
+
+```bash
+npm run dev
+# open: http://localhost:5173/demo/chord-search/
+```
+
 ## Generating the song dataset locally
 
 Chord data lives in the sibling [`harmony-data`](../harmony-data) repo and is **not** committed to this project. The app reads a generated file at `static/data/songs.json` (gitignored).
