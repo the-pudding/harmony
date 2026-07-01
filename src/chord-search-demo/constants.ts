@@ -161,7 +161,7 @@ export const MATCHING_SONGS_TIME_SERIES_BRUSH_HINT =
 	"Drag to filter by release year. Double-click to clear year filter.";
 
 export const PROGRESSION_PCT_HISTOGRAM_TITLE =
-	"Distribution: What percent of chords in a song match the searched chords?";
+	"Distribution: In sections that match, what percent of chords are covered by the search?";
 export const PROGRESSION_PCT_HISTOGRAM_HEIGHT_PX = 100;
 export const PROGRESSION_PCT_HISTOGRAM_MARGIN_TOP_PX = 8;
 export const PROGRESSION_PCT_HISTOGRAM_MARGIN_RIGHT_PX = 8;
@@ -170,7 +170,7 @@ export const PROGRESSION_PCT_HISTOGRAM_MARGIN_LEFT_PX = 36;
 export const PROGRESSION_PCT_HISTOGRAM_BIN_COUNT = 40;
 export const PROGRESSION_PCT_HISTOGRAM_BAR_FILL = "#6366f1";
 export const PROGRESSION_PCT_HISTOGRAM_IDLE_MESSAGE =
-	"search chords to see the distribution of the percent they make up songs";
+	"search chords to see how much of each matching section they cover";
 export const PROGRESSION_PCT_HISTOGRAM_EMPTY_MESSAGE =
 	"No matching songs for the current progression.";
 export const PROGRESSION_PCT_HISTOGRAM_AXIS_TICK_COUNT = 5;
@@ -178,7 +178,7 @@ export const PROGRESSION_PCT_HISTOGRAM_BRUSH_FILL = "rgba(99, 102, 241, 0.2)";
 export const PROGRESSION_PCT_HISTOGRAM_BRUSH_STROKE =
 	"rgba(99, 102, 241, 0.65)";
 export const PROGRESSION_PCT_HISTOGRAM_BRUSH_HINT =
-	"Drag to filter by % of song. Double-click to clear % of song filter.";
+	"Drag to filter by % of chords covered in matching sections. Double-click to clear.";
 
 export const ARTIST_FILTER_OPTION_LIMIT = 10;
 export const TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y = "0.375rem";

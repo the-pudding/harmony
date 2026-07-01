@@ -147,13 +147,13 @@
 		if (!hasData) return placeholderMessage;
 
 		if (!activePctRange) {
-			return "Distribution of progression length as percent of each matching song";
+			return "Distribution of chord coverage in matching sections, as a percent per song";
 		}
 
 		const [minPct, maxPct] = activePctRange;
 		return minPct === maxPct
-			? `Progression percent of song histogram, filtered to ${minPct}%`
-			: `Progression percent of song histogram, filtered to ${minPct}% through ${maxPct}%`;
+			? `Chord coverage in matching sections histogram, filtered to ${minPct}%`
+			: `Chord coverage in matching sections histogram, filtered to ${minPct}% through ${maxPct}%`;
 	});
 
 	const plotXFromClientX = (clientX: number, svgLeft: number): number => {
