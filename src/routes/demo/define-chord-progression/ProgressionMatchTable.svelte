@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { GroupedSong } from "../progressions/songBrowser.js";
-	import type { CoreProgressionWithStats } from "./progressionMatchAnalysis.js";
+	import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
 
@@ -9,7 +9,7 @@
 	const COLUMN_GAP_REM = 1.25;
 
 	type Props = {
-		matches: CoreProgressionWithStats[];
+		matches: ProgressionWithMatchStats[];
 		song: GroupedSong;
 		activeProgression: string | null;
 		onselect: (chordProgression: string) => void;
@@ -27,7 +27,7 @@
 		<col class="match-chords-column" />
 	</colgroup>
 	<tbody>
-		{#each matches as match (match.name)}
+		{#each matches as match (match.chordProgression)}
 			<tr
 				class="match-row"
 				class:match-row-active={activeProgression === match.chordProgression}

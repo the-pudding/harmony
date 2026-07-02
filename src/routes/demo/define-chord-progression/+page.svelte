@@ -11,6 +11,7 @@
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
 	import ProgressionMatchTable from "./ProgressionMatchTable.svelte";
 	import { computeProgressionMatches } from "./progressionMatchAnalysis.js";
+	import { computeRecurringProgressionMatches } from "./recurringProgressionAnalysis.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import { type GroupedSong } from "../progressions/songBrowser.js";
 	import {
@@ -111,6 +112,12 @@
 
 	const coreProgressionMatches = $derived(
 		selectedSong ? computeProgressionMatches(selectedSong, coreProgressions) : []
+	);
+
+	const recurringProgressionMatches = $derived(
+		selectedSong
+			? computeRecurringProgressionMatches(selectedSong, coreProgressions)
+			: []
 	);
 
 	const isSongKeyKnown = (songKey: string): boolean =>
@@ -280,6 +287,26 @@
 						/>
 					{:else}
 						<p class="list-meta">No core progressions matched this song.</p>
+					{/if}
+				</section>
+
+				<section class="step-section">
+					<h2 class="section-heading">
+						2. Look for all other chord progressions of 3 chords or more that appear at
+						least twice in the song
+					</h2>
+
+					{#if recurringProgressionMatches.length > 0}
+						<ProgressionMatchTable
+							matches={recurringProgressionMatches}
+							song={selectedSong}
+							activeProgression={pinnedProgression}
+							onselect={handleProgressionSelect}
+						/>
+					{:else}
+						<p class="list-meta">
+							No other recurring progressions of 3+ chords matched this song.
+						</p>
 					{/if}
 				</section>
 			{/if}

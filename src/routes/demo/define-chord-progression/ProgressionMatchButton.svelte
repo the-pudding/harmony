@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { CoreProgressionWithStats } from "./progressionMatchAnalysis.js";
+	import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
 
 	type Props = {
-		match: CoreProgressionWithStats;
+		match: ProgressionWithMatchStats;
 		active: boolean;
 		onselect: (chordProgression: string) => void;
 	};

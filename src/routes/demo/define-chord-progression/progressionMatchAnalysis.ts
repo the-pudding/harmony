@@ -3,19 +3,32 @@ import type { GroupedSong, SongSection } from "../progressions/songBrowser.js";
 import { romanTokensToParsedProgression } from "../../../chord-processing/romanNumerals.js";
 import {
 	findSubProgressionMatches,
-	isPositionInMatch
+	isPositionInMatch,
+	toAbstractProgression
 } from "../../../chord-processing/match-chord-progressions/index.js";
-import type { SubProgressionMatch } from "../../../chord-processing/types.js";
+import type {
+	ParsedProgressionChord,
+	SubProgressionMatch
+} from "../../../chord-processing/types.js";
 
-export type CoreProgressionWithStats = CoreProgression & {
+export type ProgressionWithMatchStats = {
+	name: string;
+	chordProgression: string;
+	description: string;
 	matchCount: number;
 	coveragePercent: number;
 };
+
+export type CoreProgressionWithStats = ProgressionWithMatchStats;
 
 export type ChordHighlightSegment = {
 	matchIndex: number;
 	indices: number[];
 };
+
+export const abstractProgressionKey = (
+	parsed: ParsedProgressionChord[]
+): string => JSON.stringify(toAbstractProgression(parsed));
 
 const countCoveredPositions = (
 	sectionLength: number,
@@ -24,6 +37,46 @@ const countCoveredPositions = (
 	Array.from({ length: sectionLength }, (_, position) =>
 		matches.some((match) => isPositionInMatch(position, match, sectionLength))
 	).filter(Boolean).length;
+
+export const computeStatsForParsedProgression = (
+	song: GroupedSong,
+	parsed: ParsedProgressionChord[]
+): { matchCount: number; coveragePercent: number } => {
+	const totalChords = song.sections.reduce(
+		(sum, section) => sum + section.parsedProgression.length,
+		0
+	);
+	if (totalChords === 0) return { matchCount: 0, coveragePercent: 0 };
+
+	const stats = song.sections.reduce(
+		(accumulator, section) => {
+			const matches = findSubProgressionMatches(
+				section.parsedProgression,
+				parsed
+			);
+			return {
+				matchCount: accumulator.matchCount + matches.length,
+				coveredPositions:
+					accumulator.coveredPositions +
+					countCoveredPositions(section.parsedProgression.length, matches)
+			};
+		},
+		{ matchCount: 0, coveredPositions: 0 }
+	);
+
+	return {
+		matchCount: stats.matchCount,
+		coveragePercent: (stats.coveredPositions / totalChords) * 100
+	};
+};
+
+export const chordProgressionFromRomanTokens = (
+	romanTokens: string[]
+): string | null => {
+	const parsed = romanTokensToParsedProgression(romanTokens);
+	if (!parsed) return null;
+	return romanTokens.join("-");
+};
 
 export function computeProgressionMatches(
 	song: GroupedSong,
@@ -42,26 +95,12 @@ export function computeProgressionMatches(
 			);
 			if (!parsed) return null;
 
-			const stats = song.sections.reduce(
-				(accumulator, section) => {
-					const matches = findSubProgressionMatches(
-						section.parsedProgression,
-						parsed
-					);
-					return {
-						matchCount: accumulator.matchCount + matches.length,
-						coveredPositions:
-							accumulator.coveredPositions +
-							countCoveredPositions(section.parsedProgression.length, matches)
-					};
-				},
-				{ matchCount: 0, coveredPositions: 0 }
-			);
+			const stats = computeStatsForParsedProgression(song, parsed);
 
 			return {
 				...progression,
 				matchCount: stats.matchCount,
-				coveragePercent: (stats.coveredPositions / totalChords) * 100
+				coveragePercent: stats.coveragePercent
 			};
 		})
 		.filter(
