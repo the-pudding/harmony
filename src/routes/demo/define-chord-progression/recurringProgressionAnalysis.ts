@@ -9,34 +9,6 @@ import {
 const MIN_PROGRESSION_LENGTH = 3;
 const MIN_OCCURRENCES = 2;
 
-const tokensMatchAt = (
-	haystack: string[],
-	needle: string[],
-	start: number
-): boolean =>
-	needle.every((token, offset) => haystack[start + offset] === token);
-
-const countSubsequenceInTokens = (
-	haystack: string[],
-	needle: string[]
-): number => {
-	const lastStart = haystack.length - needle.length;
-	return Array.from(
-		{ length: Math.max(0, lastStart + 1) },
-		(_, start) => start
-	).filter((start) => tokensMatchAt(haystack, needle, start)).length;
-};
-
-const countOccurrencesInSong = (
-	song: GroupedSong,
-	romanTokens: string[]
-): number =>
-	song.sections.reduce(
-		(total, section) =>
-			total + countSubsequenceInTokens(section.romanTokens, romanTokens),
-		0
-	);
-
 const contiguousWindowsFromTokens = (tokens: string[]): string[][] =>
 	tokens.flatMap((_, start) =>
 		Array.from(
@@ -65,9 +37,10 @@ const toRecurringMatch = (
 	const parsed = romanTokensToParsedProgression(romanTokens);
 	const chordProgression = chordProgressionFromRomanTokens(romanTokens);
 	if (!parsed || !chordProgression) return null;
-	if (countOccurrencesInSong(song, romanTokens) < MIN_OCCURRENCES) return null;
 
 	const stats = computeStatsForParsedProgression(song, parsed);
+	if (stats.matchCount < MIN_OCCURRENCES) return null;
+
 	return {
 		name: chordProgression,
 		chordProgression,

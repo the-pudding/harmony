@@ -274,23 +274,8 @@
 
 			{#if selectedSong}
 				<section class="step-section">
-					<h2 class="section-heading">1. Look for matches from our core progressions</h2>
-
-					{#if coreProgressionMatches.length > 0}
-						<ProgressionMatchTable
-							matches={coreProgressionMatches}
-							song={selectedSong}
-							activeProgression={pinnedProgression}
-							onselect={handleProgressionSelect}
-						/>
-					{:else}
-						<p class="list-meta">No core progressions matched this song.</p>
-					{/if}
-				</section>
-
-				<section class="step-section">
 					<h2 class="section-heading">
-						2. Look for all other chord progressions of 3 chords or more that appear at
+						1. Find all possible chord progressions of 3 chords or more that appear at
 						least twice in the song
 					</h2>
 
@@ -303,8 +288,23 @@
 						/>
 					{:else}
 						<p class="list-meta">
-							No other recurring progressions of 3+ chords matched this song.
+							No recurring progressions of 3+ chords matched this song.
 						</p>
+					{/if}
+				</section>
+
+				<section class="step-section">
+					<h2 class="section-heading">2. Look for matches from our core progressions</h2>
+
+					{#if coreProgressionMatches.length > 0}
+						<ProgressionMatchTable
+							matches={coreProgressionMatches}
+							song={selectedSong}
+							activeProgression={pinnedProgression}
+							onselect={handleProgressionSelect}
+						/>
+					{:else}
+						<p class="list-meta">No core progressions matched this song.</p>
 					{/if}
 				</section>
 			{/if}

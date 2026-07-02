@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { romanTokensToParsedProgression } from "../../../chord-processing/romanNumerals.js";
+import type { ParsedProgressionChord } from "../../../chord-processing/types.js";
 import type { GroupedSong, SongSection } from "../progressions/songBrowser.js";
 import { computeRecurringProgressionMatches } from "./recurringProgressionAnalysis.js";
 
@@ -21,6 +22,36 @@ const makeSong = (sectionsTokens: string[][]): GroupedSong => ({
 	keyLabel: null,
 	sections: sectionsTokens.map(makeSection)
 });
+
+// Build a section where the roman tokens intentionally disagree with the parsed
+// chords (e.g. a slash-bass V/3 collapses to the token "V"), so we can prove
+// the analysis reports the bass-aware match stats rather than raw token counts.
+const makeSectionWithParsed = (
+	romanTokens: string[],
+	parsedProgression: ParsedProgressionChord[]
+): SongSection => ({
+	label: null,
+	chords: romanTokens,
+	romanTokens,
+	parsedProgression,
+	keyLabel: null
+});
+
+const chord = (
+	rootPitchClass: number,
+	suffix: string,
+	bassPitchClass?: number
+): ParsedProgressionChord => ({
+	rootPitchClass,
+	suffix,
+	...(bassPitchClass !== undefined ? { bassPitchClass } : {}),
+	display: ""
+});
+
+const TONIC = chord(0, "major");
+const DOMINANT = chord(7, "major");
+const DOMINANT_SLASH_THIRD = chord(7, "major", 11);
+const SUBMEDIANT = chord(9, "minor");
 
 const progressions = (song: GroupedSong): string[] =>
 	computeRecurringProgressionMatches(song).map((match) => match.chordProgression);
@@ -79,6 +110,14 @@ describe("computeRecurringProgressionMatches — invariants", () => {
 		}
 	});
 
+	it("never returns progressions that occur 0 times or cover 0% of the song", () => {
+		const matches = computeRecurringProgressionMatches(imYours);
+		for (const match of matches) {
+			expect(match.matchCount).toBeGreaterThan(0);
+			expect(match.coveragePercent).toBeGreaterThan(0);
+		}
+	});
+
 	it("returns each distinct progression at most once", () => {
 		const found = progressions(imYours);
 		expect(new Set(found).size).toBe(found.length);
@@ -133,5 +172,52 @@ describe("computeRecurringProgressionMatches — recurrence detection", () => {
 	it("surfaces long recurring progressions, not just the minimum length", () => {
 		const song = makeSong([["I", "V", "vi", "IV", "I", "V", "vi", "IV"]]);
 		expect(progressions(song)).toContain("I-V-vi-IV");
+	});
+});
+
+describe("computeRecurringProgressionMatches — bass-aware stats", () => {
+	// Both dominant chords are inverted (V/3), so the plain "I-V-vi" search never
+	// truly matches: the roman tokens repeat but the actual chords do not.
+	const invertedDominantSong: GroupedSong = {
+		songKey: "test",
+		title: "Test Song",
+		artists: ["Tester"],
+		keyLabel: null,
+		sections: [
+			makeSectionWithParsed(
+				["I", "V", "vi", "I", "V", "vi"],
+				[
+					TONIC,
+					DOMINANT_SLASH_THIRD,
+					SUBMEDIANT,
+					TONIC,
+					DOMINANT_SLASH_THIRD,
+					SUBMEDIANT
+				]
+			)
+		]
+	};
+
+	it("filters out roman-token repeats that do not actually recur as chords", () => {
+		expect(progressions(invertedDominantSong)).not.toContain("I-V-vi");
+	});
+
+	// One dominant is inverted and one is root position, so "I-V-vi" only truly
+	// recurs once — below the minimum — and must not be shown as a 1x/low row.
+	const mixedDominantSong: GroupedSong = {
+		songKey: "test",
+		title: "Test Song",
+		artists: ["Tester"],
+		keyLabel: null,
+		sections: [
+			makeSectionWithParsed(
+				["I", "V", "vi", "I", "V", "vi"],
+				[TONIC, DOMINANT_SLASH_THIRD, SUBMEDIANT, TONIC, DOMINANT, SUBMEDIANT]
+			)
+		]
+	};
+
+	it("does not surface progressions whose real chords recur only once", () => {
+		expect(progressions(mixedDominantSong)).not.toContain("I-V-vi");
 	});
 });
