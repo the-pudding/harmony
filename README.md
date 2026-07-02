@@ -3,13 +3,16 @@
 ## Off you go!
 
 ```bash
+# for good measure
+npm run songs
+
 npm run dev
 # open: http://localhost:5173/demo/chord-search/
 ```
 
 ## Generating the song dataset locally
 
-Chord data lives in the sibling [`harmony-data`](../harmony-data) repo and is **not** committed to this project. The app reads a generated file at `static/data/songs.json` (gitignored).
+Chord data lives in the sibling [`harmony-data`](../harmony-data) repo and is **not** committed to this project. The app reads generated files at `static/data/songs.json` and `static/data/popular-songs.json` (both gitignored).
 
 To build or refresh the dataset from `harmony-data`:
 
@@ -23,6 +26,7 @@ This runs [`tasks/build-songs.js`](tasks/build-songs.js), which:
 - joins Billboard flags from `../harmony-data/data/tracker.csv`
 - converts HookTheory chord data into the format used by the chord-search matcher
 - writes `static/data/songs.json`
+- writes `static/data/popular-songs.json` (songs matching `static/top10-songs.csv`, for faster demo page loads)
 
 When `harmony-data` is updated (e.g. after pulling fresh scrapes):
 

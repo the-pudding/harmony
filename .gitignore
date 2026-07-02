@@ -6,3 +6,4 @@ build
 functions
 .env
 /static/data/songs.json
+/static/data/popular-songs.json

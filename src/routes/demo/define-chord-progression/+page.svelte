@@ -11,19 +11,23 @@
 	import SongSelectDropdown from "./SongSelectDropdown.svelte";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import {
-		buildTop10MatchKeys,
-		groupSongs,
-		isPopularRecentSong,
-		parseTop10SongsCsv,
 		type GroupedSong,
 		type SongSection
 	} from "../progressions/songBrowser.js";
+	import {
+		fetchGroupedAllSongs,
+		fetchGroupedPopularSongs,
+		findGroupedSongByKey,
+		isGroupedSongKeyKnown,
+		sortAllSongs,
+		sortPopularSongs
+	} from "../progressions/songBrowserData.js";
 	import { romanTokensToParsedProgression } from "../../../chord-processing/romanNumerals.js";
 	import {
 		findSubProgressionMatches,
 		isPositionInMatch
 	} from "../../../chord-processing/match-chord-progressions/index.js";
-	import type { SongInput, SubProgressionMatch } from "../../../chord-processing/types.js";
+	import type { SubProgressionMatch } from "../../../chord-processing/types.js";
 	import {
 		areDefineChordProgressionUrlStatesEqual,
 		buildDefineChordProgressionUrlState,
@@ -32,9 +36,10 @@
 		readDefineChordProgressionUrlState
 	} from "./defineChordProgressionUrlParams.js";
 
-	let allSongs = $state<GroupedSong[]>([]);
-	let top10Keys = $state<Set<string>>(new Set());
+	let popularSongs = $state<GroupedSong[]>([]);
+	let fullSongs = $state<GroupedSong[] | null>(null);
 	let loading = $state(true);
+	let loadingFullSongs = $state(false);
 	let loadError = $state("");
 	let showPopularOnly = $state(true);
 	let titleFilter = $state("");
@@ -43,29 +48,43 @@
 	let coreProgressions = $state<CoreProgression[]>([]);
 	let urlInitialized = $state(false);
 	let applyingFromUrl = $state(false);
+	let fullSongsLoadPromise = $state<Promise<GroupedSong[]> | null>(null);
 
 	const debouncedReplaceState = debounce((nextUrl: string) => {
 		replaceState(nextUrl, page.state);
 	}, DEFINE_CHORD_PROGRESSION_URL_DEBOUNCE_MS);
 
+	const ensureFullSongsLoaded = (): Promise<GroupedSong[]> => {
+		if (fullSongs !== null) return Promise.resolve(fullSongs);
+		if (fullSongsLoadPromise) return fullSongsLoadPromise;
+
+		loadingFullSongs = true;
+		const promise = fetchGroupedAllSongs()
+			.then((songs) => {
+				fullSongs = songs;
+				return songs;
+			})
+			.catch((err) => {
+				loadError = err instanceof Error ? err.message : String(err);
+				throw err;
+			})
+			.finally(() => {
+				loadingFullSongs = false;
+				fullSongsLoadPromise = null;
+			});
+
+		fullSongsLoadPromise = promise;
+		return promise;
+	};
+
 	onMount(() => {
 		const load = async () => {
 			try {
-				const [songsRes, top10Res, progressionsRes] = await Promise.all([
-					fetch("/data/songs.json"),
-					fetch("/top10-songs.csv"),
+				const [songs, progressionsRes] = await Promise.all([
+					fetchGroupedPopularSongs(),
 					fetch("/data/core-progressions.json")
 				]);
-				if (!songsRes.ok)
-					throw new Error(`Could not load song dataset: HTTP ${songsRes.status}`);
-				if (!top10Res.ok)
-					throw new Error(`Could not load top 10 songs: HTTP ${top10Res.status}`);
-
-				const songs: SongInput[] = await songsRes.json();
-				const top10Text = await top10Res.text();
-
-				allSongs = groupSongs(songs);
-				top10Keys = buildTop10MatchKeys(parseTop10SongsCsv(top10Text));
+				popularSongs = songs;
 				if (progressionsRes.ok) {
 					coreProgressions = await progressionsRes.json();
 				}
@@ -81,13 +100,13 @@
 		return () => debouncedReplaceState.cancel();
 	});
 
+	const searchableSongs = $derived(fullSongs ?? popularSongs);
+
 	const baseList = $derived.by((): GroupedSong[] => {
 		if (showPopularOnly) {
-			return allSongs
-				.filter((song) => isPopularRecentSong(song, top10Keys))
-				.sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
+			return sortPopularSongs(popularSongs);
 		}
-		return [...allSongs].sort((a, b) => a.title.localeCompare(b.title));
+		return sortAllSongs(fullSongs ?? []);
 	});
 
 	const filteredSongs = $derived.by(() => {
@@ -101,14 +120,14 @@
 	});
 
 	const selectedSong = $derived(
-		allSongs.find((song) => song.songKey === selectedKey) ?? null
+		findGroupedSongByKey(searchableSongs, selectedKey)
 	);
 
 	const isSongKeyKnown = (songKey: string): boolean =>
-		allSongs.some((song) => song.songKey === songKey);
+		isGroupedSongKeyKnown(searchableSongs, songKey);
 
 	$effect(() => {
-		if (loading || allSongs.length === 0) return;
+		if (loading || popularSongs.length === 0) return;
 
 		page.url.search;
 
@@ -118,8 +137,18 @@
 				const urlState = readDefineChordProgressionUrlState(
 					page.url.searchParams
 				);
-				if (urlState.song && isSongKeyKnown(urlState.song)) {
-					selectedKey = urlState.song;
+				const urlSongKey = urlState.song;
+				if (
+					urlSongKey &&
+					!isGroupedSongKeyKnown(searchableSongs, urlSongKey) &&
+					fullSongs === null &&
+					!loadingFullSongs
+				) {
+					void ensureFullSongsLoaded();
+					return;
+				}
+				if (urlSongKey && isGroupedSongKeyKnown(searchableSongs, urlSongKey)) {
+					selectedKey = urlSongKey;
 				} else if (!urlInitialized) {
 					selectedKey = baseList[0]?.songKey ?? "";
 				}
@@ -174,6 +203,13 @@
 		selectedKey = songKey;
 	}
 
+	function handlePopularToggleChange(checked: boolean) {
+		showPopularOnly = checked;
+		if (!checked && fullSongs === null) {
+			void ensureFullSongsLoaded();
+		}
+	}
+
 	function handleProgressionSelect(chordProgression: string) {
 		selectedProgression =
 			selectedProgression === chordProgression ? null : chordProgression;
@@ -219,6 +255,8 @@
 	<div class="content">
 		{#if loading}
 			<p class="dataset-status">Loading song dataset…</p>
+		{:else if loadingFullSongs && !showPopularOnly}
+			<p class="dataset-status">Loading full song dataset…</p>
 		{:else if loadError}
 			<p class="dataset-status error">{loadError}</p>
 		{/if}
@@ -233,7 +271,7 @@
 			/>
 			<ToggleSwitch
 				checked={showPopularOnly}
-				onchange={(checked) => (showPopularOnly = checked)}
+				onchange={handlePopularToggleChange}
 				label="popular recent songs only"
 			/>
 		</div>

@@ -3,46 +3,53 @@
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
+	import type { GroupedSong } from "./songBrowser.js";
 	import {
-		buildTop10MatchKeys,
-		groupSongs,
-		isPopularRecentSong,
-		parseTop10SongsCsv,
-		type GroupedSong
-	} from "./songBrowser.js";
-	import type { SongInput } from "../../../chord-processing/types.js";
+		fetchGroupedAllSongs,
+		fetchGroupedPopularSongs,
+		sortAllSongs,
+		sortPopularSongs
+	} from "./songBrowserData.js";
 
 	const PAGE_SIZE = 20;
 
 	let allSongs = $state<GroupedSong[]>([]);
-	let top10Keys = $state<Set<string>>(new Set());
+	let popularSongs = $state<GroupedSong[] | null>(null);
 	let loading = $state(true);
+	let loadingPopularSongs = $state(false);
 	let loadError = $state("");
 	let showPopularOnly = $state(false);
 	let titleFilter = $state("");
 	let page = $state(0);
+	let popularSongsLoadPromise = $state<Promise<GroupedSong[]> | null>(null);
+
+	const ensurePopularSongsLoaded = (): Promise<GroupedSong[]> => {
+		if (popularSongs !== null) return Promise.resolve(popularSongs);
+		if (popularSongsLoadPromise) return popularSongsLoadPromise;
+
+		loadingPopularSongs = true;
+		const promise = fetchGroupedPopularSongs()
+			.then((songs) => {
+				popularSongs = songs;
+				return songs;
+			})
+			.catch((err) => {
+				loadError = err instanceof Error ? err.message : String(err);
+				throw err;
+			})
+			.finally(() => {
+				loadingPopularSongs = false;
+				popularSongsLoadPromise = null;
+			});
+
+		popularSongsLoadPromise = promise;
+		return promise;
+	};
 
 	onMount(() => {
 		const load = async () => {
 			try {
-				const [songsRes, top10Res] = await Promise.all([
-					fetch("/data/songs.json"),
-					fetch("/top10-songs.csv")
-				]);
-				if (!songsRes.ok)
-					throw new Error(
-						`Could not load song dataset: HTTP ${songsRes.status}`
-					);
-				if (!top10Res.ok)
-					throw new Error(
-						`Could not load top 10 songs: HTTP ${top10Res.status}`
-					);
-
-				const songs: SongInput[] = await songsRes.json();
-				const top10Text = await top10Res.text();
-
-				allSongs = groupSongs(songs);
-				top10Keys = buildTop10MatchKeys(parseTop10SongsCsv(top10Text));
+				allSongs = await fetchGroupedAllSongs();
 			} catch (err) {
 				loadError = err instanceof Error ? err.message : String(err);
 			} finally {
@@ -55,11 +62,9 @@
 
 	const baseList = $derived.by((): GroupedSong[] => {
 		if (showPopularOnly) {
-			return allSongs
-				.filter((song) => isPopularRecentSong(song, top10Keys))
-				.sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
+			return sortPopularSongs(popularSongs ?? []);
 		}
-		return [...allSongs].sort((a, b) => a.title.localeCompare(b.title));
+		return sortAllSongs(allSongs);
 	});
 
 	const filteredSongs = $derived.by(() => {
@@ -91,6 +96,13 @@
 	function nextPage() {
 		if (page < totalPages - 1) page++;
 	}
+
+	function handlePopularToggleChange(checked: boolean) {
+		showPopularOnly = checked;
+		if (checked && popularSongs === null) {
+			void ensurePopularSongsLoaded();
+		}
+	}
 </script>
 
 <svelte:head>
@@ -107,6 +119,8 @@
 	<div class="content">
 		{#if loading}
 			<p class="dataset-status">Loading song dataset…</p>
+		{:else if loadingPopularSongs && showPopularOnly}
+			<p class="dataset-status">Loading popular songs…</p>
 		{:else if loadError}
 			<p class="dataset-status error">{loadError}</p>
 		{/if}
@@ -120,7 +134,7 @@
 			/>
 			<ToggleSwitch
 				checked={showPopularOnly}
-				onchange={(checked) => (showPopularOnly = checked)}
+				onchange={handlePopularToggleChange}
 				label="popular recent songs only"
 			/>
 		</div>
