@@ -194,6 +194,9 @@
 							<span class="year">({selectedSong.year})</span>
 						{/if}
 						<span class="artist">— {selectedSong.artists.join(", ")}</span>
+						{#if selectedSong.keyLabel}
+							<span class="key-label">· {selectedSong.keyLabel}</span>
+						{/if}
 					</div>
 					<div class="sections">
 						{#each selectedSong.sections as section, si (si)}
@@ -209,7 +212,7 @@
 											<span class="match-group">
 												{#each segment.indices as pos, i}
 													<span class="chord highlighted">
-														{section.parsedProgression[pos].display}
+														{section.romanTokens[pos]}
 													</span>
 													{#if i < segment.indices.length - 1}
 														<span class="dot">·</span>
@@ -218,7 +221,7 @@
 											</span>
 										{:else}
 											{#each segment.indices as pos, i}
-												<span class="chord">{section.parsedProgression[pos].display}</span>
+												<span class="chord">{section.romanTokens[pos]}</span>
 												{#if i < segment.indices.length - 1}
 													<span class="dot">·</span>
 												{/if}
@@ -364,7 +367,8 @@
 	}
 
 	.year,
-	.artist {
+	.artist,
+	.key-label {
 		color: #71717a;
 	}
 

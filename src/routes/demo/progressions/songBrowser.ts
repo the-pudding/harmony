@@ -3,6 +3,7 @@ import {
 	hasDistinctBass,
 	noteNameToPitchClass
 } from "../../../chord-processing/index.js";
+import { NOTE_NAMES } from "../../../chord-processing/chord-classifier/notes.js";
 import {
 	parseSongTitleAndSectionLabel,
 	resolveSongKey
@@ -16,7 +17,9 @@ import type {
 export type SongSection = {
 	label: string | null;
 	chords: string[];
+	romanTokens: string[];
 	parsedProgression: ParsedProgressionChord[];
+	keyLabel: string | null;
 };
 
 export type GroupedSong = {
@@ -24,7 +27,29 @@ export type GroupedSong = {
 	title: string;
 	artists: string[];
 	year?: number;
+	keyLabel: string | null;
 	sections: SongSection[];
+};
+
+const MAJOR_TONIC_ROMAN = "I";
+const MINOR_TONIC_ROMAN = "i";
+
+export const inferKeyLabel = (
+	romanTokens: string[],
+	parsedProgression: ParsedProgressionChord[]
+): string | null => {
+	for (let index = 0; index < romanTokens.length; index++) {
+		const token = romanTokens[index];
+		const chord = parsedProgression[index];
+		if (!chord) continue;
+		if (token === MAJOR_TONIC_ROMAN) {
+			return `${NOTE_NAMES[chord.rootPitchClass]} major`;
+		}
+		if (token === MINOR_TONIC_ROMAN) {
+			return `${NOTE_NAMES[chord.rootPitchClass]} minor`;
+		}
+	}
+	return null;
 };
 
 export type Top10Song = {
@@ -77,22 +102,30 @@ export const groupSongs = (songs: SongInput[]): GroupedSong[] => {
 				title: baseTitle,
 				artists: song.artists,
 				year: song.year,
+				keyLabel: null,
 				sections: []
 			});
 		}
 		const parsedProgression = song.progression.map(parseChord);
+		const romanTokens = song.romanTokens ?? [];
 		map.get(key)!.sections.push({
 			label: sectionLabel,
 			chords: parsedProgression.map((c) => c.display),
-			parsedProgression
+			romanTokens,
+			parsedProgression,
+			keyLabel: inferKeyLabel(romanTokens, parsedProgression)
 		});
 	}
-	return [...map.values()].map((song) => ({
-		...song,
-		sections: [...song.sections].sort(
+	return [...map.values()].map((song) => {
+		const sections = [...song.sections].sort(
 			(a, b) => sectionRank(a.label) - sectionRank(b.label)
-		)
-	}));
+		);
+		const keyLabel =
+			sections
+				.map((section) => section.keyLabel)
+				.find((label) => label !== null) ?? null;
+		return { ...song, sections, keyLabel };
+	});
 };
 
 // A minimal CSV line parser that handles quoted fields containing commas (e.g. multi-artist credits).
