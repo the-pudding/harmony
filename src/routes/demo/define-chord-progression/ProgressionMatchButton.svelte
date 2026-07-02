@@ -4,19 +4,15 @@
 	type Props = {
 		match: CoreProgressionWithStats;
 		active: boolean;
-		onhover: (chordProgression: string) => void;
-		onunhover: () => void;
 		onselect: (chordProgression: string) => void;
 	};
 
-	let { match, active, onhover, onunhover, onselect }: Props = $props();
+	let { match, active, onselect }: Props = $props();
 </script>
 
 <button
 	class="prog-btn"
 	class:active
-	onmouseenter={() => onhover(match.chordProgression)}
-	onmouseleave={onunhover}
 	onclick={() => onselect(match.chordProgression)}
 	title={match.chordProgression}
 >
@@ -31,6 +27,9 @@
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 0.125rem;
+		width: 100%;
+		max-width: 100%;
+		box-sizing: border-box;
 		background: rgba(255, 255, 255, 0.05);
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		border-radius: 0.375rem;
@@ -41,8 +40,8 @@
 			background 0.15s ease,
 			border-color 0.15s ease,
 			color 0.15s ease;
-		white-space: nowrap;
 		text-align: left;
+		overflow-wrap: anywhere;
 	}
 
 	.prog-btn:hover {

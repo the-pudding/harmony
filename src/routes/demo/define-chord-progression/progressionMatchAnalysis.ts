@@ -1,14 +1,20 @@
 import type { CoreProgression } from "$data/core-progressions.js";
-import type { GroupedSong } from "../progressions/songBrowser.js";
+import type { GroupedSong, SongSection } from "../progressions/songBrowser.js";
 import { romanTokensToParsedProgression } from "../../../chord-processing/romanNumerals.js";
 import {
 	findSubProgressionMatches,
 	isPositionInMatch
 } from "../../../chord-processing/match-chord-progressions/index.js";
+import type { SubProgressionMatch } from "../../../chord-processing/types.js";
 
 export type CoreProgressionWithStats = CoreProgression & {
 	matchCount: number;
 	coveragePercent: number;
+};
+
+export type ChordHighlightSegment = {
+	matchIndex: number;
+	indices: number[];
 };
 
 const countCoveredPositions = (
@@ -63,4 +69,41 @@ export function computeProgressionMatches(
 				match !== null && match.matchCount > 0
 		)
 		.sort((a, b) => b.coveragePercent - a.coveragePercent);
+}
+
+export function getSectionMatches(
+	section: SongSection,
+	chordProgression: string | null
+): SubProgressionMatch[] {
+	if (!chordProgression) return [];
+	const parsed = romanTokensToParsedProgression(chordProgression.split("-"));
+	if (!parsed) return [];
+	return findSubProgressionMatches(section.parsedProgression, parsed);
+}
+
+export function buildChordHighlightSegments(
+	section: SongSection,
+	matches: SubProgressionMatch[]
+): ChordHighlightSegment[] {
+	const sectionLength = section.parsedProgression.length;
+	const positionToMatchIndex = Array.from(
+		{ length: sectionLength },
+		(_, position) =>
+			matches.findIndex((match) =>
+				isPositionInMatch(position, match, sectionLength)
+			)
+	);
+	const segments: ChordHighlightSegment[] = [];
+
+	for (let position = 0; position < sectionLength; position++) {
+		const matchIndex = positionToMatchIndex[position];
+		const lastSegment = segments[segments.length - 1];
+		if (lastSegment && lastSegment.matchIndex === matchIndex) {
+			lastSegment.indices.push(position);
+		} else {
+			segments.push({ matchIndex, indices: [position] });
+		}
+	}
+
+	return segments;
 }

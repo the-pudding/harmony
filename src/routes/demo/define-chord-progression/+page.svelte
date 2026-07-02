@@ -9,12 +9,10 @@
 	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
 	import SongSelectDropdown from "./SongSelectDropdown.svelte";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
+	import SongChordsDisplay from "./SongChordsDisplay.svelte";
 	import { computeProgressionMatches } from "./progressionMatchAnalysis.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
-	import {
-		type GroupedSong,
-		type SongSection
-	} from "../progressions/songBrowser.js";
+	import { type GroupedSong } from "../progressions/songBrowser.js";
 	import {
 		fetchGroupedAllSongs,
 		fetchGroupedPopularSongs,
@@ -23,12 +21,6 @@
 		sortAllSongs,
 		sortPopularSongs
 	} from "../progressions/songBrowserData.js";
-	import { romanTokensToParsedProgression } from "../../../chord-processing/romanNumerals.js";
-	import {
-		findSubProgressionMatches,
-		isPositionInMatch
-	} from "../../../chord-processing/match-chord-progressions/index.js";
-	import type { SubProgressionMatch } from "../../../chord-processing/types.js";
 	import {
 		areDefineChordProgressionUrlStatesEqual,
 		buildDefineChordProgressionUrlState,
@@ -45,7 +37,6 @@
 	let showPopularOnly = $state(true);
 	let titleFilter = $state("");
 	let selectedKey = $state("");
-	let hoveredProgression = $state<string | null>(null);
 	let pinnedProgression = $state<string | null>(null);
 	const coreProgressions: CoreProgression[] = coreProgressionsData;
 	let urlInitialized = $state(false);
@@ -117,8 +108,6 @@
 	const selectedSong = $derived(
 		findGroupedSongByKey(searchableSongs, selectedKey)
 	);
-
-	const activeProgression = $derived(hoveredProgression ?? pinnedProgression);
 
 	const coreProgressionMatches = $derived(
 		selectedSong ? computeProgressionMatches(selectedSong, coreProgressions) : []
@@ -197,13 +186,7 @@
 
 	$effect(() => {
 		selectedKey;
-		hoveredProgression = null;
 		pinnedProgression = null;
-	});
-
-	const parsedSearchProgression = $derived.by(() => {
-		if (!activeProgression) return null;
-		return romanTokensToParsedProgression(activeProgression.split("-"));
 	});
 
 	function handleSongSelect(songKey: string) {
@@ -217,42 +200,9 @@
 		}
 	}
 
-	function handleProgressionHover(chordProgression: string) {
-		hoveredProgression = chordProgression;
-	}
-
-	function handleProgressionUnhover() {
-		hoveredProgression = null;
-	}
-
 	function handleProgressionSelect(chordProgression: string) {
 		pinnedProgression =
 			pinnedProgression === chordProgression ? null : chordProgression;
-	}
-
-	type Segment = { matchIndex: number; indices: number[] };
-
-	function buildSegments(section: SongSection, matches: SubProgressionMatch[]): Segment[] {
-		const n = section.parsedProgression.length;
-		const posToMatch = Array.from({ length: n }, (_, pos) =>
-			matches.findIndex((match) => isPositionInMatch(pos, match, n))
-		);
-		const segments: Segment[] = [];
-		for (let i = 0; i < n; i++) {
-			const mi = posToMatch[i];
-			const last = segments[segments.length - 1];
-			if (last && last.matchIndex === mi) {
-				last.indices.push(i);
-			} else {
-				segments.push({ matchIndex: mi, indices: [i] });
-			}
-		}
-		return segments;
-	}
-
-	function sectionMatches(section: SongSection): SubProgressionMatch[] {
-		if (!parsedSearchProgression) return [];
-		return findSubProgressionMatches(section.parsedProgression, parsedSearchProgression);
 	}
 </script>
 
@@ -312,53 +262,7 @@
 
 				{#if selectedSong}
 					<div class="song-card">
-						<div class="song-title-row">
-							<span class="song-name">{selectedSong.title}</span>
-							{#if selectedSong.year !== undefined}
-								<span class="year">({selectedSong.year})</span>
-							{/if}
-							<span class="artist">— {selectedSong.artists.join(", ")}</span>
-							{#if selectedSong.keyLabel}
-								<span class="key-label">· {selectedSong.keyLabel}</span>
-							{/if}
-						</div>
-						<div class="sections">
-							{#each selectedSong.sections as section, si (si)}
-								{@const matches = sectionMatches(section)}
-								{@const segments = buildSegments(section, matches)}
-								<div class="section-row">
-									{#if section.label}
-										<span class="section-label">{section.label}</span>
-									{/if}
-									<div class="chords">
-										{#each segments as segment, segi}
-											{#if segment.matchIndex !== -1}
-												<span class="match-group">
-													{#each segment.indices as pos, i}
-														<span class="chord highlighted">
-															{section.romanTokens[pos]}
-														</span>
-														{#if i < segment.indices.length - 1}
-															<span class="dot">·</span>
-														{/if}
-													{/each}
-												</span>
-											{:else}
-												{#each segment.indices as pos, i}
-													<span class="chord">{section.romanTokens[pos]}</span>
-													{#if i < segment.indices.length - 1}
-														<span class="dot">·</span>
-													{/if}
-												{/each}
-											{/if}
-											{#if segi < segments.length - 1}
-												<span class="dot">·</span>
-											{/if}
-										{/each}
-									</div>
-								</div>
-							{/each}
-						</div>
+						<SongChordsDisplay song={selectedSong} showMetadata />
 					</div>
 				{/if}
 			</section>
@@ -368,17 +272,34 @@
 					<h2 class="section-heading">1. Look for matches from our core progressions</h2>
 
 					{#if coreProgressionMatches.length > 0}
-						<div class="button-row">
-							{#each coreProgressionMatches as match (match.name)}
-								<ProgressionMatchButton
-									{match}
-									active={pinnedProgression === match.chordProgression}
-									onhover={handleProgressionHover}
-									onunhover={handleProgressionUnhover}
-									onselect={handleProgressionSelect}
-								/>
-							{/each}
-						</div>
+						<table class="match-table">
+							<colgroup>
+								<col class="match-button-column" />
+								<col class="match-chords-column" />
+							</colgroup>
+							<tbody>
+								{#each coreProgressionMatches as match (match.name)}
+									<tr
+										class="match-row"
+										class:match-row-active={pinnedProgression === match.chordProgression}
+									>
+										<td class="match-button-cell">
+											<ProgressionMatchButton
+												{match}
+												active={pinnedProgression === match.chordProgression}
+												onselect={handleProgressionSelect}
+											/>
+										</td>
+										<td class="match-chords-cell">
+											<SongChordsDisplay
+												song={selectedSong}
+												chordProgression={match.chordProgression}
+											/>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
 					{:else}
 						<p class="list-meta">No core progressions matched this song.</p>
 					{/if}
@@ -461,92 +382,55 @@
 		margin: 0;
 	}
 
-	.button-row {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.375rem;
-	}
-
 	.song-card {
 		padding: 0.625rem;
 		border: 1px solid #27272a;
 		border-radius: 0.25rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.375rem;
 	}
 
-	.song-title-row {
-		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
-		gap: 0.25rem;
+	.match-table {
+		--match-button-column-width: 32%;
+		--match-chords-column-width: 68%;
+		width: 100%;
+		border-collapse: collapse;
+		table-layout: fixed;
 	}
 
-	.song-name {
-		color: #fff;
-		font-weight: 500;
+	.match-button-column {
+		width: var(--match-button-column-width);
 	}
 
-	.year,
-	.artist,
-	.key-label {
-		color: #71717a;
+	.match-chords-column {
+		width: var(--match-chords-column-width);
 	}
 
-	.sections {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
+	.match-row {
+		border-top: 1px solid #27272a;
 	}
 
-	.section-row {
-		display: flex;
-		align-items: baseline;
-		flex-wrap: wrap;
-		gap: 0.375rem;
+	.match-row:last-child {
+		border-bottom: 1px solid #27272a;
 	}
 
-	.section-label {
-		flex-shrink: 0;
-		font-size: 0.5625rem;
-		font-weight: 500;
-		text-transform: lowercase;
-		letter-spacing: 0.02em;
-		color: #52525b;
-		min-width: 4.5rem;
+	.match-row:hover,
+	.match-row-active {
+		background: rgba(255, 255, 255, 0.03);
 	}
 
-	.chords {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 0.125rem;
-		font-size: 0.75rem;
+	.match-button-cell {
+		vertical-align: top;
+		padding: 0.625rem 0.75rem 0.625rem 0;
+		width: var(--match-button-column-width);
+		max-width: var(--match-button-column-width);
+		overflow: hidden;
 	}
 
-	.chord {
-		color: #a1a1aa;
-		padding: 0.125rem 0.375rem;
-	}
-
-	.chord.highlighted {
-		background: #4338ca;
-		color: #fff;
-		border-radius: 0.25rem;
-		font-weight: 500;
-	}
-
-	.match-group {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.125rem;
-		border: 1px solid rgba(99, 102, 241, 0.55);
-		border-radius: 0.375rem;
-		padding: 0.2rem;
-	}
-
-	.dot {
-		color: #3f3f46;
+	.match-chords-cell {
+		vertical-align: top;
+		padding: 0.625rem 0;
+		width: var(--match-chords-column-width);
+		max-width: var(--match-chords-column-width);
+		min-width: 0;
+		overflow: hidden;
 	}
 </style>
