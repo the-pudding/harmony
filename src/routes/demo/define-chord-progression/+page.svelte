@@ -1,5 +1,8 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import debounce from "lodash.debounce";
+	import { onMount, untrack } from "svelte";
+	import { replaceState } from "$app/navigation";
+	import { page } from "$app/state";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
 	import CoreProgressionButtons, {
@@ -20,6 +23,13 @@
 		isPositionInMatch
 	} from "../../../chord-processing/match-chord-progressions/index.js";
 	import type { SongInput, SubProgressionMatch } from "../../../chord-processing/types.js";
+	import {
+		areDefineChordProgressionUrlStatesEqual,
+		buildDefineChordProgressionUrlState,
+		DEFINE_CHORD_PROGRESSION_URL_DEBOUNCE_MS,
+		defineChordProgressionUrlStateToQueryString,
+		readDefineChordProgressionUrlState
+	} from "./defineChordProgressionUrlParams.js";
 
 	let allSongs = $state<GroupedSong[]>([]);
 	let top10Keys = $state<Set<string>>(new Set());
@@ -30,6 +40,12 @@
 	let selectedKey = $state("");
 	let selectedProgression = $state<string | null>(null);
 	let coreProgressions = $state<CoreProgression[]>([]);
+	let urlInitialized = $state(false);
+	let applyingFromUrl = $state(false);
+
+	const debouncedReplaceState = debounce((nextUrl: string) => {
+		replaceState(nextUrl, page.state);
+	}, DEFINE_CHORD_PROGRESSION_URL_DEBOUNCE_MS);
 
 	onMount(() => {
 		const load = async () => {
@@ -60,6 +76,8 @@
 		};
 
 		void load();
+
+		return () => debouncedReplaceState.cancel();
 	});
 
 	const baseList = $derived.by((): GroupedSong[] => {
@@ -81,20 +99,86 @@
 		);
 	});
 
+	const selectableSongs = $derived.by((): GroupedSong[] => {
+		const selected = allSongs.find((song) => song.songKey === selectedKey);
+		if (
+			selected &&
+			!filteredSongs.some((song) => song.songKey === selectedKey)
+		) {
+			return [selected, ...filteredSongs];
+		}
+		return filteredSongs;
+	});
+
 	const selectedSong = $derived(
-		filteredSongs.find((s) => s.songKey === selectedKey) ?? null
+		allSongs.find((song) => song.songKey === selectedKey) ?? null
 	);
+
+	const isSongKeyKnown = (songKey: string): boolean =>
+		allSongs.some((song) => song.songKey === songKey);
+
+	$effect(() => {
+		if (loading || allSongs.length === 0) return;
+
+		page.url.search;
+
+		untrack(() => {
+			applyingFromUrl = true;
+			try {
+				const urlState = readDefineChordProgressionUrlState(
+					page.url.searchParams
+				);
+				if (urlState.song && isSongKeyKnown(urlState.song)) {
+					selectedKey = urlState.song;
+				} else if (!urlInitialized) {
+					selectedKey = filteredSongs[0]?.songKey ?? "";
+				}
+				urlInitialized = true;
+			} finally {
+				applyingFromUrl = false;
+			}
+		});
+	});
+
+	$effect(() => {
+		if (!urlInitialized || applyingFromUrl) return;
+
+		titleFilter;
+		showPopularOnly;
+		filteredSongs;
+
+		if (selectedKey && isSongKeyKnown(selectedKey)) return;
+
+		selectedKey = filteredSongs[0]?.songKey ?? "";
+	});
+
+	$effect(() => {
+		if (!urlInitialized || loading || applyingFromUrl) return;
+
+		selectedKey;
+
+		const desiredState = buildDefineChordProgressionUrlState({
+			selectedSongKey: selectedKey
+		});
+		const currentUrlState = readDefineChordProgressionUrlState(
+			page.url.searchParams
+		);
+
+		if (areDefineChordProgressionUrlStatesEqual(desiredState, currentUrlState)) {
+			return;
+		}
+
+		const queryString = defineChordProgressionUrlStateToQueryString(desiredState);
+		const nextUrl = queryString
+			? `${page.url.pathname}?${queryString}`
+			: page.url.pathname;
+
+		debouncedReplaceState(nextUrl);
+	});
 
 	const parsedSearchProgression = $derived.by(() => {
 		if (!selectedProgression) return null;
 		return romanTokensToParsedProgression(selectedProgression.split("-"));
-	});
-
-	$effect(() => {
-		titleFilter;
-		showPopularOnly;
-		filteredSongs;
-		selectedKey = filteredSongs[0]?.songKey ?? "";
 	});
 
 	function handleProgressionSelect(chordProgression: string) {
@@ -173,9 +257,9 @@
 			{/if}
 		</p>
 
-		{#if filteredSongs.length > 0}
+		{#if selectableSongs.length > 0}
 			<select class="song-select" bind:value={selectedKey}>
-				{#each filteredSongs as song (song.songKey)}
+				{#each selectableSongs as song (song.songKey)}
 					<option value={song.songKey}>{songLabel(song)}</option>
 				{/each}
 			</select>
