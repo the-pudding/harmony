@@ -5,10 +5,7 @@
 	import { CORE_PROGRESSION_PALETTE, DEFAULT_PROGRESSION_PALETTE } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
-
-	const BUTTON_COLUMN_WIDTH_PERCENT = 22;
-	const CHORDS_COLUMN_WIDTH_PERCENT = 100 - BUTTON_COLUMN_WIDTH_PERCENT;
-	const COLUMN_GAP_REM = 1.25;
+	import { BUTTON_COLUMN_WIDTH_PERCENT, CHORDS_COLUMN_WIDTH_PERCENT, COLUMN_GAP_REM } from "./progressionTableLayout.js";
 
 	type Props = {
 		matches: ProgressionWithMatchStats[];

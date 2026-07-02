@@ -10,6 +10,7 @@
 	import SongSelectDropdown from "./SongSelectDropdown.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
 	import ProgressionMatchTable from "./ProgressionMatchTable.svelte";
+	import FinalAnnotatedSong from "./FinalAnnotatedSong.svelte";
 	import { computeProgressionMatches, MIN_PROGRESSION_OCCURRENCES } from "./progressionMatchAnalysis.js";
 	import type { ChordAnnotation } from "./progressionMatchAnalysis.js";
 	import { computeRecurringProgressionMatches } from "./recurringProgressionAnalysis.js";
@@ -146,6 +147,11 @@
 			? Math.round(coveragePercent(selectedSong, recurringSelection.coverage))
 			: 0
 	);
+
+	const finalMatches = $derived([
+		...coreSelection.selected,
+		...recurringSelection.selected
+	]);
 
 	const songAnnotations = $derived<ChordAnnotation[]>([
 		...coreSelection.selected.map((match) => ({
@@ -377,19 +383,22 @@
 				<section class="step-section">
 					<h2 class="section-heading">
 						4. This gives us the progressions that define this song. If they explain more
-						than 80% of the song, we consider that song 'explained'
-					</h2>
-					<p class="section-description">
-						Explains {explainedPercent}% of the song{explainedPercent >
+						than 80% of the song, we consider that song 'explained'{explainedPercent >
 						EXPLAINED_THRESHOLD_PERCENT
 							? " ✅"
 							: ""}
-					</p>
+					</h2>
 
 					{#if songAnnotations.length > 0}
-						<div class="song-card">
-							<SongChordsDisplay song={selectedSong} annotations={songAnnotations} />
-						</div>
+						<FinalAnnotatedSong
+							song={selectedSong}
+							matches={finalMatches}
+							annotations={songAnnotations}
+							{explainedPercent}
+							isExplained={explainedPercent > EXPLAINED_THRESHOLD_PERCENT}
+							activeProgression={pinnedProgression}
+							onselect={handleProgressionSelect}
+						/>
 					{:else}
 						<p class="list-meta">No progressions selected.</p>
 					{/if}
