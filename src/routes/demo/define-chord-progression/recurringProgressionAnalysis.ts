@@ -1,3 +1,4 @@
+import coreProgressions from "$data/core-progressions.js";
 import type { GroupedSong } from "../progressions/songBrowser.js";
 import { romanTokensToParsedProgression } from "../../../chord-processing/romanNumerals.js";
 import {
@@ -5,6 +6,13 @@ import {
 	computeStatsForParsedProgression,
 	type ProgressionWithMatchStats
 } from "./progressionMatchAnalysis.js";
+
+const coreProgressionNameByChordProgression = new Map(
+	coreProgressions.map((progression) => [
+		progression.chordProgression,
+		progression.name
+	])
+);
 
 const MIN_PROGRESSION_LENGTH = 3;
 const MIN_OCCURRENCES = 2;
@@ -42,7 +50,7 @@ const toRecurringMatch = (
 	if (stats.matchCount < MIN_OCCURRENCES) return null;
 
 	return {
-		name: chordProgression,
+		name: coreProgressionNameByChordProgression.get(chordProgression) ?? "",
 		chordProgression,
 		description: "",
 		matchCount: stats.matchCount,

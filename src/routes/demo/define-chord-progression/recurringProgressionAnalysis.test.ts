@@ -175,9 +175,9 @@ describe("computeRecurringProgressionMatches — recurrence detection", () => {
 	});
 });
 
-describe("computeRecurringProgressionMatches — bass-aware stats", () => {
-	// Both dominant chords are inverted (V/3), so the plain "I-V-vi" search never
-	// truly matches: the roman tokens repeat but the actual chords do not.
+describe("computeRecurringProgressionMatches — ignores slash bass", () => {
+	// Both dominant chords are inverted (V/3). Ignoring the bass, "I-V-vi" is a
+	// genuine repeat and should be surfaced just like a root-position dominant.
 	const invertedDominantSong: GroupedSong = {
 		songKey: "test",
 		title: "Test Song",
@@ -198,12 +198,12 @@ describe("computeRecurringProgressionMatches — bass-aware stats", () => {
 		]
 	};
 
-	it("filters out roman-token repeats that do not actually recur as chords", () => {
-		expect(progressions(invertedDominantSong)).not.toContain("I-V-vi");
+	it("surfaces progressions whose only difference is an inverted (slash) chord", () => {
+		expect(progressions(invertedDominantSong)).toContain("I-V-vi");
 	});
 
-	// One dominant is inverted and one is root position, so "I-V-vi" only truly
-	// recurs once — below the minimum — and must not be shown as a 1x/low row.
+	// One dominant is inverted and one is root position. Ignoring the bass they
+	// are the same chord, so "I-V-vi" recurs twice and should be surfaced.
 	const mixedDominantSong: GroupedSong = {
 		songKey: "test",
 		title: "Test Song",
@@ -217,7 +217,7 @@ describe("computeRecurringProgressionMatches — bass-aware stats", () => {
 		]
 	};
 
-	it("does not surface progressions whose real chords recur only once", () => {
-		expect(progressions(mixedDominantSong)).not.toContain("I-V-vi");
+	it("treats a slash chord and its root-position form as the same chord", () => {
+		expect(progressions(mixedDominantSong)).toContain("I-V-vi");
 	});
 });

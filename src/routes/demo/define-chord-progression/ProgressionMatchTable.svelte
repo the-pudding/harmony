@@ -7,6 +7,7 @@
 	const BUTTON_COLUMN_WIDTH_PERCENT = 22;
 	const CHORDS_COLUMN_WIDTH_PERCENT = 100 - BUTTON_COLUMN_WIDTH_PERCENT;
 	const COLUMN_GAP_REM = 1.25;
+	const CORE_PROGRESSION_BORDER_COLOR = "rgba(134, 239, 172, 0.85)";
 
 	type Props = {
 		matches: ProgressionWithMatchStats[];
@@ -36,6 +37,7 @@
 					<ProgressionMatchButton
 						{match}
 						active={activeProgression === match.chordProgression}
+						borderColor={match.name ? CORE_PROGRESSION_BORDER_COLOR : undefined}
 						{onselect}
 					/>
 				</td>

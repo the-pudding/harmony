@@ -5,20 +5,34 @@
 		match: ProgressionWithMatchStats;
 		active: boolean;
 		onselect: (chordProgression: string) => void;
+		borderColor?: string;
 	};
 
-	let { match, active, onselect }: Props = $props();
+	let { match, active, onselect, borderColor }: Props = $props();
+
+	const COVERAGE_PERCENT_MAX = 100;
+	const coveragePercentRounded = $derived(Math.round(match.coveragePercent));
+	const coverageBarWidth = $derived(
+		`${Math.min(Math.max(match.coveragePercent, 0), COVERAGE_PERCENT_MAX)}%`
+	);
 </script>
 
 <button
 	class="prog-btn"
 	class:active
+	class:custom-border={borderColor !== undefined}
+	style:--prog-btn-border-color={borderColor}
 	onclick={() => onselect(match.chordProgression)}
 	title={match.chordProgression}
 >
-	<span class="prog-name">{match.name}</span>
+	{#if match.name}
+		<span class="prog-name">{match.name}</span>
+	{/if}
 	<span class="prog-chords">{match.chordProgression}</span>
-	<span class="prog-stats">{match.matchCount}× · {Math.round(match.coveragePercent)}%</span>
+	<span class="prog-stats">{match.matchCount}× · {coveragePercentRounded}%</span>
+	<div class="prog-coverage-bar" aria-hidden="true">
+		<div class="prog-coverage-fill" style:width={coverageBarWidth}></div>
+	</div>
 </button>
 
 <style>
@@ -50,6 +64,14 @@
 		color: #e4e4e7;
 	}
 
+	.prog-btn.custom-border:not(.active) {
+		border-color: var(--prog-btn-border-color);
+	}
+
+	.prog-btn.custom-border:hover:not(.active) {
+		border-color: color-mix(in srgb, var(--prog-btn-border-color) 70%, white);
+	}
+
 	.prog-btn.active {
 		background: rgba(137, 180, 250, 0.15);
 		border-color: rgba(137, 180, 250, 0.4);
@@ -77,14 +99,38 @@
 
 	.prog-stats {
 		font-size: 0.65rem;
-		color: rgba(161, 161, 170, 0.5);
+		color: rgba(161, 161, 170, 0.85);
 	}
 
 	.prog-btn.active .prog-stats {
-		color: rgba(137, 180, 250, 0.5);
+		color: rgba(137, 180, 250, 0.85);
 	}
 
 	.prog-btn:hover .prog-stats {
-		color: rgba(228, 228, 231, 0.5);
+		color: rgba(228, 228, 231, 0.85);
+	}
+
+	.prog-coverage-bar {
+		width: 100%;
+		height: 0.25rem;
+		margin-top: 0.125rem;
+		border-radius: 9999px;
+		background: rgba(255, 255, 255, 0.08);
+		overflow: hidden;
+	}
+
+	.prog-coverage-fill {
+		height: 100%;
+		border-radius: inherit;
+		background: rgba(161, 161, 170, 0.75);
+		transition: width 0.2s ease;
+	}
+
+	.prog-btn.active .prog-coverage-fill {
+		background: rgba(137, 180, 250, 0.85);
+	}
+
+	.prog-btn:hover .prog-coverage-fill {
+		background: rgba(228, 228, 231, 0.75);
 	}
 </style>

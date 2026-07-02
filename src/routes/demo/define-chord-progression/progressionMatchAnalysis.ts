@@ -30,6 +30,23 @@ export const abstractProgressionKey = (
 	parsed: ParsedProgressionChord[]
 ): string => JSON.stringify(toAbstractProgression(parsed));
 
+// Slash chords are matched purely on the chord itself; the bass note is ignored.
+const withoutSlashBass = (
+	chords: ParsedProgressionChord[]
+): ParsedProgressionChord[] =>
+	chords.map(
+		({ bassPitchClass: _bass, ...chord }) => chord as ParsedProgressionChord
+	);
+
+const matchProgressionIgnoringBass = (
+	sectionProgression: ParsedProgressionChord[],
+	searchProgression: ParsedProgressionChord[]
+): SubProgressionMatch[] =>
+	findSubProgressionMatches(
+		withoutSlashBass(sectionProgression),
+		withoutSlashBass(searchProgression)
+	);
+
 const countCoveredPositions = (
 	sectionLength: number,
 	matches: ReturnType<typeof findSubProgressionMatches>
@@ -50,7 +67,7 @@ export const computeStatsForParsedProgression = (
 
 	const stats = song.sections.reduce(
 		(accumulator, section) => {
-			const matches = findSubProgressionMatches(
+			const matches = matchProgressionIgnoringBass(
 				section.parsedProgression,
 				parsed
 			);
@@ -117,7 +134,7 @@ export function getSectionMatches(
 	if (!chordProgression) return [];
 	const parsed = romanTokensToParsedProgression(chordProgression.split("-"));
 	if (!parsed) return [];
-	return findSubProgressionMatches(section.parsedProgression, parsed);
+	return matchProgressionIgnoringBass(section.parsedProgression, parsed);
 }
 
 export function buildChordHighlightSegments(
