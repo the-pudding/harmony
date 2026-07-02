@@ -1,0 +1,72 @@
+export type CoreProgression = {
+	name: string;
+	chordProgression: string;
+	description: string;
+	technicalNotes?: string;
+};
+
+const coreProgressions: CoreProgression[] = [
+	{ name: "basic plagal", chordProgression: "I-IV-I-IV", description: "" },
+	{ name: "basic perfect", chordProgression: "I-V-I-V", description: "" },
+	{
+		name: "IV-V vamp",
+		chordProgression: "IV-V-IV-V",
+		description: "",
+		technicalNotes:
+			"Teenage Dream and Call Me Maybe are variants of this with a vi passing chord"
+	},
+	{ name: "major-y", chordProgression: "I-V-IV-V", description: "" },
+	{ name: "minor-y", chordProgression: "i-bVII-v-bVI", description: "" },
+	{ name: "axis of awesome", chordProgression: "I-V-vi-IV", description: "" },
+	{ name: "doo wop", chordProgression: "I-vi-IV-V", description: "" },
+	// also could be thought of as a V-IV-I
+	{ name: "mixolydian vamp", chordProgression: "I-bVII-IV", description: "" },
+	{ name: "jazz changes", chordProgression: "vi-ii-V-I", description: "" },
+	{
+		name: "andalusian cadence",
+		chordProgression: "i-bVII-bVI-V",
+		description: ""
+	},
+	{ name: "boyband", chordProgression: "bVI-V-i", description: "" },
+	{ name: "royal road", chordProgression: "IV-V-iii-vi", description: "" },
+	{
+		name: "plagal cascade",
+		chordProgression: "i-bIII-bVII-IV",
+		description: ""
+	},
+	{
+		name: "pachelbel canon",
+		chordProgression: "I-V-vi-iii-IV-I-IV-V",
+		description: ""
+	},
+	{ name: "turnaround", chordProgression: "I-vi-ii-V", description: "" },
+	{ name: "neo-soul", chordProgression: "IVM7-iii7-vi7-ii7", description: "" },
+	{ name: "jazz ii-V-I", chordProgression: "ii7-V7-IM7", description: "" },
+	// todo: handle diminished chords, which seem not to work
+	{ name: "minor ii-V-i", chordProgression: "ii°7-V7-i", description: "" },
+	{ name: "cinquillo", chordProgression: "I-IV-I-V", description: "" },
+	{ name: "pop minor", chordProgression: "i-bVI-bIII-bVII", description: "" }
+];
+
+export const progressionsThatDidntMatchAnything: CoreProgression[] = [
+	{ name: "japanese pop", chordProgression: "IV-V-ii-vi", description: "" },
+	{
+		name: "blues",
+		chordProgression: "I-I-I-I-IV-IV-I-I-V-IV-I-V",
+		description: ""
+	},
+	{
+		name: "minor turnaround",
+		chordProgression: "i-VI-III-VII",
+		description: ""
+	},
+	{ name: "flamenco", chordProgression: "i-VII-VI-V", description: "" },
+	{
+		name: "circle of fifths",
+		chordProgression: "I-IV-VII-III-VI-II-V-I",
+		description: ""
+	},
+	{ name: "creep", chordProgression: "I-III-IV-iv", description: "" }
+];
+
+export default coreProgressions;

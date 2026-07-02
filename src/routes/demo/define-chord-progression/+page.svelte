@@ -1,5 +1,6 @@
 <script lang="ts">
 	import debounce from "lodash.debounce";
+	import coreProgressionsData from "$data/core-progressions.js";
 	import { onMount, untrack } from "svelte";
 	import { replaceState } from "$app/navigation";
 	import { page } from "$app/state";
@@ -45,7 +46,7 @@
 	let titleFilter = $state("");
 	let selectedKey = $state("");
 	let selectedProgression = $state<string | null>(null);
-	let coreProgressions = $state<CoreProgression[]>([]);
+	const coreProgressions: CoreProgression[] = coreProgressionsData;
 	let urlInitialized = $state(false);
 	let applyingFromUrl = $state(false);
 	let fullSongsLoadPromise = $state<Promise<GroupedSong[]> | null>(null);
@@ -80,14 +81,7 @@
 	onMount(() => {
 		const load = async () => {
 			try {
-				const [songs, progressionsRes] = await Promise.all([
-					fetchGroupedPopularSongs(),
-					fetch("/data/core-progressions.json")
-				]);
-				popularSongs = songs;
-				if (progressionsRes.ok) {
-					coreProgressions = await progressionsRes.json();
-				}
+				popularSongs = await fetchGroupedPopularSongs();
 			} catch (err) {
 				loadError = err instanceof Error ? err.message : String(err);
 			} finally {

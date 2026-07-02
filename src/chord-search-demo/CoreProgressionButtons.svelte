@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import coreProgressions from "$data/core-progressions.js";
 	import { romanTokensToParsedProgression } from "../chord-processing/romanNumerals.js";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 
@@ -12,16 +12,7 @@
 
 	let { activeProgression: activeProp = undefined, onselect }: Props = $props();
 
-	let progressions = $state<Progression[]>([]);
-
-	onMount(async () => {
-		try {
-			const res = await fetch("/data/core-progressions.json");
-			progressions = await res.json();
-		} catch {
-			// silently fail — buttons just won't appear
-		}
-	});
+	const progressions: Progression[] = coreProgressions;
 
 	const storeActiveProgression = $derived.by(() => {
 		const searchChords = chordSearchDemoStore.searchChords;
