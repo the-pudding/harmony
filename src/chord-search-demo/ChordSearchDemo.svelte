@@ -32,7 +32,8 @@
 		SPLIT_NOTE_EDIT_TOOLTIP,
 		SONGS_DATA_URL,
 		SONGS_LOAD_ERROR_PREFIX,
-		SONGS_LOADING_MESSAGE
+		SONGS_LOADING_MESSAGE,
+		TOP_NAV_WITH_SEARCH_HEIGHT
 	} from "./constants.js";
 	type ChordDetectorInstance = ReturnType<typeof createChordDetector>;
 
@@ -206,7 +207,7 @@
 
 <ChordSearchUrlSync songsReady={!songsLoading && !songsError} />
 
-<div class="page">
+<div class="page" style="--top-nav-height: {TOP_NAV_WITH_SEARCH_HEIGHT};">
 	<TopNavBar
 		{isConnected}
 		{selectedInputName}
@@ -270,7 +271,7 @@
 		display: flex;
 		flex-direction: column;
 		position: relative;
-		padding-top: 3.25rem;
+		padding-top: var(--top-nav-height);
 	}
 
 	.piano-strip {

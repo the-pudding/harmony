@@ -8,6 +8,7 @@ import {
 	resolveSongKey
 } from "../../../chord-processing/songIdentity.js";
 import type {
+	ParsedProgressionChord,
 	ProgressionChordInput,
 	SongInput
 } from "../../../chord-processing/types.js";
@@ -15,6 +16,7 @@ import type {
 export type SongSection = {
 	label: string | null;
 	chords: string[];
+	parsedProgression: ParsedProgressionChord[];
 };
 
 export type GroupedSong = {
@@ -31,14 +33,15 @@ export type Top10Song = {
 	year: number;
 };
 
-const chordDisplayName = (chord: ProgressionChordInput): string => {
+const parseChord = (chord: ProgressionChordInput): ParsedProgressionChord => {
 	const rootPitchClass = noteNameToPitchClass(chord.noteName);
 	const bassPitchClass = chord.bassNoteName
 		? noteNameToPitchClass(chord.bassNoteName)
 		: undefined;
-	return hasDistinctBass({ rootPitchClass, bassPitchClass })
-		? formatChordName({ rootPitchClass, suffix: chord.suffix, bassPitchClass })
-		: formatChordName({ rootPitchClass, suffix: chord.suffix });
+	const structured = hasDistinctBass({ rootPitchClass, bassPitchClass })
+		? { rootPitchClass, suffix: chord.suffix, bassPitchClass }
+		: { rootPitchClass, suffix: chord.suffix };
+	return { ...structured, display: formatChordName(structured) };
 };
 
 // Order sections the way they'd appear in a lead sheet, not alphabetically.
@@ -77,9 +80,11 @@ export const groupSongs = (songs: SongInput[]): GroupedSong[] => {
 				sections: []
 			});
 		}
+		const parsedProgression = song.progression.map(parseChord);
 		map.get(key)!.sections.push({
 			label: sectionLabel,
-			chords: song.progression.map(chordDisplayName)
+			chords: parsedProgression.map((c) => c.display),
+			parsedProgression
 		});
 	}
 	return [...map.values()].map((song) => ({

@@ -181,9 +181,14 @@ export const PROGRESSION_PCT_HISTOGRAM_BRUSH_HINT =
 	"Drag to filter by % of chords covered in matching sections. Double-click to clear.";
 
 export const ARTIST_FILTER_OPTION_LIMIT = 10;
+export const TOP_NAV_PADDING_Y = "0.75rem";
+export const TOP_NAV_ROW_GAP = "0.5rem";
+export const TOP_NAV_PRIMARY_ROW_HEIGHT = "1.5rem";
+export const TOP_NAV_HEIGHT = `calc(2 * ${TOP_NAV_PADDING_Y} + ${TOP_NAV_PRIMARY_ROW_HEIGHT})`;
 export const TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y = "0.375rem";
 export const TOP_NAV_CHORD_SEARCH_GROUP_CONTENT_MIN_HEIGHT = "1.5rem";
 export const TOP_NAV_CHORD_SEARCH_GROUP_HEIGHT = `calc(2 * ${TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y} + ${TOP_NAV_CHORD_SEARCH_GROUP_CONTENT_MIN_HEIGHT})`;
+export const TOP_NAV_WITH_SEARCH_HEIGHT = `calc(${TOP_NAV_HEIGHT} + ${TOP_NAV_ROW_GAP} + ${TOP_NAV_CHORD_SEARCH_GROUP_HEIGHT})`;
 export const TOP_NAV_FILTER_INPUT_HEIGHT = TOP_NAV_CHORD_SEARCH_GROUP_HEIGHT;
 export const TOP_NAV_ARTIST_FILTER_WIDTH = "11rem";
 export const TOP_NAV_SONG_FILTER_WIDTH = "8rem";

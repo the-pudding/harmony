@@ -5,7 +5,9 @@
 		CLEAR_CHORDS_LABEL,
 		CLEAR_SENTINEL_NOTES,
 		TOP_NAV_CHORD_SEARCH_GROUP_HEIGHT,
-		TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y
+		TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y,
+		TOP_NAV_PADDING_Y,
+		TOP_NAV_ROW_GAP
 	} from "../constants.js";
 	import ArtistFilter from "./ArtistFilter.svelte";
 	import SearchInputToggle from "./SearchInputToggle.svelte";
@@ -30,45 +32,54 @@
 	}: Props = $props();
 </script>
 
-<nav class="top-nav" aria-label="Search filters and current progression">
-	<span class="logo">harmony</span>
-	<div class="page-nav">
-		<a href="/demo/chord-search" class="page-link" class:active={page.url.pathname === "/demo/chord-search"}>chord search</a>
-		<a href="/demo/progressions" class="page-link" class:active={page.url.pathname === "/demo/progressions"}>progressions</a>
+<nav
+	class="top-nav"
+	style="--top-nav-padding-y: {TOP_NAV_PADDING_Y}; --top-nav-row-gap: {TOP_NAV_ROW_GAP};"
+	aria-label="Search filters and current progression"
+>
+	<div class="top-nav-header">
+		<span class="logo">harmony</span>
+		<div class="page-nav">
+			<a href="/demo/chord-search" class="page-link" class:active={page.url.pathname === "/demo/chord-search"}>chord search</a>
+			<a href="/demo/progressions" class="page-link" class:active={page.url.pathname === "/demo/progressions"}>progressions</a>
+			<a href="/demo/define-chord-progression" class="page-link" class:active={page.url.pathname === "/demo/define-chord-progression"}>define 'chord progression'</a>
+		</div>
 	</div>
 	{#if showSearch}
-		<ArtistFilter />
-		<TitleArtistFilter />
-		<div
-			class="chord-search-group"
-			style="--chord-search-group-height: {TOP_NAV_CHORD_SEARCH_GROUP_HEIGHT}; --chord-search-group-padding-y: {TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y};"
-		>
-			<div class="progression-wrap">
-				<SearchProgression
-					chords={chordSearchDemoStore.searchChords}
-					fuzzySearch={chordSearchDemoStore.fuzzySearch}
-					ignoreSlashBassNotes={chordSearchDemoStore.ignoreSlashBassNotes}
-					searchInputActive={chordSearchDemoStore.searchInputActive}
-				/>
+		<div class="top-nav-search">
+			<ArtistFilter />
+			<TitleArtistFilter />
+			<div
+				class="chord-search-group"
+				style="--chord-search-group-height: {TOP_NAV_CHORD_SEARCH_GROUP_HEIGHT}; --chord-search-group-padding-y: {TOP_NAV_CHORD_SEARCH_GROUP_PADDING_Y};"
+			>
+				<div class="progression-wrap">
+					<SearchProgression
+						chords={chordSearchDemoStore.searchChords}
+						fuzzySearch={chordSearchDemoStore.fuzzySearch}
+						ignoreSlashBassNotes={chordSearchDemoStore.ignoreSlashBassNotes}
+						searchInputActive={chordSearchDemoStore.searchInputActive}
+					/>
+				</div>
+				<div class="search-actions">
+					<SearchInputToggle />
+					<button type="button" class="action-pill clear" onclick={chordSearchDemoStore.clearSearch}>
+						{CLEAR_CHORDS_LABEL}
+						<span class="shortcut">· {CLEAR_SENTINEL_NOTES}</span>
+					</button>
+				</div>
 			</div>
-			<div class="search-actions">
-				<SearchInputToggle />
-				<button type="button" class="action-pill clear" onclick={chordSearchDemoStore.clearSearch}>
-					{CLEAR_CHORDS_LABEL}
-					<span class="shortcut">· {CLEAR_SENTINEL_NOTES}</span>
-				</button>
-			</div>
-		</div>
-		<div class="nav-trailing">
-			<div class="midi-status">
-				{#if isConnected}
-					<span class="connected" title={selectedInputName}>connected</span>
-				{:else}
-					<button type="button" class="connect" onclick={onConnect}>connect</button>
-				{/if}
-				{#if connectError}
-					<span class="connect-error">{connectError}</span>
-				{/if}
+			<div class="nav-trailing">
+				<div class="midi-status">
+					{#if isConnected}
+						<span class="connected" title={selectedInputName}>connected</span>
+					{:else}
+						<button type="button" class="connect" onclick={onConnect}>connect</button>
+					{/if}
+					{#if connectError}
+						<span class="connect-error">{connectError}</span>
+					{/if}
+				</div>
 			</div>
 		</div>
 	{/if}
@@ -82,13 +93,28 @@
 		right: 0;
 		z-index: 20;
 		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1.5rem;
+		flex-direction: column;
+		align-items: stretch;
+		gap: var(--top-nav-row-gap);
+		padding: var(--top-nav-padding-y) 1.5rem;
 		background: rgba(9, 9, 11, 0.92);
 		border-bottom: 1px solid rgba(39, 39, 42, 0.8);
 		backdrop-filter: blur(8px);
 		box-sizing: border-box;
+	}
+
+	.top-nav-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.top-nav-search {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		width: 100%;
+		min-width: 0;
 	}
 
 	.logo {
@@ -151,6 +177,7 @@
 		align-items: center;
 		gap: 0.75rem;
 		flex-shrink: 0;
+		margin-left: auto;
 	}
 
 	.search-actions {

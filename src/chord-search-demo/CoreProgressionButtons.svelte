@@ -5,6 +5,13 @@
 
 	type Progression = { name: string; chordProgression: string; description: string };
 
+	type Props = {
+		activeProgression?: string | null;
+		onselect?: (progression: string | null) => void;
+	};
+
+	let { activeProgression: activeProp = undefined, onselect }: Props = $props();
+
 	let progressions = $state<Progression[]>([]);
 
 	onMount(async () => {
@@ -16,7 +23,31 @@
 		}
 	});
 
+	const storeActiveProgression = $derived.by(() => {
+		const searchChords = chordSearchDemoStore.searchChords;
+		if (searchChords.length === 0) return null;
+		for (const p of progressions) {
+			const parsed = romanTokensToParsedProgression(p.chordProgression.split("-"));
+			if (!parsed || parsed.length !== searchChords.length) continue;
+			const isMatch = parsed.every(
+				(chord, i) =>
+					chord.rootPitchClass === searchChords[i].rootPitchClass &&
+					chord.suffix === searchChords[i].suffix
+			);
+			if (isMatch) return p.chordProgression;
+		}
+		return null;
+	});
+
+	const activeProgression = $derived(
+		activeProp !== undefined ? activeProp : storeActiveProgression
+	);
+
 	const handleProgressionClick = (chordProgression: string) => {
+		if (onselect !== undefined) {
+			onselect(activeProgression === chordProgression ? null : chordProgression);
+			return;
+		}
 		if (activeProgression === chordProgression) {
 			chordSearchDemoStore.clearSearch();
 			return;
@@ -27,22 +58,6 @@
 		chordSearchDemoStore.getProgressionSearch().setProgression(parsed);
 		chordSearchDemoStore.syncSearch();
 	};
-
-	const activeProgression = $derived.by(() => {
-		const searchChords = chordSearchDemoStore.searchChords;
-		if (searchChords.length === 0) return null;
-		for (const p of progressions) {
-			const parsed = romanTokensToParsedProgression(p.chordProgression.split("-"));
-			if (!parsed || parsed.length !== searchChords.length) continue;
-			const matches = parsed.every(
-				(chord, i) =>
-					chord.rootPitchClass === searchChords[i].rootPitchClass &&
-					chord.suffix === searchChords[i].suffix
-			);
-			if (matches) return p.chordProgression;
-		}
-		return null;
-	});
 </script>
 
 {#if progressions.length > 0}

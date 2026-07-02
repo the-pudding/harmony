@@ -2,25 +2,31 @@
 	import { onMount } from "svelte";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
+	import CoreProgressionButtons from "../../../chord-search-demo/CoreProgressionButtons.svelte";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import {
 		buildTop10MatchKeys,
 		groupSongs,
 		isPopularRecentSong,
 		parseTop10SongsCsv,
-		type GroupedSong
-	} from "./songBrowser.js";
-	import type { SongInput } from "../../../chord-processing/types.js";
-
-	const PAGE_SIZE = 20;
+		type GroupedSong,
+		type SongSection
+	} from "../progressions/songBrowser.js";
+	import { romanTokensToParsedProgression } from "../../../chord-processing/romanNumerals.js";
+	import {
+		findSubProgressionMatches,
+		isPositionInMatch
+	} from "../../../chord-processing/match-chord-progressions/index.js";
+	import type { SongInput, SubProgressionMatch } from "../../../chord-processing/types.js";
 
 	let allSongs = $state<GroupedSong[]>([]);
 	let top10Keys = $state<Set<string>>(new Set());
 	let loading = $state(true);
 	let loadError = $state("");
-	let showPopularOnly = $state(false);
+	let showPopularOnly = $state(true);
 	let titleFilter = $state("");
-	let page = $state(0);
+	let selectedKey = $state("");
+	let selectedProgression = $state<string | null>(null);
 
 	onMount(() => {
 		const load = async () => {
@@ -30,13 +36,9 @@
 					fetch("/top10-songs.csv")
 				]);
 				if (!songsRes.ok)
-					throw new Error(
-						`Could not load song dataset: HTTP ${songsRes.status}`
-					);
+					throw new Error(`Could not load song dataset: HTTP ${songsRes.status}`);
 				if (!top10Res.ok)
-					throw new Error(
-						`Could not load top 10 songs: HTTP ${top10Res.status}`
-					);
+					throw new Error(`Could not load top 10 songs: HTTP ${top10Res.status}`);
 
 				const songs: SongInput[] = await songsRes.json();
 				const top10Text = await top10Res.text();
@@ -72,29 +74,55 @@
 		);
 	});
 
-	const totalPages = $derived(
-		Math.max(1, Math.ceil(filteredSongs.length / PAGE_SIZE))
+	const selectedSong = $derived(
+		filteredSongs.find((s) => s.songKey === selectedKey) ?? null
 	);
-	const pageSongs = $derived(
-		filteredSongs.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
-	);
+
+	const parsedSearchProgression = $derived.by(() => {
+		if (!selectedProgression) return null;
+		return romanTokensToParsedProgression(selectedProgression.split("-"));
+	});
 
 	$effect(() => {
 		titleFilter;
 		showPopularOnly;
-		page = 0;
+		filteredSongs;
+		selectedKey = filteredSongs[0]?.songKey ?? "";
 	});
 
-	function prevPage() {
-		if (page > 0) page--;
+	function songLabel(song: GroupedSong): string {
+		const year = song.year !== undefined ? ` (${song.year})` : "";
+		return `${song.title}${year} — ${song.artists.join(", ")}`;
 	}
-	function nextPage() {
-		if (page < totalPages - 1) page++;
+
+	type Segment = { matchIndex: number; indices: number[] };
+
+	function buildSegments(section: SongSection, matches: SubProgressionMatch[]): Segment[] {
+		const n = section.parsedProgression.length;
+		const posToMatch = Array.from({ length: n }, (_, pos) =>
+			matches.findIndex((match) => isPositionInMatch(pos, match, n))
+		);
+		const segments: Segment[] = [];
+		for (let i = 0; i < n; i++) {
+			const mi = posToMatch[i];
+			const last = segments[segments.length - 1];
+			if (last && last.matchIndex === mi) {
+				last.indices.push(i);
+			} else {
+				segments.push({ matchIndex: mi, indices: [i] });
+			}
+		}
+		return segments;
+	}
+
+	function sectionMatches(section: SongSection): SubProgressionMatch[] {
+		if (!parsedSearchProgression) return [];
+		return findSubProgressionMatches(section.parsedProgression, parsedSearchProgression);
 	}
 </script>
 
 <svelte:head>
-	<title>harmony — progressions</title>
+	<title>harmony — define 'chord progression'</title>
 	<link
 		rel="stylesheet"
 		href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
@@ -129,30 +157,61 @@
 			{#if filteredSongs.length === 0}
 				No songs match
 			{:else}
-				{filteredSongs.length.toLocaleString()} songs · page {page + 1} of {totalPages}
+				{filteredSongs.length.toLocaleString()} songs match
 			{/if}
 		</p>
 
-		<div class="songs">
-			{#each pageSongs as song (song.songKey)}
+		{#if filteredSongs.length > 0}
+			<select class="song-select" bind:value={selectedKey}>
+				{#each filteredSongs as song (song.songKey)}
+					<option value={song.songKey}>{songLabel(song)}</option>
+				{/each}
+			</select>
+
+			<CoreProgressionButtons
+				activeProgression={selectedProgression}
+				onselect={(prog) => (selectedProgression = prog)}
+			/>
+
+			{#if selectedSong}
 				<div class="song-card">
 					<div class="song-title-row">
-						<span class="song-name">{song.title}</span>
-						{#if song.year !== undefined}
-							<span class="year">({song.year})</span>
+						<span class="song-name">{selectedSong.title}</span>
+						{#if selectedSong.year !== undefined}
+							<span class="year">({selectedSong.year})</span>
 						{/if}
-						<span class="artist">— {song.artists.join(", ")}</span>
+						<span class="artist">— {selectedSong.artists.join(", ")}</span>
 					</div>
 					<div class="sections">
-						{#each song.sections as section, si (si)}
+						{#each selectedSong.sections as section, si (si)}
+							{@const matches = sectionMatches(section)}
+							{@const segments = buildSegments(section, matches)}
 							<div class="section-row">
 								{#if section.label}
 									<span class="section-label">{section.label}</span>
 								{/if}
 								<div class="chords">
-									{#each section.chords as chord, i (i)}
-										<span class="chord">{chord}</span>
-										{#if i < section.chords.length - 1}
+									{#each segments as segment, segi}
+										{#if segment.matchIndex !== -1}
+											<span class="match-group">
+												{#each segment.indices as pos, i}
+													<span class="chord highlighted">
+														{section.parsedProgression[pos].display}
+													</span>
+													{#if i < segment.indices.length - 1}
+														<span class="dot">·</span>
+													{/if}
+												{/each}
+											</span>
+										{:else}
+											{#each segment.indices as pos, i}
+												<span class="chord">{section.parsedProgression[pos].display}</span>
+												{#if i < segment.indices.length - 1}
+													<span class="dot">·</span>
+												{/if}
+											{/each}
+										{/if}
+										{#if segi < segments.length - 1}
 											<span class="dot">·</span>
 										{/if}
 									{/each}
@@ -161,21 +220,7 @@
 						{/each}
 					</div>
 				</div>
-			{/each}
-		</div>
-
-		{#if totalPages > 1}
-			<div class="pagination">
-				<button class="page-btn" onclick={prevPage} disabled={page === 0}
-					>← prev</button
-				>
-				<span class="page-info">{page + 1} / {totalPages}</span>
-				<button
-					class="page-btn"
-					onclick={nextPage}
-					disabled={page >= totalPages - 1}>next →</button
-				>
-			</div>
+			{/if}
 		{/if}
 	</div>
 </div>
@@ -255,10 +300,33 @@
 		margin: 0;
 	}
 
-	.songs {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
+	.song-select {
+		width: 100%;
+		box-sizing: border-box;
+		background: rgba(24, 24, 27, 0.6);
+		border: 1px solid rgba(63, 63, 70, 0.8);
+		border-radius: 0.375rem;
+		color: #f4f4f5;
+		font-family: inherit;
+		font-size: 0.8125rem;
+		padding: 0.5rem 0.75rem;
+		outline: none;
+		cursor: pointer;
+		transition: border-color 0.15s;
+		appearance: none;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2371717a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 0.75rem center;
+		padding-right: 2rem;
+	}
+
+	.song-select:focus {
+		border-color: rgba(99, 102, 241, 0.6);
+	}
+
+	.song-select option {
+		background: #18181b;
+		color: #f4f4f5;
 	}
 
 	.song-card {
@@ -323,46 +391,23 @@
 		padding: 0.125rem 0.375rem;
 	}
 
+	.chord.highlighted {
+		background: #4338ca;
+		color: #fff;
+		border-radius: 0.25rem;
+		font-weight: 500;
+	}
+
+	.match-group {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.125rem;
+		border: 1px solid rgba(99, 102, 241, 0.55);
+		border-radius: 0.375rem;
+		padding: 0.2rem;
+	}
+
 	.dot {
 		color: #3f3f46;
-	}
-
-	.pagination {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		justify-content: center;
-		padding: 0.5rem 0;
-	}
-
-	.page-btn {
-		background: rgba(24, 24, 27, 0.6);
-		border: 1px solid rgba(63, 63, 70, 0.8);
-		border-radius: 0.25rem;
-		color: #a1a1aa;
-		font-family: inherit;
-		font-size: 0.75rem;
-		padding: 0.375rem 0.75rem;
-		cursor: pointer;
-		transition:
-			color 0.12s,
-			border-color 0.12s,
-			background 0.12s;
-	}
-
-	.page-btn:hover:not(:disabled) {
-		color: #f4f4f5;
-		border-color: #52525b;
-		background: rgba(39, 39, 42, 0.6);
-	}
-
-	.page-btn:disabled {
-		opacity: 0.3;
-		cursor: default;
-	}
-
-	.page-info {
-		font-size: 0.75rem;
-		color: #71717a;
 	}
 </style>
