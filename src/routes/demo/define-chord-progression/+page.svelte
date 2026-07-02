@@ -8,6 +8,7 @@
 	import CoreProgressionButtons, {
 		type CoreProgression
 	} from "./CoreProgressionButtons.svelte";
+	import SongSelectDropdown from "./SongSelectDropdown.svelte";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import {
 		buildTop10MatchKeys,
@@ -99,17 +100,6 @@
 		);
 	});
 
-	const selectableSongs = $derived.by((): GroupedSong[] => {
-		const selected = allSongs.find((song) => song.songKey === selectedKey);
-		if (
-			selected &&
-			!filteredSongs.some((song) => song.songKey === selectedKey)
-		) {
-			return [selected, ...filteredSongs];
-		}
-		return filteredSongs;
-	});
-
 	const selectedSong = $derived(
 		allSongs.find((song) => song.songKey === selectedKey) ?? null
 	);
@@ -131,7 +121,7 @@
 				if (urlState.song && isSongKeyKnown(urlState.song)) {
 					selectedKey = urlState.song;
 				} else if (!urlInitialized) {
-					selectedKey = filteredSongs[0]?.songKey ?? "";
+					selectedKey = baseList[0]?.songKey ?? "";
 				}
 				urlInitialized = true;
 			} finally {
@@ -143,13 +133,12 @@
 	$effect(() => {
 		if (!urlInitialized || applyingFromUrl) return;
 
-		titleFilter;
 		showPopularOnly;
-		filteredSongs;
+		baseList;
 
 		if (selectedKey && isSongKeyKnown(selectedKey)) return;
 
-		selectedKey = filteredSongs[0]?.songKey ?? "";
+		selectedKey = baseList[0]?.songKey ?? "";
 	});
 
 	$effect(() => {
@@ -181,14 +170,13 @@
 		return romanTokensToParsedProgression(selectedProgression.split("-"));
 	});
 
+	function handleSongSelect(songKey: string) {
+		selectedKey = songKey;
+	}
+
 	function handleProgressionSelect(chordProgression: string) {
 		selectedProgression =
 			selectedProgression === chordProgression ? null : chordProgression;
-	}
-
-	function songLabel(song: GroupedSong): string {
-		const year = song.year !== undefined ? ` (${song.year})` : "";
-		return `${song.title}${year} — ${song.artists.join(", ")}`;
 	}
 
 	type Segment = { matchIndex: number; indices: number[] };
@@ -236,11 +224,12 @@
 		{/if}
 
 		<div class="controls">
-			<input
-				class="filter-input"
-				type="search"
-				placeholder="Filter by title or artist…"
-				bind:value={titleFilter}
+			<SongSelectDropdown
+				songs={baseList}
+				{selectedSong}
+				{selectedKey}
+				bind:searchQuery={titleFilter}
+				onSelectedKeyChange={handleSongSelect}
 			/>
 			<ToggleSwitch
 				checked={showPopularOnly}
@@ -250,20 +239,16 @@
 		</div>
 
 		<p class="list-meta">
-			{#if filteredSongs.length === 0}
+			{#if titleFilter.trim() ? filteredSongs.length === 0 : baseList.length === 0}
 				No songs match
-			{:else}
+			{:else if titleFilter.trim()}
 				{filteredSongs.length.toLocaleString()} songs match
+			{:else}
+				{baseList.length.toLocaleString()} songs
 			{/if}
 		</p>
 
-		{#if selectableSongs.length > 0}
-			<select class="song-select" bind:value={selectedKey}>
-				{#each selectableSongs as song (song.songKey)}
-					<option value={song.songKey}>{songLabel(song)}</option>
-				{/each}
-			</select>
-
+		{#if baseList.length > 0}
 			<CoreProgressionButtons
 				progressions={coreProgressions}
 				activeProgression={selectedProgression}
@@ -371,62 +356,10 @@
 		flex-wrap: wrap;
 	}
 
-	.filter-input {
-		flex: 1;
-		min-width: 12rem;
-		box-sizing: border-box;
-		background: rgba(24, 24, 27, 0.6);
-		border: 1px solid rgba(63, 63, 70, 0.8);
-		border-radius: 0.375rem;
-		color: #f4f4f5;
-		font-family: inherit;
-		font-size: 0.8125rem;
-		padding: 0.5rem 0.75rem;
-		outline: none;
-		transition: border-color 0.15s;
-	}
-
-	.filter-input:focus {
-		border-color: rgba(99, 102, 241, 0.6);
-	}
-
-	.filter-input::placeholder {
-		color: #52525b;
-	}
-
 	.list-meta {
 		font-size: 0.875rem;
 		color: #71717a;
 		margin: 0;
-	}
-
-	.song-select {
-		width: 100%;
-		box-sizing: border-box;
-		background: rgba(24, 24, 27, 0.6);
-		border: 1px solid rgba(63, 63, 70, 0.8);
-		border-radius: 0.375rem;
-		color: #f4f4f5;
-		font-family: inherit;
-		font-size: 0.8125rem;
-		padding: 0.5rem 0.75rem;
-		outline: none;
-		cursor: pointer;
-		transition: border-color 0.15s;
-		appearance: none;
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2371717a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-		background-repeat: no-repeat;
-		background-position: right 0.75rem center;
-		padding-right: 2rem;
-	}
-
-	.song-select:focus {
-		border-color: rgba(99, 102, 241, 0.6);
-	}
-
-	.song-select option {
-		background: #18181b;
-		color: #f4f4f5;
 	}
 
 	.song-card {
