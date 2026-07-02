@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { GroupedSong } from "../progressions/songBrowser.js";
-	import type { ProgressionWithMatchStats, ChordAnnotation } from "./progressionMatchAnalysis.js";
+	import type { GroupedSong } from "../../progressions/songBrowser.js";
+	import type { ProgressionWithMatchStats, ChordAnnotation } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import { CORE_PROGRESSION_PALETTE } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";

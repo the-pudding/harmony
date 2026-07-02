@@ -1,7 +1,6 @@
-export type ChordHighlightPalette = {
-	fill: string;
-	border: string;
-};
+import type { ChordHighlightPalette } from "../progression-matching-logic/progressionMatchAnalysis.js";
+
+export type { ChordHighlightPalette };
 
 export const CORE_PROGRESSION_PALETTE: ChordHighlightPalette = {
 	fill: "#15803d",

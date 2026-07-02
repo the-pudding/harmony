@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { GroupedSong } from "../progressions/songBrowser.js";
+	import type { GroupedSong } from "../../progressions/songBrowser.js";
 
 	const SONG_SELECT_DROPDOWN_OPTION_LIMIT = 20;
 

@@ -1,4 +1,4 @@
-import type { GroupedSong } from "../progressions/songBrowser.js";
+import type { GroupedSong } from "../../progressions/songBrowser.js";
 import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
 import { computeCoveredPositionsBySection } from "./progressionMatchAnalysis.js";
 
@@ -12,13 +12,19 @@ export type SelectionResult = {
 export const emptyCoverage = (song: GroupedSong): SectionCoverage =>
 	song.sections.map(() => []);
 
-export const coveragePercent = (song: GroupedSong, coverage: SectionCoverage): number => {
+export const coveragePercent = (
+	song: GroupedSong,
+	coverage: SectionCoverage
+): number => {
 	const totalChords = song.sections.reduce(
 		(sum, section) => sum + section.parsedProgression.length,
 		0
 	);
 	if (totalChords === 0) return 0;
-	const coveredCount = coverage.reduce((sum, positions) => sum + positions.length, 0);
+	const coveredCount = coverage.reduce(
+		(sum, positions) => sum + positions.length,
+		0
+	);
 	return (coveredCount / totalChords) * 100;
 };
 
@@ -65,7 +71,10 @@ export const greedilySelectProgressions = (
 			progressionChordCount(b.chordProgression) -
 			progressionChordCount(a.chordProgression);
 		if (lengthDiff !== 0) return lengthDiff;
-		return totalMatchedChords(b.chordProgression) - totalMatchedChords(a.chordProgression);
+		return (
+			totalMatchedChords(b.chordProgression) -
+			totalMatchedChords(a.chordProgression)
+		);
 	});
 
 	return sorted.reduce<SelectionResult>(

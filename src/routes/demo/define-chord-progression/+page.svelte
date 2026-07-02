@@ -7,17 +7,17 @@
 	import { page } from "$app/state";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
-	import SongSelectDropdown from "./SongSelectDropdown.svelte";
-	import SongChordsDisplay from "./SongChordsDisplay.svelte";
-	import ProgressionMatchTable from "./ProgressionMatchTable.svelte";
-	import FinalAnnotatedSong from "./FinalAnnotatedSong.svelte";
-	import { computeProgressionMatches, MIN_PROGRESSION_OCCURRENCES } from "./progressionMatchAnalysis.js";
-	import type { ChordAnnotation } from "./progressionMatchAnalysis.js";
-	import { computeRecurringProgressionMatches } from "./recurringProgressionAnalysis.js";
-	import { selectCoreProgressions } from "./coreProgressionSelection.js";
-	import { selectNonCoreProgressions } from "./recurringProgressionSelection.js";
-	import { coveragePercent } from "./greedyProgressionSelection.js";
-	import { CORE_PROGRESSION_PALETTE, DEFAULT_PROGRESSION_PALETTE } from "./progressionColors.js";
+	import SongSelectDropdown from "./components/SongSelectDropdown.svelte";
+	import SongChordsDisplay from "./components/SongChordsDisplay.svelte";
+	import ProgressionMatchTable from "./components/ProgressionMatchTable.svelte";
+	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
+	import { computeProgressionMatches, MIN_PROGRESSION_OCCURRENCES } from "./progression-matching-logic/progressionMatchAnalysis.js";
+	import type { ChordAnnotation } from "./progression-matching-logic/progressionMatchAnalysis.js";
+	import { computeRecurringProgressionMatches } from "./progression-matching-logic/recurringProgressionAnalysis.js";
+	import { selectCoreProgressions } from "./progression-matching-logic/coreProgressionSelection.js";
+	import { selectNonCoreProgressions } from "./progression-matching-logic/recurringProgressionSelection.js";
+	import { coveragePercent } from "./progression-matching-logic/greedyProgressionSelection.js";
+	import { CORE_PROGRESSION_PALETTE, DEFAULT_PROGRESSION_PALETTE } from "./components/progressionColors.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import { type GroupedSong } from "../progressions/songBrowser.js";
 	import {

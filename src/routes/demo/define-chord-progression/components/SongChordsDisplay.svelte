@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { GroupedSong } from "../progressions/songBrowser.js";
-	import type { ChordAnnotation } from "./progressionMatchAnalysis.js";
+	import type { GroupedSong } from "../../progressions/songBrowser.js";
+	import type { ChordAnnotation } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import type { ChordHighlightPalette } from "./progressionColors.js";
-	import { buildColoredHighlightSegments } from "./progressionMatchAnalysis.js";
+	import { buildColoredHighlightSegments } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import { DEFAULT_PROGRESSION_PALETTE } from "./progressionColors.js";
 
 	type Props = {

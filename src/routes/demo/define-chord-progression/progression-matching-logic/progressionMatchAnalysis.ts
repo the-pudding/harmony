@@ -1,18 +1,25 @@
 import type { CoreProgression } from "$data/core-progressions.js";
-import type { GroupedSong, SongSection } from "../progressions/songBrowser.js";
-import { romanTokensToParsedProgression } from "../../../chord-processing/romanNumerals.js";
+import type {
+	GroupedSong,
+	SongSection
+} from "../../progressions/songBrowser.js";
+import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import {
 	findSubProgressionMatches,
 	isPositionInMatch,
 	toAbstractProgression
-} from "../../../chord-processing/match-chord-progressions/index.js";
+} from "../../../../chord-processing/match-chord-progressions/index.js";
 import type {
 	ParsedProgressionChord,
 	SubProgressionMatch
-} from "../../../chord-processing/types.js";
-import type { ChordHighlightPalette } from "./progressionColors.js";
+} from "../../../../chord-processing/types.js";
 
 export const MIN_PROGRESSION_OCCURRENCES = 2;
+
+export type ChordHighlightPalette = {
+	fill: string;
+	border: string;
+};
 
 export type ProgressionWithMatchStats = {
 	name: string;

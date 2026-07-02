@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
+	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
 
 	type Props = {
 		match: ProgressionWithMatchStats;

@@ -1,4 +1,4 @@
-import type { GroupedSong } from "../progressions/songBrowser.js";
+import type { GroupedSong } from "../../progressions/songBrowser.js";
 import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
 import {
 	greedilySelectProgressions,
@@ -9,4 +9,5 @@ import {
 export const selectCoreProgressions = (
 	song: GroupedSong,
 	coreMatches: ProgressionWithMatchStats[]
-): SelectionResult => greedilySelectProgressions(song, coreMatches, emptyCoverage(song));
+): SelectionResult =>
+	greedilySelectProgressions(song, coreMatches, emptyCoverage(song));

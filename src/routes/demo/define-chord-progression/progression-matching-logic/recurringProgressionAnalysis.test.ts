@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { romanTokensToParsedProgression } from "../../../chord-processing/romanNumerals.js";
-import type { ParsedProgressionChord } from "../../../chord-processing/types.js";
-import type { GroupedSong, SongSection } from "../progressions/songBrowser.js";
+import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
+import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
+import type {
+	GroupedSong,
+	SongSection
+} from "../../progressions/songBrowser.js";
 import { computeRecurringProgressionMatches } from "./recurringProgressionAnalysis.js";
 import { MIN_PROGRESSION_OCCURRENCES } from "./progressionMatchAnalysis.js";
 

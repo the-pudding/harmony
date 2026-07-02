@@ -1,6 +1,6 @@
 import coreProgressions from "$data/core-progressions.js";
-import type { GroupedSong } from "../progressions/songBrowser.js";
-import { romanTokensToParsedProgression } from "../../../chord-processing/romanNumerals.js";
+import type { GroupedSong } from "../../progressions/songBrowser.js";
+import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import {
 	chordProgressionFromRomanTokens,
 	computeStatsForParsedProgression,
