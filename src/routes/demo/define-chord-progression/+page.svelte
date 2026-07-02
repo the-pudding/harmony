@@ -115,9 +115,7 @@
 	);
 
 	const recurringProgressionMatches = $derived(
-		selectedSong
-			? computeRecurringProgressionMatches(selectedSong, coreProgressions)
-			: []
+		selectedSong ? computeRecurringProgressionMatches(selectedSong) : []
 	);
 
 	const isSongKeyKnown = (songKey: string): boolean =>
