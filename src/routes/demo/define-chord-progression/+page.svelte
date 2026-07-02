@@ -2,7 +2,9 @@
 	import { onMount } from "svelte";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
-	import CoreProgressionButtons from "../../../chord-search-demo/CoreProgressionButtons.svelte";
+	import CoreProgressionButtons, {
+		type CoreProgression
+	} from "./CoreProgressionButtons.svelte";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import {
 		buildTop10MatchKeys,
@@ -27,13 +29,15 @@
 	let titleFilter = $state("");
 	let selectedKey = $state("");
 	let selectedProgression = $state<string | null>(null);
+	let coreProgressions = $state<CoreProgression[]>([]);
 
 	onMount(() => {
 		const load = async () => {
 			try {
-				const [songsRes, top10Res] = await Promise.all([
+				const [songsRes, top10Res, progressionsRes] = await Promise.all([
 					fetch("/data/songs.json"),
-					fetch("/top10-songs.csv")
+					fetch("/top10-songs.csv"),
+					fetch("/data/core-progressions.json")
 				]);
 				if (!songsRes.ok)
 					throw new Error(`Could not load song dataset: HTTP ${songsRes.status}`);
@@ -45,6 +49,9 @@
 
 				allSongs = groupSongs(songs);
 				top10Keys = buildTop10MatchKeys(parseTop10SongsCsv(top10Text));
+				if (progressionsRes.ok) {
+					coreProgressions = await progressionsRes.json();
+				}
 			} catch (err) {
 				loadError = err instanceof Error ? err.message : String(err);
 			} finally {
@@ -89,6 +96,11 @@
 		filteredSongs;
 		selectedKey = filteredSongs[0]?.songKey ?? "";
 	});
+
+	function handleProgressionSelect(chordProgression: string) {
+		selectedProgression =
+			selectedProgression === chordProgression ? null : chordProgression;
+	}
 
 	function songLabel(song: GroupedSong): string {
 		const year = song.year !== undefined ? ` (${song.year})` : "";
@@ -169,8 +181,9 @@
 			</select>
 
 			<CoreProgressionButtons
+				progressions={coreProgressions}
 				activeProgression={selectedProgression}
-				onselect={(prog) => (selectedProgression = prog)}
+				onselect={handleProgressionSelect}
 			/>
 
 			{#if selectedSong}
