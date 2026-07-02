@@ -12,9 +12,15 @@
 	};
 
 	let { song, chordProgression = null, showMetadata = false }: Props = $props();
+
+	const SECTION_LABEL_CHORD_GAP_PX = 2;
+	const SECTION_LABEL_RIGHT_PADDING_PX = 6;
 </script>
 
-<div class="song-chords">
+<div
+	class="song-chords"
+	style="--section-label-chord-gap: {SECTION_LABEL_CHORD_GAP_PX}px; --section-label-right-padding: {SECTION_LABEL_RIGHT_PADDING_PX}px;"
+>
 	{#if showMetadata}
 		<div class="song-title-row">
 			<span class="song-name">{song.title}</span>
@@ -31,36 +37,36 @@
 		{#each song.sections as section, sectionIndex (sectionIndex)}
 			{@const matches = getSectionMatches(section, chordProgression)}
 			{@const segments = buildChordHighlightSegments(section, matches)}
-			<div class="section-row">
-				{#if section.label}
-					<span class="section-label">{section.label}</span>
-				{/if}
-				<div class="chords">
-					{#each segments as segment, segmentIndex (segmentIndex)}
-						{#if segment.matchIndex !== -1}
-							<span class="match-group">
-								{#each segment.indices as position, positionIndex (position)}
-									<span class="chord highlighted">
-										{section.romanTokens[position]}
-									</span>
-									{#if positionIndex < segment.indices.length - 1}
-										<span class="dot">·</span>
-									{/if}
-								{/each}
-							</span>
-						{:else}
+			{#if section.label}
+				<span class="section-label">{section.label}</span>
+			{:else}
+				<span class="section-label section-label-empty" aria-hidden="true"></span>
+			{/if}
+			<div class="chords">
+				{#each segments as segment, segmentIndex (segmentIndex)}
+					{#if segment.matchIndex !== -1}
+						<span class="match-group">
 							{#each segment.indices as position, positionIndex (position)}
-								<span class="chord">{section.romanTokens[position]}</span>
+								<span class="chord highlighted">
+									{section.romanTokens[position]}
+								</span>
 								{#if positionIndex < segment.indices.length - 1}
 									<span class="dot">·</span>
 								{/if}
 							{/each}
-						{/if}
-						{#if segmentIndex < segments.length - 1}
-							<span class="dot">·</span>
-						{/if}
-					{/each}
-				</div>
+						</span>
+					{:else}
+						{#each segment.indices as position, positionIndex (position)}
+							<span class="chord">{section.romanTokens[position]}</span>
+							{#if positionIndex < segment.indices.length - 1}
+								<span class="dot">·</span>
+							{/if}
+						{/each}
+					{/if}
+					{#if segmentIndex < segments.length - 1}
+						<span class="dot">·</span>
+					{/if}
+				{/each}
 			</div>
 		{/each}
 	</div>
@@ -95,26 +101,26 @@
 	}
 
 	.sections {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.section-row {
-		display: flex;
+		display: grid;
+		grid-template-columns: max-content minmax(0, 1fr);
+		column-gap: var(--section-label-chord-gap);
+		row-gap: 0.25rem;
 		align-items: baseline;
-		flex-wrap: wrap;
-		gap: 0.375rem;
 	}
 
 	.section-label {
-		flex-shrink: 0;
 		font-size: 0.5625rem;
 		font-weight: 500;
 		text-transform: lowercase;
 		letter-spacing: 0.02em;
 		color: #52525b;
-		min-width: 4.5rem;
+		white-space: nowrap;
+		text-align: right;
+		padding-right: var(--section-label-right-padding);
+	}
+
+	.section-label-empty {
+		display: block;
 	}
 
 	.chords {
@@ -123,6 +129,7 @@
 		align-items: center;
 		gap: 0.125rem;
 		font-size: 0.75rem;
+		min-width: 0;
 	}
 
 	.chord {

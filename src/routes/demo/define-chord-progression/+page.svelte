@@ -8,8 +8,8 @@
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
 	import SongSelectDropdown from "./SongSelectDropdown.svelte";
-	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
+	import ProgressionMatchTable from "./ProgressionMatchTable.svelte";
 	import { computeProgressionMatches } from "./progressionMatchAnalysis.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import { type GroupedSong } from "../progressions/songBrowser.js";
@@ -272,34 +272,12 @@
 					<h2 class="section-heading">1. Look for matches from our core progressions</h2>
 
 					{#if coreProgressionMatches.length > 0}
-						<table class="match-table">
-							<colgroup>
-								<col class="match-button-column" />
-								<col class="match-chords-column" />
-							</colgroup>
-							<tbody>
-								{#each coreProgressionMatches as match (match.name)}
-									<tr
-										class="match-row"
-										class:match-row-active={pinnedProgression === match.chordProgression}
-									>
-										<td class="match-button-cell">
-											<ProgressionMatchButton
-												{match}
-												active={pinnedProgression === match.chordProgression}
-												onselect={handleProgressionSelect}
-											/>
-										</td>
-										<td class="match-chords-cell">
-											<SongChordsDisplay
-												song={selectedSong}
-												chordProgression={match.chordProgression}
-											/>
-										</td>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
+						<ProgressionMatchTable
+							matches={coreProgressionMatches}
+							song={selectedSong}
+							activeProgression={pinnedProgression}
+							onselect={handleProgressionSelect}
+						/>
 					{:else}
 						<p class="list-meta">No core progressions matched this song.</p>
 					{/if}
@@ -386,51 +364,5 @@
 		padding: 0.625rem;
 		border: 1px solid #27272a;
 		border-radius: 0.25rem;
-	}
-
-	.match-table {
-		--match-button-column-width: 32%;
-		--match-chords-column-width: 68%;
-		width: 100%;
-		border-collapse: collapse;
-		table-layout: fixed;
-	}
-
-	.match-button-column {
-		width: var(--match-button-column-width);
-	}
-
-	.match-chords-column {
-		width: var(--match-chords-column-width);
-	}
-
-	.match-row {
-		border-top: 1px solid #27272a;
-	}
-
-	.match-row:last-child {
-		border-bottom: 1px solid #27272a;
-	}
-
-	.match-row:hover,
-	.match-row-active {
-		background: rgba(255, 255, 255, 0.03);
-	}
-
-	.match-button-cell {
-		vertical-align: top;
-		padding: 0.625rem 0.75rem 0.625rem 0;
-		width: var(--match-button-column-width);
-		max-width: var(--match-button-column-width);
-		overflow: hidden;
-	}
-
-	.match-chords-cell {
-		vertical-align: top;
-		padding: 0.625rem 0;
-		width: var(--match-chords-column-width);
-		max-width: var(--match-chords-column-width);
-		min-width: 0;
-		overflow: hidden;
 	}
 </style>
