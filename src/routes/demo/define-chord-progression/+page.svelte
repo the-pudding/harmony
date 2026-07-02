@@ -1,15 +1,15 @@
 <script lang="ts">
 	import debounce from "lodash.debounce";
 	import coreProgressionsData from "$data/core-progressions.js";
+	import type { CoreProgression } from "$data/core-progressions.js";
 	import { onMount, untrack } from "svelte";
 	import { replaceState } from "$app/navigation";
 	import { page } from "$app/state";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
-	import CoreProgressionButtons, {
-		type CoreProgression
-	} from "./CoreProgressionButtons.svelte";
 	import SongSelectDropdown from "./SongSelectDropdown.svelte";
+	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
+	import { computeProgressionMatches } from "./progressionMatchAnalysis.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import {
 		type GroupedSong,
@@ -45,7 +45,8 @@
 	let showPopularOnly = $state(true);
 	let titleFilter = $state("");
 	let selectedKey = $state("");
-	let selectedProgression = $state<string | null>(null);
+	let hoveredProgression = $state<string | null>(null);
+	let pinnedProgression = $state<string | null>(null);
 	const coreProgressions: CoreProgression[] = coreProgressionsData;
 	let urlInitialized = $state(false);
 	let applyingFromUrl = $state(false);
@@ -115,6 +116,12 @@
 
 	const selectedSong = $derived(
 		findGroupedSongByKey(searchableSongs, selectedKey)
+	);
+
+	const activeProgression = $derived(hoveredProgression ?? pinnedProgression);
+
+	const coreProgressionMatches = $derived(
+		selectedSong ? computeProgressionMatches(selectedSong, coreProgressions) : []
 	);
 
 	const isSongKeyKnown = (songKey: string): boolean =>
@@ -188,9 +195,15 @@
 		debouncedReplaceState(nextUrl);
 	});
 
+	$effect(() => {
+		selectedKey;
+		hoveredProgression = null;
+		pinnedProgression = null;
+	});
+
 	const parsedSearchProgression = $derived.by(() => {
-		if (!selectedProgression) return null;
-		return romanTokensToParsedProgression(selectedProgression.split("-"));
+		if (!activeProgression) return null;
+		return romanTokensToParsedProgression(activeProgression.split("-"));
 	});
 
 	function handleSongSelect(songKey: string) {
@@ -204,9 +217,17 @@
 		}
 	}
 
+	function handleProgressionHover(chordProgression: string) {
+		hoveredProgression = chordProgression;
+	}
+
+	function handleProgressionUnhover() {
+		hoveredProgression = null;
+	}
+
 	function handleProgressionSelect(chordProgression: string) {
-		selectedProgression =
-			selectedProgression === chordProgression ? null : chordProgression;
+		pinnedProgression =
+			pinnedProgression === chordProgression ? null : chordProgression;
 	}
 
 	type Segment = { matchIndex: number; indices: number[] };
@@ -247,6 +268,11 @@
 	<TopNavBar showSearch={false} />
 
 	<div class="content">
+		<h1 class="page-title">
+			How do we determine the core chord progressions that define a songs harmonic
+			essense?
+		</h1>
+
 		{#if loading}
 			<p class="dataset-status">Loading song dataset…</p>
 		{:else if loadingFullSongs && !showPopularOnly}
@@ -255,88 +281,108 @@
 			<p class="dataset-status error">{loadError}</p>
 		{/if}
 
-		<div class="controls">
-			<SongSelectDropdown
-				songs={baseList}
-				{selectedSong}
-				{selectedKey}
-				bind:searchQuery={titleFilter}
-				onSelectedKeyChange={handleSongSelect}
-			/>
-			<ToggleSwitch
-				checked={showPopularOnly}
-				onchange={handlePopularToggleChange}
-				label="popular recent songs only"
-			/>
-		</div>
-
-		<p class="list-meta">
-			{#if titleFilter.trim() ? filteredSongs.length === 0 : baseList.length === 0}
-				No songs match
-			{:else if titleFilter.trim()}
-				{filteredSongs.length.toLocaleString()} songs match
-			{:else}
-				{baseList.length.toLocaleString()} songs
-			{/if}
-		</p>
-
 		{#if baseList.length > 0}
-			<CoreProgressionButtons
-				progressions={coreProgressions}
-				activeProgression={selectedProgression}
-				onselect={handleProgressionSelect}
-			/>
+			<section class="step-section">
+				<h2 class="section-heading">0. Pick an example song</h2>
 
-			{#if selectedSong}
-				<div class="song-card">
-					<div class="song-title-row">
-						<span class="song-name">{selectedSong.title}</span>
-						{#if selectedSong.year !== undefined}
-							<span class="year">({selectedSong.year})</span>
-						{/if}
-						<span class="artist">— {selectedSong.artists.join(", ")}</span>
-						{#if selectedSong.keyLabel}
-							<span class="key-label">· {selectedSong.keyLabel}</span>
-						{/if}
-					</div>
-					<div class="sections">
-						{#each selectedSong.sections as section, si (si)}
-							{@const matches = sectionMatches(section)}
-							{@const segments = buildSegments(section, matches)}
-							<div class="section-row">
-								{#if section.label}
-									<span class="section-label">{section.label}</span>
-								{/if}
-								<div class="chords">
-									{#each segments as segment, segi}
-										{#if segment.matchIndex !== -1}
-											<span class="match-group">
+				<div class="controls">
+					<SongSelectDropdown
+						songs={baseList}
+						{selectedSong}
+						{selectedKey}
+						bind:searchQuery={titleFilter}
+						onSelectedKeyChange={handleSongSelect}
+					/>
+					<ToggleSwitch
+						checked={showPopularOnly}
+						onchange={handlePopularToggleChange}
+						label="popular recent songs only"
+					/>
+				</div>
+
+				<p class="list-meta">
+					{#if titleFilter.trim() ? filteredSongs.length === 0 : baseList.length === 0}
+						No songs match
+					{:else if titleFilter.trim()}
+						{filteredSongs.length.toLocaleString()} songs match
+					{:else}
+						{baseList.length.toLocaleString()} songs
+					{/if}
+				</p>
+
+				{#if selectedSong}
+					<div class="song-card">
+						<div class="song-title-row">
+							<span class="song-name">{selectedSong.title}</span>
+							{#if selectedSong.year !== undefined}
+								<span class="year">({selectedSong.year})</span>
+							{/if}
+							<span class="artist">— {selectedSong.artists.join(", ")}</span>
+							{#if selectedSong.keyLabel}
+								<span class="key-label">· {selectedSong.keyLabel}</span>
+							{/if}
+						</div>
+						<div class="sections">
+							{#each selectedSong.sections as section, si (si)}
+								{@const matches = sectionMatches(section)}
+								{@const segments = buildSegments(section, matches)}
+								<div class="section-row">
+									{#if section.label}
+										<span class="section-label">{section.label}</span>
+									{/if}
+									<div class="chords">
+										{#each segments as segment, segi}
+											{#if segment.matchIndex !== -1}
+												<span class="match-group">
+													{#each segment.indices as pos, i}
+														<span class="chord highlighted">
+															{section.romanTokens[pos]}
+														</span>
+														{#if i < segment.indices.length - 1}
+															<span class="dot">·</span>
+														{/if}
+													{/each}
+												</span>
+											{:else}
 												{#each segment.indices as pos, i}
-													<span class="chord highlighted">
-														{section.romanTokens[pos]}
-													</span>
+													<span class="chord">{section.romanTokens[pos]}</span>
 													{#if i < segment.indices.length - 1}
 														<span class="dot">·</span>
 													{/if}
 												{/each}
-											</span>
-										{:else}
-											{#each segment.indices as pos, i}
-												<span class="chord">{section.romanTokens[pos]}</span>
-												{#if i < segment.indices.length - 1}
-													<span class="dot">·</span>
-												{/if}
-											{/each}
-										{/if}
-										{#if segi < segments.length - 1}
-											<span class="dot">·</span>
-										{/if}
-									{/each}
+											{/if}
+											{#if segi < segments.length - 1}
+												<span class="dot">·</span>
+											{/if}
+										{/each}
+									</div>
 								</div>
-							</div>
-						{/each}
+							{/each}
+						</div>
 					</div>
-				</div>
+				{/if}
+			</section>
+
+			{#if selectedSong}
+				<section class="step-section">
+					<h2 class="section-heading">1. Look for matches from our core progressions</h2>
+
+					{#if coreProgressionMatches.length > 0}
+						<div class="button-row">
+							{#each coreProgressionMatches as match (match.name)}
+								<ProgressionMatchButton
+									{match}
+									active={pinnedProgression === match.chordProgression}
+									onhover={handleProgressionHover}
+									onunhover={handleProgressionUnhover}
+									onselect={handleProgressionSelect}
+								/>
+							{/each}
+						</div>
+					{:else}
+						<p class="list-meta">No core progressions matched this song.</p>
+					{/if}
+				</section>
 			{/if}
 		{/if}
 	</div>
@@ -364,11 +410,32 @@
 		padding: 1.5rem 12px 2rem;
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
+		gap: 1.5rem;
 		width: 100%;
 		max-width: 56rem;
 		margin: 0 auto;
 		box-sizing: border-box;
+	}
+
+	.page-title {
+		font-size: 1.125rem;
+		font-weight: 600;
+		line-height: 1.4;
+		margin: 0;
+		color: #f4f4f5;
+	}
+
+	.step-section {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.section-heading {
+		font-size: 0.875rem;
+		font-weight: 500;
+		margin: 0;
+		color: #a1a1aa;
 	}
 
 	.dataset-status {
@@ -392,6 +459,12 @@
 		font-size: 0.875rem;
 		color: #71717a;
 		margin: 0;
+	}
+
+	.button-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.375rem;
 	}
 
 	.song-card {
