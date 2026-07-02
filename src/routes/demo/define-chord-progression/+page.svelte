@@ -10,8 +10,13 @@
 	import SongSelectDropdown from "./SongSelectDropdown.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
 	import ProgressionMatchTable from "./ProgressionMatchTable.svelte";
-	import { computeProgressionMatches } from "./progressionMatchAnalysis.js";
+	import { computeProgressionMatches, MIN_PROGRESSION_OCCURRENCES } from "./progressionMatchAnalysis.js";
+	import type { ChordAnnotation } from "./progressionMatchAnalysis.js";
 	import { computeRecurringProgressionMatches } from "./recurringProgressionAnalysis.js";
+	import { selectCoreProgressions } from "./coreProgressionSelection.js";
+	import { selectNonCoreProgressions } from "./recurringProgressionSelection.js";
+	import { coveragePercent } from "./greedyProgressionSelection.js";
+	import { CORE_PROGRESSION_PALETTE, DEFAULT_PROGRESSION_PALETTE } from "./progressionColors.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import { type GroupedSong } from "../progressions/songBrowser.js";
 	import {
@@ -110,6 +115,8 @@
 		findGroupedSongByKey(searchableSongs, selectedKey)
 	);
 
+	const EXPLAINED_THRESHOLD_PERCENT = 80;
+
 	const coreProgressionMatches = $derived(
 		selectedSong ? computeProgressionMatches(selectedSong, coreProgressions) : []
 	);
@@ -117,6 +124,39 @@
 	const recurringProgressionMatches = $derived(
 		selectedSong ? computeRecurringProgressionMatches(selectedSong) : []
 	);
+
+	const coreSelection = $derived(
+		selectedSong
+			? selectCoreProgressions(selectedSong, coreProgressionMatches)
+			: { selected: [], coverage: [] }
+	);
+
+	const recurringSelection = $derived(
+		selectedSong
+			? selectNonCoreProgressions(
+					selectedSong,
+					recurringProgressionMatches,
+					coreSelection.coverage
+				)
+			: { selected: [], coverage: [] }
+	);
+
+	const explainedPercent = $derived(
+		selectedSong
+			? Math.round(coveragePercent(selectedSong, recurringSelection.coverage))
+			: 0
+	);
+
+	const songAnnotations = $derived<ChordAnnotation[]>([
+		...coreSelection.selected.map((match) => ({
+			chordProgression: match.chordProgression,
+			palette: CORE_PROGRESSION_PALETTE
+		})),
+		...recurringSelection.selected.map((match) => ({
+			chordProgression: match.chordProgression,
+			palette: DEFAULT_PROGRESSION_PALETTE
+		}))
+	]);
 
 	const isSongKeyKnown = (songKey: string): boolean =>
 		isGroupedSongKeyKnown(searchableSongs, songKey);
@@ -294,17 +334,64 @@
 				</section>
 
 				<section class="step-section">
-					<h2 class="section-heading">2. Look for matches from our core progressions</h2>
+				<h2 class="section-heading">
+					2. Selection: greedily select any (non-overlapping) core-progressions that appear
+					at least {MIN_PROGRESSION_OCCURRENCES} times, from longest to shortest
+				</h2>
+					<p class="section-description">
+						This incentivises us to really hone and expand the coverage of
+						core-progressions, and also makes it so we maximize classified chords over
+						random ones that might happen to be better/longer for some reason.
+					</p>
 
-					{#if coreProgressionMatches.length > 0}
+					{#if coreSelection.selected.length > 0}
 						<ProgressionMatchTable
-							matches={coreProgressionMatches}
+							matches={coreSelection.selected}
 							song={selectedSong}
 							activeProgression={pinnedProgression}
 							onselect={handleProgressionSelect}
 						/>
 					{:else}
 						<p class="list-meta">No core progressions matched this song.</p>
+					{/if}
+				</section>
+
+				<section class="step-section">
+					<h2 class="section-heading">
+						3. Select any non-overlapping non-core-progressions longest to shortest,
+						until there are no options left.
+					</h2>
+
+					{#if recurringSelection.selected.length > 0}
+						<ProgressionMatchTable
+							matches={recurringSelection.selected}
+							song={selectedSong}
+							activeProgression={pinnedProgression}
+							onselect={handleProgressionSelect}
+						/>
+					{:else}
+						<p class="list-meta">No additional non-core progressions to add.</p>
+					{/if}
+				</section>
+
+				<section class="step-section">
+					<h2 class="section-heading">
+						4. This gives us the progressions that define this song. If they explain more
+						than 80% of the song, we consider that song 'explained'
+					</h2>
+					<p class="section-description">
+						Explains {explainedPercent}% of the song{explainedPercent >
+						EXPLAINED_THRESHOLD_PERCENT
+							? " ✅"
+							: ""}
+					</p>
+
+					{#if songAnnotations.length > 0}
+						<div class="song-card">
+							<SongChordsDisplay song={selectedSong} annotations={songAnnotations} />
+						</div>
+					{:else}
+						<p class="list-meta">No progressions selected.</p>
 					{/if}
 				</section>
 			{/if}
@@ -384,6 +471,13 @@
 		font-size: 0.875rem;
 		color: #71717a;
 		margin: 0;
+	}
+
+	.section-description {
+		font-size: 0.8125rem;
+		color: #71717a;
+		margin: 0;
+		line-height: 1.5;
 	}
 
 	.song-card {

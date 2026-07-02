@@ -3,9 +3,9 @@ import { romanTokensToParsedProgression } from "../../../chord-processing/romanN
 import type { ParsedProgressionChord } from "../../../chord-processing/types.js";
 import type { GroupedSong, SongSection } from "../progressions/songBrowser.js";
 import { computeRecurringProgressionMatches } from "./recurringProgressionAnalysis.js";
+import { MIN_PROGRESSION_OCCURRENCES } from "./progressionMatchAnalysis.js";
 
 const MIN_PROGRESSION_LENGTH = 3;
-const MIN_OCCURRENCES = 2;
 
 const makeSection = (romanTokens: string[]): SongSection => ({
 	label: null,
@@ -106,7 +106,9 @@ describe("computeRecurringProgressionMatches — invariants", () => {
 		const matches = computeRecurringProgressionMatches(imYours);
 		expect(matches.length).toBeGreaterThan(0);
 		for (const match of matches) {
-			expect(match.matchCount).toBeGreaterThanOrEqual(MIN_OCCURRENCES);
+			expect(match.matchCount).toBeGreaterThanOrEqual(
+				MIN_PROGRESSION_OCCURRENCES
+			);
 		}
 	});
 

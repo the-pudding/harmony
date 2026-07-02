@@ -4,6 +4,7 @@ import { romanTokensToParsedProgression } from "../../../chord-processing/romanN
 import {
 	chordProgressionFromRomanTokens,
 	computeStatsForParsedProgression,
+	MIN_PROGRESSION_OCCURRENCES,
 	type ProgressionWithMatchStats
 } from "./progressionMatchAnalysis.js";
 
@@ -15,7 +16,6 @@ const coreProgressionNameByChordProgression = new Map(
 );
 
 const MIN_PROGRESSION_LENGTH = 3;
-const MIN_OCCURRENCES = 2;
 
 const contiguousWindowsFromTokens = (tokens: string[]): string[][] =>
 	tokens.flatMap((_, start) =>
@@ -47,7 +47,7 @@ const toRecurringMatch = (
 	if (!parsed || !chordProgression) return null;
 
 	const stats = computeStatsForParsedProgression(song, parsed);
-	if (stats.matchCount < MIN_OCCURRENCES) return null;
+	if (stats.matchCount < MIN_PROGRESSION_OCCURRENCES) return null;
 
 	return {
 		name: coreProgressionNameByChordProgression.get(chordProgression) ?? "",

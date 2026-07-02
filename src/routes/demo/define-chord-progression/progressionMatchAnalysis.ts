@@ -10,6 +10,9 @@ import type {
 	ParsedProgressionChord,
 	SubProgressionMatch
 } from "../../../chord-processing/types.js";
+import type { ChordHighlightPalette } from "./progressionColors.js";
+
+export const MIN_PROGRESSION_OCCURRENCES = 2;
 
 export type ProgressionWithMatchStats = {
 	name: string;
@@ -122,7 +125,7 @@ export function computeProgressionMatches(
 		})
 		.filter(
 			(match): match is CoreProgressionWithStats =>
-				match !== null && match.matchCount > 0
+				match !== null && match.matchCount >= MIN_PROGRESSION_OCCURRENCES
 		)
 		.sort((a, b) => b.coveragePercent - a.coveragePercent);
 }
@@ -136,6 +139,83 @@ export function getSectionMatches(
 	if (!parsed) return [];
 	return matchProgressionIgnoringBass(section.parsedProgression, parsed);
 }
+
+export const computeCoveredPositionsBySection = (
+	song: GroupedSong,
+	chordProgression: string
+): number[][] =>
+	song.sections.map((section) => {
+		const matches = getSectionMatches(section, chordProgression);
+		const sectionLength = section.parsedProgression.length;
+		return Array.from({ length: sectionLength }, (_, pos) => pos).filter(
+			(pos) =>
+				matches.some((match) => isPositionInMatch(pos, match, sectionLength))
+		);
+	});
+
+export type ChordAnnotation = {
+	chordProgression: string;
+	palette: ChordHighlightPalette;
+};
+
+export type ColoredHighlightSegment = {
+	palette: ChordHighlightPalette | null;
+	indices: number[];
+};
+
+type PositionGroup = { annotationIndex: number; matchIndex: number } | null;
+
+const isContinuingGroup = (prev: PositionGroup, curr: PositionGroup): boolean =>
+	(prev === null && curr === null) ||
+	(prev !== null &&
+		curr !== null &&
+		prev.annotationIndex === curr.annotationIndex &&
+		prev.matchIndex === curr.matchIndex);
+
+export const buildColoredHighlightSegments = (
+	section: SongSection,
+	annotations: ChordAnnotation[]
+): ColoredHighlightSegment[] => {
+	const sectionLength = section.parsedProgression.length;
+
+	const matchesByAnnotation = annotations.map(({ chordProgression }) =>
+		getSectionMatches(section, chordProgression)
+	);
+
+	const positionGroups: PositionGroup[] = Array.from(
+		{ length: sectionLength },
+		(_, position) => {
+			for (
+				let annotationIndex = 0;
+				annotationIndex < annotations.length;
+				annotationIndex++
+			) {
+				const matchIndex = matchesByAnnotation[annotationIndex].findIndex(
+					(match) => isPositionInMatch(position, match, sectionLength)
+				);
+				if (matchIndex !== -1) return { annotationIndex, matchIndex };
+			}
+			return null;
+		}
+	);
+
+	const segments: ColoredHighlightSegment[] = [];
+	for (let position = 0; position < sectionLength; position++) {
+		const group = positionGroups[position];
+		const prevGroup = position > 0 ? positionGroups[position - 1] : undefined;
+
+		if (prevGroup !== undefined && isContinuingGroup(prevGroup, group)) {
+			segments[segments.length - 1].indices.push(position);
+		} else {
+			segments.push({
+				palette:
+					group !== null ? annotations[group.annotationIndex].palette : null,
+				indices: [position]
+			});
+		}
+	}
+	return segments;
+};
 
 export function buildChordHighlightSegments(
 	section: SongSection,

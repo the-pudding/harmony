@@ -1,22 +1,30 @@
 <script lang="ts">
 	import type { GroupedSong } from "../progressions/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
+	import type { ChordHighlightPalette } from "./progressionColors.js";
+	import { CORE_PROGRESSION_PALETTE, DEFAULT_PROGRESSION_PALETTE } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
 
 	const BUTTON_COLUMN_WIDTH_PERCENT = 22;
 	const CHORDS_COLUMN_WIDTH_PERCENT = 100 - BUTTON_COLUMN_WIDTH_PERCENT;
 	const COLUMN_GAP_REM = 1.25;
-	const CORE_PROGRESSION_BORDER_COLOR = "rgba(134, 239, 172, 0.85)";
 
 	type Props = {
 		matches: ProgressionWithMatchStats[];
 		song: GroupedSong;
 		activeProgression: string | null;
 		onselect: (chordProgression: string) => void;
+		chordHighlightPalette?: ChordHighlightPalette;
 	};
 
-	let { matches, song, activeProgression, onselect }: Props = $props();
+	let {
+		matches,
+		song,
+		activeProgression,
+		onselect,
+		chordHighlightPalette = DEFAULT_PROGRESSION_PALETTE
+	}: Props = $props();
 </script>
 
 <table
@@ -37,12 +45,16 @@
 					<ProgressionMatchButton
 						{match}
 						active={activeProgression === match.chordProgression}
-						borderColor={match.name ? CORE_PROGRESSION_BORDER_COLOR : undefined}
+						borderColor={match.name ? CORE_PROGRESSION_PALETTE.border : undefined}
 						{onselect}
 					/>
 				</td>
 				<td class="match-chords-cell">
-					<SongChordsDisplay song={song} chordProgression={match.chordProgression} />
+					<SongChordsDisplay
+						{song}
+						chordProgression={match.chordProgression}
+						highlightPalette={chordHighlightPalette}
+					/>
 				</td>
 			</tr>
 		{/each}

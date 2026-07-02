@@ -1,20 +1,35 @@
 <script lang="ts">
 	import type { GroupedSong } from "../progressions/songBrowser.js";
-	import {
-		buildChordHighlightSegments,
-		getSectionMatches
-	} from "./progressionMatchAnalysis.js";
+	import type { ChordAnnotation } from "./progressionMatchAnalysis.js";
+	import type { ChordHighlightPalette } from "./progressionColors.js";
+	import { buildColoredHighlightSegments } from "./progressionMatchAnalysis.js";
+	import { DEFAULT_PROGRESSION_PALETTE } from "./progressionColors.js";
 
 	type Props = {
 		song: GroupedSong;
 		chordProgression?: string | null;
+		highlightPalette?: ChordHighlightPalette;
+		annotations?: ChordAnnotation[];
 		showMetadata?: boolean;
 	};
 
-	let { song, chordProgression = null, showMetadata = false }: Props = $props();
+	let {
+		song,
+		chordProgression = null,
+		highlightPalette,
+		annotations,
+		showMetadata = false
+	}: Props = $props();
 
 	const SECTION_LABEL_CHORD_GAP_PX = 2;
 	const SECTION_LABEL_RIGHT_PADDING_PX = 6;
+
+	const effectiveAnnotations = $derived(
+		annotations ??
+			(chordProgression
+				? [{ chordProgression, palette: highlightPalette ?? DEFAULT_PROGRESSION_PALETTE }]
+				: [])
+	);
 </script>
 
 <div
@@ -35,8 +50,7 @@
 	{/if}
 	<div class="sections">
 		{#each song.sections as section, sectionIndex (sectionIndex)}
-			{@const matches = getSectionMatches(section, chordProgression)}
-			{@const segments = buildChordHighlightSegments(section, matches)}
+			{@const segments = buildColoredHighlightSegments(section, effectiveAnnotations)}
 			{#if section.label}
 				<span class="section-label">{section.label}</span>
 			{:else}
@@ -44,8 +58,12 @@
 			{/if}
 			<div class="chords">
 				{#each segments as segment, segmentIndex (segmentIndex)}
-					{#if segment.matchIndex !== -1}
-						<span class="match-group">
+					{#if segment.palette !== null}
+						<span
+							class="match-group"
+							style:--highlight-fill={segment.palette.fill}
+							style:--highlight-border={segment.palette.border}
+						>
 							{#each segment.indices as position, positionIndex (position)}
 								<span class="chord highlighted">
 									{section.romanTokens[position]}
@@ -138,7 +156,7 @@
 	}
 
 	.chord.highlighted {
-		background: #4338ca;
+		background: var(--highlight-fill);
 		color: #fff;
 		border-radius: 0.25rem;
 		font-weight: 500;
@@ -148,7 +166,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.125rem;
-		border: 1px solid rgba(99, 102, 241, 0.55);
+		border: 1px solid var(--highlight-border);
 		border-radius: 0.375rem;
 		padding: 0.2rem;
 	}
