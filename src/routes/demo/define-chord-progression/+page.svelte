@@ -215,7 +215,7 @@
 	<title>harmony — define 'chord progression'</title>
 	<link
 		rel="stylesheet"
-		href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
+		href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
 	/>
 </svelte:head>
 
@@ -356,10 +356,11 @@
 	}
 
 	.section-heading {
-		font-size: 0.875rem;
-		font-weight: 500;
-		margin: 0;
-		color: #a1a1aa;
+		font-size: 1rem;
+		font-weight: 700;
+		margin-top: 2rem;
+		margin-bottom: 0rem;
+		color: white;
 	}
 
 	.dataset-status {
