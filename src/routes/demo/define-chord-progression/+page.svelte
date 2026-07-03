@@ -12,6 +12,7 @@
 	import ProgressionMatchTable from "./components/ProgressionMatchTable.svelte";
 	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
 	import { computeProgressionMatches, MIN_PROGRESSION_OCCURRENCES } from "./progression-matching-logic/progressionMatchAnalysis.js";
+	import { MIN_PROGRESSION_LENGTH } from "./progression-matching-logic/progressionConstraints.js";
 	import type { ChordAnnotation } from "./progression-matching-logic/progressionMatchAnalysis.js";
 	import { computeRecurringProgressionMatches } from "./progression-matching-logic/recurringProgressionAnalysis.js";
 	import { selectCoreProgressions } from "./progression-matching-logic/coreProgressionSelection.js";
@@ -316,8 +317,8 @@
 			{#if selectedSong}
 				<section class="step-section">
 					<h2 class="section-heading">
-						1. Find all possible chord progressions of 3 chords or more that appear at
-						least twice in the song
+					1. Find all possible chord progressions of {MIN_PROGRESSION_LENGTH} chords or more that appear at
+					least twice in the song
 					</h2>
 
 					{#if recurringProgressionMatches.length > 0}
@@ -329,7 +330,7 @@
 						/>
 					{:else}
 						<p class="list-meta">
-							No recurring progressions of 3+ chords matched this song.
+							No recurring progressions of {MIN_PROGRESSION_LENGTH}+ chords matched this song.
 						</p>
 					{/if}
 				</section>
