@@ -8,6 +8,10 @@ import {
 	MIN_PROGRESSION_OCCURRENCES,
 	type ProgressionWithMatchStats
 } from "./progressionMatchAnalysis.js";
+import {
+	MIN_PROGRESSION_LENGTH,
+	isSelfRepeatingProgression
+} from "./progressionConstraints.js";
 
 const coreProgressionNameByChordProgression = new Map(
 	coreProgressions.map((progression) => [
@@ -15,8 +19,6 @@ const coreProgressionNameByChordProgression = new Map(
 		progression.name
 	])
 );
-
-const MIN_PROGRESSION_LENGTH = 3;
 
 const contiguousWindowsFromTokens = (tokens: string[]): string[][] =>
 	tokens.flatMap((_, start) =>
@@ -80,6 +82,7 @@ export function computeRecurringProgressionMatches(
 	return uniqueWindows
 		.map((romanTokens) => toRecurringMatch(song, romanTokens))
 		.filter((match): match is ProgressionWithMatchStats => match !== null)
+		.filter((match) => !isSelfRepeatingProgression(match.chordProgression))
 		.sort(
 			(a, b) =>
 				b.coveragePercent - a.coveragePercent ||

@@ -14,6 +14,7 @@ import type {
 	SubProgressionMatch
 } from "../../../../chord-processing/types.js";
 import { matchHighlightForCoreProgression } from "../components/progressionColors.js";
+import { isSelfRepeatingProgression } from "./progressionConstraints.js";
 
 export const MIN_PROGRESSION_OCCURRENCES = 2;
 
@@ -119,6 +120,9 @@ export function computeProgressionMatches(
 	if (totalChords === 0) return [];
 
 	return coreProgressions
+		.filter(
+			(progression) => !isSelfRepeatingProgression(progression.chordProgression)
+		)
 		.map((progression): CoreProgressionWithStats | null => {
 			const parsed = romanTokensToParsedProgression(
 				progression.chordProgression.split("-")

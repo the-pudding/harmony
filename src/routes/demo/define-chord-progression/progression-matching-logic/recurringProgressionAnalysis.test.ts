@@ -7,8 +7,7 @@ import type {
 } from "../../progressions/songBrowser.js";
 import { computeRecurringProgressionMatches } from "./recurringProgressionAnalysis.js";
 import { MIN_PROGRESSION_OCCURRENCES } from "./progressionMatchAnalysis.js";
-
-const MIN_PROGRESSION_LENGTH = 3;
+import { MIN_PROGRESSION_LENGTH } from "./progressionConstraints.js";
 
 const makeSection = (romanTokens: string[]): SongSection => ({
 	label: null,
@@ -224,5 +223,47 @@ describe("computeRecurringProgressionMatches — ignores slash bass", () => {
 
 	it("treats a slash chord and its root-position form as the same chord", () => {
 		expect(progressions(mixedDominantSong)).toContain("I-V-vi");
+	});
+});
+
+describe("computeRecurringProgressionMatches — no self-repeating progressions", () => {
+	it("never returns a progression that is its own unit repeated consecutively", () => {
+		const matches = computeRecurringProgressionMatches(imYours);
+		for (const match of matches) {
+			const tokens = match.chordProgression.split("-");
+			for (
+				let blockLength = MIN_PROGRESSION_LENGTH;
+				blockLength <= Math.floor(tokens.length / 2);
+				blockLength++
+			) {
+				for (let start = 0; start + 2 * blockLength <= tokens.length; start++) {
+					const block = tokens.slice(start, start + blockLength).join("-");
+					const next = tokens
+						.slice(start + blockLength, start + 2 * blockLength)
+						.join("-");
+					expect(block).not.toBe(next);
+				}
+			}
+		}
+	});
+
+	it("the-weeknd pattern: surfaces I-vi-iii-V but not the doubled I-vi-iii-V-I-vi-iii-V", () => {
+		const saveYourTears = makeSong([
+			["I", "vi", "iii", "V", "I", "vi", "iii", "V"],
+			["I", "vi", "iii", "V", "I", "vi", "iii", "V"]
+		]);
+		const found = progressions(saveYourTears);
+		expect(found).toContain("I-vi-iii-V");
+		expect(found).not.toContain("I-vi-iii-V-I-vi-iii-V");
+	});
+
+	it("IV-V vamp: surfaces IV-V-IV-V but not the 8-chord IV-V-IV-V-IV-V-IV-V", () => {
+		const vampSong = makeSong([
+			["IV", "V", "IV", "V", "IV", "V", "IV", "V"],
+			["IV", "V", "IV", "V", "IV", "V", "IV", "V"]
+		]);
+		const found = progressions(vampSong);
+		expect(found).toContain("IV-V-IV-V");
+		expect(found).not.toContain("IV-V-IV-V-IV-V-IV-V");
 	});
 });
