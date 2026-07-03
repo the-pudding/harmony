@@ -320,6 +320,9 @@
 					1. Find all possible chord progressions of {MIN_PROGRESSION_LENGTH} chords or more that appear at
 					least twice in the song
 					</h2>
+					<p class="section-description">
+						A valid progression cannot consist of consecutive {MIN_PROGRESSION_LENGTH}+ progressions repeating more than once. ie this prevents, say, matching "ii V I ii V I" instead of two separate "ii V I" progressions.
+					</p>
 
 					{#if recurringProgressionMatches.length > 0}
 						<ProgressionMatchTable
@@ -360,9 +363,11 @@
 
 				<section class="step-section">
 					<h2 class="section-heading">
-						3. Select any non-overlapping non-core-progressions longest to shortest,
-						until there are no options left.
+						3. Try to fill in gaps with non-core-progressions, trying them out greedily from longest to shortest
 					</h2>
+					<p class="section-description">
+						Basically, "Ok, we're plumb out of core progressions, so what best fills the gaps?"
+					</p>
 
 					{#if recurringSelection.selected.length > 0}
 						<ProgressionMatchTable
