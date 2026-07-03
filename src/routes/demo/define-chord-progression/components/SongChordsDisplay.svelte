@@ -11,6 +11,7 @@
 		song: GroupedSong;
 		chordProgression?: string | null;
 		highlightPalette?: ChordHighlightPalette;
+		isStrictSubset?: boolean;
 		annotations?: ChordAnnotation[];
 		showMetadata?: boolean;
 	};
@@ -19,6 +20,7 @@
 		song,
 		chordProgression = null,
 		highlightPalette,
+		isStrictSubset = false,
 		annotations,
 		showMetadata = false
 	}: Props = $props();
@@ -29,7 +31,7 @@
 	const effectiveAnnotations = $derived(
 		annotations ??
 			(chordProgression
-				? [{ chordProgression, palette: highlightPalette ?? DEFAULT_PROGRESSION_PALETTE }]
+				? [{ chordProgression, palette: highlightPalette ?? DEFAULT_PROGRESSION_PALETTE, isStrictSubset }]
 				: [])
 	);
 	const youtubeSearchUrl = $derived(
@@ -85,6 +87,7 @@
 					{#if segment.palette !== null}
 						<span
 							class="match-group"
+							class:dashed={segment.isStrictSubset}
 							style:--highlight-fill={segment.palette.fill}
 							style:--highlight-border={segment.palette.border}
 						>
@@ -213,6 +216,10 @@
 		border: 1px solid var(--highlight-border);
 		border-radius: 0.375rem;
 		padding: 0.2rem;
+	}
+
+	.match-group.dashed {
+		border-style: dashed;
 	}
 
 	.dot {

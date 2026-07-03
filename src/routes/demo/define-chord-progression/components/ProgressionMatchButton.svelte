@@ -6,9 +6,10 @@
 		active: boolean;
 		onselect: (chordProgression: string) => void;
 		borderColor?: string;
+		dashed?: boolean;
 	};
 
-	let { match, active, onselect, borderColor }: Props = $props();
+	let { match, active, onselect, borderColor, dashed = false }: Props = $props();
 
 	const COVERAGE_PERCENT_MAX = 100;
 	const coveragePercentRounded = $derived(Math.round(match.coveragePercent));
@@ -21,6 +22,7 @@
 	class="prog-btn"
 	class:active
 	class:custom-border={borderColor !== undefined}
+	class:dashed
 	style:--prog-btn-border-color={borderColor}
 	onclick={() => onselect(match.chordProgression)}
 	title={match.chordProgression}
@@ -70,6 +72,10 @@
 
 	.prog-btn.custom-border:hover:not(.active) {
 		border-color: color-mix(in srgb, var(--prog-btn-border-color) 70%, white);
+	}
+
+	.prog-btn.dashed:not(.active) {
+		border-style: dashed;
 	}
 
 	.prog-btn.active {

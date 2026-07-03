@@ -1,8 +1,10 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../progressions/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import { matchOutline } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import ProgressionMatchScatterPlot from "./ProgressionMatchScatterPlot.svelte";
+	import ProgressionMatchSummary from "./ProgressionMatchSummary.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
 	import { BUTTON_COLUMN_WIDTH_PERCENT, CHORDS_COLUMN_WIDTH_PERCENT, COLUMN_GAP_REM } from "./progressionTableLayout.js";
 
@@ -20,10 +22,23 @@
 
 	let showAll = $state(false);
 
-	const total = $derived(matches.length);
-	const hasMore = $derived(total > MAX_COLLAPSED_RESULTS);
+	const total = $derived(allMatches.length);
+	const highlighted = $derived(matches.length);
+	const coreCount = $derived(allMatches.filter((m) => m.isCoreProgression).length);
+	const nonCoreCount = $derived(total - coreCount);
+	const strictSubsetCount = $derived(allMatches.filter((m) => m.isStrictSubset).length);
+
+	const hasMore = $derived(highlighted > MAX_COLLAPSED_RESULTS);
 	const visibleMatches = $derived(showAll ? matches : matches.slice(0, MAX_COLLAPSED_RESULTS));
 </script>
+
+<ProgressionMatchSummary
+	{total}
+	{highlighted}
+	{coreCount}
+	{nonCoreCount}
+	{strictSubsetCount}
+/>
 
 <ProgressionMatchScatterPlot {allMatches} highlightedMatches={matches} {activeProgression} {onselect} />
 
@@ -37,6 +52,7 @@
 	</colgroup>
 	<tbody>
 		{#each visibleMatches as match (match.chordProgression)}
+			{@const outline = matchOutline(match)}
 			<tr
 				class="match-row"
 				class:match-row-active={activeProgression === match.chordProgression}
@@ -45,9 +61,8 @@
 					<ProgressionMatchButton
 						{match}
 						active={activeProgression === match.chordProgression}
-						borderColor={match.isCoreProgression
-							? match.highlightPalette.border
-							: undefined}
+						borderColor={outline.color}
+						dashed={outline.dashed}
 						{onselect}
 					/>
 				</td>
@@ -56,6 +71,7 @@
 						{song}
 						chordProgression={match.chordProgression}
 						highlightPalette={match.highlightPalette}
+						isStrictSubset={match.isStrictSubset}
 					/>
 				</td>
 			</tr>
@@ -66,9 +82,9 @@
 {#if hasMore}
 	<button class="show-more-btn" onclick={() => { showAll = !showAll; }}>
 		{#if showAll}
-			Collapse to {MAX_COLLAPSED_RESULTS} / {total}
+			Collapse to {MAX_COLLAPSED_RESULTS} / {highlighted}
 		{:else}
-			{MAX_COLLAPSED_RESULTS} / {total} results. Click to show all {total}
+			{MAX_COLLAPSED_RESULTS} / {highlighted} results. Click to show all {highlighted}
 		{/if}
 	</button>
 {/if}

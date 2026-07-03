@@ -30,6 +30,7 @@ export type ProgressionWithMatchStats = {
 	matchCount: number;
 	coveragePercent: number;
 	isCoreProgression: boolean;
+	isStrictSubset?: boolean;
 	highlightPalette: ChordHighlightPalette;
 };
 
@@ -171,10 +172,12 @@ export const computeCoveredPositionsBySection = (
 export type ChordAnnotation = {
 	chordProgression: string;
 	palette: ChordHighlightPalette;
+	isStrictSubset?: boolean;
 };
 
 export type ColoredHighlightSegment = {
 	palette: ChordHighlightPalette | null;
+	isStrictSubset: boolean;
 	indices: number[];
 };
 
@@ -222,9 +225,11 @@ export const buildColoredHighlightSegments = (
 		if (prevGroup !== undefined && isContinuingGroup(prevGroup, group)) {
 			segments[segments.length - 1].indices.push(position);
 		} else {
+			const annotation =
+				group !== null ? annotations[group.annotationIndex] : null;
 			segments.push({
-				palette:
-					group !== null ? annotations[group.annotationIndex].palette : null,
+				palette: annotation?.palette ?? null,
+				isStrictSubset: annotation?.isStrictSubset ?? false,
 				indices: [position]
 			});
 		}

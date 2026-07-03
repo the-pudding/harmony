@@ -1,4 +1,7 @@
-import type { ChordHighlightPalette } from "../progression-matching-logic/progressionMatchAnalysis.js";
+import type {
+	ChordHighlightPalette,
+	ProgressionWithMatchStats
+} from "../progression-matching-logic/progressionMatchAnalysis.js";
 
 export type { ChordHighlightPalette };
 
@@ -22,4 +25,22 @@ export const matchHighlightForCoreProgression = (
 	highlightPalette: isCoreProgression
 		? CORE_PROGRESSION_PALETTE
 		: DEFAULT_PROGRESSION_PALETTE
+});
+
+export type MatchOutline = {
+	color: string | undefined;
+	dashed: boolean;
+};
+
+export const matchOutline = (
+	match: Pick<
+		ProgressionWithMatchStats,
+		"isCoreProgression" | "isStrictSubset" | "highlightPalette"
+	>
+): MatchOutline => ({
+	dashed: !!match.isStrictSubset,
+	color:
+		match.isStrictSubset || match.isCoreProgression
+			? match.highlightPalette.border
+			: undefined
 });

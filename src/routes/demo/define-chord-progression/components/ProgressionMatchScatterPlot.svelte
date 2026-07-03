@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import { matchOutline } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 
 	type Props = {
@@ -18,10 +19,13 @@
 	const PAD_RIGHT = 16;
 	const PAD_BOTTOM = 32;
 	const PAD_LEFT = 36;
-	const POINT_RADIUS = 5;
-	const POINT_RADIUS_HOVERED = 7;
+	const POINT_RADIUS = 7;
+	const POINT_RADIUS_HOVERED = 9;
+	const POINT_RADIUS_DIM = 4;
 	const X_TICK_VALS = [0, 25, 50, 75, 100];
 	const Y_TICK_COUNT = 4;
+	const SUBSET_STROKE_WIDTH = 1.5;
+	const SUBSET_DASH_ARRAY = "3 2";
 
 	let containerWidth = $state(0);
 	let hoveredMatch = $state<ProgressionWithMatchStats | null>(null);
@@ -42,9 +46,9 @@
 
 	const DIM_COLOR = "rgb(113, 113, 122)";
 	const DIM_OPACITY = 0.5;
-	const DIM_POINT_RADIUS = 3;
 	const HIGHLIGHT_OPACITY = 1;
 	const JITTER_RANGE_PX = 8;
+	const SUBSET_STROKE_COLOR = "rgba(113, 113, 122, 0.8)";
 
 	function toOpaqueColor(color: string): string {
 		const m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
@@ -83,13 +87,13 @@
 
 <div class="scatter-wrap" bind:clientWidth={containerWidth}>
 	{#if hoveredMatch}
+		{@const outline = matchOutline(hoveredMatch)}
 		<div class="tooltip" style:left="{tooltipX}px" style:top="{tooltipY}px">
 			<ProgressionMatchButton
 				match={hoveredMatch}
 				active={activeProgression === hoveredMatch.chordProgression}
-				borderColor={hoveredMatch.isCoreProgression
-					? hoveredMatch.highlightPalette.border
-					: undefined}
+				borderColor={outline.color}
+				dashed={outline.dashed}
 				{onselect}
 			/>
 		</div>
@@ -146,7 +150,7 @@
 				transform="rotate(-90, 8, {PAD_TOP + innerHeight / 2})">times</text
 			>
 
-			<!-- Data points: dim first (with jitter), then highlighted on top -->
+			<!-- Dim (non-highlighted) points -->
 			{#each allMatches as match (match.chordProgression)}
 				{@const isHighlighted = highlightedKeys.has(match.chordProgression)}
 				{#if !isHighlighted}
@@ -155,20 +159,23 @@
 					<circle
 						{cx}
 						{cy}
-						r={DIM_POINT_RADIUS}
+						r={POINT_RADIUS_DIM}
 						fill={DIM_COLOR}
 						opacity={DIM_OPACITY}
+						stroke={match.isStrictSubset ? SUBSET_STROKE_COLOR : "transparent"}
+						stroke-width={match.isStrictSubset ? SUBSET_STROKE_WIDTH : 0}
+						stroke-dasharray={match.isStrictSubset ? SUBSET_DASH_ARRAY : undefined}
 						class="data-point"
 						role="graphics-symbol"
 						aria-label={pointAriaLabel(match)}
 						onmouseenter={(e) => handleMouseEnter(e, match)}
 						onmousemove={handleMouseMove}
-						onmouseleave={() => {
-							hoveredMatch = null;
-						}}
+						onmouseleave={() => { hoveredMatch = null; }}
 					/>
 				{/if}
 			{/each}
+
+			<!-- Highlighted points -->
 			{#each allMatches as match (match.chordProgression)}
 				{@const isHighlighted = highlightedKeys.has(match.chordProgression)}
 				{#if isHighlighted}
@@ -182,16 +189,15 @@
 						r={isHovered ? POINT_RADIUS_HOVERED : POINT_RADIUS}
 						fill={toOpaqueColor(match.highlightPalette.border)}
 						opacity={HIGHLIGHT_OPACITY}
-						stroke={isActive ? "rgba(255,255,255,0.7)" : "transparent"}
-						stroke-width="2"
+						stroke={isActive ? "rgba(255,255,255,0.7)" : match.isStrictSubset ? SUBSET_STROKE_COLOR : "transparent"}
+						stroke-width={isActive || match.isStrictSubset ? SUBSET_STROKE_WIDTH : 0}
+						stroke-dasharray={!isActive && match.isStrictSubset ? SUBSET_DASH_ARRAY : undefined}
 						class="data-point"
 						role="graphics-symbol"
 						aria-label={pointAriaLabel(match)}
 						onmouseenter={(e) => handleMouseEnter(e, match)}
 						onmousemove={handleMouseMove}
-						onmouseleave={() => {
-							hoveredMatch = null;
-						}}
+						onmouseleave={() => { hoveredMatch = null; }}
 					/>
 				{/if}
 			{/each}

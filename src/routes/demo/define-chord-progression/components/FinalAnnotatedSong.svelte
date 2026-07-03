@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../progressions/songBrowser.js";
 	import type { ProgressionWithMatchStats, ChordAnnotation } from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import { matchOutline } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
 	import { BUTTON_COLUMN_WIDTH_PERCENT, CHORDS_COLUMN_WIDTH_PERCENT, COLUMN_GAP_REM } from "./progressionTableLayout.js";
@@ -29,12 +30,12 @@
 >
 	<div class="buttons-column">
 		{#each sortedMatches as match (match.chordProgression)}
+			{@const outline = matchOutline(match)}
 			<ProgressionMatchButton
 				{match}
 				active={activeProgression === match.chordProgression}
-				borderColor={match.isCoreProgression
-					? match.highlightPalette.border
-					: undefined}
+				borderColor={outline.color}
+				dashed={outline.dashed}
 				{onselect}
 			/>
 		{/each}

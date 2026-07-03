@@ -18,6 +18,7 @@
 	import { selectCoreProgressions } from "./progression-matching-logic/coreProgressionSelection.js";
 	import { selectNonCoreProgressions } from "./progression-matching-logic/recurringProgressionSelection.js";
 	import { coveragePercent } from "./progression-matching-logic/greedyProgressionSelection.js";
+	import { findStrictSubsetKeys, applySubsetFlag } from "./progression-matching-logic/strictSubsetProgressions.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import { type GroupedSong } from "../progressions/songBrowser.js";
 	import {
@@ -127,10 +128,20 @@
 		selectedSong ? computeRecurringProgressionMatches(selectedSong) : []
 	);
 
+	const strictSubsetKeys = $derived(findStrictSubsetKeys(recurringProgressionMatches));
+
+	const flaggedRecurringMatches = $derived(
+		applySubsetFlag(recurringProgressionMatches, strictSubsetKeys)
+	);
+
 	const coreSelection = $derived(
 		selectedSong
 			? selectCoreProgressions(selectedSong, coreProgressionMatches)
 			: { selected: [], coverage: [] }
+	);
+
+	const flaggedCoreSelected = $derived(
+		applySubsetFlag(coreSelection.selected, strictSubsetKeys)
 	);
 
 	const recurringSelection = $derived(
@@ -143,6 +154,10 @@
 			: { selected: [], coverage: [] }
 	);
 
+	const flaggedRecurringSelected = $derived(
+		applySubsetFlag(recurringSelection.selected, strictSubsetKeys)
+	);
+
 	const explainedPercent = $derived(
 		selectedSong
 			? Math.round(coveragePercent(selectedSong, recurringSelection.coverage))
@@ -150,14 +165,15 @@
 	);
 
 	const finalMatches = $derived([
-		...coreSelection.selected,
-		...recurringSelection.selected
+		...flaggedCoreSelected,
+		...flaggedRecurringSelected
 	]);
 
 	const songAnnotations = $derived<ChordAnnotation[]>(
 		finalMatches.map((match) => ({
 			chordProgression: match.chordProgression,
-			palette: match.highlightPalette
+			palette: match.highlightPalette,
+			isStrictSubset: match.isStrictSubset
 		}))
 	);
 
@@ -325,10 +341,10 @@
 						A valid progression cannot consist of consecutive {MIN_PROGRESSION_LENGTH}+ progressions repeating more than once. ie this prevents, say, matching "ii V I ii V I" instead of two separate "ii V I" progressions.
 					</p>
 
-				{#if recurringProgressionMatches.length > 0}
+				{#if flaggedRecurringMatches.length > 0}
 					<ProgressionMatchTable
-						matches={recurringProgressionMatches}
-						allMatches={recurringProgressionMatches}
+						matches={flaggedRecurringMatches}
+						allMatches={flaggedRecurringMatches}
 						song={selectedSong}
 						activeProgression={pinnedProgression}
 						onselect={handleProgressionSelect}
@@ -351,10 +367,10 @@
 						random ones that might happen to be better/longer for some reason.
 					</p>
 
-				{#if coreSelection.selected.length > 0}
+				{#if flaggedCoreSelected.length > 0}
 					<ProgressionMatchTable
-						matches={coreSelection.selected}
-						allMatches={recurringProgressionMatches}
+						matches={flaggedCoreSelected}
+						allMatches={flaggedRecurringMatches}
 						song={selectedSong}
 						activeProgression={pinnedProgression}
 						onselect={handleProgressionSelect}
@@ -372,10 +388,10 @@
 						Basically, "Ok, we're plumb out of core progressions, so what best fills the gaps?"
 					</p>
 
-				{#if recurringSelection.selected.length > 0}
+				{#if flaggedRecurringSelected.length > 0}
 					<ProgressionMatchTable
-						matches={recurringSelection.selected}
-						allMatches={recurringProgressionMatches}
+						matches={flaggedRecurringSelected}
+						allMatches={flaggedRecurringMatches}
 						song={selectedSong}
 						activeProgression={pinnedProgression}
 						onselect={handleProgressionSelect}
