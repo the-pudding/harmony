@@ -11,6 +11,7 @@ import {
 import type {
 	ParsedProgressionChord,
 	ProgressionChordInput,
+	SongDataSource,
 	SongInput
 } from "../../../chord-processing/types.js";
 
@@ -27,6 +28,7 @@ export type GroupedSong = {
 	title: string;
 	artists: string[];
 	year?: number;
+	source?: SongDataSource;
 	keyLabel: string | null;
 	sections: SongSection[];
 };
@@ -102,6 +104,7 @@ export const groupSongs = (songs: SongInput[]): GroupedSong[] => {
 				title: baseTitle,
 				artists: song.artists,
 				year: song.year,
+				source: song.source,
 				keyLabel: null,
 				sections: []
 			});
