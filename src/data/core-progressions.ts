@@ -19,6 +19,11 @@ const coreProgressions: CoreProgression[] = [
 	{ name: "minor-y", chordProgression: "i-bVII-v-bVI", description: "" },
 	{ name: "axis of awesome", chordProgression: "I-V-vi-IV", description: "" },
 	{ name: "doo wop", chordProgression: "I-vi-IV-V", description: "" },
+	{
+		name: "dark doo wop (save your tears for another day)",
+		chordProgression: "I-vi-iii-V",
+		description: ""
+	},
 	// also could be thought of as a V-IV-I
 	{ name: "mixolydian vamp", chordProgression: "I-bVII-IV", description: "" },
 	{ name: "jazz changes", chordProgression: "vi-ii-V-I", description: "" },
