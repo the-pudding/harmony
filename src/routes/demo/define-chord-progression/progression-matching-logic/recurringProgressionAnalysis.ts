@@ -1,9 +1,11 @@
 import coreProgressions from "$data/core-progressions.js";
-import type { GroupedSong } from "../../progressions/songBrowser.js";
-import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
+import type {
+	GroupedSong,
+	SongSection
+} from "../../progressions/songBrowser.js";
+import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import { matchHighlightForCoreProgression } from "../components/progressionColors.js";
 import {
-	chordProgressionFromRomanTokens,
 	computeStatsForParsedProgression,
 	MIN_PROGRESSION_OCCURRENCES,
 	type ProgressionWithMatchStats
@@ -20,14 +22,31 @@ const coreProgressionNameByChordProgression = new Map(
 	])
 );
 
-const contiguousWindowsFromTokens = (tokens: string[]): string[][] =>
-	tokens.flatMap((_, start) =>
+// A candidate progression carries both its display label (roman tokens, which
+// are scale-blind) and its real, scale-aware parsed chords (used for matching).
+type CandidateWindow = {
+	romanTokens: string[];
+	parsedProgression: ParsedProgressionChord[];
+};
+
+const contiguousWindowsFromSection = (
+	section: SongSection
+): CandidateWindow[] =>
+	section.parsedProgression.flatMap((_, start) =>
 		Array.from(
 			{
-				length: Math.max(0, tokens.length - start - MIN_PROGRESSION_LENGTH + 1)
+				length: Math.max(
+					0,
+					section.parsedProgression.length - start - MIN_PROGRESSION_LENGTH + 1
+				)
 			},
-			(_, lengthOffset) =>
-				tokens.slice(start, start + MIN_PROGRESSION_LENGTH + lengthOffset)
+			(_, lengthOffset) => {
+				const end = start + MIN_PROGRESSION_LENGTH + lengthOffset;
+				return {
+					romanTokens: section.romanTokens.slice(start, end),
+					parsedProgression: section.parsedProgression.slice(start, end)
+				};
+			}
 		)
 	);
 
@@ -43,13 +62,17 @@ const uniqueBy = <T>(items: T[], keyOf: (item: T) => string): T[] => {
 
 const toRecurringMatch = (
 	song: GroupedSong,
-	romanTokens: string[]
+	{ romanTokens, parsedProgression }: CandidateWindow
 ): ProgressionWithMatchStats | null => {
-	const parsed = romanTokensToParsedProgression(romanTokens);
-	const chordProgression = chordProgressionFromRomanTokens(romanTokens);
-	if (!parsed || !chordProgression) return null;
+	if (
+		romanTokens.length !== parsedProgression.length ||
+		parsedProgression.length === 0
+	) {
+		return null;
+	}
+	const chordProgression = romanTokens.join("-");
 
-	const stats = computeStatsForParsedProgression(song, parsed);
+	const stats = computeStatsForParsedProgression(song, parsedProgression);
 	if (stats.matchCount < MIN_PROGRESSION_OCCURRENCES) return null;
 
 	const name =
@@ -59,6 +82,7 @@ const toRecurringMatch = (
 	return {
 		name,
 		chordProgression,
+		parsedProgression,
 		description: "",
 		matchCount: stats.matchCount,
 		coveragePercent: stats.coveragePercent,
@@ -73,14 +97,14 @@ export function computeRecurringProgressionMatches(
 	song: GroupedSong
 ): ProgressionWithMatchStats[] {
 	const candidateWindows = song.sections.flatMap((section) =>
-		contiguousWindowsFromTokens(section.romanTokens)
+		contiguousWindowsFromSection(section)
 	);
-	const uniqueWindows = uniqueBy(candidateWindows, (tokens) =>
-		tokens.join("-")
+	const uniqueWindows = uniqueBy(candidateWindows, (window) =>
+		window.romanTokens.join("-")
 	);
 
 	return uniqueWindows
-		.map((romanTokens) => toRecurringMatch(song, romanTokens))
+		.map((window) => toRecurringMatch(song, window))
 		.filter((match): match is ProgressionWithMatchStats => match !== null)
 		.filter((match) => !isSelfRepeatingProgression(match.chordProgression))
 		.sort(

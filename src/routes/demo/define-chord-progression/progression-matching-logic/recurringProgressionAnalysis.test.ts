@@ -55,6 +55,38 @@ const DOMINANT = chord(7, "major");
 const DOMINANT_SLASH_THIRD = chord(7, "major", 11);
 const SUBMEDIANT = chord(9, "minor");
 
+const NOTES_PER_OCTAVE = 12;
+const ROMAN_BASES = ["I", "II", "III", "IV", "V", "VI", "VII"];
+const SCALE_INTERVALS: Record<string, number[]> = {
+	major: [0, 2, 4, 5, 7, 9, 11],
+	harmonicMinor: [0, 2, 3, 5, 7, 8, 11],
+	phrygianDominant: [0, 1, 4, 5, 7, 8, 10]
+};
+
+// Build a section the way build-songs.js does: real, scale-aware pitch classes,
+// while the roman tokens stay scale-blind (no accidentals). This reproduces the
+// production data shape that the major-only makeSection helper cannot express.
+const makeModalSection = (
+	romanTokens: string[],
+	scale: keyof typeof SCALE_INTERVALS,
+	tonicPitchClass = 0
+): SongSection => {
+	const parsedProgression = romanTokens.map((token) => {
+		const degree = ROMAN_BASES.indexOf(token.toUpperCase()) + 1;
+		const rootPitchClass =
+			(tonicPitchClass + SCALE_INTERVALS[scale][degree - 1]) % NOTES_PER_OCTAVE;
+		const suffix = token === token.toUpperCase() ? "major" : "minor";
+		return chord(rootPitchClass, suffix);
+	});
+	return {
+		label: null,
+		chords: romanTokens,
+		romanTokens,
+		parsedProgression,
+		keyLabel: null
+	};
+};
+
 const progressions = (song: GroupedSong): string[] =>
 	computeRecurringProgressionMatches(song).map((match) => match.chordProgression);
 
@@ -265,5 +297,47 @@ describe("computeRecurringProgressionMatches — no self-repeating progressions"
 		const found = progressions(vampSong);
 		expect(found).toContain("IV-V-IV-V");
 		expect(found).not.toContain("IV-V-IV-V-IV-V-IV-V");
+	});
+});
+
+// "Montero (Call Me By Your Name)" — Lil Nas X. The V/VI sections are in
+// harmonic minor and the I/ii chorus is phrygian dominant, so every window
+// contains a modal degree (harmonic-minor b6 / phrygian-dominant b2) whose real
+// interval a major-scale roman parse gets wrong. Matching on the roman strings
+// therefore found zero progressions; matching on the real parsed chords fixes it.
+const montero: GroupedSong = {
+	songKey: "test",
+	title: "Montero (Call Me By Your Name)",
+	artists: ["Lil Nas X"],
+	keyLabel: null,
+	sections: [
+		makeModalSection(["V", "VI", "V", "VI"], "harmonicMinor"),
+		makeModalSection(["V", "VI", "V", "VI", "V"], "harmonicMinor"),
+		makeModalSection(
+			["V", "VI", "V", "VI", "V", "VI", "V", "VI", "V"],
+			"harmonicMinor"
+		),
+		makeModalSection(
+			["I", "ii", "I", "ii", "I", "ii", "I", "ii", "I"],
+			"phrygianDominant"
+		)
+	]
+};
+
+describe("computeRecurringProgressionMatches — modal songs (Montero)", () => {
+	it("does not silently return zero matches for a modal song", () => {
+		expect(computeRecurringProgressionMatches(montero).length).toBeGreaterThan(0);
+	});
+
+	it("surfaces the harmonic-minor V-VI vamp", () => {
+		const found = progressions(montero);
+		expect(found).toContain("V-VI-V-VI");
+		expect(found).toContain("V-VI-V");
+	});
+
+	it("surfaces the phrygian-dominant I-ii vamp", () => {
+		const found = progressions(montero);
+		expect(found).toContain("I-ii-I-ii");
+		expect(found).toContain("I-ii-I");
 	});
 });

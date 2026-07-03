@@ -26,6 +26,7 @@ export type ChordHighlightPalette = {
 export type ProgressionWithMatchStats = {
 	name: string;
 	chordProgression: string;
+	parsedProgression: ParsedProgressionChord[];
 	description: string;
 	matchCount: number;
 	coveragePercent: number;
@@ -102,14 +103,6 @@ export const computeStatsForParsedProgression = (
 	};
 };
 
-export const chordProgressionFromRomanTokens = (
-	romanTokens: string[]
-): string | null => {
-	const parsed = romanTokensToParsedProgression(romanTokens);
-	if (!parsed) return null;
-	return romanTokens.join("-");
-};
-
 export function computeProgressionMatches(
 	song: GroupedSong,
 	coreProgressions: CoreProgression[]
@@ -134,6 +127,7 @@ export function computeProgressionMatches(
 
 			return {
 				...progression,
+				parsedProgression: parsed,
 				matchCount: stats.matchCount,
 				coveragePercent: stats.coveragePercent,
 				...matchHighlightForCoreProgression(true)
@@ -148,20 +142,21 @@ export function computeProgressionMatches(
 
 export function getSectionMatches(
 	section: SongSection,
-	chordProgression: string | null
+	searchProgression: ParsedProgressionChord[] | null
 ): SubProgressionMatch[] {
-	if (!chordProgression) return [];
-	const parsed = romanTokensToParsedProgression(chordProgression.split("-"));
-	if (!parsed) return [];
-	return matchProgressionIgnoringBass(section.parsedProgression, parsed);
+	if (!searchProgression || searchProgression.length === 0) return [];
+	return matchProgressionIgnoringBass(
+		section.parsedProgression,
+		searchProgression
+	);
 }
 
 export const computeCoveredPositionsBySection = (
 	song: GroupedSong,
-	chordProgression: string
+	searchProgression: ParsedProgressionChord[]
 ): number[][] =>
 	song.sections.map((section) => {
-		const matches = getSectionMatches(section, chordProgression);
+		const matches = getSectionMatches(section, searchProgression);
 		const sectionLength = section.parsedProgression.length;
 		return Array.from({ length: sectionLength }, (_, pos) => pos).filter(
 			(pos) =>
@@ -170,7 +165,7 @@ export const computeCoveredPositionsBySection = (
 	});
 
 export type ChordAnnotation = {
-	chordProgression: string;
+	parsedProgression: ParsedProgressionChord[];
 	palette: ChordHighlightPalette;
 	isStrictSubset?: boolean;
 };
@@ -196,8 +191,8 @@ export const buildColoredHighlightSegments = (
 ): ColoredHighlightSegment[] => {
 	const sectionLength = section.parsedProgression.length;
 
-	const matchesByAnnotation = annotations.map(({ chordProgression }) =>
-		getSectionMatches(section, chordProgression)
+	const matchesByAnnotation = annotations.map(({ parsedProgression }) =>
+		getSectionMatches(section, parsedProgression)
 	);
 
 	const positionGroups: PositionGroup[] = Array.from(

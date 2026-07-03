@@ -56,7 +56,7 @@ export const greedilySelectProgressions = (
 	const coverageMap = new Map(
 		candidates.map((candidate) => [
 			candidate.chordProgression,
-			computeCoveredPositionsBySection(song, candidate.chordProgression)
+			computeCoveredPositionsBySection(song, candidate.parsedProgression)
 		])
 	);
 

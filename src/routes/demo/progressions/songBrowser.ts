@@ -36,6 +36,22 @@ export type GroupedSong = {
 const MAJOR_TONIC_ROMAN = "I";
 const MINOR_TONIC_ROMAN = "i";
 
+const humanizeScale = (scale: string): string =>
+	scale.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+
+// Prefer the section's real, scale-aware key from the source data (e.g.
+// "G# harmonic minor"); fall back to guessing a major/minor tonic from the
+// roman tokens only when the source omitted the key or scale.
+export const sectionKeyLabel = (
+	key: string | undefined,
+	scale: string | undefined,
+	romanTokens: string[],
+	parsedProgression: ParsedProgressionChord[]
+): string | null => {
+	if (key && scale) return `${key} ${humanizeScale(scale)}`;
+	return inferKeyLabel(romanTokens, parsedProgression);
+};
+
 export const inferKeyLabel = (
 	romanTokens: string[],
 	parsedProgression: ParsedProgressionChord[]
@@ -116,17 +132,31 @@ export const groupSongs = (songs: SongInput[]): GroupedSong[] => {
 			chords: parsedProgression.map((c) => c.display),
 			romanTokens,
 			parsedProgression,
-			keyLabel: inferKeyLabel(romanTokens, parsedProgression)
+			keyLabel: sectionKeyLabel(
+				song.key,
+				song.scale,
+				romanTokens,
+				parsedProgression
+			)
 		});
 	}
 	return [...map.values()].map((song) => {
 		const sections = [...song.sections].sort(
 			(a, b) => sectionRank(a.label) - sectionRank(b.label)
 		);
+		const distinctKeyLabels = [
+			...new Set(
+				sections
+					.map((section) => section.keyLabel)
+					.filter((label): label is string => label !== null)
+			)
+		];
 		const keyLabel =
-			sections
-				.map((section) => section.keyLabel)
-				.find((label) => label !== null) ?? null;
+			distinctKeyLabels.length === 0
+				? null
+				: distinctKeyLabels.length === 1
+					? distinctKeyLabels[0]
+					: `[${distinctKeyLabels.join(", ")}]`;
 		return { ...song, sections, keyLabel };
 	});
 };

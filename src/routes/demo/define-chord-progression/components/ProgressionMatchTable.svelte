@@ -69,7 +69,7 @@
 				<td class="match-chords-cell">
 					<SongChordsDisplay
 						{song}
-						chordProgression={match.chordProgression}
+						parsedProgression={match.parsedProgression}
 						highlightPalette={match.highlightPalette}
 						isStrictSubset={match.isStrictSubset}
 					/>

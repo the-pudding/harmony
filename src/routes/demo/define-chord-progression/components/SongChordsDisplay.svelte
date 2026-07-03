@@ -4,12 +4,13 @@
 	import type { GroupedSong } from "../../progressions/songBrowser.js";
 	import type { ChordAnnotation } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import type { ChordHighlightPalette } from "./progressionColors.js";
+	import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 	import { buildColoredHighlightSegments } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import { DEFAULT_PROGRESSION_PALETTE } from "./progressionColors.js";
 
 	type Props = {
 		song: GroupedSong;
-		chordProgression?: string | null;
+		parsedProgression?: ParsedProgressionChord[] | null;
 		highlightPalette?: ChordHighlightPalette;
 		isStrictSubset?: boolean;
 		annotations?: ChordAnnotation[];
@@ -18,7 +19,7 @@
 
 	let {
 		song,
-		chordProgression = null,
+		parsedProgression = null,
 		highlightPalette,
 		isStrictSubset = false,
 		annotations,
@@ -30,9 +31,19 @@
 
 	const effectiveAnnotations = $derived(
 		annotations ??
-			(chordProgression
-				? [{ chordProgression, palette: highlightPalette ?? DEFAULT_PROGRESSION_PALETTE, isStrictSubset }]
+			(parsedProgression
+				? [{ parsedProgression, palette: highlightPalette ?? DEFAULT_PROGRESSION_PALETTE, isStrictSubset }]
 				: [])
+	);
+
+	// Per-section key labels only appear when the key actually varies across
+	// sections; uniform-key songs show it once in the metadata line instead.
+	const showPerSectionKeys = $derived(
+		new Set(
+			song.sections
+				.map((section) => section.keyLabel)
+				.filter((label) => label !== null)
+		).size > 1
 	);
 	const youtubeSearchUrl = $derived(
 		buildYouTubeSearchUrl({
@@ -77,8 +88,15 @@
 	<div class="sections">
 		{#each song.sections as section, sectionIndex (sectionIndex)}
 			{@const segments = buildColoredHighlightSegments(section, effectiveAnnotations)}
-			{#if section.label}
-				<span class="section-label">{section.label}</span>
+			{#if section.label || (showPerSectionKeys && section.keyLabel)}
+				<div class="section-label-cell">
+					{#if section.label}
+						<span class="section-label">{section.label}</span>
+					{/if}
+					{#if showPerSectionKeys && section.keyLabel}
+						<span class="section-key">{section.keyLabel}</span>
+					{/if}
+				</div>
 			{:else}
 				<span class="section-label section-label-empty" aria-hidden="true"></span>
 			{/if}
@@ -173,12 +191,27 @@
 		align-items: baseline;
 	}
 
+	.section-label-cell {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+	}
+
 	.section-label {
 		font-size: 0.5625rem;
 		font-weight: 500;
 		text-transform: lowercase;
 		letter-spacing: 0.02em;
 		color: #52525b;
+		white-space: nowrap;
+		text-align: right;
+		padding-right: var(--section-label-right-padding);
+	}
+
+	.section-key {
+		font-size: 0.5rem;
+		letter-spacing: 0.02em;
+		color: #3f3f46;
 		white-space: nowrap;
 		text-align: right;
 		padding-right: var(--section-label-right-padding);

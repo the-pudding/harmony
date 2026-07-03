@@ -75,7 +75,12 @@ const pitchClassToNoteName = (pitchClass) =>
 	NOTE_NAMES[((pitchClass % NOTES_PER_OCTAVE) + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE];
 
 const degreeToPitchClass = (degree, key, scale) => {
-	const intervals = SCALE_INTERVALS[scale] ?? SCALE_INTERVALS.major;
+	const intervals = SCALE_INTERVALS[scale];
+	if (!intervals) {
+		throw new Error(
+			`Unknown scale "${scale}"; add it to SCALE_INTERVALS instead of silently defaulting to major`
+		);
+	}
 	const offset = intervals[degree - 1];
 	if (offset === undefined) return null;
 	return (tonicToPitchClass(key) + offset) % NOTES_PER_OCTAVE;
@@ -323,6 +328,8 @@ const sectionToSongInput = (
 			: {}),
 		progression,
 		romanTokens,
+		key: section.key,
+		scale: section.scale,
 		...abstractProgression
 	};
 };

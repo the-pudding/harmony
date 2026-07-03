@@ -13,6 +13,7 @@ const makeFakeMatch = (
 ): ProgressionWithMatchStats => ({
 	name: "",
 	chordProgression,
+	parsedProgression: [],
 	description: "",
 	matchCount: 2,
 	coveragePercent,

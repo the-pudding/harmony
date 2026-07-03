@@ -171,7 +171,7 @@
 
 	const songAnnotations = $derived<ChordAnnotation[]>(
 		finalMatches.map((match) => ({
-			chordProgression: match.chordProgression,
+			parsedProgression: match.parsedProgression,
 			palette: match.highlightPalette,
 			isStrictSubset: match.isStrictSubset
 		}))
