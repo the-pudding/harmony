@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../progressions/songBrowser.js";
 	import type { ProgressionWithMatchStats, ChordAnnotation } from "../progression-matching-logic/progressionMatchAnalysis.js";
-	import { CORE_PROGRESSION_PALETTE } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
 	import { BUTTON_COLUMN_WIDTH_PERCENT, CHORDS_COLUMN_WIDTH_PERCENT, COLUMN_GAP_REM } from "./progressionTableLayout.js";
@@ -33,7 +32,9 @@
 			<ProgressionMatchButton
 				{match}
 				active={activeProgression === match.chordProgression}
-				borderColor={match.name ? CORE_PROGRESSION_PALETTE.border : undefined}
+				borderColor={match.isCoreProgression
+					? match.highlightPalette.border
+					: undefined}
 				{onselect}
 			/>
 		{/each}

@@ -13,6 +13,7 @@ import type {
 	ParsedProgressionChord,
 	SubProgressionMatch
 } from "../../../../chord-processing/types.js";
+import { matchHighlightForCoreProgression } from "../components/progressionColors.js";
 
 export const MIN_PROGRESSION_OCCURRENCES = 2;
 
@@ -27,6 +28,8 @@ export type ProgressionWithMatchStats = {
 	description: string;
 	matchCount: number;
 	coveragePercent: number;
+	isCoreProgression: boolean;
+	highlightPalette: ChordHighlightPalette;
 };
 
 export type CoreProgressionWithStats = ProgressionWithMatchStats;
@@ -127,7 +130,8 @@ export function computeProgressionMatches(
 			return {
 				...progression,
 				matchCount: stats.matchCount,
-				coveragePercent: stats.coveragePercent
+				coveragePercent: stats.coveragePercent,
+				...matchHighlightForCoreProgression(true)
 			};
 		})
 		.filter(

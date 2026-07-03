@@ -1,8 +1,6 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../progressions/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
-	import type { ChordHighlightPalette } from "./progressionColors.js";
-	import { CORE_PROGRESSION_PALETTE, DEFAULT_PROGRESSION_PALETTE } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
 	import { BUTTON_COLUMN_WIDTH_PERCENT, CHORDS_COLUMN_WIDTH_PERCENT, COLUMN_GAP_REM } from "./progressionTableLayout.js";
@@ -12,16 +10,9 @@
 		song: GroupedSong;
 		activeProgression: string | null;
 		onselect: (chordProgression: string) => void;
-		chordHighlightPalette?: ChordHighlightPalette;
 	};
 
-	let {
-		matches,
-		song,
-		activeProgression,
-		onselect,
-		chordHighlightPalette = DEFAULT_PROGRESSION_PALETTE
-	}: Props = $props();
+	let { matches, song, activeProgression, onselect }: Props = $props();
 </script>
 
 <table
@@ -42,7 +33,9 @@
 					<ProgressionMatchButton
 						{match}
 						active={activeProgression === match.chordProgression}
-						borderColor={match.name ? CORE_PROGRESSION_PALETTE.border : undefined}
+						borderColor={match.isCoreProgression
+							? match.highlightPalette.border
+							: undefined}
 						{onselect}
 					/>
 				</td>
@@ -50,7 +43,7 @@
 					<SongChordsDisplay
 						{song}
 						chordProgression={match.chordProgression}
-						highlightPalette={chordHighlightPalette}
+						highlightPalette={match.highlightPalette}
 					/>
 				</td>
 			</tr>

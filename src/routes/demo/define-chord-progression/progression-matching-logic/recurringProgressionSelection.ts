@@ -11,6 +11,8 @@ export const selectNonCoreProgressions = (
 	recurringMatches: ProgressionWithMatchStats[],
 	initialCoverage: SectionCoverage
 ): SelectionResult => {
-	const nonCoreMatches = recurringMatches.filter((match) => match.name === "");
+	const nonCoreMatches = recurringMatches.filter(
+		(match) => !match.isCoreProgression
+	);
 	return greedilySelectProgressions(song, nonCoreMatches, initialCoverage);
 };

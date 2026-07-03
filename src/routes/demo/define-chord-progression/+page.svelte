@@ -17,7 +17,6 @@
 	import { selectCoreProgressions } from "./progression-matching-logic/coreProgressionSelection.js";
 	import { selectNonCoreProgressions } from "./progression-matching-logic/recurringProgressionSelection.js";
 	import { coveragePercent } from "./progression-matching-logic/greedyProgressionSelection.js";
-	import { CORE_PROGRESSION_PALETTE, DEFAULT_PROGRESSION_PALETTE } from "./components/progressionColors.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import { type GroupedSong } from "../progressions/songBrowser.js";
 	import {
@@ -153,16 +152,12 @@
 		...recurringSelection.selected
 	]);
 
-	const songAnnotations = $derived<ChordAnnotation[]>([
-		...coreSelection.selected.map((match) => ({
+	const songAnnotations = $derived<ChordAnnotation[]>(
+		finalMatches.map((match) => ({
 			chordProgression: match.chordProgression,
-			palette: CORE_PROGRESSION_PALETTE
-		})),
-		...recurringSelection.selected.map((match) => ({
-			chordProgression: match.chordProgression,
-			palette: DEFAULT_PROGRESSION_PALETTE
+			palette: match.highlightPalette
 		}))
-	]);
+	);
 
 	const isSongKeyKnown = (songKey: string): boolean =>
 		isGroupedSongKeyKnown(searchableSongs, songKey);
