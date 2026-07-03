@@ -117,6 +117,7 @@
 	);
 
 	const EXPLAINED_THRESHOLD_PERCENT = 80;
+	const GREEDY_SORT_LABEL = "highest song coverage first (length of progression as tiebreaker)";
 
 	const coreProgressionMatches = $derived(
 		selectedSong ? computeProgressionMatches(selectedSong, coreProgressions) : []
@@ -341,9 +342,9 @@
 
 				<section class="step-section">
 				<h2 class="section-heading">
-					2. Selection: greedily select any (non-overlapping) core-progressions that appear
-					at least {MIN_PROGRESSION_OCCURRENCES} times, from longest to shortest
-				</h2>
+				2. Selection: greedily select any (non-overlapping) core-progressions that appear
+				at least {MIN_PROGRESSION_OCCURRENCES} times, by {GREEDY_SORT_LABEL}
+			</h2>
 					<p class="section-description">
 						This incentivises us to really hone and expand the coverage of
 						core-progressions, and also makes it so we maximize classified chords over
@@ -364,9 +365,9 @@
 				</section>
 
 				<section class="step-section">
-					<h2 class="section-heading">
-						3. Try to fill in gaps with non-core-progressions, trying them out greedily from longest to shortest
-					</h2>
+				<h2 class="section-heading">
+					3. Try to fill in gaps with non-core-progressions, trying them out greedily by {GREEDY_SORT_LABEL}
+				</h2>
 					<p class="section-description">
 						Basically, "Ok, we're plumb out of core progressions, so what best fills the gaps?"
 					</p>

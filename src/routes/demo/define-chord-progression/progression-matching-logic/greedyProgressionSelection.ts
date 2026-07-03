@@ -67,13 +67,13 @@ export const greedilySelectProgressions = (
 		);
 
 	const sorted = [...candidates].sort((a, b) => {
-		const lengthDiff =
-			progressionChordCount(b.chordProgression) -
-			progressionChordCount(a.chordProgression);
-		if (lengthDiff !== 0) return lengthDiff;
-		return (
+		const coverageDiff =
 			totalMatchedChords(b.chordProgression) -
-			totalMatchedChords(a.chordProgression)
+			totalMatchedChords(a.chordProgression);
+		if (coverageDiff !== 0) return coverageDiff;
+		return (
+			progressionChordCount(b.chordProgression) -
+			progressionChordCount(a.chordProgression)
 		);
 	});
 
