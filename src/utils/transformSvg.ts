@@ -1,6 +1,6 @@
-import { linear, type EasingFunction } from "svelte/easing";
+import { linear } from "svelte/easing";
 import { interpolateTransformSvg } from "d3";
-import type { TransitionConfig } from "svelte/transition";
+import type { EasingFunction, TransitionConfig } from "svelte/transition";
 
 type TransformSvgParams = {
 	relative?: boolean;

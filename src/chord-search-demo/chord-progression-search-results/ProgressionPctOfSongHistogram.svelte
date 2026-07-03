@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { bin, max, scaleLinear, tickStep } from "d3";
+	import { bin, scaleLinear, tickStep } from "d3";
 	import { chordSearchDemoStore } from "../chordSearchDemoStore.svelte.js";
 	import {
 		PCT_OF_SONG_DOMAIN,
@@ -72,7 +72,13 @@
 	});
 
 	const maxBinCount = $derived(
-		Math.max(max(histogramBins, (bucket) => bucket.length) ?? 0, PERCENT_BASELINE_MAX)
+		Math.max(
+			histogramBins.reduce(
+				(peak, bucket) => Math.max(peak, bucket.length),
+				PERCENT_BASELINE_MAX
+			),
+			PERCENT_BASELINE_MAX
+		)
 	);
 
 	const xScale = $derived.by(() =>

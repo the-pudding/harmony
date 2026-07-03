@@ -74,6 +74,11 @@
 		tooltipX = e.clientX - rect.left;
 		tooltipY = e.clientY - rect.top;
 	}
+
+	const pointAriaLabel = (match: ProgressionWithMatchStats): string => {
+		const stats = `${match.matchCount} times, ${Math.round(match.coveragePercent)}% coverage`;
+		return match.name ? `${match.name}: ${match.chordProgression}, ${stats}` : `${match.chordProgression}, ${stats}`;
+	};
 </script>
 
 <div class="scatter-wrap" bind:clientWidth={containerWidth}>
@@ -154,6 +159,8 @@
 						fill={DIM_COLOR}
 						opacity={DIM_OPACITY}
 						class="data-point"
+						role="graphics-symbol"
+						aria-label={pointAriaLabel(match)}
 						onmouseenter={(e) => handleMouseEnter(e, match)}
 						onmousemove={handleMouseMove}
 						onmouseleave={() => {
@@ -178,6 +185,8 @@
 						stroke={isActive ? "rgba(255,255,255,0.7)" : "transparent"}
 						stroke-width="2"
 						class="data-point"
+						role="graphics-symbol"
+						aria-label={pointAriaLabel(match)}
 						onmouseenter={(e) => handleMouseEnter(e, match)}
 						onmousemove={handleMouseMove}
 						onmouseleave={() => {

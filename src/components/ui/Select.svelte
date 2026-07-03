@@ -3,10 +3,16 @@
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
 	import Check from "@lucide/svelte/icons/check";
 
+	type SelectItem = {
+		value: string;
+		label: string;
+		group?: string;
+	};
+
 	let {
 		id = useId(),
 		value = $bindable(),
-		items = [], // Array of { value, label, group }
+		items = [] as SelectItem[],
 		placeholder = "Select an option",
 		multiple = false,
 		disabled = false,
@@ -15,13 +21,13 @@
 	} = $props();
 
 	const groups = $derived.by(() => {
-		const g = {};
+		const groupedItems: Record<string, SelectItem[]> = {};
 		items.forEach((item) => {
 			const groupName = item.group || "default";
-			if (!g[groupName]) g[groupName] = [];
-			g[groupName].push(item);
+			if (!groupedItems[groupName]) groupedItems[groupName] = [];
+			groupedItems[groupName].push(item);
 		});
-		return g;
+		return groupedItems;
 	});
 
 	const groupNames = $derived(Object.keys(groups));
@@ -39,39 +45,38 @@
 	});
 </script>
 
-<Select.Root
-	{id}
-	bind:value
-	{multiple}
-	{disabled}
-	type={multiple ? "multiple" : "single"}
-	class="bits-select {className}"
-	{...restProps}
->
-	<Select.Trigger {id}>
-		<span data-select-value>{selectedLabel}</span>
-		<ChevronDown data-select-icon />
-	</Select.Trigger>
-	<Select.Content sideOffset={4}>
-		{#each groupNames as groupName}
-			{#if groupName !== "default"}
-				<Select.Group>
-					<Select.GroupHeading>{groupName}</Select.GroupHeading>
+<div class="bits-select {className ?? ''}">
+	<Select.Root
+		bind:value
+		{disabled}
+		type={multiple ? "multiple" : "single"}
+		{...restProps}
+	>
+		<Select.Trigger {id}>
+			<span data-select-value>{selectedLabel}</span>
+			<ChevronDown data-select-icon />
+		</Select.Trigger>
+		<Select.Content sideOffset={4}>
+			{#each groupNames as groupName}
+				{#if groupName !== "default"}
+					<Select.Group>
+						<Select.GroupHeading>{groupName}</Select.GroupHeading>
+						{#each groups[groupName] as item}
+							<Select.Item value={item.value} label={item.label}>
+								{item.label}
+								<span data-select-item-indicator><Check /></span>
+							</Select.Item>
+						{/each}
+					</Select.Group>
+				{:else}
 					{#each groups[groupName] as item}
 						<Select.Item value={item.value} label={item.label}>
 							{item.label}
 							<span data-select-item-indicator><Check /></span>
 						</Select.Item>
 					{/each}
-				</Select.Group>
-			{:else}
-				{#each groups[groupName] as item}
-					<Select.Item value={item.value} label={item.label}>
-						{item.label}
-						<span data-select-item-indicator><Check /></span>
-					</Select.Item>
-				{/each}
-			{/if}
-		{/each}
-	</Select.Content>
-</Select.Root>
+				{/if}
+			{/each}
+		</Select.Content>
+	</Select.Root>
+</div>

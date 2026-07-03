@@ -102,12 +102,15 @@ export const romanTokensToPrecomputedAbstract = (
 	const parsed = tokens.map(parseRomanToken);
 	if (parsed.some((entry) => entry === null)) return null;
 
-	const suffixes = parsed.map(
+	const validParsed = parsed.filter(
+		(entry): entry is ParsedToken => entry !== null
+	);
+	const suffixes = validParsed.map(
 		({ quality }) => ROMAN_QUALITY_TO_SUFFIX[quality] ?? null
 	);
 	if (suffixes.some((suffix) => suffix === null)) return null;
 
-	const pitchClasses = parsed.map((entry) => pitchClassFromEntry(entry!));
+	const pitchClasses = validParsed.map((entry) => pitchClassFromEntry(entry));
 	const deltas = pitchClasses
 		.slice(1)
 		.map((pc, index) => (pc - pitchClasses[index] + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE);

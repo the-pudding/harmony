@@ -6,7 +6,7 @@
 	import copy from "$data/copy.json";
 	import version from "$utils/version";
 
-	let { data } = $props();
+	let {} = $props();
 
 	version();
 
@@ -21,7 +21,6 @@
 	const url = "https://pudding.cool";
 	const keywords = "";
 	setContext("copy", copy);
-	setContext("data", data);
 </script>
 
 <Meta {title} {description} {url} {preloadFont} {keywords} />
