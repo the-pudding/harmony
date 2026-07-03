@@ -3,12 +3,15 @@
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 
 	type Props = {
-		matches: ProgressionWithMatchStats[];
+		allMatches: ProgressionWithMatchStats[];
+		highlightedMatches: ProgressionWithMatchStats[];
 		activeProgression: string | null;
 		onselect: (chordProgression: string) => void;
 	};
 
-	let { matches, activeProgression, onselect }: Props = $props();
+	let { allMatches, highlightedMatches, activeProgression, onselect }: Props = $props();
+
+	const highlightedKeys = $derived(new Set(highlightedMatches.map((m) => m.chordProgression)));
 
 	const CHART_HEIGHT = 160;
 	const PAD_TOP = 12;
@@ -27,7 +30,7 @@
 
 	const innerWidth = $derived(containerWidth - PAD_LEFT - PAD_RIGHT);
 	const innerHeight = $derived(CHART_HEIGHT - PAD_TOP - PAD_BOTTOM);
-	const maxMatchCount = $derived(Math.max(...matches.map((m) => m.matchCount), 1));
+	const maxMatchCount = $derived(Math.max(...allMatches.map((m) => m.matchCount), 1));
 
 	const yTickVals = $derived.by(() => {
 		const step = Math.max(1, Math.ceil(maxMatchCount / Y_TICK_COUNT));
@@ -36,6 +39,24 @@
 		if (vals[vals.length - 1] !== maxMatchCount) vals.push(maxMatchCount);
 		return [...new Set(vals)];
 	});
+
+	const DIM_COLOR = "rgb(113, 113, 122)";
+	const DIM_OPACITY = 0.5;
+	const DIM_POINT_RADIUS = 3;
+	const HIGHLIGHT_OPACITY = 1;
+	const JITTER_RANGE_PX = 8;
+
+	function toOpaqueColor(color: string): string {
+		const m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+		return m ? `rgb(${m[1]}, ${m[2]}, ${m[3]})` : color;
+	}
+
+	function stableJitter(seed: string, axis: string): number {
+		let h = 5381;
+		const s = seed + axis;
+		for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) ^ s.charCodeAt(i)) | 0;
+		return ((h >>> 0) / 0xffffffff - 0.5) * JITTER_RANGE_PX;
+	}
 
 	function handleMouseEnter(e: MouseEvent, match: ProgressionWithMatchStats) {
 		hoveredMatch = match;
@@ -120,26 +141,50 @@
 				transform="rotate(-90, 8, {PAD_TOP + innerHeight / 2})">times</text
 			>
 
-			<!-- Data points -->
-			{#each matches as match (match.chordProgression)}
-				{@const cx = PAD_LEFT + (match.coveragePercent / 100) * innerWidth}
-				{@const cy = PAD_TOP + innerHeight - (match.matchCount / maxMatchCount) * innerHeight}
-				{@const isHovered = hoveredMatch?.chordProgression === match.chordProgression}
-				{@const isActive = activeProgression === match.chordProgression}
-				<circle
-					{cx}
-					{cy}
-					r={isHovered ? POINT_RADIUS_HOVERED : POINT_RADIUS}
-					fill={match.highlightPalette.border}
-					stroke={isActive ? "rgba(255,255,255,0.7)" : "transparent"}
-					stroke-width="2"
-					class="data-point"
-					onmouseenter={(e) => handleMouseEnter(e, match)}
-					onmousemove={handleMouseMove}
-					onmouseleave={() => {
-						hoveredMatch = null;
-					}}
-				/>
+			<!-- Data points: dim first (with jitter), then highlighted on top -->
+			{#each allMatches as match (match.chordProgression)}
+				{@const isHighlighted = highlightedKeys.has(match.chordProgression)}
+				{#if !isHighlighted}
+					{@const cx = PAD_LEFT + (match.coveragePercent / 100) * innerWidth + stableJitter(match.chordProgression, 'x')}
+					{@const cy = PAD_TOP + innerHeight - (match.matchCount / maxMatchCount) * innerHeight + stableJitter(match.chordProgression, 'y')}
+					<circle
+						{cx}
+						{cy}
+						r={DIM_POINT_RADIUS}
+						fill={DIM_COLOR}
+						opacity={DIM_OPACITY}
+						class="data-point"
+						onmouseenter={(e) => handleMouseEnter(e, match)}
+						onmousemove={handleMouseMove}
+						onmouseleave={() => {
+							hoveredMatch = null;
+						}}
+					/>
+				{/if}
+			{/each}
+			{#each allMatches as match (match.chordProgression)}
+				{@const isHighlighted = highlightedKeys.has(match.chordProgression)}
+				{#if isHighlighted}
+					{@const cx = PAD_LEFT + (match.coveragePercent / 100) * innerWidth}
+					{@const cy = PAD_TOP + innerHeight - (match.matchCount / maxMatchCount) * innerHeight}
+					{@const isHovered = hoveredMatch?.chordProgression === match.chordProgression}
+					{@const isActive = activeProgression === match.chordProgression}
+					<circle
+						{cx}
+						{cy}
+						r={isHovered ? POINT_RADIUS_HOVERED : POINT_RADIUS}
+						fill={toOpaqueColor(match.highlightPalette.border)}
+						opacity={HIGHLIGHT_OPACITY}
+						stroke={isActive ? "rgba(255,255,255,0.7)" : "transparent"}
+						stroke-width="2"
+						class="data-point"
+						onmouseenter={(e) => handleMouseEnter(e, match)}
+						onmousemove={handleMouseMove}
+						onmouseleave={() => {
+							hoveredMatch = null;
+						}}
+					/>
+				{/if}
 			{/each}
 		</svg>
 	{/if}

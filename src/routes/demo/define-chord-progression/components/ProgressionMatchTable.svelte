@@ -10,12 +10,13 @@
 
 	type Props = {
 		matches: ProgressionWithMatchStats[];
+		allMatches: ProgressionWithMatchStats[];
 		song: GroupedSong;
 		activeProgression: string | null;
 		onselect: (chordProgression: string) => void;
 	};
 
-	let { matches, song, activeProgression, onselect }: Props = $props();
+	let { matches, allMatches, song, activeProgression, onselect }: Props = $props();
 
 	let showAll = $state(false);
 
@@ -24,7 +25,7 @@
 	const visibleMatches = $derived(showAll ? matches : matches.slice(0, MAX_COLLAPSED_RESULTS));
 </script>
 
-<ProgressionMatchScatterPlot {matches} {activeProgression} {onselect} />
+<ProgressionMatchScatterPlot {allMatches} highlightedMatches={matches} {activeProgression} {onselect} />
 
 <table
 	class="match-table"

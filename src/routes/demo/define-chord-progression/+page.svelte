@@ -324,13 +324,14 @@
 						A valid progression cannot consist of consecutive {MIN_PROGRESSION_LENGTH}+ progressions repeating more than once. ie this prevents, say, matching "ii V I ii V I" instead of two separate "ii V I" progressions.
 					</p>
 
-					{#if recurringProgressionMatches.length > 0}
-						<ProgressionMatchTable
-							matches={recurringProgressionMatches}
-							song={selectedSong}
-							activeProgression={pinnedProgression}
-							onselect={handleProgressionSelect}
-						/>
+				{#if recurringProgressionMatches.length > 0}
+					<ProgressionMatchTable
+						matches={recurringProgressionMatches}
+						allMatches={recurringProgressionMatches}
+						song={selectedSong}
+						activeProgression={pinnedProgression}
+						onselect={handleProgressionSelect}
+					/>
 					{:else}
 						<p class="list-meta">
 							No recurring progressions of {MIN_PROGRESSION_LENGTH}+ chords matched this song.
@@ -349,13 +350,14 @@
 						random ones that might happen to be better/longer for some reason.
 					</p>
 
-					{#if coreSelection.selected.length > 0}
-						<ProgressionMatchTable
-							matches={coreSelection.selected}
-							song={selectedSong}
-							activeProgression={pinnedProgression}
-							onselect={handleProgressionSelect}
-						/>
+				{#if coreSelection.selected.length > 0}
+					<ProgressionMatchTable
+						matches={coreSelection.selected}
+						allMatches={recurringProgressionMatches}
+						song={selectedSong}
+						activeProgression={pinnedProgression}
+						onselect={handleProgressionSelect}
+					/>
 					{:else}
 						<p class="list-meta">No core progressions matched this song.</p>
 					{/if}
@@ -369,13 +371,14 @@
 						Basically, "Ok, we're plumb out of core progressions, so what best fills the gaps?"
 					</p>
 
-					{#if recurringSelection.selected.length > 0}
-						<ProgressionMatchTable
-							matches={recurringSelection.selected}
-							song={selectedSong}
-							activeProgression={pinnedProgression}
-							onselect={handleProgressionSelect}
-						/>
+				{#if recurringSelection.selected.length > 0}
+					<ProgressionMatchTable
+						matches={recurringSelection.selected}
+						allMatches={recurringProgressionMatches}
+						song={selectedSong}
+						activeProgression={pinnedProgression}
+						onselect={handleProgressionSelect}
+					/>
 					{:else}
 						<p class="list-meta">No additional non-core progressions to add.</p>
 					{/if}
