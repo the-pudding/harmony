@@ -46,13 +46,28 @@ export const handReviewedSongs: HandReviewedSong[] = [
 	},
 	{
 		id: "drake__passionfruit",
+		technicalNotes:
+			"Technically E lydian, but I feel it's easier to read it as B major. Note that the progression starts and ends with the same IV chord. It repeats endlessly, so I just wrote it once for each section.",
 		correctedSongContents: {
 			sections: [
+				{
+					name: "Intro",
+					key: "B",
+					scale: "major",
+					// technically these chords all have major and minor sevenths and other jazzy complexity, I even think of the iv as "V/VI"
+					romanTokens: ["IV", "ii", "iii", "vi", "IV"]
+				},
 				{
 					name: "Verse",
 					key: "B",
 					scale: "major",
-					romanTokens: ["IV", "ii", "iii", "V", "IV"]
+					romanTokens: ["IV", "ii", "iii", "vi", "IV"]
+				},
+				{
+					name: "Chorus",
+					key: "B",
+					scale: "major",
+					romanTokens: ["IV", "ii", "iii", "vi", "IV"]
 				}
 			]
 		}
