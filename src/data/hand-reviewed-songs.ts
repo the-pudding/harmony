@@ -1,6 +1,6 @@
 export type CorrectedSongSection = {
 	label: string;
-	chords: string[];
+	romanTokens: string[];
 };
 
 export type CorrectedSongContents = {
@@ -23,15 +23,15 @@ export const handReviewedSongs: HandReviewedSong[] = [
 			sections: [
 				{
 					label: "Verse 1",
-					chords: ["Eb", "E", "Eb", "E", "Eb", "E", "Eb", "E"]
+					romanTokens: ["V", "bVI", "V", "bVI", "V", "bVI", "V", "bVI"]
 				},
 				{
 					label: "Pre-Chorus",
-					chords: ["Eb", "E", "Eb", "E"]
+					romanTokens: ["V", "bVI", "V", "bVI"]
 				},
 				{
 					label: "Chorus",
-					chords: ["Eb", "E", "Eb", "E", "Eb", "E", "Eb", "E"]
+					romanTokens: ["V", "bVI", "V", "bVI", "V", "bVI", "V", "bVI"]
 				}
 			]
 		}

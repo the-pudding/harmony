@@ -185,6 +185,22 @@ const isContinuingGroup = (prev: PositionGroup, curr: PositionGroup): boolean =>
 		prev.annotationIndex === curr.annotationIndex &&
 		prev.matchIndex === curr.matchIndex);
 
+const toNonOverlappingMatches = (
+	matches: SubProgressionMatch[],
+	sectionLength: number
+): SubProgressionMatch[] => {
+	const covered = new Set<number>();
+	return matches.filter(({ start, length }) => {
+		const positions = Array.from(
+			{ length },
+			(_, i) => (start + i) % sectionLength
+		);
+		if (positions.some((p) => covered.has(p))) return false;
+		positions.forEach((p) => covered.add(p));
+		return true;
+	});
+};
+
 export const buildColoredHighlightSegments = (
 	section: SongSection,
 	annotations: ChordAnnotation[]
@@ -192,7 +208,10 @@ export const buildColoredHighlightSegments = (
 	const sectionLength = section.parsedProgression.length;
 
 	const matchesByAnnotation = annotations.map(({ parsedProgression }) =>
-		getSectionMatches(section, parsedProgression)
+		toNonOverlappingMatches(
+			getSectionMatches(section, parsedProgression),
+			sectionLength
+		)
 	);
 
 	const positionGroups: PositionGroup[] = Array.from(

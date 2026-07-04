@@ -1,42 +1,20 @@
 import { parseSongTitleAndSectionLabel, resolveSongKey } from "../chord-processing/songIdentity.js";
 import type { ProgressionChordInput, SongInput } from "../chord-processing/types.js";
+import { romanTokensToParsedProgression } from "../chord-processing/romanNumerals.js";
+import { NOTE_NAMES } from "../chord-processing/chord-classifier/notes.js";
 import { handReviewedSongs } from "./hand-reviewed-songs.js";
 import type { CorrectedSongContents } from "./hand-reviewed-songs.js";
 
-const NOTE_NAME_PATTERN = /^([A-G][#b]?)/;
-
-const SHORT_SUFFIX_TO_CANONICAL: Record<string, string> = {
-	"": "major",
-	m: "minor",
-	m7: "minor7",
-	m9: "minor9",
-	mmaj7: "minor maj7",
-	maj7: "maj7",
-	maj9: "maj9",
-	"7": "7",
-	"9": "9",
-	"7sus4": "7sus4",
-	sus2: "sus2",
-	sus4: "sus4",
-	add9: "add9",
-	"6": "6",
-	"6/9": "6/9",
-	dim: "diminished",
-	dim7: "dim7",
-	m7b5: "m7b5",
-	aug: "augmented"
-};
-
-const parseChordString = (chord: string): ProgressionChordInput => {
-	const [rootAndSuffix, bassName] = chord.split("/");
-	const noteMatch = rootAndSuffix.match(NOTE_NAME_PATTERN);
-	if (!noteMatch) throw new Error(`Cannot parse chord: "${chord}"`);
-	const noteName = noteMatch[1];
-	const shortSuffix = rootAndSuffix.slice(noteName.length);
-	const suffix = SHORT_SUFFIX_TO_CANONICAL[shortSuffix];
-	if (suffix === undefined)
-		throw new Error(`Unknown chord suffix "${shortSuffix}" in "${chord}"`);
-	return bassName ? { noteName, suffix, bassNoteName: bassName } : { noteName, suffix };
+const romanTokensToProgression = (
+	tokens: string[]
+): ProgressionChordInput[] => {
+	const parsed = romanTokensToParsedProgression(tokens);
+	if (!parsed)
+		throw new Error(`Cannot parse roman tokens: ${tokens.join(", ")}`);
+	return parsed.map(({ rootPitchClass, suffix }) => ({
+		noteName: NOTE_NAMES[rootPitchClass],
+		suffix
+	}));
 };
 
 export const applyHandReviewedCorrections = (songs: SongInput[]): SongInput[] => {
@@ -82,6 +60,6 @@ export const correctedSongContentsToSongInputs = (
 		title: `${baseTitle} (${section.label})`,
 		artists,
 		year,
-		progression: section.chords.map(parseChordString),
-		romanTokens: section.chords
+		progression: romanTokensToProgression(section.romanTokens),
+		romanTokens: section.romanTokens
 	}));
