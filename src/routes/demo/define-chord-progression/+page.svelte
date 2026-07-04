@@ -368,6 +368,30 @@
 			</section>
 
 			{#if selectedSong}
+				<h3 class="walkthrough-heading">END RESULT</h3>
+
+				<section class="step-section">
+					<h2 class="section-heading">
+						Here's the final chord progressions for this song, which cover <span class="coverage-highlight">{explainedPercent}%{explainedPercent > EXPLAINED_THRESHOLD_PERCENT ? " ✅" : " 😔"}</span> of all chords. In subsequent sections, we'll break down the algorithm that derived this...
+					</h2>
+
+					{#if songAnnotations.length > 0}
+						<FinalAnnotatedSong
+							song={selectedSong}
+							matches={finalMatches}
+							annotations={songAnnotations}
+							{explainedPercent}
+							isExplained={explainedPercent > EXPLAINED_THRESHOLD_PERCENT}
+							activeProgression={pinnedProgression}
+							onselect={handleProgressionSelect}
+						/>
+					{:else}
+						<p class="list-meta">No progressions selected.</p>
+					{/if}
+				</section>
+
+				<h3 class="walkthrough-heading">WALKTHROUGH OF ALGORITHM</h3>
+
 				<section class="step-section">
 					<h2 class="section-heading">
 					1. Find all possible chord progressions of {MIN_PROGRESSION_LENGTH} chords or more that appear at
@@ -437,29 +461,6 @@
 					{/if}
 				</section>
 
-				<section class="step-section">
-					<h2 class="section-heading">
-						4. This gives us the progressions that define this song. If they explain more
-						than 80% of the song, we consider that song 'explained'{explainedPercent >
-						EXPLAINED_THRESHOLD_PERCENT
-							? " ✅"
-							: ""}
-					</h2>
-
-					{#if songAnnotations.length > 0}
-						<FinalAnnotatedSong
-							song={selectedSong}
-							matches={finalMatches}
-							annotations={songAnnotations}
-							{explainedPercent}
-							isExplained={explainedPercent > EXPLAINED_THRESHOLD_PERCENT}
-							activeProgression={pinnedProgression}
-							onselect={handleProgressionSelect}
-						/>
-					{:else}
-						<p class="list-meta">No progressions selected.</p>
-					{/if}
-				</section>
 			{/if}
 		{/if}
 	</div>
@@ -511,8 +512,8 @@
 	.section-heading {
 		font-size: 1rem;
 		font-weight: 700;
-		margin-top: 2rem;
-		margin-bottom: 0rem;
+		margin-top: 0.25rem;
+		margin-bottom: 0;
 		color: white;
 	}
 
@@ -544,6 +545,19 @@
 		color: #71717a;
 		margin: 0;
 		line-height: 1.5;
+	}
+
+	.walkthrough-heading {
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		color: #71717a;
+		margin: 2.5rem 0 0.25rem;
+	}
+
+	.coverage-highlight {
+		text-decoration: underline;
+		text-underline-offset: 3px;
 	}
 
 	.song-card {
