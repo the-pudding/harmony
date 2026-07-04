@@ -6,6 +6,7 @@ import type {
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import { matchHighlightForCoreProgression } from "../components/progressionColors.js";
 import {
+	computeCoveredPositionsBySection,
 	computeStatsForParsedProgression,
 	MIN_PROGRESSION_OCCURRENCES,
 	type ProgressionWithMatchStats
@@ -14,6 +15,7 @@ import {
 	MIN_PROGRESSION_LENGTH,
 	isSelfRepeatingProgression
 } from "./progressionConstraints.js";
+import type { SectionCoverage } from "./greedyProgressionSelection.js";
 
 const coreProgressionNameByChordProgression = new Map(
 	coreProgressions.map((progression) => [
@@ -22,33 +24,51 @@ const coreProgressionNameByChordProgression = new Map(
 	])
 );
 
-// A candidate progression carries both its display label (roman tokens, which
-// are scale-blind) and its real, scale-aware parsed chords (used for matching).
 type CandidateWindow = {
 	romanTokens: string[];
 	parsedProgression: ParsedProgressionChord[];
 };
 
-const contiguousWindowsFromSection = (
-	section: SongSection
-): CandidateWindow[] =>
-	section.parsedProgression.flatMap((_, start) =>
+const uncoveredPositionsFromCoverage = (
+	sectionLength: number,
+	coveredPositions: number[]
+): number[] => {
+	const covered = new Set(coveredPositions);
+	return Array.from({ length: sectionLength }, (_, index) => index).filter(
+		(index) => !covered.has(index)
+	);
+};
+
+const windowsTouchingPositions = (
+	section: SongSection,
+	positions: number[]
+): CandidateWindow[] => {
+	const touchSet = new Set(positions);
+	const sectionLength = section.parsedProgression.length;
+
+	return section.parsedProgression.flatMap((_, start) =>
 		Array.from(
 			{
 				length: Math.max(
 					0,
-					section.parsedProgression.length - start - MIN_PROGRESSION_LENGTH + 1
+					sectionLength - start - MIN_PROGRESSION_LENGTH + 1
 				)
 			},
 			(_, lengthOffset) => {
 				const end = start + MIN_PROGRESSION_LENGTH + lengthOffset;
+				const touchesUncovered = Array.from(
+					{ length: end - start },
+					(__, index) => start + index
+				).some((position) => touchSet.has(position));
+				if (!touchesUncovered) return null;
 				return {
 					romanTokens: section.romanTokens.slice(start, end),
 					parsedProgression: section.parsedProgression.slice(start, end)
 				};
 			}
-		)
+		).filter((window): window is CandidateWindow => window !== null)
 	);
+};
 
 const uniqueBy = <T>(items: T[], keyOf: (item: T) => string): T[] => {
 	const seen = new Set<string>();
@@ -60,7 +80,15 @@ const uniqueBy = <T>(items: T[], keyOf: (item: T) => string): T[] => {
 	});
 };
 
-const toRecurringMatch = (
+const hasOverlapWithCoverage = (
+	newPositions: SectionCoverage,
+	existing: SectionCoverage
+): boolean =>
+	newPositions.some((positions, sectionIndex) =>
+		positions.some((pos) => (existing[sectionIndex] ?? []).includes(pos))
+	);
+
+const toGapFillMatch = (
 	song: GroupedSong,
 	{ romanTokens, parsedProgression }: CandidateWindow
 ): ProgressionWithMatchStats | null => {
@@ -93,24 +121,40 @@ const toRecurringMatch = (
 const progressionLength = (match: ProgressionWithMatchStats): number =>
 	match.chordProgression.split("-").length;
 
-export function computeRecurringProgressionMatches(
-	song: GroupedSong
-): ProgressionWithMatchStats[] {
-	const candidateWindows = song.sections.flatMap((section) =>
-		contiguousWindowsFromSection(section)
-	);
+export const computeGapFillProgressionMatches = (
+	song: GroupedSong,
+	initialCoverage: SectionCoverage
+): ProgressionWithMatchStats[] => {
+	const candidateWindows = song.sections.flatMap((section, sectionIndex) => {
+		const uncovered = uncoveredPositionsFromCoverage(
+			section.parsedProgression.length,
+			initialCoverage[sectionIndex] ?? []
+		);
+		return windowsTouchingPositions(section, uncovered);
+	});
+
+	if (candidateWindows.length === 0) return [];
+
 	const uniqueWindows = uniqueBy(candidateWindows, (window) =>
 		window.romanTokens.join("-")
 	);
 
 	return uniqueWindows
-		.map((window) => toRecurringMatch(song, window))
+		.map((window) => toGapFillMatch(song, window))
 		.filter((match): match is ProgressionWithMatchStats => match !== null)
 		.filter((match) => !isSelfRepeatingProgression(match.chordProgression))
+		.filter((match) => !match.isCoreProgression)
+		.filter(
+			(match) =>
+				!hasOverlapWithCoverage(
+					computeCoveredPositionsBySection(song, match.parsedProgression),
+					initialCoverage
+				)
+		)
 		.sort(
 			(a, b) =>
 				b.coveragePercent - a.coveragePercent ||
 				progressionLength(b) - progressionLength(a) ||
 				a.chordProgression.localeCompare(b.chordProgression)
 		);
-}
+};

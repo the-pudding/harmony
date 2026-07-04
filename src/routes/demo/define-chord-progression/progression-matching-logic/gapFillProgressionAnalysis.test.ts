@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
+import coreProgressions from "$data/core-progressions.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import type {
 	GroupedSong,
 	SongSection
 } from "../../progressions/songBrowser.js";
-import { computeRecurringProgressionMatches } from "./recurringProgressionAnalysis.js";
+import { computeGapFillProgressionMatches } from "./gapFillProgressionAnalysis.js";
+import { selectFinalProgressions } from "./finalProgressionSelection.js";
+import { emptyCoverage } from "./greedyProgressionSelection.js";
 import { MIN_PROGRESSION_OCCURRENCES } from "./progressionMatchAnalysis.js";
 import { MIN_PROGRESSION_LENGTH } from "./progressionConstraints.js";
 
@@ -25,9 +28,6 @@ const makeSong = (sectionsTokens: string[][]): GroupedSong => ({
 	sections: sectionsTokens.map(makeSection)
 });
 
-// Build a section where the roman tokens intentionally disagree with the parsed
-// chords (e.g. a slash-bass V/3 collapses to the token "V"), so we can prove
-// the analysis reports the bass-aware match stats rather than raw token counts.
 const makeSectionWithParsed = (
 	romanTokens: string[],
 	parsedProgression: ParsedProgressionChord[]
@@ -63,9 +63,6 @@ const SCALE_INTERVALS: Record<string, number[]> = {
 	phrygianDominant: [0, 1, 4, 5, 7, 8, 10]
 };
 
-// Build a section the way build-songs.js does: real, scale-aware pitch classes,
-// while the roman tokens stay scale-blind (no accidentals). This reproduces the
-// production data shape that the major-only makeSection helper cannot express.
 const makeModalSection = (
 	romanTokens: string[],
 	scale: keyof typeof SCALE_INTERVALS,
@@ -87,48 +84,42 @@ const makeModalSection = (
 	};
 };
 
-const progressions = (song: GroupedSong): string[] =>
-	computeRecurringProgressionMatches(song).map((match) => match.chordProgression);
+const gapProgressions = (song: GroupedSong): string[] =>
+	computeGapFillProgressionMatches(song, emptyCoverage(song)).map(
+		(match) => match.chordProgression
+	);
 
-// "I'm Yours" — Jason Mraz, in B major.
-// Roman tokens after the build pipeline collapses V/3 -> V and dedupes the
-// borrowed (IV) that repeats the plain IV.
 const imYours = makeSong([
-	// Bridge
 	["I", "V", "vi", "V", "IV", "I", "V", "vi", "V", "IV"],
-	// Verse
 	["I", "V", "vi", "IV", "I", "V", "vi", "IV"],
-	// Chorus
 	["I", "V", "vi", "IV"]
 ]);
 
-describe("computeRecurringProgressionMatches — I'm Yours", () => {
+describe("computeGapFillProgressionMatches — I'm Yours", () => {
 	it("surfaces the previously-missing I-V-vi", () => {
-		expect(progressions(imYours)).toContain("I-V-vi");
+		expect(gapProgressions(imYours)).toContain("I-V-vi");
 	});
 
 	it("still surfaces the progressions that already worked", () => {
-		const found = progressions(imYours);
+		const found = gapProgressions(imYours);
 		expect(found).toContain("V-vi-IV");
 		expect(found).toContain("vi-V-IV");
 	});
 
-	it("surfaces progressions even when they also exist in core progressions", () => {
-		// I-V-vi-IV is the "axis of awesome" core progression; it should still
-		// appear here because we now surface everything that recurs.
-		expect(progressions(imYours)).toContain("I-V-vi-IV");
+	it("excludes core progressions from gap-fill candidates", () => {
+		expect(gapProgressions(imYours)).not.toContain("I-V-vi-IV");
 	});
 
 	it("keeps sub-progressions alongside the longer progressions that contain them", () => {
-		const found = progressions(imYours);
+		const found = gapProgressions(imYours);
 		expect(found).toContain("I-V-vi");
-		expect(found).toContain("I-V-vi-IV");
+		expect(found).not.toContain("I-V-vi-IV");
 	});
 });
 
-describe("computeRecurringProgressionMatches — invariants", () => {
+describe("computeGapFillProgressionMatches — invariants", () => {
 	it("only returns progressions of at least the minimum length", () => {
-		const matches = computeRecurringProgressionMatches(imYours);
+		const matches = computeGapFillProgressionMatches(imYours, emptyCoverage(imYours));
 		for (const match of matches) {
 			expect(match.chordProgression.split("-").length).toBeGreaterThanOrEqual(
 				MIN_PROGRESSION_LENGTH
@@ -137,7 +128,7 @@ describe("computeRecurringProgressionMatches — invariants", () => {
 	});
 
 	it("only returns progressions that recur at least the minimum number of times", () => {
-		const matches = computeRecurringProgressionMatches(imYours);
+		const matches = computeGapFillProgressionMatches(imYours, emptyCoverage(imYours));
 		expect(matches.length).toBeGreaterThan(0);
 		for (const match of matches) {
 			expect(match.matchCount).toBeGreaterThanOrEqual(
@@ -147,7 +138,7 @@ describe("computeRecurringProgressionMatches — invariants", () => {
 	});
 
 	it("never returns progressions that occur 0 times or cover 0% of the song", () => {
-		const matches = computeRecurringProgressionMatches(imYours);
+		const matches = computeGapFillProgressionMatches(imYours, emptyCoverage(imYours));
 		for (const match of matches) {
 			expect(match.matchCount).toBeGreaterThan(0);
 			expect(match.coveragePercent).toBeGreaterThan(0);
@@ -155,29 +146,29 @@ describe("computeRecurringProgressionMatches — invariants", () => {
 	});
 
 	it("returns each distinct progression at most once", () => {
-		const found = progressions(imYours);
+		const found = gapProgressions(imYours);
 		expect(new Set(found).size).toBe(found.length);
 	});
 
-	it("only returns progressions that parse into valid chords", () => {
-		const matches = computeRecurringProgressionMatches(imYours);
+	it("only returns non-core progressions", () => {
+		const matches = computeGapFillProgressionMatches(imYours, emptyCoverage(imYours));
 		for (const match of matches) {
-			expect(
-				romanTokensToParsedProgression(match.chordProgression.split("-"))
-			).not.toBeNull();
+			expect(match.isCoreProgression).toBe(false);
 		}
 	});
 });
 
-describe("computeRecurringProgressionMatches — recurrence detection", () => {
+describe("computeGapFillProgressionMatches — recurrence detection", () => {
 	it("surfaces a progression that appears exactly twice", () => {
 		const song = makeSong([["I", "IV", "V", "I", "IV", "V"]]);
-		expect(progressions(song)).toContain("I-IV-V");
+		expect(gapProgressions(song)).toContain("I-IV-V");
 	});
 
 	it("does not surface a progression that appears only once", () => {
 		const song = makeSong([["I", "IV", "V", "vi", "ii", "iii"]]);
-		expect(computeRecurringProgressionMatches(song)).toHaveLength(0);
+		expect(computeGapFillProgressionMatches(song, emptyCoverage(song))).toHaveLength(
+			0
+		);
 	});
 
 	it("counts occurrences across separate sections", () => {
@@ -185,35 +176,36 @@ describe("computeRecurringProgressionMatches — recurrence detection", () => {
 			["I", "vi", "IV"],
 			["ii", "I", "vi", "IV"]
 		]);
-		expect(progressions(song)).toContain("I-vi-IV");
+		expect(gapProgressions(song)).toContain("I-vi-IV");
 	});
 
 	it("counts overlapping occurrences within a section", () => {
-		// "I-V-I" occurs at index 0 and index 2 (overlapping).
 		const song = makeSong([["I", "V", "I", "V", "I"]]);
-		expect(progressions(song)).toContain("I-V-I");
+		expect(gapProgressions(song)).toContain("I-V-I");
 	});
 
 	it("ignores progressions shorter than the minimum length", () => {
 		const song = makeSong([["I", "V", "I", "V"]]);
-		// "I-V" recurs but is too short; nothing of length >= 3 recurs.
-		expect(computeRecurringProgressionMatches(song)).toHaveLength(0);
+		expect(computeGapFillProgressionMatches(song, emptyCoverage(song))).toHaveLength(
+			0
+		);
 	});
 
 	it("returns nothing for a song with no repeating structure", () => {
 		const song = makeSong([["I", "ii", "iii", "IV", "V", "vi"]]);
-		expect(computeRecurringProgressionMatches(song)).toHaveLength(0);
+		expect(computeGapFillProgressionMatches(song, emptyCoverage(song))).toHaveLength(
+			0
+		);
 	});
 
 	it("surfaces long recurring progressions, not just the minimum length", () => {
 		const song = makeSong([["I", "V", "vi", "IV", "I", "V", "vi", "IV"]]);
-		expect(progressions(song)).toContain("I-V-vi-IV");
+		expect(gapProgressions(song)).not.toContain("I-V-vi-IV");
+		expect(gapProgressions(song)).toContain("I-V-vi");
 	});
 });
 
-describe("computeRecurringProgressionMatches — ignores slash bass", () => {
-	// Both dominant chords are inverted (V/3). Ignoring the bass, "I-V-vi" is a
-	// genuine repeat and should be surfaced just like a root-position dominant.
+describe("computeGapFillProgressionMatches — ignores slash bass", () => {
 	const invertedDominantSong: GroupedSong = {
 		songKey: "test",
 		title: "Test Song",
@@ -235,11 +227,9 @@ describe("computeRecurringProgressionMatches — ignores slash bass", () => {
 	};
 
 	it("surfaces progressions whose only difference is an inverted (slash) chord", () => {
-		expect(progressions(invertedDominantSong)).toContain("I-V-vi");
+		expect(gapProgressions(invertedDominantSong)).toContain("I-V-vi");
 	});
 
-	// One dominant is inverted and one is root position. Ignoring the bass they
-	// are the same chord, so "I-V-vi" recurs twice and should be surfaced.
 	const mixedDominantSong: GroupedSong = {
 		songKey: "test",
 		title: "Test Song",
@@ -254,13 +244,13 @@ describe("computeRecurringProgressionMatches — ignores slash bass", () => {
 	};
 
 	it("treats a slash chord and its root-position form as the same chord", () => {
-		expect(progressions(mixedDominantSong)).toContain("I-V-vi");
+		expect(gapProgressions(mixedDominantSong)).toContain("I-V-vi");
 	});
 });
 
-describe("computeRecurringProgressionMatches — no self-repeating progressions", () => {
+describe("computeGapFillProgressionMatches — no self-repeating progressions", () => {
 	it("never returns a progression that is its own unit repeated consecutively", () => {
-		const matches = computeRecurringProgressionMatches(imYours);
+		const matches = computeGapFillProgressionMatches(imYours, emptyCoverage(imYours));
 		for (const match of matches) {
 			const tokens = match.chordProgression.split("-");
 			for (
@@ -279,32 +269,27 @@ describe("computeRecurringProgressionMatches — no self-repeating progressions"
 		}
 	});
 
-	it("the-weeknd pattern: surfaces I-vi-iii-V but not the doubled I-vi-iii-V-I-vi-iii-V", () => {
+	it("the-weeknd pattern: excludes core I-vi-iii-V and the doubled I-vi-iii-V-I-vi-iii-V", () => {
 		const saveYourTears = makeSong([
 			["I", "vi", "iii", "V", "I", "vi", "iii", "V"],
 			["I", "vi", "iii", "V", "I", "vi", "iii", "V"]
 		]);
-		const found = progressions(saveYourTears);
-		expect(found).toContain("I-vi-iii-V");
+		const found = gapProgressions(saveYourTears);
+		expect(found).not.toContain("I-vi-iii-V");
 		expect(found).not.toContain("I-vi-iii-V-I-vi-iii-V");
 	});
 
-	it("IV-V vamp: surfaces IV-V-IV-V but not the 8-chord IV-V-IV-V-IV-V-IV-V", () => {
+	it("IV-V vamp: excludes the core IV-V-IV-V and the doubled 8-chord form", () => {
 		const vampSong = makeSong([
 			["IV", "V", "IV", "V", "IV", "V", "IV", "V"],
 			["IV", "V", "IV", "V", "IV", "V", "IV", "V"]
 		]);
-		const found = progressions(vampSong);
-		expect(found).toContain("IV-V-IV-V");
+		const found = gapProgressions(vampSong);
+		expect(found).not.toContain("IV-V-IV-V");
 		expect(found).not.toContain("IV-V-IV-V-IV-V-IV-V");
 	});
 });
 
-// "Montero (Call Me By Your Name)" — Lil Nas X. The V/VI sections are in
-// harmonic minor and the I/ii chorus is phrygian dominant, so every window
-// contains a modal degree (harmonic-minor b6 / phrygian-dominant b2) whose real
-// interval a major-scale roman parse gets wrong. Matching on the roman strings
-// therefore found zero progressions; matching on the real parsed chords fixes it.
 const montero: GroupedSong = {
 	songKey: "test",
 	title: "Montero (Call Me By Your Name)",
@@ -324,20 +309,41 @@ const montero: GroupedSong = {
 	]
 };
 
-describe("computeRecurringProgressionMatches — modal songs (Montero)", () => {
+describe("computeGapFillProgressionMatches — modal songs (Montero)", () => {
 	it("does not silently return zero matches for a modal song", () => {
-		expect(computeRecurringProgressionMatches(montero).length).toBeGreaterThan(0);
+		expect(
+			computeGapFillProgressionMatches(montero, emptyCoverage(montero)).length
+		).toBeGreaterThan(0);
 	});
 
 	it("surfaces the harmonic-minor V-VI vamp", () => {
-		const found = progressions(montero);
+		const found = gapProgressions(montero);
 		expect(found).toContain("V-VI-V-VI");
 		expect(found).toContain("V-VI-V");
 	});
 
 	it("surfaces the phrygian-dominant I-ii vamp", () => {
-		const found = progressions(montero);
+		const found = gapProgressions(montero);
 		expect(found).toContain("I-ii-I-ii");
 		expect(found).toContain("I-ii-I");
+	});
+});
+
+describe("selectFinalProgressions", () => {
+	it("returns a positive coverage for I'm Yours", () => {
+		const result = selectFinalProgressions(imYours, coreProgressions);
+		expect(result.explainedPercent).toBeGreaterThan(0);
+		expect(result.coreSelected.length + result.gapSelected.length).toBeGreaterThan(
+			0
+		);
+	});
+
+	it("returns empty gap candidates when core progressions cover the entire song", () => {
+		const fullCoverageSong = makeSong([
+			["I", "V", "vi", "IV", "I", "V", "vi", "IV"]
+		]);
+		const result = selectFinalProgressions(fullCoverageSong, coreProgressions);
+		expect(result.gapCandidates).toHaveLength(0);
+		expect(result.gapSelected).toHaveLength(0);
 	});
 });

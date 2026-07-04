@@ -1,10 +1,6 @@
 import coreProgressionsData from "$data/core-progressions.js";
 import type { GroupedSong } from "../../progressions/songBrowser.js";
-import { computeProgressionMatches } from "../progression-matching-logic/progressionMatchAnalysis.js";
-import { computeRecurringProgressionMatches } from "../progression-matching-logic/recurringProgressionAnalysis.js";
-import { selectCoreProgressions } from "../progression-matching-logic/coreProgressionSelection.js";
-import { selectNonCoreProgressions } from "../progression-matching-logic/recurringProgressionSelection.js";
-import { coveragePercent } from "../progression-matching-logic/greedyProgressionSelection.js";
+import { selectFinalProgressions } from "../progression-matching-logic/finalProgressionSelection.js";
 
 export type SongCoverageEntry = {
 	songKey: string;
@@ -42,15 +38,12 @@ const coreProgressions = coreProgressionsData;
 let songs: GroupedSong[] = [];
 
 const computeOneSong = (song: GroupedSong): SongCoverageEntry => {
-	const coreMatches = computeProgressionMatches(song, coreProgressions);
-	const recurring = computeRecurringProgressionMatches(song);
-	const coreSelection = selectCoreProgressions(song, coreMatches);
-	const recurringSelection = selectNonCoreProgressions(song, recurring, coreSelection.coverage);
+	const selection = selectFinalProgressions(song, coreProgressions);
 	return {
 		songKey: song.songKey,
 		title: song.title,
 		artists: song.artists,
-		coveragePercent: Math.round(coveragePercent(song, recurringSelection.coverage))
+		coveragePercent: selection.explainedPercent
 	};
 };
 

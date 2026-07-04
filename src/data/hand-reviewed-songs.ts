@@ -65,7 +65,7 @@ export const handReviewedSongs: HandReviewedSong[] = [
 				},
 				{
 					label: "Bridge",
-					romanTokens: ["i", "iv", "III", "iv"] // technically this ends with a spicy b2 in the bass acting as a dominant root of the subsequent VI chord in the chorus
+					romanTokens: ["i", "iv", "III", "iv"] // technically this ends with a spicy b2 in the bass
 				},
 				{
 					label: "Outro",

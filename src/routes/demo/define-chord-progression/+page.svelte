@@ -17,13 +17,10 @@
 		terminateCoverageWorkerPool,
 		type SongCoverageEntry
 	} from "./compute-coverage-of-all-songs/index.js";
-	import { computeProgressionMatches, MIN_PROGRESSION_OCCURRENCES } from "./progression-matching-logic/progressionMatchAnalysis.js";
+	import { MIN_PROGRESSION_OCCURRENCES } from "./progression-matching-logic/progressionMatchAnalysis.js";
 	import { MIN_PROGRESSION_LENGTH } from "./progression-matching-logic/progressionConstraints.js";
 	import type { ChordAnnotation } from "./progression-matching-logic/progressionMatchAnalysis.js";
-	import { computeRecurringProgressionMatches } from "./progression-matching-logic/recurringProgressionAnalysis.js";
-	import { selectCoreProgressions } from "./progression-matching-logic/coreProgressionSelection.js";
-	import { selectNonCoreProgressions } from "./progression-matching-logic/recurringProgressionSelection.js";
-	import { coveragePercent } from "./progression-matching-logic/greedyProgressionSelection.js";
+	import { selectFinalProgressions } from "./progression-matching-logic/finalProgressionSelection.js";
 	import { findStrictSubsetKeys, applySubsetFlag } from "./progression-matching-logic/strictSubsetProgressions.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import { type GroupedSong } from "../progressions/songBrowser.js";
@@ -126,49 +123,43 @@
 
 	const GREEDY_SORT_LABEL = "highest song coverage first (length of progression as tiebreaker)";
 
-	const coreProgressionMatches = $derived(
-		selectedSong ? computeProgressionMatches(selectedSong, coreProgressions) : []
-	);
-
-	const recurringProgressionMatches = $derived(
-		selectedSong ? computeRecurringProgressionMatches(selectedSong) : []
-	);
-
-	const strictSubsetKeys = $derived(findStrictSubsetKeys(recurringProgressionMatches));
-
-	const flaggedRecurringMatches = $derived(
-		applySubsetFlag(recurringProgressionMatches, strictSubsetKeys)
-	);
-
-	const coreSelection = $derived(
+	const finalSelection = $derived(
 		selectedSong
-			? selectCoreProgressions(selectedSong, coreProgressionMatches)
-			: { selected: [], coverage: [] }
+			? selectFinalProgressions(selectedSong, coreProgressions)
+			: {
+					coreMatches: [],
+					gapCandidates: [],
+					coreSelected: [],
+					gapSelected: [],
+					coverage: [],
+					explainedPercent: 0
+				}
+	);
+
+	const strictSubsetKeys = $derived(
+		findStrictSubsetKeys([
+			...finalSelection.coreMatches,
+			...finalSelection.gapCandidates
+		])
+	);
+
+	const flaggedCoreMatches = $derived(
+		applySubsetFlag(finalSelection.coreMatches, strictSubsetKeys)
 	);
 
 	const flaggedCoreSelected = $derived(
-		applySubsetFlag(coreSelection.selected, strictSubsetKeys)
+		applySubsetFlag(finalSelection.coreSelected, strictSubsetKeys)
 	);
 
-	const recurringSelection = $derived(
-		selectedSong
-			? selectNonCoreProgressions(
-					selectedSong,
-					recurringProgressionMatches,
-					coreSelection.coverage
-				)
-			: { selected: [], coverage: [] }
+	const flaggedGapCandidates = $derived(
+		applySubsetFlag(finalSelection.gapCandidates, strictSubsetKeys)
 	);
 
-	const flaggedRecurringSelected = $derived(
-		applySubsetFlag(recurringSelection.selected, strictSubsetKeys)
+	const flaggedGapSelected = $derived(
+		applySubsetFlag(finalSelection.gapSelected, strictSubsetKeys)
 	);
 
-	const explainedPercent = $derived(
-		selectedSong
-			? Math.round(coveragePercent(selectedSong, recurringSelection.coverage))
-			: 0
-	);
+	const explainedPercent = $derived(finalSelection.explainedPercent);
 
 	let allSongCoverages = $state<SongCoverageEntry[] | null>(null);
 	let coverageRequestId = 0;
@@ -195,7 +186,7 @@
 
 	const finalMatches = $derived([
 		...flaggedCoreSelected,
-		...flaggedRecurringSelected
+		...flaggedGapSelected
 	]);
 
 	const songAnnotations = $derived<ChordAnnotation[]>(
@@ -382,32 +373,8 @@
 				<h3 class="walkthrough-heading">WALKTHROUGH OF ALGORITHM</h3>
 
 				<section class="step-section">
-					<h2 class="section-heading">
-					1. Find all possible chord progressions of {MIN_PROGRESSION_LENGTH} chords or more that appear at
-					least twice in the song
-					</h2>
-					<p class="section-description">
-						A valid progression cannot consist of consecutive {MIN_PROGRESSION_LENGTH}+ progressions repeating more than once. ie this prevents, say, matching "ii V I ii V I" instead of two separate "ii V I" progressions.
-					</p>
-
-				{#if flaggedRecurringMatches.length > 0}
-					<ProgressionMatchTable
-						matches={flaggedRecurringMatches}
-						allMatches={flaggedRecurringMatches}
-						song={selectedSong}
-						activeProgression={pinnedProgression}
-						onselect={handleProgressionSelect}
-					/>
-					{:else}
-						<p class="list-meta">
-							No recurring progressions of {MIN_PROGRESSION_LENGTH}+ chords matched this song.
-						</p>
-					{/if}
-				</section>
-
-				<section class="step-section">
 				<h2 class="section-heading">
-				2. Selection: greedily select any (non-overlapping) core-progressions that appear
+				1. Greedily select any (non-overlapping) core-progressions that appear
 				at least {MIN_PROGRESSION_OCCURRENCES} times, by {GREEDY_SORT_LABEL}
 			</h2>
 					<p class="section-description">
@@ -419,7 +386,7 @@
 				{#if flaggedCoreSelected.length > 0}
 					<ProgressionMatchTable
 						matches={flaggedCoreSelected}
-						allMatches={flaggedRecurringMatches}
+						allMatches={flaggedCoreMatches}
 						song={selectedSong}
 						activeProgression={pinnedProgression}
 						onselect={handleProgressionSelect}
@@ -431,16 +398,16 @@
 
 				<section class="step-section">
 				<h2 class="section-heading">
-					3. Try to fill in gaps with non-core-progressions, trying them out greedily by {GREEDY_SORT_LABEL}
+					2. Fill gaps with recurring progressions found among uncovered chords, trying them out greedily by {GREEDY_SORT_LABEL}
 				</h2>
 					<p class="section-description">
-						Basically, "Ok, we're plumb out of core progressions, so what best fills the gaps?"
+						Among chords not yet covered, we look for progressions of {MIN_PROGRESSION_LENGTH}+ chords that recur at least twice. A valid progression cannot consist of consecutive {MIN_PROGRESSION_LENGTH}+ progressions repeating more than once.
 					</p>
 
-				{#if flaggedRecurringSelected.length > 0}
+				{#if flaggedGapSelected.length > 0}
 					<ProgressionMatchTable
-						matches={flaggedRecurringSelected}
-						allMatches={flaggedRecurringMatches}
+						matches={flaggedGapSelected}
+						allMatches={flaggedGapCandidates}
 						song={selectedSong}
 						activeProgression={pinnedProgression}
 						onselect={handleProgressionSelect}
