@@ -4,6 +4,7 @@
 	import { matchOutline } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
+	import SongMetadataHeader from "./SongMetadataHeader.svelte";
 	import { BUTTON_COLUMN_WIDTH_PERCENT, CHORDS_COLUMN_WIDTH_PERCENT, COLUMN_GAP_REM } from "./progressionTableLayout.js";
 
 	type Props = {
@@ -24,31 +25,41 @@
 	);
 </script>
 
-<div
-	class="final-layout"
-	style="--button-col-width: {BUTTON_COLUMN_WIDTH_PERCENT}%; --chords-col-width: {CHORDS_COLUMN_WIDTH_PERCENT}%; --column-gap: {COLUMN_GAP_REM}rem;"
->
-	<div class="buttons-column">
-		{#each sortedMatches as match (match.chordProgression)}
-			{@const outline = matchOutline(match)}
-			<ProgressionMatchButton
-				{match}
-				active={activeProgression === match.chordProgression}
-				borderColor={outline.color}
-				dashed={outline.dashed}
-				{onselect}
-			/>
-		{/each}
-		<div class="total-row">
-			<span class="total-label">= <strong class="total-percent">{explainedPercent}%</strong> of the song{#if isExplained}<span class="checkmark">✅</span>{/if}</span>
+<div class="final-annotated-song">
+	<SongMetadataHeader {song} />
+	<div
+		class="final-layout"
+		style="--button-col-width: {BUTTON_COLUMN_WIDTH_PERCENT}%; --chords-col-width: {CHORDS_COLUMN_WIDTH_PERCENT}%; --column-gap: {COLUMN_GAP_REM}rem;"
+	>
+		<div class="buttons-column">
+			{#each sortedMatches as match (match.chordProgression)}
+				{@const outline = matchOutline(match)}
+				<ProgressionMatchButton
+					{match}
+					active={activeProgression === match.chordProgression}
+					borderColor={outline.color}
+					dashed={outline.dashed}
+					{onselect}
+				/>
+			{/each}
+			<div class="total-row">
+				<span class="total-label">= <strong class="total-percent">{explainedPercent}%</strong> of the song{#if isExplained}<span class="checkmark">✅</span>{/if}</span>
+			</div>
 		</div>
-	</div>
-	<div class="chords-column">
-		<SongChordsDisplay {song} {annotations} />
+		<div class="chords-column">
+			<SongChordsDisplay {song} {annotations} />
+		</div>
 	</div>
 </div>
 
 <style>
+	.final-annotated-song {
+		display: flex;
+		flex-direction: column;
+		gap: 0.625rem;
+		width: 100%;
+	}
+
 	.final-layout {
 		display: grid;
 		grid-template-columns: var(--button-col-width) var(--chords-col-width);

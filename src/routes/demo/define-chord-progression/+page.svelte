@@ -8,7 +8,6 @@
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
 	import SongSelectDropdown from "./components/SongSelectDropdown.svelte";
-	import SongChordsDisplay from "./components/SongChordsDisplay.svelte";
 	import ProgressionMatchTable from "./components/ProgressionMatchTable.svelte";
 	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
 	import SongCoverageBeeswarm from "./components/SongCoverageBeeswarm.svelte";
@@ -359,12 +358,6 @@
 						{baseList.length.toLocaleString()} songs
 					{/if}
 				</p>
-
-				{#if selectedSong}
-					<div class="song-card">
-						<SongChordsDisplay song={selectedSong} showMetadata />
-					</div>
-				{/if}
 			</section>
 
 			{#if selectedSong}
@@ -558,11 +551,5 @@
 	.coverage-highlight {
 		text-decoration: underline;
 		text-underline-offset: 3px;
-	}
-
-	.song-card {
-		padding: 0.625rem;
-		border: 1px solid #27272a;
-		border-radius: 0.25rem;
 	}
 </style>
