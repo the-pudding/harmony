@@ -18,6 +18,7 @@
 	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
 	import ChordSearchUrlSync from "./ChordSearchUrlSync.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
+	import { fetchSongInputs } from "../routes/demo/progressions/songBrowserData.js";
 	import {
 		CHORD_SEARCH_DEMO_HORIZONTAL_MARGIN_PX,
 		CLEAR_SENTINEL_MIDIS,
@@ -175,11 +176,7 @@
 	onMount(() => {
 		const loadSongs = async () => {
 			try {
-				const response = await fetch(SONGS_DATA_URL);
-				if (!response.ok) {
-					throw new Error(`${SONGS_LOAD_ERROR_PREFIX} HTTP ${response.status}`);
-				}
-				await chordSearchDemoStore.setSongs(await response.json());
+				await chordSearchDemoStore.setSongs(await fetchSongInputs(SONGS_DATA_URL));
 			} catch (err) {
 				songsError = err instanceof Error ? err.message : String(err);
 			} finally {

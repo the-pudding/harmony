@@ -5,23 +5,19 @@ import { groupSongs, type GroupedSong } from "./songBrowser.js";
 export const POPULAR_SONGS_DATA_URL = "/data/popular-songs.json";
 export const ALL_SONGS_DATA_URL = "/data/songs.json";
 
-const fetchSongInputs = async (url: string): Promise<SongInput[]> => {
+export const fetchSongInputs = async (url: string): Promise<SongInput[]> => {
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Could not load song dataset: HTTP ${response.status}`);
 	}
-	return response.json();
+	return applyHandReviewedCorrections(await response.json());
 };
 
 export const fetchGroupedPopularSongs = async (): Promise<GroupedSong[]> =>
-	groupSongs(
-		applyHandReviewedCorrections(await fetchSongInputs(POPULAR_SONGS_DATA_URL))
-	);
+	groupSongs(await fetchSongInputs(POPULAR_SONGS_DATA_URL));
 
 export const fetchGroupedAllSongs = async (): Promise<GroupedSong[]> =>
-	groupSongs(
-		applyHandReviewedCorrections(await fetchSongInputs(ALL_SONGS_DATA_URL))
-	);
+	groupSongs(await fetchSongInputs(ALL_SONGS_DATA_URL));
 
 export const sortPopularSongs = (songs: GroupedSong[]): GroupedSong[] =>
 	[...songs].sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
