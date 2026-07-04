@@ -18,6 +18,8 @@ export type HandReviewedSong = {
 export const handReviewedSongs: HandReviewedSong[] = [
 	{
 		id: "lil-nas-x__montero-call-me-by-your-name",
+		technicalNotes:
+			"This is generally a Flamenco-style (Andalusian) progression, just rocking between a sort of I and bII the entire time. I wrote Ab minor, but you could think of it as E phrygian dominant (in HT, `scale: phrygianDominant`).",
 		correctedSongContents: {
 			key: "Ab minor",
 			sections: [

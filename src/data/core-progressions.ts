@@ -32,6 +32,11 @@ const coreProgressions: CoreProgression[] = [
 		chordProgression: "i-bVII-bVI-V",
 		description: ""
 	},
+	{
+		name: "call me by your (andalusian) name",
+		chordProgression: "I-bII-I-bII",
+		description: ""
+	},
 	{ name: "boyband", chordProgression: "bVI-V-i", description: "" },
 	{ name: "royal road", chordProgression: "IV-V-iii-vi", description: "" },
 	{
