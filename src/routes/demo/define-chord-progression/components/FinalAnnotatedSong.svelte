@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../progressions/songBrowser.js";
 	import type { ProgressionWithMatchStats, ChordAnnotation } from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
 	import { matchOutline } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
@@ -29,6 +30,7 @@
 
 <div class="final-annotated-song">
 	<SongMetadataHeader {song} />
+	<ChordProgressionIssuesNote songKey={song.songKey} />
 	<div
 		class="final-layout"
 		class:final-layout-chords-only={!hasMatches}

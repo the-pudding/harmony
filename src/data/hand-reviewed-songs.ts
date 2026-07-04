@@ -9,6 +9,8 @@ export type CorrectedSongContents = {
 	sections: CorrectedSongSection[];
 };
 
+export const CHORD_PROGRESSION_ISSUES_LABEL = "chordProgressionIssues:";
+
 export type HandReviewedSong = {
 	id: string;
 	chordProgressionIssues?: string;
@@ -17,6 +19,11 @@ export type HandReviewedSong = {
 };
 
 export const handReviewedSongs: HandReviewedSong[] = [
+	{
+		id: "sza__good-days",
+		chordProgressionIssues:
+			"It's wrong and missing a lot of sections. This song has a lot of lovely, jazzy chords: vamps on Imaj7-vi7, some nice b6 noted chords, etc."
+	},
 	{
 		id: "lil-nas-x__montero-call-me-by-your-name",
 		technicalNotes:
@@ -121,3 +128,13 @@ export const handReviewedSongs: HandReviewedSong[] = [
 		}
 	}
 ];
+
+const chordProgressionIssuesBySongId = new Map(
+	handReviewedSongs
+		.filter((review) => review.chordProgressionIssues !== undefined)
+		.map((review) => [review.id, review.chordProgressionIssues!])
+);
+
+export const getChordProgressionIssues = (
+	songKey: string
+): string | undefined => chordProgressionIssuesBySongId.get(songKey);

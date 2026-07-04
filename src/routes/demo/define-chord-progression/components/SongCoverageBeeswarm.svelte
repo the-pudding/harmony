@@ -1,4 +1,8 @@
 <script lang="ts">
+	import {
+		getChordProgressionIssues
+	} from "$data/hand-reviewed-songs.js";
+	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
 	import { EXPLAINED_THRESHOLD_PERCENT } from "../constants.js";
 
 	type SongEntry = {
@@ -6,6 +10,7 @@
 		title: string;
 		artists: string[];
 		coveragePercent: number;
+		chordProgressionIssues?: string;
 	};
 
 	type DodgedNode = SongEntry & {
@@ -50,7 +55,13 @@
 		const epsilon = 1e-3;
 
 		const nodes: DodgedNode[] = songs
-			.map((s) => ({ ...s, x: xScale(s.coveragePercent), y: 0, next: null as DodgedNode | null }))
+			.map((s) => ({
+				...s,
+				chordProgressionIssues: getChordProgressionIssues(s.songKey),
+				x: xScale(s.coveragePercent),
+				y: 0,
+				next: null as DodgedNode | null
+			}))
 			.sort((a, b) => a.x - b.x);
 
 		let head: DodgedNode | null = null;
@@ -199,6 +210,7 @@
 			{#each dodgedNodes as node}
 				{@const isSelected = node.songKey === selectedSongKey}
 				{@const isHovered = node.songKey === hoveredSongKey}
+				{@const hasIssues = node.chordProgressionIssues !== undefined}
 				{@const r = isSelected ? SELECTED_DOT_RADIUS : DOT_RADIUS}
 				{@const cy = AXIS_Y - DOT_RADIUS - node.y}
 				<circle
@@ -208,6 +220,7 @@
 					class="dot"
 					class:selected={isSelected}
 					class:hovered={isHovered}
+					class:has-issues={hasIssues}
 					onmouseenter={() => handleDotEnter(node.songKey)}
 					onmouseleave={scheduleHoverClear}
 					onclick={() => selectSong(node.songKey)}
@@ -236,6 +249,12 @@
 					<span class="song-title">{hoveredNode.title}</span>
 					<span class="song-artists">{hoveredNode.artists.join(', ')}</span>
 					<span class="song-stats">{Math.round(hoveredNode.coveragePercent)}% chord coverage</span>
+					<ChordProgressionIssuesNote
+						songKey={hoveredNode.songKey}
+						size="sm"
+						inline
+						brightensOnParentHover
+					/>
 					<div class="coverage-bar" aria-hidden="true">
 						<div
 							class="coverage-fill"
@@ -320,6 +339,22 @@
 
 	.dot.selected {
 		fill: #89b4fa;
+		stroke: rgba(255, 255, 255, 0.9);
+		stroke-width: 1.5px;
+	}
+
+	.dot.has-issues {
+		fill: rgba(239, 68, 68, 0.65);
+	}
+
+	.dot.has-issues.hovered {
+		fill: rgba(239, 68, 68, 0.95);
+		stroke: rgba(255, 255, 255, 0.6);
+		stroke-width: 1.5px;
+	}
+
+	.dot.has-issues.selected {
+		fill: #f87171;
 		stroke: rgba(255, 255, 255, 0.9);
 		stroke-width: 1.5px;
 	}
