@@ -37,5 +37,41 @@ export const handReviewedSongs: HandReviewedSong[] = [
 				}
 			]
 		}
+	},
+	{
+		id: "danity-kane__damaged",
+		correctedSongContents: {
+			key: "Eb minor",
+			sections: [
+				{
+					label: "Refrain",
+					romanTokens: ["i", "iv", "V", "VI", "iv", "V"]
+				},
+				{
+					label: "Verse 1",
+					romanTokens: ["i", "iv", "VI", "iv", "V"]
+				},
+				{
+					label: "Chorus",
+					romanTokens: ["VI", "v", "iv", "VII", "VI", "v", "iv", "V"]
+				},
+				{
+					label: "Post-Chorus",
+					romanTokens: ["i", "VII", "VI", "V"]
+				},
+				{
+					label: "Verse 2",
+					romanTokens: ["i", "VII", "VI", "V", "i", "VII", "VI", "iv"] // ends on the softer iv (rather than V), which blends with the tonic sung high in the melody
+				},
+				{
+					label: "Bridge",
+					romanTokens: ["i", "iv", "III", "iv"] // technically this ends with a spicy b2 in the bass acting as a dominant root of the subsequent VI chord in the chorus
+				},
+				{
+					label: "Outro",
+					romanTokens: ["i", "iv", "III", "iv"]
+				}
+			]
+		}
 	}
 ];
