@@ -1,10 +1,11 @@
 export type CorrectedSongSection = {
-	label: string;
+	name: string;
+	key: string;
+	scale: string;
 	romanTokens: string[];
 };
 
 export type CorrectedSongContents = {
-	key?: string;
 	sections: CorrectedSongSection[];
 };
 
@@ -19,21 +20,26 @@ export const handReviewedSongs: HandReviewedSong[] = [
 	{
 		id: "lil-nas-x__montero-call-me-by-your-name",
 		technicalNotes:
-			"This is generally a Flamenco-style (Andalusian) progression, just rocking between a sort of I and bII the entire time. I wrote Ab minor, but you could think of it as E phrygian dominant (in HT, `scale: phrygianDominant`).",
+			"Flamenco-style (Andalusian) progression rocking between I and II the entire time. In phrygian dominant the 2nd scale degree is already the b2 (1 semitone above the tonic), so 'II' is correct — 'bII' would lower it a further semitone back to the tonic.",
 		correctedSongContents: {
-			key: "Ab minor",
 			sections: [
 				{
-					label: "Verse 1",
-					romanTokens: ["V", "bVI", "V", "bVI", "V", "bVI", "V", "bVI"]
+					name: "Verse 1",
+					key: "Eb",
+					scale: "phrygianDominant",
+					romanTokens: ["I", "II", "I", "II", "I", "II", "I", "II"]
 				},
 				{
-					label: "Pre-Chorus",
-					romanTokens: ["V", "bVI", "V", "bVI"]
+					name: "Pre-Chorus",
+					key: "Eb",
+					scale: "phrygianDominant",
+					romanTokens: ["I", "II", "I", "II"]
 				},
 				{
-					label: "Chorus",
-					romanTokens: ["V", "bVI", "V", "bVI", "V", "bVI", "V", "bVI"]
+					name: "Chorus",
+					key: "Eb",
+					scale: "phrygianDominant",
+					romanTokens: ["I", "II", "I", "II", "I", "II", "I", "II"]
 				}
 			]
 		}
@@ -41,48 +47,48 @@ export const handReviewedSongs: HandReviewedSong[] = [
 	{
 		id: "danity-kane__damaged",
 		correctedSongContents: {
-			key: "Eb minor",
 			sections: [
 				{
-					label: "Refrain",
+					name: "Refrain",
+					key: "Eb",
+					scale: "minor",
 					romanTokens: ["i", "iv", "V", "VI", "iv", "V"]
 				},
 				{
-					label: "Verse 1",
+					name: "Verse 1",
+					key: "Eb",
+					scale: "minor",
 					romanTokens: ["i", "iv", "VI", "iv", "V"]
 				},
 				{
-					label: "Chorus",
+					name: "Chorus",
+					key: "Eb",
+					scale: "minor",
 					romanTokens: ["VI", "v", "iv", "VII", "VI", "v", "iv", "V"]
 				},
 				{
-					label: "Post-Chorus",
+					name: "Post-Chorus",
+					key: "Eb",
+					scale: "minor",
 					romanTokens: ["i", "VII", "VI", "V"]
 				},
 				{
-					label: "Verse 2",
+					name: "Verse 2",
+					key: "Eb",
+					scale: "minor",
 					romanTokens: ["i", "VII", "VI", "V", "i", "VII", "VI", "iv"] // ends on the softer iv (rather than V), which blends with the tonic sung high in the melody
 				},
 				{
-					label: "Bridge",
+					name: "Bridge",
+					key: "Eb",
+					scale: "minor",
 					romanTokens: ["i", "iv", "III", "iv"] // technically this ends with a spicy b2 in the bass
 				},
 				{
-					label: "Outro",
+					name: "Outro",
+					key: "Eb",
+					scale: "minor",
 					romanTokens: ["i", "iv", "III", "iv"]
-				}
-			]
-		}
-	},
-	{
-		id: "drake__passionfruit",
-		correctedSongContents: {
-			key: "B major",
-			sections: [
-				{
-					label: "Verse",
-					romanTokens: ["IV", "ii", "iii", "V"]
-					// romanTokens: ["IVmaj7", "iim7", "iiim7", "IV/V"]
 				}
 			]
 		}

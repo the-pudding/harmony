@@ -1,21 +1,8 @@
 import { parseSongTitleAndSectionLabel, resolveSongKey } from "../chord-processing/songIdentity.js";
-import type { ProgressionChordInput, SongInput } from "../chord-processing/types.js";
-import { romanTokensToParsedProgression } from "../chord-processing/romanNumerals.js";
-import { NOTE_NAMES } from "../chord-processing/chord-classifier/notes.js";
+import type { SongInput } from "../chord-processing/types.js";
+import { romanTokensToProgressionInKey } from "../chord-processing/scales.js";
 import { handReviewedSongs } from "./hand-reviewed-songs.js";
 import type { CorrectedSongContents } from "./hand-reviewed-songs.js";
-
-const romanTokensToProgression = (
-	tokens: string[]
-): ProgressionChordInput[] => {
-	const parsed = romanTokensToParsedProgression(tokens);
-	if (!parsed)
-		throw new Error(`Cannot parse roman tokens: ${tokens.join(", ")}`);
-	return parsed.map(({ rootPitchClass, suffix }) => ({
-		noteName: NOTE_NAMES[rootPitchClass],
-		suffix
-	}));
-};
 
 export const applyHandReviewedCorrections = (songs: SongInput[]): SongInput[] => {
 	const corrections = new Map(
@@ -55,11 +42,17 @@ export const correctedSongContentsToSongInputs = (
 	contents: CorrectedSongContents
 ): SongInput[] =>
 	contents.sections.map((section) => ({
-		id: `${songId}__${section.label.toLowerCase().replace(/\s+/g, "-")}`,
+		id: `${songId}__${section.name.toLowerCase().replace(/\s+/g, "-")}`,
 		songKey: songId,
-		title: `${baseTitle} (${section.label})`,
+		title: `${baseTitle} (${section.name})`,
 		artists,
 		year,
-		progression: romanTokensToProgression(section.romanTokens),
+		key: section.key,
+		scale: section.scale,
+		progression: romanTokensToProgressionInKey(
+			section.romanTokens,
+			section.key,
+			section.scale
+		),
 		romanTokens: section.romanTokens
 	}));

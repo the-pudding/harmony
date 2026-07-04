@@ -27,4 +27,5 @@ export {
 	progressionChordInputsAreEqual
 } from "./match-chord-progressions/index.js";
 export { isPositionInMatch } from "./match-chord-progressions/match.js";
+export { SCALE_INTERVALS, romanTokensToProgressionInKey } from "./scales.js";
 export type * from "./types.js";

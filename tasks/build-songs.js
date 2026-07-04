@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { csvParse } from "d3";
+import { SCALE_INTERVALS } from "../src/chord-processing/scale-intervals.js";
 
 const HARMONY_ROOT = process.cwd();
 const DATA_ROOT = path.join(HARMONY_ROOT, "../harmony-data");
@@ -45,18 +46,6 @@ const tonicToPitchClass = (key) => {
 	const pitchClass = parseNoteToPitchClass(key);
 	if (pitchClass === null) throw new Error(`Invalid key: "${key}"`);
 	return pitchClass;
-};
-
-const SCALE_INTERVALS = {
-	major: [0, 2, 4, 5, 7, 9, 11],
-	minor: [0, 2, 3, 5, 7, 8, 10],
-	dorian: [0, 2, 3, 5, 7, 9, 10],
-	phrygian: [0, 1, 3, 5, 7, 8, 10],
-	lydian: [0, 2, 4, 6, 7, 9, 11],
-	mixolydian: [0, 2, 4, 5, 7, 9, 10],
-	locrian: [0, 1, 3, 5, 6, 8, 10],
-	harmonicMinor: [0, 2, 3, 5, 7, 8, 11],
-	phrygianDominant: [0, 1, 4, 5, 7, 8, 10]
 };
 
 const KEBAB_SEPARATORS = /[\s_]+/g;
