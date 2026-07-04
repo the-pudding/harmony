@@ -1,0 +1,1 @@
+export const EXPLAINED_THRESHOLD_PERCENT = 80;

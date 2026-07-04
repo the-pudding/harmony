@@ -43,6 +43,7 @@
 		defineChordProgressionUrlStateToQueryString,
 		readDefineChordProgressionUrlState
 	} from "./defineChordProgressionUrlParams.js";
+	import { EXPLAINED_THRESHOLD_PERCENT } from "./constants.js";
 
 	let popularSongs = $state<GroupedSong[]>([]);
 	let fullSongs = $state<GroupedSong[] | null>(null);
@@ -124,7 +125,6 @@
 		findGroupedSongByKey(searchableSongs, selectedKey)
 	);
 
-	const EXPLAINED_THRESHOLD_PERCENT = 80;
 	const GREEDY_SORT_LABEL = "highest song coverage first (length of progression as tiebreaker)";
 
 	const coreProgressionMatches = $derived(

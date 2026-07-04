@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { EXPLAINED_THRESHOLD_PERCENT } from "../constants.js";
+
 	type SongEntry = {
 		songKey: string;
 		title: string;
@@ -97,6 +99,40 @@
 
 	const tooltipTopY = $derived(hoveredNode ? AXIS_Y - DOT_RADIUS - hoveredNode.y : 0);
 
+	const ANNOTATION_LINE_Y_TOP = 8;
+
+	type ChartAnnotation = {
+		x: number;
+		label: string;
+		textAnchor: 'start' | 'end';
+		textOffsetX: number;
+	};
+
+	const chartAnnotations = $derived.by((): ChartAnnotation[] => {
+		if (!songs || songs.length === 0) return [];
+		const total = songs.length;
+		const aboveThreshold = Math.round(
+			(songs.filter((s) => s.coveragePercent >= EXPLAINED_THRESHOLD_PERCENT).length / total) * 100
+		);
+		const atZero = Math.round(
+			(songs.filter((s) => s.coveragePercent === 0).length / total) * 100
+		);
+		return [
+			{
+				x: xScale(0),
+				label: `${atZero}% of songs have 0% coverage`,
+				textAnchor: 'start',
+				textOffsetX: 6
+			},
+			{
+				x: xScale(EXPLAINED_THRESHOLD_PERCENT),
+				label: `${aboveThreshold}% of songs above ${EXPLAINED_THRESHOLD_PERCENT}% coverage`,
+				textAnchor: 'end',
+				textOffsetX: -6
+			}
+		];
+	});
+
 	function handleDotEnter(songKey: string) {
 		if (clearHoverTimeout !== null) {
 			clearTimeout(clearHoverTimeout);
@@ -140,6 +176,21 @@
 				y2={AXIS_Y}
 				class="axis-line"
 			/>
+			{#each chartAnnotations as annotation}
+				<line
+					x1={annotation.x}
+					x2={annotation.x}
+					y1={ANNOTATION_LINE_Y_TOP}
+					y2={AXIS_Y}
+					class="threshold-line"
+				/>
+				<text
+					x={annotation.x + annotation.textOffsetX}
+					y={ANNOTATION_LINE_Y_TOP + 9}
+					text-anchor={annotation.textAnchor}
+					class="threshold-label"
+				>{annotation.label}</text>
+			{/each}
 			{#each TICK_VALUES as tick}
 				{@const tx = xScale(tick)}
 				<line x1={tx} x2={tx} y1={AXIS_Y} y2={AXIS_Y + 5} class="tick-mark" />
@@ -219,6 +270,18 @@
 	svg {
 		display: block;
 		overflow: visible;
+	}
+
+	.threshold-line {
+		stroke: rgba(255, 255, 255, 0.2);
+		stroke-width: 1;
+		stroke-dasharray: 4 3;
+	}
+
+	.threshold-label {
+		font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+		font-size: 0.6rem;
+		fill: rgba(161, 161, 170, 0.55);
 	}
 
 	.axis-line {
