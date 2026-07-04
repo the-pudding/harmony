@@ -10,6 +10,20 @@ import type {
 export const MIN_OCCURRENCES_DEFAULT = 1;
 export const MIN_OCCURRENCES_AT_LEAST_TWICE = 2;
 
+// Maps extended chord suffixes to their base quality for progression matching.
+// Extensions (7ths, 9ths, etc.) embellish the underlying quality rather than
+// defining a distinct harmonic function, so I-vi7-iii7-V should match I-vi-iii-V.
+export const SUFFIX_TO_BASE: Readonly<Record<string, string>> = {
+	"maj7": "major",
+	"7": "major",
+	"9": "major",
+	"minor7": "minor",
+	"minor9": "minor",
+	"m7b5": "diminished",
+	"dim7": "diminished",
+	"7sus4": "sus4"
+};
+
 export type ProgressionMatchFilterOptions = {
 	matchAtBeginningOnly?: boolean;
 	minOccurrences?: number;

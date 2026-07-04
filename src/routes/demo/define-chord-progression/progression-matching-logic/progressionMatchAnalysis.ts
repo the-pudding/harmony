@@ -7,6 +7,7 @@ import { romanTokensToParsedProgression } from "../../../../chord-processing/rom
 import {
 	findSubProgressionMatches,
 	isPositionInMatch,
+	SUFFIX_TO_BASE,
 	toAbstractProgression
 } from "../../../../chord-processing/match-chord-progressions/index.js";
 import type {
@@ -54,13 +55,21 @@ const withoutSlashBass = (
 		({ bassPitchClass: _bass, ...chord }) => chord as ParsedProgressionChord
 	);
 
-const matchProgressionIgnoringBass = (
+const withoutExtensions = (
+	chords: ParsedProgressionChord[]
+): ParsedProgressionChord[] =>
+	chords.map((chord) => ({
+		...chord,
+		suffix: SUFFIX_TO_BASE[chord.suffix] ?? chord.suffix
+	}));
+
+const matchProgressionIgnoringBassAndExtensions = (
 	sectionProgression: ParsedProgressionChord[],
 	searchProgression: ParsedProgressionChord[]
 ): SubProgressionMatch[] =>
 	findSubProgressionMatches(
-		withoutSlashBass(sectionProgression),
-		withoutSlashBass(searchProgression)
+		withoutExtensions(withoutSlashBass(sectionProgression)),
+		withoutExtensions(withoutSlashBass(searchProgression))
 	);
 
 const countCoveredPositions = (
@@ -83,7 +92,7 @@ export const computeStatsForParsedProgression = (
 
 	const stats = song.sections.reduce(
 		(accumulator, section) => {
-			const matches = matchProgressionIgnoringBass(
+			const matches = matchProgressionIgnoringBassAndExtensions(
 				section.parsedProgression,
 				parsed
 			);
@@ -145,7 +154,7 @@ export function getSectionMatches(
 	searchProgression: ParsedProgressionChord[] | null
 ): SubProgressionMatch[] {
 	if (!searchProgression || searchProgression.length === 0) return [];
-	return matchProgressionIgnoringBass(
+	return matchProgressionIgnoringBassAndExtensions(
 		section.parsedProgression,
 		searchProgression
 	);

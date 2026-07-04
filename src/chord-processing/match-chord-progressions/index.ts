@@ -369,5 +369,6 @@ export {
 	isPositionInMatch,
 	MIN_OCCURRENCES_DEFAULT,
 	MIN_OCCURRENCES_AT_LEAST_TWICE,
+	SUFFIX_TO_BASE,
 	type ProgressionMatchFilterOptions
 } from "./match.js";
