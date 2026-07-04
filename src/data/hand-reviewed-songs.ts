@@ -73,5 +73,18 @@ export const handReviewedSongs: HandReviewedSong[] = [
 				}
 			]
 		}
+	},
+	{
+		id: "drake__passionfruit",
+		correctedSongContents: {
+			key: "B major",
+			sections: [
+				{
+					label: "Verse",
+					romanTokens: ["IV", "ii", "iii", "V"]
+					// romanTokens: ["IVmaj7", "iim7", "iiim7", "IV/V"]
+				}
+			]
+		}
 	}
 ];
