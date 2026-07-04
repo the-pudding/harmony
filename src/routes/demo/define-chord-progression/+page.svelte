@@ -492,7 +492,8 @@
 
 	.list-meta {
 		font-size: 0.875rem;
-		color: #71717a;
+		font-style: italic;
+		color: #545454;
 		margin: 0;
 	}
 
