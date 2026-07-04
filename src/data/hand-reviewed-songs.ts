@@ -45,6 +45,19 @@ export const handReviewedSongs: HandReviewedSong[] = [
 		}
 	},
 	{
+		id: "drake__passionfruit",
+		correctedSongContents: {
+			sections: [
+				{
+					name: "Verse",
+					key: "B",
+					scale: "major",
+					romanTokens: ["IV", "ii", "iii", "V", "IV"]
+				}
+			]
+		}
+	},
+	{
 		id: "danity-kane__damaged",
 		correctedSongContents: {
 			sections: [
