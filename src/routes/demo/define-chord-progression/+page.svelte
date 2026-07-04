@@ -2,7 +2,7 @@
 	import debounce from "lodash.debounce";
 	import coreProgressionsData from "$data/core-progressions.js";
 	import type { CoreProgression } from "$data/core-progressions.js";
-	import { onMount, untrack } from "svelte";
+	import { onMount, onDestroy, untrack } from "svelte";
 	import { replaceState } from "$app/navigation";
 	import { page } from "$app/state";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
@@ -11,6 +11,13 @@
 	import SongChordsDisplay from "./components/SongChordsDisplay.svelte";
 	import ProgressionMatchTable from "./components/ProgressionMatchTable.svelte";
 	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
+	import SongCoverageBeeswarm from "./components/SongCoverageBeeswarm.svelte";
+	import {
+		initCoverageWorkerPool,
+		computeCoverageOfAllSongs,
+		terminateCoverageWorkerPool,
+		type SongCoverageEntry
+	} from "./compute-coverage-of-all-songs/index.js";
 	import { computeProgressionMatches, MIN_PROGRESSION_OCCURRENCES } from "./progression-matching-logic/progressionMatchAnalysis.js";
 	import { MIN_PROGRESSION_LENGTH } from "./progression-matching-logic/progressionConstraints.js";
 	import type { ChordAnnotation } from "./progression-matching-logic/progressionMatchAnalysis.js";
@@ -164,6 +171,29 @@
 			: 0
 	);
 
+	let allSongCoverages = $state<SongCoverageEntry[] | null>(null);
+	let coverageRequestId = 0;
+
+	$effect(() => {
+		const songs = baseList;
+		allSongCoverages = null;
+		let active = true;
+		const requestId = ++coverageRequestId;
+
+		void initCoverageWorkerPool($state.snapshot(songs)).then(async () => {
+			if (!active) return;
+			const coverages = await computeCoverageOfAllSongs(requestId);
+			if (active) allSongCoverages = coverages;
+		});
+
+		return () => {
+			active = false;
+			terminateCoverageWorkerPool();
+		};
+	});
+
+	onDestroy(() => terminateCoverageWorkerPool());
+
 	const finalMatches = $derived([
 		...flaggedCoreSelected,
 		...flaggedRecurringSelected
@@ -298,6 +328,12 @@
 		{#if baseList.length > 0}
 			<section class="step-section">
 				<h2 class="section-heading">0. Pick an example song</h2>
+
+				<SongCoverageBeeswarm
+					songs={allSongCoverages}
+					selectedSongKey={selectedKey}
+					onSelectSong={handleSongSelect}
+				/>
 
 				<div class="controls">
 					<SongSelectDropdown
