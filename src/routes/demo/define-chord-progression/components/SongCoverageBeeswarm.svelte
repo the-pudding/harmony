@@ -3,7 +3,10 @@
 		getChordProgressionIssues
 	} from "$data/hand-reviewed-songs.js";
 	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
-	import { EXPLAINED_THRESHOLD_PERCENT } from "../constants.js";
+	import {
+		EXPLAINED_THRESHOLD_PERCENT,
+		HIGH_COVERAGE_THRESHOLD_PERCENT
+	} from "../constants.js";
 
 	type SongEntry = {
 		songKey: string;
@@ -125,6 +128,10 @@
 		const aboveThreshold = Math.round(
 			(songs.filter((s) => s.coveragePercent >= EXPLAINED_THRESHOLD_PERCENT).length / total) * 100
 		);
+		const aboveHighCoverage = Math.round(
+			(songs.filter((s) => s.coveragePercent >= HIGH_COVERAGE_THRESHOLD_PERCENT).length / total) *
+				100
+		);
 		const atZero = Math.round(
 			(songs.filter((s) => s.coveragePercent === 0).length / total) * 100
 		);
@@ -138,6 +145,12 @@
 			{
 				x: xScale(EXPLAINED_THRESHOLD_PERCENT),
 				label: `${aboveThreshold}% of songs above ${EXPLAINED_THRESHOLD_PERCENT}% coverage`,
+				textAnchor: 'end',
+				textOffsetX: -6
+			},
+			{
+				x: xScale(HIGH_COVERAGE_THRESHOLD_PERCENT),
+				label: `${aboveHighCoverage}% above ${HIGH_COVERAGE_THRESHOLD_PERCENT}%`,
 				textAnchor: 'end',
 				textOffsetX: -6
 			}
