@@ -23,29 +23,34 @@
 	const sortedMatches = $derived(
 		[...matches].sort((a, b) => b.coveragePercent - a.coveragePercent)
 	);
+
+	const hasMatches = $derived(sortedMatches.length > 0);
 </script>
 
 <div class="final-annotated-song">
 	<SongMetadataHeader {song} />
 	<div
 		class="final-layout"
+		class:final-layout-chords-only={!hasMatches}
 		style="--button-col-width: {BUTTON_COLUMN_WIDTH_PERCENT}%; --chords-col-width: {CHORDS_COLUMN_WIDTH_PERCENT}%; --column-gap: {COLUMN_GAP_REM}rem;"
 	>
-		<div class="buttons-column">
-			{#each sortedMatches as match (match.chordProgression)}
-				{@const outline = matchOutline(match)}
-				<ProgressionMatchButton
-					{match}
-					active={activeProgression === match.chordProgression}
-					borderColor={outline.color}
-					dashed={outline.dashed}
-					{onselect}
-				/>
-			{/each}
-			<div class="total-row">
-				<span class="total-label">= <strong class="total-percent">{explainedPercent}%</strong> of the song{#if isExplained}<span class="checkmark">✅</span>{/if}</span>
+		{#if hasMatches}
+			<div class="buttons-column">
+				{#each sortedMatches as match (match.chordProgression)}
+					{@const outline = matchOutline(match)}
+					<ProgressionMatchButton
+						{match}
+						active={activeProgression === match.chordProgression}
+						borderColor={outline.color}
+						dashed={outline.dashed}
+						{onselect}
+					/>
+				{/each}
+				<div class="total-row">
+					<span class="total-label">= <strong class="total-percent">{explainedPercent}%</strong> of the song{#if isExplained}<span class="checkmark">✅</span>{/if}</span>
+				</div>
 			</div>
-		</div>
+		{/if}
 		<div class="chords-column">
 			<SongChordsDisplay {song} {annotations} />
 		</div>
@@ -65,6 +70,10 @@
 		grid-template-columns: var(--button-col-width) var(--chords-col-width);
 		column-gap: var(--column-gap);
 		width: 100%;
+	}
+
+	.final-layout-chords-only {
+		grid-template-columns: 1fr;
 	}
 
 	.buttons-column {

@@ -368,19 +368,15 @@
 						Here's the final chord progressions for this song, which cover <span class="coverage-highlight">{explainedPercent}%{explainedPercent > EXPLAINED_THRESHOLD_PERCENT ? " ✅" : " 😔"}</span> of all chords. In subsequent sections, we'll break down the algorithm that derived this...
 					</h2>
 
-					{#if songAnnotations.length > 0}
-						<FinalAnnotatedSong
-							song={selectedSong}
-							matches={finalMatches}
-							annotations={songAnnotations}
-							{explainedPercent}
-							isExplained={explainedPercent > EXPLAINED_THRESHOLD_PERCENT}
-							activeProgression={pinnedProgression}
-							onselect={handleProgressionSelect}
-						/>
-					{:else}
-						<p class="list-meta">No progressions selected.</p>
-					{/if}
+					<FinalAnnotatedSong
+						song={selectedSong}
+						matches={finalMatches}
+						annotations={songAnnotations}
+						{explainedPercent}
+						isExplained={explainedPercent > EXPLAINED_THRESHOLD_PERCENT}
+						activeProgression={pinnedProgression}
+						onselect={handleProgressionSelect}
+					/>
 				</section>
 
 				<h3 class="walkthrough-heading">WALKTHROUGH OF ALGORITHM</h3>
