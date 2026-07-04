@@ -20,6 +20,38 @@ const ROMAN_QUALITY_TO_SUFFIX: Record<string, string> = {
 	aug: "augmented"
 };
 
+// Ordered longest-first so "maj7" is tried before "7", etc.
+const EXTENSION_SUFFIXES = [
+	"maj7", "maj9", "m7b5", "dim7", "7sus4", "sus4", "sus2", "add9", "add6", "m7", "7", "9", "6"
+] as const;
+
+const peelExtension = (t: string): [base: string, ext: string | null] => {
+	for (const ext of EXTENSION_SUFFIXES) {
+		if (t.endsWith(ext)) return [t.slice(0, -ext.length), ext];
+	}
+	return [t, null];
+};
+
+const extensionSuffixForQuality = (quality: string, ext: string | null): string | null => {
+	if (!ext) return ROMAN_QUALITY_TO_SUFFIX[quality] ?? null;
+	if (ext === "maj7" || ext === "maj9") return ext;
+	if (ext === "7sus4" || ext === "sus4" || ext === "sus2") return ext;
+	if (ext === "add9") return "add9";
+	if (ext === "add6") return "6";
+	if (ext === "m7b5") return "m7b5";
+	if (ext === "dim7") return "dim7";
+	if (ext === "m7") return quality === "min" ? "minor7" : null;
+	if (ext === "7") {
+		if (quality === "maj") return "7";
+		if (quality === "min") return "minor7";
+		if (quality === "dim") return "dim7";
+		return null;
+	}
+	if (ext === "9") return quality === "maj" ? "9" : quality === "min" ? "minor9" : null;
+	if (ext === "6") return "6";
+	return null;
+};
+
 const intervalBetweenScaleDegrees = (
 	fromDegree: number,
 	toDegree: number
@@ -59,38 +91,59 @@ const romanBaseToDegree = (base: string): number | null => {
 	);
 };
 
-type ParsedToken = { degree: number; quality: string; flat: boolean };
+type ParsedToken = {
+	degree: number;
+	quality: string;
+	flat: boolean;
+	suffix: string;
+};
 
 export const parseRomanToken = (token: string): ParsedToken | null => {
-	// Strip a leading 'b' flat prefix if the rest is a valid roman numeral base
-	let t = token;
+	// Strip outer parentheses: "(IV)" → "IV", "(IVmaj7)" → "IVmaj7"
+	let t = token.replace(/^\(([^)]+)\)$/, "$1");
+
+	// Strip slash annotations (inversion/applied): "IV/V" → "IV", "vi/V/3" → "vi"
+	const slashIdx = t.indexOf("/");
+	if (slashIdx !== -1) t = t.slice(0, slashIdx);
+
+	// Normalize parenthetical adds: "IV(add9)" → "IVadd9", "I(add6)" → "Iadd6"
+	t = t.replace(/\(add(\d+)\)/, "add$1");
+
+	// Peel extension from right
+	const [base, ext] = peelExtension(t);
+	t = base;
+
 	let flat = false;
 	if (t.startsWith("b") && t.length > 1) {
 		const rest = t.slice(1);
-		// Strip any trailing quality suffix before testing the base
-		const base = rest.replace(/[°+]$/, "");
-		if (romanBaseToDegree(base) !== null) {
+		const baseForCheck = rest.replace(/[°+]$/, "");
+		if (romanBaseToDegree(baseForCheck) !== null) {
 			flat = true;
 			t = rest;
 		}
 	}
 
+	let quality: string;
+	let degree: number | null;
+
 	if (t.endsWith("°")) {
-		const degree = romanBaseToDegree(t.slice(0, -1));
-		return degree ? { degree, quality: "dim", flat } : null;
+		degree = romanBaseToDegree(t.slice(0, -1));
+		quality = "dim";
+	} else if (t.endsWith("+")) {
+		degree = romanBaseToDegree(t.slice(0, -1));
+		quality = "aug";
+	} else {
+		degree = romanBaseToDegree(t);
+		quality = t === t.toUpperCase() ? "maj" : "min";
 	}
 
-	if (t.endsWith("+")) {
-		const degree = romanBaseToDegree(t.slice(0, -1));
-		return degree ? { degree, quality: "aug", flat } : null;
-	}
-
-	const degree = romanBaseToDegree(t);
 	if (!degree) return null;
 
-	const quality = t === t.toUpperCase() ? "maj" : "min";
-	return { degree, quality, flat };
-};
+	const suffix = extensionSuffixForQuality(quality, ext);
+	if (!suffix) return null;
+
+	return { degree, quality, flat, suffix };
+};;
 
 const pitchClassFromEntry = (entry: ParsedToken): number =>
 	(MAJOR_SCALE_INTERVALS[entry.degree - 1] - (entry.flat ? 1 : 0) + NOTES_PER_OCTAVE) %
@@ -105,10 +158,7 @@ export const romanTokensToPrecomputedAbstract = (
 	const validParsed = parsed.filter(
 		(entry): entry is ParsedToken => entry !== null
 	);
-	const suffixes = validParsed.map(
-		({ quality }) => ROMAN_QUALITY_TO_SUFFIX[quality] ?? null
-	);
-	if (suffixes.some((suffix) => suffix === null)) return null;
+	const suffixes = validParsed.map(({ suffix }) => suffix);
 
 	const pitchClasses = validParsed.map((entry) => pitchClassFromEntry(entry));
 	const deltas = pitchClasses
@@ -121,7 +171,7 @@ export const romanTokensToPrecomputedAbstract = (
 			: 0;
 
 	return {
-		suffixes: suffixes as string[],
+		suffixes,
 		deltas,
 		bassIntervals: suffixes.map(() => null),
 		wrapDelta
@@ -135,14 +185,11 @@ export const romanTokensToParsedProgression = (
 	if (parsed.some((entry) => entry === null)) return null;
 
 	const chords = parsed.map((entry) => {
-		const suffix = ROMAN_QUALITY_TO_SUFFIX[entry!.quality];
-		if (!suffix) return null;
+		const { suffix } = entry!;
 		const rootPitchClass = pitchClassFromEntry(entry!);
 		const chord = { rootPitchClass, suffix };
 		return { ...chord, display: formatChordName(chord) };
 	});
-
-	if (chords.some((chord) => chord === null)) return null;
 
 	return chords as ParsedProgressionChord[];
 };

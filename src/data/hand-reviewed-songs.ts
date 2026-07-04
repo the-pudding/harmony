@@ -54,20 +54,19 @@ export const handReviewedSongs: HandReviewedSong[] = [
 					name: "Intro",
 					key: "B",
 					scale: "major",
-					// technically these chords all have major and minor sevenths and other jazzy complexity, I even think of the iv as "V/VI"
-					romanTokens: ["IV", "ii", "iii", "vi", "IV"]
+					romanTokens: ["IVmaj7", "ii7", "iii7", "vi7", "IVmaj7"]
 				},
 				{
 					name: "Verse",
 					key: "B",
 					scale: "major",
-					romanTokens: ["IV", "ii", "iii", "vi", "IV"]
+					romanTokens: ["IVmaj7", "ii7", "iii7", "vi7", "IVmaj7"]
 				},
 				{
 					name: "Chorus",
 					key: "B",
 					scale: "major",
-					romanTokens: ["IV", "ii", "iii", "vi", "IV"]
+					romanTokens: ["IVmaj7", "ii7", "iii7", "vi7", "IVmaj7"]
 				}
 			]
 		}
