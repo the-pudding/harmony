@@ -24,10 +24,10 @@
 	let hoveredSongKey = $state<string | null>(null);
 	let clearHoverTimeout: ReturnType<typeof setTimeout> | null = null;
 
-	const DOT_RADIUS = 3;
+	const DOT_RADIUS = 2.5;
 	const SELECTED_DOT_RADIUS = 4.5;
-	const DOT_SPACING = 1;
-	const CHART_HEIGHT = 240;
+	const DOT_SPACING = 0.1;
+	const CHART_HEIGHT = 500;
 	const PADDING_LEFT = 28;
 	const PADDING_RIGHT = 28;
 	const AXIS_HEIGHT = 28;

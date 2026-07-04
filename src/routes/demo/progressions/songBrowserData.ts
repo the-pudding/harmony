@@ -1,3 +1,4 @@
+import { applyHandReviewedCorrections } from "../../../data/applyHandReviewedCorrections.js";
 import type { SongInput } from "../../../chord-processing/types.js";
 import { groupSongs, type GroupedSong } from "./songBrowser.js";
 
@@ -13,10 +14,14 @@ const fetchSongInputs = async (url: string): Promise<SongInput[]> => {
 };
 
 export const fetchGroupedPopularSongs = async (): Promise<GroupedSong[]> =>
-	groupSongs(await fetchSongInputs(POPULAR_SONGS_DATA_URL));
+	groupSongs(
+		applyHandReviewedCorrections(await fetchSongInputs(POPULAR_SONGS_DATA_URL))
+	);
 
 export const fetchGroupedAllSongs = async (): Promise<GroupedSong[]> =>
-	groupSongs(await fetchSongInputs(ALL_SONGS_DATA_URL));
+	groupSongs(
+		applyHandReviewedCorrections(await fetchSongInputs(ALL_SONGS_DATA_URL))
+	);
 
 export const sortPopularSongs = (songs: GroupedSong[]): GroupedSong[] =>
 	[...songs].sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
