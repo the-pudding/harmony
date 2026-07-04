@@ -401,14 +401,27 @@ const buildSongs = () => {
 		sectionsWritten: 0,
 		sectionsSkipped: 0,
 		chordsDropped: 0,
+		songsDeduped: 0,
 		unrecognizedSuffixes: new Map()
 	};
+
+	// Track which song keys have already been emitted. Since SONG_SOURCE_DIRS
+	// lists HookTheory first, any song present in both sources will use the HT
+	// transcription (more accurate) and the UG version will be skipped.
+	const seenSongKeys = new Set();
 
 	const songs = SONG_SOURCE_DIRS.flatMap(({ dirPath, source }) =>
 		readSongFiles(dirPath).flatMap((filePath) => {
 			stats.filesRead += 1;
 			const songData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
 			const lookupKey = trackerKey(songData.artist, songData.song);
+
+			if (seenSongKeys.has(lookupKey)) {
+				stats.songsDeduped += 1;
+				return [];
+			}
+			seenSongKeys.add(lookupKey);
+
 			const trackerEntry = trackerIndex.get(lookupKey);
 			const billboardEntry = billboardIndex.get(lookupKey);
 
@@ -448,7 +461,7 @@ const buildSongs = () => {
 	songs.sort(compareSongsByPopularity);
 
 	return { songs, stats };
-};
+};;
 
 const parseSongTitleAndSectionLabel = (title) => {
 	const match = title.match(SECTION_LABEL_SUFFIX_PATTERN);
@@ -524,6 +537,9 @@ const logSummary = (stats) => {
 	console.log(`Wrote ${stats.sectionsWritten} sections from ${stats.filesRead} song files`);
 	console.log(`Skipped ${stats.sectionsSkipped} empty sections`);
 	console.log(`Dropped ${stats.chordsDropped} unmapped chords`);
+	console.log(
+		`Deduped ${stats.songsDeduped} UG songs already covered by HookTheory`
+	);
 
 	if (stats.unrecognizedSuffixes.size > 0) {
 		const topUnrecognized = [...stats.unrecognizedSuffixes.entries()]
