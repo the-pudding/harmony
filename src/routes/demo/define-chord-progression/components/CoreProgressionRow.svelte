@@ -20,9 +20,15 @@
 
 	let { coreProgressions, selectedSong, activeProgression, progressionMatchRates, onselect }: Props = $props();
 
-	const displayMatches = $derived(
-		buildCoreProgressionDisplayMatches(coreProgressions, selectedSong)
-	);
+	const displayMatches = $derived.by(() => {
+		const matches = buildCoreProgressionDisplayMatches(coreProgressions, selectedSong);
+		if (!progressionMatchRates) return matches;
+		return [...matches].sort(
+			(a, b) =>
+				(progressionMatchRates[b.chordProgression] ?? 0) -
+				(progressionMatchRates[a.chordProgression] ?? 0)
+		);
+	});
 </script>
 
 <div
