@@ -20,6 +20,31 @@ export type HandReviewedSong = {
 
 export const handReviewedSongs: HandReviewedSong[] = [
 	{
+		id: "drake__whats-next",
+		correctedSongContents: {
+			sections: [
+				{
+					name: "Intro",
+					key: "A",
+					scale: "minor",
+					romanTokens: ["v", "iv", "i", "VII"]
+				},
+				{
+					name: "Verse",
+					key: "A",
+					scale: "minor",
+					romanTokens: ["v", "iv", "i", "VII"]
+				},
+				{
+					name: "Chorus",
+					key: "A",
+					scale: "minor",
+					romanTokens: ["v", "iv", "i", "VII"]
+				}
+			]
+		}
+	},
+	{
 		id: "sza__good-days",
 		chordProgressionIssues:
 			"It's wrong and missing a lot of sections. This song has a lot of lovely, jazzy chords: vamps on Imaj7-vi7, some nice b6 noted chords, etc."
