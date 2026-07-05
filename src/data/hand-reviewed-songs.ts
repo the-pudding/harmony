@@ -20,6 +20,27 @@ export type HandReviewedSong = {
 
 export const handReviewedSongs: HandReviewedSong[] = [
 	{
+		id: "jonas-brothers__burnin-up",
+		technicalNotes:
+			"Original basically correct, they just missed the bII at the end of the bridge and listed just one verse.",
+		correctedSongContents: {
+			sections: [
+				...["Intro", "Verse 1", "Chorus", "Verse 2"].map((name) => ({
+					name,
+					key: "B",
+					scale: "minor",
+					romanTokens: ["i", "III", "VII", "VI"]
+				})),
+				{
+					name: "Bridge",
+					key: "B",
+					scale: "minor",
+					romanTokens: ["VI", "VII", "i", "VII", "VI", "VII", "bII"]
+				}
+			]
+		}
+	},
+	{
 		id: "omi__cheerleader",
 		technicalNotes:
 			"Original chords were mostly correct, but with like 2 random chords, V-IV, thrown in at the start of one of the verses.",
