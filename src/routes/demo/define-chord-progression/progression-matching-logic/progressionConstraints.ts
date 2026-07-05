@@ -1,4 +1,5 @@
 export const MIN_PROGRESSION_LENGTH = 3;
+export const MAX_PROGRESSION_LENGTH = 8;
 
 const blockRepeatsAt = (
 	tokens: readonly string[],

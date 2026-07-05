@@ -10,6 +10,7 @@
 	import SongSelectDropdown from "./components/SongSelectDropdown.svelte";
 	import ProgressionMatchTable from "./components/ProgressionMatchTable.svelte";
 	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
+	import ProgressionDefinitionCriteriaTable from "./components/ProgressionDefinitionCriteriaTable.svelte";
 	import SongCoverageBeeswarm from "./components/SongCoverageBeeswarm.svelte";
 	import {
 		initCoverageWorkerPool,
@@ -18,7 +19,10 @@
 		type SongCoverageEntry
 	} from "./compute-coverage-of-all-songs/index.js";
 	import { MIN_PROGRESSION_OCCURRENCES } from "./progression-matching-logic/progressionMatchAnalysis.js";
-	import { MIN_PROGRESSION_LENGTH } from "./progression-matching-logic/progressionConstraints.js";
+	import {
+		MIN_PROGRESSION_LENGTH,
+		MAX_PROGRESSION_LENGTH
+	} from "./progression-matching-logic/progressionConstraints.js";
 	import type { ChordAnnotation } from "./progression-matching-logic/progressionMatchAnalysis.js";
 	import { selectFinalProgressions } from "./progression-matching-logic/finalProgressionSelection.js";
 	import { findStrictSubsetKeys, applySubsetFlag } from "./progression-matching-logic/strictSubsetProgressions.js";
@@ -370,12 +374,16 @@
 					/>
 				</section>
 
+				<h3 class="walkthrough-heading">DEFINE PROGRESSION</h3>
+
+				<ProgressionDefinitionCriteriaTable />
+
 				<h3 class="walkthrough-heading">WALKTHROUGH OF ALGORITHM</h3>
 
 				<section class="step-section">
 				<h2 class="section-heading">
 				1. Greedily select any (non-overlapping) core-progressions that appear
-				at least {MIN_PROGRESSION_OCCURRENCES} times, by {GREEDY_SORT_LABEL}
+				at least <span class="const-value">{MIN_PROGRESSION_OCCURRENCES}</span> times, by {GREEDY_SORT_LABEL}
 			</h2>
 					<p class="section-description">
 						This incentivises us to really hone and expand the coverage of
@@ -401,7 +409,12 @@
 					2. Fill gaps with recurring progressions found among uncovered chords, trying them out greedily by {GREEDY_SORT_LABEL}
 				</h2>
 					<p class="section-description">
-						Among chords not yet covered, we look for progressions of {MIN_PROGRESSION_LENGTH}+ chords that recur at least twice. A valid progression cannot consist of consecutive {MIN_PROGRESSION_LENGTH}+ progressions repeating more than once.
+						Among chords not yet covered, we look for progressions of
+						<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>–<span
+							class="const-value">{MAX_PROGRESSION_LENGTH}</span> chords that recur at
+						least twice. A valid progression cannot consist of consecutive
+						<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>+ progressions
+						repeating more than once.
 					</p>
 
 				{#if flaggedGapSelected.length > 0}
@@ -510,6 +523,13 @@
 		letter-spacing: 0.12em;
 		color: #71717a;
 		margin: 2.5rem 0 0.25rem;
+	}
+
+	.const-value {
+		font-weight: 700;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+		color: #f4f4f5;
 	}
 
 	.coverage-highlight {

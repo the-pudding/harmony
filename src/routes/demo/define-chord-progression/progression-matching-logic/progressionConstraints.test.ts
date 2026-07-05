@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
 	hasConsecutivelyRepeatedBlock,
 	isSelfRepeatingProgression,
-	MIN_PROGRESSION_LENGTH
+	MIN_PROGRESSION_LENGTH,
+	MAX_PROGRESSION_LENGTH
 } from "./progressionConstraints.js";
 
 describe("hasConsecutivelyRepeatedBlock", () => {
@@ -66,6 +67,10 @@ describe("hasConsecutivelyRepeatedBlock", () => {
 		const twoChordRepeat = ["IV", "V", "IV", "V"];
 		expect(hasConsecutivelyRepeatedBlock(twoChordRepeat)).toBe(false);
 		expect(MIN_PROGRESSION_LENGTH).toBe(3);
+	});
+
+	it("exports MAX_PROGRESSION_LENGTH as 8", () => {
+		expect(MAX_PROGRESSION_LENGTH).toBe(8);
 	});
 });
 

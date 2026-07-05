@@ -13,6 +13,7 @@ import {
 } from "./progressionMatchAnalysis.js";
 import {
 	MIN_PROGRESSION_LENGTH,
+	MAX_PROGRESSION_LENGTH,
 	isSelfRepeatingProgression
 } from "./progressionConstraints.js";
 import type { SectionCoverage } from "./greedyProgressionSelection.js";
@@ -46,13 +47,11 @@ const windowsTouchingPositions = (
 	const touchSet = new Set(positions);
 	const sectionLength = section.parsedProgression.length;
 
-	return section.parsedProgression.flatMap((_, start) =>
-		Array.from(
+	return section.parsedProgression.flatMap((_, start) => {
+		const maxEnd = Math.min(sectionLength, start + MAX_PROGRESSION_LENGTH);
+		return Array.from(
 			{
-				length: Math.max(
-					0,
-					sectionLength - start - MIN_PROGRESSION_LENGTH + 1
-				)
+				length: Math.max(0, maxEnd - start - MIN_PROGRESSION_LENGTH + 1)
 			},
 			(_, lengthOffset) => {
 				const end = start + MIN_PROGRESSION_LENGTH + lengthOffset;
@@ -66,8 +65,8 @@ const windowsTouchingPositions = (
 					parsedProgression: section.parsedProgression.slice(start, end)
 				};
 			}
-		).filter((window): window is CandidateWindow => window !== null)
-	);
+		).filter((window): window is CandidateWindow => window !== null);
+	});
 };
 
 const uniqueBy = <T>(items: T[], keyOf: (item: T) => string): T[] => {

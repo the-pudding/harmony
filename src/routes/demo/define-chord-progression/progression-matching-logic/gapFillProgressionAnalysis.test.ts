@@ -11,7 +11,10 @@ import { computeGapFillProgressionMatches } from "./gapFillProgressionAnalysis.j
 import { selectFinalProgressions } from "./finalProgressionSelection.js";
 import { emptyCoverage } from "./greedyProgressionSelection.js";
 import { MIN_PROGRESSION_OCCURRENCES } from "./progressionMatchAnalysis.js";
-import { MIN_PROGRESSION_LENGTH } from "./progressionConstraints.js";
+import {
+	MIN_PROGRESSION_LENGTH,
+	MAX_PROGRESSION_LENGTH
+} from "./progressionConstraints.js";
 import { correctedSongContentsToSongInputs } from "../../../../data/applyHandReviewedCorrections.js";
 import { handReviewedSongs } from "../../../../data/hand-reviewed-songs.js";
 
@@ -209,6 +212,29 @@ describe("computeGapFillProgressionMatches — recurrence detection", () => {
 		const song = makeSong([["I", "V", "vi", "IV", "I", "V", "vi", "IV"]]);
 		expect(gapProgressions(song)).not.toContain("I-V-vi-IV");
 		expect(gapProgressions(song)).toContain("I-V-vi");
+	});
+
+	it("never returns progressions longer than the maximum length", () => {
+		const longBlock = [
+			"I",
+			"ii",
+			"iii",
+			"IV",
+			"V",
+			"vi",
+			"bVII",
+			"I",
+			"ii"
+		];
+		const song = makeSong([[...longBlock, ...longBlock]]);
+		const progressions = gapProgressions(song);
+		expect(progressions.length).toBeGreaterThan(0);
+		expect(
+			progressions.every(
+				(progression) =>
+					progression.split("-").length <= MAX_PROGRESSION_LENGTH
+			)
+		).toBe(true);
 	});
 });
 
