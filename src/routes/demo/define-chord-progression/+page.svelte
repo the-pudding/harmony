@@ -371,6 +371,7 @@
 
 					{#if showSongsContext}
 						<div class="songs-context-content">
+						<div class="section-description">match % measured based on if the progression ultimately was deemed a chord progression in the song (not just if it appeared at all)</div>
 						<CoreProgressionRow
 							{coreProgressions}
 							selectedSong={selectedSong ?? null}
