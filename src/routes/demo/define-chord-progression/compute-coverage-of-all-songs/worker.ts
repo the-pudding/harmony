@@ -1,12 +1,18 @@
 import coreProgressionsData from "$data/core-progressions.js";
 import type { GroupedSong } from "../../progressions/songBrowser.js";
 import { selectFinalProgressions } from "../progression-matching-logic/finalProgressionSelection.js";
+import {
+	parseCoreProgressions,
+	findMatchingCoreProgressionsForSong,
+	type ParsedCoreProgression
+} from "../progression-matching-logic/progressionMatchAnalysis.js";
 
 export type SongCoverageEntry = {
 	songKey: string;
 	title: string;
 	artists: string[];
 	coveragePercent: number;
+	matchingProgressions: string[];
 };
 
 export type CoverageWorkerInitMessage = {
@@ -36,6 +42,7 @@ export type CoverageWorkerResponse = CoverageWorkerInitDoneMessage | CoverageWor
 const coreProgressions = coreProgressionsData;
 
 let songs: GroupedSong[] = [];
+let parsedCoreProgressions: ParsedCoreProgression[] = [];
 
 const computeOneSong = (song: GroupedSong): SongCoverageEntry => {
 	const selection = selectFinalProgressions(song, coreProgressions);
@@ -43,7 +50,11 @@ const computeOneSong = (song: GroupedSong): SongCoverageEntry => {
 		songKey: song.songKey,
 		title: song.title,
 		artists: song.artists,
-		coveragePercent: selection.explainedPercent
+		coveragePercent: selection.explainedPercent,
+		matchingProgressions: findMatchingCoreProgressionsForSong(
+			song,
+			parsedCoreProgressions
+		)
 	};
 };
 
@@ -52,6 +63,7 @@ self.onmessage = (event: MessageEvent<CoverageWorkerMessage>) => {
 
 	if (message.type === "INIT") {
 		songs = message.songs;
+		parsedCoreProgressions = parseCoreProgressions(coreProgressions);
 		const response: CoverageWorkerInitDoneMessage = { type: "INIT_DONE" };
 		self.postMessage(response);
 		return;

@@ -4,6 +4,7 @@
 	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
 	import { matchOutline } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
+	import SongProgressionStats from "./progression-match-stats/SongProgressionStats.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
 	import SongMetadataHeader from "./SongMetadataHeader.svelte";
 	import { BUTTON_COLUMN_WIDTH_PERCENT, CHORDS_COLUMN_WIDTH_PERCENT, COLUMN_GAP_REM } from "./progressionTableLayout.js";
@@ -46,7 +47,15 @@
 						borderColor={outline.color}
 						dashed={outline.dashed}
 						{onselect}
-					/>
+					>
+						{#snippet stats({ active })}
+							<SongProgressionStats
+								matchCount={match.matchCount}
+								coveragePercent={match.coveragePercent}
+								{active}
+							/>
+						{/snippet}
+					</ProgressionMatchButton>
 				{/each}
 				<div class="total-row">
 					<span class="total-label">= <strong class="total-percent">{explainedPercent}%</strong> of the song{#if isExplained}<span class="checkmark">✅</span>{/if}</span>

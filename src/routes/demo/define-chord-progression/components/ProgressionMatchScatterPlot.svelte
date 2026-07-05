@@ -2,6 +2,7 @@
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import { matchOutline } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
+	import SongProgressionStats from "./progression-match-stats/SongProgressionStats.svelte";
 
 	type Props = {
 		allMatches: ProgressionWithMatchStats[];
@@ -95,7 +96,15 @@
 				borderColor={outline.color}
 				dashed={outline.dashed}
 				{onselect}
-			/>
+			>
+				{#snippet stats({ active })}
+					<SongProgressionStats
+						matchCount={hoveredMatch.matchCount}
+						coveragePercent={hoveredMatch.coveragePercent}
+						{active}
+					/>
+				{/snippet}
+			</ProgressionMatchButton>
 		</div>
 	{/if}
 

@@ -3,6 +3,7 @@
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import { matchOutline } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
+	import SongProgressionStats from "./progression-match-stats/SongProgressionStats.svelte";
 	import ProgressionMatchScatterPlot from "./ProgressionMatchScatterPlot.svelte";
 	import ProgressionMatchSummary from "./ProgressionMatchSummary.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
@@ -64,7 +65,15 @@
 						borderColor={outline.color}
 						dashed={outline.dashed}
 						{onselect}
-					/>
+					>
+						{#snippet stats({ active })}
+							<SongProgressionStats
+								matchCount={match.matchCount}
+								coveragePercent={match.coveragePercent}
+								{active}
+							/>
+						{/snippet}
+					</ProgressionMatchButton>
 				</td>
 				<td class="match-chords-cell">
 					<SongChordsDisplay

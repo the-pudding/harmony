@@ -169,6 +169,85 @@ export function computeProgressionMatches(
 		.sort((a, b) => b.coveragePercent - a.coveragePercent);
 }
 
+export type ParsedCoreProgression = {
+	chordProgression: string;
+	parsed: ParsedProgressionChord[];
+};
+
+export const parseCoreProgressions = (
+	coreProgressions: CoreProgression[]
+): ParsedCoreProgression[] =>
+	coreProgressions
+		.filter(
+			(progression) => !isSelfRepeatingProgression(progression.chordProgression)
+		)
+		.flatMap((progression) => {
+			const parsed = romanTokensToParsedProgression(
+				progression.chordProgression.split("-"),
+				progression.scale
+			);
+			if (!parsed) return [];
+			return [{ chordProgression: progression.chordProgression, parsed }];
+		});
+
+export const findMatchingCoreProgressionsForSong = (
+	song: GroupedSong,
+	parsedCoreProgressions: ParsedCoreProgression[]
+): string[] =>
+	parsedCoreProgressions
+		.filter(({ parsed }) => {
+			const { matchCount } = computeStatsForParsedProgression(song, parsed);
+			return matchCount >= MIN_PROGRESSION_OCCURRENCES;
+		})
+		.map(({ chordProgression }) => chordProgression);
+
+export const buildProgressionMatchRates = (
+	matchingLists: string[][],
+	totalSongs: number
+): Record<string, number> => {
+	if (totalSongs === 0) return {};
+	const counts: Record<string, number> = {};
+	for (const list of matchingLists) {
+		for (const chordProgression of list) {
+			counts[chordProgression] = (counts[chordProgression] ?? 0) + 1;
+		}
+	}
+	const rates: Record<string, number> = {};
+	for (const [chordProgression, count] of Object.entries(counts)) {
+		rates[chordProgression] = Math.round((count / totalSongs) * 100);
+	}
+	return rates;
+};
+
+export const buildCoreProgressionDisplayMatches = (
+	coreProgressions: CoreProgression[],
+	song: GroupedSong | null
+): ProgressionWithMatchStats[] =>
+	coreProgressions
+		.filter(
+			(progression) => !isSelfRepeatingProgression(progression.chordProgression)
+		)
+		.map((progression): ProgressionWithMatchStats | null => {
+			const parsed = romanTokensToParsedProgression(
+				progression.chordProgression.split("-"),
+				progression.scale
+			);
+			if (!parsed) return null;
+
+			const stats = song
+				? computeStatsForParsedProgression(song, parsed)
+				: { matchCount: 0, coveragePercent: 0 };
+
+			return {
+				...progression,
+				parsedProgression: parsed,
+				matchCount: stats.matchCount,
+				coveragePercent: stats.coveragePercent,
+				...matchHighlightForCoreProgression(true)
+			};
+		})
+		.filter((match): match is ProgressionWithMatchStats => match !== null);
+
 export function getSectionMatches(
 	section: SongSection,
 	searchProgression: ParsedProgressionChord[] | null

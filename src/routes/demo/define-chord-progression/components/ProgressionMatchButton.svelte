@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from "svelte";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
 
 	type Props = {
@@ -7,15 +8,10 @@
 		onselect: (chordProgression: string) => void;
 		borderColor?: string;
 		dashed?: boolean;
+		stats?: Snippet<[{ active: boolean }]>;
 	};
 
-	let { match, active, onselect, borderColor, dashed = false }: Props = $props();
-
-	const COVERAGE_PERCENT_MAX = 100;
-	const coveragePercentRounded = $derived(Math.round(match.coveragePercent));
-	const coverageBarWidth = $derived(
-		`${Math.min(Math.max(match.coveragePercent, 0), COVERAGE_PERCENT_MAX)}%`
-	);
+	let { match, active, onselect, borderColor, dashed = false, stats }: Props = $props();
 </script>
 
 <button
@@ -31,10 +27,9 @@
 		<span class="prog-name">{match.name}</span>
 	{/if}
 	<span class="prog-chords">{match.chordProgression}</span>
-	<span class="prog-stats">{match.matchCount}× · {coveragePercentRounded}%</span>
-	<div class="prog-coverage-bar" aria-hidden="true">
-		<div class="prog-coverage-fill" style:width={coverageBarWidth}></div>
-	</div>
+	{#if stats}
+		{@render stats({ active })}
+	{/if}
 </button>
 
 <style>
@@ -101,42 +96,5 @@
 
 	.prog-btn:hover .prog-chords {
 		color: rgba(228, 228, 231, 0.7);
-	}
-
-	.prog-stats {
-		font-size: 0.65rem;
-		color: rgba(161, 161, 170, 0.85);
-	}
-
-	.prog-btn.active .prog-stats {
-		color: rgba(137, 180, 250, 0.85);
-	}
-
-	.prog-btn:hover .prog-stats {
-		color: rgba(228, 228, 231, 0.85);
-	}
-
-	.prog-coverage-bar {
-		width: 100%;
-		height: 0.25rem;
-		margin-top: 0.125rem;
-		border-radius: 9999px;
-		background: rgba(255, 255, 255, 0.08);
-		overflow: hidden;
-	}
-
-	.prog-coverage-fill {
-		height: 100%;
-		border-radius: inherit;
-		background: rgba(161, 161, 170, 0.75);
-		transition: width 0.2s ease;
-	}
-
-	.prog-btn.active .prog-coverage-fill {
-		background: rgba(137, 180, 250, 0.85);
-	}
-
-	.prog-btn:hover .prog-coverage-fill {
-		background: rgba(228, 228, 231, 0.75);
 	}
 </style>

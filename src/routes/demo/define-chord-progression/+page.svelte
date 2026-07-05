@@ -10,12 +10,13 @@
 	import ProgressionMatchTable from "./components/ProgressionMatchTable.svelte";
 	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
 	import ProgressionDefinitionCriteriaTable from "./components/ProgressionDefinitionCriteriaTable.svelte";
+	import CoreProgressionRow from "./components/CoreProgressionRow.svelte";
 	import SongCoverageBeeswarm from "./components/SongCoverageBeeswarm.svelte";
 	import {
 		initCoverageWorkerPool,
 		computeCoverageOfAllSongs,
 		terminateCoverageWorkerPool,
-		type SongCoverageEntry
+		type AllSongsCoverageResult
 	} from "./compute-coverage-of-all-songs/index.js";
 	import { MIN_PROGRESSION_OCCURRENCES } from "./progression-matching-logic/progressionMatchAnalysis.js";
 	import {
@@ -211,19 +212,19 @@
 
 	const explainedPercent = $derived(finalSelection.explainedPercent);
 
-	let allSongCoverages = $state<SongCoverageEntry[] | null>(null);
+	let allSongsCoverageResult = $state<AllSongsCoverageResult | null>(null);
 	let coverageRequestId = 0;
 
 	$effect(() => {
 		const songs = baseList;
-		allSongCoverages = null;
+		allSongsCoverageResult = null;
 		let active = true;
 		const requestId = ++coverageRequestId;
 
 		void initCoverageWorkerPool($state.snapshot(songs)).then(async () => {
 			if (!active) return;
 			const coverages = await computeCoverageOfAllSongs(requestId);
-			if (active) allSongCoverages = coverages;
+			if (active) allSongsCoverageResult = coverages;
 		});
 
 		return () => {
@@ -370,11 +371,20 @@
 
 					{#if showSongsContext}
 						<div class="songs-context-content">
-							<SongCoverageBeeswarm
-								songs={allSongCoverages}
-								selectedSongKey={selectedKey}
-								onSelectSong={handleSongSelect}
-							/>
+						<CoreProgressionRow
+							{coreProgressions}
+							selectedSong={selectedSong ?? null}
+							activeProgression={pinnedProgression}
+							progressionMatchRates={allSongsCoverageResult?.progressionMatchRates ?? null}
+							onselect={handleProgressionSelect}
+						/>
+
+						<SongCoverageBeeswarm
+							songs={allSongsCoverageResult?.songCoverages ?? null}
+							selectedSongKey={selectedKey}
+							highlightedProgression={pinnedProgression}
+							onSelectSong={handleSongSelect}
+						/>
 						</div>
 					{/if}
 				</div>
@@ -640,6 +650,9 @@
 	}
 
 	.songs-context-content {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
 		padding: 0.75rem;
 		background: var(--songs-context-content-bg);
 	}

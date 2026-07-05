@@ -13,6 +13,7 @@
 		title: string;
 		artists: string[];
 		coveragePercent: number;
+		matchingProgressions: string[];
 		chordProgressionIssues?: string;
 	};
 
@@ -25,10 +26,11 @@
 	type Props = {
 		songs: SongEntry[] | null;
 		selectedSongKey: string;
+		highlightedProgression: string | null;
 		onSelectSong?: (key: string) => void;
 	};
 
-	let { songs, selectedSongKey, onSelectSong }: Props = $props();
+	let { songs, selectedSongKey, highlightedProgression, onSelectSong }: Props = $props();
 
 	let containerWidth = $state(0);
 	let hoveredSongKey = $state<string | null>(null);
@@ -224,6 +226,7 @@
 				{@const isSelected = node.songKey === selectedSongKey}
 				{@const isHovered = node.songKey === hoveredSongKey}
 				{@const hasIssues = node.chordProgressionIssues !== undefined}
+				{@const isCoreMatched = highlightedProgression !== null && node.matchingProgressions.includes(highlightedProgression)}
 				{@const r = isSelected ? SELECTED_DOT_RADIUS : DOT_RADIUS}
 				{@const cy = AXIS_Y - DOT_RADIUS - node.y}
 				<circle
@@ -232,8 +235,9 @@
 					{r}
 					class="dot"
 					class:selected={isSelected}
+					class:core-matched={isCoreMatched && !isSelected}
 					class:hovered={isHovered}
-					class:has-issues={hasIssues}
+					class:has-issues={hasIssues && !isCoreMatched && !isSelected}
 					onmouseenter={() => handleDotEnter(node.songKey)}
 					onmouseleave={scheduleHoverClear}
 					onclick={() => selectSong(node.songKey)}
@@ -347,6 +351,18 @@
 	.dot.hovered {
 		fill: rgba(99, 102, 241, 0.9);
 		stroke: rgba(255, 255, 255, 0.6);
+		stroke-width: 1.5px;
+	}
+
+	.dot.core-matched {
+		fill: rgba(21, 128, 61, 0.85);
+		stroke: rgba(134, 239, 172, 0.7);
+		stroke-width: 1px;
+	}
+
+	.dot.core-matched.hovered {
+		fill: rgba(21, 128, 61, 1);
+		stroke: rgba(134, 239, 172, 0.95);
 		stroke-width: 1.5px;
 	}
 

@@ -1,5 +1,6 @@
 import CoverageWorker from "./worker.ts?worker";
 import type { GroupedSong } from "../../progressions/songBrowser.js";
+import { buildProgressionMatchRates } from "../progression-matching-logic/progressionMatchAnalysis.js";
 import type {
 	CoverageWorkerInitMessage,
 	CoverageWorkerComputeMessage,
@@ -8,6 +9,11 @@ import type {
 } from "./worker.js";
 
 export type { SongCoverageEntry };
+
+export type AllSongsCoverageResult = {
+	songCoverages: SongCoverageEntry[];
+	progressionMatchRates: Record<string, number>;
+};
 
 const WORKER_POOL_MAX = 8;
 const MIN_SONGS_PER_WORKER = 10;
@@ -77,12 +83,19 @@ export const initCoverageWorkerPool = async (songs: GroupedSong[]): Promise<void
 	await Promise.all(workerHandles.map(({ initDone }) => initDone));
 };
 
-export const computeCoverageOfAllSongs = async (requestId: number): Promise<SongCoverageEntry[]> => {
-	if (workerHandles.length === 0) return [];
+export const computeCoverageOfAllSongs = async (
+	requestId: number
+): Promise<AllSongsCoverageResult> => {
+	if (workerHandles.length === 0) {
+		return { songCoverages: [], progressionMatchRates: {} };
+	}
 
 	await Promise.all(workerHandles.map(({ initDone }) => initDone));
 
-	const computeMessage: CoverageWorkerComputeMessage = { type: "COMPUTE", requestId };
+	const computeMessage: CoverageWorkerComputeMessage = {
+		type: "COMPUTE",
+		requestId
+	};
 
 	const chunkResults = await Promise.all(
 		workerHandles.map(async ({ worker }) => {
@@ -92,7 +105,13 @@ export const computeCoverageOfAllSongs = async (requestId: number): Promise<Song
 		})
 	);
 
-	return chunkResults.flat();
+	const songCoverages = chunkResults.flat();
+	const progressionMatchRates = buildProgressionMatchRates(
+		songCoverages.map((s) => s.matchingProgressions),
+		songCoverages.length
+	);
+
+	return { songCoverages, progressionMatchRates };
 };
 
 export const terminateCoverageWorkerPool = (): void => {

@@ -7,7 +7,10 @@ import type {
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import {
 	computeProgressionMatches,
-	computeStatsForParsedProgression
+	computeStatsForParsedProgression,
+	parseCoreProgressions,
+	findMatchingCoreProgressionsForSong,
+	buildProgressionMatchRates
 } from "./progressionMatchAnalysis.js";
 import coreProgressions from "$data/core-progressions.js";
 
@@ -163,5 +166,75 @@ describe("computeStatsForParsedProgression — overlapping match regression (hig
 		const statsLong = computeStatsForParsedProgression(outroTokenSong, parse("i-v-VI-iv-i"));
 		const statsShort = computeStatsForParsedProgression(outroTokenSong, parse("i-v-VI-iv"));
 		expect(statsShort.coveragePercent).toBeGreaterThan(statsLong.coveragePercent);
+	});
+});
+
+describe("parseCoreProgressions", () => {
+	it("returns an entry for every non-self-repeating core progression that parses", () => {
+		const parsed = parseCoreProgressions(coreProgressions);
+		expect(parsed.length).toBeGreaterThan(0);
+		expect(
+			parsed.every((p) => Array.isArray(p.parsed) && p.parsed.length > 0)
+		).toBe(true);
+	});
+
+	it("carries the original chordProgression string through", () => {
+		const parsed = parseCoreProgressions(coreProgressions);
+		const axisEntry = parsed.find((p) => p.chordProgression === "I-V-vi-IV");
+		expect(axisEntry).toBeDefined();
+	});
+});
+
+describe("findMatchingCoreProgressionsForSong", () => {
+	it("returns the burnin-up progression for the burnin-up song (4 matches >= 2)", () => {
+		const parsedCore = parseCoreProgressions(coreProgressions);
+		const matches = findMatchingCoreProgressionsForSong(
+			{ ...saveYourTearsHooktheory, songKey: "jonas-brothers__burnin-up" },
+			parsedCore
+		);
+		// save your tears matches "dark doo wop" I-vi-iii-V pattern — check it appears
+		expect(matches).toContain("I-vi-iii-V");
+	});
+
+	it("does not include progressions with only 1 match (below MIN_PROGRESSION_OCCURRENCES)", () => {
+		const singleMatchSection = makeSection([
+			C_MAJOR,
+			A_MINOR,
+			E_MINOR,
+			G_MAJOR
+		]);
+		const singleMatchSong: GroupedSong = {
+			songKey: "test__single-match",
+			title: "Test",
+			artists: ["Test"],
+			keyLabel: "C major",
+			sections: [singleMatchSection]
+		};
+		const parsedCore = parseCoreProgressions(coreProgressions);
+		const matches = findMatchingCoreProgressionsForSong(
+			singleMatchSong,
+			parsedCore
+		);
+		expect(matches).not.toContain("I-vi-iii-V");
+	});
+});
+
+describe("buildProgressionMatchRates", () => {
+	it("returns empty object when totalSongs is 0", () => {
+		expect(buildProgressionMatchRates([["I-V-vi-IV"]], 0)).toEqual({});
+	});
+
+	it("computes the correct percentage rounded to nearest integer", () => {
+		const rates = buildProgressionMatchRates(
+			[["I-V-vi-IV"], ["I-V-vi-IV"], ["I-vi-IV-V"]],
+			4
+		);
+		expect(rates["I-V-vi-IV"]).toBe(50);
+		expect(rates["I-vi-IV-V"]).toBe(25);
+	});
+
+	it("progressions absent from all lists are not present in the result", () => {
+		const rates = buildProgressionMatchRates([["I-V-vi-IV"]], 2);
+		expect(rates["I-vi-iii-V"]).toBeUndefined();
 	});
 });
