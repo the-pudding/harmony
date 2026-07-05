@@ -67,12 +67,13 @@ const coreProgressions: CoreProgression[] = [
 		scale: "minor",
 		description: ""
 	},
-	{
-		name: "poker face",
-		chordProgression: "i-VI-III-VII",
-		scale: "minor",
-		description: ""
-	},
+	// TEMP: hide this progression, because we're testing a bug that only appears in lady-gaga__poker-face with it gone.
+	// {
+	// 	name: "poker face",
+	// 	chordProgression: "i-VI-III-VII",
+	// 	scale: "minor",
+	// 	description: ""
+	// },
 	{
 		name: "axis of awesome",
 		chordProgression: "I-V-vi-IV",
