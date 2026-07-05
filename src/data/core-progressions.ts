@@ -68,6 +68,12 @@ const coreProgressions: CoreProgression[] = [
 		description: ""
 	},
 	{
+		name: "poker face",
+		chordProgression: "i-VI-III-VII",
+		scale: "minor",
+		description: ""
+	},
+	{
 		name: "axis of awesome",
 		chordProgression: "I-V-vi-IV",
 		scale: "major",
