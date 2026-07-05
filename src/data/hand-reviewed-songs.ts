@@ -20,33 +20,30 @@ export type HandReviewedSong = {
 
 export const handReviewedSongs: HandReviewedSong[] = [
 	{
+		id: "one-direction__perfect",
+		technicalNotes:
+			"There are just 4 chords, which the original song nailed, but listed only for the chorus, preventing a 2x+ match.",
+		correctedSongContents: {
+			sections: [
+				...["Intro", "Verse 1", "Chorus", "Verse 2", "Bridge"].map((name) => ({
+					name,
+					key: "D",
+					scale: "major",
+					romanTokens: ["I", "IV", "vi", "IV"]
+				}))
+			]
+		}
+	},
+	{
 		id: "travis-scott__highest-in-the-room",
 		correctedSongContents: {
 			sections: [
-				{
-					name: "Intro",
+				...["Intro", "Verse 1", "Chorus", "Verse 2"].map((name) => ({
+					name,
 					key: "D",
 					scale: "minor",
 					romanTokens: ["i", "v", "i", "v"]
-				},
-				{
-					name: "Verse 1",
-					key: "D",
-					scale: "minor",
-					romanTokens: ["i", "v", "i", "v"]
-				},
-				{
-					name: "Chorus",
-					key: "D",
-					scale: "minor",
-					romanTokens: ["i", "v", "i", "v"]
-				},
-				{
-					name: "Verse 2",
-					key: "D",
-					scale: "minor",
-					romanTokens: ["i", "v", "i", "v"]
-				},
+				})),
 				{
 					name: "Outro",
 					key: "D",
