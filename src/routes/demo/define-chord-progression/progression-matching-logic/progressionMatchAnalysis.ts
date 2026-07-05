@@ -88,14 +88,6 @@ const toNonOverlappingMatches = (
 	});
 };
 
-const countCoveredPositions = (
-	sectionLength: number,
-	matches: ReturnType<typeof findSubProgressionMatches>
-): number =>
-	Array.from({ length: sectionLength }, (_, position) =>
-		matches.some((match) => isPositionInMatch(position, match, sectionLength))
-	).filter(Boolean).length;
-
 export const computeStatsForParsedProgression = (
 	song: GroupedSong,
 	parsed: ParsedProgressionChord[]
@@ -108,22 +100,12 @@ export const computeStatsForParsedProgression = (
 
 	const stats = song.sections.reduce(
 		(accumulator, section) => {
-			const allMatches = matchProgressionIgnoringBassAndExtensions(
-				section.parsedProgression,
-				parsed
-			);
-			const nonOverlapping = toNonOverlappingMatches(
-				allMatches,
-				section.parsedProgression.length
-			);
+			const matches = getSectionMatches(section, parsed);
 			return {
-				matchCount: accumulator.matchCount + nonOverlapping.length,
+				matchCount: accumulator.matchCount + matches.length,
 				coveredPositions:
 					accumulator.coveredPositions +
-					countCoveredPositions(
-						section.parsedProgression.length,
-						nonOverlapping
-					)
+					matches.reduce((sum, m) => sum + m.length, 0)
 			};
 		},
 		{ matchCount: 0, coveredPositions: 0 }
@@ -177,9 +159,13 @@ export function getSectionMatches(
 	searchProgression: ParsedProgressionChord[] | null
 ): SubProgressionMatch[] {
 	if (!searchProgression || searchProgression.length === 0) return [];
-	return matchProgressionIgnoringBassAndExtensions(
-		section.parsedProgression,
-		searchProgression
+	const sectionLength = section.parsedProgression.length;
+	return toNonOverlappingMatches(
+		matchProgressionIgnoringBassAndExtensions(
+			section.parsedProgression,
+			searchProgression
+		),
+		sectionLength
 	);
 }
 
@@ -188,8 +174,8 @@ export const computeCoveredPositionsBySection = (
 	searchProgression: ParsedProgressionChord[]
 ): number[][] =>
 	song.sections.map((section) => {
-		const matches = getSectionMatches(section, searchProgression);
 		const sectionLength = section.parsedProgression.length;
+		const matches = getSectionMatches(section, searchProgression);
 		return Array.from({ length: sectionLength }, (_, pos) => pos).filter(
 			(pos) =>
 				matches.some((match) => isPositionInMatch(pos, match, sectionLength))
@@ -224,10 +210,7 @@ export const buildColoredHighlightSegments = (
 	const sectionLength = section.parsedProgression.length;
 
 	const matchesByAnnotation = annotations.map(({ parsedProgression }) =>
-		toNonOverlappingMatches(
-			getSectionMatches(section, parsedProgression),
-			sectionLength
-		)
+		getSectionMatches(section, parsedProgression)
 	);
 
 	const positionGroups: PositionGroup[] = Array.from(

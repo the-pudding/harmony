@@ -398,3 +398,53 @@ describe("selectFinalProgressions — highest in the room outro regression", () 
 		expect(candidate).toBeUndefined();
 	});
 });
+
+// God's Plan-style vamp regression:
+// When a section is a pure vamp (e.g. iv-v repeated 8× = 16 chords), a longer
+// version of the pattern (iv-v-iv-v-iv-v, 6 chords) used to win the greedy sort
+// over the shorter one (iv-v-iv-v, 4 chords) because overlapping raw matches made
+// both look like they covered all 16 positions. With the tiebreaker favouring
+// length, the 6-chord form was selected, leaving the last 4 chords unhighlighted
+// while still reporting 100% coverage. The fix (non-overlapping in
+// computeCoveredPositionsBySection) makes the 4-chord form win with more real
+// coverage (28 positions vs 24).
+
+const vampVerse = makeSection(["iv", "v", "iv", "v", "iv", "v", "iv", "v", "iv", "v", "iv", "v", "iv", "v", "iv", "v"]);
+const vampBridge = makeSection(["iv", "v", "iv", "v", "iv", "v", "iv", "v", "iv", "v", "iv", "v"]);
+const vampPreChorus = makeSection(["iv", "v", "VI", "i", "iv", "v", "VI", "i"]);
+
+const vampSong: GroupedSong = {
+	songKey: "drake__gods-plan",
+	title: "God's Plan",
+	artists: ["Drake"],
+	keyLabel: null,
+	sections: [vampVerse, vampBridge, vampPreChorus]
+};
+
+describe("selectFinalProgressions — vamp regression (gods plan)", () => {
+	it("selects iv-v-iv-v (4-chord) as a gap-fill, not iv-v-iv-v-iv-v (6-chord)", () => {
+		const result = selectFinalProgressions(vampSong, coreProgressions);
+		const gapKeys = result.gapSelected.map((m) => m.chordProgression);
+		expect(gapKeys).toContain("iv-v-iv-v");
+		expect(gapKeys).not.toContain("iv-v-iv-v-iv-v");
+	});
+
+	it("iv-v-iv-v has more non-overlapping coverage than iv-v-iv-v-iv-v in the vamp sections", () => {
+		const result = selectFinalProgressions(vampSong, coreProgressions);
+		const short = result.gapCandidates.find((m) => m.chordProgression === "iv-v-iv-v");
+		const long = result.gapCandidates.find((m) => m.chordProgression === "iv-v-iv-v-iv-v");
+		expect(short).toBeDefined();
+		expect(short!.matchCount).toBeGreaterThan((long?.matchCount ?? 0));
+	});
+
+	it("also selects iv-v-VI-i for the pre-chorus section", () => {
+		const result = selectFinalProgressions(vampSong, coreProgressions);
+		const gapKeys = result.gapSelected.map((m) => m.chordProgression);
+		expect(gapKeys).toContain("iv-v-VI-i");
+	});
+
+	it("reaches 100% explained coverage with iv-v-iv-v and iv-v-VI-i together", () => {
+		const result = selectFinalProgressions(vampSong, coreProgressions);
+		expect(result.explainedPercent).toBe(100);
+	});
+});
