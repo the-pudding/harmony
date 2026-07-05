@@ -20,6 +20,27 @@ export type HandReviewedSong = {
 
 export const handReviewedSongs: HandReviewedSong[] = [
 	{
+		id: "omi__cheerleader",
+		technicalNotes:
+			"Original chords were mostly correct, but with like 2 random chords, V-IV, thrown in at the start of one of the verses.",
+		correctedSongContents: {
+			sections: [
+				...["Intro", "Verse"].map((name) => ({
+					name,
+					key: "E",
+					scale: "major",
+					romanTokens: ["I", "V", "IV"]
+				})),
+				...["Pre-Chorus", "Chorus", "Bridge"].map((name) => ({
+					name,
+					key: "E",
+					scale: "major",
+					romanTokens: ["I", "IV", "V", "IV"]
+				}))
+			]
+		}
+	},
+	{
 		id: "one-direction__perfect",
 		technicalNotes:
 			"There are just 4 chords, which the original song nailed, but listed only for the chorus, preventing a 2x+ match.",

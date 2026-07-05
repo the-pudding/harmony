@@ -6,6 +6,7 @@ export type CoreProgression = {
 };
 
 const coreProgressions: CoreProgression[] = [
+	// Happy, major-y progressions ------------------------------------------------
 	{ name: "basic plagal", chordProgression: "I-IV-I-IV", description: "" },
 	{ name: "basic perfect", chordProgression: "I-V-I-V", description: "" },
 	{
@@ -15,7 +16,11 @@ const coreProgressions: CoreProgression[] = [
 		technicalNotes:
 			"Teenage Dream and Call Me Maybe are variants of this with a vi passing chord"
 	},
+	{ name: "Cheerleader 1", chordProgression: "I-V-IV", description: "" },
+	{ name: "Cheerleader 2", chordProgression: "I-IV-V-IV", description: "" },
 	{ name: "major-y", chordProgression: "I-V-IV-V", description: "" },
+	{ name: "mixolydian vamp", chordProgression: "I-bVII-IV", description: "" }, // also could be thought of as a V-IV-I
+
 	{ name: "minor-y", chordProgression: "i-bVII-v-bVI", description: "" },
 	{ name: "axis of awesome", chordProgression: "I-V-vi-IV", description: "" },
 	{ name: "doo wop", chordProgression: "I-vi-IV-V", description: "" },
@@ -24,8 +29,7 @@ const coreProgressions: CoreProgression[] = [
 		chordProgression: "I-vi-iii-V",
 		description: ""
 	},
-	// also could be thought of as a V-IV-I
-	{ name: "mixolydian vamp", chordProgression: "I-bVII-IV", description: "" },
+
 	{ name: "jazz changes", chordProgression: "vi-ii-V-I", description: "" },
 	{
 		name: "andalusian cadence",
