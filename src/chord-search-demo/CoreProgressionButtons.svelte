@@ -1,9 +1,7 @@
 <script lang="ts">
-	import coreProgressions from "$data/core-progressions.js";
+	import coreProgressions, { type CoreProgression } from "$data/core-progressions.js";
 	import { romanTokensToParsedProgression } from "../chord-processing/romanNumerals.js";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
-
-	type Progression = { name: string; chordProgression: string; description: string };
 
 	type Props = {
 		activeProgression?: string | null;
@@ -12,7 +10,7 @@
 
 	let { activeProgression: activeProp = undefined, onselect }: Props = $props();
 
-	const progressions: Progression[] = coreProgressions;
+	const progressions: CoreProgression[] = coreProgressions;
 
 	const storeActiveProgression = $derived.by(() => {
 		const searchChords = chordSearchDemoStore.searchChords;
