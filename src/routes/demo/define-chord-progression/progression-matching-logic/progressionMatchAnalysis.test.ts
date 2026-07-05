@@ -116,3 +116,52 @@ describe("computeProgressionMatches — extension-stripping regression (save you
 		expect(htCount).toBe(ugCount);
 	});
 });
+
+// Travis Scott "Highest in the Room" — the outro is:
+//   vi · i · v · VI · iv · i · v · VI · iv · i
+// i-v-VI-iv appears at positions 1-4 and 5-8: 2 non-overlapping matches.
+// i-v-VI-iv-i appears at positions 1-5 and 5-9, sharing position 5, so only 1
+// non-overlapping instance. Before the fix, computeStatsForParsedProgression
+// counted raw (overlapping) matches, causing i-v-VI-iv-i to show "2×" in the UI.
+//
+// Both the section and the search are built with romanTokensToParsedProgression
+// so their abstract (interval-based) representations are consistent.
+
+const OUTRO_TOKENS = ["vi", "i", "v", "VI", "iv", "i", "v", "VI", "iv", "i"];
+
+const makeTokenSection = (romanTokens: string[]): SongSection => ({
+	label: null,
+	chords: romanTokens,
+	romanTokens,
+	parsedProgression: romanTokensToParsedProgression(romanTokens) ?? [],
+	keyLabel: null
+});
+
+const outroTokenSong: GroupedSong = {
+	songKey: "travis-scott__highest-in-the-room",
+	title: "Highest in the Room",
+	artists: ["Travis Scott"],
+	keyLabel: null,
+	sections: [makeTokenSection(OUTRO_TOKENS)]
+};
+
+const parse = (progression: string) =>
+	romanTokensToParsedProgression(progression.split("-"))!;
+
+describe("computeStatsForParsedProgression — overlapping match regression (highest in the room)", () => {
+	it("counts i-v-VI-iv-i as only 1 non-overlapping match in the outro", () => {
+		const stats = computeStatsForParsedProgression(outroTokenSong, parse("i-v-VI-iv-i"));
+		expect(stats.matchCount).toBe(1);
+	});
+
+	it("counts i-v-VI-iv as 2 non-overlapping matches in the outro", () => {
+		const stats = computeStatsForParsedProgression(outroTokenSong, parse("i-v-VI-iv"));
+		expect(stats.matchCount).toBe(2);
+	});
+
+	it("outro coverage is higher for i-v-VI-iv than i-v-VI-iv-i", () => {
+		const statsLong = computeStatsForParsedProgression(outroTokenSong, parse("i-v-VI-iv-i"));
+		const statsShort = computeStatsForParsedProgression(outroTokenSong, parse("i-v-VI-iv"));
+		expect(statsShort.coveragePercent).toBeGreaterThan(statsLong.coveragePercent);
+	});
+});

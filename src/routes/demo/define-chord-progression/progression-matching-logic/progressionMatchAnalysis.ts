@@ -72,6 +72,22 @@ const matchProgressionIgnoringBassAndExtensions = (
 		withoutExtensions(withoutSlashBass(searchProgression))
 	);
 
+const toNonOverlappingMatches = (
+	matches: SubProgressionMatch[],
+	sectionLength: number
+): SubProgressionMatch[] => {
+	const covered = new Set<number>();
+	return matches.filter(({ start, length }) => {
+		const positions = Array.from(
+			{ length },
+			(_, i) => (start + i) % sectionLength
+		);
+		if (positions.some((p) => covered.has(p))) return false;
+		positions.forEach((p) => covered.add(p));
+		return true;
+	});
+};
+
 const countCoveredPositions = (
 	sectionLength: number,
 	matches: ReturnType<typeof findSubProgressionMatches>
@@ -92,15 +108,22 @@ export const computeStatsForParsedProgression = (
 
 	const stats = song.sections.reduce(
 		(accumulator, section) => {
-			const matches = matchProgressionIgnoringBassAndExtensions(
+			const allMatches = matchProgressionIgnoringBassAndExtensions(
 				section.parsedProgression,
 				parsed
 			);
+			const nonOverlapping = toNonOverlappingMatches(
+				allMatches,
+				section.parsedProgression.length
+			);
 			return {
-				matchCount: accumulator.matchCount + matches.length,
+				matchCount: accumulator.matchCount + nonOverlapping.length,
 				coveredPositions:
 					accumulator.coveredPositions +
-					countCoveredPositions(section.parsedProgression.length, matches)
+					countCoveredPositions(
+						section.parsedProgression.length,
+						nonOverlapping
+					)
 			};
 		},
 		{ matchCount: 0, coveredPositions: 0 }
@@ -193,22 +216,6 @@ const isContinuingGroup = (prev: PositionGroup, curr: PositionGroup): boolean =>
 		curr !== null &&
 		prev.annotationIndex === curr.annotationIndex &&
 		prev.matchIndex === curr.matchIndex);
-
-const toNonOverlappingMatches = (
-	matches: SubProgressionMatch[],
-	sectionLength: number
-): SubProgressionMatch[] => {
-	const covered = new Set<number>();
-	return matches.filter(({ start, length }) => {
-		const positions = Array.from(
-			{ length },
-			(_, i) => (start + i) % sectionLength
-		);
-		if (positions.some((p) => covered.has(p))) return false;
-		positions.forEach((p) => covered.add(p));
-		return true;
-	});
-};
 
 export const buildColoredHighlightSegments = (
 	section: SongSection,

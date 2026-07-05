@@ -30,13 +30,19 @@ export const handReviewedSongs: HandReviewedSong[] = [
 					romanTokens: ["i", "v", "i", "v"]
 				},
 				{
-					name: "Verse",
+					name: "Verse 1",
 					key: "D",
 					scale: "minor",
 					romanTokens: ["i", "v", "i", "v"]
 				},
 				{
 					name: "Chorus",
+					key: "D",
+					scale: "minor",
+					romanTokens: ["i", "v", "i", "v"]
+				},
+				{
+					name: "Verse 2",
 					key: "D",
 					scale: "minor",
 					romanTokens: ["i", "v", "i", "v"]

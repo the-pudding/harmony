@@ -6,11 +6,14 @@ import type {
 	GroupedSong,
 	SongSection
 } from "../../progressions/songBrowser.js";
+import { groupSongs } from "../../progressions/songBrowser.js";
 import { computeGapFillProgressionMatches } from "./gapFillProgressionAnalysis.js";
 import { selectFinalProgressions } from "./finalProgressionSelection.js";
 import { emptyCoverage } from "./greedyProgressionSelection.js";
 import { MIN_PROGRESSION_OCCURRENCES } from "./progressionMatchAnalysis.js";
 import { MIN_PROGRESSION_LENGTH } from "./progressionConstraints.js";
+import { correctedSongContentsToSongInputs } from "../../../../data/applyHandReviewedCorrections.js";
+import { handReviewedSongs } from "../../../../data/hand-reviewed-songs.js";
 
 const makeSection = (romanTokens: string[]): SongSection => ({
 	label: null,
@@ -179,9 +182,13 @@ describe("computeGapFillProgressionMatches — recurrence detection", () => {
 		expect(gapProgressions(song)).toContain("I-vi-IV");
 	});
 
-	it("counts overlapping occurrences within a section", () => {
-		const song = makeSong([["I", "V", "I", "V", "I"]]);
-		expect(gapProgressions(song)).toContain("I-V-I");
+	it("does not double-count slide-window matches that share a boundary chord", () => {
+		const song = makeSong([["i", "v", "VI", "iv", "i", "v", "VI", "iv", "i"]]);
+		// i-v-VI-iv appears at positions 0-3 and 4-7: 2 non-overlapping matches
+		expect(gapProgressions(song)).toContain("i-v-VI-iv");
+		// i-v-VI-iv-i appears at positions 0-4 and 4-8: shares boundary chord at index 4,
+		// so only 1 non-overlapping match — it must be excluded by the ≥2 threshold
+		expect(gapProgressions(song)).not.toContain("i-v-VI-iv-i");
 	});
 
 	it("ignores progressions shorter than the minimum length", () => {
@@ -345,5 +352,49 @@ describe("selectFinalProgressions", () => {
 		const result = selectFinalProgressions(fullCoverageSong, coreProgressions);
 		expect(result.gapCandidates).toHaveLength(0);
 		expect(result.gapSelected).toHaveLength(0);
+	});
+});
+
+// Integration: Travis Scott "Highest in the Room"
+// Outro: vi · i · v · VI · iv · i · v · VI · iv · i
+// After the non-overlapping fix, the gap-fill should surface i-v-VI-iv (2×),
+// not i-v-VI-iv-i (which only has 1 non-overlapping instance and must be excluded).
+
+const highestInTheRoomReview = handReviewedSongs.find(
+	(s) => s.id === "travis-scott__highest-in-the-room"
+)!;
+const highestInTheRoomSong = groupSongs(
+	correctedSongContentsToSongInputs(
+		highestInTheRoomReview.id,
+		"Highest in the Room",
+		["Travis Scott"],
+		2019,
+		highestInTheRoomReview.correctedSongContents!
+	)
+)[0];
+
+describe("selectFinalProgressions — highest in the room outro regression", () => {
+	it("core progressions do not match this minor vamp (coreSelected is empty)", () => {
+		const result = selectFinalProgressions(highestInTheRoomSong, coreProgressions);
+		expect(result.coreSelected).toHaveLength(0);
+	});
+
+	it("surfaces i-v-VI-iv in gap candidates with 2 occurrences", () => {
+		const result = selectFinalProgressions(highestInTheRoomSong, coreProgressions);
+		const match = result.gapCandidates.find((m) => m.chordProgression === "i-v-VI-iv");
+		expect(match).toBeDefined();
+		expect(match!.matchCount).toBe(2);
+	});
+
+	it("selects i-v-VI-iv in the gap-fill selection", () => {
+		const result = selectFinalProgressions(highestInTheRoomSong, coreProgressions);
+		const gapKeys = result.gapSelected.map((m) => m.chordProgression);
+		expect(gapKeys).toContain("i-v-VI-iv");
+	});
+
+	it("does not include i-v-VI-iv-i in gap candidates (only 1 non-overlapping instance)", () => {
+		const result = selectFinalProgressions(highestInTheRoomSong, coreProgressions);
+		const candidate = result.gapCandidates.find((m) => m.chordProgression === "i-v-VI-iv-i");
+		expect(candidate).toBeUndefined();
 	});
 });
