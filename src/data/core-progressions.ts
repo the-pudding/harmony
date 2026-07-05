@@ -51,13 +51,13 @@ const coreProgressions: CoreProgression[] = [
 	{
 		name: "mixolydian vamp",
 		chordProgression: "I-bVII-IV",
-		scale: "mixolydian",
-		description: ""
+		scale: "major",
+		description: "Sweet Home Alabama..."
 	}, // also could be thought of as a V-IV-I
 
 	{
 		name: "minor-y",
-		chordProgression: "i-bVII-v-bVI",
+		chordProgression: "i-VII-v-VI",
 		scale: "minor",
 		description: ""
 	},
@@ -101,19 +101,19 @@ const coreProgressions: CoreProgression[] = [
 	},
 	{
 		name: "andalusian cadence",
-		chordProgression: "i-bVII-bVI-V",
-		scale: "harmonicMinor",
+		chordProgression: "i-VII-VI-V",
+		scale: "minor",
 		description: ""
 	},
 	{
 		name: "call me by your (andalusian) name",
 		chordProgression: "I-bII-I-bII",
-		scale: "phrygianDominant",
+		scale: "major", // we could re-write as phrygian dominant, but is that actually clearer?
 		description: ""
 	},
 	{
 		name: "boyband",
-		chordProgression: "bVI-V-i",
+		chordProgression: "VI-V-i",
 		scale: "minor",
 		description: ""
 	},
@@ -125,7 +125,7 @@ const coreProgressions: CoreProgression[] = [
 	},
 	{
 		name: "plagal cascade",
-		chordProgression: "i-bIII-bVII-IV",
+		chordProgression: "i-III-VII-IV",
 		scale: "minor",
 		description: ""
 	},
@@ -161,6 +161,7 @@ const coreProgressions: CoreProgression[] = [
 		description: ""
 	},
 	{
+		// TODO: not sure where this name came from, doesn't mean much to me...
 		name: "cinquillo",
 		chordProgression: "I-IV-I-V",
 		scale: "major",
@@ -168,7 +169,7 @@ const coreProgressions: CoreProgression[] = [
 	},
 	{
 		name: "pop minor",
-		chordProgression: "i-bVI-bIII-bVII",
+		chordProgression: "i-VI-III-VII",
 		scale: "minor",
 		description: ""
 	}
@@ -196,13 +197,7 @@ export const progressionsThatDidntMatchAnything: CoreProgression[] = [
 	{
 		name: "flamenco",
 		chordProgression: "i-VII-VI-V",
-		scale: "harmonicMinor",
-		description: ""
-	},
-	{
-		name: "circle of fifths",
-		chordProgression: "I-IV-VII-III-VI-II-V-I",
-		scale: "major",
+		scale: "minor",
 		description: ""
 	},
 	{
