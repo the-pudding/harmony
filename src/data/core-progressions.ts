@@ -16,12 +16,22 @@ const coreProgressions: CoreProgression[] = [
 		technicalNotes:
 			"Teenage Dream and Call Me Maybe are variants of this with a vi passing chord"
 	},
-	{ name: "Cheerleader 1", chordProgression: "I-V-IV", description: "" },
-	{ name: "Cheerleader 2", chordProgression: "I-IV-V-IV", description: "" },
+	{ name: "Cheerleader Verse", chordProgression: "I-V-IV", description: "" },
+	{
+		name: "Cheerleader Chorus",
+		chordProgression: "I-IV-V-IV",
+		description: ""
+	},
 	{ name: "major-y", chordProgression: "I-V-IV-V", description: "" },
 	{ name: "mixolydian vamp", chordProgression: "I-bVII-IV", description: "" }, // also could be thought of as a V-IV-I
 
 	{ name: "minor-y", chordProgression: "i-bVII-v-bVI", description: "" },
+	{
+		name: "burnin up with you baby",
+		// TODO: these numerals are based on a the minor scale (not major), but that's currently not supported by the parse
+		chordProgression: "i-III-VII-VI",
+		description: ""
+	},
 	{ name: "axis of awesome", chordProgression: "I-V-vi-IV", description: "" },
 	{ name: "doo wop", chordProgression: "I-vi-IV-V", description: "" },
 	{
