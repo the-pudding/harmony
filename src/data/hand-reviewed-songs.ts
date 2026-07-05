@@ -20,6 +20,33 @@ export type HandReviewedSong = {
 
 export const handReviewedSongs: HandReviewedSong[] = [
 	{
+		id: "billie-eilish__therefore-i-am",
+		technicalNotes:
+			"Original chords are technically correct, but since they list only one section, it's both incomplete and (at the time of writing) doesn't allow for matches on 2+ instances",
+		correctedSongContents: {
+			sections: [
+				{
+					name: "Intro",
+					key: "D",
+					scale: "minor",
+					romanTokens: ["I", "V7", "I", "V7"]
+				},
+				{
+					name: "Verse",
+					key: "D",
+					scale: "minor",
+					romanTokens: ["I", "V7", "I", "V7"]
+				},
+				{
+					name: "Chorus",
+					key: "D",
+					scale: "minor",
+					romanTokens: ["I", "V7", "I", "V7"]
+				}
+			]
+		}
+	},
+	{
 		id: "kanye-west__jail",
 		correctedSongContents: {
 			sections: [
