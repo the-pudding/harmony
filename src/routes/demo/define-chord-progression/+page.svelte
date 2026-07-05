@@ -1,5 +1,4 @@
 <script lang="ts">
-	import debounce from "lodash.debounce";
 	import coreProgressionsData from "$data/core-progressions.js";
 	import type { CoreProgression } from "$data/core-progressions.js";
 	import { onMount, onDestroy, untrack } from "svelte";
@@ -39,9 +38,9 @@
 	import {
 		areDefineChordProgressionUrlStatesEqual,
 		buildDefineChordProgressionUrlState,
-		DEFINE_CHORD_PROGRESSION_URL_DEBOUNCE_MS,
 		defineChordProgressionUrlStateToQueryString,
-		readDefineChordProgressionUrlState
+		readDefineChordProgressionUrlState,
+		type DefineChordProgressionUrlState
 	} from "./defineChordProgressionUrlParams.js";
 	import { EXPLAINED_THRESHOLD_PERCENT } from "./constants.js";
 
@@ -54,14 +53,63 @@
 	let titleFilter = $state("");
 	let selectedKey = $state("");
 	let pinnedProgression = $state<string | null>(null);
+	let showSongsContext = $state(false);
 	const coreProgressions: CoreProgression[] = coreProgressionsData;
 	let urlInitialized = $state(false);
 	let applyingFromUrl = $state(false);
 	let fullSongsLoadPromise = $state<Promise<GroupedSong[]> | null>(null);
 
-	const debouncedReplaceState = debounce((nextUrl: string) => {
+	const localUrlState = (): DefineChordProgressionUrlState =>
+		buildDefineChordProgressionUrlState({
+			selectedSongKey: selectedKey,
+			songsContextExpanded: showSongsContext
+		});
+
+	const applyUrlStateToPage = (urlState: DefineChordProgressionUrlState) => {
+		if (
+			urlInitialized &&
+			areDefineChordProgressionUrlStatesEqual(urlState, localUrlState())
+		) {
+			return;
+		}
+
+		applyingFromUrl = true;
+		try {
+			const urlSongKey = urlState.song;
+			if (
+				urlSongKey &&
+				!isGroupedSongKeyKnown(searchableSongs, urlSongKey) &&
+				fullSongs === null &&
+				!loadingFullSongs
+			) {
+				void ensureFullSongsLoaded();
+				return;
+			}
+			if (urlSongKey && isGroupedSongKeyKnown(searchableSongs, urlSongKey)) {
+				selectedKey = urlSongKey;
+			} else if (!urlInitialized) {
+				selectedKey = baseList[0]?.songKey ?? "";
+			}
+			showSongsContext = urlState.songsContextExpanded;
+			urlInitialized = true;
+		} finally {
+			applyingFromUrl = false;
+		}
+	};
+
+	const syncPageStateToUrl = () => {
+		const desiredState = localUrlState();
+		const currentUrlState = readDefineChordProgressionUrlState(page.url.searchParams);
+
+		if (areDefineChordProgressionUrlStatesEqual(desiredState, currentUrlState)) return;
+
+		const queryString = defineChordProgressionUrlStateToQueryString(desiredState);
+		const nextUrl = queryString
+			? `${page.url.pathname}?${queryString}`
+			: page.url.pathname;
+
 		replaceState(nextUrl, page.state);
-	}, DEFINE_CHORD_PROGRESSION_URL_DEBOUNCE_MS);
+	};
 
 	const ensureFullSongsLoaded = (): Promise<GroupedSong[]> => {
 		if (fullSongs !== null) return Promise.resolve(fullSongs);
@@ -98,8 +146,6 @@
 		};
 
 		void load();
-
-		return () => debouncedReplaceState.cancel();
 	});
 
 	const searchableSongs = $derived(fullSongs ?? popularSongs);
@@ -210,30 +256,7 @@
 		page.url.search;
 
 		untrack(() => {
-			applyingFromUrl = true;
-			try {
-				const urlState = readDefineChordProgressionUrlState(
-					page.url.searchParams
-				);
-				const urlSongKey = urlState.song;
-				if (
-					urlSongKey &&
-					!isGroupedSongKeyKnown(searchableSongs, urlSongKey) &&
-					fullSongs === null &&
-					!loadingFullSongs
-				) {
-					void ensureFullSongsLoaded();
-					return;
-				}
-				if (urlSongKey && isGroupedSongKeyKnown(searchableSongs, urlSongKey)) {
-					selectedKey = urlSongKey;
-				} else if (!urlInitialized) {
-					selectedKey = baseList[0]?.songKey ?? "";
-				}
-				urlInitialized = true;
-			} finally {
-				applyingFromUrl = false;
-			}
+			applyUrlStateToPage(readDefineChordProgressionUrlState(page.url.searchParams));
 		});
 	});
 
@@ -252,24 +275,9 @@
 		if (!urlInitialized || loading || applyingFromUrl) return;
 
 		selectedKey;
+		showSongsContext;
 
-		const desiredState = buildDefineChordProgressionUrlState({
-			selectedSongKey: selectedKey
-		});
-		const currentUrlState = readDefineChordProgressionUrlState(
-			page.url.searchParams
-		);
-
-		if (areDefineChordProgressionUrlStatesEqual(desiredState, currentUrlState)) {
-			return;
-		}
-
-		const queryString = defineChordProgressionUrlStateToQueryString(desiredState);
-		const nextUrl = queryString
-			? `${page.url.pathname}?${queryString}`
-			: page.url.pathname;
-
-		debouncedReplaceState(nextUrl);
+		untrack(syncPageStateToUrl);
 	});
 
 	$effect(() => {
@@ -291,6 +299,10 @@
 	function handleProgressionSelect(chordProgression: string) {
 		pinnedProgression =
 			pinnedProgression === chordProgression ? null : chordProgression;
+	}
+
+	function handleSongsContextToggle() {
+		showSongsContext = !showSongsContext;
 	}
 </script>
 
@@ -323,11 +335,49 @@
 			<section class="step-section">
 				<h2 class="section-heading">0. Pick an example song</h2>
 
-				<SongCoverageBeeswarm
-					songs={allSongCoverages}
-					selectedSongKey={selectedKey}
-					onSelectSong={handleSongSelect}
-				/>
+				<div
+					class="songs-context-panel"
+					class:songs-context-panel-expanded={showSongsContext}
+				>
+					<button
+						class="songs-context-toggle"
+						onclick={handleSongsContextToggle}
+						aria-expanded={showSongsContext}
+					>
+						<span class="songs-context-toggle-label">
+							{showSongsContext
+								? "Collapse all songs context"
+								: "Expand all songs context"}
+						</span>
+						<svg
+							class="songs-context-chevron"
+							class:songs-context-chevron-collapsed={!showSongsContext}
+							width="16"
+							height="16"
+							viewBox="0 0 16 16"
+							fill="none"
+							aria-hidden="true"
+						>
+							<path
+								d="M4 6l4 4 4-4"
+								stroke="currentColor"
+								stroke-width="1.5"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+						</svg>
+					</button>
+
+					{#if showSongsContext}
+						<div class="songs-context-content">
+							<SongCoverageBeeswarm
+								songs={allSongCoverages}
+								selectedSongKey={selectedKey}
+								onSelectSong={handleSongSelect}
+							/>
+						</div>
+					{/if}
+				</div>
 
 				<div class="controls">
 					<SongSelectDropdown
@@ -535,5 +585,76 @@
 	.coverage-highlight {
 		text-decoration: underline;
 		text-underline-offset: 3px;
+	}
+
+	.songs-context-panel {
+		--songs-context-border-color: rgba(63, 63, 70, 0.9);
+		--songs-context-toggle-bg: rgba(39, 39, 42, 0.75);
+		--songs-context-toggle-bg-hover: rgba(63, 63, 70, 0.85);
+		--songs-context-content-bg: rgba(24, 24, 27, 0.45);
+		border: 1px solid var(--songs-context-border-color);
+		border-radius: 0.5rem;
+		overflow: hidden;
+	}
+
+	.songs-context-toggle {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 0.625rem 0.75rem;
+		border: none;
+		background: var(--songs-context-toggle-bg);
+		color: #a1a1aa;
+		cursor: pointer;
+		text-align: left;
+		font-family: inherit;
+		font-size: 0.8125rem;
+		font-style: italic;
+		transition:
+			background 0.15s ease,
+			color 0.15s ease;
+	}
+
+	.songs-context-panel-expanded .songs-context-toggle {
+		border-bottom: 1px solid var(--songs-context-border-color);
+	}
+
+	.songs-context-toggle:hover {
+		background: var(--songs-context-toggle-bg-hover);
+		color: #e4e4e7;
+	}
+
+	.songs-context-toggle:focus-visible {
+		outline: 2px solid rgba(137, 180, 250, 0.8);
+		outline-offset: -2px;
+	}
+
+	.songs-context-toggle:hover .songs-context-chevron {
+		color: #d4d4d8;
+	}
+
+	.songs-context-toggle-label {
+		line-height: 1.4;
+	}
+
+	.songs-context-content {
+		padding: 0.75rem;
+		background: var(--songs-context-content-bg);
+	}
+
+	.songs-context-chevron {
+		flex-shrink: 0;
+		width: 1rem;
+		height: 1rem;
+		color: #71717a;
+		transition:
+			transform 0.2s ease,
+			color 0.15s ease;
+	}
+
+	.songs-context-chevron-collapsed {
+		transform: rotate(-90deg);
 	}
 </style>

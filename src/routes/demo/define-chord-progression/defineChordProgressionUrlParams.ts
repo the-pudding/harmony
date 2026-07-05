@@ -1,20 +1,27 @@
 export const DEFINE_CHORD_PROGRESSION_URL_PARAM_SONG = "song";
-export const DEFINE_CHORD_PROGRESSION_URL_DEBOUNCE_MS = 200;
+export const DEFINE_CHORD_PROGRESSION_URL_PARAM_SONGS_CONTEXT = "songsContext";
+export const DEFINE_CHORD_PROGRESSION_SONGS_CONTEXT_EXPANDED_VALUE = "1";
 
 export type DefineChordProgressionUrlState = {
 	song: string;
+	songsContextExpanded: boolean;
 };
 
 export const readDefineChordProgressionUrlState = (
 	searchParams: URLSearchParams
 ): DefineChordProgressionUrlState => ({
-	song: searchParams.get(DEFINE_CHORD_PROGRESSION_URL_PARAM_SONG) ?? ""
+	song: searchParams.get(DEFINE_CHORD_PROGRESSION_URL_PARAM_SONG) ?? "",
+	songsContextExpanded:
+		searchParams.get(DEFINE_CHORD_PROGRESSION_URL_PARAM_SONGS_CONTEXT) ===
+		DEFINE_CHORD_PROGRESSION_SONGS_CONTEXT_EXPANDED_VALUE
 });
 
 export const buildDefineChordProgressionUrlState = (state: {
 	selectedSongKey: string;
+	songsContextExpanded: boolean;
 }): DefineChordProgressionUrlState => ({
-	song: state.selectedSongKey
+	song: state.selectedSongKey,
+	songsContextExpanded: state.songsContextExpanded
 });
 
 export const defineChordProgressionUrlStateToQueryString = (
@@ -24,10 +31,18 @@ export const defineChordProgressionUrlStateToQueryString = (
 	if (state.song) {
 		params.set(DEFINE_CHORD_PROGRESSION_URL_PARAM_SONG, state.song);
 	}
+	if (state.songsContextExpanded) {
+		params.set(
+			DEFINE_CHORD_PROGRESSION_URL_PARAM_SONGS_CONTEXT,
+			DEFINE_CHORD_PROGRESSION_SONGS_CONTEXT_EXPANDED_VALUE
+		);
+	}
 	return params.toString();
 };
 
 export const areDefineChordProgressionUrlStatesEqual = (
 	first: DefineChordProgressionUrlState,
 	second: DefineChordProgressionUrlState
-): boolean => first.song === second.song;
+): boolean =>
+	first.song === second.song &&
+	first.songsContextExpanded === second.songsContextExpanded;
