@@ -20,6 +20,31 @@ export type HandReviewedSong = {
 
 export const handReviewedSongs: HandReviewedSong[] = [
 	{
+		id: "kanye-west__jail",
+		correctedSongContents: {
+			sections: [
+				{
+					name: "Intro",
+					key: "E",
+					scale: "major",
+					romanTokens: ["I", "ii", "IV", "I"]
+				},
+				{
+					name: "Verse",
+					key: "E",
+					scale: "major",
+					romanTokens: ["I", "ii", "IV", "I"]
+				},
+				{
+					name: "Chorus",
+					key: "E",
+					scale: "major",
+					romanTokens: ["I", "ii", "IV", "I"]
+				}
+			]
+		}
+	},
+	{
 		id: "drake__whats-next",
 		correctedSongContents: {
 			sections: [
