@@ -20,6 +20,37 @@ export type HandReviewedSong = {
 
 export const handReviewedSongs: HandReviewedSong[] = [
 	{
+		id: "travis-scott__highest-in-the-room",
+		correctedSongContents: {
+			sections: [
+				{
+					name: "Intro",
+					key: "D",
+					scale: "minor",
+					romanTokens: ["i", "v", "i", "v"]
+				},
+				{
+					name: "Verse",
+					key: "D",
+					scale: "minor",
+					romanTokens: ["i", "v", "i", "v"]
+				},
+				{
+					name: "Chorus",
+					key: "D",
+					scale: "minor",
+					romanTokens: ["i", "v", "i", "v"]
+				},
+				{
+					name: "Outro",
+					key: "D",
+					scale: "minor",
+					romanTokens: ["vi", "i", "v", "VI", "iv", "i", "v", "VI", "iv", "i"]
+				}
+			]
+		}
+	},
+	{
 		id: "billie-eilish__therefore-i-am",
 		technicalNotes:
 			"Original chords are technically correct, but since they list only one section, it's both incomplete and (at the time of writing) doesn't allow for matches on 2+ instances",
