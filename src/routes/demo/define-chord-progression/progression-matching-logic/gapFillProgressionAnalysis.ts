@@ -6,6 +6,8 @@ import type {
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import { matchHighlightForCoreProgression } from "../components/progressionColors.js";
 import {
+	abstractProgressionKey,
+	buildCoreNameByAbstractKey,
 	computeCoveredPositionsBySection,
 	computeStatsForParsedProgression,
 	MIN_PROGRESSION_OCCURRENCES,
@@ -24,6 +26,9 @@ const coreProgressionNameByChordProgression = new Map(
 		progression.name
 	])
 );
+
+const coreProgressionNameByAbstractKey =
+	buildCoreNameByAbstractKey(coreProgressions);
 
 type CandidateWindow = {
 	romanTokens: string[];
@@ -103,7 +108,11 @@ const toGapFillMatch = (
 	if (stats.matchCount < MIN_PROGRESSION_OCCURRENCES) return null;
 
 	const name =
-		coreProgressionNameByChordProgression.get(chordProgression) ?? "";
+		coreProgressionNameByChordProgression.get(chordProgression) ??
+		coreProgressionNameByAbstractKey.get(
+			abstractProgressionKey(parsedProgression)
+		) ??
+		"";
 	const isCoreProgression = name !== "";
 
 	return {

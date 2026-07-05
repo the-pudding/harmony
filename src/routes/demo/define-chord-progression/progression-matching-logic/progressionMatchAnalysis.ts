@@ -47,6 +47,20 @@ export const abstractProgressionKey = (
 	parsed: ParsedProgressionChord[]
 ): string => JSON.stringify(toAbstractProgression(parsed));
 
+export const buildCoreNameByAbstractKey = (
+	coreProgressions: CoreProgression[]
+): Map<string, string> =>
+	new Map(
+		coreProgressions.flatMap((progression) => {
+			const parsed = romanTokensToParsedProgression(
+				progression.chordProgression.split("-"),
+				progression.scale
+			);
+			if (!parsed) return [];
+			return [[abstractProgressionKey(parsed), progression.name]] as const;
+		})
+	);
+
 // Slash chords are matched purely on the chord itself; the bass note is ignored.
 const withoutSlashBass = (
 	chords: ParsedProgressionChord[]
@@ -133,7 +147,8 @@ export function computeProgressionMatches(
 		)
 		.map((progression): CoreProgressionWithStats | null => {
 			const parsed = romanTokensToParsedProgression(
-				progression.chordProgression.split("-")
+				progression.chordProgression.split("-"),
+				progression.scale
 			);
 			if (!parsed) return null;
 

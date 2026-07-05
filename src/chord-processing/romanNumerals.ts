@@ -4,10 +4,11 @@ import type {
 	ParsedProgressionChord,
 	PrecomputedAbstractProgression
 } from "./types.js";
+import { SCALE_INTERVALS, type ScaleName } from "./scale-intervals.js";
+
+export type { ScaleName };
 
 const ROMAN_BASE = ["I", "II", "III", "IV", "V", "VI", "VII"] as const;
-
-const MAJOR_SCALE_INTERVALS = [0, 2, 4, 5, 7, 9, 11] as const;
 
 const ROMAN_NUMERAL_TO_DEGREE = Object.fromEntries(
 	ROMAN_BASE.map((numeral, index) => [numeral, index + 1])
@@ -52,14 +53,6 @@ const extensionSuffixForQuality = (quality: string, ext: string | null): string 
 	return null;
 };
 
-const intervalBetweenScaleDegrees = (
-	fromDegree: number,
-	toDegree: number
-): number => {
-	const fromPitchClass = MAJOR_SCALE_INTERVALS[fromDegree - 1];
-	const toPitchClass = MAJOR_SCALE_INTERVALS[toDegree - 1];
-	return (toPitchClass - fromPitchClass + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE;
-};
 
 export const degreeQualityToRoman = (
 	degree: number,
@@ -145,12 +138,20 @@ export const parseRomanToken = (token: string): ParsedToken | null => {
 	return { degree, quality, flat, suffix };
 };;
 
-const pitchClassFromEntry = (entry: ParsedToken): number =>
-	(MAJOR_SCALE_INTERVALS[entry.degree - 1] - (entry.flat ? 1 : 0) + NOTES_PER_OCTAVE) %
-	NOTES_PER_OCTAVE;
+const pitchClassFromEntry = (
+	entry: ParsedToken,
+	scale: ScaleName = "major"
+): number => {
+	const intervals = SCALE_INTERVALS[scale];
+	return (
+		(intervals[entry.degree - 1] - (entry.flat ? 1 : 0) + NOTES_PER_OCTAVE) %
+		NOTES_PER_OCTAVE
+	);
+};
 
 export const romanTokensToPrecomputedAbstract = (
-	tokens: string[]
+	tokens: string[],
+	scale: ScaleName = "major"
 ): PrecomputedAbstractProgression | null => {
 	const parsed = tokens.map(parseRomanToken);
 	if (parsed.some((entry) => entry === null)) return null;
@@ -160,13 +161,20 @@ export const romanTokensToPrecomputedAbstract = (
 	);
 	const suffixes = validParsed.map(({ suffix }) => suffix);
 
-	const pitchClasses = validParsed.map((entry) => pitchClassFromEntry(entry));
+	const pitchClasses = validParsed.map((entry) =>
+		pitchClassFromEntry(entry, scale)
+	);
 	const deltas = pitchClasses
 		.slice(1)
-		.map((pc, index) => (pc - pitchClasses[index] + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE);
+		.map(
+			(pc, index) =>
+				(pc - pitchClasses[index] + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE
+		);
 	const wrapDelta =
 		pitchClasses.length > 1
-			? (pitchClasses[0] - pitchClasses[pitchClasses.length - 1] + NOTES_PER_OCTAVE) %
+			? (pitchClasses[0] -
+					pitchClasses[pitchClasses.length - 1] +
+					NOTES_PER_OCTAVE) %
 				NOTES_PER_OCTAVE
 			: 0;
 
@@ -179,14 +187,15 @@ export const romanTokensToPrecomputedAbstract = (
 };
 
 export const romanTokensToParsedProgression = (
-	tokens: string[]
+	tokens: string[],
+	scale: ScaleName = "major"
 ): ParsedProgressionChord[] | null => {
 	const parsed = tokens.map(parseRomanToken);
 	if (parsed.some((entry) => entry === null)) return null;
 
 	const chords = parsed.map((entry) => {
 		const { suffix } = entry!;
-		const rootPitchClass = pitchClassFromEntry(entry!);
+		const rootPitchClass = pitchClassFromEntry(entry!, scale);
 		const chord = { rootPitchClass, suffix };
 		return { ...chord, display: formatChordName(chord) };
 	});

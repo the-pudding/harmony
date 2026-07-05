@@ -18,7 +18,7 @@
 		const searchChords = chordSearchDemoStore.searchChords;
 		if (searchChords.length === 0) return null;
 		for (const p of progressions) {
-			const parsed = romanTokensToParsedProgression(p.chordProgression.split("-"));
+			const parsed = romanTokensToParsedProgression(p.chordProgression.split("-"), p.scale);
 			if (!parsed || parsed.length !== searchChords.length) continue;
 			const isMatch = parsed.every(
 				(chord, i) =>
@@ -44,7 +44,8 @@
 			return;
 		}
 		const tokens = chordProgression.split("-");
-		const parsed = romanTokensToParsedProgression(tokens);
+		const p = progressions.find((prog) => prog.chordProgression === chordProgression);
+		const parsed = romanTokensToParsedProgression(tokens, p?.scale);
 		if (!parsed) return;
 		chordSearchDemoStore.getProgressionSearch().setProgression(parsed);
 		chordSearchDemoStore.syncSearch();

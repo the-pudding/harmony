@@ -78,3 +78,34 @@ describe("parseRomanToken — extensions", () => {
 		expect(toPrecomputedAbstractProgression(parsed!)).toEqual(abstract);
 	});
 });
+
+// Natural minor: [0, 2, 3, 5, 7, 8, 10]
+// i=0, III=3, VII=10, VI=8
+// Major: [0, 2, 4, 5, 7, 9, 11]
+// i=0, III=4, VII=11, VI=9
+describe("romanTokensToParsedProgression — scale-aware parsing (burnin up regression)", () => {
+	it("i-III-VII-VI with minor scale produces minor-scale pitch classes", () => {
+		const parsed = romanTokensToParsedProgression(["i", "III", "VII", "VI"], "minor");
+		expect(parsed).not.toBeNull();
+		expect(parsed!.map((c) => c.rootPitchClass)).toEqual([0, 3, 10, 8]);
+		expect(parsed!.map((c) => c.suffix)).toEqual(["minor", "major", "major", "major"]);
+	});
+
+	it("i-III-VII-VI with major scale (the bug) produces major-scale pitch classes", () => {
+		const parsed = romanTokensToParsedProgression(["i", "III", "VII", "VI"], "major");
+		expect(parsed).not.toBeNull();
+		expect(parsed!.map((c) => c.rootPitchClass)).toEqual([0, 4, 11, 9]);
+	});
+
+	it("minor and major parsings of i-III-VII-VI produce different pitch classes", () => {
+		const minor = romanTokensToParsedProgression(["i", "III", "VII", "VI"], "minor")!;
+		const major = romanTokensToParsedProgression(["i", "III", "VII", "VI"], "major")!;
+		expect(minor.map((c) => c.rootPitchClass)).not.toEqual(major.map((c) => c.rootPitchClass));
+	});
+
+	it("defaults to major scale when scale is omitted", () => {
+		const withDefault = romanTokensToParsedProgression(["I", "V", "vi", "IV"]);
+		const withMajor = romanTokensToParsedProgression(["I", "V", "vi", "IV"], "major");
+		expect(withDefault).toEqual(withMajor);
+	});
+});

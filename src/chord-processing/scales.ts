@@ -1,9 +1,9 @@
 import { NOTES_PER_OCTAVE, NOTE_NAMES, noteNameToPitchClass } from "./chord-classifier/notes.js";
 import { parseRomanToken } from "./romanNumerals.js";
 import type { ProgressionChordInput } from "./types.js";
-import { SCALE_INTERVALS } from "./scale-intervals.js";
+import { SCALE_INTERVALS, type ScaleName } from "./scale-intervals.js";
 
-export { SCALE_INTERVALS };
+export { SCALE_INTERVALS, type ScaleName };
 
 const ROMAN_QUALITY_TO_SUFFIX: Record<string, string> = {
 	maj: "major",
