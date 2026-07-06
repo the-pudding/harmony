@@ -27,6 +27,10 @@
 	);
 
 	const hasMatches = $derived(sortedMatches.length > 0);
+
+	let hoveredProgression = $state<string | null>(null);
+
+	const focusedProgression = $derived(hoveredProgression ?? activeProgression);
 </script>
 
 <div class="final-annotated-song">
@@ -47,6 +51,12 @@
 						borderColor={outline.color}
 						dashed={outline.dashed}
 						{onselect}
+						onhover={(chordProgression) => {
+							hoveredProgression = chordProgression;
+						}}
+						onunhover={() => {
+							hoveredProgression = null;
+						}}
 					>
 						{#snippet stats({ active })}
 							<SongProgressionStats
@@ -63,7 +73,7 @@
 			</div>
 		{/if}
 		<div class="chords-column">
-			<SongChordsDisplay {song} {annotations} />
+			<SongChordsDisplay {song} {annotations} focusedProgression={focusedProgression} />
 		</div>
 	</div>
 </div>

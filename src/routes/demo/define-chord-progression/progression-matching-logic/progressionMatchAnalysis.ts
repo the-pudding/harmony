@@ -282,11 +282,13 @@ export type ChordAnnotation = {
 	parsedProgression: ParsedProgressionChord[];
 	palette: ChordHighlightPalette;
 	isStrictSubset?: boolean;
+	chordProgression?: string;
 };
 
 export type ColoredHighlightSegment = {
 	palette: ChordHighlightPalette | null;
 	isStrictSubset: boolean;
+	chordProgression: string | null;
 	indices: number[];
 };
 
@@ -339,6 +341,7 @@ export const buildColoredHighlightSegments = (
 			segments.push({
 				palette: annotation?.palette ?? null,
 				isStrictSubset: annotation?.isStrictSubset ?? false,
+				chordProgression: annotation?.chordProgression ?? null,
 				indices: [position]
 			});
 		}

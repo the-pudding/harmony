@@ -7,12 +7,23 @@
 		match: ProgressionWithMatchStats;
 		active: boolean;
 		onselect: (chordProgression: string) => void;
+		onhover?: (chordProgression: string) => void;
+		onunhover?: () => void;
 		borderColor?: string;
 		dashed?: boolean;
 		stats?: Snippet<[{ active: boolean }]>;
 	};
 
-	let { match, active, onselect, borderColor, dashed = false, stats }: Props = $props();
+	let {
+		match,
+		active,
+		onselect,
+		onhover,
+		onunhover,
+		borderColor,
+		dashed = false,
+		stats
+	}: Props = $props();
 
 	const scaleName = $derived(humanizeScale(match.scale));
 	const scaleLabel = $derived(`scale: ${scaleName}`);
@@ -31,6 +42,8 @@
 	class:dashed
 	style:--prog-btn-border-color={borderColor}
 	onclick={() => onselect(match.chordProgression)}
+	onmouseenter={() => onhover?.(match.chordProgression)}
+	onmouseleave={() => onunhover?.()}
 	title={buttonTitle}
 >
 	{#if match.name}

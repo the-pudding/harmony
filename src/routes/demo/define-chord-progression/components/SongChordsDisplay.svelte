@@ -6,12 +6,15 @@
 	import { buildColoredHighlightSegments } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import { DEFAULT_PROGRESSION_PALETTE } from "./progressionColors.js";
 
+	const DIMMED_HIGHLIGHT_OPACITY = 0.22;
+
 	type Props = {
 		song: GroupedSong;
 		parsedProgression?: ParsedProgressionChord[] | null;
 		highlightPalette?: ChordHighlightPalette;
 		isStrictSubset?: boolean;
 		annotations?: ChordAnnotation[];
+		focusedProgression?: string | null;
 	};
 
 	let {
@@ -19,7 +22,8 @@
 		parsedProgression = null,
 		highlightPalette,
 		isStrictSubset = false,
-		annotations
+		annotations,
+		focusedProgression = null
 	}: Props = $props();
 
 	const SECTION_LABEL_CHORD_GAP_PX = 2;
@@ -45,7 +49,7 @@
 
 <div
 	class="song-chords"
-	style="--section-label-chord-gap: {SECTION_LABEL_CHORD_GAP_PX}px; --section-label-right-padding: {SECTION_LABEL_RIGHT_PADDING_PX}px;"
+	style="--section-label-chord-gap: {SECTION_LABEL_CHORD_GAP_PX}px; --section-label-right-padding: {SECTION_LABEL_RIGHT_PADDING_PX}px; --dimmed-highlight-opacity: {DIMMED_HIGHLIGHT_OPACITY};"
 >
 	<div class="sections">
 		{#each song.sections as section, sectionIndex (sectionIndex)}
@@ -68,6 +72,8 @@
 						<span
 							class="match-group"
 							class:dashed={segment.isStrictSubset}
+							class:dimmed={focusedProgression !== null &&
+								segment.chordProgression !== focusedProgression}
 							style:--highlight-fill={segment.palette.fill}
 							style:--highlight-border={segment.palette.border}
 						>
@@ -173,6 +179,11 @@
 		border: 1px solid var(--highlight-border);
 		border-radius: 0.375rem;
 		padding: 0.2rem;
+		transition: opacity 0.15s ease;
+	}
+
+	.match-group.dimmed {
+		opacity: var(--dimmed-highlight-opacity);
 	}
 
 	.match-group.dashed {

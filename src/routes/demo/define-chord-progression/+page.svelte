@@ -245,7 +245,8 @@
 		finalMatches.map((match) => ({
 			parsedProgression: match.parsedProgression,
 			palette: match.highlightPalette,
-			isStrictSubset: match.isStrictSubset
+			isStrictSubset: match.isStrictSubset,
+			chordProgression: match.chordProgression
 		}))
 	);
 
