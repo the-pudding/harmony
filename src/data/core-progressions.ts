@@ -62,18 +62,11 @@ const coreProgressions: CoreProgression[] = [
 		description: ""
 	},
 	{
-		name: "burnin up with you baby",
+		name: "burnin up with you",
 		chordProgression: "i-III-VII-VI",
 		scale: "minor",
 		description: ""
 	},
-	// TEMP: hide this progression, because we're testing a bug that only appears in lady-gaga__poker-face with it gone.
-	// {
-	// 	name: "poker face",
-	// 	chordProgression: "i-VI-III-VII",
-	// 	scale: "minor",
-	// 	description: ""
-	// },
 	{
 		name: "axis of awesome",
 		chordProgression: "I-V-vi-IV",
@@ -87,7 +80,7 @@ const coreProgressions: CoreProgression[] = [
 		description: ""
 	},
 	{
-		name: "dark doo wop (save your tears for another day)",
+		name: "dark doo wop",
 		chordProgression: "I-vi-iii-V",
 		scale: "major",
 		description: ""
@@ -104,6 +97,12 @@ const coreProgressions: CoreProgression[] = [
 		chordProgression: "i-VII-VI-V",
 		scale: "minor",
 		description: ""
+	},
+	{
+		name: "broody walk down",
+		chordProgression: "i-VI-V",
+		scale: "minor",
+		description: "Similar to i-VII-VI-V, but jumps to the VI"
 	},
 	{
 		name: "call me by your (andalusian) name",
