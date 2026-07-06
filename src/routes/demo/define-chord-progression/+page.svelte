@@ -10,6 +10,7 @@
 	import ProgressionMatchTable from "./components/ProgressionMatchTable.svelte";
 	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
 	import ProgressionDefinitionCriteriaTable from "./components/ProgressionDefinitionCriteriaTable.svelte";
+	import CodeReference from "./components/CodeReference.svelte";
 	import CollapsiblePanel from "./components/CollapsiblePanel.svelte";
 	import CoreProgressionRow from "./components/CoreProgressionRow.svelte";
 	import SongCoverageBeeswarm from "./components/SongCoverageBeeswarm.svelte";
@@ -316,8 +317,8 @@
 
 	<div class="content">
 		<h1 class="page-title">
-			How do we determine the core chord progressions that define a songs harmonic
-			essense?
+			A. What defines a chord progression? B. Given there are many possible ways to slice a song, what algorithm do we apply to maximize coverage but also prioritize our
+			predefined <CodeReference filename="core-progressions.ts" />?
 		</h1>
 
 		{#if loading}
@@ -330,11 +331,11 @@
 
 		{#if baseList.length > 0}
 			<section class="step-section">
-				<h2 class="section-heading">0. Pick an example song</h2>
+				<h2 class="section-heading">Pick an example song to see how the algorithm works on it</h2>
 
 				<CollapsiblePanel
-					expandLabel="Expand all songs context"
-					collapseLabel="Collapse all songs context"
+					expandLabel="How well the algorithm is doing across all songs?"
+					collapseLabel="How well the algorithm is doing across all songs?"
 					bind:expanded={showSongsContext}
 				>
 					<div class="section-description">
@@ -388,7 +389,7 @@
 
 				<section class="step-section">
 					<h2 class="section-heading">
-						Here's the final chord progressions for this song, which cover <span class="coverage-highlight">{explainedPercent}%{explainedPercent > EXPLAINED_THRESHOLD_PERCENT ? " ✅" : " 😔"}</span> of all chords. In subsequent sections, we'll break down the algorithm that derived this...
+						Here are the final chord progressions selected for this song, which cover <span class="coverage-highlight">{explainedPercent}%{explainedPercent > EXPLAINED_THRESHOLD_PERCENT ? " ✅" : " 😔"}</span> of all chords
 					</h2>
 
 					<FinalAnnotatedSong
@@ -419,9 +420,8 @@
 				at least <span class="const-value">{MIN_PROGRESSION_OCCURRENCES}</span> times, by {GREEDY_SORT_LABEL}
 			</h2>
 					<p class="section-description">
-						No two selected core progressions may share a chord position.
-						This incentivises us to really hone and expand the coverage of
-						core-progressions, and also makes it so we maximize classified chords over
+						Being "greedy" with core-progressions incentivizes us to really expand the coverage of
+						<CodeReference filename="core-progressions.ts" />, and also makes it so we maximize classified chords over
 						random ones that might happen to be better/longer for some reason.
 					</p>
 
@@ -440,7 +440,7 @@
 
 				<section class="step-section">
 				<h2 class="section-heading">
-					2. Fill gaps with recurring progressions found among uncovered chords, trying them out greedily by {GREEDY_SORT_LABEL}
+					2. Look for any other recurring progressions in the to gaps not occupied by core-progressions, selecting them greedily by {GREEDY_SORT_LABEL}
 				</h2>
 					<p class="section-description">
 						Among chords not yet covered by core progressions, we look for

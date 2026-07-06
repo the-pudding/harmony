@@ -11,15 +11,15 @@
 </script>
 
 <div class="summary">
-	<span class="stat"><span class="label">total</span> <span class="value">{total}</span></span>
+	<span class="stat"><span class="value">{total}</span> <span class="label">total</span></span>
 	<span class="sep">·</span>
-	<span class="stat"><span class="label">highlighted</span> <span class="value">{highlighted}</span></span>
+	<span class="stat"><span class="value">{highlighted}</span> <span class="label">highlighted</span></span>
 	<span class="sep">·</span>
-	<span class="stat core"><span class="label">core</span> <span class="value">{coreCount}</span></span>
+	<span class="stat core"><span class="value">{coreCount}</span> <span class="label">core</span></span>
 	<span class="sep">·</span>
-	<span class="stat"><span class="label">non-core</span> <span class="value">{nonCoreCount}</span></span>
+	<span class="stat"><span class="value">{nonCoreCount}</span> <span class="label">non-core</span></span>
 	<span class="sep">·</span>
-	<span class="stat subset"><span class="label">is strict subset of a progression with more coverage</span> <span class="value dashed-badge">{strictSubsetCount}</span></span>
+	<span class="stat subset"><span class="value dashed-badge">{strictSubsetCount}</span> <span class="label">is strict subset of a progression with more coverage</span></span>
 </div>
 
 <style>

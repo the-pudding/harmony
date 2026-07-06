@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CodeReference from "./CodeReference.svelte";
 	import { MIN_PROGRESSION_OCCURRENCES } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import {
 		MIN_PROGRESSION_LENGTH,
@@ -21,13 +22,10 @@
 					<span class="const-value">{MAX_PROGRESSION_LENGTH}</span> chords, inclusive
 				</td>
 				<td>
-					<div class="code-source">
-						<code class="code-file">progressionConstraints.ts</code>
-						<span class="code-symbols">
-							<code class="code-symbol">MIN_PROGRESSION_LENGTH</code>
-							<code class="code-symbol">MAX_PROGRESSION_LENGTH</code>
-						</span>
-					</div>
+					<CodeReference
+						filename="progressionConstraints.ts"
+						symbols={["MIN_PROGRESSION_LENGTH", "MAX_PROGRESSION_LENGTH"]}
+					/>
 				</td>
 			</tr>
 			<tr>
@@ -36,12 +34,10 @@
 					<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>+ chords within itself
 				</td>
 				<td>
-					<div class="code-source">
-						<code class="code-file">progressionConstraints.ts</code>
-						<span class="code-symbols">
-							<code class="code-symbol">isSelfRepeatingProgression</code>
-						</span>
-					</div>
+					<CodeReference
+						filename="progressionConstraints.ts"
+						symbols={["isSelfRepeatingProgression"]}
+					/>
 				</td>
 			</tr>
 			<tr>
@@ -51,24 +47,19 @@
 					song (core matching)
 				</td>
 				<td>
-					<div class="code-source">
-						<code class="code-file">progressionMatchAnalysis.ts</code>
-						<span class="code-symbols">
-							<code class="code-symbol">MIN_PROGRESSION_OCCURRENCES</code>
-							<code class="code-symbol">computeStatsForParsedProgression</code>
-						</span>
-					</div>
+					<CodeReference
+						filename="progressionMatchAnalysis.ts"
+						symbols={["MIN_PROGRESSION_OCCURRENCES", "computeStatsForParsedProgression"]}
+					/>
 				</td>
 			</tr>
 			<tr>
 				<td>Adjacent repeated chords are ignored</td>
 				<td>
-					<div class="code-source">
-						<code class="code-file">build-songs.js</code>
-						<span class="code-symbols">
-							<code class="code-symbol">progressionChordInputsAreEqual</code>
-						</span>
-					</div>
+					<CodeReference
+						filename="build-songs.js"
+						symbols={["progressionChordInputsAreEqual"]}
+					/>
 				</td>
 			</tr>
 			<tr>
@@ -76,13 +67,10 @@
 					Matching ignores slash bass and normalizes extensions to base quality
 				</td>
 				<td>
-					<div class="code-source">
-						<code class="code-file">progressionMatchAnalysis.ts</code>
-						<span class="code-symbols">
-							<code class="code-symbol">matchProgressionIgnoringBassAndExtensions</code>
-							<code class="code-symbol">SUFFIX_TO_BASE</code>
-						</span>
-					</div>
+					<CodeReference
+						filename="progressionMatchAnalysis.ts"
+						symbols={["matchProgressionIgnoringBassAndExtensions", "SUFFIX_TO_BASE"]}
+					/>
 				</td>
 			</tr>
 		</tbody>
@@ -106,12 +94,10 @@
 						Occurrences are counted as non-overlapping matches within each section
 					</td>
 					<td>
-						<div class="code-source">
-							<code class="code-file">progressionMatchAnalysis.ts</code>
-							<span class="code-symbols">
-								<code class="code-symbol">toNonOverlappingMatches</code>
-							</span>
-						</div>
+						<CodeReference
+							filename="progressionMatchAnalysis.ts"
+							symbols={["toNonOverlappingMatches"]}
+						/>
 					</td>
 				</tr>
 				<tr>
@@ -120,19 +106,14 @@
 						progressions share a chord position
 					</td>
 					<td>
-						<div class="code-source">
-							<code class="code-file">greedyProgressionSelection.ts</code>
-							<span class="code-symbols">
-								<code class="code-symbol">greedilySelectProgressions</code>
-								<code class="code-symbol">hasOverlapWithCoverage</code>
-							</span>
-						</div>
-						<div class="code-source">
-							<code class="code-file">coreProgressionSelection.ts</code>
-							<span class="code-symbols">
-								<code class="code-symbol">selectCoreProgressions</code>
-							</span>
-						</div>
+						<CodeReference
+							filename="greedyProgressionSelection.ts"
+							symbols={["greedilySelectProgressions", "hasOverlapWithCoverage"]}
+						/>
+						<CodeReference
+							filename="coreProgressionSelection.ts"
+							symbols={["selectCoreProgressions"]}
+						/>
 					</td>
 				</tr>
 				<tr>
@@ -143,19 +124,14 @@
 						progressions
 					</td>
 					<td>
-						<div class="code-source">
-							<code class="code-file">gapFillProgressionAnalysis.ts</code>
-							<span class="code-symbols">
-								<code class="code-symbol">computeGapFillProgressionMatches</code>
-							</span>
-						</div>
-						<div class="code-source">
-							<code class="code-file">progressionMatchAnalysis.ts</code>
-							<span class="code-symbols">
-								<code class="code-symbol">computeGapOnlyStats</code>
-								<code class="code-symbol">isMatchFullyOutsideCoverage</code>
-							</span>
-						</div>
+						<CodeReference
+							filename="gapFillProgressionAnalysis.ts"
+							symbols={["computeGapFillProgressionMatches"]}
+						/>
+						<CodeReference
+							filename="progressionMatchAnalysis.ts"
+							symbols={["computeGapOnlyStats", "isMatchFullyOutsideCoverage"]}
+						/>
 					</td>
 				</tr>
 				<tr>
@@ -164,26 +140,21 @@
 						show only the chord positions each selection actually claims
 					</td>
 					<td>
-						<div class="code-source">
-							<code class="code-file">finalProgressionSelection.ts</code>
-							<span class="code-symbols">
-								<code class="code-symbol">selectFinalProgressions</code>
-								<code class="code-symbol">buildFinalChordAnnotations</code>
-							</span>
-						</div>
-						<div class="code-source">
-							<code class="code-file">greedyProgressionSelection.ts</code>
-							<span class="code-symbols">
-								<code class="code-symbol">getCandidateCoverage</code>
-							</span>
-						</div>
-						<div class="code-source">
-							<code class="code-file">progressionMatchAnalysis.ts</code>
-							<span class="code-symbols">
-								<code class="code-symbol">computeGapOnlyCoveredPositionsBySection</code>
-								<code class="code-symbol">buildColoredHighlightSegments</code>
-							</span>
-						</div>
+						<CodeReference
+							filename="finalProgressionSelection.ts"
+							symbols={["selectFinalProgressions", "buildFinalChordAnnotations"]}
+						/>
+						<CodeReference
+							filename="greedyProgressionSelection.ts"
+							symbols={["getCandidateCoverage"]}
+						/>
+						<CodeReference
+							filename="progressionMatchAnalysis.ts"
+							symbols={[
+								"computeGapOnlyCoveredPositionsBySection",
+								"buildColoredHighlightSegments"
+							]}
+						/>
 					</td>
 				</tr>
 			</tbody>
@@ -268,35 +239,5 @@
 		text-decoration: underline;
 		text-underline-offset: 3px;
 		color: #f4f4f5;
-	}
-
-	.code-source {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 0.25rem;
-	}
-
-	.code-file {
-		font-size: 0.6875rem;
-		font-weight: 500;
-		color: #71717a;
-		background: transparent;
-		padding: 0;
-	}
-
-	.code-symbols {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.25rem;
-	}
-
-	.code-symbol {
-		font-size: 0.75rem;
-		font-weight: 500;
-		color: #93c5fd;
-		background: rgba(147, 197, 253, 0.08);
-		padding: 0.05rem 0.3rem;
-		border-radius: 0.2rem;
 	}
 </style>

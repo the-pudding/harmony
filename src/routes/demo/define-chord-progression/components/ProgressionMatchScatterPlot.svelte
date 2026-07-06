@@ -88,19 +88,20 @@
 
 <div class="scatter-wrap" bind:clientWidth={containerWidth}>
 	{#if hoveredMatch}
-		{@const outline = matchOutline(hoveredMatch)}
+		{@const tooltipMatch = hoveredMatch}
+		{@const outline = matchOutline(tooltipMatch)}
 		<div class="tooltip" style:left="{tooltipX}px" style:top="{tooltipY}px">
 			<ProgressionMatchButton
-				match={hoveredMatch}
-				active={activeProgression === hoveredMatch.chordProgression}
+				match={tooltipMatch}
+				active={activeProgression === tooltipMatch.chordProgression}
 				borderColor={outline.color}
 				dashed={outline.dashed}
 				{onselect}
 			>
 				{#snippet stats({ active })}
 					<SongProgressionStats
-						matchCount={hoveredMatch.matchCount}
-						coveragePercent={hoveredMatch.coveragePercent}
+						matchCount={tooltipMatch.matchCount}
+						coveragePercent={tooltipMatch.coveragePercent}
 						{active}
 					/>
 				{/snippet}
@@ -149,14 +150,14 @@
 				class="axis-title"
 				x={PAD_LEFT + innerWidth / 2}
 				y={CHART_HEIGHT - 2}
-				text-anchor="middle">coverage %</text
+				text-anchor="middle">% of song the progression covers</text
 			>
 			<text
 				class="axis-title"
 				x={8}
 				y={PAD_TOP + innerHeight / 2}
 				text-anchor="middle"
-				transform="rotate(-90, 8, {PAD_TOP + innerHeight / 2})">times</text
+				transform="rotate(-90, 8, {PAD_TOP + innerHeight / 2})"># of instances</text
 			>
 
 			<!-- Dim (non-highlighted) points -->
