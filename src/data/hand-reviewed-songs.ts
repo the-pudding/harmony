@@ -20,6 +20,58 @@ export type HandReviewedSong = {
 
 export const handReviewedSongs: HandReviewedSong[] = [
 	{
+		id: "olivia-rodrigo__good-4-u",
+		technicalNotes:
+			"Like other songs, the HT original is almost there, but misses several chords completely. This seem to happen a lot when the harmony is largely implied by a sparse bassline.",
+		correctedSongContents: {
+			sections: [
+				...["Verse 1", "Verse 2"].map((name) => ({
+					name,
+					key: "F#",
+					scale: "minor",
+					romanTokens: ["i", "VII", "i", "VII", "i", "VII", "VI", "V"]
+				})),
+				{
+					name: "Chorus",
+					key: "F#",
+					scale: "minor",
+					romanTokens: [
+						// 1
+						"VI",
+						"III",
+						"VII",
+						"i",
+						"VII",
+						// 2
+						"VI",
+						"III",
+						"VII",
+						"i",
+						"VII",
+						// 3
+						"VI",
+						"III",
+						"VII",
+						"i",
+						"VII",
+						// 4
+						"VI",
+						"III",
+						"VII",
+						"i",
+						"VII"
+					]
+				},
+				...["Interlude", "Bridge"].map((name) => ({
+					name,
+					key: "F#",
+					scale: "minor",
+					romanTokens: ["i", "VII", "IV", "i", "VII", "IV"]
+				}))
+			]
+		}
+	},
+	{
 		id: "travis-scott__stargazing",
 		technicalNotes:
 			"Good attempt from the original HT, but the harmony is subtle and bass-driven, and they didn't quite get it.",
