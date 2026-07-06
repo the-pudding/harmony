@@ -56,6 +56,12 @@ const coreProgressions: CoreProgression[] = [
 			"Similar strengths to other four chord classics, but starting on the IV makes it feel fresh/yearn-y. Peaked in mid 2010s"
 	},
 	{
+		name: "never getting back together",
+		chordProgression: "IV-I-V-vi",
+		scale: "major",
+		description: ""
+	},
+	{
 		name: "mixolydian vamp",
 		chordProgression: "I-bVII-IV",
 		scale: "major",
