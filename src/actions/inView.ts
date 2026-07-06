@@ -25,7 +25,10 @@ const inView: Action<HTMLElement, InViewParams> = (node, params = {}) => {
 		const marginBottom = bottom ? bottom * -1 : 0;
 		const rootMargin = `${marginTop}px 0px ${marginBottom}px 0px`;
 		observer?.disconnect();
-		observer = new IntersectionObserver(handleIntersect, { root: root ?? null, rootMargin });
+		observer = new IntersectionObserver(handleIntersect, {
+			root: root ?? null,
+			rootMargin
+		});
 		observer.observe(node);
 	};
 

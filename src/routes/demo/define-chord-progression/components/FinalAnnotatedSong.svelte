@@ -1,13 +1,20 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../progressions/songBrowser.js";
-	import type { ProgressionWithMatchStats, ChordAnnotation } from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import type {
+		ProgressionWithMatchStats,
+		ChordAnnotation
+	} from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
 	import { matchOutline } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongProgressionStats from "./progression-match-stats/SongProgressionStats.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
 	import SongMetadataHeader from "./SongMetadataHeader.svelte";
-	import { BUTTON_COLUMN_WIDTH_PERCENT, CHORDS_COLUMN_WIDTH_PERCENT, COLUMN_GAP_REM } from "./progressionTableLayout.js";
+	import {
+		BUTTON_COLUMN_WIDTH_PERCENT,
+		CHORDS_COLUMN_WIDTH_PERCENT,
+		COLUMN_GAP_REM
+	} from "./progressionTableLayout.js";
 
 	type Props = {
 		song: GroupedSong;
@@ -19,8 +26,15 @@
 		onselect: (chordProgression: string) => void;
 	};
 
-	let { song, matches, annotations, explainedPercent, isExplained, activeProgression, onselect }: Props =
-		$props();
+	let {
+		song,
+		matches,
+		annotations,
+		explainedPercent,
+		isExplained,
+		activeProgression,
+		onselect
+	}: Props = $props();
 
 	const sortedMatches = $derived(
 		[...matches].sort((a, b) => b.coveragePercent - a.coveragePercent)
@@ -68,12 +82,15 @@
 					</ProgressionMatchButton>
 				{/each}
 				<div class="total-row">
-					<span class="total-label">= <strong class="total-percent">{explainedPercent}%</strong> of the song{#if isExplained}<span class="checkmark">✅</span>{/if}</span>
+					<span class="total-label"
+						>= <strong class="total-percent">{explainedPercent}%</strong> of the
+						song{#if isExplained}<span class="checkmark">✅</span>{/if}</span
+					>
 				</div>
 			</div>
 		{/if}
 		<div class="chords-column">
-			<SongChordsDisplay {song} {annotations} focusedProgression={focusedProgression} />
+			<SongChordsDisplay {song} {annotations} {focusedProgression} />
 		</div>
 	</div>
 </div>

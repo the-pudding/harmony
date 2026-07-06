@@ -148,7 +148,9 @@
 				<th class="rank-col" scope="col"></th>
 				<th class="sequence-col" scope="col">Progression</th>
 				<th class="avg-pct-col" scope="col">Avg % of song</th>
-				<th class="bar-col" scope="col">{SEQUENCE_CHART_SONG_APPEARANCES_COL_HEADER}</th>
+				<th class="bar-col" scope="col"
+					>{SEQUENCE_CHART_SONG_APPEARANCES_COL_HEADER}</th
+				>
 			</tr>
 		</thead>
 		<tbody>
@@ -196,7 +198,10 @@
 							>
 								<div
 									class="bar-fill"
-									style:width="{barWidthFromMax(row.avgPctOfSong, maxAvgPctOfSong)}%"
+									style:width="{barWidthFromMax(
+										row.avgPctOfSong,
+										maxAvgPctOfSong
+									)}%"
 									style:background-color={SEQUENCE_CHART_AVG_PCT_BAR_COLOR}
 								></div>
 							</div>
@@ -213,11 +218,16 @@
 							<div
 								class="bar-track"
 								role="img"
-								aria-label="{songAppearancesAriaLabel(row)} (length {row.length})"
+								aria-label="{songAppearancesAriaLabel(
+									row
+								)} (length {row.length})"
 							>
 								<div
 									class="bar-fill"
-									style:width="{barWidthFromMax(pctOfAllSongs(row.songCount), maxPctOfAllSongs)}%"
+									style:width="{barWidthFromMax(
+										pctOfAllSongs(row.songCount),
+										maxPctOfAllSongs
+									)}%"
 									style:background-color={barColor(row.label, row.length)}
 								></div>
 							</div>

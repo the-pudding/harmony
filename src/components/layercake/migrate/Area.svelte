@@ -3,11 +3,9 @@
 	import { getContext } from "svelte";
 	import { area, curveLinear } from "d3";
 
-	const { data, xGet, yGet, yScale } = getContext<LayerCakeContext>("LayerCake");
+	const { data, xGet, yGet, yScale } =
+		getContext<LayerCakeContext>("LayerCake");
 	let { fill = "#ccc", curve = curveLinear } = $props();
-
-
-
 
 	const path = $derived(
 		area<unknown>()

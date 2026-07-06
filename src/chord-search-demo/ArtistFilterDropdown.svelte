@@ -18,7 +18,9 @@
 
 	let query = $state("");
 	let isOpen = $state(false);
-	let listboxId = $state(`artist-filter-${Math.random().toString(36).slice(2)}`);
+	let listboxId = $state(
+		`artist-filter-${Math.random().toString(36).slice(2)}`
+	);
 
 	const filteredOptions = $derived.by(() => {
 		const normalizedQuery = query.trim().toLowerCase();
@@ -82,7 +84,8 @@
 		aria-autocomplete="list"
 		placeholder="Filter by artist…"
 		value={displayValue}
-		oninput={(event) => handleInput((event.currentTarget as HTMLInputElement).value)}
+		oninput={(event) =>
+			handleInput((event.currentTarget as HTMLInputElement).value)}
 		onfocus={handleFocus}
 		onblur={handleBlur}
 	/>

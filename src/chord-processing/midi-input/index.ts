@@ -1,10 +1,17 @@
-import type { MidiDeviceInfo, NoteOffPayload, NoteOnPayload } from "../types.js";
+import type {
+	MidiDeviceInfo,
+	NoteOffPayload,
+	NoteOnPayload
+} from "../types.js";
 
 const NOTE_ON_STATUS = 0x90;
 const NOTE_OFF_STATUS = 0x80;
 const STATUS_MASK = 0xf0;
 
-const toDeviceInfo = (input: MIDIInput, activeId: string | null): MidiDeviceInfo => ({
+const toDeviceInfo = (
+	input: MIDIInput,
+	activeId: string | null
+): MidiDeviceInfo => ({
 	id: input.id,
 	name: input.name ?? "",
 	manufacturer: input.manufacturer ?? "",
@@ -21,7 +28,11 @@ type MidiInputOptions = {
 	onStateChange?: (inputs: MidiDeviceInfo[]) => void;
 };
 
-export const createMidiInput = ({ onNoteOn, onNoteOff, onStateChange }: MidiInputOptions = {}) => {
+export const createMidiInput = ({
+	onNoteOn,
+	onNoteOff,
+	onStateChange
+}: MidiInputOptions = {}) => {
 	let midiAccess: MIDIAccess | null = null;
 	let activeInput: MIDIInput | null = null;
 
@@ -33,7 +44,10 @@ export const createMidiInput = ({ onNoteOn, onNoteOff, onStateChange }: MidiInpu
 
 		if (status === NOTE_ON_STATUS && velocity > 0) {
 			onNoteOn?.({ midi: note, velocity });
-		} else if (status === NOTE_OFF_STATUS || (status === NOTE_ON_STATUS && velocity === 0)) {
+		} else if (
+			status === NOTE_OFF_STATUS ||
+			(status === NOTE_ON_STATUS && velocity === 0)
+		) {
 			onNoteOff?.({ midi: note, velocity });
 		}
 	};
@@ -62,7 +76,9 @@ export const createMidiInput = ({ onNoteOn, onNoteOff, onStateChange }: MidiInpu
 		const inputs = [...midiAccess.inputs.values()];
 		if (inputs.length === 0) throw new Error("No MIDI inputs found.");
 
-		const chosen = inputName ? inputs.find((i) => i.name === inputName) : inputs[0];
+		const chosen = inputName
+			? inputs.find((i) => i.name === inputName)
+			: inputs[0];
 
 		if (!chosen) throw new Error(`MIDI input "${inputName}" not found.`);
 

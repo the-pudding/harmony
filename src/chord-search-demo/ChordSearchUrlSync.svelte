@@ -34,7 +34,10 @@
 		applyingFromUrl = true;
 		try {
 			if (urlState.progression !== currentStoreState.progression) {
-				if (urlState.progression && isValidProgressionParam(urlState.progression)) {
+				if (
+					urlState.progression &&
+					isValidProgressionParam(urlState.progression)
+				) {
 					chordSearchDemoStore.setSearchFromSequenceLabel(urlState.progression);
 				} else if (!urlState.progression) {
 					chordSearchDemoStore.clearSearch();

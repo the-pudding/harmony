@@ -20,7 +20,9 @@ export type CoverageWorkerComputeMessage = {
 	requestId: number;
 };
 
-export type CoverageWorkerMessage = CoverageWorkerInitMessage | CoverageWorkerComputeMessage;
+export type CoverageWorkerMessage =
+	| CoverageWorkerInitMessage
+	| CoverageWorkerComputeMessage;
 
 export type CoverageWorkerInitDoneMessage = {
 	type: "INIT_DONE";
@@ -32,7 +34,9 @@ export type CoverageWorkerResultMessage = {
 	coverages: SongCoverageEntry[];
 };
 
-export type CoverageWorkerResponse = CoverageWorkerInitDoneMessage | CoverageWorkerResultMessage;
+export type CoverageWorkerResponse =
+	| CoverageWorkerInitDoneMessage
+	| CoverageWorkerResultMessage;
 
 const coreProgressions = coreProgressionsData;
 

@@ -19,7 +19,9 @@ const songKeyFromId = (id: string | undefined): string => {
 	return parts.length >= 2 ? `${parts[0]}__${parts[1]}` : id;
 };
 
-export const buildChartSongIndex = (songs: SongInput[]): ChartSongIndexEntry[] =>
+export const buildChartSongIndex = (
+	songs: SongInput[]
+): ChartSongIndexEntry[] =>
 	songs.flatMap((song, index) => {
 		if (
 			!song.romanTokens?.length ||

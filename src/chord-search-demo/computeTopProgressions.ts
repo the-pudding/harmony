@@ -55,7 +55,10 @@ export function longestQualifyingPrefix(
 // tokens[0..L-1] === tokens[L..2L-1] — i.e., the section literally starts with
 // the pattern back-to-back. This correctly identifies the period even when the
 // section has a different ending (e.g. I V vi IV I V vi IV I V bVII bVI → [I V vi IV]).
-function periodByFirstRepeat(tokens: string[], minLen: number): string[] | null {
+function periodByFirstRepeat(
+	tokens: string[],
+	minLen: number
+): string[] | null {
 	for (let L = minLen; L * 2 <= tokens.length && L <= MAX_GRAM_LEN; L++) {
 		if (tokens.slice(0, L).every((t, i) => t === tokens[L + i])) {
 			return tokens.slice(0, L);
@@ -73,12 +76,20 @@ export function fundamentalAttribution(
 	const minLen = Math.max(2, opts.minLength);
 	const period = periodByFirstRepeat(tokens, minLen);
 	if (period) return period;
-	return longestQualifyingPrefix(tokens, { minLength: minLen, matchAtLeastTwice: opts.matchAtLeastTwice });
+	return longestQualifyingPrefix(tokens, {
+		minLength: minLen,
+		matchAtLeastTwice: opts.matchAtLeastTwice
+	});
 }
 
 export function computeTopProgressions(
 	songs: SongInput[],
-	opts: { aggregateRepeats: boolean; matchAtBeginningOnly: boolean; matchAtLeastTwice: boolean; minLength?: number },
+	opts: {
+		aggregateRepeats: boolean;
+		matchAtBeginningOnly: boolean;
+		matchAtLeastTwice: boolean;
+		minLength?: number;
+	},
 	topN = 30
 ): ProgressionStat[] {
 	const gramToSongs = new Map<string, Set<string>>();
@@ -108,7 +119,11 @@ export function computeTopProgressions(
 			const maximalLabels = new Set<string>();
 			for (let i = 0; i < tokens.length; i++) {
 				let bestLen = 0;
-				for (let len = minLen; len <= Math.min(MAX_GRAM_LEN, tokens.length - i); len++) {
+				for (
+					let len = minLen;
+					len <= Math.min(MAX_GRAM_LEN, tokens.length - i);
+					len++
+				) {
 					const gram = tokens.slice(i, i + len);
 					if (countOccurrences(tokens, gram) >= minOccurrences) {
 						bestLen = len;
@@ -131,7 +146,9 @@ export function computeTopProgressions(
 		.slice(0, topN);
 }
 
-export function filterSubsumedProgressions(progressions: ProgressionStat[]): ProgressionStat[] {
+export function filterSubsumedProgressions(
+	progressions: ProgressionStat[]
+): ProgressionStat[] {
 	return progressions.filter(
 		(p) =>
 			!progressions.some((other) => {

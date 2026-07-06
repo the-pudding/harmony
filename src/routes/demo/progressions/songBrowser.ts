@@ -8,7 +8,10 @@ import {
 	parseSongTitleAndSectionLabel,
 	resolveSongKey
 } from "../../../chord-processing/songIdentity.js";
-import { SCALE_INTERVALS, type ScaleName } from "../../../chord-processing/scale-intervals.js";
+import {
+	SCALE_INTERVALS,
+	type ScaleName
+} from "../../../chord-processing/scale-intervals.js";
 import type {
 	ParsedProgressionChord,
 	ProgressionChordInput,
@@ -42,7 +45,8 @@ const DEFAULT_SECTION_SCALE: ScaleName = "major";
 export const humanizeScale = (scale: string): string =>
 	scale.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
 
-const isValidScaleName = (scale: string): scale is ScaleName => scale in SCALE_INTERVALS;
+const isValidScaleName = (scale: string): scale is ScaleName =>
+	scale in SCALE_INTERVALS;
 
 const inferScaleFromRomanTokens = (romanTokens: string[]): ScaleName => {
 	for (const token of romanTokens) {
@@ -56,7 +60,9 @@ export const resolveSectionScale = (
 	scale: string | undefined,
 	romanTokens: string[]
 ): ScaleName =>
-	scale && isValidScaleName(scale) ? scale : inferScaleFromRomanTokens(romanTokens);
+	scale && isValidScaleName(scale)
+		? scale
+		: inferScaleFromRomanTokens(romanTokens);
 
 // Prefer the section's real, scale-aware key from the source data (e.g.
 // "G# harmonic minor"); fall back to guessing a major/minor tonic from the

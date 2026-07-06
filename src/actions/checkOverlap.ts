@@ -23,7 +23,12 @@ const isOverlapping = (nodes: Element[]) => {
 	const matches = nodes.slice(1).find((node) => {
 		if (node.classList.contains("is-overlap")) return false;
 		const r = node.getBoundingClientRect();
-		const b: [number, number, number, number] = [r.left, r.top, r.right, r.bottom];
+		const b: [number, number, number, number] = [
+			r.left,
+			r.top,
+			r.right,
+			r.bottom
+		];
 		return intersects(a, b);
 	});
 	return !!matches;

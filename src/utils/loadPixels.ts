@@ -11,7 +11,13 @@ type Pixel = {
 	rgb: string;
 };
 
-const getPixels = ({ data, width }: { data: Uint8ClampedArray; width: number }) => {
+const getPixels = ({
+	data,
+	width
+}: {
+	data: Uint8ClampedArray;
+	width: number;
+}) => {
 	const output: Pixel[] = [];
 	for (let index = 0; index < data.length; index += 4) {
 		const i = Math.floor(index / 4);

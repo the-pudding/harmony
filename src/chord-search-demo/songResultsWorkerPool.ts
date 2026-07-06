@@ -1,5 +1,8 @@
 import SongResultsWorker from "./songResults.worker.ts?worker";
-import type { AbstractProgression, ParsedProgressionChord } from "../chord-processing/types.js";
+import type {
+	AbstractProgression,
+	ParsedProgressionChord
+} from "../chord-processing/types.js";
 import { toEffectiveSearchProgression } from "../chord-processing/match-chord-progressions/index.js";
 import { assembleGroupedSongResults } from "./assembleGroupedSongResults.js";
 import { buildAnnualMatchCounts } from "./chord-progression-search-results/buildAnnualMatchCounts.js";
@@ -101,7 +104,10 @@ export const initSongResultsWorkerPool = async (
 
 	corpusState = buildSongResultsCorpusState(songs);
 	const poolSize = resolveWorkerPoolSize(corpusState.workerIndex.length);
-	const chunks = splitSongResultsIndexIntoChunks(corpusState.workerIndex, poolSize);
+	const chunks = splitSongResultsIndexIntoChunks(
+		corpusState.workerIndex,
+		poolSize
+	);
 
 	workerHandles = chunks.map((songChunk) => {
 		const worker = new SongResultsWorker();
@@ -110,7 +116,9 @@ export const initSongResultsWorkerPool = async (
 			chunk: songChunk
 		};
 		worker.postMessage(initMessage);
-		const initDone = waitForWorkerMessage(worker, "INIT_DONE").then(() => undefined);
+		const initDone = waitForWorkerMessage(worker, "INIT_DONE").then(
+			() => undefined
+		);
 		return { worker, initDone };
 	});
 
@@ -167,4 +175,5 @@ export const terminateSongResultsWorkerPool = (): void => {
 	corpusState = null;
 };
 
-export const isSongResultsWorkerPoolReady = (): boolean => workerHandles.length > 0;
+export const isSongResultsWorkerPoolReady = (): boolean =>
+	workerHandles.length > 0;

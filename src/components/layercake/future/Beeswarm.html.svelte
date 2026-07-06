@@ -6,7 +6,8 @@
 	import type { LayerCakeContext } from "$types/layercake";
 	import { getContext } from "svelte";
 
-	const { data, xGet, zGet, config } = getContext<LayerCakeContext>("LayerCake");
+	const { data, xGet, zGet, config } =
+		getContext<LayerCakeContext>("LayerCake");
 	let {
 		r = 3,
 		strokeWidth = 0,

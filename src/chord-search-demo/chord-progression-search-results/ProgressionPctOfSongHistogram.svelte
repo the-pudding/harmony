@@ -28,7 +28,9 @@
 	const PERCENT_BASELINE_MAX = 1;
 	const AXIS_PERCENT_MAX_FRACTION_DIGITS = 0;
 
-	const hasSearchChords = $derived(chordSearchDemoStore.searchChords.length > 0);
+	const hasSearchChords = $derived(
+		chordSearchDemoStore.searchChords.length > 0
+	);
 	const pctValues = $derived.by(() => {
 		if (!hasSearchChords) return [] as number[];
 
@@ -45,7 +47,9 @@
 	);
 
 	let containerWidth = $state(0);
-	let brushDrag = $state<{ startPlotX: number; currentPlotX: number } | null>(null);
+	let brushDrag = $state<{ startPlotX: number; currentPlotX: number } | null>(
+		null
+	);
 
 	const activePctRange = $derived(chordSearchDemoStore.pctOfSongRangeFilter);
 
@@ -64,7 +68,8 @@
 	);
 
 	const histogramBins = $derived.by(() => {
-		if (!hasData) return [] as Array<{ x0: number; x1: number; length: number }>;
+		if (!hasData)
+			return [] as Array<{ x0: number; x1: number; length: number }>;
 
 		return bin<number, number>()
 			.domain([...PCT_OF_SONG_DOMAIN])
@@ -115,7 +120,11 @@
 	});
 
 	const countTicks = $derived.by(() => {
-		const step = tickStep(0, maxBinCount, PROGRESSION_PCT_HISTOGRAM_AXIS_TICK_COUNT);
+		const step = tickStep(
+			0,
+			maxBinCount,
+			PROGRESSION_PCT_HISTOGRAM_AXIS_TICK_COUNT
+		);
 		const ticks: number[] = [];
 
 		for (let count = 0; count <= maxBinCount; count += step) {
@@ -253,89 +262,89 @@
 	>
 		{#if hasData && plotWidth > 0}
 			<svg
-					class="chart"
-					class:chart-brushing={brushDrag !== null}
-					width={containerWidth}
-					height={PROGRESSION_PCT_HISTOGRAM_HEIGHT_PX}
-					role="img"
-					aria-label={chartAriaLabel}
+				class="chart"
+				class:chart-brushing={brushDrag !== null}
+				width={containerWidth}
+				height={PROGRESSION_PCT_HISTOGRAM_HEIGHT_PX}
+				role="img"
+				aria-label={chartAriaLabel}
+			>
+				<g
+					transform="translate({PROGRESSION_PCT_HISTOGRAM_MARGIN_LEFT_PX}, {PROGRESSION_PCT_HISTOGRAM_MARGIN_TOP_PX})"
 				>
-					<g
-						transform="translate({PROGRESSION_PCT_HISTOGRAM_MARGIN_LEFT_PX}, {PROGRESSION_PCT_HISTOGRAM_MARGIN_TOP_PX})"
-					>
-						{#each countTicks as count (count)}
-							<line
-								class="grid-line"
-								x1="0"
-								x2={plotWidth}
-								y1={yScale(count)}
-								y2={yScale(count)}
-							/>
-							<text
-								class="axis-label y-axis-label"
-								x="-8"
-								y={yScale(count)}
-								text-anchor="end"
-							>
-								{count}
-							</text>
-						{/each}
-
-						{#each histogramBins as bucket (bucket.x0)}
-							<rect
-								class="bar"
-								x={xScale(bucket.x0 ?? PCT_OF_SONG_DOMAIN_MIN)}
-								y={yScale(bucket.length)}
-								width={Math.max(
-									xScale(bucket.x1 ?? PCT_OF_SONG_DOMAIN_MAX) -
-										xScale(bucket.x0 ?? PCT_OF_SONG_DOMAIN_MIN),
-									0
-								)}
-								height={Math.max(plotHeight - yScale(bucket.length), 0)}
-								fill={PROGRESSION_PCT_HISTOGRAM_BAR_FILL}
-							/>
-						{/each}
-
-						{#each pctTicks as pct (pct)}
-							<text
-								class="axis-label x-axis-label"
-								x={xScale(pct)}
-								y={plotHeight + 16}
-								text-anchor="middle"
-							>
-								{pctAxisLabelFormatter.format(pct)}%
-							</text>
-						{/each}
-
-						{#if selectionRect}
-							<rect
-								class="brush-selection"
-								x={selectionRect.x}
-								y="0"
-								width={selectionRect.width}
-								height={plotHeight}
-								fill={PROGRESSION_PCT_HISTOGRAM_BRUSH_FILL}
-								stroke={PROGRESSION_PCT_HISTOGRAM_BRUSH_STROKE}
-							/>
-						{/if}
-
-						<rect
-							class="brush-overlay"
-							role="button"
-							aria-label={PROGRESSION_PCT_HISTOGRAM_BRUSH_HINT}
-							tabindex="0"
-							x="0"
-							y="0"
-							width={plotWidth}
-							height={plotHeight}
-							fill="transparent"
-							onpointerdown={onBrushPointerDown}
-							onpointermove={onBrushPointerMove}
-							onpointerup={onBrushPointerUp}
-							onpointercancel={onBrushPointerCancel}
-							ondblclick={onBrushDoubleClick}
+					{#each countTicks as count (count)}
+						<line
+							class="grid-line"
+							x1="0"
+							x2={plotWidth}
+							y1={yScale(count)}
+							y2={yScale(count)}
 						/>
-					</g>
+						<text
+							class="axis-label y-axis-label"
+							x="-8"
+							y={yScale(count)}
+							text-anchor="end"
+						>
+							{count}
+						</text>
+					{/each}
+
+					{#each histogramBins as bucket (bucket.x0)}
+						<rect
+							class="bar"
+							x={xScale(bucket.x0 ?? PCT_OF_SONG_DOMAIN_MIN)}
+							y={yScale(bucket.length)}
+							width={Math.max(
+								xScale(bucket.x1 ?? PCT_OF_SONG_DOMAIN_MAX) -
+									xScale(bucket.x0 ?? PCT_OF_SONG_DOMAIN_MIN),
+								0
+							)}
+							height={Math.max(plotHeight - yScale(bucket.length), 0)}
+							fill={PROGRESSION_PCT_HISTOGRAM_BAR_FILL}
+						/>
+					{/each}
+
+					{#each pctTicks as pct (pct)}
+						<text
+							class="axis-label x-axis-label"
+							x={xScale(pct)}
+							y={plotHeight + 16}
+							text-anchor="middle"
+						>
+							{pctAxisLabelFormatter.format(pct)}%
+						</text>
+					{/each}
+
+					{#if selectionRect}
+						<rect
+							class="brush-selection"
+							x={selectionRect.x}
+							y="0"
+							width={selectionRect.width}
+							height={plotHeight}
+							fill={PROGRESSION_PCT_HISTOGRAM_BRUSH_FILL}
+							stroke={PROGRESSION_PCT_HISTOGRAM_BRUSH_STROKE}
+						/>
+					{/if}
+
+					<rect
+						class="brush-overlay"
+						role="button"
+						aria-label={PROGRESSION_PCT_HISTOGRAM_BRUSH_HINT}
+						tabindex="0"
+						x="0"
+						y="0"
+						width={plotWidth}
+						height={plotHeight}
+						fill="transparent"
+						onpointerdown={onBrushPointerDown}
+						onpointermove={onBrushPointerMove}
+						onpointerup={onBrushPointerUp}
+						onpointercancel={onBrushPointerCancel}
+						ondblclick={onBrushDoubleClick}
+					/>
+				</g>
 			</svg>
 		{:else}
 			<p class="empty-placeholder">{placeholderMessage}</p>

@@ -1,6 +1,9 @@
 import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
 
-export const isContiguousRun = (shorter: string[], longer: string[]): boolean => {
+export const isContiguousRun = (
+	shorter: string[],
+	longer: string[]
+): boolean => {
 	if (shorter.length >= longer.length) return false;
 	const limit = longer.length - shorter.length;
 	for (let start = 0; start <= limit; start++) {

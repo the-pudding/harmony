@@ -4,7 +4,8 @@ import type { StableChordCandidate } from "../types.js";
 const DEFAULT_SETTLE_MS = 60;
 export const DEFAULT_SPLIT_BASS_NOTE = "D3";
 
-const sortedMidiArray = (set: Set<number>): number[] => [...set].sort((a, b) => a - b);
+const sortedMidiArray = (set: Set<number>): number[] =>
+	[...set].sort((a, b) => a - b);
 
 const arraysEqual = (a: number[], b: number[]): boolean =>
 	a.length === b.length && a.every((v, i) => v === b[i]);

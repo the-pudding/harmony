@@ -4,14 +4,16 @@
 	import { uniques } from "layercake";
 	import { Delaunay } from "d3";
 
-	const { data, xGet, yGet, width, height } = getContext<LayerCakeContext>("LayerCake");
+	const { data, xGet, yGet, width, height } =
+		getContext<LayerCakeContext>("LayerCake");
 	let { stroke = undefined }: { stroke?: string } = $props();
 
 	const dispatcher = createEventDispatcher();
 
 	type VoronoiPoint = [number, number] & { data?: unknown };
 
-	const onEnter = (point: VoronoiPoint) => dispatcher("voronoi-mouseover", point);
+	const onEnter = (point: VoronoiPoint) =>
+		dispatcher("voronoi-mouseover", point);
 
 	const points = $derived(
 		$data.map((d: Record<string, unknown>) => {
@@ -20,7 +22,9 @@
 			return point;
 		})
 	);
-	const uniquePoints = $derived(uniques(points, (d: VoronoiPoint) => d.join(), false));
+	const uniquePoints = $derived(
+		uniques(points, (d: VoronoiPoint) => d.join(), false)
+	);
 	const voronoi = $derived(
 		Delaunay.from(uniquePoints).voronoi([0, 0, $width ?? 0, $height ?? 0])
 	);

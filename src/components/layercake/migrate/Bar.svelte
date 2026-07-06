@@ -2,10 +2,9 @@
 	import type { LayerCakeContext, CanvasContext } from "$types/layercake";
 	import { getContext } from "svelte";
 
-	const { data, xGet, yGet, xScale, yScale } = getContext<LayerCakeContext>("LayerCake");
+	const { data, xGet, yGet, xScale, yScale } =
+		getContext<LayerCakeContext>("LayerCake");
 	let { fill = "#ccc" } = $props();
-
-
 </script>
 
 <g>

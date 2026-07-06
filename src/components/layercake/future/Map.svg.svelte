@@ -5,15 +5,22 @@
 <script lang="ts">
 	import type { LayerCakeContext } from "$types/layercake";
 	import type { FeatureCollection } from "geojson";
-	import { getContext, createEventDispatcher } from 'svelte';
-	import { geoPath } from 'd3-geo';
-	import { raise } from 'layercake';
+	import { getContext, createEventDispatcher } from "svelte";
+	import { geoPath } from "d3-geo";
+	import { raise } from "layercake";
 
-	const { data, width, height, zGet } = getContext<LayerCakeContext>("LayerCake");
-	let { projection, fixedAspectRatio = undefined, fill = undefined, stroke = '#333', strokeWidth = 0.5, features = undefined } = $props();
+	const { data, width, height, zGet } =
+		getContext<LayerCakeContext>("LayerCake");
+	let {
+		projection,
+		fixedAspectRatio = undefined,
+		fill = undefined,
+		stroke = "#333",
+		strokeWidth = 0.5,
+		features = undefined
+	} = $props();
 
 	const geoData = $derived($data as unknown as FeatureCollection);
-
 
 	/** @type {Function} projection - A D3 projection function. Pass this in as an uncalled function, e.g. `projection={geoAlbersUsa}`. */
 
@@ -32,7 +39,9 @@
 	 */
 	const dispatch = createEventDispatcher();
 
-	const fitSizeRange = $derived(fixedAspectRatio ? [100, 100 / fixedAspectRatio] : [$width, $height]);
+	const fitSizeRange = $derived(
+		fixedAspectRatio ? [100, 100 / fixedAspectRatio] : [$width, $height]
+	);
 
 	const projectionFn = $derived(projection().fitSize(fitSizeRange, geoData));
 
@@ -43,26 +52,27 @@
 			raise(this);
 			// When the element gets raised, it flashes 0,0 for a second so skip that
 			if (e.layerX !== 0 && e.layerY !== 0) {
-				dispatch('mousemove', { e, props: feature.properties });
+				dispatch("mousemove", { e, props: feature.properties });
 			}
-		}
+		};
 	}
 </script>
 
 <g
 	class="map-group"
-	on:mouseout={(e) => dispatch('mouseout')}
-	on:blur={(e) => dispatch('mouseout')}
+	on:mouseout={(e) => dispatch("mouseout")}
+	on:blur={(e) => dispatch("mouseout")}
 >
-	{#each (features || geoData.features) as feature}
+	{#each features || geoData.features as feature}
 		<path
 			class="feature-path"
-			fill="{fill || String($zGet(feature.properties))}"
-			stroke={stroke}
+			fill={fill || String($zGet(feature.properties))}
+			{stroke}
 			stroke-width={strokeWidth}
-			d="{geoPathFn(feature)}"
-			on:mouseover={(e) => dispatch('mousemove', { e, props: feature.properties })}
-			on:focus={(e) => dispatch('mousemove', { e, props: feature.properties })}
+			d={geoPathFn(feature)}
+			on:mouseover={(e) =>
+				dispatch("mousemove", { e, props: feature.properties })}
+			on:focus={(e) => dispatch("mousemove", { e, props: feature.properties })}
 			on:mousemove={handleMousemove(feature)}
 		></path>
 	{/each}

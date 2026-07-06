@@ -1,5 +1,8 @@
 <script lang="ts">
-	import type { PathStats, SankeyLayer } from "./computeNextChordProbabilities.js";
+	import type {
+		PathStats,
+		SankeyLayer
+	} from "./computeNextChordProbabilities.js";
 
 	type Props = { layers: SankeyLayer[]; pathStats: PathStats | null };
 	const { layers, pathStats }: Props = $props();
@@ -45,7 +48,8 @@
 
 		const allNodes: LayoutNode[] = [];
 		const links: LayoutLink[] = [];
-		const totalWidth = layers.length * NODE_WIDTH + (layers.length - 1) * COL_GAP;
+		const totalWidth =
+			layers.length * NODE_WIDTH + (layers.length - 1) * COL_GAP;
 		const layerLayouts: LayoutNode[][] = [];
 
 		// Cascade: each layer fits within the height of the chosen node from the previous layer.
@@ -83,7 +87,7 @@
 					x,
 					y,
 					height,
-					centerY,
+					centerY
 				};
 				y += height + NODE_GAP;
 				return ln;
@@ -115,7 +119,7 @@
 					y1: srcChosen.centerY,
 					x2,
 					y2: dest.centerY,
-					isChosenPath: dest.isChosen,
+					isChosenPath: dest.isChosen
 				});
 			}
 		}
@@ -123,10 +127,14 @@
 		return { nodes: allNodes, links, totalWidth };
 	});
 
-	const svgHeight = $derived(pathStats ? CHART_HEIGHT + STATS_AREA_HEIGHT : CHART_HEIGHT);
+	const svgHeight = $derived(
+		pathStats ? CHART_HEIGHT + STATS_AREA_HEIGHT : CHART_HEIGHT
+	);
 
 	const statsLabelX = $derived(
-		layers.length > 0 ? (layers.length - 1) * (NODE_WIDTH + COL_GAP) + NODE_WIDTH / 2 : 0
+		layers.length > 0
+			? (layers.length - 1) * (NODE_WIDTH + COL_GAP) + NODE_WIDTH / 2
+			: 0
 	);
 
 	const statsPct = $derived(
@@ -165,9 +173,13 @@
 		{#each layout.nodes as node (`${node.token}-${node.x}`)}
 			{@const fill = node.isChosen ? CHOSEN_COLOR : UNCHOSEN_NODE_FILL}
 			{@const stroke = node.isChosen ? CHOSEN_COLOR : UNCHOSEN_NODE_STROKE}
-			{@const labelColor = node.isChosen ? CHOSEN_LABEL_COLOR : UNCHOSEN_LABEL_COLOR}
+			{@const labelColor = node.isChosen
+				? CHOSEN_LABEL_COLOR
+				: UNCHOSEN_LABEL_COLOR}
 			{@const showLabel = node.height >= LABEL_MIN_HEIGHT}
-			{@const pct = Math.round((node.count / (node.layerTotalCount || 1)) * 100)}
+			{@const pct = Math.round(
+				(node.count / (node.layerTotalCount || 1)) * 100
+			)}
 
 			<rect
 				x={node.x}

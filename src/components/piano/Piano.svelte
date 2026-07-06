@@ -73,7 +73,9 @@
 	style:--sentinel-label-stroke-color={SENTINEL_LABEL_STROKE_COLOR}
 >
 	<div class="section-labels">
-		<div class="section-label bass-label" style="width: {bassWidth}%">← Bass</div>
+		<div class="section-label bass-label" style="width: {bassWidth}%">
+			← Bass
+		</div>
 		<div class="split-edit" style="left: {bassWidth}%">
 			<button
 				type="button"
@@ -83,13 +85,18 @@
 				aria-pressed={splitNoteEditing}
 				onclick={() => onSplitEditToggle?.()}
 			>
-				<Pencil size={SPLIT_EDIT_ICON_SIZE_PX} strokeWidth={SPLIT_EDIT_ICON_STROKE_WIDTH} />
+				<Pencil
+					size={SPLIT_EDIT_ICON_SIZE_PX}
+					strokeWidth={SPLIT_EDIT_ICON_STROKE_WIDTH}
+				/>
 			</button>
 			{#if splitNoteEditing}
 				<p class="split-tooltip" role="status">{splitNoteEditTooltip}</p>
 			{/if}
 		</div>
-		<div class="section-label treble-label" style="width: {trebleWidth}%">Treble →</div>
+		<div class="section-label treble-label" style="width: {trebleWidth}%">
+			Treble →
+		</div>
 	</div>
 	<div class="keys-wrapper" class:split-editing={splitNoteEditing}>
 		{#each sentinelLabels as bounds (bounds.label)}
@@ -108,7 +115,9 @@
 				isSplit={key.midi === splitMidi}
 				totalWhiteKeys={TOTAL_WHITE_KEYS}
 				blackKeyWidthRatio={BLACK_KEY_WIDTH_RATIO}
-				onSelect={splitNoteEditing ? () => onSplitNotePick?.(key.midi) : undefined}
+				onSelect={splitNoteEditing
+					? () => onSplitNotePick?.(key.midi)
+					: undefined}
 			/>
 		{/each}
 	</div>
@@ -214,7 +223,8 @@
 		justify-content: center;
 		font-size: var(--sentinel-label-font-size);
 		color: var(--sentinel-label-color);
-		-webkit-text-stroke: var(--sentinel-label-stroke-width) var(--sentinel-label-stroke-color);
+		-webkit-text-stroke: var(--sentinel-label-stroke-width)
+			var(--sentinel-label-stroke-color);
 		pointer-events: none;
 		z-index: 3;
 		text-transform: lowercase;

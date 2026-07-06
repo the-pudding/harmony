@@ -1,7 +1,10 @@
 <script lang="ts">
 	let top = $state<string | undefined>();
 	let left = $state<string | undefined>();
-	let { evt = {} as { detail?: { e: { layerY: number; layerX: number } } }, offset = -35 } = $props();
+	let {
+		evt = {} as { detail?: { e: { layerY: number; layerX: number } } },
+		offset = -35
+	} = $props();
 
 	$effect(() => {
 		if (evt.detail) {

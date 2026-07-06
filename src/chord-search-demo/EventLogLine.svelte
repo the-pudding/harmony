@@ -12,7 +12,8 @@
 		<span class="detail">
 			— <NoteDisplay note={entry.chordEvent.bassNote} /> /
 			{#each entry.chordEvent.trebleNotes as note, i}
-				{#if i > 0}, {/if}
+				{#if i > 0},
+				{/if}
 				<NoteDisplay {note} />
 			{/each}
 		</span>

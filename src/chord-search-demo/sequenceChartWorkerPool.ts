@@ -65,7 +65,11 @@ const waitForWorkerMessage = <T extends SequenceChartWorkerResponse["type"]>(
 		const onMessage = (event: MessageEvent<SequenceChartWorkerResponse>) => {
 			const response = event.data;
 			if (response.type !== expectedType) return;
-			if (requestId !== undefined && "requestId" in response && response.requestId !== requestId)
+			if (
+				requestId !== undefined &&
+				"requestId" in response &&
+				response.requestId !== requestId
+			)
 				return;
 
 			worker.removeEventListener("message", onMessage);
@@ -100,7 +104,9 @@ export const initSequenceChartWorkerPool = async (
 			chunk: songChunk
 		};
 		worker.postMessage(initMessage);
-		const initDone = waitForWorkerMessage(worker, "INIT_DONE").then(() => undefined);
+		const initDone = waitForWorkerMessage(worker, "INIT_DONE").then(
+			() => undefined
+		);
 		return { worker, initDone };
 	});
 
@@ -146,4 +152,5 @@ export const terminateSequenceChartWorkerPool = (): void => {
 	workerHandles = [];
 };
 
-export const isSequenceChartWorkerPoolReady = (): boolean => workerHandles.length > 0;
+export const isSequenceChartWorkerPoolReady = (): boolean =>
+	workerHandles.length > 0;

@@ -5,7 +5,9 @@
 </script>
 
 <span class="note">
-	<span class="name">{note.noteName}</span><sub class="octave">{note.octave}</sub>
+	<span class="name">{note.noteName}</span><sub class="octave"
+		>{note.octave}</sub
+	>
 </span>
 
 <style>

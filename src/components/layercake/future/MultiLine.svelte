@@ -9,10 +9,7 @@
 	const { data, xGet, yGet, zGet } = getContext<LayerCakeContext>("LayerCake");
 
 	const path = (values: unknown[]) =>
-		"M" +
-		values
-			.map((d) => `${$xGet(d)},${$yGet(d)}`)
-			.join("L");
+		"M" + values.map((d) => `${$xGet(d)},${$yGet(d)}`).join("L");
 </script>
 
 <g class="line-group">

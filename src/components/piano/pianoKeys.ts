@@ -81,7 +81,10 @@ export const splitNoteToMidi = (splitNote: MidiCoercible): number => {
 				? (() => {
 						const m = splitNote.match(/^([A-G][#b]?)(-?\d+)$/);
 						if (!m) return { noteName: "C" as Note["noteName"], octave: 4 };
-						return { noteName: m[1] as Note["noteName"], octave: parseInt(m[2], 10) };
+						return {
+							noteName: m[1] as Note["noteName"],
+							octave: parseInt(m[2], 10)
+						};
 					})()
 				: (splitNote as Note)
 		);

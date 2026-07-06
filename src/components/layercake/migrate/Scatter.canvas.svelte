@@ -3,7 +3,8 @@
 	import { getContext } from "svelte";
 	import { scaleCanvas } from "layercake";
 
-	const { data, xGet, yGet, width, height } = getContext<LayerCakeContext>("LayerCake");
+	const { data, xGet, yGet, width, height } =
+		getContext<LayerCakeContext>("LayerCake");
 	let { r = 4, fill = "#ccc", stroke = "#000", strokeWidth = 0 } = $props();
 
 	const { ctx } = getContext<CanvasContext>("canvas");

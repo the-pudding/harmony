@@ -30,7 +30,10 @@ const resolveWorkerPoolSize = (songCount: number): number => {
 			? navigator.hardwareConcurrency
 			: 4;
 	const cappedLimit = Math.min(hardwareLimit, WORKER_POOL_MAX);
-	return Math.max(1, Math.min(cappedLimit, Math.ceil(songCount / MIN_SONGS_PER_WORKER)));
+	return Math.max(
+		1,
+		Math.min(cappedLimit, Math.ceil(songCount / MIN_SONGS_PER_WORKER))
+	);
 };
 
 const splitIntoChunks = <T>(items: T[], count: number): T[][] =>
@@ -48,7 +51,11 @@ const waitForWorkerMessage = <T extends CoverageWorkerResponse["type"]>(
 		const onMessage = (event: MessageEvent<CoverageWorkerResponse>) => {
 			const response = event.data;
 			if (response.type !== expectedType) return;
-			if (requestId !== undefined && "requestId" in response && response.requestId !== requestId)
+			if (
+				requestId !== undefined &&
+				"requestId" in response &&
+				response.requestId !== requestId
+			)
 				return;
 			worker.removeEventListener("message", onMessage);
 			worker.removeEventListener("error", onError);
@@ -67,7 +74,9 @@ const waitForWorkerMessage = <T extends CoverageWorkerResponse["type"]>(
 
 let workerHandles: WorkerHandle[] = [];
 
-export const initCoverageWorkerPool = async (songs: GroupedSong[]): Promise<void> => {
+export const initCoverageWorkerPool = async (
+	songs: GroupedSong[]
+): Promise<void> => {
 	terminateCoverageWorkerPool();
 
 	const poolSize = resolveWorkerPoolSize(songs.length);
@@ -75,9 +84,14 @@ export const initCoverageWorkerPool = async (songs: GroupedSong[]): Promise<void
 
 	workerHandles = chunks.map((chunk) => {
 		const worker = new CoverageWorker();
-		const initMessage: CoverageWorkerInitMessage = { type: "INIT", songs: chunk };
+		const initMessage: CoverageWorkerInitMessage = {
+			type: "INIT",
+			songs: chunk
+		};
 		worker.postMessage(initMessage);
-		const initDone = waitForWorkerMessage(worker, "INIT_DONE").then(() => undefined);
+		const initDone = waitForWorkerMessage(worker, "INIT_DONE").then(
+			() => undefined
+		);
 		return { worker, initDone };
 	});
 
@@ -125,4 +139,5 @@ export const terminateCoverageWorkerPool = (): void => {
 	workerHandles = [];
 };
 
-export const isCoverageWorkerPoolReady = (): boolean => workerHandles.length > 0;
+export const isCoverageWorkerPoolReady = (): boolean =>
+	workerHandles.length > 0;

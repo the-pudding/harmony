@@ -13,13 +13,6 @@
 		ticks = 4 as LayerCakeTicks
 	} = $props();
 
-
-
-
-
-
-
-
 	/** If this is a number, it passes that along to the [d3Scale.ticks](https://github.com/d3/d3-scale) function. If this is an array, hardcodes the ticks to those values. If it's a function, passes along the default tick values and expects an array of tick values in return. */
 
 	const tickVals = $derived(
@@ -33,7 +26,10 @@
 
 <div class="axis y-axis" style="transform:translate(-{pad.left ?? 0}px, 0)">
 	{#each tickVals as tick, i}
-		<div class="tick tick-{i}" style="top:{$yScale(tick)}%;left:{($xRange ?? [0, 0])[0]}%;">
+		<div
+			class="tick tick-{i}"
+			style="top:{$yScale(tick)}%;left:{($xRange ?? [0, 0])[0]}%;"
+		>
 			{#if gridlines !== false}
 				<div
 					class="gridline"

@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { PianoKeyData } from "./pianoKeys.js";
-	import { SPLIT_KEY_BORDER_COLOR, SPLIT_KEY_BORDER_WIDTH_PX } from "./pianoKeys.js";
+	import {
+		SPLIT_KEY_BORDER_COLOR,
+		SPLIT_KEY_BORDER_WIDTH_PX
+	} from "./pianoKeys.js";
 
 	type Props = {
 		keyData: PianoKeyData;
@@ -11,8 +14,14 @@
 		onSelect?: () => void;
 	};
 
-	const { keyData, isActive, isSplit, totalWhiteKeys, blackKeyWidthRatio, onSelect }: Props =
-		$props();
+	const {
+		keyData,
+		isActive,
+		isSplit,
+		totalWhiteKeys,
+		blackKeyWidthRatio,
+		onSelect
+	}: Props = $props();
 
 	type KeyState = "idle" | "active";
 

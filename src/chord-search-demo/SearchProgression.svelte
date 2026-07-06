@@ -28,7 +28,11 @@
 	function displayChordName(chord: ParsedProgressionChord) {
 		const suffix = fuzzySearch ? simplifySuffix(chord.suffix) : chord.suffix;
 		const base = { rootPitchClass: chord.rootPitchClass, suffix };
-		return formatChordName(ignoreSlashBassNotes ? base : { ...base, bassPitchClass: chord.bassPitchClass });
+		return formatChordName(
+			ignoreSlashBassNotes
+				? base
+				: { ...base, bassPitchClass: chord.bassPitchClass }
+		);
 	}
 
 	function isFuzzified(chord: ParsedProgressionChord) {

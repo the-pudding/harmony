@@ -42,7 +42,8 @@ const canonicalNoteName = (noteName: string): NoteName =>
 
 export const noteNameToPitchClass = (noteName: string): number => {
 	const notePitchClass = NOTE_NAMES.indexOf(canonicalNoteName(noteName));
-	if (notePitchClass === -1) throw new Error(`Invalid note name: "${noteName}"`);
+	if (notePitchClass === -1)
+		throw new Error(`Invalid note name: "${noteName}"`);
 	return notePitchClass;
 };
 
@@ -56,7 +57,11 @@ const parseNoteString = (str: string): Note => {
 	return { noteName: match[1] as NoteName, octave: parseInt(match[2], 10) };
 };
 
-export type MidiCoercible = number | string | Note | { noteName: string; octave: number };
+export type MidiCoercible =
+	| number
+	| string
+	| Note
+	| { noteName: string; octave: number };
 
 export const coerceToMidi = (value: MidiCoercible): number => {
 	if (typeof value === "number") return value;
@@ -68,5 +73,7 @@ export const coerceToMidi = (value: MidiCoercible): number => {
 		};
 		return noteToMidi(note);
 	}
-	throw new Error(`Cannot coerce value to MIDI number: ${JSON.stringify(value)}`);
+	throw new Error(
+		`Cannot coerce value to MIDI number: ${JSON.stringify(value)}`
+	);
 };

@@ -22,7 +22,10 @@ export default class UseWindowDimensions {
 			this.#debouncedResize = debounce(this.#onResize.bind(this), ms);
 			window?.visualViewport?.addEventListener("resize", this.#debouncedResize);
 			return () => {
-				window?.visualViewport?.removeEventListener("resize", this.#debouncedResize!);
+				window?.visualViewport?.removeEventListener(
+					"resize",
+					this.#debouncedResize!
+				);
 			};
 		});
 	}

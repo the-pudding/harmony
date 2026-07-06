@@ -13,7 +13,9 @@ const burninCore = coreProgressions.find(
 	(p) => p.name === "burnin up with you"
 )!;
 const burninSong = groupSongs(
-	(songs as { songKey: string }[]).filter((s) => s.songKey === "jonas-brothers__burnin-up") as Parameters<typeof groupSongs>[0]
+	(songs as { songKey: string }[]).filter(
+		(s) => s.songKey === "jonas-brothers__burnin-up"
+	) as Parameters<typeof groupSongs>[0]
 )[0];
 
 describe("burnin up — scale-aware core matching regression", () => {

@@ -9,6 +9,8 @@
 
 	const dispatch = createEventDispatcher();
 
+	const defaultFormatFn = (value: unknown) => value;
+
 	const sortFn = {
 		asc: (a, b) =>
 			a == null || b == null ? NaN : a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN,
@@ -48,16 +50,18 @@
 	let inputValue;
 
 	$: th = columns.map((d, i) => ({ sort: true, type: "text", ...d, i }));
-	$: tr = rows.map((d) => ({
-		...d,
-		style: d.style || "",
-		class: d.class || ""
-	})).filter(d => {
-		if (!filter || !inputValue) return true;
-		const a = d[filter]?.toLowerCase();
-		const b = inputValue.toLowerCase();
-		return a.includes(b);
-	});
+	$: tr = rows
+		.map((d) => ({
+			...d,
+			style: d.style || "",
+			class: d.class || ""
+		}))
+		.filter((d) => {
+			if (!filter || !inputValue) return true;
+			const a = d[filter]?.toLowerCase();
+			const b = inputValue.toLowerCase();
+			return a.includes(b);
+		});
 	$: autoSort(tr);
 	$: filterLabel = filter ? th.find((d) => d.prop === filter).label : "";
 </script>
@@ -82,23 +86,23 @@
 			{/each}
 		</tr>
 		{#if filter}
-		<tr>
-			<th>
-				<input type="text" placeholder="Filter {filterLabel}..." bind:value={inputValue}>
-			</th>
-		</tr>
+			<tr>
+				<th>
+					<input
+						type="text"
+						placeholder="Filter {filterLabel}..."
+						bind:value={inputValue}
+					/>
+				</th>
+			</tr>
 		{/if}
 	</thead>
 	<tbody bind:this={tbodyEl}>
 		{#each tr as r}
-			<tr style={r.style}
-						class={r.class} on:click={() => dispatch("chart", r)}>
-				{#each columns as { label, prop, type, formatFn = (d) => d }}
-					{@const value = formatFn(r[prop])}
-					<td
-						data-th={label}
-						class:is-number={type === "number"}
-					>
+			<tr style={r.style} class={r.class} on:click={() => dispatch("chart", r)}>
+				{#each columns as { label, prop, type, formatFn }}
+					{@const value = (formatFn ?? defaultFormatFn)(r[prop])}
+					<td data-th={label} class:is-number={type === "number"}>
 						{@html value}
 					</td>
 				{/each}
@@ -118,7 +122,6 @@
 		table-layout: auto;
 	}
 
-	
 	td {
 		vertical-align: bottom;
 		line-height: 1.2;
@@ -161,7 +164,6 @@
 		position: relative;
 	}
 
-	
 	th.is-sortable button:after {
 		content: "⇅";
 		display: flex;
@@ -198,7 +200,8 @@
 		display: block;
 	}
 
-	.scrollable thead tr, .scrollable tbody tr {
+	.scrollable thead tr,
+	.scrollable tbody tr {
 		display: table;
 		width: 100%;
 		table-layout: fixed;
@@ -211,28 +214,28 @@
 	}
 
 	.mobile:not(.filter) thead {
-    display: none;
-  }
+		display: none;
+	}
 
 	.mobile.filter thead tr:first-of-type {
-    display: none;
-  }
-  
+		display: none;
+	}
+
 	.mobile tbody {
-    width: 100%;
-  }
-  
+		width: 100%;
+	}
+
 	.mobile tr,
-  .mobile th,
-  .mobile td {
-    display: block;
-    padding: 0;
-  }
-  
+	.mobile th,
+	.mobile td {
+		display: block;
+		padding: 0;
+	}
+
 	.mobile tr {
-    border-bottom: none;
-    margin: 0;
-  }
+		border-bottom: none;
+		margin: 0;
+	}
 
 	.mobile td {
 		display: flex;
@@ -245,12 +248,12 @@
 	}
 
 	.mobile td[data-th]:before {
-    content: attr(data-th);
-    font-weight: bold;
-    display: block;
-    content: attr(data-th);
+		content: attr(data-th);
+		font-weight: bold;
+		display: block;
+		content: attr(data-th);
 		max-width: 50%;
-  }
+	}
 
 	.filter tr:last-of-type th {
 		width: 100%;

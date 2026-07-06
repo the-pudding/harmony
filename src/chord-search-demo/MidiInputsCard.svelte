@@ -36,7 +36,10 @@
 	{#if inputs.length > 0}
 		<label class="switcher">
 			<span>Active input</span>
-			<select value={selectedInputName} onchange={(e) => onInputChange(e.currentTarget.value)}>
+			<select
+				value={selectedInputName}
+				onchange={(e) => onInputChange(e.currentTarget.value)}
+			>
 				{#each inputs as device (device.id)}
 					<option value={device.name}>{device.name}</option>
 				{/each}

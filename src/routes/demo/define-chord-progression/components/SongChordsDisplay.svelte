@@ -32,7 +32,13 @@
 	const effectiveAnnotations = $derived(
 		annotations ??
 			(parsedProgression
-				? [{ parsedProgression, palette: highlightPalette ?? DEFAULT_PROGRESSION_PALETTE, isStrictSubset }]
+				? [
+						{
+							parsedProgression,
+							palette: highlightPalette ?? DEFAULT_PROGRESSION_PALETTE,
+							isStrictSubset
+						}
+					]
 				: [])
 	);
 
@@ -53,7 +59,11 @@
 >
 	<div class="sections">
 		{#each song.sections as section, sectionIndex (sectionIndex)}
-			{@const segments = buildColoredHighlightSegments(section, sectionIndex, effectiveAnnotations)}
+			{@const segments = buildColoredHighlightSegments(
+				section,
+				sectionIndex,
+				effectiveAnnotations
+			)}
 			{#if section.label || (showPerSectionKeys && section.keyLabel)}
 				<div class="section-label-cell">
 					{#if section.label}
@@ -64,7 +74,8 @@
 					{/if}
 				</div>
 			{:else}
-				<span class="section-label section-label-empty" aria-hidden="true"></span>
+				<span class="section-label section-label-empty" aria-hidden="true"
+				></span>
 			{/if}
 			<div class="chords">
 				{#each segments as segment, segmentIndex (segmentIndex)}

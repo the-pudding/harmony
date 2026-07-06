@@ -83,11 +83,15 @@
 
 	const syncPageStateToUrl = () => {
 		const desiredState = localUrlState();
-		const currentUrlState = readDefineChordProgressionUrlState(page.url.searchParams);
+		const currentUrlState = readDefineChordProgressionUrlState(
+			page.url.searchParams
+		);
 
-		if (areDefineChordProgressionUrlStatesEqual(desiredState, currentUrlState)) return;
+		if (areDefineChordProgressionUrlStatesEqual(desiredState, currentUrlState))
+			return;
 
-		const queryString = defineChordProgressionUrlStateToQueryString(desiredState);
+		const queryString =
+			defineChordProgressionUrlStateToQueryString(desiredState);
 		const nextUrl = queryString
 			? `${page.url.pathname}?${queryString}`
 			: page.url.pathname;
@@ -109,7 +113,9 @@
 		page.url.search;
 
 		untrack(() => {
-			applyUrlStateToPage(readDefineChordProgressionUrlState(page.url.searchParams));
+			applyUrlStateToPage(
+				readDefineChordProgressionUrlState(page.url.searchParams)
+			);
 		});
 	});
 

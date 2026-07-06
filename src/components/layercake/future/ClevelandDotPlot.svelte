@@ -6,7 +6,8 @@
 	import type { LayerCakeContext } from "$types/layercake";
 	import { getContext } from "svelte";
 
-	const { data, xGet, yGet, yScale, zScale, config } = getContext<LayerCakeContext>("LayerCake");
+	const { data, xGet, yGet, yScale, zScale, config } =
+		getContext<LayerCakeContext>("LayerCake");
 	let { r = 5 } = $props();
 
 	const midHeight = $derived(($yScale.bandwidth?.() ?? 0) / 2);

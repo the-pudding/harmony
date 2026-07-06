@@ -66,8 +66,26 @@ const saveYourTearsHooktheory: GroupedSong = {
 	artists: ["The Weeknd"],
 	keyLabel: "C major",
 	sections: [
-		makeSection([C_MAJOR, A_MINOR7, E_MINOR7, G_MAJOR, C_MAJOR, A_MINOR7, E_MINOR7, G_MAJOR]),
-		makeSection([C_MAJOR, A_MINOR7, E_MINOR7, G_MAJOR, C_MAJOR, A_MINOR7, E_MINOR7, G_MAJOR])
+		makeSection([
+			C_MAJOR,
+			A_MINOR7,
+			E_MINOR7,
+			G_MAJOR,
+			C_MAJOR,
+			A_MINOR7,
+			E_MINOR7,
+			G_MAJOR
+		]),
+		makeSection([
+			C_MAJOR,
+			A_MINOR7,
+			E_MINOR7,
+			G_MAJOR,
+			C_MAJOR,
+			A_MINOR7,
+			E_MINOR7,
+			G_MAJOR
+		])
 	]
 };
 
@@ -78,14 +96,35 @@ const saveYourTearsUg: GroupedSong = {
 	artists: ["The Weeknd"],
 	keyLabel: "C major",
 	sections: [
-		makeSection([C_MAJOR, A_MINOR, E_MINOR, G_MAJOR, C_MAJOR, A_MINOR, E_MINOR, G_MAJOR]),
-		makeSection([C_MAJOR, A_MINOR, E_MINOR, G_MAJOR, C_MAJOR, A_MINOR, E_MINOR, G_MAJOR])
+		makeSection([
+			C_MAJOR,
+			A_MINOR,
+			E_MINOR,
+			G_MAJOR,
+			C_MAJOR,
+			A_MINOR,
+			E_MINOR,
+			G_MAJOR
+		]),
+		makeSection([
+			C_MAJOR,
+			A_MINOR,
+			E_MINOR,
+			G_MAJOR,
+			C_MAJOR,
+			A_MINOR,
+			E_MINOR,
+			G_MAJOR
+		])
 	]
 };
 
 describe("computeStatsForParsedProgression — extension-stripping regression (save your tears)", () => {
 	it("counts I-vi7-iii7-V sections as matching I-vi-iii-V (dark doo wop)", () => {
-		const stats = computeStatsForParsedProgression(saveYourTearsHooktheory, darkDooWopParsed);
+		const stats = computeStatsForParsedProgression(
+			saveYourTearsHooktheory,
+			darkDooWopParsed
+		);
 		expect(stats.matchCount).toBe(4);
 	});
 
@@ -94,32 +133,51 @@ describe("computeStatsForParsedProgression — extension-stripping regression (s
 			saveYourTearsHooktheory,
 			darkDooWopParsed
 		);
-		const statsPlain = computeStatsForParsedProgression(saveYourTearsUg, darkDooWopParsed);
+		const statsPlain = computeStatsForParsedProgression(
+			saveYourTearsUg,
+			darkDooWopParsed
+		);
 		expect(statsWithExtensions.matchCount).toBe(statsPlain.matchCount);
-		expect(statsWithExtensions.coveragePercent).toBe(statsPlain.coveragePercent);
+		expect(statsWithExtensions.coveragePercent).toBe(
+			statsPlain.coveragePercent
+		);
 	});
 
 	it("covers 100% of each 7th-chord section when the whole section is the pattern", () => {
-		const stats = computeStatsForParsedProgression(saveYourTearsHooktheory, darkDooWopParsed);
+		const stats = computeStatsForParsedProgression(
+			saveYourTearsHooktheory,
+			darkDooWopParsed
+		);
 		expect(stats.coveragePercent).toBe(100);
 	});
 });
 
 describe("computeProgressionMatches — extension-stripping regression (save your tears)", () => {
 	it("surfaces dark doo wop even when all sections use 7th-chord voicings", () => {
-		const matches = computeProgressionMatches(saveYourTearsHooktheory, coreProgressions);
-		const darkDooWopMatch = matches.find(
-			(m) => m.name === darkDooWop.name
+		const matches = computeProgressionMatches(
+			saveYourTearsHooktheory,
+			coreProgressions
 		);
+		const darkDooWopMatch = matches.find((m) => m.name === darkDooWop.name);
 		expect(darkDooWopMatch).toBeDefined();
 		expect(darkDooWopMatch!.matchCount).toBe(4);
 	});
 
 	it("reports the same match count regardless of whether 7ths are present", () => {
-		const matchesHt = computeProgressionMatches(saveYourTearsHooktheory, coreProgressions);
-		const matchesUg = computeProgressionMatches(saveYourTearsUg, coreProgressions);
-		const htCount = matchesHt.find((m) => m.name === darkDooWop.name)?.matchCount;
-		const ugCount = matchesUg.find((m) => m.name === darkDooWop.name)?.matchCount;
+		const matchesHt = computeProgressionMatches(
+			saveYourTearsHooktheory,
+			coreProgressions
+		);
+		const matchesUg = computeProgressionMatches(
+			saveYourTearsUg,
+			coreProgressions
+		);
+		const htCount = matchesHt.find(
+			(m) => m.name === darkDooWop.name
+		)?.matchCount;
+		const ugCount = matchesUg.find(
+			(m) => m.name === darkDooWop.name
+		)?.matchCount;
 		expect(htCount).toBe(ugCount);
 	});
 });
@@ -158,19 +216,33 @@ const parse = (progression: string) =>
 
 describe("computeStatsForParsedProgression — overlapping match regression (highest in the room)", () => {
 	it("counts i-v-VI-iv-i as only 1 non-overlapping match in the outro", () => {
-		const stats = computeStatsForParsedProgression(outroTokenSong, parse("i-v-VI-iv-i"));
+		const stats = computeStatsForParsedProgression(
+			outroTokenSong,
+			parse("i-v-VI-iv-i")
+		);
 		expect(stats.matchCount).toBe(1);
 	});
 
 	it("counts i-v-VI-iv as 2 non-overlapping matches in the outro", () => {
-		const stats = computeStatsForParsedProgression(outroTokenSong, parse("i-v-VI-iv"));
+		const stats = computeStatsForParsedProgression(
+			outroTokenSong,
+			parse("i-v-VI-iv")
+		);
 		expect(stats.matchCount).toBe(2);
 	});
 
 	it("outro coverage is higher for i-v-VI-iv than i-v-VI-iv-i", () => {
-		const statsLong = computeStatsForParsedProgression(outroTokenSong, parse("i-v-VI-iv-i"));
-		const statsShort = computeStatsForParsedProgression(outroTokenSong, parse("i-v-VI-iv"));
-		expect(statsShort.coveragePercent).toBeGreaterThan(statsLong.coveragePercent);
+		const statsLong = computeStatsForParsedProgression(
+			outroTokenSong,
+			parse("i-v-VI-iv-i")
+		);
+		const statsShort = computeStatsForParsedProgression(
+			outroTokenSong,
+			parse("i-v-VI-iv")
+		);
+		expect(statsShort.coveragePercent).toBeGreaterThan(
+			statsLong.coveragePercent
+		);
 	});
 });
 

@@ -12,7 +12,8 @@
 	const coveragePercentRounded = $derived(Math.round(coveragePercent));
 </script>
 
-<span class="stats" class:active>{matchCount}× · {coveragePercentRounded}%</span>
+<span class="stats" class:active>{matchCount}× · {coveragePercentRounded}%</span
+>
 <ProgressionCoverageBar percent={coveragePercent} {active} />
 
 <style>

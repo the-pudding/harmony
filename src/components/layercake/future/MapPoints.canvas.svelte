@@ -29,7 +29,9 @@
 	const { ctx } = getContext<CanvasContext>("canvas");
 
 	const geoData = $derived($data as unknown as GeoJSON.FeatureCollection);
-	const projectionFn = $derived(projection().fitSize([$width ?? 0, $height ?? 0], geoData));
+	const projectionFn = $derived(
+		projection().fitSize([$width ?? 0, $height ?? 0], geoData)
+	);
 	const featuresToDraw = $derived(features ?? geoData.features);
 
 	$effect(() => {

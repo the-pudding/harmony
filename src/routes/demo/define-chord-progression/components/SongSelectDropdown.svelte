@@ -91,7 +91,8 @@
 		aria-autocomplete="list"
 		placeholder="Search by title or artist…"
 		value={displayValue}
-		oninput={(event) => handleInput((event.currentTarget as HTMLInputElement).value)}
+		oninput={(event) =>
+			handleInput((event.currentTarget as HTMLInputElement).value)}
 		onfocus={handleFocus}
 		onblur={handleBlur}
 	/>

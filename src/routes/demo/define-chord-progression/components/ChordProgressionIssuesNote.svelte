@@ -35,7 +35,7 @@
 		class="chord-progression-issues-note"
 		class:brightens-on-parent-hover={brightensOnParentHover}
 		style:font-size={fontSize}
-		style:color={color}
+		style:color
 		style:--issues-color-hover={ISSUES_COLOR_HOVER}
 	>
 		<span class="label">{CHORD_PROGRESSION_ISSUES_LABEL}</span>

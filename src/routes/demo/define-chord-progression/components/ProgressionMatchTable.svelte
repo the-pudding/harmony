@@ -7,7 +7,11 @@
 	import ProgressionMatchScatterPlot from "./ProgressionMatchScatterPlot.svelte";
 	import ProgressionMatchSummary from "./ProgressionMatchSummary.svelte";
 	import SongChordsDisplay from "./SongChordsDisplay.svelte";
-	import { BUTTON_COLUMN_WIDTH_PERCENT, CHORDS_COLUMN_WIDTH_PERCENT, COLUMN_GAP_REM } from "./progressionTableLayout.js";
+	import {
+		BUTTON_COLUMN_WIDTH_PERCENT,
+		CHORDS_COLUMN_WIDTH_PERCENT,
+		COLUMN_GAP_REM
+	} from "./progressionTableLayout.js";
 
 	const MAX_COLLAPSED_RESULTS = 5;
 
@@ -19,18 +23,25 @@
 		onselect: (chordProgression: string) => void;
 	};
 
-	let { matches, allMatches, song, activeProgression, onselect }: Props = $props();
+	let { matches, allMatches, song, activeProgression, onselect }: Props =
+		$props();
 
 	let showAll = $state(false);
 
 	const total = $derived(allMatches.length);
 	const highlighted = $derived(matches.length);
-	const coreCount = $derived(allMatches.filter((m) => m.isCoreProgression).length);
+	const coreCount = $derived(
+		allMatches.filter((m) => m.isCoreProgression).length
+	);
 	const nonCoreCount = $derived(total - coreCount);
-	const strictSubsetCount = $derived(allMatches.filter((m) => m.isStrictSubset).length);
+	const strictSubsetCount = $derived(
+		allMatches.filter((m) => m.isStrictSubset).length
+	);
 
 	const hasMore = $derived(highlighted > MAX_COLLAPSED_RESULTS);
-	const visibleMatches = $derived(showAll ? matches : matches.slice(0, MAX_COLLAPSED_RESULTS));
+	const visibleMatches = $derived(
+		showAll ? matches : matches.slice(0, MAX_COLLAPSED_RESULTS)
+	);
 </script>
 
 <ProgressionMatchSummary
@@ -41,7 +52,12 @@
 	{strictSubsetCount}
 />
 
-<ProgressionMatchScatterPlot {allMatches} highlightedMatches={matches} {activeProgression} {onselect} />
+<ProgressionMatchScatterPlot
+	{allMatches}
+	highlightedMatches={matches}
+	{activeProgression}
+	{onselect}
+/>
 
 <table
 	class="match-table"
@@ -89,7 +105,12 @@
 </table>
 
 {#if hasMore}
-	<button class="show-more-btn" onclick={() => { showAll = !showAll; }}>
+	<button
+		class="show-more-btn"
+		onclick={() => {
+			showAll = !showAll;
+		}}
+	>
 		{#if showAll}
 			Collapse to {MAX_COLLAPSED_RESULTS} / {highlighted}
 		{:else}

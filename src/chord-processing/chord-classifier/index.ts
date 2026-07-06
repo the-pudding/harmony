@@ -1,6 +1,10 @@
 import { NOTES_PER_OCTAVE, NOTE_NAMES, pitchClass } from "./notes.js";
 import { CHORD_TEMPLATES } from "./templates.js";
-import type { ChordClassification, ChordTemplate, StructuredChord } from "../types.js";
+import type {
+	ChordClassification,
+	ChordTemplate,
+	StructuredChord
+} from "../types.js";
 
 const setsEqual = (a: Set<number>, b: Set<number>): boolean => {
 	if (a.size !== b.size) return false;

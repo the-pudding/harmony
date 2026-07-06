@@ -12,13 +12,7 @@
 			"$stores/*": "./src/stores/*"
 		}
 	},
-	"include": [
-		"src/**/*.js",
-		"src/**/*.ts",
-		"src/**/*.svelte"
-	],
-	"exclude": [
-		"tasks/*.js"
-	],
+	"include": ["src/**/*.js", "src/**/*.ts", "src/**/*.svelte"],
+	"exclude": ["tasks/*.js"],
 	"extends": "./.svelte-kit/tsconfig.json"
 }

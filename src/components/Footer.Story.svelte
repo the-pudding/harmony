@@ -17,7 +17,9 @@
 	// custom to starter
 	const base = "https://pudding.cool";
 
-	const youtube = $derived(href.includes("youtube") || href.includes("youtu.be"));
+	const youtube = $derived(
+		href.includes("youtube") || href.includes("youtu.be")
+	);
 	const dir = $derived(resource ? "resources" : "screenshots");
 	const imagePath = $derived(`${base}/common/assets/thumbnails/${dir}`);
 	const style = $derived(bgColor ? `--story-bg: ${bgColor};` : "");

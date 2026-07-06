@@ -1,5 +1,8 @@
 import { degreeQualityToRoman } from "../chord-processing/romanNumerals.js";
-import type { ParsedProgressionChord, SongInput } from "../chord-processing/types.js";
+import type {
+	ParsedProgressionChord,
+	SongInput
+} from "../chord-processing/types.js";
 
 export type SankeyNode = {
 	token: string;
@@ -18,10 +21,10 @@ const MAJOR_SCALE_PITCH_CLASSES = [0, 2, 4, 5, 7, 9, 11] as const;
 
 // Chromatic pitch classes that are one semitone below a diatonic scale degree
 const FLAT_PITCH_CLASS_TO_DEGREE: Partial<Record<number, number>> = {
-	1: 2,  // bII  (C#/Db)
-	3: 3,  // bIII (D#/Eb)
-	8: 6,  // bVI  (G#/Ab)
-	10: 7, // bVII (A#/Bb)
+	1: 2, // bII  (C#/Db)
+	3: 3, // bIII (D#/Eb)
+	8: 6, // bVI  (G#/Ab)
+	10: 7 // bVII (A#/Bb)
 };
 
 const ROMAN_BASES = ["I", "II", "III", "IV", "V", "VI", "VII"] as const;
@@ -47,10 +50,12 @@ const SUFFIX_TO_QUALITY: Record<string, string> = {
 	m7b5: "dim",
 	"7": "maj",
 	"13": "maj",
-	"11": "maj",
+	"11": "maj"
 };
 
-export function chordToRomanToken(chord: ParsedProgressionChord): string | null {
+export function chordToRomanToken(
+	chord: ParsedProgressionChord
+): string | null {
 	const quality = SUFFIX_TO_QUALITY[chord.suffix] ?? null;
 	if (!quality) return null;
 
@@ -72,7 +77,10 @@ export function chordToRomanToken(chord: ParsedProgressionChord): string | null 
 	return null;
 }
 
-function countNextChords(songs: SongInput[], prefix: string[]): Map<string, number> {
+function countNextChords(
+	songs: SongInput[],
+	prefix: string[]
+): Map<string, number> {
 	const counts = new Map<string, number>();
 
 	for (const song of songs) {
@@ -92,7 +100,10 @@ function countNextChords(songs: SongInput[], prefix: string[]): Map<string, numb
 	return counts;
 }
 
-function countsToLayer(counts: Map<string, number>, chosenToken: string): SankeyLayer {
+function countsToLayer(
+	counts: Map<string, number>,
+	chosenToken: string
+): SankeyLayer {
 	const total = [...counts.values()].reduce((a, b) => a + b, 0);
 
 	const sorted = [...counts.entries()]
@@ -102,7 +113,7 @@ function countsToLayer(counts: Map<string, number>, chosenToken: string): Sankey
 	const nodes: SankeyNode[] = sorted.map(([token, count]) => ({
 		token,
 		count,
-		isChosen: token === chosenToken,
+		isChosen: token === chosenToken
 	}));
 
 	return { nodes, totalCount: total };
@@ -152,7 +163,7 @@ export function computeNextChordData(
 	// Layer 0: the first chosen chord, always 100% width
 	layers.push({
 		nodes: [{ token: searchTokens[0], count: 1, isChosen: true }],
-		totalCount: 1,
+		totalCount: 1
 	});
 
 	// Layers 1..N-1: distribution of next chords given the chosen prefix so far.

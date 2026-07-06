@@ -176,7 +176,9 @@
 	onMount(() => {
 		const loadSongs = async () => {
 			try {
-				await chordSearchDemoStore.setSongs(await fetchSongInputs(SONGS_DATA_URL));
+				await chordSearchDemoStore.setSongs(
+					await fetchSongInputs(SONGS_DATA_URL)
+				);
 			} catch (err) {
 				songsError = err instanceof Error ? err.message : String(err);
 			} finally {
@@ -245,7 +247,8 @@
 				<h1 class="column-title">Song results</h1>
 				{#if chordSearchDemoStore.hasSearch}
 					<p class="result-count">
-						{chordSearchDemoStore.allGroupedSearchResults.length.toLocaleString()} songs
+						{chordSearchDemoStore.allGroupedSearchResults.length.toLocaleString()}
+						songs
 					</p>
 				{/if}
 				<MatchingSongsTimeSeriesChart />

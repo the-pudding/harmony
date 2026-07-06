@@ -22,7 +22,20 @@ const SONG_SOURCE_DIRS = [
 ];
 
 const NOTES_PER_OCTAVE = 12;
-const NOTE_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+const NOTE_NAMES = [
+	"C",
+	"C#",
+	"D",
+	"Eb",
+	"E",
+	"F",
+	"F#",
+	"G",
+	"Ab",
+	"A",
+	"Bb",
+	"B"
+];
 const NOTE_LETTER_PITCH_CLASSES = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
 const parseNoteToPitchClass = (noteName) => {
@@ -38,8 +51,10 @@ const parseNoteToPitchClass = (noteName) => {
 	);
 
 	return (
-		((letterPitchClass + accidentalOffset) % NOTES_PER_OCTAVE) + NOTES_PER_OCTAVE
-	) % NOTES_PER_OCTAVE;
+		(((letterPitchClass + accidentalOffset) % NOTES_PER_OCTAVE) +
+			NOTES_PER_OCTAVE) %
+		NOTES_PER_OCTAVE
+	);
 };
 
 const tonicToPitchClass = (key) => {
@@ -61,7 +76,9 @@ const kebabCase = (value) =>
 		.replace(KEBAB_SEPARATORS, "-");
 
 const pitchClassToNoteName = (pitchClass) =>
-	NOTE_NAMES[((pitchClass % NOTES_PER_OCTAVE) + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE];
+	NOTE_NAMES[
+		((pitchClass % NOTES_PER_OCTAVE) + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE
+	];
 
 const degreeToPitchClass = (degree, key, scale) => {
 	const intervals = SCALE_INTERVALS[scale];
@@ -225,16 +242,22 @@ const chordToProgressionInput = (chord, key, scale) => {
 
 	const noteName = pitchClassToNoteName(rootPitchClass);
 	const bassNoteName =
-		bassPitchClass !== rootPitchClass ? pitchClassToNoteName(bassPitchClass) : undefined;
+		bassPitchClass !== rootPitchClass
+			? pitchClassToNoteName(bassPitchClass)
+			: undefined;
 
-	return bassNoteName ? { noteName, suffix, bassNoteName } : { noteName, suffix };
+	return bassNoteName
+		? { noteName, suffix, bassNoteName }
+		: { noteName, suffix };
 };
 
 const intervalBetweenRoots = (fromPitchClass, toPitchClass) =>
 	(toPitchClass - fromPitchClass + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE;
 
 const toPrecomputedAbstractProgression = (progression) => {
-	const rootPitchClasses = progression.map(({ noteName }) => parseNoteToPitchClass(noteName));
+	const rootPitchClasses = progression.map(({ noteName }) =>
+		parseNoteToPitchClass(noteName)
+	);
 	const suffixes = progression.map(({ suffix }) => suffix);
 	const bassIntervals = progression.map(({ noteName, bassNoteName }) => {
 		const rootPitchClass = parseNoteToPitchClass(noteName);
@@ -333,14 +356,19 @@ const readSongFiles = (dirPath) => {
 
 const loadTrackerIndex = () => {
 	if (!fs.existsSync(TRACKER_PATH)) {
-		console.warn(`Tracker not found at ${TRACKER_PATH}; skipping Billboard flags`);
+		console.warn(
+			`Tracker not found at ${TRACKER_PATH}; skipping Billboard flags`
+		);
 		return new Map();
 	}
 
-	return csvParse(fs.readFileSync(TRACKER_PATH, "utf-8")).reduce((index, row) => {
-		const key = trackerKey(row.artist, row.song);
-		return index.set(key, row);
-	}, new Map());
+	return csvParse(fs.readFileSync(TRACKER_PATH, "utf-8")).reduce(
+		(index, row) => {
+			const key = trackerKey(row.artist, row.song);
+			return index.set(key, row);
+		},
+		new Map()
+	);
 };
 
 const parseBillboardChartYear = (date) => {
@@ -450,7 +478,7 @@ const buildSongs = () => {
 	songs.sort(compareSongsByPopularity);
 
 	return { songs, stats };
-};;
+};
 
 const parseSongTitleAndSectionLabel = (title) => {
 	const match = title.match(SECTION_LABEL_SUFFIX_PATTERN);
@@ -523,7 +551,9 @@ const ensureOutputDir = () => {
 };
 
 const logSummary = (stats) => {
-	console.log(`Wrote ${stats.sectionsWritten} sections from ${stats.filesRead} song files`);
+	console.log(
+		`Wrote ${stats.sectionsWritten} sections from ${stats.filesRead} song files`
+	);
 	console.log(`Skipped ${stats.sectionsSkipped} empty sections`);
 	console.log(`Dropped ${stats.chordsDropped} unmapped chords`);
 	console.log(
@@ -535,7 +565,9 @@ const logSummary = (stats) => {
 			.sort((a, b) => b[1] - a[1])
 			.slice(0, 10);
 		console.log("Top unrecognized suffix combos:");
-		topUnrecognized.forEach(([combo, count]) => console.log(`  ${combo}: ${count}`));
+		topUnrecognized.forEach(([combo, count]) =>
+			console.log(`  ${combo}: ${count}`)
+		);
 	}
 };
 

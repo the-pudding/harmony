@@ -11,9 +11,12 @@
 		onselect: (chordProgression: string) => void;
 	};
 
-	let { allMatches, highlightedMatches, activeProgression, onselect }: Props = $props();
+	let { allMatches, highlightedMatches, activeProgression, onselect }: Props =
+		$props();
 
-	const highlightedKeys = $derived(new Set(highlightedMatches.map((m) => m.chordProgression)));
+	const highlightedKeys = $derived(
+		new Set(highlightedMatches.map((m) => m.chordProgression))
+	);
 
 	const CHART_HEIGHT = 160;
 	const PAD_TOP = 12;
@@ -35,7 +38,9 @@
 
 	const innerWidth = $derived(containerWidth - PAD_LEFT - PAD_RIGHT);
 	const innerHeight = $derived(CHART_HEIGHT - PAD_TOP - PAD_BOTTOM);
-	const maxMatchCount = $derived(Math.max(...allMatches.map((m) => m.matchCount), 1));
+	const maxMatchCount = $derived(
+		Math.max(...allMatches.map((m) => m.matchCount), 1)
+	);
 
 	const yTickVals = $derived.by(() => {
 		const step = Math.max(1, Math.ceil(maxMatchCount / Y_TICK_COUNT));
@@ -59,7 +64,8 @@
 	function stableJitter(seed: string, axis: string): number {
 		let h = 5381;
 		const s = seed + axis;
-		for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) ^ s.charCodeAt(i)) | 0;
+		for (let i = 0; i < s.length; i++)
+			h = (Math.imul(h, 31) ^ s.charCodeAt(i)) | 0;
 		return ((h >>> 0) / 0xffffffff - 0.5) * JITTER_RANGE_PX;
 	}
 
@@ -73,7 +79,9 @@
 	}
 
 	function positionTooltip(e: MouseEvent) {
-		const container = (e.currentTarget as Element).closest(".scatter-wrap") as HTMLElement | null;
+		const container = (e.currentTarget as Element).closest(
+			".scatter-wrap"
+		) as HTMLElement | null;
 		if (!container) return;
 		const rect = container.getBoundingClientRect();
 		tooltipX = e.clientX - rect.left;
@@ -82,7 +90,9 @@
 
 	const pointAriaLabel = (match: ProgressionWithMatchStats): string => {
 		const stats = `${match.matchCount} times, ${Math.round(match.coveragePercent)}% coverage`;
-		return match.name ? `${match.name}: ${match.chordProgression}, ${stats}` : `${match.chordProgression}, ${stats}`;
+		return match.name
+			? `${match.name}: ${match.chordProgression}, ${stats}`
+			: `${match.chordProgression}, ${stats}`;
 	};
 </script>
 
@@ -113,19 +123,39 @@
 		<svg width={containerWidth} height={CHART_HEIGHT}>
 			<!-- Y-axis gridlines and labels -->
 			{#each yTickVals as tick (tick)}
-				{@const y = PAD_TOP + innerHeight - (tick / maxMatchCount) * innerHeight}
-				<line class="gridline" x1={PAD_LEFT} y1={y} x2={PAD_LEFT + innerWidth} y2={y} />
-				<text class="axis-label" x={PAD_LEFT - 6} {y} text-anchor="end" dominant-baseline="middle"
-					>{tick}</text
+				{@const y =
+					PAD_TOP + innerHeight - (tick / maxMatchCount) * innerHeight}
+				<line
+					class="gridline"
+					x1={PAD_LEFT}
+					y1={y}
+					x2={PAD_LEFT + innerWidth}
+					y2={y}
+				/>
+				<text
+					class="axis-label"
+					x={PAD_LEFT - 6}
+					{y}
+					text-anchor="end"
+					dominant-baseline="middle">{tick}</text
 				>
 			{/each}
 
 			<!-- X-axis gridlines and labels -->
 			{#each X_TICK_VALS as tick (tick)}
 				{@const x = PAD_LEFT + (tick / 100) * innerWidth}
-				<line class="gridline" x1={x} y1={PAD_TOP} x2={x} y2={PAD_TOP + innerHeight} />
-				<text class="axis-label" {x} y={PAD_TOP + innerHeight + 14} text-anchor="middle"
-					>{tick}%</text
+				<line
+					class="gridline"
+					x1={x}
+					y1={PAD_TOP}
+					x2={x}
+					y2={PAD_TOP + innerHeight}
+				/>
+				<text
+					class="axis-label"
+					{x}
+					y={PAD_TOP + innerHeight + 14}
+					text-anchor="middle">{tick}%</text
 				>
 			{/each}
 
@@ -157,15 +187,23 @@
 				x={8}
 				y={PAD_TOP + innerHeight / 2}
 				text-anchor="middle"
-				transform="rotate(-90, 8, {PAD_TOP + innerHeight / 2})"># of instances</text
+				transform="rotate(-90, 8, {PAD_TOP + innerHeight / 2})"
+				># of instances</text
 			>
 
 			<!-- Dim (non-highlighted) points -->
 			{#each allMatches as match (match.chordProgression)}
 				{@const isHighlighted = highlightedKeys.has(match.chordProgression)}
 				{#if !isHighlighted}
-					{@const cx = PAD_LEFT + (match.coveragePercent / 100) * innerWidth + stableJitter(match.chordProgression, 'x')}
-					{@const cy = PAD_TOP + innerHeight - (match.matchCount / maxMatchCount) * innerHeight + stableJitter(match.chordProgression, 'y')}
+					{@const cx =
+						PAD_LEFT +
+						(match.coveragePercent / 100) * innerWidth +
+						stableJitter(match.chordProgression, "x")}
+					{@const cy =
+						PAD_TOP +
+						innerHeight -
+						(match.matchCount / maxMatchCount) * innerHeight +
+						stableJitter(match.chordProgression, "y")}
 					<circle
 						{cx}
 						{cy}
@@ -174,13 +212,17 @@
 						opacity={DIM_OPACITY}
 						stroke={match.isStrictSubset ? SUBSET_STROKE_COLOR : "transparent"}
 						stroke-width={match.isStrictSubset ? SUBSET_STROKE_WIDTH : 0}
-						stroke-dasharray={match.isStrictSubset ? SUBSET_DASH_ARRAY : undefined}
+						stroke-dasharray={match.isStrictSubset
+							? SUBSET_DASH_ARRAY
+							: undefined}
 						class="data-point"
 						role="graphics-symbol"
 						aria-label={pointAriaLabel(match)}
 						onmouseenter={(e) => handleMouseEnter(e, match)}
 						onmousemove={handleMouseMove}
-						onmouseleave={() => { hoveredMatch = null; }}
+						onmouseleave={() => {
+							hoveredMatch = null;
+						}}
 					/>
 				{/if}
 			{/each}
@@ -190,8 +232,12 @@
 				{@const isHighlighted = highlightedKeys.has(match.chordProgression)}
 				{#if isHighlighted}
 					{@const cx = PAD_LEFT + (match.coveragePercent / 100) * innerWidth}
-					{@const cy = PAD_TOP + innerHeight - (match.matchCount / maxMatchCount) * innerHeight}
-					{@const isHovered = hoveredMatch?.chordProgression === match.chordProgression}
+					{@const cy =
+						PAD_TOP +
+						innerHeight -
+						(match.matchCount / maxMatchCount) * innerHeight}
+					{@const isHovered =
+						hoveredMatch?.chordProgression === match.chordProgression}
 					{@const isActive = activeProgression === match.chordProgression}
 					<circle
 						{cx}
@@ -199,15 +245,25 @@
 						r={isHovered ? POINT_RADIUS_HOVERED : POINT_RADIUS}
 						fill={toOpaqueColor(match.highlightPalette.border)}
 						opacity={HIGHLIGHT_OPACITY}
-						stroke={isActive ? "rgba(255,255,255,0.7)" : match.isStrictSubset ? SUBSET_STROKE_COLOR : "transparent"}
-						stroke-width={isActive || match.isStrictSubset ? SUBSET_STROKE_WIDTH : 0}
-						stroke-dasharray={!isActive && match.isStrictSubset ? SUBSET_DASH_ARRAY : undefined}
+						stroke={isActive
+							? "rgba(255,255,255,0.7)"
+							: match.isStrictSubset
+								? SUBSET_STROKE_COLOR
+								: "transparent"}
+						stroke-width={isActive || match.isStrictSubset
+							? SUBSET_STROKE_WIDTH
+							: 0}
+						stroke-dasharray={!isActive && match.isStrictSubset
+							? SUBSET_DASH_ARRAY
+							: undefined}
 						class="data-point"
 						role="graphics-symbol"
 						aria-label={pointAriaLabel(match)}
 						onmouseenter={(e) => handleMouseEnter(e, match)}
 						onmousemove={handleMouseMove}
-						onmouseleave={() => { hoveredMatch = null; }}
+						onmouseleave={() => {
+							hoveredMatch = null;
+						}}
 					/>
 				{/if}
 			{/each}

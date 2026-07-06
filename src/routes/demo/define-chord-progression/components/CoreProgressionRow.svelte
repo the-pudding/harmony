@@ -29,7 +29,10 @@
 	}: Props = $props();
 
 	const displayMatches = $derived.by(() => {
-		const matches = buildCoreProgressionDisplayMatches(coreProgressions, selectedSong);
+		const matches = buildCoreProgressionDisplayMatches(
+			coreProgressions,
+			selectedSong
+		);
 		if (!progressionMatchRates) return matches;
 		return [...matches].sort(
 			(a, b) =>
@@ -46,7 +49,8 @@
 	{#each displayMatches as match (match.chordProgression)}
 		{@const outline = matchOutline(match)}
 		{@const matchRate = progressionMatchRates?.[match.chordProgression] ?? 0}
-		{@const matchingSongCount = progressionMatchCounts?.[match.chordProgression] ?? 0}
+		{@const matchingSongCount =
+			progressionMatchCounts?.[match.chordProgression] ?? 0}
 		<div class="core-progression-row-item">
 			<ProgressionMatchButton
 				{match}

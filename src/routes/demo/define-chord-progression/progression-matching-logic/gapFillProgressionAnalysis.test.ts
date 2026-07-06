@@ -15,6 +15,10 @@ import {
 	MIN_PROGRESSION_LENGTH,
 	MAX_PROGRESSION_LENGTH
 } from "./progressionConstraints.js";
+import {
+	SCALE_INTERVALS,
+	type ScaleName
+} from "../../../../chord-processing/scale-intervals.js";
 import { correctedSongContentsToSongInputs } from "../../../../data/applyHandReviewedCorrections.js";
 import { handReviewedSongs } from "../../../../data/hand-reviewed-songs.js";
 
@@ -65,21 +69,17 @@ const SUBMEDIANT = chord(9, "minor");
 
 const NOTES_PER_OCTAVE = 12;
 const ROMAN_BASES = ["I", "II", "III", "IV", "V", "VI", "VII"];
-const SCALE_INTERVALS: Record<string, number[]> = {
-	major: [0, 2, 4, 5, 7, 9, 11],
-	harmonicMinor: [0, 2, 3, 5, 7, 8, 11],
-	phrygianDominant: [0, 1, 4, 5, 7, 8, 10]
-};
 
 const makeModalSection = (
 	romanTokens: string[],
-	scale: keyof typeof SCALE_INTERVALS,
+	scale: ScaleName,
 	tonicPitchClass = 0
 ): SongSection => {
 	const parsedProgression = romanTokens.map((token) => {
 		const degree = ROMAN_BASES.indexOf(token.toUpperCase()) + 1;
 		const rootPitchClass =
-			(tonicPitchClass + SCALE_INTERVALS[scale][degree - 1]) % NOTES_PER_OCTAVE;
+			(tonicPitchClass + SCALE_INTERVALS[scale]![degree - 1]) %
+			NOTES_PER_OCTAVE;
 		const suffix = token === token.toUpperCase() ? "major" : "minor";
 		return chord(rootPitchClass, suffix);
 	});
@@ -161,7 +161,10 @@ describe("computeGapFillProgressionMatches — I'm Yours", () => {
 
 describe("computeGapFillProgressionMatches — invariants", () => {
 	it("only returns progressions of at least the minimum length", () => {
-		const matches = computeGapFillProgressionMatches(imYours, emptyCoverage(imYours));
+		const matches = computeGapFillProgressionMatches(
+			imYours,
+			emptyCoverage(imYours)
+		);
 		for (const match of matches) {
 			expect(match.chordProgression.split("-").length).toBeGreaterThanOrEqual(
 				MIN_PROGRESSION_LENGTH
@@ -170,7 +173,10 @@ describe("computeGapFillProgressionMatches — invariants", () => {
 	});
 
 	it("only returns progressions that recur at least the minimum number of times", () => {
-		const matches = computeGapFillProgressionMatches(imYours, emptyCoverage(imYours));
+		const matches = computeGapFillProgressionMatches(
+			imYours,
+			emptyCoverage(imYours)
+		);
 		expect(matches.length).toBeGreaterThan(0);
 		for (const match of matches) {
 			expect(match.matchCount).toBeGreaterThanOrEqual(
@@ -180,7 +186,10 @@ describe("computeGapFillProgressionMatches — invariants", () => {
 	});
 
 	it("never returns progressions that occur 0 times or cover 0% of the song", () => {
-		const matches = computeGapFillProgressionMatches(imYours, emptyCoverage(imYours));
+		const matches = computeGapFillProgressionMatches(
+			imYours,
+			emptyCoverage(imYours)
+		);
 		for (const match of matches) {
 			expect(match.matchCount).toBeGreaterThan(0);
 			expect(match.coveragePercent).toBeGreaterThan(0);
@@ -193,7 +202,10 @@ describe("computeGapFillProgressionMatches — invariants", () => {
 	});
 
 	it("only returns non-core progressions", () => {
-		const matches = computeGapFillProgressionMatches(imYours, emptyCoverage(imYours));
+		const matches = computeGapFillProgressionMatches(
+			imYours,
+			emptyCoverage(imYours)
+		);
 		for (const match of matches) {
 			expect(match.isCoreProgression).toBe(false);
 		}
@@ -208,9 +220,9 @@ describe("computeGapFillProgressionMatches — recurrence detection", () => {
 
 	it("does not surface a progression that appears only once", () => {
 		const song = makeSong([["I", "IV", "V", "vi", "ii", "iii"]]);
-		expect(computeGapFillProgressionMatches(song, emptyCoverage(song))).toHaveLength(
-			0
-		);
+		expect(
+			computeGapFillProgressionMatches(song, emptyCoverage(song))
+		).toHaveLength(0);
 	});
 
 	it("counts occurrences across separate sections", () => {
@@ -232,16 +244,16 @@ describe("computeGapFillProgressionMatches — recurrence detection", () => {
 
 	it("ignores progressions shorter than the minimum length", () => {
 		const song = makeSong([["I", "V", "I", "V"]]);
-		expect(computeGapFillProgressionMatches(song, emptyCoverage(song))).toHaveLength(
-			0
-		);
+		expect(
+			computeGapFillProgressionMatches(song, emptyCoverage(song))
+		).toHaveLength(0);
 	});
 
 	it("returns nothing for a song with no repeating structure", () => {
 		const song = makeSong([["I", "ii", "iii", "IV", "V", "vi"]]);
-		expect(computeGapFillProgressionMatches(song, emptyCoverage(song))).toHaveLength(
-			0
-		);
+		expect(
+			computeGapFillProgressionMatches(song, emptyCoverage(song))
+		).toHaveLength(0);
 	});
 
 	it("surfaces long recurring progressions, not just the minimum length", () => {
@@ -251,24 +263,13 @@ describe("computeGapFillProgressionMatches — recurrence detection", () => {
 	});
 
 	it("never returns progressions longer than the maximum length", () => {
-		const longBlock = [
-			"I",
-			"ii",
-			"iii",
-			"IV",
-			"V",
-			"vi",
-			"bVII",
-			"I",
-			"ii"
-		];
+		const longBlock = ["I", "ii", "iii", "IV", "V", "vi", "bVII", "I", "ii"];
 		const song = makeSong([[...longBlock, ...longBlock]]);
 		const progressions = gapProgressions(song);
 		expect(progressions.length).toBeGreaterThan(0);
 		expect(
 			progressions.every(
-				(progression) =>
-					progression.split("-").length <= MAX_PROGRESSION_LENGTH
+				(progression) => progression.split("-").length <= MAX_PROGRESSION_LENGTH
 			)
 		).toBe(true);
 	});
@@ -319,7 +320,10 @@ describe("computeGapFillProgressionMatches — ignores slash bass", () => {
 
 describe("computeGapFillProgressionMatches — no self-repeating progressions", () => {
 	it("never returns a progression that is its own unit repeated consecutively", () => {
-		const matches = computeGapFillProgressionMatches(imYours, emptyCoverage(imYours));
+		const matches = computeGapFillProgressionMatches(
+			imYours,
+			emptyCoverage(imYours)
+		);
 		for (const match of matches) {
 			const tokens = match.chordProgression.split("-");
 			for (
@@ -404,9 +408,9 @@ describe("selectFinalProgressions", () => {
 	it("returns a positive coverage for I'm Yours", () => {
 		const result = selectFinalProgressions(imYours, coreProgressions);
 		expect(result.explainedPercent).toBeGreaterThan(0);
-		expect(result.coreSelected.length + result.gapSelected.length).toBeGreaterThan(
-			0
-		);
+		expect(
+			result.coreSelected.length + result.gapSelected.length
+		).toBeGreaterThan(0);
 	});
 
 	it("returns empty gap candidates when core progressions cover the entire song", () => {
@@ -439,26 +443,42 @@ const highestInTheRoomSong = groupSongs(
 
 describe("selectFinalProgressions — highest in the room outro regression", () => {
 	it("core progressions do not match this minor vamp (coreSelected is empty)", () => {
-		const result = selectFinalProgressions(highestInTheRoomSong, coreProgressions);
+		const result = selectFinalProgressions(
+			highestInTheRoomSong,
+			coreProgressions
+		);
 		expect(result.coreSelected).toHaveLength(0);
 	});
 
 	it("surfaces i-v-VI-iv in gap candidates with 2 occurrences", () => {
-		const result = selectFinalProgressions(highestInTheRoomSong, coreProgressions);
-		const match = result.gapCandidates.find((m) => m.chordProgression === "i-v-VI-iv");
+		const result = selectFinalProgressions(
+			highestInTheRoomSong,
+			coreProgressions
+		);
+		const match = result.gapCandidates.find(
+			(m) => m.chordProgression === "i-v-VI-iv"
+		);
 		expect(match).toBeDefined();
 		expect(match!.matchCount).toBe(2);
 	});
 
 	it("selects i-v-VI-iv in the gap-fill selection", () => {
-		const result = selectFinalProgressions(highestInTheRoomSong, coreProgressions);
+		const result = selectFinalProgressions(
+			highestInTheRoomSong,
+			coreProgressions
+		);
 		const gapKeys = result.gapSelected.map((m) => m.chordProgression);
 		expect(gapKeys).toContain("i-v-VI-iv");
 	});
 
 	it("does not include i-v-VI-iv-i in gap candidates (only 1 non-overlapping instance)", () => {
-		const result = selectFinalProgressions(highestInTheRoomSong, coreProgressions);
-		const candidate = result.gapCandidates.find((m) => m.chordProgression === "i-v-VI-iv-i");
+		const result = selectFinalProgressions(
+			highestInTheRoomSong,
+			coreProgressions
+		);
+		const candidate = result.gapCandidates.find(
+			(m) => m.chordProgression === "i-v-VI-iv-i"
+		);
 		expect(candidate).toBeUndefined();
 	});
 });
@@ -473,8 +493,38 @@ describe("selectFinalProgressions — highest in the room outro regression", () 
 // computeCoveredPositionsBySection) makes the 4-chord form win with more real
 // coverage (28 positions vs 24).
 
-const vampVerse = makeSection(["iv", "v", "iv", "v", "iv", "v", "iv", "v", "iv", "v", "iv", "v", "iv", "v", "iv", "v"]);
-const vampBridge = makeSection(["iv", "v", "iv", "v", "iv", "v", "iv", "v", "iv", "v", "iv", "v"]);
+const vampVerse = makeSection([
+	"iv",
+	"v",
+	"iv",
+	"v",
+	"iv",
+	"v",
+	"iv",
+	"v",
+	"iv",
+	"v",
+	"iv",
+	"v",
+	"iv",
+	"v",
+	"iv",
+	"v"
+]);
+const vampBridge = makeSection([
+	"iv",
+	"v",
+	"iv",
+	"v",
+	"iv",
+	"v",
+	"iv",
+	"v",
+	"iv",
+	"v",
+	"iv",
+	"v"
+]);
 const vampPreChorus = makeSection(["iv", "v", "VI", "i", "iv", "v", "VI", "i"]);
 
 const vampSong: GroupedSong = {
@@ -495,10 +545,14 @@ describe("selectFinalProgressions — vamp regression (gods plan)", () => {
 
 	it("iv-v-iv-v has more non-overlapping coverage than iv-v-iv-v-iv-v in the vamp sections", () => {
 		const result = selectFinalProgressions(vampSong, coreProgressions);
-		const short = result.gapCandidates.find((m) => m.chordProgression === "iv-v-iv-v");
-		const long = result.gapCandidates.find((m) => m.chordProgression === "iv-v-iv-v-iv-v");
+		const short = result.gapCandidates.find(
+			(m) => m.chordProgression === "iv-v-iv-v"
+		);
+		const long = result.gapCandidates.find(
+			(m) => m.chordProgression === "iv-v-iv-v-iv-v"
+		);
 		expect(short).toBeDefined();
-		expect(short!.matchCount).toBeGreaterThan((long?.matchCount ?? 0));
+		expect(short!.matchCount).toBeGreaterThan(long?.matchCount ?? 0);
 	});
 
 	it("also selects iv-v-VI-i for the pre-chorus section", () => {

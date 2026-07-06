@@ -37,7 +37,9 @@ export const buildSongResultsWorkerEntry = (
 	wrapDelta: prepared.abstractProgression.wrapDelta
 });
 
-export const buildSongResultsCorpusState = (songs: SongInput[]): SongResultsCorpusState => {
+export const buildSongResultsCorpusState = (
+	songs: SongInput[]
+): SongResultsCorpusState => {
 	const preparedSongs = songs.map((song, index) => prepareSong(song, index));
 	const workerIndex = preparedSongs.map(buildSongResultsWorkerEntry);
 

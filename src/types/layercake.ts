@@ -1,8 +1,16 @@
 import type { Writable } from "svelte/store";
 
-export type LayerCakeConfig = Record<string, string> & { z?: string; x?: string[] };
+export type LayerCakeConfig = Record<string, string> & {
+	z?: string;
+	x?: string[];
+};
 
-export type LayerCakePadding = { top?: number; right?: number; bottom?: number; left?: number };
+export type LayerCakePadding = {
+	top?: number;
+	right?: number;
+	bottom?: number;
+	left?: number;
+};
 
 export type LayerCakeRows = Record<string, unknown>[];
 

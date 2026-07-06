@@ -38,7 +38,9 @@ const withSimplifiedSearchAbstract = (
 	suffixes: searchAbstract.suffixes.map(simplifySuffix)
 });
 
-const toSongAbstract = (entry: ChartSongIndexEntry): PrecomputedAbstractProgression => ({
+const toSongAbstract = (
+	entry: ChartSongIndexEntry
+): PrecomputedAbstractProgression => ({
 	suffixes: entry.suffixes,
 	deltas: entry.deltas,
 	bassIntervals: entry.bassIntervals,
@@ -92,10 +94,14 @@ export const matchChartCorpusChunk = (
 	return chunk
 		.filter((entry) => {
 			if (allowedSongKeys && !allowedSongKeys.has(entry.songKey)) return false;
-			if (filters.selectedArtist && !matchesSelectedArtist(entry.artists, filters.selectedArtist))
+			if (
+				filters.selectedArtist &&
+				!matchesSelectedArtist(entry.artists, filters.selectedArtist)
+			)
 				return false;
 			if (!matchesYearRange(entry.year, filters.yearRange)) return false;
-			if (normalizedTitle && !matchesTitle(entry.title, normalizedTitle)) return false;
+			if (normalizedTitle && !matchesTitle(entry.title, normalizedTitle))
+				return false;
 			if (filters.hasSearchChords) {
 				if (!searchAbstract) return false;
 				return matchesSearch(entry, searchAbstract, filters);

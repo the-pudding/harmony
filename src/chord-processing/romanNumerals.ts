@@ -23,7 +23,19 @@ const ROMAN_QUALITY_TO_SUFFIX: Record<string, string> = {
 
 // Ordered longest-first so "maj7" is tried before "7", etc.
 const EXTENSION_SUFFIXES = [
-	"maj7", "maj9", "m7b5", "dim7", "7sus4", "sus4", "sus2", "add9", "add6", "m7", "7", "9", "6"
+	"maj7",
+	"maj9",
+	"m7b5",
+	"dim7",
+	"7sus4",
+	"sus4",
+	"sus2",
+	"add9",
+	"add6",
+	"m7",
+	"7",
+	"9",
+	"6"
 ] as const;
 
 const peelExtension = (t: string): [base: string, ext: string | null] => {
@@ -33,7 +45,10 @@ const peelExtension = (t: string): [base: string, ext: string | null] => {
 	return [t, null];
 };
 
-const extensionSuffixForQuality = (quality: string, ext: string | null): string | null => {
+const extensionSuffixForQuality = (
+	quality: string,
+	ext: string | null
+): string | null => {
 	if (!ext) return ROMAN_QUALITY_TO_SUFFIX[quality] ?? null;
 	if (ext === "maj7" || ext === "maj9") return ext;
 	if (ext === "7sus4" || ext === "sus4" || ext === "sus2") return ext;
@@ -48,11 +63,11 @@ const extensionSuffixForQuality = (quality: string, ext: string | null): string 
 		if (quality === "dim") return "dim7";
 		return null;
 	}
-	if (ext === "9") return quality === "maj" ? "9" : quality === "min" ? "minor9" : null;
+	if (ext === "9")
+		return quality === "maj" ? "9" : quality === "min" ? "minor9" : null;
 	if (ext === "6") return "6";
 	return null;
 };
-
 
 export const degreeQualityToRoman = (
 	degree: number,
@@ -136,7 +151,7 @@ export const parseRomanToken = (token: string): ParsedToken | null => {
 	if (!suffix) return null;
 
 	return { degree, quality, flat, suffix };
-};;
+};
 
 const pitchClassFromEntry = (
 	entry: ParsedToken,

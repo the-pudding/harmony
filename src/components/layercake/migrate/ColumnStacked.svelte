@@ -2,7 +2,8 @@
 	import type { LayerCakeContext } from "$types/layercake";
 	import { getContext } from "svelte";
 
-	const { data, xGet, yGet, zGet, xScale } = getContext<LayerCakeContext>("LayerCake");
+	const { data, xGet, yGet, zGet, xScale } =
+		getContext<LayerCakeContext>("LayerCake");
 	const stacks = $derived($data as unknown as unknown[][]);
 </script>
 

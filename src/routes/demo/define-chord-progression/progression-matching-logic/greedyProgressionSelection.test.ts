@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
-import type { GroupedSong, SongSection } from "../../progressions/songBrowser.js";
+import type {
+	GroupedSong,
+	SongSection
+} from "../../progressions/songBrowser.js";
 import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
 import {
 	computeCoveredPositionsBySection,

@@ -18,8 +18,7 @@ export const hasConsecutivelyRepeatedBlock = (
 	tokens.some((_, start) =>
 		Array.from(
 			{
-				length:
-					Math.floor((tokens.length - start) / 2) - minBlockLength + 1
+				length: Math.floor((tokens.length - start) / 2) - minBlockLength + 1
 			},
 			(_, offset) => minBlockLength + offset
 		).some((blockLength) => blockRepeatsAt(tokens, start, blockLength))

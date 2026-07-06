@@ -10,7 +10,8 @@
 	import type { GeoJSON } from "geojson";
 	import type { GeoProjection } from "d3-geo";
 
-	const { data, width, height, zGet } = getContext<LayerCakeContext>("LayerCake");
+	const { data, width, height, zGet } =
+		getContext<LayerCakeContext>("LayerCake");
 	let {
 		projection,
 		stroke = "#ccc",
@@ -28,7 +29,9 @@
 	const { ctx } = getContext<CanvasContext>("canvas");
 
 	const geoData = $derived($data as unknown as GeoJSON.FeatureCollection);
-	const projectionFn = $derived(projection().fitSize([$width ?? 0, $height ?? 0], geoData));
+	const projectionFn = $derived(
+		projection().fitSize([$width ?? 0, $height ?? 0], geoData)
+	);
 	const geoPathFn = $derived(geoPath(projectionFn) as GeoPath);
 	const featuresToDraw = $derived(features ?? geoData.features);
 

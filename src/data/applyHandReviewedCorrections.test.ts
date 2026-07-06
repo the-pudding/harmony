@@ -32,7 +32,13 @@ const MONTERO_CONTENTS: CorrectedSongContents = {
 };
 
 const groupFrom = (id: string, contents: CorrectedSongContents) => {
-	const inputs = correctedSongContentsToSongInputs(id, "Test Song", ["Test Artist"], undefined, contents);
+	const inputs = correctedSongContentsToSongInputs(
+		id,
+		"Test Song",
+		["Test Artist"],
+		undefined,
+		contents
+	);
 	return groupSongs(inputs);
 };
 
@@ -63,10 +69,18 @@ describe("correctedSongContentsToSongInputs", () => {
 
 	it("throws on unknown scale", () => {
 		const badContents: CorrectedSongContents = {
-			sections: [{ name: "Verse", key: "C", scale: "nonsense", romanTokens: ["I"] }]
+			sections: [
+				{ name: "Verse", key: "C", scale: "nonsense", romanTokens: ["I"] }
+			]
 		};
 		expect(() =>
-			correctedSongContentsToSongInputs("test", "Test", ["Artist"], undefined, badContents)
+			correctedSongContentsToSongInputs(
+				"test",
+				"Test",
+				["Artist"],
+				undefined,
+				badContents
+			)
 		).toThrow("Unknown scale");
 	});
 });

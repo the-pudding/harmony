@@ -20,13 +20,16 @@
 
 	let internalSingleValue = $state<string | undefined>(
 		untrack(() =>
-			required ? (value as string | undefined) || items[0]?.value : (value as string | undefined)
+			required
+				? (value as string | undefined) || items[0]?.value
+				: (value as string | undefined)
 		)
 	);
 	let internalMultipleValue = $state<string[] | undefined>(
 		untrack(() =>
 			required
-				? (value as string[] | undefined) || (items[0]?.value ? [items[0].value] : [])
+				? (value as string[] | undefined) ||
+					(items[0]?.value ? [items[0].value] : [])
 				: (value as string[] | undefined)
 		)
 	);

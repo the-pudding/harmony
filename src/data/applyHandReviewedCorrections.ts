@@ -1,10 +1,15 @@
-import { parseSongTitleAndSectionLabel, resolveSongKey } from "../chord-processing/songIdentity.js";
+import {
+	parseSongTitleAndSectionLabel,
+	resolveSongKey
+} from "../chord-processing/songIdentity.js";
 import type { SongInput } from "../chord-processing/types.js";
 import { romanTokensToProgressionInKey } from "../chord-processing/scales.js";
 import { handReviewedSongs } from "./hand-reviewed-songs.js";
 import type { CorrectedSongContents } from "./hand-reviewed-songs.js";
 
-export const applyHandReviewedCorrections = (songs: SongInput[]): SongInput[] => {
+export const applyHandReviewedCorrections = (
+	songs: SongInput[]
+): SongInput[] => {
 	const corrections = new Map(
 		handReviewedSongs
 			.filter((r) => r.correctedSongContents !== undefined)
@@ -13,12 +18,19 @@ export const applyHandReviewedCorrections = (songs: SongInput[]): SongInput[] =>
 
 	if (corrections.size === 0) return songs;
 
-	const metadataByKey = new Map<string, { baseTitle: string; artists: string[]; year?: number }>();
+	const metadataByKey = new Map<
+		string,
+		{ baseTitle: string; artists: string[]; year?: number }
+	>();
 	for (const song of songs) {
 		const key = resolveSongKey(song);
 		if (!metadataByKey.has(key)) {
 			const { baseTitle } = parseSongTitleAndSectionLabel(song.title);
-			metadataByKey.set(key, { baseTitle, artists: song.artists, year: song.year });
+			metadataByKey.set(key, {
+				baseTitle,
+				artists: song.artists,
+				year: song.year
+			});
 		}
 	}
 
@@ -28,7 +40,13 @@ export const applyHandReviewedCorrections = (songs: SongInput[]): SongInput[] =>
 	const replacements = [...corrections.entries()].flatMap(([id, contents]) => {
 		const meta = metadataByKey.get(id);
 		if (!meta) return [];
-		return correctedSongContentsToSongInputs(id, meta.baseTitle, meta.artists, meta.year, contents);
+		return correctedSongContentsToSongInputs(
+			id,
+			meta.baseTitle,
+			meta.artists,
+			meta.year,
+			contents
+		);
 	});
 
 	return [...filtered, ...replacements];

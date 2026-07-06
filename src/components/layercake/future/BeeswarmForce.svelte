@@ -5,9 +5,16 @@
 <script lang="ts">
 	import type { LayerCakeContext } from "$types/layercake";
 	import { getContext } from "svelte";
-	import { forceSimulation, forceX, forceY, forceCollide, type SimulationNodeDatum } from "d3-force";
+	import {
+		forceSimulation,
+		forceX,
+		forceY,
+		forceCollide,
+		type SimulationNodeDatum
+	} from "d3-force";
 
-	const { data, xGet, height, zGet } = getContext<LayerCakeContext>("LayerCake");
+	const { data, xGet, height, zGet } =
+		getContext<LayerCakeContext>("LayerCake");
 	let {
 		r = 4,
 		strokeWidth = 1,
@@ -27,14 +34,28 @@
 	type BeeNode = SimulationNodeDatum & Record<string, unknown>;
 
 	const simulation = $derived.by(() => {
-		const nodes: BeeNode[] = $data.map((d: Record<string, unknown>) => ({ ...d }));
+		const nodes: BeeNode[] = $data.map((d: Record<string, unknown>) => ({
+			...d
+		}));
 		const sim = forceSimulation(nodes)
-			.force("x", forceX<BeeNode>().x((d) => $xGet(d)).strength(xStrength))
-			.force("y", forceY<BeeNode>().y($height / 2).strength(yStrength))
+			.force(
+				"x",
+				forceX<BeeNode>()
+					.x((d) => $xGet(d))
+					.strength(xStrength)
+			)
+			.force(
+				"y",
+				forceY<BeeNode>()
+					.y($height / 2)
+					.strength(yStrength)
+			)
 			.force("collide", forceCollide(r))
 			.stop();
 
-		const n = Math.ceil(Math.log(sim.alphaMin()) / Math.log(1 - sim.alphaDecay()));
+		const n = Math.ceil(
+			Math.log(sim.alphaMin()) / Math.log(1 - sim.alphaDecay())
+		);
 		for (let i = 0; i < n; i += 1) sim.tick();
 		return sim;
 	});

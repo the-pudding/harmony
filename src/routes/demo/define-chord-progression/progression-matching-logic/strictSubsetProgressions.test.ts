@@ -24,7 +24,9 @@ const makeFakeMatch = (
 
 describe("isContiguousRun", () => {
 	it("finds a run at the start", () => {
-		expect(isContiguousRun(["I", "V", "vi"], ["I", "V", "vi", "IV"])).toBe(true);
+		expect(isContiguousRun(["I", "V", "vi"], ["I", "V", "vi", "IV"])).toBe(
+			true
+		);
 	});
 
 	it("finds a run at the end", () => {
@@ -36,7 +38,9 @@ describe("isContiguousRun", () => {
 	});
 
 	it("returns false for equal-length sequences", () => {
-		expect(isContiguousRun(["I", "V", "vi", "IV"], ["I", "V", "vi", "IV"])).toBe(false);
+		expect(
+			isContiguousRun(["I", "V", "vi", "IV"], ["I", "V", "vi", "IV"])
+		).toBe(false);
 	});
 
 	it("returns false when the shorter is not a contiguous substring", () => {
@@ -48,7 +52,9 @@ describe("isContiguousRun", () => {
 	});
 
 	it("finds a 3-chord run inside a 5-chord progression", () => {
-		expect(isContiguousRun(["ii", "V", "I"], ["I", "ii", "V", "I", "vi"])).toBe(true);
+		expect(isContiguousRun(["ii", "V", "I"], ["I", "ii", "V", "I", "vi"])).toBe(
+			true
+		);
 	});
 });
 
@@ -120,7 +126,10 @@ describe("applySubsetFlag", () => {
 		const matches = [makeFakeMatch("I-V-vi", 20)];
 		const keys = new Set(["I-V-vi"]);
 		applySubsetFlag(matches, keys);
-		expect((matches[0] as ProgressionWithMatchStats & { isStrictSubset?: boolean }).isStrictSubset).toBeUndefined();
+		expect(
+			(matches[0] as ProgressionWithMatchStats & { isStrictSubset?: boolean })
+				.isStrictSubset
+		).toBeUndefined();
 	});
 
 	it("preserves all other fields", () => {

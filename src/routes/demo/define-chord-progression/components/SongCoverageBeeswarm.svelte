@@ -1,7 +1,5 @@
 <script lang="ts">
-	import {
-		getChordProgressionIssues
-	} from "$data/hand-reviewed-songs.js";
+	import { getChordProgressionIssues } from "$data/hand-reviewed-songs.js";
 	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
 	import {
 		EXPLAINED_THRESHOLD_PERCENT,
@@ -30,7 +28,8 @@
 		onSelectSong?: (key: string) => void;
 	};
 
-	let { songs, selectedSongKey, highlightedProgression, onSelectSong }: Props = $props();
+	let { songs, selectedSongKey, highlightedProgression, onSelectSong }: Props =
+		$props();
 
 	let containerWidth = $state(0);
 	let hoveredSongKey = $state<string | null>(null);
@@ -48,9 +47,13 @@
 	const TOOLTIP_WIDTH = 200;
 	const HOVER_CLEAR_DELAY_MS = 120;
 
-	const plotWidth = $derived(Math.max(0, containerWidth - PADDING_LEFT - PADDING_RIGHT));
+	const plotWidth = $derived(
+		Math.max(0, containerWidth - PADDING_LEFT - PADDING_RIGHT)
+	);
 
-	const xScale = $derived((pct: number) => PADDING_LEFT + (pct / 100) * plotWidth);
+	const xScale = $derived(
+		(pct: number) => PADDING_LEFT + (pct / 100) * plotWidth
+	);
 
 	const dodgedNodes = $derived.by(() => {
 		if (plotWidth <= 0 || songs === null) return [] as DodgedNode[];
@@ -89,7 +92,8 @@
 				b.y = Infinity;
 				do {
 					const candidateY = a!.y + Math.sqrt(radius2 - (a!.x - b.x) ** 2);
-					if (candidateY < b.y && !intersects(b.x, candidateY)) b.y = candidateY;
+					if (candidateY < b.y && !intersects(b.x, candidateY))
+						b.y = candidateY;
 					a = a!.next;
 				} while (a);
 			}
@@ -110,17 +114,25 @@
 
 	const tooltipLeft = $derived.by(() => {
 		if (!hoveredNode) return 0;
-		return Math.max(4, Math.min(containerWidth - TOOLTIP_WIDTH - 4, hoveredNode.x - TOOLTIP_WIDTH / 2));
+		return Math.max(
+			4,
+			Math.min(
+				containerWidth - TOOLTIP_WIDTH - 4,
+				hoveredNode.x - TOOLTIP_WIDTH / 2
+			)
+		);
 	});
 
-	const tooltipTopY = $derived(hoveredNode ? AXIS_Y - DOT_RADIUS - hoveredNode.y : 0);
+	const tooltipTopY = $derived(
+		hoveredNode ? AXIS_Y - DOT_RADIUS - hoveredNode.y : 0
+	);
 
 	const ANNOTATION_LINE_Y_TOP = 8;
 
 	type ChartAnnotation = {
 		x: number;
 		label: string;
-		textAnchor: 'start' | 'end';
+		textAnchor: "start" | "end";
 		textOffsetX: number;
 	};
 
@@ -128,10 +140,15 @@
 		if (!songs || songs.length === 0) return [];
 		const total = songs.length;
 		const aboveThreshold = Math.round(
-			(songs.filter((s) => s.coveragePercent >= EXPLAINED_THRESHOLD_PERCENT).length / total) * 100
+			(songs.filter((s) => s.coveragePercent >= EXPLAINED_THRESHOLD_PERCENT)
+				.length /
+				total) *
+				100
 		);
 		const aboveHighCoverage = Math.round(
-			(songs.filter((s) => s.coveragePercent >= HIGH_COVERAGE_THRESHOLD_PERCENT).length / total) *
+			(songs.filter((s) => s.coveragePercent >= HIGH_COVERAGE_THRESHOLD_PERCENT)
+				.length /
+				total) *
 				100
 		);
 		const atZero = Math.round(
@@ -141,19 +158,19 @@
 			{
 				x: xScale(0),
 				label: `${atZero}% of songs have 0% coverage`,
-				textAnchor: 'start',
+				textAnchor: "start",
 				textOffsetX: 6
 			},
 			{
 				x: xScale(EXPLAINED_THRESHOLD_PERCENT),
 				label: `${aboveThreshold}% of songs above ${EXPLAINED_THRESHOLD_PERCENT}% coverage`,
-				textAnchor: 'end',
+				textAnchor: "end",
 				textOffsetX: -6
 			},
 			{
 				x: xScale(HIGH_COVERAGE_THRESHOLD_PERCENT),
 				label: `${aboveHighCoverage}% above ${HIGH_COVERAGE_THRESHOLD_PERCENT}%`,
-				textAnchor: 'end',
+				textAnchor: "end",
 				textOffsetX: -6
 			}
 		];
@@ -190,7 +207,7 @@
 
 <div class="beeswarm" bind:clientWidth={containerWidth}>
 	{#if songs === null}
-		<div class="loading-shell" style:height={CHART_HEIGHT + 'px'}>
+		<div class="loading-shell" style:height={CHART_HEIGHT + "px"}>
 			<span class="loading-text">Computing coverage…</span>
 		</div>
 	{:else if containerWidth > 0 && songs.length > 0}
@@ -214,19 +231,23 @@
 					x={annotation.x + annotation.textOffsetX}
 					y={ANNOTATION_LINE_Y_TOP + 9}
 					text-anchor={annotation.textAnchor}
-					class="threshold-label"
-				>{annotation.label}</text>
+					class="threshold-label">{annotation.label}</text
+				>
 			{/each}
 			{#each TICK_VALUES as tick}
 				{@const tx = xScale(tick)}
 				<line x1={tx} x2={tx} y1={AXIS_Y} y2={AXIS_Y + 5} class="tick-mark" />
-				<text x={tx} y={AXIS_Y + 16} text-anchor="middle" class="tick-label">{tick}%</text>
+				<text x={tx} y={AXIS_Y + 16} text-anchor="middle" class="tick-label"
+					>{tick}%</text
+				>
 			{/each}
 			{#each dodgedNodes as node}
 				{@const isSelected = node.songKey === selectedSongKey}
 				{@const isHovered = node.songKey === hoveredSongKey}
 				{@const hasIssues = node.chordProgressionIssues !== undefined}
-				{@const isCoreMatched = highlightedProgression !== null && node.matchingProgressions.includes(highlightedProgression)}
+				{@const isCoreMatched =
+					highlightedProgression !== null &&
+					node.matchingProgressions.includes(highlightedProgression)}
 				{@const r = isSelected ? SELECTED_DOT_RADIUS : DOT_RADIUS}
 				{@const cy = AXIS_Y - DOT_RADIUS - node.y}
 				<circle
@@ -242,11 +263,13 @@
 					onmouseleave={scheduleHoverClear}
 					onclick={() => selectSong(node.songKey)}
 					onkeydown={(e) => {
-						if (e.key === 'Enter' || e.key === ' ') selectSong(node.songKey);
+						if (e.key === "Enter" || e.key === " ") selectSong(node.songKey);
 					}}
 					role="button"
 					tabindex={0}
-					aria-label="{node.title} — {Math.round(node.coveragePercent)}% explained"
+					aria-label="{node.title} — {Math.round(
+						node.coveragePercent
+					)}% explained"
 				/>
 			{/each}
 		</svg>
@@ -254,18 +277,23 @@
 		{#if hoveredNode}
 			<div
 				class="tooltip"
-				style:left={tooltipLeft + 'px'}
-				style:top={tooltipTopY - DOT_RADIUS - 6 + 'px'}
-				style:width={TOOLTIP_WIDTH + 'px'}
+				style:left={tooltipLeft + "px"}
+				style:top={tooltipTopY - DOT_RADIUS - 6 + "px"}
+				style:width={TOOLTIP_WIDTH + "px"}
 				style:transform="translateY(-100%)"
 				onmouseenter={cancelHoverClear}
 				onmouseleave={scheduleHoverClear}
 				role="none"
 			>
-				<button class="song-card" onclick={() => selectSong(hoveredNode.songKey)}>
+				<button
+					class="song-card"
+					onclick={() => selectSong(hoveredNode.songKey)}
+				>
 					<span class="song-title">{hoveredNode.title}</span>
-					<span class="song-artists">{hoveredNode.artists.join(', ')}</span>
-					<span class="song-stats">{Math.round(hoveredNode.coveragePercent)}% chord coverage</span>
+					<span class="song-artists">{hoveredNode.artists.join(", ")}</span>
+					<span class="song-stats"
+						>{Math.round(hoveredNode.coveragePercent)}% chord coverage</span
+					>
 					<ChordProgressionIssuesNote
 						songKey={hoveredNode.songKey}
 						size="sm"
@@ -275,7 +303,7 @@
 					<div class="coverage-bar" aria-hidden="true">
 						<div
 							class="coverage-fill"
-							style:width={Math.min(hoveredNode.coveragePercent, 100) + '%'}
+							style:width={Math.min(hoveredNode.coveragePercent, 100) + "%"}
 						></div>
 					</div>
 				</button>
@@ -298,7 +326,7 @@
 	}
 
 	.loading-text {
-		font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.7rem;
 		color: rgba(161, 161, 170, 0.5);
 	}
@@ -315,7 +343,7 @@
 	}
 
 	.threshold-label {
-		font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.6rem;
 		fill: rgba(161, 161, 170, 0.55);
 	}
@@ -331,7 +359,7 @@
 	}
 
 	.tick-label {
-		font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.6rem;
 		fill: rgba(161, 161, 170, 0.7);
 	}
@@ -426,7 +454,7 @@
 	}
 
 	.song-artists {
-		font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.65rem;
 		color: rgba(161, 161, 170, 0.7);
 	}

@@ -16,9 +16,7 @@
 				{chordSearchDemoStore.hasSearch ? NO_MATCH_MESSAGE : SEARCH_PLACEHOLDER}
 			</p>
 		{:else}
-			<p class="results-label">
-				Sorted by popularity:
-			</p>
+			<p class="results-label">Sorted by popularity:</p>
 			{#each chordSearchDemoStore.searchResults as result (result.songKey)}
 				<ChordProgressionSearchResult {result} />
 			{/each}

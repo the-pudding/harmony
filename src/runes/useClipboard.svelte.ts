@@ -17,7 +17,10 @@ const copyMethods = [
 	}
 ];
 
-const useClipboard = (copyString: string | number, config: ClipboardConfig = {}) => {
+const useClipboard = (
+	copyString: string | number,
+	config: ClipboardConfig = {}
+) => {
 	const { delay = 1000 } = config;
 	let lastCopied = $state<number | null>(null);
 	const copied = $derived(lastCopied !== null);
@@ -35,20 +38,33 @@ const useClipboard = (copyString: string | number, config: ClipboardConfig = {})
 	};
 
 	const copy = async (newCopyString?: string | number) => {
-		if (newCopyString !== undefined && typeof newCopyString !== "string" && typeof newCopyString !== "number") {
-			throw new Error("Invalid copy type: Only string and number are supported.");
+		if (
+			newCopyString !== undefined &&
+			typeof newCopyString !== "string" &&
+			typeof newCopyString !== "number"
+		) {
+			throw new Error(
+				"Invalid copy type: Only string and number are supported."
+			);
 		}
 
 		const time = Date.now();
 		lastCopied = time;
-		const str = String(newCopyString === undefined ? copyString : newCopyString);
+		const str = String(
+			newCopyString === undefined ? copyString : newCopyString
+		);
 		await copyToClipboard(str);
 		await new Promise((res) => setTimeout(res, delay));
 		if (time !== lastCopied) return;
 		lastCopied = null;
 	};
 
-	return { get copied() { return copied; }, copy };
+	return {
+		get copied() {
+			return copied;
+		},
+		copy
+	};
 };
 
 export default useClipboard;

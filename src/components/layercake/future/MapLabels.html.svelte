@@ -5,13 +5,18 @@
 <script lang="ts">
 	import type { LayerCakeContext } from "$types/layercake";
 	import type { FeatureCollection } from "geojson";
-	import { getContext } from 'svelte';
+	import { getContext } from "svelte";
 
 	const { data, width, height } = getContext<LayerCakeContext>("LayerCake");
-	let { projection, fixedAspectRatio = undefined, getLabel, getCoordinates, features = undefined } = $props();
+	let {
+		projection,
+		fixedAspectRatio = undefined,
+		getLabel,
+		getCoordinates,
+		features = undefined
+	} = $props();
 
 	const geoData = $derived($data as unknown as FeatureCollection);
-
 
 	/** @type {Function} projection - A D3 projection function. Pass this in as an uncalled function, e.g. `projection={geoAlbersUsa}`. */
 
@@ -23,27 +28,28 @@
 
 	/** @type {Array} [features] - A list of labels as GeoJSON features. If unset, the plotted features will defaults to those in `$data.features`, assuming this field a list of GeoJSON features. */
 
-	const fitSizeRange = $derived(fixedAspectRatio ? [100, 100 / fixedAspectRatio] : [$width, $height]);
+	const fitSizeRange = $derived(
+		fixedAspectRatio ? [100, 100 / fixedAspectRatio] : [$width, $height]
+	);
 
 	const projectionFn = $derived(projection().fitSize(fitSizeRange, $data));
 
-	const units = $derived(fixedAspectRatio ? '%': 'px');
+	const units = $derived(fixedAspectRatio ? "%" : "px");
 </script>
 
-<div
-	class="map-labels"
-	style:aspect-ratio={fixedAspectRatio ? 1 : null}
->
-{#each (features || geoData.features) as d}
-	{@const coords = projectionFn(getCoordinates(d))}
-	<div
-		class="map-label"
-		style="
+<div class="map-labels" style:aspect-ratio={fixedAspectRatio ? 1 : null}>
+	{#each features || geoData.features as d}
+		{@const coords = projectionFn(getCoordinates(d))}
+		<div
+			class="map-label"
+			style="
 			left: {coords[0]}{units};
 			top: {coords[1]}{units};
 		"
-	>{getLabel(d)}</div>
-{/each}
+		>
+			{getLabel(d)}
+		</div>
+	{/each}
 </div>
 
 <style>

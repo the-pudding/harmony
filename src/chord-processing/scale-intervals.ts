@@ -12,4 +12,5 @@ const SCALE_INTERVALS_CONST = {
 
 export type ScaleName = keyof typeof SCALE_INTERVALS_CONST;
 
-export const SCALE_INTERVALS: Record<string, readonly number[]> = SCALE_INTERVALS_CONST;
+export const SCALE_INTERVALS: Record<string, readonly number[]> =
+	SCALE_INTERVALS_CONST;

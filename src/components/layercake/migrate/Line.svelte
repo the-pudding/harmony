@@ -6,9 +6,6 @@
 	const { data, xGet, yGet } = getContext<LayerCakeContext>("LayerCake");
 	let { stroke = "#ccc", curve = curveLinear } = $props();
 
-
-
-
 	const path = $derived(line().x($xGet).y($yGet).curve(curve));
 	const pathD = $derived(path($data as unknown as [number, number][]));
 </script>

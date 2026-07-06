@@ -88,14 +88,19 @@ export const matchSongResultsChunk = (
 	const normalizedTitle = filters.titleFilter.trim();
 	const orderedSongKeys: string[] = [];
 	const seenSongKeys = new Set<string>();
-	const sectionMatches: Array<{ id: string; matches: SubProgressionMatch[] }> = [];
+	const sectionMatches: Array<{ id: string; matches: SubProgressionMatch[] }> =
+		[];
 	const songTotalMatches = new Map<string, number>();
 
 	for (const entry of chunk) {
-		if (filters.selectedArtist && !matchesSelectedArtist(entry.artists, filters.selectedArtist))
+		if (
+			filters.selectedArtist &&
+			!matchesSelectedArtist(entry.artists, filters.selectedArtist)
+		)
 			continue;
 		if (!matchesYearRange(entry.year, filters.yearRange)) continue;
-		if (normalizedTitle && !matchesTitle(entry.titleLower, normalizedTitle)) continue;
+		if (normalizedTitle && !matchesTitle(entry.titleLower, normalizedTitle))
+			continue;
 
 		if (filters.hasSearchChords) {
 			if (!searchAbstract) continue;
@@ -122,7 +127,9 @@ export const matchSongResultsChunk = (
 		: MIN_OCCURRENCES_DEFAULT;
 
 	const matchedSongKeys = filters.hasSearchChords
-		? orderedSongKeys.filter((key) => (songTotalMatches.get(key) ?? 0) >= minOccurrences)
+		? orderedSongKeys.filter(
+				(key) => (songTotalMatches.get(key) ?? 0) >= minOccurrences
+			)
 		: orderedSongKeys;
 
 	return { matchedSongKeys, sectionMatches };

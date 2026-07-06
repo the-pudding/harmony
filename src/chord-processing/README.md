@@ -22,19 +22,19 @@ The interactive UI lives in `src/chord-search-demo/`; song data is in `src/chord
 import { createChordDetector } from "../chord-processing/index.js";
 
 const detector = createChordDetector({
-  splitBassAndTrebleOn: "C4", // or { noteName: "C", octave: 4 }, or MIDI number 60
-  settleMs: 60,               // ms of silence before a chord is stamped
-  getBassAsRoot: () => false, // optional live getter — see "Bass as root" below
-  onChordStart: (chord) => console.log("start", chord),
-  onChordEnd:   (chord) => console.log("end",   chord),
+	splitBassAndTrebleOn: "C4", // or { noteName: "C", octave: 4 }, or MIDI number 60
+	settleMs: 60, // ms of silence before a chord is stamped
+	getBassAsRoot: () => false, // optional live getter — see "Bass as root" below
+	onChordStart: (chord) => console.log("start", chord),
+	onChordEnd: (chord) => console.log("end", chord)
 });
 
-await detector.connect();       // picks first MIDI input; prompts browser permission
+await detector.connect(); // picks first MIDI input; prompts browser permission
 await detector.connect({ inputName: "Arturia KeyStep" }); // or target by name
 
-detector.listInputs();          // → array of device info objects
-detector.getActiveInput();      // → active device info or null
-detector.reclassify();          // re-runs classify on the current held chord (e.g. after toggling getBassAsRoot)
+detector.listInputs(); // → array of device info objects
+detector.getActiveInput(); // → active device info or null
+detector.reclassify(); // re-runs classify on the current held chord (e.g. after toggling getBassAsRoot)
 detector.disconnect();
 ```
 
@@ -104,12 +104,12 @@ src/chord-search-demo/      Svelte demo (replaces midi-chord-detector/demo/)
 import { createChordGater } from "../chord-processing/chord-gater/index.js";
 
 const gate = createChordGater({
-  splitBassAndTrebleOn: "C4",
-  settleMs: 60,
-  onStableChordCandidate: ({ bassMidi, trebleMidis }) =>
-    console.log("stable", bassMidi, trebleMidis),
-  onStableChordRelease: ({ bassMidi, trebleMidis }) =>
-    console.log("released", bassMidi, trebleMidis),
+	splitBassAndTrebleOn: "C4",
+	settleMs: 60,
+	onStableChordCandidate: ({ bassMidi, trebleMidis }) =>
+		console.log("stable", bassMidi, trebleMidis),
+	onStableChordRelease: ({ bassMidi, trebleMidis }) =>
+		console.log("released", bassMidi, trebleMidis)
 });
 
 gate.handleNoteOn(48);
@@ -128,60 +128,60 @@ import { formatChordName } from "../chord-processing/formatChordDisplay.js";
 const classifier = createChordClassifier();
 
 classifier.classify({
-  bassMidi: 48,              // C3
-  trebleMidis: [63, 67, 72], // D#4, G4, C5
+	bassMidi: 48, // C3
+	trebleMidis: [63, 67, 72] // D#4, G4, C5
 });
 // → { rootPitchClass: 0, suffix: "minor", bassPitchClass: 0 }
 
 classifier.classify({
-  bassMidi: 48,              // C3
-  trebleMidis: [64, 67, 71], // E4, G4, B4
-  bassAsRoot: true,
+	bassMidi: 48, // C3
+	trebleMidis: [64, 67, 71], // E4, G4, B4
+	bassAsRoot: true
 });
 // → { rootPitchClass: 0, suffix: "maj7" }  (bass included as a chord tone, rooted on C)
 
-formatChordName({ rootPitchClass: 0, suffix: "minor" });        // → "Cm"
-formatChordName({ rootPitchClass: 0, suffix: "major" });        // → "C"
+formatChordName({ rootPitchClass: 0, suffix: "minor" }); // → "Cm"
+formatChordName({ rootPitchClass: 0, suffix: "major" }); // → "C"
 formatChordName({ rootPitchClass: 0, suffix: "major", bassPitchClass: 4 }); // → "C / E"
-formatChordName(null);                                   // → "unknown"
+formatChordName(null); // → "unknown"
 ```
 
 `classify()` returns `null` when no template matches. `formatChordName` accepts that and returns `"unknown"`.
 
 ### Searching songs by chord progression
 
-`match-chord-progressions` matches user-played chords against a song catalog **abstractly**: matching is on chord *types* and the *intervals between roots*, not absolute pitch. So a played `D → A → Bm` (in any key) matches a song's `C → G → Am` (I-V-vi anywhere), and a `ii-V-I` shape matches across all keys.
+`match-chord-progressions` matches user-played chords against a song catalog **abstractly**: matching is on chord _types_ and the _intervals between roots_, not absolute pitch. So a played `D → A → Bm` (in any key) matches a song's `C → G → Am` (I-V-vi anywhere), and a `ii-V-I` shape matches across all keys.
 
 ```ts
 import { createProgressionSearch } from "../chord-processing/match-chord-progressions/index.js";
 
 const search = createProgressionSearch({
-  songs: [
-    {
-      title: "Hey, Soul Sister",
-      artist: "Train",
-      progression: [
-        { noteName: "C", suffix: "major" },
-        { noteName: "G", suffix: "major" },
-        { noteName: "A", suffix: "minor" },
-        { noteName: "F", suffix: "major" },
-      ],
-    },
-    {
-      title: "Sunday Morning",
-      artist: "Maroon 5",
-      progression: [
-        { noteName: "D", suffix: "minor7" },
-        { noteName: "G", suffix: "7" },
-        { noteName: "C", suffix: "maj7" },
-      ],
-    },
-  ],
+	songs: [
+		{
+			title: "Hey, Soul Sister",
+			artist: "Train",
+			progression: [
+				{ noteName: "C", suffix: "major" },
+				{ noteName: "G", suffix: "major" },
+				{ noteName: "A", suffix: "minor" },
+				{ noteName: "F", suffix: "major" }
+			]
+		},
+		{
+			title: "Sunday Morning",
+			artist: "Maroon 5",
+			progression: [
+				{ noteName: "D", suffix: "minor7" },
+				{ noteName: "G", suffix: "7" },
+				{ noteName: "C", suffix: "maj7" }
+			]
+		}
+	]
 });
 
-search.append({ rootPitchClass: 2, suffix: "major" });   // D major
-search.append({ rootPitchClass: 9, suffix: "major" });   // A major
-search.append({ rootPitchClass: 11, suffix: "minor" });  // B minor
+search.append({ rootPitchClass: 2, suffix: "major" }); // D major
+search.append({ rootPitchClass: 9, suffix: "major" }); // A major
+search.append({ rootPitchClass: 11, suffix: "minor" }); // B minor
 
 search.getResults();
 // → [{ song: { title: "Hey, Soul Sister", ..., parsedProgression: [...] },
@@ -202,17 +202,17 @@ Add entries to `chord-classifier/templates.ts`. Each template is a **pitch-class
 
 ```ts
 export const CHORD_TEMPLATES = [
-  { suffix: "major",      intervals: [0, 4, 7] },
-  { suffix: "minor",      intervals: [0, 3, 7] },
-  { suffix: "diminished", intervals: [0, 3, 6] },
-  { suffix: "augmented",  intervals: [0, 4, 8] },
-  { suffix: "sus2",       intervals: [0, 2, 7] },
-  { suffix: "sus4",       intervals: [0, 5, 7] },
-  { suffix: "maj7",       intervals: [0, 4, 7, 11] },
-  { suffix: "7",          intervals: [0, 4, 7, 10] },
-  { suffix: "m7b5",       intervals: [0, 3, 6, 10] },
-  { suffix: "dim7",       intervals: [0, 3, 6, 9] },
-  // ... etc
+	{ suffix: "major", intervals: [0, 4, 7] },
+	{ suffix: "minor", intervals: [0, 3, 7] },
+	{ suffix: "diminished", intervals: [0, 3, 6] },
+	{ suffix: "augmented", intervals: [0, 4, 8] },
+	{ suffix: "sus2", intervals: [0, 2, 7] },
+	{ suffix: "sus4", intervals: [0, 5, 7] },
+	{ suffix: "maj7", intervals: [0, 4, 7, 11] },
+	{ suffix: "7", intervals: [0, 4, 7, 10] },
+	{ suffix: "m7b5", intervals: [0, 3, 6, 10] },
+	{ suffix: "dim7", intervals: [0, 3, 6, 9] }
+	// ... etc
 ];
 ```
 
@@ -220,7 +220,7 @@ Or pass custom templates directly:
 
 ```ts
 createChordDetector({
-  chordClassifierOptions: { templates: myTemplates },
+	chordClassifierOptions: { templates: myTemplates }
 });
 ```
 

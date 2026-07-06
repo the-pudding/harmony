@@ -40,9 +40,24 @@
 	<div class="top-nav-header">
 		<span class="logo">harmony</span>
 		<div class="page-nav">
-			<a href="/demo/chord-search" class="page-link" class:active={page.url.pathname === "/demo/chord-search"}>chord search</a>
-			<a href="/demo/progressions" class="page-link" class:active={page.url.pathname === "/demo/progressions"}>progressions</a>
-			<a href="/demo/define-chord-progression" class="page-link" class:active={page.url.pathname === "/demo/define-chord-progression"}>define 'chord progression'</a>
+			<a
+				href="/demo/chord-search"
+				class="page-link"
+				class:active={page.url.pathname === "/demo/chord-search"}
+				>chord search</a
+			>
+			<a
+				href="/demo/progressions"
+				class="page-link"
+				class:active={page.url.pathname === "/demo/progressions"}
+				>progressions</a
+			>
+			<a
+				href="/demo/define-chord-progression"
+				class="page-link"
+				class:active={page.url.pathname === "/demo/define-chord-progression"}
+				>define 'chord progression'</a
+			>
 		</div>
 	</div>
 	{#if showSearch}
@@ -63,7 +78,11 @@
 				</div>
 				<div class="search-actions">
 					<SearchInputToggle />
-					<button type="button" class="action-pill clear" onclick={chordSearchDemoStore.clearSearch}>
+					<button
+						type="button"
+						class="action-pill clear"
+						onclick={chordSearchDemoStore.clearSearch}
+					>
 						{CLEAR_CHORDS_LABEL}
 						<span class="shortcut">· {CLEAR_SENTINEL_NOTES}</span>
 					</button>
@@ -74,7 +93,9 @@
 					{#if isConnected}
 						<span class="connected" title={selectedInputName}>connected</span>
 					{:else}
-						<button type="button" class="connect" onclick={onConnect}>connect</button>
+						<button type="button" class="connect" onclick={onConnect}
+							>connect</button
+						>
 					{/if}
 					{#if connectError}
 						<span class="connect-error">{connectError}</span>
@@ -138,7 +159,9 @@
 		text-decoration: none;
 		padding: 0.25rem 0.625rem;
 		border-radius: 0.25rem;
-		transition: color 0.15s, background 0.15s;
+		transition:
+			color 0.15s,
+			background 0.15s;
 	}
 
 	.page-link:hover {

@@ -2,7 +2,10 @@ import { csvParse, type DSVRowArray } from "d3";
 
 type FetcherOptions = RequestInit | undefined;
 
-export const useFetcher = (initialUrl: string | null, options?: FetcherOptions) => {
+export const useFetcher = (
+	initialUrl: string | null,
+	options?: FetcherOptions
+) => {
 	let url = $state(initialUrl);
 	let data = $state<unknown>(null);
 	let loading = $state(true);
@@ -20,7 +23,8 @@ export const useFetcher = (initialUrl: string | null, options?: FetcherOptions) 
 		if (!url) return [null, null] as const;
 		try {
 			const res = await fetch(url, options);
-			if (!res.ok) throw new Error(`Unexpected error occurred (status ${res.status})`);
+			if (!res.ok)
+				throw new Error(`Unexpected error occurred (status ${res.status})`);
 
 			if (url.includes(".csv")) {
 				const csv = await res.text();
@@ -28,7 +32,8 @@ export const useFetcher = (initialUrl: string | null, options?: FetcherOptions) 
 			}
 			return [null, (await res.json()) as unknown] as const;
 		} catch (e) {
-			const message = e instanceof Error ? e.message : "Unexpected error occurred";
+			const message =
+				e instanceof Error ? e.message : "Unexpected error occurred";
 			return [message, null] as const;
 		}
 	};

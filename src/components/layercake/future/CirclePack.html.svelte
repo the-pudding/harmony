@@ -44,7 +44,9 @@
 			})
 	);
 
-	const packer = $derived(pack<Record<string, unknown>>().size([$width, $height]).padding(spacing));
+	const packer = $derived(
+		pack<Record<string, unknown>>().size([$width, $height]).padding(spacing)
+	);
 
 	const stratified = $derived(stratifier(dataset));
 
@@ -59,7 +61,9 @@
 			)
 	);
 
-	const packed = $derived(packer(root as unknown as HierarchyNode<Record<string, unknown>>));
+	const packed = $derived(
+		packer(root as unknown as HierarchyNode<Record<string, unknown>>)
+	);
 
 	const descendants = $derived(packed.descendants());
 
@@ -69,7 +73,11 @@
 
 <div class="circle-pack" data-has-parent-key={parentKey !== undefined}>
 	{#each descendants as d}
-		<div class="circle-group" data-id={d.data.id} data-visible={labelVisibilityThreshold(d.r)}>
+		<div
+			class="circle-group"
+			data-id={d.data.id}
+			data-visible={labelVisibilityThreshold(d.r)}
+		>
 			<div
 				class="circle"
 				style="left:{d.x}px;top:{d.y}px;width:{d.r * 2}px;height:{d.r *
@@ -90,8 +98,11 @@
 			>
 				<div class="text">{titleCase(String(d.data.id))}</div>
 				{#if (d.data as Record<string, unknown>).data}
-					{@const nodeData = (d.data as Record<string, Record<string, unknown>>).data}
-					<div class="text value">{commas(Number(nodeData[valueKey] ?? 0))}</div>
+					{@const nodeData = (d.data as Record<string, Record<string, unknown>>)
+						.data}
+					<div class="text value">
+						{commas(Number(nodeData[valueKey] ?? 0))}
+					</div>
 				{/if}
 			</div>
 		</div>

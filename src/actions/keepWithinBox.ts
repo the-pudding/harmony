@@ -5,13 +5,18 @@ type KeepWithinBoxParams = {
 };
 
 function getXY(node: SVGElement) {
-	return node
-		.getAttribute("transform")
-		?.split(",")
-		.map((d) => +d.replace(/[^0-9.]/g, "")) ?? [0, 0];
+	return (
+		node
+			.getAttribute("transform")
+			?.split(",")
+			.map((d) => +d.replace(/[^0-9.]/g, "")) ?? [0, 0]
+	);
 }
 
-const keepWithinBox: Action<SVGElement, KeepWithinBoxParams> = (node, params = {}) => {
+const keepWithinBox: Action<SVGElement, KeepWithinBoxParams> = (
+	node,
+	params = {}
+) => {
 	const check = ({ width }: KeepWithinBoxParams) => {
 		if (width === undefined) return;
 		const { left, right } = node.getBoundingClientRect();

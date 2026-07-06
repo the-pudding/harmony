@@ -28,7 +28,9 @@ const resize: Action<HTMLElement, ResizeParams> = (node, params = {}) => {
 
 	const setObserver = () => {
 		observer?.disconnect();
-		const cb = params.debounce ? debounce(handleResize, params.debounce) : handleResize;
+		const cb = params.debounce
+			? debounce(handleResize, params.debounce)
+			: handleResize;
 		observer = new ResizeObserver(cb);
 		observer.observe(node);
 	};

@@ -139,8 +139,9 @@ export const computeGapFillProgressionMatches = (
 
 	if (candidateWindows.length === 0) return [];
 
-	const uniqueWindows = uniqueBy(candidateWindows, (window) =>
-		`${window.romanTokens.join("-")}|${window.scale}`
+	const uniqueWindows = uniqueBy(
+		candidateWindows,
+		(window) => `${window.romanTokens.join("-")}|${window.scale}`
 	);
 
 	return uniqueWindows

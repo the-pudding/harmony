@@ -12,7 +12,10 @@ import {
 import type { SectionCoverage } from "./greedyProgressionSelection.js";
 import { computeGapFillProgressionMatches } from "./gapFillProgressionAnalysis.js";
 import { emptyCoverage } from "./greedyProgressionSelection.js";
-import type { GroupedSong, SongSection } from "../../progressions/songBrowser.js";
+import type {
+	GroupedSong,
+	SongSection
+} from "../../progressions/songBrowser.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 
 const assertNoOverlappingCoverage = (coverage: SectionCoverage): void => {
@@ -28,7 +31,8 @@ const assertAnnotationsDisjoint = (
 	for (let sectionIndex = 0; sectionIndex < sectionCount; sectionIndex++) {
 		const claimed = new Set<number>();
 		for (const annotation of annotations) {
-			const positions = annotation.highlightPositionsBySection?.[sectionIndex] ?? [];
+			const positions =
+				annotation.highlightPositionsBySection?.[sectionIndex] ?? [];
 			for (const position of positions) {
 				expect(claimed.has(position)).toBe(false);
 				claimed.add(position);
@@ -96,7 +100,16 @@ const vampBridge = makeRomanSection([
 	"iv",
 	"v"
 ]);
-const vampPreChorus = makeRomanSection(["iv", "v", "VI", "i", "iv", "v", "VI", "i"]);
+const vampPreChorus = makeRomanSection([
+	"iv",
+	"v",
+	"VI",
+	"i",
+	"iv",
+	"v",
+	"VI",
+	"i"
+]);
 
 const vampSong: GroupedSong = {
 	songKey: "drake__gods-plan",
@@ -131,7 +144,8 @@ const assertFinalSelectionInvariants = (
 
 	const annotationPositions = song.sections.map((_, sectionIndex) =>
 		annotations.flatMap(
-			(annotation) => annotation.highlightPositionsBySection?.[sectionIndex] ?? []
+			(annotation) =>
+				annotation.highlightPositionsBySection?.[sectionIndex] ?? []
 		)
 	);
 	expect(annotationPositions).toEqual(result.coverage);
@@ -163,7 +177,10 @@ describe("selectFinalProgressions — no-overlap invariants", () => {
 	});
 
 	it("highest in the room still selects i-v-VI-iv without overlaps", () => {
-		const result = selectFinalProgressions(highestInTheRoomSong, coreProgressions);
+		const result = selectFinalProgressions(
+			highestInTheRoomSong,
+			coreProgressions
+		);
 		assertNoOverlappingCoverage(result.coverage);
 		expect(result.gapSelected.map((match) => match.chordProgression)).toContain(
 			"i-v-VI-iv"

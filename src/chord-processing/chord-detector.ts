@@ -19,7 +19,11 @@ const buildChordEvent = (
 	classifier: ChordClassifierInstance,
 	bassAsRoot: boolean
 ): ChordEvent => {
-	const classification = classifier.classify({ bassMidi, trebleMidis, bassAsRoot });
+	const classification = classifier.classify({
+		bassMidi,
+		trebleMidis,
+		bassAsRoot
+	});
 	return {
 		bassNote: midiToNote(bassMidi),
 		trebleNotes: trebleMidis.map(midiToNote),

@@ -19,7 +19,8 @@ export const buildArtistOptions = (songs: SongInput[]): ArtistOption[] => {
 		const score = song.popularityScore ?? 0;
 
 		for (const artist of song.artists) {
-			const scoresBySong = artistSongScores.get(artist) ?? new Map<string, number>();
+			const scoresBySong =
+				artistSongScores.get(artist) ?? new Map<string, number>();
 			scoresBySong.set(key, Math.max(scoresBySong.get(key) ?? 0, score));
 			artistSongScores.set(artist, scoresBySong);
 		}

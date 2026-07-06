@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { LayerCakeContext, LayerCakeTicks } from "$types/layercake";
 	import { getContext } from "svelte";
-	const { width, height, xScale, yRange } = getContext<LayerCakeContext>("LayerCake");
+	const { width, height, xScale, yRange } =
+		getContext<LayerCakeContext>("LayerCake");
 	let {
 		gridlines = true,
 		tickMarks = false,
@@ -11,14 +12,6 @@
 		formatTick = (d: string | number) => String(d),
 		ticks = undefined as LayerCakeTicks
 	} = $props();
-
-
-
-
-
-
-
-
 
 	/** If this is a number, it passes that along to the [d3Scale.ticks](https://github.com/d3/d3-scale) function. If this is an array, hardcodes the ticks to those values. If it's a function, passes along the default tick values and expects an array of tick values in return. If nothing, it uses the default ticks supplied by the D3 function. */
 
@@ -66,7 +59,7 @@
 			y1={($height ?? 0) + 0.5}
 			y2={($height ?? 0) + 0.5}
 			x1="0"
-			x2={($width ?? 0)}
+			x2={$width ?? 0}
 		/>
 	{/if}
 </g>

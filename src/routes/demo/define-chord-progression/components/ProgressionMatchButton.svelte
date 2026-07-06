@@ -50,7 +50,9 @@
 		<span class="prog-name">{match.name}</span>
 	{/if}
 	{#if match.isCoreProgression}
-		<span class="prog-scale"><span class="prog-scale-label">scale:</span> {scaleName}</span>
+		<span class="prog-scale"
+			><span class="prog-scale-label">scale:</span> {scaleName}</span
+		>
 	{/if}
 	<span class="prog-chords">{match.chordProgression}</span>
 	{#if stats}

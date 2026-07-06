@@ -13,7 +13,10 @@ import {
 } from "./pctOfSong.js";
 
 const progressionOfLength = (length: number): ParsedProgressionChord[] =>
-	Array.from({ length: length }, () => ({ display: "I" }) as ParsedProgressionChord);
+	Array.from(
+		{ length: length },
+		() => ({ display: "I" }) as ParsedProgressionChord
+	);
 
 const groupedResult = (
 	sections: GroupedSongSearchResult["sections"]

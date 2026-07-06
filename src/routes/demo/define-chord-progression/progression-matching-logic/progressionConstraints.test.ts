@@ -9,19 +9,47 @@ import {
 describe("hasConsecutivelyRepeatedBlock", () => {
 	it("rejects a progression that is its own unit repeated twice", () => {
 		expect(
-			hasConsecutivelyRepeatedBlock(["I", "vi", "iii", "V", "I", "vi", "iii", "V"])
+			hasConsecutivelyRepeatedBlock([
+				"I",
+				"vi",
+				"iii",
+				"V",
+				"I",
+				"vi",
+				"iii",
+				"V"
+			])
 		).toBe(true);
 	});
 
 	it("rejects a 8-chord progression that repeats a 4-chord block", () => {
 		expect(
-			hasConsecutivelyRepeatedBlock(["IV", "V", "IV", "V", "IV", "V", "IV", "V"])
+			hasConsecutivelyRepeatedBlock([
+				"IV",
+				"V",
+				"IV",
+				"V",
+				"IV",
+				"V",
+				"IV",
+				"V"
+			])
 		).toBe(true);
 	});
 
 	it("rejects an internal consecutive repeat (not starting at index 0)", () => {
 		expect(
-			hasConsecutivelyRepeatedBlock(["ii", "I", "vi", "iii", "V", "I", "vi", "iii", "V"])
+			hasConsecutivelyRepeatedBlock([
+				"ii",
+				"I",
+				"vi",
+				"iii",
+				"V",
+				"I",
+				"vi",
+				"iii",
+				"V"
+			])
 		).toBe(true);
 	});
 
@@ -49,7 +77,16 @@ describe("hasConsecutivelyRepeatedBlock", () => {
 
 	it("allows a longer core progression with no repeating block", () => {
 		expect(
-			hasConsecutivelyRepeatedBlock(["I", "V", "vi", "iii", "IV", "I", "IV", "V"])
+			hasConsecutivelyRepeatedBlock([
+				"I",
+				"V",
+				"vi",
+				"iii",
+				"IV",
+				"I",
+				"IV",
+				"V"
+			])
 		).toBe(false);
 	});
 

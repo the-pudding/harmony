@@ -31,7 +31,8 @@
 			<tr>
 				<td>
 					Does not repeat a consecutive pattern of
-					<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>+ chords within itself
+					<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>+ chords
+					within itself
 				</td>
 				<td>
 					<CodeReference
@@ -43,13 +44,16 @@
 			<tr>
 				<td>
 					Appears at least
-					<span class="const-value">{MIN_PROGRESSION_OCCURRENCES}</span> times in the
-					song (core matching)
+					<span class="const-value">{MIN_PROGRESSION_OCCURRENCES}</span> times in
+					the song (core matching)
 				</td>
 				<td>
 					<CodeReference
 						filename="progressionMatchAnalysis.ts"
-						symbols={["MIN_PROGRESSION_OCCURRENCES", "computeStatsForParsedProgression"]}
+						symbols={[
+							"MIN_PROGRESSION_OCCURRENCES",
+							"computeStatsForParsedProgression"
+						]}
 					/>
 				</td>
 			</tr>
@@ -69,7 +73,10 @@
 				<td>
 					<CodeReference
 						filename="progressionMatchAnalysis.ts"
-						symbols={["matchProgressionIgnoringBassAndExtensions", "SUFFIX_TO_BASE"]}
+						symbols={[
+							"matchProgressionIgnoringBassAndExtensions",
+							"SUFFIX_TO_BASE"
+						]}
 					/>
 				</td>
 			</tr>
@@ -77,7 +84,9 @@
 	</table>
 
 	<section class="overlap-section" aria-labelledby="overlap-criteria-heading">
-		<h3 id="overlap-criteria-heading" class="overlap-heading">Non-overlap rules</h3>
+		<h3 id="overlap-criteria-heading" class="overlap-heading">
+			Non-overlap rules
+		</h3>
 		<p class="overlap-description">
 			No chord position is ever claimed by more than one selected progression.
 		</p>
@@ -91,7 +100,8 @@
 			<tbody>
 				<tr>
 					<td>
-						Occurrences are counted as non-overlapping matches within each section
+						Occurrences are counted as non-overlapping matches within each
+						section
 					</td>
 					<td>
 						<CodeReference
@@ -136,13 +146,17 @@
 				</tr>
 				<tr>
 					<td>
-						Selected gap progressions are also pairwise non-overlapping; highlights
-						show only the chord positions each selection actually claims
+						Selected gap progressions are also pairwise non-overlapping;
+						highlights show only the chord positions each selection actually
+						claims
 					</td>
 					<td>
 						<CodeReference
 							filename="finalProgressionSelection.ts"
-							symbols={["selectFinalProgressions", "buildFinalChordAnnotations"]}
+							symbols={[
+								"selectFinalProgressions",
+								"buildFinalChordAnnotations"
+							]}
 						/>
 						<CodeReference
 							filename="greedyProgressionSelection.ts"

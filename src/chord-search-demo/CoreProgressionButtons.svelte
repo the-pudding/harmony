@@ -1,5 +1,7 @@
 <script lang="ts">
-	import coreProgressions, { type CoreProgression } from "$data/core-progressions.js";
+	import coreProgressions, {
+		type CoreProgression
+	} from "$data/core-progressions.js";
 	import { romanTokensToParsedProgression } from "../chord-processing/romanNumerals.js";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 
@@ -16,7 +18,10 @@
 		const searchChords = chordSearchDemoStore.searchChords;
 		if (searchChords.length === 0) return null;
 		for (const p of progressions) {
-			const parsed = romanTokensToParsedProgression(p.chordProgression.split("-"), p.scale);
+			const parsed = romanTokensToParsedProgression(
+				p.chordProgression.split("-"),
+				p.scale
+			);
 			if (!parsed || parsed.length !== searchChords.length) continue;
 			const isMatch = parsed.every(
 				(chord, i) =>
@@ -34,7 +39,9 @@
 
 	const handleProgressionClick = (chordProgression: string) => {
 		if (onselect !== undefined) {
-			onselect(activeProgression === chordProgression ? null : chordProgression);
+			onselect(
+				activeProgression === chordProgression ? null : chordProgression
+			);
 			return;
 		}
 		if (activeProgression === chordProgression) {
@@ -42,7 +49,9 @@
 			return;
 		}
 		const tokens = chordProgression.split("-");
-		const p = progressions.find((prog) => prog.chordProgression === chordProgression);
+		const p = progressions.find(
+			(prog) => prog.chordProgression === chordProgression
+		);
 		const parsed = romanTokensToParsedProgression(tokens, p?.scale);
 		if (!parsed) return;
 		chordSearchDemoStore.getProgressionSearch().setProgression(parsed);

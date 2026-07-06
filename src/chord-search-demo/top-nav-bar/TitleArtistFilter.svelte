@@ -13,7 +13,9 @@
 	style="--song-filter-width: {TOP_NAV_SONG_FILTER_WIDTH}; --filter-input-height: {TOP_NAV_FILTER_INPUT_HEIGHT};"
 	value={chordSearchDemoStore.titleFilter}
 	oninput={(event) =>
-		chordSearchDemoStore.setTitleFilter((event.currentTarget as HTMLInputElement).value)}
+		chordSearchDemoStore.setTitleFilter(
+			(event.currentTarget as HTMLInputElement).value
+		)}
 />
 
 <style>

@@ -11,7 +11,9 @@ export type FigureMapFeature = Feature<Point> & {
 };
 
 export type FigureCustomData = {
-	projectionFn?: (coordinates: number[] | readonly number[]) => [number, number];
+	projectionFn?: (
+		coordinates: number[] | readonly number[]
+	) => [number, number];
 	pathFn?: GeoPath<unknown, GeoPermissibleObjects>;
 	projectionObject?: GeoPermissibleObjects;
 };

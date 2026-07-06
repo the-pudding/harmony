@@ -86,7 +86,9 @@
 	const hasData = $derived(chartData.length > 0);
 
 	let containerWidth = $state(0);
-	let brushDrag = $state<{ startPlotX: number; currentPlotX: number } | null>(null);
+	let brushDrag = $state<{ startPlotX: number; currentPlotX: number } | null>(
+		null
+	);
 	let tooltip = $state<{
 		year: number;
 		count: number;
@@ -312,15 +314,17 @@
 			overlay.releasePointerCapture(event.pointerId);
 		}
 
-	const { startPlotX, currentPlotX } = brushDrag;
-	brushDrag = null;
+		const { startPlotX, currentPlotX } = brushDrag;
+		brushDrag = null;
 
-	if (startPlotX === currentPlotX) {
-		chordSearchDemoStore.clearYearRangeFilter();
-		return;
-	}
+		if (startPlotX === currentPlotX) {
+			chordSearchDemoStore.clearYearRangeFilter();
+			return;
+		}
 
-	chordSearchDemoStore.setYearRangeFilter(yearRangeFromPlotXs(startPlotX, currentPlotX));
+		chordSearchDemoStore.setYearRangeFilter(
+			yearRangeFromPlotXs(startPlotX, currentPlotX)
+		);
 	};
 
 	const onBrushPointerCancel = (event: PointerEvent) => {

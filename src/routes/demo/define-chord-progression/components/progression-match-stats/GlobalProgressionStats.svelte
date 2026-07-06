@@ -17,9 +17,8 @@
 </script>
 
 <span class="stats" class:active
-	>matched in <span class="match-rate">{matchRateLabel}%</span> of all songs <span class="song-count"
-		>({matchingSongLabel})</span
-	></span
+	>matched in <span class="match-rate">{matchRateLabel}%</span> of all songs
+	<span class="song-count">({matchingSongLabel})</span></span
 >
 <ProgressionCoverageBar percent={matchRatePercent} {active} />
 
