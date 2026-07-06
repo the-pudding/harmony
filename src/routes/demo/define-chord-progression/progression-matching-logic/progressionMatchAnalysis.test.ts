@@ -12,7 +12,8 @@ import {
 	computeGapOnlyStats,
 	parseCoreProgressions,
 	findMatchingCoreProgressionsForSong,
-	buildProgressionMatchRates
+	buildProgressionMatchRates,
+	formatMatchRatePercent
 } from "./progressionMatchAnalysis.js";
 import coreProgressions from "$data/core-progressions.js";
 
@@ -224,22 +225,55 @@ describe("findMatchingCoreProgressionsForSong", () => {
 });
 
 describe("buildProgressionMatchRates", () => {
-	it("returns empty object when totalSongs is 0", () => {
-		expect(buildProgressionMatchRates([["I-V-vi-IV"]], 0)).toEqual({});
+	it("returns empty objects when totalSongs is 0", () => {
+		expect(buildProgressionMatchRates([["I-V-vi-IV"]], 0)).toEqual({
+			progressionMatchRates: {},
+			progressionMatchCounts: {}
+		});
 	});
 
-	it("computes the correct percentage rounded to nearest integer", () => {
-		const rates = buildProgressionMatchRates(
-			[["I-V-vi-IV"], ["I-V-vi-IV"], ["I-vi-IV-V"]],
-			4
-		);
-		expect(rates["I-V-vi-IV"]).toBe(50);
-		expect(rates["I-vi-IV-V"]).toBe(25);
+	it("computes the correct percentage without rounding sub-1% values away", () => {
+		const { progressionMatchRates, progressionMatchCounts } =
+			buildProgressionMatchRates(
+				[["I-V-vi-IV"], ["I-V-vi-IV"], ["I-vi-IV-V"]],
+				4
+			);
+		expect(progressionMatchRates["I-V-vi-IV"]).toBe(50);
+		expect(progressionMatchRates["I-vi-IV-V"]).toBe(25);
+		expect(progressionMatchCounts["I-V-vi-IV"]).toBe(2);
+		expect(progressionMatchCounts["I-vi-IV-V"]).toBe(1);
+	});
+
+	it("preserves fractional percentages below 1%", () => {
+		const { progressionMatchRates, progressionMatchCounts } =
+			buildProgressionMatchRates([["I-V-vi-IV"]], 1000);
+		expect(progressionMatchRates["I-V-vi-IV"]).toBe(0.1);
+		expect(progressionMatchCounts["I-V-vi-IV"]).toBe(1);
 	});
 
 	it("progressions absent from all lists are not present in the result", () => {
-		const rates = buildProgressionMatchRates([["I-V-vi-IV"]], 2);
-		expect(rates["I-vi-iii-V"]).toBeUndefined();
+		const { progressionMatchRates } = buildProgressionMatchRates(
+			[["I-V-vi-IV"]],
+			2
+		);
+		expect(progressionMatchRates["I-vi-iii-V"]).toBeUndefined();
+	});
+});
+
+describe("formatMatchRatePercent", () => {
+	it("shows integers for rates at or above 1%", () => {
+		expect(formatMatchRatePercent(50)).toBe("50");
+		expect(formatMatchRatePercent(1)).toBe("1");
+	});
+
+	it("shows up to two decimal places for non-zero rates below 1%", () => {
+		expect(formatMatchRatePercent(0.1)).toBe("0.1");
+		expect(formatMatchRatePercent(0.12)).toBe("0.12");
+		expect(formatMatchRatePercent(0.125)).toBe("0.13");
+	});
+
+	it("shows 0 for zero rates", () => {
+		expect(formatMatchRatePercent(0)).toBe("0");
 	});
 });
 

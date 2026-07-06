@@ -13,6 +13,7 @@ export type { SongCoverageEntry };
 export type AllSongsCoverageResult = {
 	songCoverages: SongCoverageEntry[];
 	progressionMatchRates: Record<string, number>;
+	progressionMatchCounts: Record<string, number>;
 };
 
 const WORKER_POOL_MAX = 8;
@@ -87,7 +88,11 @@ export const computeCoverageOfAllSongs = async (
 	requestId: number
 ): Promise<AllSongsCoverageResult> => {
 	if (workerHandles.length === 0) {
-		return { songCoverages: [], progressionMatchRates: {} };
+		return {
+			songCoverages: [],
+			progressionMatchRates: {},
+			progressionMatchCounts: {}
+		};
 	}
 
 	await Promise.all(workerHandles.map(({ initDone }) => initDone));
@@ -106,12 +111,13 @@ export const computeCoverageOfAllSongs = async (
 	);
 
 	const songCoverages = chunkResults.flat();
-	const progressionMatchRates = buildProgressionMatchRates(
-		songCoverages.map((s) => s.matchingProgressions),
-		songCoverages.length
-	);
+	const { progressionMatchRates, progressionMatchCounts } =
+		buildProgressionMatchRates(
+			songCoverages.map((s) => s.matchingProgressions),
+			songCoverages.length
+		);
 
-	return { songCoverages, progressionMatchRates };
+	return { songCoverages, progressionMatchRates, progressionMatchCounts };
 };
 
 export const terminateCoverageWorkerPool = (): void => {

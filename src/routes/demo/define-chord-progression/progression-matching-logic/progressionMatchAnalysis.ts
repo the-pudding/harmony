@@ -20,6 +20,22 @@ import { isSelfRepeatingProgression } from "./progressionConstraints.js";
 
 export const MIN_PROGRESSION_OCCURRENCES = 2;
 
+export const MATCH_RATE_INTEGER_DISPLAY_THRESHOLD_PERCENT = 1;
+export const MATCH_RATE_LOW_PRECISION_DECIMAL_PLACES = 2;
+const PERCENT_MULTIPLIER = 100;
+
+export const formatMatchRatePercent = (percent: number): string => {
+	if (percent >= MATCH_RATE_INTEGER_DISPLAY_THRESHOLD_PERCENT) {
+		return String(Math.round(percent));
+	}
+	if (percent <= 0) {
+		return "0";
+	}
+	return Number(
+		percent.toFixed(MATCH_RATE_LOW_PRECISION_DECIMAL_PLACES)
+	).toString();
+};
+
 export type ChordHighlightPalette = {
 	fill: string;
 	border: string;
@@ -206,19 +222,27 @@ export const findMatchingCoreProgressionsForSong = (
 export const buildProgressionMatchRates = (
 	matchingLists: string[][],
 	totalSongs: number
-): Record<string, number> => {
-	if (totalSongs === 0) return {};
+): {
+	progressionMatchRates: Record<string, number>;
+	progressionMatchCounts: Record<string, number>;
+} => {
+	if (totalSongs === 0) {
+		return { progressionMatchRates: {}, progressionMatchCounts: {} };
+	}
 	const counts: Record<string, number> = {};
 	for (const list of matchingLists) {
 		for (const chordProgression of list) {
 			counts[chordProgression] = (counts[chordProgression] ?? 0) + 1;
 		}
 	}
-	const rates: Record<string, number> = {};
+	const progressionMatchRates: Record<string, number> = {};
+	const progressionMatchCounts: Record<string, number> = {};
 	for (const [chordProgression, count] of Object.entries(counts)) {
-		rates[chordProgression] = Math.round((count / totalSongs) * 100);
+		progressionMatchRates[chordProgression] =
+			(count / totalSongs) * PERCENT_MULTIPLIER;
+		progressionMatchCounts[chordProgression] = count;
 	}
-	return rates;
+	return { progressionMatchRates, progressionMatchCounts };
 };
 
 export const buildCoreProgressionDisplayMatches = (

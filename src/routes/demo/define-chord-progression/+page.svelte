@@ -262,6 +262,7 @@
 						selectedSong={selectedSong ?? null}
 						activeProgression={pinnedProgression}
 						progressionMatchRates={allSongsCoverageResult?.progressionMatchRates ?? null}
+						progressionMatchCounts={allSongsCoverageResult?.progressionMatchCounts ?? null}
 						onselect={handleProgressionSelect}
 					/>
 

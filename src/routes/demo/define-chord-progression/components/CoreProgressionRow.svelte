@@ -15,10 +15,18 @@
 		selectedSong: GroupedSong | null;
 		activeProgression: string | null;
 		progressionMatchRates: Record<string, number> | null;
+		progressionMatchCounts: Record<string, number> | null;
 		onselect: (chordProgression: string) => void;
 	};
 
-	let { coreProgressions, selectedSong, activeProgression, progressionMatchRates, onselect }: Props = $props();
+	let {
+		coreProgressions,
+		selectedSong,
+		activeProgression,
+		progressionMatchRates,
+		progressionMatchCounts,
+		onselect
+	}: Props = $props();
 
 	const displayMatches = $derived.by(() => {
 		const matches = buildCoreProgressionDisplayMatches(coreProgressions, selectedSong);
@@ -38,6 +46,7 @@
 	{#each displayMatches as match (match.chordProgression)}
 		{@const outline = matchOutline(match)}
 		{@const matchRate = progressionMatchRates?.[match.chordProgression] ?? 0}
+		{@const matchingSongCount = progressionMatchCounts?.[match.chordProgression] ?? 0}
 		<div class="core-progression-row-item">
 			<ProgressionMatchButton
 				{match}
@@ -47,7 +56,11 @@
 				{onselect}
 			>
 				{#snippet stats({ active })}
-					<GlobalProgressionStats matchRatePercent={matchRate} {active} />
+					<GlobalProgressionStats
+						matchRatePercent={matchRate}
+						{matchingSongCount}
+						{active}
+					/>
 				{/snippet}
 			</ProgressionMatchButton>
 		</div>
