@@ -1,5 +1,5 @@
 import CoverageWorker from "./worker.ts?worker";
-import type { GroupedSong } from "../../progressions/songBrowser.js";
+import type { GroupedSong } from "../../../../data/songBrowser.js";
 import { buildProgressionMatchRates } from "../progression-matching-logic/progressionMatchAnalysis.js";
 import type {
 	CoverageWorkerInitMessage,

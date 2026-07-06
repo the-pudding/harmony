@@ -5,8 +5,8 @@ import type { ParsedProgressionChord } from "../../../../chord-processing/types.
 import type {
 	GroupedSong,
 	SongSection
-} from "../../progressions/songBrowser.js";
-import { groupSongs } from "../../progressions/songBrowser.js";
+} from "../../../../data/songBrowser.js";
+import { groupSongs } from "../../../../data/songBrowser.js";
 import { computeGapFillProgressionMatches } from "./gapFillProgressionAnalysis.js";
 import { selectFinalProgressions } from "./finalProgressionSelection.js";
 import { emptyCoverage } from "./greedyProgressionSelection.js";

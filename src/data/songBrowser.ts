@@ -2,22 +2,22 @@ import {
 	formatChordName,
 	hasDistinctBass,
 	noteNameToPitchClass
-} from "../../../chord-processing/index.js";
-import { NOTE_NAMES } from "../../../chord-processing/chord-classifier/notes.js";
+} from "../chord-processing/index.js";
+import { NOTE_NAMES } from "../chord-processing/chord-classifier/notes.js";
 import {
 	parseSongTitleAndSectionLabel,
 	resolveSongKey
-} from "../../../chord-processing/songIdentity.js";
+} from "../chord-processing/songIdentity.js";
 import {
 	SCALE_INTERVALS,
 	type ScaleName
-} from "../../../chord-processing/scale-intervals.js";
+} from "../chord-processing/scale-intervals.js";
 import type {
 	ParsedProgressionChord,
 	ProgressionChordInput,
 	SongDataSource,
 	SongInput
-} from "../../../chord-processing/types.js";
+} from "../chord-processing/types.js";
 
 export type SongSection = {
 	label: string | null;
@@ -64,9 +64,6 @@ export const resolveSectionScale = (
 		? scale
 		: inferScaleFromRomanTokens(romanTokens);
 
-// Prefer the section's real, scale-aware key from the source data (e.g.
-// "G# harmonic minor"); fall back to guessing a major/minor tonic from the
-// roman tokens only when the source omitted the key or scale.
 export const sectionKeyLabel = (
 	key: string | undefined,
 	scale: string | undefined,
@@ -112,7 +109,6 @@ const parseChord = (chord: ProgressionChordInput): ParsedProgressionChord => {
 	return { ...structured, display: formatChordName(structured) };
 };
 
-// Order sections the way they'd appear in a lead sheet, not alphabetically.
 const SECTION_RANK_PATTERNS: Array<(label: string) => boolean> = [
 	(s) => s.startsWith("intro"),
 	(s) => s.startsWith("verse"),
@@ -188,7 +184,6 @@ export const groupSongs = (songs: SongInput[]): GroupedSong[] => {
 	});
 };
 
-// A minimal CSV line parser that handles quoted fields containing commas (e.g. multi-artist credits).
 const parseCsvLine = (line: string): string[] => {
 	const fields: string[] = [];
 	let current = "";

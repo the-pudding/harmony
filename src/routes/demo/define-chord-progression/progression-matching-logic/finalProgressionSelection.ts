@@ -1,5 +1,5 @@
 import type { CoreProgression } from "$data/core-progressions.js";
-import type { GroupedSong } from "../../progressions/songBrowser.js";
+import type { GroupedSong } from "../../../../data/songBrowser.js";
 import {
 	computeCoveredPositionsBySection,
 	computeGapOnlyCoveredPositionsBySection,

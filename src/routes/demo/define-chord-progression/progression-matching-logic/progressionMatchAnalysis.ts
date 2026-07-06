@@ -2,7 +2,7 @@ import type { CoreProgression } from "$data/core-progressions.js";
 import type {
 	GroupedSong,
 	SongSection
-} from "../../progressions/songBrowser.js";
+} from "../../../../data/songBrowser.js";
 import type { ScaleName } from "../../../../chord-processing/scales.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import {

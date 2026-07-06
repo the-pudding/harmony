@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import songs from "../../../../../static/data/songs.json";
 import coreProgressions from "$data/core-progressions.js";
-import { groupSongs } from "../../progressions/songBrowser.js";
+import { groupSongs } from "../../../../data/songBrowser.js";
 import {
 	computeProgressionMatches,
 	computeStatsForParsedProgression

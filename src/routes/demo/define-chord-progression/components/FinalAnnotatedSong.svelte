@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { GroupedSong } from "../../progressions/songBrowser.js";
+	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type {
 		ProgressionWithMatchStats,
 		ChordAnnotation

@@ -18,7 +18,7 @@
 	import TopNavBar from "./top-nav-bar/TopNavBar.svelte";
 	import ChordSearchUrlSync from "./ChordSearchUrlSync.svelte";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
-	import { fetchSongInputs } from "../routes/demo/progressions/songBrowserData.js";
+	import { fetchSongInputs } from "../data/songBrowserData.js";
 	import {
 		CHORD_SEARCH_DEMO_HORIZONTAL_MARGIN_PX,
 		CLEAR_SENTINEL_MIDIS,

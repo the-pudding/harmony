@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { CoreProgression } from "$data/core-progressions.js";
-	import type { GroupedSong } from "../../progressions/songBrowser.js";
+	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import { buildCoreProgressionDisplayMatches } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import { matchOutline } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";

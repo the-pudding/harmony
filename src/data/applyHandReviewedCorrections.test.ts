@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { correctedSongContentsToSongInputs } from "./applyHandReviewedCorrections.js";
-import { groupSongs } from "../routes/demo/progressions/songBrowser.js";
+import { groupSongs } from "./songBrowser.js";
 import type { CorrectedSongContents } from "./hand-reviewed-songs.js";
 
 const DAMAGED_CONTENTS: CorrectedSongContents = {

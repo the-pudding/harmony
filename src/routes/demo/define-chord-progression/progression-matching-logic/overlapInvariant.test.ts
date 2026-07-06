@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import songs from "../../../../../static/data/songs.json";
 import coreProgressions from "$data/core-progressions.js";
-import { groupSongs } from "../../progressions/songBrowser.js";
+import { groupSongs } from "../../../../data/songBrowser.js";
 import { correctedSongContentsToSongInputs } from "../../../../data/applyHandReviewedCorrections.js";
 import { handReviewedSongs } from "../../../../data/hand-reviewed-songs.js";
 import type { ChordAnnotation } from "./progressionMatchAnalysis.js";
@@ -15,7 +15,7 @@ import { emptyCoverage } from "./greedyProgressionSelection.js";
 import type {
 	GroupedSong,
 	SongSection
-} from "../../progressions/songBrowser.js";
+} from "../../../../data/songBrowser.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 
 const assertNoOverlappingCoverage = (coverage: SectionCoverage): void => {

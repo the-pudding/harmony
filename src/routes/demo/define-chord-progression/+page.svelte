@@ -33,14 +33,14 @@
 		applySubsetFlag
 	} from "./progression-matching-logic/strictSubsetProgressions.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
-	import { type GroupedSong } from "../progressions/songBrowser.js";
+	import { type GroupedSong } from "../../../data/songBrowser.js";
 	import {
 		fetchGroupedAllSongs,
 		fetchGroupedPopularSongs,
 		findGroupedSongByKey,
 		sortAllSongs,
 		sortPopularSongs
-	} from "../progressions/songBrowserData.js";
+	} from "../../../data/songBrowserData.js";
 	import DefineChordProgressionUrlSync from "./DefineChordProgressionUrlSync.svelte";
 	import { EXPLAINED_THRESHOLD_PERCENT } from "./constants.js";
 

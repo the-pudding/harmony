@@ -2,8 +2,8 @@
 	import { untrack } from "svelte";
 	import { pushState, replaceState } from "$app/navigation";
 	import { page } from "$app/state";
-	import { type GroupedSong } from "../progressions/songBrowser.js";
-	import { isGroupedSongKeyKnown } from "../progressions/songBrowserData.js";
+	import { type GroupedSong } from "../../../data/songBrowser.js";
+	import { isGroupedSongKeyKnown } from "../../../data/songBrowserData.js";
 	import {
 		areDefineChordProgressionUrlStatesEqual,
 		buildDefineChordProgressionUrlState,

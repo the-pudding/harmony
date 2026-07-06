@@ -47,12 +47,6 @@
 				>chord search</a
 			>
 			<a
-				href="/demo/progressions"
-				class="page-link"
-				class:active={page.url.pathname === "/demo/progressions"}
-				>progressions</a
-			>
-			<a
 				href="/demo/define-chord-progression"
 				class="page-link"
 				class:active={page.url.pathname === "/demo/define-chord-progression"}

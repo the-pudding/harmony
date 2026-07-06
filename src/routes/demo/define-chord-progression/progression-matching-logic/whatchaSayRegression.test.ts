@@ -4,8 +4,8 @@ import coreProgressions from "$data/core-progressions.js";
 import type {
 	GroupedSong,
 	SongSection
-} from "../../progressions/songBrowser.js";
-import { groupSongs } from "../../progressions/songBrowser.js";
+} from "../../../../data/songBrowser.js";
+import { groupSongs } from "../../../../data/songBrowser.js";
 import {
 	buildColoredHighlightSegments,
 	computeCoveredPositionsBySection,

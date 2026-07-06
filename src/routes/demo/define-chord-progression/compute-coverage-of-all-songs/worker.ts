@@ -1,5 +1,5 @@
 import coreProgressionsData from "$data/core-progressions.js";
-import type { GroupedSong } from "../../progressions/songBrowser.js";
+import type { GroupedSong } from "../../../../data/songBrowser.js";
 import { selectFinalProgressions } from "../progression-matching-logic/finalProgressionSelection.js";
 
 export type SongCoverageEntry = {

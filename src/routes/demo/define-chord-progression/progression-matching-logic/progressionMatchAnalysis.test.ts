@@ -3,7 +3,7 @@ import { romanTokensToParsedProgression } from "../../../../chord-processing/rom
 import type {
 	GroupedSong,
 	SongSection
-} from "../../progressions/songBrowser.js";
+} from "../../../../data/songBrowser.js";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import {
 	computeProgressionMatches,

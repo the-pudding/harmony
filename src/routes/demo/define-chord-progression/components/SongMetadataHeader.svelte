@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { SONG_DATA_SOURCE_TITLE } from "../../../../chord-search-demo/constants.js";
 	import { buildYouTubeSearchUrl } from "../../../../chord-search-demo/youtubeSearch.js";
-	import type { GroupedSong } from "../../progressions/songBrowser.js";
+	import type { GroupedSong } from "../../../../data/songBrowser.js";
 
 	type Props = {
 		song: GroupedSong;

@@ -1,5 +1,5 @@
-import { applyHandReviewedCorrections } from "../../../data/applyHandReviewedCorrections.js";
-import type { SongInput } from "../../../chord-processing/types.js";
+import { applyHandReviewedCorrections } from "./applyHandReviewedCorrections.js";
+import type { SongInput } from "../chord-processing/types.js";
 import { groupSongs, type GroupedSong } from "./songBrowser.js";
 
 export const POPULAR_SONGS_DATA_URL = "/data/popular-songs.json";
