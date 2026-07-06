@@ -49,6 +49,13 @@ const coreProgressions: CoreProgression[] = [
 		description: ""
 	},
 	{
+		name: "whatcha say",
+		chordProgression: "IV-I-vi-V",
+		scale: "major",
+		description:
+			"Similar strengths to other four chord classics, but starting on the IV makes it feel fresh/yearn-y. Peaked in mid 2010s"
+	},
+	{
 		name: "mixolydian vamp",
 		chordProgression: "I-bVII-IV",
 		scale: "major",
