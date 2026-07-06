@@ -20,6 +20,27 @@ export type HandReviewedSong = {
 
 export const handReviewedSongs: HandReviewedSong[] = [
 	{
+		id: "travis-scott__stargazing",
+		technicalNotes:
+			"Good attempt from the original HT, but the harmony is subtle and bass-driven, and they didn't quite get it.",
+		correctedSongContents: {
+			sections: [
+				...[
+					"Intro",
+					"Chorus",
+					"Post-Chorus",
+					"Verse"
+					/* part 2 is basically just 1 chord, not a progression */
+				].map((name) => ({
+					name,
+					key: "G",
+					scale: "minor",
+					romanTokens: ["i", "VI", "V"]
+				}))
+			]
+		}
+	},
+	{
 		id: "jonas-brothers__burnin-up",
 		technicalNotes:
 			"Original basically correct, they just missed the bII at the end of the bridge and listed just one verse.",
