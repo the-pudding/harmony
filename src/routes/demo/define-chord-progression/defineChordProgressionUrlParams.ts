@@ -46,3 +46,13 @@ export const areDefineChordProgressionUrlStatesEqual = (
 ): boolean =>
 	first.song === second.song &&
 	first.songsContextExpanded === second.songsContextExpanded;
+
+export const shouldPushSongHistoryChange = (
+	currentUrlState: DefineChordProgressionUrlState,
+	desiredState: DefineChordProgressionUrlState,
+	isSongKeyKnown: (songKey: string) => boolean
+): boolean =>
+	currentUrlState.song !== desiredState.song &&
+	currentUrlState.song !== "" &&
+	isSongKeyKnown(currentUrlState.song) &&
+	isSongKeyKnown(desiredState.song);

@@ -1,9 +1,7 @@
 <script lang="ts">
 	import coreProgressionsData from "$data/core-progressions.js";
 	import type { CoreProgression } from "$data/core-progressions.js";
-	import { onMount, onDestroy, untrack } from "svelte";
-	import { replaceState } from "$app/navigation";
-	import { page } from "$app/state";
+	import { onMount, onDestroy } from "svelte";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
 	import SongSelectDropdown from "./components/SongSelectDropdown.svelte";
@@ -34,17 +32,10 @@
 		fetchGroupedAllSongs,
 		fetchGroupedPopularSongs,
 		findGroupedSongByKey,
-		isGroupedSongKeyKnown,
 		sortAllSongs,
 		sortPopularSongs
 	} from "../progressions/songBrowserData.js";
-	import {
-		areDefineChordProgressionUrlStatesEqual,
-		buildDefineChordProgressionUrlState,
-		defineChordProgressionUrlStateToQueryString,
-		readDefineChordProgressionUrlState,
-		type DefineChordProgressionUrlState
-	} from "./defineChordProgressionUrlParams.js";
+	import DefineChordProgressionUrlSync from "./DefineChordProgressionUrlSync.svelte";
 	import { EXPLAINED_THRESHOLD_PERCENT } from "./constants.js";
 
 	let popularSongs = $state<GroupedSong[]>([]);
@@ -58,61 +49,7 @@
 	let pinnedProgression = $state<string | null>(null);
 	let showSongsContext = $state(false);
 	const coreProgressions: CoreProgression[] = coreProgressionsData;
-	let urlInitialized = $state(false);
-	let applyingFromUrl = $state(false);
 	let fullSongsLoadPromise = $state<Promise<GroupedSong[]> | null>(null);
-
-	const localUrlState = (): DefineChordProgressionUrlState =>
-		buildDefineChordProgressionUrlState({
-			selectedSongKey: selectedKey,
-			songsContextExpanded: showSongsContext
-		});
-
-	const applyUrlStateToPage = (urlState: DefineChordProgressionUrlState) => {
-		if (
-			urlInitialized &&
-			areDefineChordProgressionUrlStatesEqual(urlState, localUrlState())
-		) {
-			return;
-		}
-
-		applyingFromUrl = true;
-		try {
-			const urlSongKey = urlState.song;
-			if (
-				urlSongKey &&
-				!isGroupedSongKeyKnown(searchableSongs, urlSongKey) &&
-				fullSongs === null &&
-				!loadingFullSongs
-			) {
-				void ensureFullSongsLoaded();
-				return;
-			}
-			if (urlSongKey && isGroupedSongKeyKnown(searchableSongs, urlSongKey)) {
-				selectedKey = urlSongKey;
-			} else if (!urlInitialized) {
-				selectedKey = baseList[0]?.songKey ?? "";
-			}
-			showSongsContext = urlState.songsContextExpanded;
-			urlInitialized = true;
-		} finally {
-			applyingFromUrl = false;
-		}
-	};
-
-	const syncPageStateToUrl = () => {
-		const desiredState = localUrlState();
-		const currentUrlState = readDefineChordProgressionUrlState(page.url.searchParams);
-
-		if (areDefineChordProgressionUrlStatesEqual(desiredState, currentUrlState)) return;
-
-		const queryString = defineChordProgressionUrlStateToQueryString(desiredState);
-		const nextUrl = queryString
-			? `${page.url.pathname}?${queryString}`
-			: page.url.pathname;
-
-		replaceState(nextUrl, page.state);
-	};
 
 	const ensureFullSongsLoaded = (): Promise<GroupedSong[]> => {
 		if (fullSongs !== null) return Promise.resolve(fullSongs);
@@ -248,39 +185,6 @@
 			: []
 	);
 
-	const isSongKeyKnown = (songKey: string): boolean =>
-		isGroupedSongKeyKnown(searchableSongs, songKey);
-
-	$effect(() => {
-		if (loading || popularSongs.length === 0) return;
-
-		page.url.search;
-
-		untrack(() => {
-			applyUrlStateToPage(readDefineChordProgressionUrlState(page.url.searchParams));
-		});
-	});
-
-	$effect(() => {
-		if (!urlInitialized || applyingFromUrl) return;
-
-		showPopularOnly;
-		baseList;
-
-		if (selectedKey && isSongKeyKnown(selectedKey)) return;
-
-		selectedKey = baseList[0]?.songKey ?? "";
-	});
-
-	$effect(() => {
-		if (!urlInitialized || loading || applyingFromUrl) return;
-
-		selectedKey;
-		showSongsContext;
-
-		untrack(syncPageStateToUrl);
-	});
-
 	$effect(() => {
 		selectedKey;
 		pinnedProgression = null;
@@ -313,6 +217,17 @@
 </svelte:head>
 
 <div class="page" style="--top-nav-height: {TOP_NAV_HEIGHT};">
+	<DefineChordProgressionUrlSync
+		songsReady={!loading && popularSongs.length > 0}
+		{showPopularOnly}
+		{searchableSongs}
+		{baseList}
+		{fullSongs}
+		{loadingFullSongs}
+		onEnsureFullSongsLoaded={ensureFullSongsLoaded}
+		bind:selectedKey
+		bind:showSongsContext
+	/>
 	<TopNavBar showSearch={false} />
 
 	<div class="content">
