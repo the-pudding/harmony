@@ -106,6 +106,13 @@ const coreProgressions: CoreProgression[] = [
 		description: ""
 	},
 	{
+		name: "dorian build up",
+		chordProgression: "ii-I-V",
+		scale: "major",
+		description:
+			"experimental: game up in Good 4 U prominently, it's sort of a spin on ii-V-I, but doesn't require the jazzy extensions to sound fresh..."
+	},
+	{
 		name: "andalusian cadence",
 		chordProgression: "i-VII-VI-V",
 		scale: "minor",
