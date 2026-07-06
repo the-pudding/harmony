@@ -32,7 +32,8 @@ export const selectFinalProgressions = (
 	const gapSelection = greedilySelectProgressions(
 		song,
 		gapCandidates,
-		coreSelection.coverage
+		coreSelection.coverage,
+		{ clipOverlap: true }
 	);
 
 	return {

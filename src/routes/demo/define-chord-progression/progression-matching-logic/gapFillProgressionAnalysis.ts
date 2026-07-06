@@ -19,7 +19,10 @@ import {
 	MAX_PROGRESSION_LENGTH,
 	isSelfRepeatingProgression
 } from "./progressionConstraints.js";
-import type { SectionCoverage } from "./greedyProgressionSelection.js";
+import {
+	hasUncoveredCoverage,
+	type SectionCoverage
+} from "./greedyProgressionSelection.js";
 
 const coreProgressionNameByChordProgression = new Map(
 	coreProgressions.map((progression) => [
@@ -87,14 +90,6 @@ const uniqueBy = <T>(items: T[], keyOf: (item: T) => string): T[] => {
 	});
 };
 
-const hasOverlapWithCoverage = (
-	newPositions: SectionCoverage,
-	existing: SectionCoverage
-): boolean =>
-	newPositions.some((positions, sectionIndex) =>
-		positions.some((pos) => (existing[sectionIndex] ?? []).includes(pos))
-	);
-
 const toGapFillMatch = (
 	song: GroupedSong,
 	{ romanTokens, parsedProgression, scale }: CandidateWindow
@@ -156,12 +151,11 @@ export const computeGapFillProgressionMatches = (
 		.filter((match): match is ProgressionWithMatchStats => match !== null)
 		.filter((match) => !isSelfRepeatingProgression(match.chordProgression))
 		.filter((match) => !match.isCoreProgression)
-		.filter(
-			(match) =>
-				!hasOverlapWithCoverage(
-					computeCoveredPositionsBySection(song, match.parsedProgression),
-					initialCoverage
-				)
+		.filter((match) =>
+			hasUncoveredCoverage(
+				computeCoveredPositionsBySection(song, match.parsedProgression),
+				initialCoverage
+			)
 		)
 		.sort(
 			(a, b) =>
