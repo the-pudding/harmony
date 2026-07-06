@@ -82,6 +82,7 @@
 	.prog-name {
 		font-size: 0.75rem;
 		color: inherit;
+		white-space: nowrap;
 	}
 
 	.prog-chords {

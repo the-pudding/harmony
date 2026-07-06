@@ -168,7 +168,7 @@ const coreProgressions: CoreProgression[] = [
 		description: ""
 	},
 	{
-		name: "pop minor",
+		name: "pop minor (poker face)",
 		chordProgression: "i-VI-III-VII",
 		scale: "minor",
 		description: ""
