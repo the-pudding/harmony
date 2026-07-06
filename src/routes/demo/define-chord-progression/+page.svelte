@@ -10,6 +10,7 @@
 	import ProgressionMatchTable from "./components/ProgressionMatchTable.svelte";
 	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
 	import ProgressionDefinitionCriteriaTable from "./components/ProgressionDefinitionCriteriaTable.svelte";
+	import CollapsiblePanel from "./components/CollapsiblePanel.svelte";
 	import CoreProgressionRow from "./components/CoreProgressionRow.svelte";
 	import SongCoverageBeeswarm from "./components/SongCoverageBeeswarm.svelte";
 	import {
@@ -302,9 +303,6 @@
 			pinnedProgression === chordProgression ? null : chordProgression;
 	}
 
-	function handleSongsContextToggle() {
-		showSongsContext = !showSongsContext;
-	}
 </script>
 
 <svelte:head>
@@ -336,59 +334,30 @@
 			<section class="step-section">
 				<h2 class="section-heading">0. Pick an example song</h2>
 
-				<div
-					class="songs-context-panel"
-					class:songs-context-panel-expanded={showSongsContext}
+				<CollapsiblePanel
+					expandLabel="Expand all songs context"
+					collapseLabel="Collapse all songs context"
+					bind:expanded={showSongsContext}
 				>
-					<button
-						class="songs-context-toggle"
-						onclick={handleSongsContextToggle}
-						aria-expanded={showSongsContext}
-					>
-						<span class="songs-context-toggle-label">
-							{showSongsContext
-								? "Collapse all songs context"
-								: "Expand all songs context"}
-						</span>
-						<svg
-							class="songs-context-chevron"
-							class:songs-context-chevron-collapsed={!showSongsContext}
-							width="16"
-							height="16"
-							viewBox="0 0 16 16"
-							fill="none"
-							aria-hidden="true"
-						>
-							<path
-								d="M4 6l4 4 4-4"
-								stroke="currentColor"
-								stroke-width="1.5"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							/>
-						</svg>
-					</button>
+					<div class="section-description">
+						match % measured based on if the progression ultimately was deemed a chord
+						progression in the song (not just if it appeared at all)
+					</div>
+					<CoreProgressionRow
+						{coreProgressions}
+						selectedSong={selectedSong ?? null}
+						activeProgression={pinnedProgression}
+						progressionMatchRates={allSongsCoverageResult?.progressionMatchRates ?? null}
+						onselect={handleProgressionSelect}
+					/>
 
-					{#if showSongsContext}
-						<div class="songs-context-content">
-						<div class="section-description">match % measured based on if the progression ultimately was deemed a chord progression in the song (not just if it appeared at all)</div>
-						<CoreProgressionRow
-							{coreProgressions}
-							selectedSong={selectedSong ?? null}
-							activeProgression={pinnedProgression}
-							progressionMatchRates={allSongsCoverageResult?.progressionMatchRates ?? null}
-							onselect={handleProgressionSelect}
-						/>
-
-						<SongCoverageBeeswarm
-							songs={allSongsCoverageResult?.songCoverages ?? null}
-							selectedSongKey={selectedKey}
-							highlightedProgression={pinnedProgression}
-							onSelectSong={handleSongSelect}
-						/>
-						</div>
-					{/if}
-				</div>
+					<SongCoverageBeeswarm
+						songs={allSongsCoverageResult?.songCoverages ?? null}
+						selectedSongKey={selectedKey}
+						highlightedProgression={pinnedProgression}
+						onSelectSong={handleSongSelect}
+					/>
+				</CollapsiblePanel>
 
 				<div class="controls">
 					<SongSelectDropdown
@@ -437,7 +406,12 @@
 
 				<h3 class="walkthrough-heading">DEFINE PROGRESSION</h3>
 
-				<ProgressionDefinitionCriteriaTable />
+				<CollapsiblePanel
+					expandLabel="Expand progression definition criteria"
+					collapseLabel="Collapse progression definition criteria"
+				>
+					<ProgressionDefinitionCriteriaTable />
+				</CollapsiblePanel>
 
 				<h3 class="walkthrough-heading">WALKTHROUGH OF ALGORITHM</h3>
 
@@ -596,79 +570,5 @@
 	.coverage-highlight {
 		text-decoration: underline;
 		text-underline-offset: 3px;
-	}
-
-	.songs-context-panel {
-		--songs-context-border-color: rgba(63, 63, 70, 0.9);
-		--songs-context-toggle-bg: rgba(39, 39, 42, 0.75);
-		--songs-context-toggle-bg-hover: rgba(63, 63, 70, 0.85);
-		--songs-context-content-bg: rgba(24, 24, 27, 0.45);
-		border: 1px solid var(--songs-context-border-color);
-		border-radius: 0.5rem;
-		overflow: hidden;
-	}
-
-	.songs-context-toggle {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.5rem;
-		width: 100%;
-		padding: 0.625rem 0.75rem;
-		border: none;
-		background: var(--songs-context-toggle-bg);
-		color: #a1a1aa;
-		cursor: pointer;
-		text-align: left;
-		font-family: inherit;
-		font-size: 0.8125rem;
-		font-style: italic;
-		transition:
-			background 0.15s ease,
-			color 0.15s ease;
-	}
-
-	.songs-context-panel-expanded .songs-context-toggle {
-		border-bottom: 1px solid var(--songs-context-border-color);
-	}
-
-	.songs-context-toggle:hover {
-		background: var(--songs-context-toggle-bg-hover);
-		color: #e4e4e7;
-	}
-
-	.songs-context-toggle:focus-visible {
-		outline: 2px solid rgba(137, 180, 250, 0.8);
-		outline-offset: -2px;
-	}
-
-	.songs-context-toggle:hover .songs-context-chevron {
-		color: #d4d4d8;
-	}
-
-	.songs-context-toggle-label {
-		line-height: 1.4;
-	}
-
-	.songs-context-content {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-		padding: 0.75rem;
-		background: var(--songs-context-content-bg);
-	}
-
-	.songs-context-chevron {
-		flex-shrink: 0;
-		width: 1rem;
-		height: 1rem;
-		color: #71717a;
-		transition:
-			transform 0.2s ease,
-			color 0.15s ease;
-	}
-
-	.songs-context-chevron-collapsed {
-		transform: rotate(-90deg);
 	}
 </style>
