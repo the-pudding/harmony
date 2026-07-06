@@ -272,17 +272,108 @@ export const computeCoveredPositionsBySection = (
 	song.sections.map((section) => {
 		const sectionLength = section.parsedProgression.length;
 		const matches = getSectionMatches(section, searchProgression);
-		return Array.from({ length: sectionLength }, (_, pos) => pos).filter(
-			(pos) =>
-				matches.some((match) => isPositionInMatch(pos, match, sectionLength))
-		);
+		return positionsFromMatches(matches, sectionLength);
 	});
+
+export const matchPositions = (
+	match: SubProgressionMatch,
+	sectionLength: number
+): number[] =>
+	Array.from(
+		{ length: match.length },
+		(_, index) => (match.start + index) % sectionLength
+	);
+
+export const isMatchFullyOutsideCoverage = (
+	match: SubProgressionMatch,
+	occupied: Set<number>,
+	sectionLength: number
+): boolean =>
+	matchPositions(match, sectionLength).every(
+		(position) => !occupied.has(position)
+	);
+
+export const getGapOnlySectionMatches = (
+	section: SongSection,
+	searchProgression: ParsedProgressionChord[],
+	occupiedPositions: number[]
+): SubProgressionMatch[] => {
+	const occupied = new Set(occupiedPositions);
+	const sectionLength = section.parsedProgression.length;
+	return getSectionMatches(section, searchProgression).filter((match) =>
+		isMatchFullyOutsideCoverage(match, occupied, sectionLength)
+	);
+};
+
+export const positionsFromMatches = (
+	matches: SubProgressionMatch[],
+	sectionLength: number
+): number[] => {
+	const positions = new Set<number>();
+	for (const match of matches) {
+		matchPositions(match, sectionLength).forEach((position) =>
+			positions.add(position)
+		);
+	}
+	return [...positions].sort((a, b) => a - b);
+};
+
+export const computeGapOnlyCoveredPositionsBySection = (
+	song: GroupedSong,
+	searchProgression: ParsedProgressionChord[],
+	occupiedCoverage: number[][]
+): number[][] =>
+	song.sections.map((section, sectionIndex) =>
+		positionsFromMatches(
+			getGapOnlySectionMatches(
+				section,
+				searchProgression,
+				occupiedCoverage[sectionIndex] ?? []
+			),
+			section.parsedProgression.length
+		)
+	);
+
+export const computeGapOnlyStats = (
+	song: GroupedSong,
+	parsed: ParsedProgressionChord[],
+	occupiedCoverage: number[][]
+): { matchCount: number; coveragePercent: number } => {
+	const totalChords = song.sections.reduce(
+		(sum, section) => sum + section.parsedProgression.length,
+		0
+	);
+	if (totalChords === 0) return { matchCount: 0, coveragePercent: 0 };
+
+	const stats = song.sections.reduce(
+		(accumulator, section, sectionIndex) => {
+			const matches = getGapOnlySectionMatches(
+				section,
+				parsed,
+				occupiedCoverage[sectionIndex] ?? []
+			);
+			return {
+				matchCount: accumulator.matchCount + matches.length,
+				coveredPositions:
+					accumulator.coveredPositions +
+					matches.reduce((sum, match) => sum + match.length, 0)
+			};
+		},
+		{ matchCount: 0, coveredPositions: 0 }
+	);
+
+	return {
+		matchCount: stats.matchCount,
+		coveragePercent: (stats.coveredPositions / totalChords) * 100
+	};
+};
 
 export type ChordAnnotation = {
 	parsedProgression: ParsedProgressionChord[];
 	palette: ChordHighlightPalette;
 	isStrictSubset?: boolean;
 	chordProgression?: string;
+	highlightPositionsBySection?: number[][];
 };
 
 export type ColoredHighlightSegment = {
@@ -303,12 +394,23 @@ const isContinuingGroup = (prev: PositionGroup, curr: PositionGroup): boolean =>
 
 export const buildColoredHighlightSegments = (
 	section: SongSection,
+	sectionIndex: number,
 	annotations: ChordAnnotation[]
 ): ColoredHighlightSegment[] => {
 	const sectionLength = section.parsedProgression.length;
 
-	const matchesByAnnotation = annotations.map(({ parsedProgression }) =>
-		getSectionMatches(section, parsedProgression)
+	const matchesByAnnotation = annotations.map(
+		({ parsedProgression, highlightPositionsBySection }) => {
+			const allMatches = getSectionMatches(section, parsedProgression);
+			const allowedPositions = highlightPositionsBySection?.[sectionIndex];
+			if (allowedPositions === undefined) return allMatches;
+			const allowed = new Set(allowedPositions);
+			return allMatches.filter((match) =>
+				matchPositions(match, sectionLength).every((position) =>
+					allowed.has(position)
+				)
+			);
+		}
 	);
 
 	const positionGroups: PositionGroup[] = Array.from(

@@ -9,7 +9,9 @@ import {
 import { selectFinalProgressions } from "./finalProgressionSelection.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 
-const burninCore = coreProgressions.find((p) => p.name === "burnin up with you baby")!;
+const burninCore = coreProgressions.find(
+	(p) => p.name === "burnin up with you"
+)!;
 const burninSong = groupSongs(
 	(songs as { songKey: string }[]).filter((s) => s.songKey === "jonas-brothers__burnin-up") as Parameters<typeof groupSongs>[0]
 )[0];
@@ -31,7 +33,7 @@ describe("burnin up — scale-aware core matching regression", () => {
 
 	it("computeProgressionMatches surfaces burnin up with 4 matches", () => {
 		const matches = computeProgressionMatches(burninSong, coreProgressions);
-		const match = matches.find((m) => m.name === "burnin up with you baby");
+		const match = matches.find((m) => m.name === "burnin up with you");
 		expect(match).toBeDefined();
 		expect(match!.matchCount).toBe(4);
 		expect(match!.coveragePercent).toBeGreaterThan(65);
@@ -40,7 +42,7 @@ describe("burnin up — scale-aware core matching regression", () => {
 	it("selectFinalProgressions picks burnin up as a core selection", () => {
 		const selection = selectFinalProgressions(burninSong, coreProgressions);
 		const names = selection.coreSelected.map((m) => m.name);
-		expect(names).toContain("burnin up with you baby");
+		expect(names).toContain("burnin up with you");
 	});
 
 	it("explained coverage beats the old false-positive Cheerleader Verse result (52%)", () => {

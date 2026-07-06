@@ -8,6 +8,8 @@ import type { ParsedProgressionChord } from "../../../../chord-processing/types.
 import {
 	computeProgressionMatches,
 	computeStatsForParsedProgression,
+	computeGapOnlyCoveredPositionsBySection,
+	computeGapOnlyStats,
 	parseCoreProgressions,
 	findMatchingCoreProgressionsForSong,
 	buildProgressionMatchRates
@@ -44,9 +46,7 @@ const makeSection = (
 	scale: "major"
 });
 
-const darkDooWop = coreProgressions.find(
-	(p) => p.name === "dark doo wop (save your tears for another day)"
-)!;
+const darkDooWop = coreProgressions.find((p) => p.name === "dark doo wop")!;
 const darkDooWopParsed = romanTokensToParsedProgression(
 	darkDooWop.chordProgression.split("-")
 )!;
@@ -240,5 +240,73 @@ describe("buildProgressionMatchRates", () => {
 	it("progressions absent from all lists are not present in the result", () => {
 		const rates = buildProgressionMatchRates([["I-V-vi-IV"]], 2);
 		expect(rates["I-vi-iii-V"]).toBeUndefined();
+	});
+});
+
+const makeRomanSection = (romanTokens: string[]): SongSection => ({
+	label: null,
+	chords: romanTokens,
+	romanTokens,
+	parsedProgression: romanTokensToParsedProgression(romanTokens, "major") ?? [],
+	keyLabel: null,
+	scale: "major"
+});
+
+const whatchaSayStyleSection = ["IV", "I", "vi", "V", "IV", "I", "vi"];
+
+const gapOnlyFixtureSong: GroupedSong = {
+	songKey: "test__gap-only",
+	title: "Gap Only Fixture",
+	artists: ["Tester"],
+	keyLabel: null,
+	sections: [
+		makeRomanSection(whatchaSayStyleSection),
+		makeRomanSection(whatchaSayStyleSection)
+	]
+};
+
+const coreOccupiedCoverage = gapOnlyFixtureSong.sections.map(() => [3, 4, 5]);
+
+describe("computeGapOnlyStats — intact instances in gaps", () => {
+	it("counts IV-I-vi only at opening positions outside core coverage", () => {
+		const parsed = romanTokensToParsedProgression(["IV", "I", "vi"], "major")!;
+		const stats = computeGapOnlyStats(
+			gapOnlyFixtureSong,
+			parsed,
+			coreOccupiedCoverage
+		);
+		expect(stats.matchCount).toBe(2);
+		const gapOnlyCoverage = computeGapOnlyCoveredPositionsBySection(
+			gapOnlyFixtureSong,
+			parsed,
+			coreOccupiedCoverage
+		);
+		for (const sectionPositions of gapOnlyCoverage) {
+			expect(sectionPositions).toEqual([0, 1, 2]);
+		}
+	});
+
+	it("returns zero gap-only matches for vi-V-IV when every instance straddles core", () => {
+		const parsed = romanTokensToParsedProgression(["vi", "V", "IV"], "major")!;
+		const stats = computeGapOnlyStats(
+			gapOnlyFixtureSong,
+			parsed,
+			coreOccupiedCoverage
+		);
+		expect(stats.matchCount).toBe(0);
+	});
+
+	it("never returns positions that are already occupied", () => {
+		const parsed = romanTokensToParsedProgression(["IV", "I", "vi"], "major")!;
+		const gapOnlyCoverage = computeGapOnlyCoveredPositionsBySection(
+			gapOnlyFixtureSong,
+			parsed,
+			coreOccupiedCoverage
+		);
+		for (const [sectionIndex, sectionPositions] of gapOnlyCoverage.entries()) {
+			for (const position of sectionPositions) {
+				expect(coreOccupiedCoverage[sectionIndex]).not.toContain(position);
+			}
+		}
 	});
 });

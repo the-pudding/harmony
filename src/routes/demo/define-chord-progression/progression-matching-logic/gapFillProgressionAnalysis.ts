@@ -9,8 +9,7 @@ import { matchHighlightForCoreProgression } from "../components/progressionColor
 import {
 	abstractProgressionKey,
 	buildCoreNameByAbstractKey,
-	computeCoveredPositionsBySection,
-	computeStatsForParsedProgression,
+	computeGapOnlyStats,
 	MIN_PROGRESSION_OCCURRENCES,
 	type ProgressionWithMatchStats
 } from "./progressionMatchAnalysis.js";
@@ -19,10 +18,7 @@ import {
 	MAX_PROGRESSION_LENGTH,
 	isSelfRepeatingProgression
 } from "./progressionConstraints.js";
-import {
-	hasUncoveredCoverage,
-	type SectionCoverage
-} from "./greedyProgressionSelection.js";
+import type { SectionCoverage } from "./greedyProgressionSelection.js";
 
 const coreProgressionNameByChordProgression = new Map(
 	coreProgressions.map((progression) => [
@@ -92,6 +88,7 @@ const uniqueBy = <T>(items: T[], keyOf: (item: T) => string): T[] => {
 
 const toGapFillMatch = (
 	song: GroupedSong,
+	initialCoverage: SectionCoverage,
 	{ romanTokens, parsedProgression, scale }: CandidateWindow
 ): ProgressionWithMatchStats | null => {
 	if (
@@ -102,7 +99,7 @@ const toGapFillMatch = (
 	}
 	const chordProgression = romanTokens.join("-");
 
-	const stats = computeStatsForParsedProgression(song, parsedProgression);
+	const stats = computeGapOnlyStats(song, parsedProgression, initialCoverage);
 	if (stats.matchCount < MIN_PROGRESSION_OCCURRENCES) return null;
 
 	const name =
@@ -147,16 +144,10 @@ export const computeGapFillProgressionMatches = (
 	);
 
 	return uniqueWindows
-		.map((window) => toGapFillMatch(song, window))
+		.map((window) => toGapFillMatch(song, initialCoverage, window))
 		.filter((match): match is ProgressionWithMatchStats => match !== null)
 		.filter((match) => !isSelfRepeatingProgression(match.chordProgression))
 		.filter((match) => !match.isCoreProgression)
-		.filter((match) =>
-			hasUncoveredCoverage(
-				computeCoveredPositionsBySection(song, match.parsedProgression),
-				initialCoverage
-			)
-		)
 		.sort(
 			(a, b) =>
 				b.coveragePercent - a.coveragePercent ||

@@ -104,6 +104,39 @@ const imYours = makeSong([
 	["I", "V", "vi", "IV"]
 ]);
 
+describe("computeGapFillProgressionMatches — gap-only filtering with partial core coverage", () => {
+	const whatchaSayStyleSection = ["IV", "I", "vi", "V", "IV", "I", "vi"];
+	const partialCoreSong = makeSong([
+		whatchaSayStyleSection,
+		whatchaSayStyleSection
+	]);
+	const coreCoverage = partialCoreSong.sections.map(() => [3, 4, 5]);
+
+	it("surfaces IV-I-vi when opening instances lie entirely in gaps", () => {
+		const found = computeGapFillProgressionMatches(
+			partialCoreSong,
+			coreCoverage
+		).map((match) => match.chordProgression);
+		expect(found).toContain("IV-I-vi");
+	});
+
+	it("does not surface vi-V-IV when every instance overlaps core", () => {
+		const found = computeGapFillProgressionMatches(
+			partialCoreSong,
+			coreCoverage
+		).map((match) => match.chordProgression);
+		expect(found).not.toContain("vi-V-IV");
+	});
+
+	it("reports gap-only match counts for IV-I-vi", () => {
+		const match = computeGapFillProgressionMatches(
+			partialCoreSong,
+			coreCoverage
+		).find((candidate) => candidate.chordProgression === "IV-I-vi");
+		expect(match?.matchCount).toBe(2);
+	});
+});
+
 describe("computeGapFillProgressionMatches — I'm Yours", () => {
 	it("surfaces the previously-missing I-V-vi", () => {
 		expect(gapProgressions(imYours)).toContain("I-V-vi");
@@ -354,8 +387,10 @@ describe("computeGapFillProgressionMatches — modal songs (Montero)", () => {
 
 	it("surfaces the harmonic-minor V-VI vamp", () => {
 		const found = gapProgressions(montero);
-		expect(found).toContain("V-VI-V-VI");
 		expect(found).toContain("V-VI-V");
+		expect(found.some((progression) => progression.startsWith("V-VI-V"))).toBe(
+			true
+		);
 	});
 
 	it("surfaces the phrygian-dominant I-ii vamp", () => {

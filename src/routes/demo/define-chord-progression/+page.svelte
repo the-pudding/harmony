@@ -25,7 +25,7 @@
 		MAX_PROGRESSION_LENGTH
 	} from "./progression-matching-logic/progressionConstraints.js";
 	import type { ChordAnnotation } from "./progression-matching-logic/progressionMatchAnalysis.js";
-	import { selectFinalProgressions } from "./progression-matching-logic/finalProgressionSelection.js";
+	import { selectFinalProgressions, buildFinalChordAnnotations } from "./progression-matching-logic/finalProgressionSelection.js";
 	import { findStrictSubsetKeys, applySubsetFlag } from "./progression-matching-logic/strictSubsetProgressions.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import { type GroupedSong } from "../progressions/songBrowser.js";
@@ -242,12 +242,9 @@
 	]);
 
 	const songAnnotations = $derived<ChordAnnotation[]>(
-		finalMatches.map((match) => ({
-			parsedProgression: match.parsedProgression,
-			palette: match.highlightPalette,
-			isStrictSubset: match.isStrictSubset,
-			chordProgression: match.chordProgression
-		}))
+		selectedSong
+			? buildFinalChordAnnotations(selectedSong, finalSelection)
+			: []
 	);
 
 	const isSongKeyKnown = (songKey: string): boolean =>
@@ -418,10 +415,11 @@
 
 				<section class="step-section">
 				<h2 class="section-heading">
-				1. Greedily select any (non-overlapping) core-progressions that appear
+				1. Greedily select any non-overlapping core-progressions that appear
 				at least <span class="const-value">{MIN_PROGRESSION_OCCURRENCES}</span> times, by {GREEDY_SORT_LABEL}
 			</h2>
 					<p class="section-description">
+						No two selected core progressions may share a chord position.
 						This incentivises us to really hone and expand the coverage of
 						core-progressions, and also makes it so we maximize classified chords over
 						random ones that might happen to be better/longer for some reason.
@@ -445,10 +443,14 @@
 					2. Fill gaps with recurring progressions found among uncovered chords, trying them out greedily by {GREEDY_SORT_LABEL}
 				</h2>
 					<p class="section-description">
-						Among chords not yet covered, we look for progressions of
+						Among chords not yet covered by core progressions, we look for
+						progressions of
 						<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>–<span
 							class="const-value">{MAX_PROGRESSION_LENGTH}</span> chords that recur at
-						least twice. A valid progression cannot consist of consecutive
+						least twice as complete instances lying entirely inside the gaps.
+						Selected gap progressions are also pairwise non-overlapping — no chord
+						position is ever claimed by more than one progression. A valid
+						progression cannot consist of consecutive
 						<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>+ progressions
 						repeating more than once.
 					</p>

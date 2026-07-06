@@ -39,25 +39,7 @@ const hasOverlapWithCoverage = (
 		positions.some((pos) => (existing[sectionIndex] ?? []).includes(pos))
 	);
 
-export const clipCoverageToUncovered = (
-	positions: SectionCoverage,
-	existing: SectionCoverage
-): SectionCoverage =>
-	positions.map((sectionPositions, sectionIndex) =>
-		sectionPositions.filter(
-			(pos) => !(existing[sectionIndex] ?? []).includes(pos)
-		)
-	);
-
-export const hasUncoveredCoverage = (
-	newPositions: SectionCoverage,
-	existing: SectionCoverage
-): boolean =>
-	clipCoverageToUncovered(newPositions, existing).some(
-		(positions) => positions.length > 0
-	);
-
-const mergeCoverage = (
+export const mergeCoverage = (
 	existing: SectionCoverage,
 	newPositions: SectionCoverage
 ): SectionCoverage =>
@@ -67,43 +49,39 @@ const mergeCoverage = (
 	]);
 
 type GreedySelectOptions = {
-	clipOverlap?: boolean;
+	getCandidateCoverage?: (
+		candidate: ProgressionWithMatchStats
+	) => SectionCoverage;
 };
 
 export const greedilySelectProgressions = (
 	song: GroupedSong,
 	candidates: ProgressionWithMatchStats[],
 	initialCoverage: SectionCoverage,
-	{ clipOverlap = false }: GreedySelectOptions = {}
+	{ getCandidateCoverage }: GreedySelectOptions = {}
 ): SelectionResult => {
 	const coverageMap = new Map(
 		candidates.map((candidate) => [
 			candidate.chordProgression,
-			computeCoveredPositionsBySection(song, candidate.parsedProgression)
+			getCandidateCoverage
+				? getCandidateCoverage(candidate)
+				: computeCoveredPositionsBySection(song, candidate.parsedProgression)
 		])
 	);
 
-	const effectivePositions = (
-		chordProgression: string,
-		againstCoverage: SectionCoverage
-	): SectionCoverage => {
-		const raw = coverageMap.get(chordProgression) ?? [];
-		return clipOverlap ? clipCoverageToUncovered(raw, againstCoverage) : raw;
-	};
+	const candidatePositions = (chordProgression: string): SectionCoverage =>
+		coverageMap.get(chordProgression) ?? [];
 
-	const totalMatchedChords = (
-		chordProgression: string,
-		againstCoverage: SectionCoverage
-	): number =>
-		effectivePositions(chordProgression, againstCoverage).reduce(
+	const totalMatchedChords = (chordProgression: string): number =>
+		candidatePositions(chordProgression).reduce(
 			(sum, positions) => sum + positions.length,
 			0
 		);
 
 	const sorted = [...candidates].sort((a, b) => {
 		const coverageDiff =
-			totalMatchedChords(b.chordProgression, initialCoverage) -
-			totalMatchedChords(a.chordProgression, initialCoverage);
+			totalMatchedChords(b.chordProgression) -
+			totalMatchedChords(a.chordProgression);
 		if (coverageDiff !== 0) return coverageDiff;
 		return (
 			progressionChordCount(b.chordProgression) -
@@ -113,14 +91,9 @@ export const greedilySelectProgressions = (
 
 	return sorted.reduce<SelectionResult>(
 		({ selected, coverage }, candidate) => {
-			const newPositions = effectivePositions(
-				candidate.chordProgression,
-				coverage
-			);
-			const canAdd = clipOverlap
-				? hasUncoveredCoverage(newPositions, emptyCoverage(song))
-				: !hasOverlapWithCoverage(newPositions, coverage);
-			if (!canAdd) {
+			const newPositions = candidatePositions(candidate.chordProgression);
+			const addsCoverage = totalMatchedChords(candidate.chordProgression) > 0;
+			if (!addsCoverage || hasOverlapWithCoverage(newPositions, coverage)) {
 				return { selected, coverage };
 			}
 			return {

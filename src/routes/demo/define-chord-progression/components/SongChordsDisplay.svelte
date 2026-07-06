@@ -53,7 +53,7 @@
 >
 	<div class="sections">
 		{#each song.sections as section, sectionIndex (sectionIndex)}
-			{@const segments = buildColoredHighlightSegments(section, effectiveAnnotations)}
+			{@const segments = buildColoredHighlightSegments(section, sectionIndex, effectiveAnnotations)}
 			{#if section.label || (showPerSectionKeys && section.keyLabel)}
 				<div class="section-label-cell">
 					{#if section.label}
