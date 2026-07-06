@@ -14,6 +14,7 @@ const makeFakeMatch = (
 	name: "",
 	chordProgression,
 	parsedProgression: [],
+	scale: "major",
 	description: "",
 	matchCount: 2,
 	coveragePercent,

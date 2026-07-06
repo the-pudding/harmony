@@ -23,7 +23,8 @@ const makeSection = (romanTokens: string[]): SongSection => ({
 	chords: romanTokens,
 	romanTokens,
 	parsedProgression: romanTokensToParsedProgression(romanTokens) ?? [],
-	keyLabel: null
+	keyLabel: null,
+	scale: "major"
 });
 
 const makeSong = (sectionsTokens: string[][]): GroupedSong => ({
@@ -42,7 +43,8 @@ const makeSectionWithParsed = (
 	chords: romanTokens,
 	romanTokens,
 	parsedProgression,
-	keyLabel: null
+	keyLabel: null,
+	scale: "major"
 });
 
 const chord = (
@@ -86,7 +88,8 @@ const makeModalSection = (
 		chords: romanTokens,
 		romanTokens,
 		parsedProgression,
-		keyLabel: null
+		keyLabel: null,
+		scale
 	};
 };
 

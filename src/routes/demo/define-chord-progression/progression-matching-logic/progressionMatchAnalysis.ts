@@ -3,6 +3,7 @@ import type {
 	GroupedSong,
 	SongSection
 } from "../../progressions/songBrowser.js";
+import type { ScaleName } from "../../../../chord-processing/scales.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import {
 	findSubProgressionMatches,
@@ -28,6 +29,7 @@ export type ProgressionWithMatchStats = {
 	name: string;
 	chordProgression: string;
 	parsedProgression: ParsedProgressionChord[];
+	scale: ScaleName;
 	description: string;
 	matchCount: number;
 	coveragePercent: number;

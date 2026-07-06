@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
+	import { humanizeScale } from "../../progressions/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
 
 	type Props = {
@@ -12,6 +13,15 @@
 	};
 
 	let { match, active, onselect, borderColor, dashed = false, stats }: Props = $props();
+
+	const scaleName = $derived(humanizeScale(match.scale));
+	const scaleLabel = $derived(`scale: ${scaleName}`);
+
+	const buttonTitle = $derived(
+		match.isCoreProgression
+			? `${match.chordProgression} (${scaleLabel})`
+			: match.chordProgression
+	);
 </script>
 
 <button
@@ -21,10 +31,13 @@
 	class:dashed
 	style:--prog-btn-border-color={borderColor}
 	onclick={() => onselect(match.chordProgression)}
-	title={match.chordProgression}
+	title={buttonTitle}
 >
 	{#if match.name}
 		<span class="prog-name">{match.name}</span>
+	{/if}
+	{#if match.isCoreProgression}
+		<span class="prog-scale"><span class="prog-scale-label">scale:</span> {scaleName}</span>
 	{/if}
 	<span class="prog-chords">{match.chordProgression}</span>
 	{#if stats}
@@ -97,5 +110,30 @@
 
 	.prog-btn:hover .prog-chords {
 		color: rgba(228, 228, 231, 0.7);
+	}
+
+	.prog-scale {
+		font-size: 0.65rem;
+		color: rgba(161, 161, 170, 0.85);
+	}
+
+	.prog-scale-label {
+		color: rgba(161, 161, 170, 0.55);
+	}
+
+	.prog-btn.active .prog-scale {
+		color: rgba(137, 180, 250, 0.85);
+	}
+
+	.prog-btn.active .prog-scale-label {
+		color: rgba(137, 180, 250, 0.55);
+	}
+
+	.prog-btn:hover .prog-scale {
+		color: rgba(228, 228, 231, 0.85);
+	}
+
+	.prog-btn:hover .prog-scale-label {
+		color: rgba(228, 228, 231, 0.55);
 	}
 </style>

@@ -8,6 +8,7 @@ import {
 	parseSongTitleAndSectionLabel,
 	resolveSongKey
 } from "../../../chord-processing/songIdentity.js";
+import { SCALE_INTERVALS, type ScaleName } from "../../../chord-processing/scale-intervals.js";
 import type {
 	ParsedProgressionChord,
 	ProgressionChordInput,
@@ -21,6 +22,7 @@ export type SongSection = {
 	romanTokens: string[];
 	parsedProgression: ParsedProgressionChord[];
 	keyLabel: string | null;
+	scale: ScaleName;
 };
 
 export type GroupedSong = {
@@ -35,9 +37,26 @@ export type GroupedSong = {
 
 const MAJOR_TONIC_ROMAN = "I";
 const MINOR_TONIC_ROMAN = "i";
+const DEFAULT_SECTION_SCALE: ScaleName = "major";
 
-const humanizeScale = (scale: string): string =>
+export const humanizeScale = (scale: string): string =>
 	scale.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+
+const isValidScaleName = (scale: string): scale is ScaleName => scale in SCALE_INTERVALS;
+
+const inferScaleFromRomanTokens = (romanTokens: string[]): ScaleName => {
+	for (const token of romanTokens) {
+		if (token === MAJOR_TONIC_ROMAN) return "major";
+		if (token === MINOR_TONIC_ROMAN) return "minor";
+	}
+	return DEFAULT_SECTION_SCALE;
+};
+
+export const resolveSectionScale = (
+	scale: string | undefined,
+	romanTokens: string[]
+): ScaleName =>
+	scale && isValidScaleName(scale) ? scale : inferScaleFromRomanTokens(romanTokens);
 
 // Prefer the section's real, scale-aware key from the source data (e.g.
 // "G# harmonic minor"); fall back to guessing a major/minor tonic from the
@@ -127,6 +146,7 @@ export const groupSongs = (songs: SongInput[]): GroupedSong[] => {
 		}
 		const parsedProgression = song.progression.map(parseChord);
 		const romanTokens = song.romanTokens ?? [];
+		const scale = resolveSectionScale(song.scale, romanTokens);
 		map.get(key)!.sections.push({
 			label: sectionLabel,
 			chords: parsedProgression.map((c) => c.display),
@@ -137,7 +157,8 @@ export const groupSongs = (songs: SongInput[]): GroupedSong[] => {
 				song.scale,
 				romanTokens,
 				parsedProgression
-			)
+			),
+			scale
 		});
 	}
 	return [...map.values()].map((song) => {

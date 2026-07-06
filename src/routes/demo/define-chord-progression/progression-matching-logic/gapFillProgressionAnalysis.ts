@@ -4,6 +4,7 @@ import type {
 	SongSection
 } from "../../progressions/songBrowser.js";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
+import type { ScaleName } from "../../../../chord-processing/scales.js";
 import { matchHighlightForCoreProgression } from "../components/progressionColors.js";
 import {
 	abstractProgressionKey,
@@ -33,6 +34,7 @@ const coreProgressionNameByAbstractKey =
 type CandidateWindow = {
 	romanTokens: string[];
 	parsedProgression: ParsedProgressionChord[];
+	scale: ScaleName;
 };
 
 const uncoveredPositionsFromCoverage = (
@@ -67,7 +69,8 @@ const windowsTouchingPositions = (
 				if (!touchesUncovered) return null;
 				return {
 					romanTokens: section.romanTokens.slice(start, end),
-					parsedProgression: section.parsedProgression.slice(start, end)
+					parsedProgression: section.parsedProgression.slice(start, end),
+					scale: section.scale
 				};
 			}
 		).filter((window): window is CandidateWindow => window !== null);
@@ -94,7 +97,7 @@ const hasOverlapWithCoverage = (
 
 const toGapFillMatch = (
 	song: GroupedSong,
-	{ romanTokens, parsedProgression }: CandidateWindow
+	{ romanTokens, parsedProgression, scale }: CandidateWindow
 ): ProgressionWithMatchStats | null => {
 	if (
 		romanTokens.length !== parsedProgression.length ||
@@ -119,6 +122,7 @@ const toGapFillMatch = (
 		name,
 		chordProgression,
 		parsedProgression,
+		scale,
 		description: "",
 		matchCount: stats.matchCount,
 		coveragePercent: stats.coveragePercent,
@@ -144,7 +148,7 @@ export const computeGapFillProgressionMatches = (
 	if (candidateWindows.length === 0) return [];
 
 	const uniqueWindows = uniqueBy(candidateWindows, (window) =>
-		window.romanTokens.join("-")
+		`${window.romanTokens.join("-")}|${window.scale}`
 	);
 
 	return uniqueWindows

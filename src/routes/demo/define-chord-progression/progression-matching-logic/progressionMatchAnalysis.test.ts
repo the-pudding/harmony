@@ -33,12 +33,15 @@ const E_MINOR = chord(4, "minor");
 const E_MINOR7 = chord(4, "minor7");
 const G_MAJOR = chord(7, "major");
 
-const makeSection = (parsedProgression: ParsedProgressionChord[]): SongSection => ({
+const makeSection = (
+	parsedProgression: ParsedProgressionChord[]
+): SongSection => ({
 	label: null,
 	chords: [],
 	romanTokens: [],
 	parsedProgression,
-	keyLabel: null
+	keyLabel: null,
+	scale: "major"
 });
 
 const darkDooWop = coreProgressions.find(
@@ -137,7 +140,8 @@ const makeTokenSection = (romanTokens: string[]): SongSection => ({
 	chords: romanTokens,
 	romanTokens,
 	parsedProgression: romanTokensToParsedProgression(romanTokens) ?? [],
-	keyLabel: null
+	keyLabel: null,
+	scale: "minor"
 });
 
 const outroTokenSong: GroupedSong = {
