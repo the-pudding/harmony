@@ -293,7 +293,6 @@ export const handReviewedSongs: HandReviewedSong[] = [
 						"IVmaj7",
 						"Imaj7",
 						"vi7",
-						"IVmaj7",
 						"Imaj7",
 						"ii°",
 						"IV",
@@ -301,7 +300,7 @@ export const handReviewedSongs: HandReviewedSong[] = [
 					]
 				},
 				{
-					name: "Pre-Chorus",
+					name: "Pre-Chorus", //  "I try to keep from losin'..."
 					key: "E",
 					scale: "major",
 					romanTokens: [
@@ -316,13 +315,13 @@ export const handReviewedSongs: HandReviewedSong[] = [
 					]
 				},
 				{
-					name: "Chorus",
+					name: "Chorus", // "All the while, I'll await my armored fate..."
 					key: "E",
 					scale: "major",
 					romanTokens: ["Imaj7", "ii°", "IVmaj7", "Imaj7", "vi7"]
 				},
 				{
-					name: "Verse 2",
+					name: "Verse 2", // "Tell me I'm not my fears, my limitations..."
 					key: "E",
 					scale: "major",
 					romanTokens: [
@@ -338,27 +337,6 @@ export const handReviewedSongs: HandReviewedSong[] = [
 						"Imaj7",
 						"vi7"
 					]
-				},
-				{
-					name: "Pre-Chorus 2",
-					key: "E",
-					scale: "major",
-					romanTokens: [
-						"Imaj7",
-						"vi7",
-						"Imaj7",
-						"vi7",
-						"IVmaj7",
-						"Vsus4",
-						"Imaj7",
-						"vi7"
-					]
-				},
-				{
-					name: "Chorus 2",
-					key: "E",
-					scale: "major",
-					romanTokens: ["Imaj7", "ii°", "IVmaj7", "Imaj7", "vi7"]
 				},
 				{
 					name: "Verse 3",
