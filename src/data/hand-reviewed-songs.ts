@@ -20,6 +20,32 @@ export type HandReviewedSong = {
 
 export const handReviewedSongs: HandReviewedSong[] = [
 	{
+		id: "walker-hayes__fancy-like",
+		technicalNotes: "Original HT put just the chorus",
+		correctedSongContents: {
+			sections: [
+				...["Intro", "Verse 1", "Chorus", "Verse 2"].map((name) => ({
+					name,
+					key: "F#",
+					scale: "major",
+					romanTokens: ["I", "V", "I", "V"]
+				})),
+				{
+					name: "Pre-Chorus",
+					key: "F#",
+					scale: "major",
+					romanTokens: ["IV", "V"]
+				},
+				{
+					name: "Bridge",
+					key: "F#",
+					scale: "major",
+					romanTokens: ["I", "V", "I", "V", "IV", "V"]
+				}
+			]
+		}
+	},
+	{
 		id: "olivia-rodrigo__good-4-u",
 		technicalNotes:
 			"Like other songs, the HT original is almost there, but misses several chords completely. This seem to happen a lot when the harmony is largely implied by a sparse bassline.",
