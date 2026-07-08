@@ -274,7 +274,100 @@ export const handReviewedSongs: HandReviewedSong[] = [
 	{
 		id: "sza__good-days",
 		chordProgressionIssues:
-			"It's wrong and missing a lot of sections. This song has a lot of lovely, jazzy chords: vamps on Imaj7-vi7, some nice b6 noted chords, etc."
+			"It's wrong and missing a lot of sections. This song has a lot of lovely, jazzy chords: vamps on Imaj7-vi7, some nice b6 noted chords, etc.",
+		correctedSongContents: {
+			sections: [
+				{
+					name: "Intro",
+					key: "E",
+					scale: "major",
+					romanTokens: ["Imaj7", "vi7"]
+				},
+				{
+					name: "Verse 1",
+					key: "E",
+					scale: "major",
+					romanTokens: [
+						"Imaj7",
+						"vi7",
+						"IVmaj7",
+						"Imaj7",
+						"vi7",
+						"IVmaj7",
+						"Imaj7",
+						"ii°",
+						"IV",
+						"iv"
+					]
+				},
+				{
+					name: "Pre-Chorus",
+					key: "E",
+					scale: "major",
+					romanTokens: [
+						"Imaj7",
+						"vi7",
+						"Imaj7",
+						"vi7",
+						"IVmaj7",
+						"Vsus4",
+						"Imaj7",
+						"vi7"
+					]
+				},
+				{
+					name: "Chorus",
+					key: "E",
+					scale: "major",
+					romanTokens: ["Imaj7", "ii°", "IVmaj7", "Imaj7", "vi7"]
+				},
+				{
+					name: "Verse 2",
+					key: "E",
+					scale: "major",
+					romanTokens: [
+						"Imaj7",
+						"vi7",
+						"IVmaj7",
+						"Imaj7",
+						"vi7",
+						"Imaj7",
+						"ii°",
+						"IV",
+						"iv",
+						"Imaj7",
+						"vi7"
+					]
+				},
+				{
+					name: "Pre-Chorus 2",
+					key: "E",
+					scale: "major",
+					romanTokens: [
+						"Imaj7",
+						"vi7",
+						"Imaj7",
+						"vi7",
+						"IVmaj7",
+						"Vsus4",
+						"Imaj7",
+						"vi7"
+					]
+				},
+				{
+					name: "Chorus 2",
+					key: "E",
+					scale: "major",
+					romanTokens: ["Imaj7", "ii°", "IVmaj7", "Imaj7", "vi7"]
+				},
+				{
+					name: "Verse 3",
+					key: "E",
+					scale: "major",
+					romanTokens: ["Imaj7", "vi7", "Imaj7", "ii°", "VI", "Imaj7", "vi7"]
+				}
+			]
+		}
 	},
 	{
 		id: "lil-nas-x__montero-call-me-by-your-name",
