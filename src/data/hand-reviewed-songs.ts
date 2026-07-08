@@ -273,8 +273,7 @@ export const handReviewedSongs: HandReviewedSong[] = [
 	},
 	{
 		id: "sza__good-days",
-		chordProgressionIssues:
-			"It's wrong and missing a lot of sections. This song has a lot of lovely, jazzy chords: vamps on Imaj7-vi7, some nice b6 noted chords, etc.",
+		chordProgressionIssues: "HT original was wrong and only had the verse.",
 		correctedSongContents: {
 			sections: [
 				{

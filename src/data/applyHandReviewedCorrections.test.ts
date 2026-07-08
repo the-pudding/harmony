@@ -105,6 +105,44 @@ describe("Damaged — Eb minor", () => {
 	});
 });
 
+describe("Good Days — E major with extended chords", () => {
+	it("preserves maj7 and minor7 suffixes from hand-reviewed roman tokens", () => {
+		const [song] = groupFrom("sza__good-days", {
+			sections: [
+				{
+					name: "Intro",
+					key: "E",
+					scale: "major",
+					romanTokens: ["Imaj7", "vi7"]
+				},
+				{
+					name: "Pre-Chorus",
+					key: "E",
+					scale: "major",
+					romanTokens: ["IVmaj7", "Vsus4", "ii°"]
+				}
+			]
+		});
+
+		const intro = song.sections.find((section) => section.label === "Intro");
+		expect(intro?.romanTokens).toEqual(["Imaj7", "vi7"]);
+		expect(intro?.parsedProgression.map((chord) => chord.suffix)).toEqual([
+			"maj7",
+			"minor7"
+		]);
+		expect(intro?.chords).toEqual(["E maj7", "C#m7"]);
+
+		const preChorus = song.sections.find(
+			(section) => section.label === "Pre-Chorus"
+		);
+		expect(preChorus?.parsedProgression.map((chord) => chord.suffix)).toEqual([
+			"maj7",
+			"sus4",
+			"diminished"
+		]);
+	});
+});
+
 describe("Montero — Eb phrygian dominant", () => {
 	it("produces keyLabel 'Eb phrygian dominant' on the grouped song", () => {
 		const [song] = groupFrom("lil-nas-x__montero", MONTERO_CONTENTS);

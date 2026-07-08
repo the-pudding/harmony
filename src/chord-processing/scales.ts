@@ -9,13 +9,6 @@ import { SCALE_INTERVALS, type ScaleName } from "./scale-intervals.js";
 
 export { SCALE_INTERVALS, type ScaleName };
 
-const ROMAN_QUALITY_TO_SUFFIX: Record<string, string> = {
-	maj: "major",
-	min: "minor",
-	dim: "diminished",
-	aug: "augmented"
-};
-
 export const romanTokensToProgressionInKey = (
 	tokens: string[],
 	key: string,
@@ -30,7 +23,7 @@ export const romanTokensToProgressionInKey = (
 		const parsed = parseRomanToken(token);
 		if (!parsed) throw new Error(`Cannot parse roman token: "${token}"`);
 
-		const { degree, quality, flat } = parsed;
+		const { degree, flat, suffix } = parsed;
 		const interval = intervals[degree - 1];
 		if (interval === undefined)
 			throw new Error(`Degree ${degree} out of range for scale "${scale}"`);
@@ -38,10 +31,6 @@ export const romanTokensToProgressionInKey = (
 		const rootPitchClass =
 			(tonic + interval - (flat ? 1 : 0) + NOTES_PER_OCTAVE * 2) %
 			NOTES_PER_OCTAVE;
-
-		const suffix = ROMAN_QUALITY_TO_SUFFIX[quality];
-		if (!suffix)
-			throw new Error(`Unknown quality "${quality}" in token "${token}"`);
 
 		return { noteName: NOTE_NAMES[rootPitchClass], suffix };
 	});
