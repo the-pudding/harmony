@@ -85,6 +85,79 @@ export const degreeQualityToRoman = (
 	return null;
 };
 
+const BASE_CHORD_SUFFIXES = new Set([
+	"major",
+	"minor",
+	"diminished",
+	"augmented"
+]);
+
+const suffixToRomanExtension = (suffix: string, quality: string): string => {
+	if (BASE_CHORD_SUFFIXES.has(suffix)) return "";
+
+	switch (suffix) {
+		case "maj7":
+			return "maj7";
+		case "maj9":
+			return "maj9";
+		case "7":
+			return "7";
+		case "9":
+			return "9";
+		case "minor7":
+			return quality === "min" ? "7" : "m7";
+		case "minor9":
+			return "9";
+		case "sus2":
+			return "sus2";
+		case "sus4":
+			return "sus4";
+		case "7sus4":
+			return "7sus4";
+		case "add9":
+			return "add9";
+		case "6":
+			return "6";
+		case "m7b5":
+			return "m7b5";
+		case "dim7":
+			return "dim7";
+		default:
+			return "";
+	}
+};
+
+const bareRomanNumeralFromToken = (token: string): string | null => {
+	const parsed = parseRomanToken(token);
+	if (!parsed) return null;
+
+	const base = degreeQualityToRoman(parsed.degree, parsed.quality);
+	if (!base) return null;
+
+	return parsed.flat ? `b${base}` : base;
+};
+
+export const formatRomanTokenFromParsed = (
+	baseRomanToken: string,
+	chord: ParsedProgressionChord | undefined
+): string => {
+	if (!chord) return baseRomanToken;
+
+	const parsedFromToken = parseRomanToken(baseRomanToken);
+	if (!parsedFromToken) return baseRomanToken;
+
+	if (parsedFromToken.suffix === chord.suffix) return baseRomanToken;
+
+	const bareNumeral = bareRomanNumeralFromToken(baseRomanToken);
+	if (!bareNumeral) return baseRomanToken;
+
+	const extension = suffixToRomanExtension(
+		chord.suffix,
+		parsedFromToken.quality
+	);
+	return `${bareNumeral}${extension}`;
+};
+
 export const gramLabel = (tokens: string[]): string => tokens.join("→");
 
 export const dedupeAdjacentTokens = (tokens: string[]): string[] =>

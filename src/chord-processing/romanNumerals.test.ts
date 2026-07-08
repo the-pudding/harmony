@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { toPrecomputedAbstractProgression } from "./match-chord-progressions/match.js";
 import {
+	formatRomanTokenFromParsed,
 	parseRomanToken,
 	romanTokensToParsedProgression,
 	romanTokensToPrecomputedAbstract
@@ -19,6 +20,52 @@ describe("romanTokensToParsedProgression", () => {
 
 	it("returns null for invalid tokens", () => {
 		expect(romanTokensToParsedProgression(["I", "not-a-chord"])).toBeNull();
+	});
+});
+
+describe("formatRomanTokenFromParsed", () => {
+	it("returns the base token when suffix already matches", () => {
+		expect(
+			formatRomanTokenFromParsed("IVmaj7", {
+				rootPitchClass: 5,
+				suffix: "maj7",
+				display: "Fmaj7"
+			})
+		).toBe("IVmaj7");
+	});
+
+	it("appends extensions stripped from dataset roman tokens", () => {
+		expect(
+			formatRomanTokenFromParsed("IV", {
+				rootPitchClass: 5,
+				suffix: "sus2",
+				display: "Fsus2"
+			})
+		).toBe("IVsus2");
+		expect(
+			formatRomanTokenFromParsed("V", {
+				rootPitchClass: 7,
+				suffix: "7",
+				display: "G7"
+			})
+		).toBe("V7");
+		expect(
+			formatRomanTokenFromParsed("ii", {
+				rootPitchClass: 2,
+				suffix: "minor7",
+				display: "Dm7"
+			})
+		).toBe("ii7");
+	});
+
+	it("leaves plain triads unchanged", () => {
+		expect(
+			formatRomanTokenFromParsed("IV", {
+				rootPitchClass: 5,
+				suffix: "major",
+				display: "F"
+			})
+		).toBe("IV");
 	});
 });
 

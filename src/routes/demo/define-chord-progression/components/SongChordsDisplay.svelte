@@ -3,6 +3,7 @@
 	import type { ChordAnnotation } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import type { ChordHighlightPalette } from "./progressionColors.js";
 	import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
+	import { formatRomanTokenFromParsed } from "../../../../chord-processing/romanNumerals.js";
 	import { buildColoredHighlightSegments } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import { DEFAULT_PROGRESSION_PALETTE } from "./progressionColors.js";
 
@@ -51,6 +52,15 @@
 				.filter((label) => label !== null)
 		).size > 1
 	);
+
+	const sectionRomanToken = (
+		section: GroupedSong["sections"][number],
+		position: number
+	): string =>
+		formatRomanTokenFromParsed(
+			section.romanTokens[position],
+			section.parsedProgression[position]
+		);
 </script>
 
 <div
@@ -90,7 +100,7 @@
 						>
 							{#each segment.indices as position, positionIndex (position)}
 								<span class="chord highlighted">
-									{section.romanTokens[position]}
+									{sectionRomanToken(section, position)}
 								</span>
 								{#if positionIndex < segment.indices.length - 1}
 									<span class="dot">·</span>
@@ -99,7 +109,7 @@
 						</span>
 					{:else}
 						{#each segment.indices as position, positionIndex (position)}
-							<span class="chord">{section.romanTokens[position]}</span>
+							<span class="chord">{sectionRomanToken(section, position)}</span>
 							{#if positionIndex < segment.indices.length - 1}
 								<span class="dot">·</span>
 							{/if}
