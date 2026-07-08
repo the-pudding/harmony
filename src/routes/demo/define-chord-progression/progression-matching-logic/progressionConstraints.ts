@@ -1,5 +1,9 @@
+// We could play with these boundaries... but, in my (David's) mind, we're looking for concise harmonic "chunks"
+// that repeat and are re-used. Harmonic "memes." I feel like progressions of 7+ chords is unrealistic
+// in popular music, and if we allow them we just end up just matching huge swaths of chords that aren't in fact
+// "progressions" at all.
 export const MIN_PROGRESSION_LENGTH = 3;
-export const MAX_PROGRESSION_LENGTH = 8;
+export const MAX_PROGRESSION_LENGTH = 6;
 
 const blockRepeatsAt = (
 	tokens: readonly string[],
