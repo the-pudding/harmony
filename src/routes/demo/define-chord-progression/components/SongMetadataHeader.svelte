@@ -1,7 +1,14 @@
 <script lang="ts">
 	import { SONG_DATA_SOURCE_TITLE } from "../../../../chord-search-demo/constants.js";
 	import { buildYouTubeSearchUrl } from "../../../../chord-search-demo/youtubeSearch.js";
+	import { handReviewedSongs } from "$data/hand-reviewed-songs.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
+
+	const MANUALLY_CORRECTED_TITLE = "manually corrected";
+	const MANUALLY_CORRECTED_EMOJI = "✏️";
+	const HAND_REVIEWED_SONG_IDS = new Set(
+		handReviewedSongs.map((reviewedSong) => reviewedSong.id)
+	);
 
 	type Props = {
 		song: GroupedSong;
@@ -20,10 +27,19 @@
 	const sourceTitle = $derived(
 		source ? SONG_DATA_SOURCE_TITLE[source] : undefined
 	);
+	const isManuallyCorrected = $derived(
+		HAND_REVIEWED_SONG_IDS.has(song.songKey)
+	);
 </script>
 
 <div class="song-title-row">
-	{#if source}
+	{#if isManuallyCorrected}
+		<span
+			class="manually-corrected"
+			title={MANUALLY_CORRECTED_TITLE}
+			aria-label={MANUALLY_CORRECTED_TITLE}>{MANUALLY_CORRECTED_EMOJI}</span
+		>
+	{:else if source}
 		<span class="source" title={sourceTitle}>{source}</span>
 	{/if}
 	<a
@@ -70,6 +86,13 @@
 
 	.youtube-search:hover {
 		opacity: 1;
+	}
+
+	.manually-corrected {
+		font-size: 0.625rem;
+		line-height: 1;
+		opacity: 0.55;
+		cursor: default;
 	}
 
 	.song-name {
