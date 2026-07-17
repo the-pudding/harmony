@@ -20,6 +20,20 @@ export type HandReviewedSong = {
 
 export const handReviewedSongs: HandReviewedSong[] = [
 	{
+		id: "desiigner__panda",
+		technicalNotes: "",
+		correctedSongContents: {
+			sections: [
+				...["Intro", "Verse 1", "Chorus", "Verse 2"].map((name) => ({
+					name,
+					key: "Eb",
+					scale: "minor",
+					romanTokens: ["i", "Vsus4", "V", "i", "Vsus4", "V"]
+				}))
+			]
+		}
+	},
+	{
 		id: "walker-hayes__fancy-like",
 		technicalNotes: "Original HT put just the chorus",
 		correctedSongContents: {
