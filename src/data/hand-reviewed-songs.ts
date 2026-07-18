@@ -477,6 +477,10 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "juice-wrld__wishing-wel",
 		chordProgressionIssues:
 			"Just has an intro, missing eg main progression: vi-IV-I"
+	},
+	{
+		id: "maroon-5__daylight",
+		chordProgressionIssues: "Chorus looks right, missing eg verse"
 	}
 ];
 
