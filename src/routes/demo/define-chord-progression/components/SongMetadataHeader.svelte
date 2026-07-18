@@ -1,14 +1,22 @@
 <script lang="ts">
 	import { SONG_DATA_SOURCE_TITLE } from "../../../../chord-search-demo/constants.js";
 	import { buildYouTubeSearchUrl } from "../../../../chord-search-demo/youtubeSearch.js";
-	import { manuallyEnteredSongs } from "$data/hand-reviewed-songs.js";
+	import {
+		getChordProgressionIssues,
+		manuallyEnteredSongs,
+		songLooksGoodAsIs
+	} from "$data/hand-reviewed-songs.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 
 	const MANUALLY_CORRECTED_TITLE = "manually corrected";
 	const MANUALLY_CORRECTED_EMOJI = "✏️";
+	const LOOKS_GOOD_TITLE = "looks good as is";
+	const LOOKS_GOOD_EMOJI = "✅";
+	const PROBLEMATIC_EMOJI = "🔴";
 	const MANUALLY_ENTERED_SONG_IDS = new Set(
 		manuallyEnteredSongs.map((song) => song.id)
 	);
+	const LOOKS_GOOD_SONG_IDS = new Set(songLooksGoodAsIs);
 
 	type Props = {
 		song: GroupedSong;
@@ -30,12 +38,17 @@
 	const isManuallyCorrected = $derived(
 		MANUALLY_ENTERED_SONG_IDS.has(song.songKey)
 	);
+	const chordProgressionIssues = $derived(
+		getChordProgressionIssues(song.songKey)
+	);
+	const isProblematic = $derived(chordProgressionIssues !== undefined);
+	const looksGoodAsIs = $derived(LOOKS_GOOD_SONG_IDS.has(song.songKey));
 </script>
 
 <div class="song-title-row">
 	{#if isManuallyCorrected}
 		<span
-			class="manually-corrected"
+			class="status-icon"
 			title={MANUALLY_CORRECTED_TITLE}
 			aria-label={MANUALLY_CORRECTED_TITLE}>{MANUALLY_CORRECTED_EMOJI}</span
 		>
@@ -50,6 +63,20 @@
 		aria-label="Search on YouTube"
 		title="Search on YouTube">🎵</a
 	>
+	{#if isProblematic}
+		<span
+			class="status-icon status-icon-problematic"
+			title={chordProgressionIssues}
+			aria-label={chordProgressionIssues}>{PROBLEMATIC_EMOJI}</span
+		>
+	{/if}
+	{#if looksGoodAsIs}
+		<span
+			class="status-icon status-icon-looks-good"
+			title={LOOKS_GOOD_TITLE}
+			aria-label={LOOKS_GOOD_TITLE}>{LOOKS_GOOD_EMOJI}</span
+		>
+	{/if}
 	<span class="song-name">{song.title}</span>
 	{#if song.year !== undefined}
 		<span class="year">({song.year})</span>
@@ -88,11 +115,19 @@
 		opacity: 1;
 	}
 
-	.manually-corrected {
+	.status-icon {
 		font-size: 0.625rem;
 		line-height: 1;
 		opacity: 0.55;
 		cursor: default;
+	}
+
+	.status-icon-problematic {
+		opacity: 0.85;
+	}
+
+	.status-icon-looks-good {
+		opacity: 0.75;
 	}
 
 	.song-name {
