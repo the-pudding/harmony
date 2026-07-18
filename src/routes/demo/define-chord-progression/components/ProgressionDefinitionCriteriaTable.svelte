@@ -80,6 +80,19 @@
 					/>
 				</td>
 			</tr>
+			<tr>
+				<td>
+					Consecutive repeats of a chord (once extensions and slash bass are
+					ignored, e.g. I·Isus2·V·Vsus4) collapse to a single chord for
+					matching, so they read as I·V rather than I·V·V
+				</td>
+				<td>
+					<CodeReference
+						filename="collapsedProgression.ts"
+						symbols={["collapseAdjacentCanonical"]}
+					/>
+				</td>
+			</tr>
 		</tbody>
 	</table>
 

@@ -1,8 +1,5 @@
 import coreProgressions from "$data/core-progressions.js";
-import type {
-	GroupedSong,
-	SongSection
-} from "../../../../data/songBrowser.js";
+import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import type { ScaleName } from "../../../../chord-processing/scales.js";
 import { matchHighlightForCoreProgression } from "../components/progressionColors.js";
@@ -18,6 +15,10 @@ import {
 	MAX_PROGRESSION_LENGTH,
 	isSelfRepeatingProgression
 } from "./progressionConstraints.js";
+import {
+	collapseAdjacentCanonical,
+	type OriginalRange
+} from "./collapsedProgression.js";
 import type { SectionCoverage } from "./greedyProgressionSelection.js";
 
 const coreProgressionNameByChordProgression = new Map(
@@ -36,6 +37,39 @@ type CandidateWindow = {
 	scale: ScaleName;
 };
 
+// The section as the matcher sees it: repeated chords (identical once extensions
+// and slash bass are ignored) merged into one, so a slice like Isus2·V·Vsus4
+// becomes the single progression I·V rather than a spurious three-chord window.
+type CollapsedSection = {
+	chords: ParsedProgressionChord[];
+	romanTokens: string[];
+	originalRanges: OriginalRange[];
+	scale: ScaleName;
+};
+
+const collapseSection = (section: SongSection): CollapsedSection => {
+	const { chords, originalRanges } = collapseAdjacentCanonical(
+		section.parsedProgression
+	);
+	return {
+		chords,
+		originalRanges,
+		romanTokens: originalRanges.map(
+			(range) => section.romanTokens[range.start] ?? ""
+		),
+		scale: section.scale
+	};
+};
+
+const rangeContainsUncovered = (
+	range: OriginalRange,
+	uncoveredOriginal: Set<number>
+): boolean =>
+	Array.from(
+		{ length: range.length },
+		(_, offset) => range.start + offset
+	).some((position) => uncoveredOriginal.has(position));
+
 const uncoveredPositionsFromCoverage = (
 	sectionLength: number,
 	coveredPositions: number[]
@@ -46,30 +80,28 @@ const uncoveredPositionsFromCoverage = (
 	);
 };
 
-const windowsTouchingPositions = (
-	section: SongSection,
-	positions: number[]
+const windowsTouchingUncovered = (
+	collapsed: CollapsedSection,
+	uncoveredOriginal: Set<number>
 ): CandidateWindow[] => {
-	const touchSet = new Set(positions);
-	const sectionLength = section.parsedProgression.length;
+	const collapsedLength = collapsed.chords.length;
 
-	return section.parsedProgression.flatMap((_, start) => {
-		const maxEnd = Math.min(sectionLength, start + MAX_PROGRESSION_LENGTH);
+	return collapsed.chords.flatMap((_, start) => {
+		const maxEnd = Math.min(collapsedLength, start + MAX_PROGRESSION_LENGTH);
 		return Array.from(
 			{
 				length: Math.max(0, maxEnd - start - MIN_PROGRESSION_LENGTH + 1)
 			},
 			(_, lengthOffset) => {
 				const end = start + MIN_PROGRESSION_LENGTH + lengthOffset;
-				const touchesUncovered = Array.from(
-					{ length: end - start },
-					(__, index) => start + index
-				).some((position) => touchSet.has(position));
+				const touchesUncovered = collapsed.originalRanges
+					.slice(start, end)
+					.some((range) => rangeContainsUncovered(range, uncoveredOriginal));
 				if (!touchesUncovered) return null;
 				return {
-					romanTokens: section.romanTokens.slice(start, end),
-					parsedProgression: section.parsedProgression.slice(start, end),
-					scale: section.scale
+					romanTokens: collapsed.romanTokens.slice(start, end),
+					parsedProgression: collapsed.chords.slice(start, end),
+					scale: collapsed.scale
 				};
 			}
 		).filter((window): window is CandidateWindow => window !== null);
@@ -130,11 +162,13 @@ export const computeGapFillProgressionMatches = (
 	initialCoverage: SectionCoverage
 ): ProgressionWithMatchStats[] => {
 	const candidateWindows = song.sections.flatMap((section, sectionIndex) => {
-		const uncovered = uncoveredPositionsFromCoverage(
-			section.parsedProgression.length,
-			initialCoverage[sectionIndex] ?? []
+		const uncovered = new Set(
+			uncoveredPositionsFromCoverage(
+				section.parsedProgression.length,
+				initialCoverage[sectionIndex] ?? []
+			)
 		);
-		return windowsTouchingPositions(section, uncovered);
+		return windowsTouchingUncovered(collapseSection(section), uncovered);
 	});
 
 	if (candidateWindows.length === 0) return [];

@@ -1,14 +1,10 @@
 import type { CoreProgression } from "$data/core-progressions.js";
-import type {
-	GroupedSong,
-	SongSection
-} from "../../../../data/songBrowser.js";
+import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import type { ScaleName } from "../../../../chord-processing/scales.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import {
 	findSubProgressionMatches,
 	isPositionInMatch,
-	SUFFIX_TO_BASE,
 	toAbstractProgression
 } from "../../../../chord-processing/match-chord-progressions/index.js";
 import type {
@@ -17,6 +13,11 @@ import type {
 } from "../../../../chord-processing/types.js";
 import { matchHighlightForCoreProgression } from "../components/progressionColors.js";
 import { isSelfRepeatingProgression } from "./progressionConstraints.js";
+import {
+	collapseAdjacentCanonical,
+	collapsedMatchToOriginalMatch,
+	toCanonicalMatchingChord
+} from "./collapsedProgression.js";
 
 export const MIN_PROGRESSION_OCCURRENCES = 2;
 
@@ -61,9 +62,11 @@ export type ChordHighlightSegment = {
 	indices: number[];
 };
 
-export const abstractProgressionKey = (
-	parsed: ParsedProgressionChord[]
-): string => JSON.stringify(toAbstractProgression(parsed));
+// Keyed on the canonical (extension- and bass-agnostic) shape so that a
+// progression matches its core definition even when transcribed with 7ths, sus
+// chords, or inversions.
+export const abstractProgressionKey = (parsed: ParsedProgressionChord[]): string =>
+	JSON.stringify(toAbstractProgression(parsed.map(toCanonicalMatchingChord)));
 
 export const buildCoreNameByAbstractKey = (
 	coreProgressions: CoreProgression[]
@@ -79,30 +82,23 @@ export const buildCoreNameByAbstractKey = (
 		})
 	);
 
-// Slash chords are matched purely on the chord itself; the bass note is ignored.
-const withoutSlashBass = (
-	chords: ParsedProgressionChord[]
-): ParsedProgressionChord[] =>
-	chords.map(
-		({ bassPitchClass: _bass, ...chord }) => chord as ParsedProgressionChord
-	);
-
-const withoutExtensions = (
-	chords: ParsedProgressionChord[]
-): ParsedProgressionChord[] =>
-	chords.map((chord) => ({
-		...chord,
-		suffix: SUFFIX_TO_BASE[chord.suffix] ?? chord.suffix
-	}));
-
+// Matching treats a run of repeated chords (identical once extensions and slash
+// bass are ignored, e.g. I·Isus2 or V·Vsus4) as a single chord: both the section
+// and the search progression are collapsed to their canonical shape before
+// matching, then each match is mapped back onto the original chord positions.
 const matchProgressionIgnoringBassAndExtensions = (
 	sectionProgression: ParsedProgressionChord[],
 	searchProgression: ParsedProgressionChord[]
-): SubProgressionMatch[] =>
-	findSubProgressionMatches(
-		withoutExtensions(withoutSlashBass(sectionProgression)),
-		withoutExtensions(withoutSlashBass(searchProgression))
+): SubProgressionMatch[] => {
+	const collapsedSection = collapseAdjacentCanonical(sectionProgression);
+	const collapsedSearch = collapseAdjacentCanonical(searchProgression);
+	return findSubProgressionMatches(
+		collapsedSection.chords,
+		collapsedSearch.chords
+	).map((match) =>
+		collapsedMatchToOriginalMatch(match, collapsedSection.originalRanges)
 	);
+};
 
 const toNonOverlappingMatches = (
 	matches: SubProgressionMatch[],
