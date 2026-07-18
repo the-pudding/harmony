@@ -481,6 +481,10 @@ export const problematicSongs: ProblematicSong[] = [
 	{
 		id: "maroon-5__daylight",
 		chordProgressionIssues: "Chorus looks right, missing eg verse"
+	},
+	{
+		id: "lady-gaga__dope",
+		chordProgressionIssues: "Just has chorus, eg no verse (iv-iii-VI-V)"
 	}
 ];
 
