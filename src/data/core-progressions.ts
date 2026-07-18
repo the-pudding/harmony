@@ -80,12 +80,26 @@ const coreProgressions: CoreProgression[] = [
 		scale: "minor",
 		description: ""
 	},
+	// All variants on I-V-vi-IV ------------------------------------------------
 	{
 		name: "axis of awesome",
 		chordProgression: "I-V-vi-IV",
 		scale: "major",
 		description: ""
 	},
+	{
+		name: "(minor)axis of awesome",
+		chordProgression: "vi-IV-I-V",
+		scale: "major",
+		description: "repeats starting on vi instead of I"
+	},
+	{
+		name: "stay with me",
+		chordProgression: "vi-IV-I",
+		scale: "major",
+		description: "a sorta pop-y, emo ii-V-I"
+	},
+	// ________________________________________________________
 	{
 		name: "doo wop",
 		chordProgression: "I-vi-IV-V",
