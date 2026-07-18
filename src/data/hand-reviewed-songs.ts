@@ -11,14 +11,18 @@ export type CorrectedSongContents = {
 
 export const CHORD_PROGRESSION_ISSUES_LABEL = "chordProgressionIssues:";
 
-export type HandReviewedSong = {
+export type ManuallyEnteredSong = {
 	id: string;
-	chordProgressionIssues?: string;
-	correctedSongContents?: CorrectedSongContents;
+	correctedSongContents: CorrectedSongContents;
 	technicalNotes?: string;
 };
 
-export const handReviewedSongs: HandReviewedSong[] = [
+export type ProblematicSong = {
+	id: string;
+	chordProgressionIssues: string;
+};
+
+export const manuallyEnteredSongs: ManuallyEnteredSong[] = [
 	{
 		id: "desiigner__panda",
 		technicalNotes: "",
@@ -287,7 +291,6 @@ export const handReviewedSongs: HandReviewedSong[] = [
 	},
 	{
 		id: "sza__good-days",
-		chordProgressionIssues: "HT original was wrong and only had the verse.",
 		correctedSongContents: {
 			sections: [
 				{
@@ -465,10 +468,22 @@ export const handReviewedSongs: HandReviewedSong[] = [
 	}
 ];
 
+export const problematicSongs: ProblematicSong[] = [
+	{
+		id: "miley-cyrus__cant-be-tamed",
+		chordProgressionIssues: "eg chrous is i-iv but it's actually i-vi-V, etc"
+	},
+	{
+		id: "juice-wrld__wishing-wel",
+		chordProgressionIssues:
+			"Just has an intro, missing eg main progression: vi-IV-I"
+	}
+];
+
+export const songLooksGoodAsIs: string[] = ["juice-wrld__wishing-well"];
+
 const chordProgressionIssuesBySongId = new Map(
-	handReviewedSongs
-		.filter((review) => review.chordProgressionIssues !== undefined)
-		.map((review) => [review.id, review.chordProgressionIssues!])
+	problematicSongs.map((song) => [song.id, song.chordProgressionIssues])
 );
 
 export const getChordProgressionIssues = (

@@ -28,7 +28,7 @@ This runs [`tasks/build-songs.js`](tasks/build-songs.js), which:
 - writes `static/data/songs.json`
 - writes `static/data/popular-songs.json` (songs matching `static/top10-songs.csv`, for faster demo page loads)
 
-Note: we hav a file called `harmony/src/data/hand-reviewed-songs.ts` where we apply manual corrections before importing to use the songs in the UI.
+Note: we have a file called `harmony/src/data/hand-reviewed-songs.ts` with `manuallyEnteredSongs`, `problematicSongs`, and `songLooksGoodAsIs` for reviewing and correcting song data before use in the UI.
 
 When `harmony-data` is updated (e.g. after pulling fresh scrapes):
 

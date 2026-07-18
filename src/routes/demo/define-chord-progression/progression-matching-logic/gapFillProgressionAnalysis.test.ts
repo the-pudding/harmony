@@ -20,7 +20,7 @@ import {
 	type ScaleName
 } from "../../../../chord-processing/scale-intervals.js";
 import { correctedSongContentsToSongInputs } from "../../../../data/applyHandReviewedCorrections.js";
-import { handReviewedSongs } from "../../../../data/hand-reviewed-songs.js";
+import { manuallyEnteredSongs } from "../../../../data/hand-reviewed-songs.js";
 
 const makeSection = (romanTokens: string[]): SongSection => ({
 	label: null,
@@ -428,7 +428,7 @@ describe("selectFinalProgressions", () => {
 // After the non-overlapping fix, the gap-fill should surface i-v-VI-iv (2×),
 // not i-v-VI-iv-i (which only has 1 non-overlapping instance and must be excluded).
 
-const highestInTheRoomReview = handReviewedSongs.find(
+const highestInTheRoomReview = manuallyEnteredSongs.find(
 	(s) => s.id === "travis-scott__highest-in-the-room"
 )!;
 const highestInTheRoomSong = groupSongs(
@@ -437,7 +437,7 @@ const highestInTheRoomSong = groupSongs(
 		"Highest in the Room",
 		["Travis Scott"],
 		2019,
-		highestInTheRoomReview.correctedSongContents!
+		highestInTheRoomReview.correctedSongContents
 	)
 )[0];
 

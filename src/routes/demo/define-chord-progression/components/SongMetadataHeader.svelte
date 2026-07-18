@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { SONG_DATA_SOURCE_TITLE } from "../../../../chord-search-demo/constants.js";
 	import { buildYouTubeSearchUrl } from "../../../../chord-search-demo/youtubeSearch.js";
-	import { handReviewedSongs } from "$data/hand-reviewed-songs.js";
+	import { manuallyEnteredSongs } from "$data/hand-reviewed-songs.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 
 	const MANUALLY_CORRECTED_TITLE = "manually corrected";
 	const MANUALLY_CORRECTED_EMOJI = "✏️";
-	const HAND_REVIEWED_SONG_IDS = new Set(
-		handReviewedSongs.map((reviewedSong) => reviewedSong.id)
+	const MANUALLY_ENTERED_SONG_IDS = new Set(
+		manuallyEnteredSongs.map((song) => song.id)
 	);
 
 	type Props = {
@@ -28,7 +28,7 @@
 		source ? SONG_DATA_SOURCE_TITLE[source] : undefined
 	);
 	const isManuallyCorrected = $derived(
-		HAND_REVIEWED_SONG_IDS.has(song.songKey)
+		MANUALLY_ENTERED_SONG_IDS.has(song.songKey)
 	);
 </script>
 
