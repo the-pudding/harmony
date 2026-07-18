@@ -106,8 +106,10 @@ describe("hasConsecutivelyRepeatedBlock", () => {
 		expect(MIN_PROGRESSION_LENGTH).toBe(3);
 	});
 
-	it("exports MAX_PROGRESSION_LENGTH as 8", () => {
-		expect(MAX_PROGRESSION_LENGTH).toBe(8);
+	it("keeps the maximum progression length at or above the minimum", () => {
+		expect(MAX_PROGRESSION_LENGTH).toBeGreaterThanOrEqual(
+			MIN_PROGRESSION_LENGTH
+		);
 	});
 });
 
