@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { getChordProgressionIssues } from "$data/hand-reviewed-songs.js";
+	import {
+		getChordProgressionIssues,
+		isSongLooksGoodAsIs,
+		LOOKS_GOOD_EMOJI,
+		LOOKS_GOOD_LABEL
+	} from "$data/hand-reviewed-songs.js";
 	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
 	import {
 		EXPLAINED_THRESHOLD_PERCENT,
@@ -13,6 +18,7 @@
 		coveragePercent: number;
 		matchingProgressions: string[];
 		chordProgressionIssues?: string;
+		looksGoodAsIs?: boolean;
 	};
 
 	type DodgedNode = SongEntry & {
@@ -66,6 +72,7 @@
 			.map((s) => ({
 				...s,
 				chordProgressionIssues: getChordProgressionIssues(s.songKey),
+				looksGoodAsIs: isSongLooksGoodAsIs(s.songKey),
 				x: xScale(s.coveragePercent),
 				y: 0,
 				next: null as DodgedNode | null
@@ -256,9 +263,10 @@
 					{r}
 					class="dot"
 					class:selected={isSelected}
-					class:core-matched={isCoreMatched && !isSelected}
+					class:core-matched={isCoreMatched}
 					class:hovered={isHovered}
-					class:has-issues={hasIssues && !isCoreMatched && !isSelected}
+					class:has-issues={hasIssues && !isCoreMatched}
+					class:looks-good={node.looksGoodAsIs && !hasIssues && !isCoreMatched}
 					onmouseenter={() => handleDotEnter(node.songKey)}
 					onmouseleave={scheduleHoverClear}
 					onclick={() => selectSong(node.songKey)}
@@ -300,6 +308,11 @@
 						inline
 						brightensOnParentHover
 					/>
+					{#if hoveredNode.looksGoodAsIs}
+						<span class="looks-good-note"
+							>{LOOKS_GOOD_EMOJI} {LOOKS_GOOD_LABEL}</span
+						>
+					{/if}
 					<div class="coverage-bar" aria-hidden="true">
 						<div
 							class="coverage-fill"
@@ -395,7 +408,6 @@
 	}
 
 	.dot.selected {
-		fill: #89b4fa;
 		stroke: rgba(255, 255, 255, 0.9);
 		stroke-width: 1.5px;
 	}
@@ -410,9 +422,13 @@
 		stroke-width: 1.5px;
 	}
 
-	.dot.has-issues.selected {
-		fill: #f87171;
-		stroke: rgba(255, 255, 255, 0.9);
+	.dot.looks-good {
+		fill: rgba(96, 165, 250, 0.65);
+	}
+
+	.dot.looks-good.hovered {
+		fill: rgba(96, 165, 250, 0.95);
+		stroke: rgba(255, 255, 255, 0.6);
 		stroke-width: 1.5px;
 	}
 
@@ -470,6 +486,17 @@
 
 	.song-card:hover .song-stats {
 		color: rgba(228, 228, 231, 0.85);
+	}
+
+	.looks-good-note {
+		font-size: 0.65rem;
+		font-style: italic;
+		line-height: 1.4;
+		color: rgba(96, 165, 250, 0.9);
+	}
+
+	.song-card:hover .looks-good-note {
+		color: rgba(147, 197, 253, 0.95);
 	}
 
 	.coverage-bar {

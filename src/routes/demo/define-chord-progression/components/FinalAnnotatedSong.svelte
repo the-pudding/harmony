@@ -1,5 +1,9 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
+	import {
+		isSongLooksGoodAsIs,
+		LOOKS_GOOD_LABEL
+	} from "$data/hand-reviewed-songs.js";
 	import type {
 		ProgressionWithMatchStats,
 		ChordAnnotation
@@ -45,11 +49,16 @@
 	let hoveredProgression = $state<string | null>(null);
 
 	const focusedProgression = $derived(hoveredProgression ?? activeProgression);
+
+	const looksGoodAsIs = $derived(isSongLooksGoodAsIs(song.songKey));
 </script>
 
 <div class="final-annotated-song">
 	<SongMetadataHeader {song} />
 	<ChordProgressionIssuesNote songKey={song.songKey} />
+	{#if looksGoodAsIs}
+		<p class="looks-good-note">{LOOKS_GOOD_LABEL}</p>
+	{/if}
 	<div
 		class="final-layout"
 		class:final-layout-chords-only={!hasMatches}
@@ -101,6 +110,14 @@
 		flex-direction: column;
 		gap: 0.625rem;
 		width: 100%;
+	}
+
+	.looks-good-note {
+		margin: 0;
+		font-size: 0.75rem;
+		font-style: italic;
+		line-height: 1.4;
+		color: rgba(96, 165, 250, 0.95);
 	}
 
 	.final-layout {

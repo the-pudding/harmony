@@ -486,6 +486,9 @@ export const problematicSongs: ProblematicSong[] = [
 
 export const songLooksGoodAsIs: string[] = ["juice-wrld__wishing-well"];
 
+export const LOOKS_GOOD_LABEL = "looks good as is";
+export const LOOKS_GOOD_EMOJI = "🔵";
+
 const chordProgressionIssuesBySongId = new Map(
 	problematicSongs.map((song) => [song.id, song.chordProgressionIssues])
 );
@@ -493,3 +496,8 @@ const chordProgressionIssuesBySongId = new Map(
 export const getChordProgressionIssues = (
 	songKey: string
 ): string | undefined => chordProgressionIssuesBySongId.get(songKey);
+
+const looksGoodSongIds = new Set(songLooksGoodAsIs);
+
+export const isSongLooksGoodAsIs = (songKey: string): boolean =>
+	looksGoodSongIds.has(songKey);

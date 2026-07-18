@@ -3,20 +3,19 @@
 	import { buildYouTubeSearchUrl } from "../../../../chord-search-demo/youtubeSearch.js";
 	import {
 		getChordProgressionIssues,
-		manuallyEnteredSongs,
-		songLooksGoodAsIs
+		isSongLooksGoodAsIs,
+		LOOKS_GOOD_EMOJI,
+		LOOKS_GOOD_LABEL,
+		manuallyEnteredSongs
 	} from "$data/hand-reviewed-songs.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 
 	const MANUALLY_CORRECTED_TITLE = "manually corrected";
 	const MANUALLY_CORRECTED_EMOJI = "✏️";
-	const LOOKS_GOOD_TITLE = "looks good as is";
-	const LOOKS_GOOD_EMOJI = "✅";
 	const PROBLEMATIC_EMOJI = "🔴";
 	const MANUALLY_ENTERED_SONG_IDS = new Set(
 		manuallyEnteredSongs.map((song) => song.id)
 	);
-	const LOOKS_GOOD_SONG_IDS = new Set(songLooksGoodAsIs);
 
 	type Props = {
 		song: GroupedSong;
@@ -42,7 +41,7 @@
 		getChordProgressionIssues(song.songKey)
 	);
 	const isProblematic = $derived(chordProgressionIssues !== undefined);
-	const looksGoodAsIs = $derived(LOOKS_GOOD_SONG_IDS.has(song.songKey));
+	const looksGoodAsIs = $derived(isSongLooksGoodAsIs(song.songKey));
 </script>
 
 <div class="song-title-row">
@@ -73,8 +72,8 @@
 	{#if looksGoodAsIs}
 		<span
 			class="status-icon status-icon-looks-good"
-			title={LOOKS_GOOD_TITLE}
-			aria-label={LOOKS_GOOD_TITLE}>{LOOKS_GOOD_EMOJI}</span
+			title={LOOKS_GOOD_LABEL}
+			aria-label={LOOKS_GOOD_LABEL}>{LOOKS_GOOD_EMOJI}</span
 		>
 	{/if}
 	<span class="song-name">{song.title}</span>
