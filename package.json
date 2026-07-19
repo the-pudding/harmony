@@ -20,14 +20,14 @@
 		"@sveltejs/adapter-static": "^3.0.9",
 		"@sveltejs/kit": "^2.55.0",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
+		"@types/d3": "^7.4.3",
+		"@types/geojson": "^7946.0.16",
+		"@types/lodash.debounce": "^4.0.9",
+		"@types/node": "^22.15.29",
 		"archieml": "^0.5.0",
 		"autoprefixer": "^10.4.27",
 		"bits-ui": "^2.16.3",
 		"d3": "^7.9.0",
-		"@types/node": "^22.15.29",
-		"@types/d3": "^7.4.3",
-		"@types/geojson": "^7946.0.16",
-		"@types/lodash.debounce": "^4.0.9",
 		"lodash.debounce": "^4.0.8",
 		"postcss": "^8.5.8",
 		"prettier": "^3.8.1",
@@ -40,13 +40,16 @@
 		"svelte-check": "^4.3.6",
 		"svelte-preprocess": "^6.0.3",
 		"typescript": "^5.3.3",
-		"vitest": "^3.2.4",
 		"vite": "^7.3.1",
-		"vite-plugin-svgstring": "^1.0.0"
+		"vite-plugin-svgstring": "^1.0.0",
+		"vitest": "^3.2.4"
 	},
 	"type": "module",
 	"engines": {
 		"node": ">= 22.22.0"
 	},
-	"browserslist": "> 0.5%, last 4 versions, not ie <= 11, not ie_mob <= 11"
+	"browserslist": "> 0.5%, last 4 versions, not ie <= 11, not ie_mob <= 11",
+	"dependencies": {
+		"@cosmograph/cosmos": "^2.0.0-beta.22"
+	}
 }
