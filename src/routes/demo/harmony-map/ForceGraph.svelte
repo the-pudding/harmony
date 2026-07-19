@@ -217,8 +217,8 @@
 		const config: GraphConfigInterface = {
 			backgroundColor: "#09090b",
 			spaceSize: 4096,
-			pointGreyoutOpacity: 1,
-			linkGreyoutOpacity: 1,
+			pointGreyoutOpacity: 0.25,
+			linkGreyoutOpacity: 0.15,
 			linkArrows: false,
 			curvedLinks: false,
 			renderHoveredPointRing: true,
@@ -244,6 +244,7 @@
 				if (index === undefined) return;
 				const node = nodes[index];
 				if (!node) return;
+				graph.selectPointByIndex(index, true);
 				hoveredInfo = { id: node.id, type: node.type };
 				if (event instanceof MouseEvent) {
 					const rect = containerEl.getBoundingClientRect();
@@ -251,6 +252,7 @@
 				}
 			},
 			onPointMouseOut: () => {
+				graph.unselectPoints();
 				hoveredInfo = null;
 				tooltipAnchor = null;
 			},

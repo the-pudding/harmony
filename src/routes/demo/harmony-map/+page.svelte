@@ -95,7 +95,7 @@
 		display: flex;
 		flex-direction: column;
 		min-height: 0;
-		padding: 1rem 1.25rem 1rem;
+		padding: 1rem 0 0;
 		gap: 0.75rem;
 		box-sizing: border-box;
 	}
@@ -107,6 +107,7 @@
 		gap: 1.5rem;
 		flex-wrap: wrap;
 		flex-shrink: 0;
+		padding: 0 1.25rem;
 	}
 
 	.header-left {
