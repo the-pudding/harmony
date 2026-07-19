@@ -270,7 +270,7 @@ export type CoreProgression = {
 	technicalNotes?: string;
 };
 
-const allProgressionGroups: ProgressionGroup[] = [
+export const allProgressionGroups: ProgressionGroup[] = [
 	happyMajoryProgressions,
 	fourFiveVampProgressions,
 	axisOfAwesomeProgressions,

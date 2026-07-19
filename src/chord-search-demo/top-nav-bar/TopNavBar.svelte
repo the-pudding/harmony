@@ -52,6 +52,12 @@
 				class:active={page.url.pathname === "/demo/define-chord-progression"}
 				>define 'chord progression'</a
 			>
+			<a
+				href="/demo/core-progressions"
+				class="page-link"
+				class:active={page.url.pathname === "/demo/core-progressions"}
+				>core progressions</a
+			>
 		</div>
 	</div>
 	{#if showSearch}

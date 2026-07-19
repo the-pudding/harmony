@@ -32,10 +32,16 @@
 		selectedSongKey: string;
 		highlightedProgression: string | null;
 		onSelectSong?: (key: string) => void;
+		chartHeight?: number;
 	};
 
-	let { songs, selectedSongKey, highlightedProgression, onSelectSong }: Props =
-		$props();
+	let {
+		songs,
+		selectedSongKey,
+		highlightedProgression,
+		onSelectSong,
+		chartHeight = 500
+	}: Props = $props();
 
 	let containerWidth = $state(0);
 	let hoveredSongKey = $state<string | null>(null);
@@ -44,11 +50,10 @@
 	const DOT_RADIUS = 2.5;
 	const SELECTED_DOT_RADIUS = 4.5;
 	const DOT_SPACING = 0.1;
-	const CHART_HEIGHT = 500;
 	const PADDING_LEFT = 28;
 	const PADDING_RIGHT = 28;
 	const AXIS_HEIGHT = 28;
-	const AXIS_Y = CHART_HEIGHT - AXIS_HEIGHT;
+	const AXIS_Y = $derived(chartHeight - AXIS_HEIGHT);
 	const TICK_VALUES = [0, 25, 50, 75, 100];
 	const TOOLTIP_WIDTH = 200;
 	const HOVER_CLEAR_DELAY_MS = 120;
@@ -214,11 +219,11 @@
 
 <div class="beeswarm" bind:clientWidth={containerWidth}>
 	{#if songs === null}
-		<div class="loading-shell" style:height={CHART_HEIGHT + "px"}>
+		<div class="loading-shell" style:height={chartHeight + "px"}>
 			<span class="loading-text">Computing coverage…</span>
 		</div>
 	{:else if containerWidth > 0 && songs.length > 0}
-		<svg width={containerWidth} height={CHART_HEIGHT}>
+		<svg width={containerWidth} height={chartHeight}>
 			<line
 				x1={PADDING_LEFT}
 				x2={PADDING_LEFT + plotWidth}

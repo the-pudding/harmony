@@ -141,3 +141,18 @@ export const terminateCoverageWorkerPool = (): void => {
 
 export const isCoverageWorkerPoolReady = (): boolean =>
 	workerHandles.length > 0;
+
+export const filterCoverageResultForProgressions = (
+	result: AllSongsCoverageResult,
+	chordProgressions: string[]
+): AllSongsCoverageResult => {
+	const progressionSet = new Set(chordProgressions);
+	const songCoverages = result.songCoverages.filter((s) =>
+		s.matchingProgressions.some((p) => progressionSet.has(p))
+	);
+	return {
+		songCoverages,
+		progressionMatchRates: result.progressionMatchRates,
+		progressionMatchCounts: result.progressionMatchCounts
+	};
+};

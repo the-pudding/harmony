@@ -1,7 +1,6 @@
 <script lang="ts">
 	import coreProgressionsData from "$data/core-progressions.js";
 	import type { CoreProgression } from "$data/core-progressions.js";
-	import { onMount, onDestroy } from "svelte";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
 	import SongSelectDropdown from "./components/SongSelectDropdown.svelte";
@@ -12,12 +11,7 @@
 	import CollapsiblePanel from "./components/CollapsiblePanel.svelte";
 	import CoreProgressionRow from "./components/CoreProgressionRow.svelte";
 	import SongCoverageBeeswarm from "./components/SongCoverageBeeswarm.svelte";
-	import {
-		initCoverageWorkerPool,
-		computeCoverageOfAllSongs,
-		terminateCoverageWorkerPool,
-		type AllSongsCoverageResult
-	} from "./compute-coverage-of-all-songs/index.js";
+	import { createAllSongsCoverageState } from "./compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
 	import { MIN_PROGRESSION_OCCURRENCES } from "./progression-matching-logic/progressionMatchAnalysis.js";
 	import {
 		MIN_PROGRESSION_LENGTH,
@@ -33,75 +27,21 @@
 		applySubsetFlag
 	} from "./progression-matching-logic/strictSubsetProgressions.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
-	import { type GroupedSong } from "../../../data/songBrowser.js";
-	import {
-		fetchGroupedAllSongs,
-		fetchGroupedPopularSongs,
-		findGroupedSongByKey,
-		sortAllSongs,
-		sortPopularSongs
-	} from "../../../data/songBrowserData.js";
+	import { findGroupedSongByKey } from "../../../data/songBrowserData.js";
 	import DefineChordProgressionUrlSync from "./DefineChordProgressionUrlSync.svelte";
 	import { EXPLAINED_THRESHOLD_PERCENT } from "./constants.js";
 
-	let popularSongs = $state<GroupedSong[]>([]);
-	let fullSongs = $state<GroupedSong[] | null>(null);
-	let loading = $state(true);
-	let loadingFullSongs = $state(false);
-	let loadError = $state("");
-	let showPopularOnly = $state(true);
+	const coverage = createAllSongsCoverageState();
+
 	let titleFilter = $state("");
 	let selectedKey = $state("");
 	let pinnedProgression = $state<string | null>(null);
 	let showSongsContext = $state(false);
 	const coreProgressions: CoreProgression[] = coreProgressionsData;
-	let fullSongsLoadPromise = $state<Promise<GroupedSong[]> | null>(null);
 
-	const ensureFullSongsLoaded = (): Promise<GroupedSong[]> => {
-		if (fullSongs !== null) return Promise.resolve(fullSongs);
-		if (fullSongsLoadPromise) return fullSongsLoadPromise;
+	const searchableSongs = $derived(coverage.fullSongs ?? coverage.popularSongs);
 
-		loadingFullSongs = true;
-		const promise = fetchGroupedAllSongs()
-			.then((songs) => {
-				fullSongs = songs;
-				return songs;
-			})
-			.catch((err) => {
-				loadError = err instanceof Error ? err.message : String(err);
-				throw err;
-			})
-			.finally(() => {
-				loadingFullSongs = false;
-				fullSongsLoadPromise = null;
-			});
-
-		fullSongsLoadPromise = promise;
-		return promise;
-	};
-
-	onMount(() => {
-		const load = async () => {
-			try {
-				popularSongs = await fetchGroupedPopularSongs();
-			} catch (err) {
-				loadError = err instanceof Error ? err.message : String(err);
-			} finally {
-				loading = false;
-			}
-		};
-
-		void load();
-	});
-
-	const searchableSongs = $derived(fullSongs ?? popularSongs);
-
-	const baseList = $derived.by((): GroupedSong[] => {
-		if (showPopularOnly) {
-			return sortPopularSongs(popularSongs);
-		}
-		return sortAllSongs(fullSongs ?? []);
-	});
+	const baseList = $derived(coverage.baseList);
 
 	const filteredSongs = $derived.by(() => {
 		const q = titleFilter.trim().toLowerCase();
@@ -119,6 +59,8 @@
 
 	const GREEDY_SORT_LABEL =
 		"highest song coverage first (length of progression as tiebreaker)";
+
+	const allSongsCoverageResult = $derived(coverage.allSongsCoverageResult);
 
 	const finalSelection = $derived(
 		selectedSong
@@ -158,29 +100,6 @@
 
 	const explainedPercent = $derived(finalSelection.explainedPercent);
 
-	let allSongsCoverageResult = $state<AllSongsCoverageResult | null>(null);
-	let coverageRequestId = 0;
-
-	$effect(() => {
-		const songs = baseList;
-		allSongsCoverageResult = null;
-		let active = true;
-		const requestId = ++coverageRequestId;
-
-		void initCoverageWorkerPool($state.snapshot(songs)).then(async () => {
-			if (!active) return;
-			const coverages = await computeCoverageOfAllSongs(requestId);
-			if (active) allSongsCoverageResult = coverages;
-		});
-
-		return () => {
-			active = false;
-			terminateCoverageWorkerPool();
-		};
-	});
-
-	onDestroy(() => terminateCoverageWorkerPool());
-
 	const finalMatches = $derived([
 		...flaggedCoreSelected,
 		...flaggedGapSelected
@@ -199,13 +118,6 @@
 		selectedKey = songKey;
 	}
 
-	function handlePopularToggleChange(checked: boolean) {
-		showPopularOnly = checked;
-		if (!checked && fullSongs === null) {
-			void ensureFullSongsLoaded();
-		}
-	}
-
 	function handleProgressionSelect(chordProgression: string) {
 		pinnedProgression =
 			pinnedProgression === chordProgression ? null : chordProgression;
@@ -222,13 +134,13 @@
 
 <div class="page" style="--top-nav-height: {TOP_NAV_HEIGHT};">
 	<DefineChordProgressionUrlSync
-		songsReady={!loading && popularSongs.length > 0}
-		{showPopularOnly}
+		songsReady={!coverage.loading && coverage.popularSongs.length > 0}
+		showPopularOnly={coverage.showPopularOnly}
 		{searchableSongs}
 		{baseList}
-		{fullSongs}
-		{loadingFullSongs}
-		onEnsureFullSongsLoaded={ensureFullSongsLoaded}
+		fullSongs={coverage.fullSongs}
+		loadingFullSongs={coverage.loadingFullSongs}
+		onEnsureFullSongsLoaded={coverage.ensureFullSongsLoaded}
 		bind:selectedKey
 		bind:showSongsContext
 	/>
@@ -243,12 +155,12 @@
 			/>?
 		</h1>
 
-		{#if loading}
+		{#if coverage.loading}
 			<p class="dataset-status">Loading song dataset…</p>
-		{:else if loadingFullSongs && !showPopularOnly}
+		{:else if coverage.loadingFullSongs && !coverage.showPopularOnly}
 			<p class="dataset-status">Loading full song dataset…</p>
-		{:else if loadError}
-			<p class="dataset-status error">{loadError}</p>
+		{:else if coverage.loadError}
+			<p class="dataset-status error">{coverage.loadError}</p>
 		{/if}
 
 		{#if baseList.length > 0}
@@ -294,8 +206,8 @@
 						onSelectedKeyChange={handleSongSelect}
 					/>
 					<ToggleSwitch
-						checked={showPopularOnly}
-						onchange={handlePopularToggleChange}
+						checked={coverage.showPopularOnly}
+						onchange={coverage.handlePopularToggleChange}
 						label="popular recent songs only"
 					/>
 				</div>
