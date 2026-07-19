@@ -32,6 +32,7 @@
 
 	function handleSelectSong(key: string) {
 		selectedSongKey = key;
+		window.open(`/demo/define-chord-progression/?song=${key}`, "_blank");
 	}
 </script>
 
