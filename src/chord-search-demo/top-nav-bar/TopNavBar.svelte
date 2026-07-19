@@ -52,13 +52,19 @@
 				class:active={page.url.pathname === "/demo/define-chord-progression"}
 				>define 'chord progression'</a
 			>
-			<a
-				href="/demo/core-progressions"
-				class="page-link"
-				class:active={page.url.pathname === "/demo/core-progressions"}
-				>core progressions</a
-			>
-		</div>
+		<a
+			href="/demo/core-progressions"
+			class="page-link"
+			class:active={page.url.pathname === "/demo/core-progressions"}
+			>core progressions</a
+		>
+		<a
+			href="/demo/harmony-map"
+			class="page-link"
+			class:active={page.url.pathname === "/demo/harmony-map"}
+			>harmony map</a
+		>
+	</div>
 	</div>
 	{#if showSearch}
 		<div class="top-nav-search">
