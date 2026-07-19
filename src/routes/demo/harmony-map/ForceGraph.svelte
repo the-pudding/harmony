@@ -96,7 +96,8 @@
 	const SONG_COLOR = "#52525b";
 	const SONG_HOVER_COLOR = "#a1a1aa";
 
-	const DIM_OPACITY = 0.08;
+	const DIM_OPACITY = 0.2;
+	const DIM_LINK_OPACITY = 0.1;
 	const FULL_OPACITY = 1;
 	const SONG_BASE_FILL_OPACITY = 0.7;
 
@@ -211,25 +212,40 @@
 			.attr("text-anchor", "middle")
 			.attr("dominant-baseline", "middle")
 			.attr("fill", "#f4f4f5")
+			.attr("stroke", "#000")
+			.attr("stroke-width", "2.5px")
+			.attr("stroke-linejoin", "round")
+			.attr("paint-order", "stroke")
 			.attr("font-family", "'JetBrains Mono', 'Fira Code', ui-monospace, monospace")
 			.attr("font-size", (n) => (n.type === "group" ? "9px" : "7px"))
 			.attr("font-weight", (n) => (n.type === "group" ? "700" : "500"))
 			.attr("pointer-events", "none")
 			.each(function (n) {
 				const el = d3.select(this);
-				const label =
-					n.type === "group"
-						? n.label
-						: n.type === "progression"
-							? n.chordProgression
-							: "";
+
+				if (n.type === "progression") {
+					el.append("tspan")
+						.attr("x", 0)
+						.attr("dy", -5)
+						.attr("font-size", "6px")
+						.attr("fill", "#d4d4d8")
+						.text(n.label);
+					el.append("tspan")
+						.attr("x", 0)
+						.attr("dy", 10)
+						.attr("font-size", "6px")
+						.attr("fill", "#c4c4cc")
+						.text(n.chordProgression);
+					return;
+				}
+
+				const words = n.label.split(" ");
 				const maxWidth = nodeRadius(n) * 2 - 4;
-				const words = label.split(" ");
 				const lines: string[] = [];
 				let current = "";
 				for (const word of words) {
 					const test = current ? `${current} ${word}` : word;
-					if (test.length * (n.type === "group" ? 5.5 : 4.5) > maxWidth && current) {
+					if (test.length * 5.5 > maxWidth && current) {
 						lines.push(current);
 						current = word;
 					} else {
@@ -237,7 +253,7 @@
 					}
 				}
 				if (current) lines.push(current);
-				const lineHeight = n.type === "group" ? 10 : 8;
+				const lineHeight = 10;
 				const yStart = -((lines.length - 1) / 2) * lineHeight;
 				lines.forEach((line, i) => {
 					el.append("tspan")
@@ -266,7 +282,7 @@
 				.transition()
 				.duration(150)
 				.attr("stroke-opacity", (l) =>
-					l.source.id === hoveredId || l.target.id === hoveredId ? 0.6 : DIM_OPACITY
+					l.source.id === hoveredId || l.target.id === hoveredId ? 0.6 : DIM_LINK_OPACITY
 				);
 			labelGroup
 				.transition()
