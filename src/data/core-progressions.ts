@@ -270,14 +270,18 @@ export type CoreProgression = {
 	technicalNotes?: string;
 };
 
-const coreProgressions: CoreProgression[] = [
-	...happyMajoryProgressions.progressions,
-	...fourFiveVampProgressions.progressions,
-	...axisOfAwesomeProgressions.progressions,
-	...minoryProgressions.progressions,
-	...jazzyProgressions.progressions,
-	...emoPopProgressions.progressions
+const allProgressionGroups: ProgressionGroup[] = [
+	happyMajoryProgressions,
+	fourFiveVampProgressions,
+	axisOfAwesomeProgressions,
+	minoryProgressions,
+	jazzyProgressions,
+	emoPopProgressions
 ];
+
+const coreProgressions: CoreProgression[] = allProgressionGroups.flatMap(
+	(group) => group.progressions
+);
 
 export const progressionsThatDidntMatchAnything: CoreProgression[] = [];
 
