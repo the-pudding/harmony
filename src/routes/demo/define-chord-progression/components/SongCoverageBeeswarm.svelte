@@ -32,7 +32,7 @@
 		selectedSongKey: string;
 		highlightedProgression: string | null;
 		onSelectSong?: (key: string) => void;
-		chartHeight?: number;
+		maxHeight?: number;
 	};
 
 	let {
@@ -40,7 +40,7 @@
 		selectedSongKey,
 		highlightedProgression,
 		onSelectSong,
-		chartHeight = 500
+		maxHeight
 	}: Props = $props();
 
 	let containerWidth = $state(0);
@@ -53,7 +53,8 @@
 	const PADDING_LEFT = 28;
 	const PADDING_RIGHT = 28;
 	const AXIS_HEIGHT = 28;
-	const AXIS_Y = $derived(chartHeight - AXIS_HEIGHT);
+	const TOP_PADDING = 24;
+	const LOADING_HEIGHT = 120;
 	const TICK_VALUES = [0, 25, 50, 75, 100];
 	const TOOLTIP_WIDTH = 200;
 	const HOVER_CLEAR_DELAY_MS = 120;
@@ -117,6 +118,20 @@
 
 		return nodes;
 	});
+
+	const tallestStackY = $derived(
+		dodgedNodes.length > 0 ? Math.max(0, ...dodgedNodes.map((n) => n.y)) : 0
+	);
+
+	const requiredHeight = $derived(
+		TOP_PADDING + tallestStackY + DOT_RADIUS * 2 + AXIS_HEIGHT
+	);
+
+	const chartHeight = $derived(
+		maxHeight !== undefined ? Math.min(requiredHeight, maxHeight) : requiredHeight
+	);
+
+	const AXIS_Y = $derived(chartHeight - AXIS_HEIGHT);
 
 	const hoveredNode = $derived(
 		hoveredSongKey !== null
@@ -219,7 +234,7 @@
 
 <div class="beeswarm" bind:clientWidth={containerWidth}>
 	{#if songs === null}
-		<div class="loading-shell" style:height={chartHeight + "px"}>
+		<div class="loading-shell" style:height={(maxHeight ?? LOADING_HEIGHT) + "px"}>
 			<span class="loading-text">Computing coverage…</span>
 		</div>
 	{:else if containerWidth > 0 && songs.length > 0}
