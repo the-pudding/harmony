@@ -56,8 +56,8 @@
 		</div>
 
 		<div class="graph-wrap">
-			{#if coverage.allSongsCoverageResult}
-				<ForceGraph data={networkData} />
+		{#if coverage.allSongsCoverageResult}
+			<ForceGraph data={networkData} songs={coverage.baseList} />
 			{:else}
 				<div class="loading-overlay">
 					<span class="loading-text">
@@ -148,8 +148,6 @@
 	.graph-wrap {
 		flex: 1;
 		min-height: 0;
-		border: 1px solid rgba(39, 39, 42, 0.8);
-		border-radius: 0.5rem;
 		overflow: hidden;
 		position: relative;
 	}
