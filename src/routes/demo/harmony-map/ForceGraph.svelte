@@ -8,8 +8,12 @@
 		selectFinalProgressions,
 		buildFinalChordAnnotations
 	} from "../define-chord-progression/progression-matching-logic/finalProgressionSelection.js";
+	import type { ProgressionWithMatchStats } from "../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
+	import { CORE_PROGRESSION_PALETTE } from "../define-chord-progression/components/progressionColors.js";
 	import { EXPLAINED_THRESHOLD_PERCENT } from "../define-chord-progression/constants.js";
+	import type { ScaleName } from "../../../chord-processing/scales.js";
 	import FinalAnnotatedSong from "../define-chord-progression/components/FinalAnnotatedSong.svelte";
+	import ProgressionMatchButton from "../define-chord-progression/components/ProgressionMatchButton.svelte";
 
 	type Props = {
 		data: ProgressionNetworkData;
@@ -23,19 +27,22 @@
 
 	type TooltipAnchor = { x: number; y: number };
 	let tooltipAnchor = $state<TooltipAnchor | null>(null);
-	let hoveredSongKey = $state<string | null>(null);
+	type HoveredInfo = { id: string; type: NetworkNode["type"] };
+	let hoveredInfo = $state<HoveredInfo | null>(null);
 	let activeProgression = $state<string | null>(null);
 
 	const songByKey = $derived(new Map(songs.map((s) => [s.songKey, s])));
 
+	const hoveredNode = $derived(
+		hoveredInfo ? (data.nodes.find((n) => n.id === hoveredInfo!.id) ?? null) : null
+	);
+
 	const hoveredSong = $derived(
-		hoveredSongKey ? (songByKey.get(hoveredSongKey) ?? null) : null
+		hoveredNode?.type === "song" ? (songByKey.get(hoveredNode.songKey) ?? null) : null
 	);
 
 	const finalSelection = $derived(
-		hoveredSong
-			? selectFinalProgressions(hoveredSong, coreProgressionsData)
-			: null
+		hoveredSong ? selectFinalProgressions(hoveredSong, coreProgressionsData) : null
 	);
 
 	const songAnnotations = $derived(
@@ -52,6 +59,34 @@
 			: []
 	);
 
+	const groupProgressionNodes = $derived.by(() => {
+		if (hoveredNode?.type !== "group") return [];
+		const groupId = hoveredNode.id;
+		const progressionIds = new Set(
+			data.links
+				.filter((l) => l.type === "group-progression" && l.source === groupId)
+				.map((l) => l.target)
+		);
+		return data.nodes.filter(
+			(n) => n.type === "progression" && progressionIds.has(n.id)
+		);
+	});
+
+	const progressionMatchStub = $derived.by((): ProgressionWithMatchStats | null => {
+		if (hoveredNode?.type !== "progression") return null;
+		return {
+			name: hoveredNode.label,
+			chordProgression: hoveredNode.chordProgression,
+			scale: hoveredNode.scale as ScaleName,
+			description: "",
+			matchCount: 0,
+			coveragePercent: 0,
+			isCoreProgression: true,
+			highlightPalette: CORE_PROGRESSION_PALETTE,
+			parsedProgression: []
+		};
+	});
+
 	const GROUP_RADIUS = 22;
 	const PROGRESSION_RADIUS = 12;
 	const SONG_RADIUS = 4;
@@ -62,8 +97,8 @@
 	const SONG_HOVER_COLOR = "#a1a1aa";
 
 	const DIM_OPACITY = 0.08;
-	const FULL_NODE_OPACITY = 1;
-	const SONG_BASE_OPACITY = 0.7;
+	const FULL_OPACITY = 1;
+	const SONG_BASE_FILL_OPACITY = 0.7;
 
 	const nodeRadius = (n: NetworkNode): number => {
 		if (n.type === "group") return GROUP_RADIUS;
@@ -100,21 +135,15 @@
 			return [{ source, target, type: l.type }];
 		});
 
-		const svg = d3
-			.select(svgEl)
-			.attr("width", width)
-			.attr("height", height);
-
+		const svg = d3.select(svgEl).attr("width", width).attr("height", height);
 		svg.selectAll("*").remove();
-
 		const g = svg.append("g");
 
 		svg.call(
-			d3.zoom<SVGSVGElement, unknown>()
+			d3
+				.zoom<SVGSVGElement, unknown>()
 				.scaleExtent([0.15, 4])
-				.on("zoom", (event) => {
-					g.attr("transform", event.transform);
-				})
+				.on("zoom", (event) => g.attr("transform", event.transform))
 		);
 
 		const simulation = d3
@@ -145,7 +174,7 @@
 			.selectAll<SVGGElement, SimNode>("g")
 			.data(nodes)
 			.join("g")
-			.style("cursor", (n) => (n.type === "song" ? "pointer" : "default"))
+			.style("cursor", "pointer")
 			.call(
 				d3
 					.drag<SVGGElement, SimNode>()
@@ -169,7 +198,7 @@
 			.append("circle")
 			.attr("r", (n) => nodeRadius(n))
 			.attr("fill", (n) => nodeColor(n))
-			.attr("fill-opacity", (n) => (n.type === "song" ? SONG_BASE_OPACITY : FULL_NODE_OPACITY))
+			.attr("fill-opacity", (n) => (n.type === "song" ? SONG_BASE_FILL_OPACITY : FULL_OPACITY))
 			.attr("stroke", (n) => (n.type === "song" ? "none" : "rgba(255,255,255,0.15)"))
 			.attr("stroke-width", 1.5);
 
@@ -188,11 +217,12 @@
 			.attr("pointer-events", "none")
 			.each(function (n) {
 				const el = d3.select(this);
-				const label = n.type === "group"
-					? n.label
-					: n.type === "progression"
-						? n.chordProgression
-						: "";
+				const label =
+					n.type === "group"
+						? n.label
+						: n.type === "progression"
+							? n.chordProgression
+							: "";
 				const maxWidth = nodeRadius(n) * 2 - 4;
 				const words = label.split(" ");
 				const lines: string[] = [];
@@ -229,22 +259,25 @@
 		const applyHighlight = (hoveredId: string) => {
 			const neighbors = neighborIdsOf(hoveredId);
 			nodeGroup
-				.transition().duration(150)
-				.attr("opacity", (n) => (neighbors.has(n.id) ? FULL_NODE_OPACITY : DIM_OPACITY));
+				.transition()
+				.duration(150)
+				.attr("opacity", (n) => (neighbors.has(n.id) ? FULL_OPACITY : DIM_OPACITY));
 			linkGroup
-				.transition().duration(150)
+				.transition()
+				.duration(150)
 				.attr("stroke-opacity", (l) =>
 					l.source.id === hoveredId || l.target.id === hoveredId ? 0.6 : DIM_OPACITY
 				);
 			labelGroup
-				.transition().duration(150)
-				.attr("opacity", (n) => (neighbors.has(n.id) ? FULL_NODE_OPACITY : DIM_OPACITY));
+				.transition()
+				.duration(150)
+				.attr("opacity", (n) => (neighbors.has(n.id) ? FULL_OPACITY : DIM_OPACITY));
 		};
 
 		const clearHighlight = () => {
-			nodeGroup.transition().duration(150).attr("opacity", FULL_NODE_OPACITY);
+			nodeGroup.transition().duration(150).attr("opacity", FULL_OPACITY);
 			linkGroup.transition().duration(150).attr("stroke-opacity", 0.25);
-			labelGroup.transition().duration(150).attr("opacity", FULL_NODE_OPACITY);
+			labelGroup.transition().duration(150).attr("opacity", FULL_OPACITY);
 		};
 
 		nodeGroup
@@ -255,14 +288,11 @@
 					d3.select(event.currentTarget as SVGGElement)
 						.select("circle")
 						.attr("fill", SONG_HOVER_COLOR);
-					hoveredSongKey = n.songKey;
 				}
 
+				hoveredInfo = { id: n.id, type: n.type };
 				const rect = svgEl.getBoundingClientRect();
-				tooltipAnchor = {
-					x: event.clientX - rect.left,
-					y: event.clientY - rect.top
-				};
+				tooltipAnchor = { x: event.clientX - rect.left, y: event.clientY - rect.top };
 			})
 			.on("mousemove", (event: MouseEvent) => {
 				const rect = svgEl.getBoundingClientRect();
@@ -271,7 +301,7 @@
 			.on("mouseout", (event: MouseEvent, n) => {
 				clearHighlight();
 				tooltipAnchor = null;
-				hoveredSongKey = null;
+				hoveredInfo = null;
 
 				if (n.type === "song") {
 					d3.select(event.currentTarget as SVGGElement)
@@ -282,6 +312,8 @@
 			.on("click", (_event: MouseEvent, n) => {
 				if (n.type === "song") {
 					window.open(`/demo/define-chord-progression/?song=${n.songKey}`, "_blank");
+				} else {
+					window.open("/demo/core-progressions/", "_blank");
 				}
 			});
 
@@ -293,7 +325,6 @@
 				.attr("y2", (l) => l.target.y ?? 0);
 
 			nodeGroup.attr("transform", (n) => `translate(${n.x ?? 0},${n.y ?? 0})`);
-
 			labelGroup.attr("transform", (n) => `translate(${n.x ?? 0},${n.y ?? 0})`);
 		});
 
@@ -318,9 +349,9 @@
 <div class="graph-container" bind:this={containerEl}>
 	<svg bind:this={svgEl}></svg>
 
-	{#if tooltipAnchor}
+	{#if tooltipAnchor && hoveredNode}
 		<div class="tooltip" style={tooltipStyle}>
-			{#if hoveredSong && finalSelection}
+			{#if hoveredNode.type === "song" && hoveredSong && finalSelection}
 				<FinalAnnotatedSong
 					song={hoveredSong}
 					matches={finalMatches}
@@ -328,10 +359,28 @@
 					{explainedPercent}
 					{isExplained}
 					{activeProgression}
-					onselect={(p) => { activeProgression = activeProgression === p ? null : p; }}
+					onselect={(p) => {
+						activeProgression = activeProgression === p ? null : p;
+					}}
 				/>
-			{:else if tooltipAnchor}
-				<span class="tooltip-hint">hover a node</span>
+			{:else if hoveredNode.type === "group"}
+				<p class="group-name">{hoveredNode.label}</p>
+				<ul class="progression-list">
+					{#each groupProgressionNodes as prog (prog.id)}
+						{#if prog.type === "progression"}
+							<li class="progression-item">
+								<span class="progression-name">{prog.label}</span>
+								<span class="progression-chords">{prog.chordProgression}</span>
+							</li>
+						{/if}
+					{/each}
+				</ul>
+			{:else if hoveredNode.type === "progression" && progressionMatchStub}
+				<ProgressionMatchButton
+					match={progressionMatchStub}
+					active={false}
+					onselect={() => {}}
+				/>
 			{/if}
 		</div>
 	{/if}
@@ -347,7 +396,7 @@
 		</div>
 		<div class="legend-item">
 			<span class="legend-dot" style="background: {SONG_COLOR};"></span>
-			<span>song (click to open)</span>
+			<span>song</span>
 		</div>
 	</div>
 </div>
@@ -381,9 +430,38 @@
 		color: #f4f4f5;
 	}
 
-	.tooltip-hint {
+	.group-name {
+		font-size: 0.75rem;
+		font-weight: 700;
+		color: #f4f4f5;
+		margin: 0 0 0.625rem;
+	}
+
+	.progression-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.progression-item {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+		padding-left: 0.75rem;
+		border-left: 2px solid rgba(99, 102, 241, 0.4);
+	}
+
+	.progression-name {
+		font-size: 0.6875rem;
+		color: #d4d4d8;
+	}
+
+	.progression-chords {
 		font-size: 0.625rem;
-		color: #52525b;
+		color: #71717a;
 	}
 
 	.legend {
