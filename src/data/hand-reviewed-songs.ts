@@ -504,12 +504,17 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "bobby-caldwell__what-you-wont-do-for-love",
 		chordProgressionIssues:
 			"whole song looks way off. should be a dorian-y tune"
+	},
+	{
+		id: "carly-rae-jepsen__call-me-maybe",
+		chordProgressionIssues: "whole thing looks wrong, should be IV-vi-V-ish"
 	}
 ];
 
 export const songLooksGoodAsIs: string[] = [
 	"juice-wrld__wishing-well",
-	"luke-combs__beer-never-broke-my-heart"
+	"luke-combs__beer-never-broke-my-heart",
+	"beyonce__if-i-were-a-boy"
 ];
 
 export const LOOKS_GOOD_LABEL = "looks good as is";

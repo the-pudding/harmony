@@ -72,15 +72,18 @@ const fourFiveVampProgressions: ProgressionGroup = {
 			scale: "major",
 			description: "",
 			technicalNotes: "a hungry energy that never settles back to the I"
-		},
-		{
-			name: "IV-(vi)-V vamp",
-			chordProgression: "IV-vi-V",
-			scale: "major",
-			description: "",
-			technicalNotes:
-				"just IV-V with a lil passing chord to keep it interesting"
 		}
+		// TODO: matches Teenage Dream perfectly, should match Call Me Maybe perfectly once we hand correct it.
+		// However, I feel with our simplistic greeny match algorithm, it overall decreases general match percentage coverage.
+		// Maybe needs some rework (or a more stringent match criteria)
+		// {
+		// 	name: "IV-(vi)-V vamp",
+		// 	chordProgression: "IV-vi-V",
+		// 	scale: "major",
+		// 	description: "",
+		// 	technicalNotes:
+		// 		"just IV-V with a lil passing chord to keep it interesting"
+		// }
 	]
 };
 
