@@ -499,10 +499,18 @@ export const problematicSongs: ProblematicSong[] = [
 	{
 		id: "extreme__hole-hearted",
 		chordProgressionIssues: "at least chorus is totally wrong"
+	},
+	{
+		id: "bobby-caldwell__what-you-wont-do-for-love",
+		chordProgressionIssues:
+			"whole song looks way off. should be a dorian-y tune"
 	}
 ];
 
-export const songLooksGoodAsIs: string[] = ["juice-wrld__wishing-well"];
+export const songLooksGoodAsIs: string[] = [
+	"juice-wrld__wishing-well",
+	"luke-combs__beer-never-broke-my-heart"
+];
 
 export const LOOKS_GOOD_LABEL = "looks good as is";
 export const LOOKS_GOOD_EMOJI = "🔵";
