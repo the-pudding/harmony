@@ -114,6 +114,21 @@ const coreProgressions: CoreProgression[] = [
 	},
 
 	{
+		name: "creep",
+		chordProgression: "I-III-IV",
+		scale: "major",
+		description: ""
+	},
+
+	{
+		name: "IV-iv turnaround",
+		chordProgression: "IV-iv-I",
+		scale: "major",
+		description:
+			"TODO: try to match just IV-iv? (often I only arrives in a subsequent section)"
+	},
+
+	{
 		name: "jazz changes",
 		chordProgression: "vi-ii-V-I",
 		scale: "major",
@@ -208,37 +223,6 @@ const coreProgressions: CoreProgression[] = [
 	}
 ];
 
-export const progressionsThatDidntMatchAnything: CoreProgression[] = [
-	{
-		name: "japanese pop",
-		chordProgression: "IV-V-ii-vi",
-		scale: "major",
-		description: ""
-	},
-	{
-		name: "blues",
-		chordProgression: "I-I-I-I-IV-IV-I-I-V-IV-I-V",
-		scale: "major",
-		description: ""
-	},
-	{
-		name: "minor turnaround",
-		chordProgression: "i-VI-III-VII",
-		scale: "minor",
-		description: ""
-	},
-	{
-		name: "flamenco",
-		chordProgression: "i-VII-VI-V",
-		scale: "minor",
-		description: ""
-	},
-	{
-		name: "creep",
-		chordProgression: "I-III-IV-iv",
-		scale: "major",
-		description: ""
-	}
-];
+export const progressionsThatDidntMatchAnything: CoreProgression[] = [];
 
 export default coreProgressions;

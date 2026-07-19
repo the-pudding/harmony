@@ -485,6 +485,20 @@ export const problematicSongs: ProblematicSong[] = [
 	{
 		id: "lady-gaga__dope",
 		chordProgressionIssues: "Just has chorus, eg no verse (iv-iii-VI-V)"
+	},
+	{
+		id: "radiohead__creep",
+		chordProgressionIssues:
+			"at least the chorus is totally wrong (missed entire harmonic concept)"
+	},
+	{
+		id: "kelly-clarkson__walk-away",
+		chordProgressionIssues:
+			"at least verse is totally wrong (should be I-bVII-IV)"
+	},
+	{
+		id: "extreme__hole-hearted",
+		chordProgressionIssues: "at least chorus is totally wrong"
 	}
 ];
 
