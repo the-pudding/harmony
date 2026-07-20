@@ -512,7 +512,6 @@ export const problematicSongs: ProblematicSong[] = [
 ];
 
 export const songLooksGoodAsIs: string[] = [
-	"juice-wrld__wishing-well",
 	"luke-combs__beer-never-broke-my-heart",
 	"beyonce__if-i-were-a-boy"
 ];
