@@ -508,6 +508,11 @@ export const problematicSongs: ProblematicSong[] = [
 	{
 		id: "carly-rae-jepsen__call-me-maybe",
 		chordProgressionIssues: "whole thing looks wrong, should be IV-vi-V-ish"
+	},
+	{
+		id: "psy__gangnam-style",
+		chordProgressionIssues:
+			"Nails chords. However, it lists the progression i-iv-V once for the verse, when in fact its played twice"
 	}
 ];
 
