@@ -513,7 +513,8 @@ export const problematicSongs: ProblematicSong[] = [
 
 export const songLooksGoodAsIs: string[] = [
 	"luke-combs__beer-never-broke-my-heart",
-	"beyonce__if-i-were-a-boy"
+	"beyonce__if-i-were-a-boy",
+	"katy-perry__roar"
 ];
 
 export const LOOKS_GOOD_LABEL = "looks good as is";

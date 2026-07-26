@@ -1,6 +1,6 @@
 <script lang="ts">
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
-	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
+	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import { allProgressionGroups } from "$data/core-progressions.js";
 	import { createAllSongsCoverageState } from "../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
@@ -46,10 +46,13 @@
 			</div>
 
 			<div class="controls">
-				<ToggleSwitch
-					checked={coverage.showPopularOnly}
-					onchange={coverage.handlePopularToggleChange}
-					label="popular recent songs only"
+				<SongCorpusFilterToggles
+					showPopularOnly={coverage.showPopularOnly}
+					onPopularChange={coverage.handlePopularToggleChange}
+					requireMultipleSections={coverage.requireMultipleSections}
+					onRequireMultipleSectionsChange={
+						coverage.handleRequireMultipleSectionsToggleChange
+					}
 				/>
 				<span class="status-text" class:error={isError}>{statusText}</span>
 			</div>

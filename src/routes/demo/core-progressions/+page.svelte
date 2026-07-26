@@ -2,7 +2,7 @@
 	import { allProgressionGroups, type ProgressionGroup } from "$data/core-progressions.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
-	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
+	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
 	import { createAllSongsCoverageState } from "../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
 	import { filterCoverageResultForProgressions } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import ProgressionGroupSection from "./ProgressionGroupSection.svelte";
@@ -57,10 +57,13 @@
 		</div>
 
 		<div class="controls">
-			<ToggleSwitch
-				checked={coverage.showPopularOnly}
-				onchange={coverage.handlePopularToggleChange}
-				label="popular recent songs only"
+			<SongCorpusFilterToggles
+				showPopularOnly={coverage.showPopularOnly}
+				onPopularChange={coverage.handlePopularToggleChange}
+				requireMultipleSections={coverage.requireMultipleSections}
+				onRequireMultipleSectionsChange={
+					coverage.handleRequireMultipleSectionsToggleChange
+				}
 			/>
 			{#if coverage.loading}
 				<span class="status-text">Loading song dataset…</span>

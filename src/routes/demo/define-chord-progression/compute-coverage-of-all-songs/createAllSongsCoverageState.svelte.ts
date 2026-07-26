@@ -1,4 +1,5 @@
-import { onMount, onDestroy } from "svelte";
+import { onMount, onDestroy, untrack } from "svelte";
+import { page } from "$app/state";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 import {
 	fetchGroupedAllSongs,
@@ -7,22 +8,52 @@ import {
 	sortPopularSongs
 } from "../../../../data/songBrowserData.js";
 import {
+	areSongCorpusFilterUrlStatesEqual,
+	MIN_SECTIONS_FOR_MULTI_SECTION_FILTER,
+	readSongCorpusFilterUrlState,
+	replaceSongCorpusFilterInUrl,
+	type SongCorpusFilterUrlState
+} from "../../songCorpusFilterUrlParams.js";
+import {
 	initCoverageWorkerPool,
 	computeCoverageOfAllSongs,
 	terminateCoverageWorkerPool,
 	type AllSongsCoverageResult
 } from "./index.js";
 
+const applySectionCountFilter = (
+	songs: GroupedSong[],
+	requireMultipleSections: boolean
+): GroupedSong[] => {
+	if (!requireMultipleSections) return songs;
+	return songs.filter(
+		(song) => song.sections.length >= MIN_SECTIONS_FOR_MULTI_SECTION_FILTER
+	);
+};
+
 export const createAllSongsCoverageState = () => {
+	const initialFilters = readSongCorpusFilterUrlState(page.url.searchParams);
+
 	let popularSongs = $state<GroupedSong[]>([]);
 	let fullSongs = $state<GroupedSong[] | null>(null);
 	let loading = $state(true);
 	let loadingFullSongs = $state(false);
 	let loadError = $state("");
-	let showPopularOnly = $state(true);
+	let showPopularOnly = $state(initialFilters.showPopularOnly);
+	let requireMultipleSections = $state(initialFilters.requireMultipleSections);
 	let fullSongsLoadPromise: Promise<GroupedSong[]> | null = null;
 	let allSongsCoverageResult = $state<AllSongsCoverageResult | null>(null);
 	let coverageRequestId = 0;
+	let applyingFromUrl = false;
+
+	const corpusFilterState = (): SongCorpusFilterUrlState => ({
+		showPopularOnly,
+		requireMultipleSections
+	});
+
+	const syncCorpusFiltersToUrl = () => {
+		replaceSongCorpusFilterInUrl(corpusFilterState());
+	};
 
 	const ensureFullSongsLoaded = (): Promise<GroupedSong[]> => {
 		if (fullSongs !== null) return Promise.resolve(fullSongs);
@@ -47,11 +78,28 @@ export const createAllSongsCoverageState = () => {
 		return promise;
 	};
 
-	const baseList = $derived.by((): GroupedSong[] => {
-		if (showPopularOnly) {
-			return sortPopularSongs(popularSongs);
+	const applyCorpusFiltersFromUrl = (urlState: SongCorpusFilterUrlState) => {
+		if (areSongCorpusFilterUrlStatesEqual(urlState, corpusFilterState())) {
+			return;
 		}
-		return sortAllSongs(fullSongs ?? []);
+
+		applyingFromUrl = true;
+		try {
+			showPopularOnly = urlState.showPopularOnly;
+			requireMultipleSections = urlState.requireMultipleSections;
+			if (!showPopularOnly && fullSongs === null) {
+				void ensureFullSongsLoaded();
+			}
+		} finally {
+			applyingFromUrl = false;
+		}
+	};
+
+	const baseList = $derived.by((): GroupedSong[] => {
+		const dataset = showPopularOnly
+			? sortPopularSongs(popularSongs)
+			: sortAllSongs(fullSongs ?? []);
+		return applySectionCountFilter(dataset, requireMultipleSections);
 	});
 
 	$effect(() => {
@@ -72,10 +120,23 @@ export const createAllSongsCoverageState = () => {
 		};
 	});
 
+	$effect(() => {
+		page.url.search;
+		if (applyingFromUrl) return;
+		untrack(() => {
+			applyCorpusFiltersFromUrl(
+				readSongCorpusFilterUrlState(page.url.searchParams)
+			);
+		});
+	});
+
 	onMount(() => {
 		void (async () => {
 			try {
 				popularSongs = await fetchGroupedPopularSongs();
+				if (!showPopularOnly) {
+					await ensureFullSongsLoaded();
+				}
 			} catch (err) {
 				loadError = err instanceof Error ? err.message : String(err);
 			} finally {
@@ -91,6 +152,12 @@ export const createAllSongsCoverageState = () => {
 		if (!checked && fullSongs === null) {
 			void ensureFullSongsLoaded();
 		}
+		syncCorpusFiltersToUrl();
+	};
+
+	const handleRequireMultipleSectionsToggleChange = (checked: boolean) => {
+		requireMultipleSections = checked;
+		syncCorpusFiltersToUrl();
 	};
 
 	return {
@@ -112,6 +179,9 @@ export const createAllSongsCoverageState = () => {
 		get showPopularOnly() {
 			return showPopularOnly;
 		},
+		get requireMultipleSections() {
+			return requireMultipleSections;
+		},
 		get baseList() {
 			return baseList;
 		},
@@ -119,6 +189,7 @@ export const createAllSongsCoverageState = () => {
 			return allSongsCoverageResult;
 		},
 		ensureFullSongsLoaded,
-		handlePopularToggleChange
+		handlePopularToggleChange,
+		handleRequireMultipleSectionsToggleChange
 	};
 };

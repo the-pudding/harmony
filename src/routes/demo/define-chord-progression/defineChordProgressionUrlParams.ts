@@ -1,3 +1,9 @@
+import {
+	readSongCorpusFilterUrlState,
+	writeSongCorpusFilterUrlState,
+	type SongCorpusFilterUrlState
+} from "../songCorpusFilterUrlParams.js";
+
 export const DEFINE_CHORD_PROGRESSION_URL_PARAM_SONG = "song";
 export const DEFINE_CHORD_PROGRESSION_URL_PARAM_SONGS_CONTEXT = "songsContext";
 export const DEFINE_CHORD_PROGRESSION_SONGS_CONTEXT_EXPANDED_VALUE = "1";
@@ -25,7 +31,8 @@ export const buildDefineChordProgressionUrlState = (state: {
 });
 
 export const defineChordProgressionUrlStateToQueryString = (
-	state: DefineChordProgressionUrlState
+	state: DefineChordProgressionUrlState,
+	corpusFilters: SongCorpusFilterUrlState
 ): string => {
 	const params = new URLSearchParams();
 	if (state.song) {
@@ -37,8 +44,19 @@ export const defineChordProgressionUrlStateToQueryString = (
 			DEFINE_CHORD_PROGRESSION_SONGS_CONTEXT_EXPANDED_VALUE
 		);
 	}
+	writeSongCorpusFilterUrlState(params, corpusFilters);
 	return params.toString();
 };
+
+export const defineChordProgressionUrlStateToQueryStringPreservingCorpusFilters =
+	(
+		state: DefineChordProgressionUrlState,
+		currentSearchParams: URLSearchParams
+	): string =>
+		defineChordProgressionUrlStateToQueryString(
+			state,
+			readSongCorpusFilterUrlState(currentSearchParams)
+		);
 
 export const areDefineChordProgressionUrlStatesEqual = (
 	first: DefineChordProgressionUrlState,

@@ -7,7 +7,7 @@
 	import {
 		areDefineChordProgressionUrlStatesEqual,
 		buildDefineChordProgressionUrlState,
-		defineChordProgressionUrlStateToQueryString,
+		defineChordProgressionUrlStateToQueryStringPreservingCorpusFilters,
 		readDefineChordProgressionUrlState,
 		shouldPushSongHistoryChange,
 		type DefineChordProgressionUrlState
@@ -91,7 +91,10 @@
 			return;
 
 		const queryString =
-			defineChordProgressionUrlStateToQueryString(desiredState);
+			defineChordProgressionUrlStateToQueryStringPreservingCorpusFilters(
+				desiredState,
+				page.url.searchParams
+			);
 		const nextUrl = queryString
 			? `${page.url.pathname}?${queryString}`
 			: page.url.pathname;

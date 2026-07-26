@@ -2,7 +2,7 @@
 	import coreProgressionsData from "$data/core-progressions.js";
 	import type { CoreProgression } from "$data/core-progressions.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
-	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
+	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
 	import SongSelectDropdown from "./components/SongSelectDropdown.svelte";
 	import ProgressionMatchTable from "./components/ProgressionMatchTable.svelte";
 	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
@@ -205,10 +205,13 @@
 						bind:searchQuery={titleFilter}
 						onSelectedKeyChange={handleSongSelect}
 					/>
-					<ToggleSwitch
-						checked={coverage.showPopularOnly}
-						onchange={coverage.handlePopularToggleChange}
-						label="popular recent songs only"
+					<SongCorpusFilterToggles
+						showPopularOnly={coverage.showPopularOnly}
+						onPopularChange={coverage.handlePopularToggleChange}
+						requireMultipleSections={coverage.requireMultipleSections}
+						onRequireMultipleSectionsChange={
+							coverage.handleRequireMultipleSectionsToggleChange
+						}
 					/>
 				</div>
 
