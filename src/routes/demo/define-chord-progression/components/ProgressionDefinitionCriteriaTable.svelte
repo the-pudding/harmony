@@ -1,6 +1,9 @@
 <script lang="ts">
 	import CodeReference from "./CodeReference.svelte";
-	import { MIN_PROGRESSION_OCCURRENCES } from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import {
+		MIN_PROGRESSION_OCCURRENCES,
+		MIN_FULL_SECTION_OCCURRENCES
+	} from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import {
 		MIN_PROGRESSION_LENGTH,
 		MAX_PROGRESSION_LENGTH
@@ -45,13 +48,17 @@
 				<td>
 					Appears at least
 					<span class="const-value">{MIN_PROGRESSION_OCCURRENCES}</span> times in
-					the song (core matching)
+					the song — or at least
+					<span class="const-value">{MIN_FULL_SECTION_OCCURRENCES}</span> time
+					if that single match fills an entire section (core progressions only)
 				</td>
 				<td>
 					<CodeReference
 						filename="progressionMatchAnalysis.ts"
 						symbols={[
 							"MIN_PROGRESSION_OCCURRENCES",
+							"MIN_FULL_SECTION_OCCURRENCES",
+							"fullyCoversAnySection",
 							"computeStatsForParsedProgression"
 						]}
 					/>

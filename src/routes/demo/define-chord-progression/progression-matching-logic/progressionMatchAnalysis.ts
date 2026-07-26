@@ -20,6 +20,7 @@ import {
 } from "./collapsedProgression.js";
 
 export const MIN_PROGRESSION_OCCURRENCES = 2;
+export const MIN_FULL_SECTION_OCCURRENCES = 1;
 
 export const MATCH_RATE_INTEGER_DISPLAY_THRESHOLD_PERCENT = 1;
 export const MATCH_RATE_LOW_PRECISION_DECIMAL_PLACES = 2;
@@ -52,6 +53,7 @@ export type ProgressionWithMatchStats = {
 	coveragePercent: number;
 	isCoreProgression: boolean;
 	isStrictSubset?: boolean;
+	isFullSectionSingleMatch?: boolean;
 	highlightPalette: ChordHighlightPalette;
 };
 
@@ -145,6 +147,20 @@ export const computeStatsForParsedProgression = (
 	};
 };
 
+export const fullyCoversAnySection = (
+	song: GroupedSong,
+	parsed: ParsedProgressionChord[]
+): boolean =>
+	song.sections.some((section) => {
+		const sectionLength = section.parsedProgression.length;
+		if (sectionLength === 0) return false;
+		const covered = positionsFromMatches(
+			getSectionMatches(section, parsed),
+			sectionLength
+		);
+		return covered.length === sectionLength;
+	});
+
 export function computeProgressionMatches(
 	song: GroupedSong,
 	coreProgressions: CoreProgression[]
@@ -167,18 +183,24 @@ export function computeProgressionMatches(
 			if (!parsed) return null;
 
 			const stats = computeStatsForParsedProgression(song, parsed);
+			const coversFullSection = fullyCoversAnySection(song, parsed);
 
 			return {
 				...progression,
 				parsedProgression: parsed,
 				matchCount: stats.matchCount,
 				coveragePercent: stats.coveragePercent,
+				isFullSectionSingleMatch:
+					stats.matchCount < MIN_PROGRESSION_OCCURRENCES && coversFullSection,
 				...matchHighlightForCoreProgression(true)
 			};
 		})
 		.filter(
 			(match): match is CoreProgressionWithStats =>
-				match !== null && match.matchCount >= MIN_PROGRESSION_OCCURRENCES
+				match !== null &&
+				(match.matchCount >= MIN_PROGRESSION_OCCURRENCES ||
+					(match.matchCount >= MIN_FULL_SECTION_OCCURRENCES &&
+						match.isFullSectionSingleMatch === true))
 		)
 		.sort((a, b) => b.coveragePercent - a.coveragePercent);
 }
@@ -211,7 +233,11 @@ export const findMatchingCoreProgressionsForSong = (
 	parsedCoreProgressions
 		.filter(({ parsed }) => {
 			const { matchCount } = computeStatsForParsedProgression(song, parsed);
-			return matchCount >= MIN_PROGRESSION_OCCURRENCES;
+			return (
+				matchCount >= MIN_PROGRESSION_OCCURRENCES ||
+				(matchCount >= MIN_FULL_SECTION_OCCURRENCES &&
+					fullyCoversAnySection(song, parsed))
+			);
 		})
 		.map(({ chordProgression }) => chordProgression);
 

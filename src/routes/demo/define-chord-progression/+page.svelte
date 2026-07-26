@@ -263,20 +263,22 @@
 				<h3 class="walkthrough-heading">WALKTHROUGH OF ALGORITHM</h3>
 
 				<section class="step-section">
-					<h2 class="section-heading">
-						1. Greedily select any non-overlapping core-progressions that appear
-						at least <span class="const-value"
-							>{MIN_PROGRESSION_OCCURRENCES}</span
-						>
-						times, by {GREEDY_SORT_LABEL}
-					</h2>
-					<p class="section-description">
-						Being "greedy" with core-progressions incentivizes us to really
-						expand the coverage of
-						<CodeReference filename="core-progressions.ts" />, and also makes it
-						so we maximize classified chords over random ones that might happen
-						to be better/longer for some reason.
-					</p>
+				<h2 class="section-heading">
+					1. Greedily select any non-overlapping core-progressions that appear
+					at least <span class="const-value"
+						>{MIN_PROGRESSION_OCCURRENCES}</span
+					>
+					times (or just once if it fills an entire section), by {GREEDY_SORT_LABEL}
+				</h2>
+				<p class="section-description">
+					Being "greedy" with core-progressions incentivizes us to really
+					expand the coverage of
+					<CodeReference filename="core-progressions.ts" />, and also makes it
+					so we maximize classified chords over random ones that might happen
+					to be better/longer for some reason. The single-occurrence exception
+					only applies to core progressions — not gap-fill candidates — to
+					avoid spuriously claiming any section with no other matches.
+				</p>
 
 					{#if flaggedCoreSelected.length > 0}
 						<ProgressionMatchTable

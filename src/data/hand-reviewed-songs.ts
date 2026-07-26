@@ -512,14 +512,15 @@ export const problematicSongs: ProblematicSong[] = [
 	{
 		id: "psy__gangnam-style",
 		chordProgressionIssues:
-			"Nails chords. However, it lists the progression i-iv-V once for the verse, when in fact its played twice"
+			"Nails chords. However, it lists the progression i-iv-v once for the intro and verse, when in fact its played thrice betwixt them. I updated our algo to catch that."
 	}
 ];
 
 export const songLooksGoodAsIs: string[] = [
 	"luke-combs__beer-never-broke-my-heart",
 	"beyonce__if-i-were-a-boy",
-	"katy-perry__roar"
+	"katy-perry__roar",
+	"billie-eilish__bad-guy"
 ];
 
 export const LOOKS_GOOD_LABEL = "looks good as is";

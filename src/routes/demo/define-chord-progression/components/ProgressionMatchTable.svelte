@@ -90,6 +90,9 @@
 							/>
 						{/snippet}
 					</ProgressionMatchButton>
+					{#if match.isFullSectionSingleMatch}
+						<span class="full-section-badge">fills a section</span>
+					{/if}
 				</td>
 				<td class="match-chords-cell">
 					<SongChordsDisplay
@@ -186,5 +189,16 @@
 		background: rgba(255, 255, 255, 0.05);
 		border-color: rgba(255, 255, 255, 0.15);
 		color: #a1a1aa;
+	}
+
+	.full-section-badge {
+		display: inline-block;
+		margin-top: 0.25rem;
+		padding: 0.1rem 0.35rem;
+		font-size: 0.6rem;
+		color: rgba(134, 239, 172, 0.7);
+		border: 1px solid rgba(134, 239, 172, 0.25);
+		border-radius: 0.25rem;
+		white-space: nowrap;
 	}
 </style>
