@@ -117,8 +117,20 @@ const minoryProgressions: ProgressionGroup = {
 	description: "Progressions that are minor-y",
 	progressions: [
 		{
-			name: "minor-y",
+			name: "minor-y", // TODO: better name
 			chordProgression: "i-VII-v-VI",
+			scale: "minor",
+			description: ""
+		},
+		{
+			name: "classic i-iv-V", // TODO: better name
+			chordProgression: "i-iv-V",
+			scale: "minor",
+			description: ""
+		},
+		{
+			name: "gangnam verse i-iv-v",
+			chordProgression: "i-iv-v",
 			scale: "minor",
 			description: ""
 		},
