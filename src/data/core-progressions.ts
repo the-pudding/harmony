@@ -231,6 +231,13 @@ const emoPopProgressions: ProgressionGroup = {
 			description:
 				"Similar strengths to other four chord classics, but starting on the IV makes it feel fresh/yearn-y. Peaked in mid 2010s"
 		},
+		{
+			name: "i want you to stay",
+			chordProgression: "I-ii-vi-IV",
+			scale: "major",
+			description:
+				"wonderfully complex, you can sort of think of I-ii and vi-IV as two inverted flavors of the same movement"
+		},
 
 		{
 			name: "save your tears",
