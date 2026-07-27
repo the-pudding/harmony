@@ -244,6 +244,13 @@ const emoPopProgressions: ProgressionGroup = {
 				"Similar strengths to other four chord classics, but starting on the IV makes it feel fresh/yearn-y. Peaked in mid 2010s"
 		},
 		{
+			name: "viva la vida",
+			chordProgression: "IV-V-I-vi",
+			scale: "major",
+			description:
+				"starts with an optimistic IV-V lift, then sort of has this melancholy I-vi dip"
+		},
+		{
 			name: "i want you to stay",
 			chordProgression: "I-ii-vi-IV",
 			scale: "major",
