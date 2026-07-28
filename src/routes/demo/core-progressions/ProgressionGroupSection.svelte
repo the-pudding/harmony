@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ProgressionGroup } from "$data/core-progressions.js";
+	import { chordProgressionVariants } from "$data/core-progressions.js";
 	import type { AllSongsCoverageResult } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import { filterCoverageResultForProgressions } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import CoreProgressionRow from "../define-chord-progression/components/CoreProgressionRow.svelte";
@@ -26,7 +27,7 @@
 	}: Props = $props();
 
 	const groupProgressionKeys = $derived(
-		group.progressions.map((p) => p.chordProgression)
+		group.progressions.flatMap((p) => chordProgressionVariants(p.chordProgression))
 	);
 
 	const filteredCoverage = $derived(

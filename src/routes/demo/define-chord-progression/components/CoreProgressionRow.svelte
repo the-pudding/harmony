@@ -40,6 +40,16 @@
 				(progressionMatchRates[a.chordProgression] ?? 0)
 		);
 	});
+
+	const variantsByName = $derived(
+		displayMatches.reduce<Record<string, string[]>>(
+			(acc, m) => ({ ...acc, [m.name]: [...(acc[m.name] ?? []), m.chordProgression] }),
+			{}
+		)
+	);
+
+	const otherVariantsFor = (match: { name: string; chordProgression: string }): string[] =>
+		(variantsByName[match.name] ?? []).filter((v) => v !== match.chordProgression);
 </script>
 
 <div
@@ -57,6 +67,7 @@
 				active={activeProgression === match.chordProgression}
 				borderColor={outline.color}
 				dashed={outline.dashed}
+				otherVariants={otherVariantsFor(match)}
 				{onselect}
 			>
 				{#snippet stats({ active })}

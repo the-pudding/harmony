@@ -15,7 +15,9 @@ import {
 	buildProgressionMatchRates,
 	formatMatchRatePercent
 } from "./progressionMatchAnalysis.js";
-import coreProgressions from "$data/core-progressions.js";
+import coreProgressions, {
+	chordProgressionVariants
+} from "$data/core-progressions.js";
 
 const chord = (
 	rootPitchClass: number,
@@ -47,9 +49,11 @@ const makeSection = (
 	scale: "major"
 });
 
-const darkDooWop = coreProgressions.find((p) => p.name === "dark doo wop")!;
+const saveYourTearsCore = coreProgressions.find(
+	(p) => p.name === "save your tears"
+)!;
 const darkDooWopParsed = romanTokensToParsedProgression(
-	darkDooWop.chordProgression.split("-")
+	chordProgressionVariants(saveYourTearsCore.chordProgression)[0].split("-")
 )!;
 
 // Regression: the-weeknd "Save Your Tears" — the HookTheory source transcribes
@@ -120,7 +124,7 @@ const saveYourTearsUg: GroupedSong = {
 };
 
 describe("computeStatsForParsedProgression — extension-stripping regression (save your tears)", () => {
-	it("counts I-vi7-iii7-V sections as matching I-vi-iii-V (dark doo wop)", () => {
+	it("counts I-vi7-iii7-V sections as matching I-vi-iii-V (save your tears)", () => {
 		const stats = computeStatsForParsedProgression(
 			saveYourTearsHooktheory,
 			darkDooWopParsed
@@ -153,12 +157,14 @@ describe("computeStatsForParsedProgression — extension-stripping regression (s
 });
 
 describe("computeProgressionMatches — extension-stripping regression (save your tears)", () => {
-	it("surfaces dark doo wop even when all sections use 7th-chord voicings", () => {
+	it("surfaces save your tears even when all sections use 7th-chord voicings", () => {
 		const matches = computeProgressionMatches(
 			saveYourTearsHooktheory,
 			coreProgressions
 		);
-		const darkDooWopMatch = matches.find((m) => m.name === darkDooWop.name);
+		const darkDooWopMatch = matches.find(
+			(m) => m.name === saveYourTearsCore.name
+		);
 		expect(darkDooWopMatch).toBeDefined();
 		expect(darkDooWopMatch!.matchCount).toBe(4);
 	});
@@ -173,10 +179,10 @@ describe("computeProgressionMatches — extension-stripping regression (save you
 			coreProgressions
 		);
 		const htCount = matchesHt.find(
-			(m) => m.name === darkDooWop.name
+			(m) => m.name === saveYourTearsCore.name
 		)?.matchCount;
 		const ugCount = matchesUg.find(
-			(m) => m.name === darkDooWop.name
+			(m) => m.name === saveYourTearsCore.name
 		)?.matchCount;
 		expect(htCount).toBe(ugCount);
 	});
@@ -278,7 +284,8 @@ describe("findMatchingCoreProgressionsForSong", () => {
 			C_MAJOR,
 			A_MINOR,
 			E_MINOR,
-			G_MAJOR
+			G_MAJOR,
+			C_MAJOR
 		]);
 		const singleMatchSong: GroupedSong = {
 			songKey: "test__single-match",

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import songs from "../../../../../static/data/songs.json";
-import coreProgressions from "$data/core-progressions.js";
+import coreProgressions, {
+	chordProgressionVariants
+} from "$data/core-progressions.js";
 import { groupSongs } from "../../../../data/songBrowser.js";
 import {
 	computeProgressionMatches,
@@ -25,7 +27,7 @@ describe("burnin up — scale-aware core matching regression", () => {
 
 	it("i-III-VII-VI parsed as minor matches all 4 instances in burnin up (Verse×2, Chorus×2)", () => {
 		const parsed = romanTokensToParsedProgression(
-			burninCore.chordProgression.split("-"),
+			chordProgressionVariants(burninCore.chordProgression)[0].split("-"),
 			"minor"
 		)!;
 		const stats = computeStatsForParsedProgression(burninSong, parsed);

@@ -1,4 +1,5 @@
 import type { ProgressionGroup } from "./core-progressions.js";
+import { chordProgressionVariants } from "./core-progressions.js";
 
 export type GroupNode = {
 	type: "group";
@@ -75,24 +76,28 @@ export const buildProgressionNetwork = (
 		});
 
 		for (const progression of group.progressions) {
-			const progressionId = progressionNodeId(progression.chordProgression);
+			for (const variant of chordProgressionVariants(
+				progression.chordProgression
+			)) {
+				const progressionId = progressionNodeId(variant);
 
-			if (!knownProgressionIds.has(progressionId)) {
-				knownProgressionIds.add(progressionId);
-				nodes.push({
-					type: "progression",
-					id: progressionId,
-					label: progression.name,
-					chordProgression: progression.chordProgression,
-					scale: progression.scale
+				if (!knownProgressionIds.has(progressionId)) {
+					knownProgressionIds.add(progressionId);
+					nodes.push({
+						type: "progression",
+						id: progressionId,
+						label: progression.name,
+						chordProgression: variant,
+						scale: progression.scale
+					});
+				}
+
+				links.push({
+					type: "group-progression",
+					source: groupId,
+					target: progressionId
 				});
 			}
-
-			links.push({
-				type: "group-progression",
-				source: groupId,
-				target: progressionId
-			});
 		}
 	}
 

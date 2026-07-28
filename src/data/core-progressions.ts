@@ -93,7 +93,7 @@ const axisOfAwesomeProgressions: ProgressionGroup = {
 	progressions: [
 		{
 			name: "axis of awesome",
-			chordProgression: "I-V-vi-IV",
+			chordProgression: ["I-V-vi-IV", "I-V-vi"],
 			scale: "major",
 			description: ""
 		},
@@ -243,6 +243,15 @@ const emoPopProgressions: ProgressionGroup = {
 			description:
 				"Similar strengths to other four chord classics, but starting on the IV makes it feel fresh/yearn-y. Peaked in mid 2010s"
 		},
+
+		{
+			name: "emo walk down",
+			chordProgression: ["I-vi-V-IV", "I-vi-V-IV-V", "I-vi-IV"],
+			scale: "major",
+			description:
+				"TODO: currently we merge eg I-Imaj7, but this progression is really I-Imaj7-vi-V-IV"
+		},
+
 		{
 			name: "viva la vida",
 			chordProgression: "IV-V-I-vi",
@@ -290,11 +299,16 @@ const emoPopProgressions: ProgressionGroup = {
 
 export type CoreProgression = {
 	name: string;
-	chordProgression: string;
+	chordProgression: string | string[];
 	scale: ScaleName;
 	description: string;
 	technicalNotes?: string;
 };
+
+export const chordProgressionVariants = (
+	chordProgression: string | string[]
+): string[] =>
+	Array.isArray(chordProgression) ? chordProgression : [chordProgression];
 
 export const allProgressionGroups: ProgressionGroup[] = [
 	happyMajoryProgressions,

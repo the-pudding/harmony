@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import coreProgressions, {
-	progressionsThatDidntMatchAnything
+	progressionsThatDidntMatchAnything,
+	chordProgressionVariants
 } from "./core-progressions.js";
 import { romanTokensToParsedProgression } from "../chord-processing/romanNumerals.js";
 
@@ -12,12 +13,30 @@ const allProgressions = [
 describe("core progressions — schema validation", () => {
 	it("every entry parses successfully with its declared scale", () => {
 		const failed = allProgressions.filter((p) => {
-			const parsed = romanTokensToParsedProgression(
-				p.chordProgression.split("-"),
-				p.scale
-			);
-			return parsed === null;
+			return chordProgressionVariants(p.chordProgression).some((variant) => {
+				const parsed = romanTokensToParsedProgression(
+					variant.split("-"),
+					p.scale
+				);
+				return parsed === null;
+			});
 		});
 		expect(failed).toHaveLength(0);
+	});
+
+	it("multi-variant entries expand to one parsed row per variant", () => {
+		const multiVariant = allProgressions.find((p) =>
+			Array.isArray(p.chordProgression)
+		);
+		if (!multiVariant) return;
+		const variants = chordProgressionVariants(multiVariant.chordProgression);
+		expect(variants.length).toBeGreaterThan(1);
+		for (const variant of variants) {
+			const parsed = romanTokensToParsedProgression(
+				variant.split("-"),
+				multiVariant.scale
+			);
+			expect(parsed).not.toBeNull();
+		}
 	});
 });

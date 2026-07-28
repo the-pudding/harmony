@@ -11,6 +11,7 @@
 		onunhover?: () => void;
 		borderColor?: string;
 		dashed?: boolean;
+		otherVariants?: string[];
 		stats?: Snippet<[{ active: boolean }]>;
 	};
 
@@ -22,6 +23,7 @@
 		onunhover,
 		borderColor,
 		dashed = false,
+		otherVariants,
 		stats
 	}: Props = $props();
 
@@ -54,7 +56,17 @@
 			><span class="prog-scale-label">scale:</span> {scaleName}</span
 		>
 	{/if}
-	<span class="prog-chords">{match.chordProgression}</span>
+	<span class="prog-chords-row">
+		<span class="prog-chords">{match.chordProgression}</span>
+		{#if otherVariants && otherVariants.length > 0}
+			<span
+				class="variants-badge"
+				data-variants={otherVariants.join(" · ")}
+				role="img"
+				aria-label="other variants: {otherVariants.join(', ')}"
+			>+{otherVariants.length}</span>
+		{/if}
+	</span>
 	{#if stats}
 		{@render stats({ active })}
 	{/if}
@@ -113,6 +125,12 @@
 		white-space: nowrap;
 	}
 
+	.prog-chords-row {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
 	.prog-chords {
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.7rem;
@@ -125,6 +143,51 @@
 
 	.prog-btn:hover .prog-chords {
 		color: rgba(228, 228, 231, 0.7);
+	}
+
+	.variants-badge {
+		position: relative;
+		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+		font-size: 0.6rem;
+		color: rgba(161, 161, 170, 0.45);
+		cursor: default;
+		padding: 0 0.2rem;
+		border: 1px solid rgba(161, 161, 170, 0.2);
+		border-radius: 0.2rem;
+		line-height: 1.4;
+	}
+
+	.prog-btn.active .variants-badge {
+		color: rgba(137, 180, 250, 0.5);
+		border-color: rgba(137, 180, 250, 0.25);
+	}
+
+	.prog-btn:hover .variants-badge {
+		color: rgba(228, 228, 231, 0.5);
+		border-color: rgba(228, 228, 231, 0.25);
+	}
+
+	.variants-badge::after {
+		content: attr(data-variants);
+		position: absolute;
+		bottom: calc(100% + 5px);
+		left: 0;
+		background: #18181b;
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		color: rgba(228, 228, 231, 0.9);
+		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+		font-size: 0.65rem;
+		padding: 0.25rem 0.4rem;
+		border-radius: 0.25rem;
+		white-space: nowrap;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.1s ease;
+		z-index: 10;
+	}
+
+	.variants-badge:hover::after {
+		opacity: 1;
 	}
 
 	.prog-scale {

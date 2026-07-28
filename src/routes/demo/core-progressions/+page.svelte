@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { allProgressionGroups, type ProgressionGroup } from "$data/core-progressions.js";
+	import { allProgressionGroups, type ProgressionGroup, chordProgressionVariants } from "$data/core-progressions.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
@@ -12,7 +12,7 @@
 	const groupMatchCount = (group: ProgressionGroup): number => {
 		const result = coverage.allSongsCoverageResult;
 		if (!result) return 0;
-		const keys = group.progressions.map((p) => p.chordProgression);
+		const keys = group.progressions.flatMap((p) => chordProgressionVariants(p.chordProgression));
 		return filterCoverageResultForProgressions(result, keys).songCoverages.length;
 	};
 

@@ -513,6 +513,11 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "psy__gangnam-style",
 		chordProgressionIssues:
 			"Nails chords. However, it lists the progression i-iv-v once for the intro and verse, when in fact its played thrice betwixt them. I updated our algo to catch that."
+	},
+	{
+		id: "miley-cyrus__7-things",
+		chordProgressionIssues:
+			"looks good overall, except the 'chorus lead out' section matches HT website with the first 3 chords, but then adds a ton of extra chords after in our dataset"
 	}
 ];
 

@@ -227,10 +227,10 @@ describe("computeGapFillProgressionMatches — recurrence detection", () => {
 
 	it("counts occurrences across separate sections", () => {
 		const song = makeSong([
-			["I", "vi", "IV"],
-			["ii", "I", "vi", "IV"]
+			["I", "iii", "IV"],
+			["ii", "I", "iii", "IV"]
 		]);
-		expect(gapProgressions(song)).toContain("I-vi-IV");
+		expect(gapProgressions(song)).toContain("I-iii-IV");
 	});
 
 	it("does not double-count slide-window matches that share a boundary chord", () => {

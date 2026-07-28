@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import songs from "../../../../../static/data/songs.json";
-import coreProgressions from "$data/core-progressions.js";
+import coreProgressions, {
+	chordProgressionVariants
+} from "$data/core-progressions.js";
 import { groupSongs } from "../../../../data/songBrowser.js";
 import {
 	computeProgressionMatches,
@@ -15,8 +17,8 @@ const gangnamSong = groupSongs(
 	) as Parameters<typeof groupSongs>[0]
 )[0];
 
-const iivvCore = coreProgressions.find(
-	(p) => p.chordProgression === "i-iv-v"
+const iivvCore = coreProgressions.find((p) =>
+	chordProgressionVariants(p.chordProgression).includes("i-iv-v")
 )!;
 
 describe("gangnam style — full-section single-match exception regression", () => {
@@ -30,7 +32,7 @@ describe("gangnam style — full-section single-match exception regression", () 
 
 	it("i-iv-v parsed as minor appears exactly once in gangnam-style", () => {
 		const parsed = romanTokensToParsedProgression(
-			iivvCore.chordProgression.split("-"),
+			"i-iv-v".split("-"),
 			"minor"
 		)!;
 		const section = gangnamSong.sections[0];

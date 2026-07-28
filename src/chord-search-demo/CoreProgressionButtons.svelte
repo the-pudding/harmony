@@ -1,6 +1,7 @@
 <script lang="ts">
 	import coreProgressions, {
-		type CoreProgression
+		type CoreProgression,
+		chordProgressionVariants
 	} from "$data/core-progressions.js";
 	import { romanTokensToParsedProgression } from "../chord-processing/romanNumerals.js";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
@@ -18,17 +19,19 @@
 		const searchChords = chordSearchDemoStore.searchChords;
 		if (searchChords.length === 0) return null;
 		for (const p of progressions) {
-			const parsed = romanTokensToParsedProgression(
-				p.chordProgression.split("-"),
-				p.scale
-			);
-			if (!parsed || parsed.length !== searchChords.length) continue;
-			const isMatch = parsed.every(
-				(chord, i) =>
-					chord.rootPitchClass === searchChords[i].rootPitchClass &&
-					chord.suffix === searchChords[i].suffix
-			);
-			if (isMatch) return p.chordProgression;
+			for (const variant of chordProgressionVariants(p.chordProgression)) {
+				const parsed = romanTokensToParsedProgression(
+					variant.split("-"),
+					p.scale
+				);
+				if (!parsed || parsed.length !== searchChords.length) continue;
+				const isMatch = parsed.every(
+					(chord, i) =>
+						chord.rootPitchClass === searchChords[i].rootPitchClass &&
+						chord.suffix === searchChords[i].suffix
+				);
+				if (isMatch) return variant;
+			}
 		}
 		return null;
 	});
@@ -36,6 +39,11 @@
 	const activeProgression = $derived(
 		activeProp !== undefined ? activeProp : storeActiveProgression
 	);
+
+	const isProgressionActive = (p: CoreProgression): boolean =>
+		activeProgression !== null &&
+		activeProgression !== undefined &&
+		chordProgressionVariants(p.chordProgression).includes(activeProgression);
 
 	const handleProgressionClick = (chordProgression: string) => {
 		if (onselect !== undefined) {
@@ -49,8 +57,8 @@
 			return;
 		}
 		const tokens = chordProgression.split("-");
-		const p = progressions.find(
-			(prog) => prog.chordProgression === chordProgression
+		const p = progressions.find((prog) =>
+			chordProgressionVariants(prog.chordProgression).includes(chordProgression)
 		);
 		const parsed = romanTokensToParsedProgression(tokens, p?.scale);
 		if (!parsed) return;
@@ -62,18 +70,20 @@
 {#if progressions.length > 0}
 	<div class="button-row">
 		{#each progressions as p (p.name)}
-			<button
-				class="prog-btn"
-				class:active={activeProgression === p.chordProgression}
-				onclick={() => handleProgressionClick(p.chordProgression)}
-				title={p.chordProgression}
-			>
-				<span class="prog-name">{p.name}</span>
-				<span class="prog-chords">{p.chordProgression}</span>
-				{#if p.description}
-					<span class="prog-description">{p.description}</span>
-				{/if}
-			</button>
+			{#each chordProgressionVariants(p.chordProgression) as variant (variant)}
+				<button
+					class="prog-btn"
+					class:active={activeProgression === variant}
+					onclick={() => handleProgressionClick(variant)}
+					title={variant}
+				>
+					<span class="prog-name">{p.name}</span>
+					<span class="prog-chords">{variant}</span>
+					{#if p.description}
+						<span class="prog-description">{p.description}</span>
+					{/if}
+				</button>
+			{/each}
 		{/each}
 	</div>
 {/if}

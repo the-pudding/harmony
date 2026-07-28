@@ -1,4 +1,5 @@
 import type { CoreProgression } from "$data/core-progressions.js";
+import { chordProgressionVariants } from "$data/core-progressions.js";
 import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import type { ScaleName } from "../../../../chord-processing/scales.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
@@ -74,14 +75,18 @@ export const buildCoreNameByAbstractKey = (
 	coreProgressions: CoreProgression[]
 ): Map<string, string> =>
 	new Map(
-		coreProgressions.flatMap((progression) => {
-			const parsed = romanTokensToParsedProgression(
-				progression.chordProgression.split("-"),
-				progression.scale
-			);
-			if (!parsed) return [];
-			return [[abstractProgressionKey(parsed), progression.name]] as const;
-		})
+		coreProgressions.flatMap((progression) =>
+			chordProgressionVariants(progression.chordProgression).flatMap(
+				(variant) => {
+					const parsed = romanTokensToParsedProgression(
+						variant.split("-"),
+						progression.scale
+					);
+					if (!parsed) return [];
+					return [[abstractProgressionKey(parsed), progression.name]] as const;
+				}
+			)
+		)
 	);
 
 // Matching treats a run of repeated chords (identical once extensions and slash
@@ -172,29 +177,33 @@ export function computeProgressionMatches(
 	if (totalChords === 0) return [];
 
 	return coreProgressions
-		.filter(
-			(progression) => !isSelfRepeatingProgression(progression.chordProgression)
+		.flatMap((progression) =>
+			chordProgressionVariants(progression.chordProgression).map(
+				(variant): CoreProgressionWithStats | null => {
+					if (isSelfRepeatingProgression(variant)) return null;
+					const parsed = romanTokensToParsedProgression(
+						variant.split("-"),
+						progression.scale
+					);
+					if (!parsed) return null;
+
+					const stats = computeStatsForParsedProgression(song, parsed);
+					const coversFullSection = fullyCoversAnySection(song, parsed);
+
+					return {
+						...progression,
+						chordProgression: variant,
+						parsedProgression: parsed,
+						matchCount: stats.matchCount,
+						coveragePercent: stats.coveragePercent,
+						isFullSectionSingleMatch:
+							stats.matchCount < MIN_PROGRESSION_OCCURRENCES &&
+							coversFullSection,
+						...matchHighlightForCoreProgression(true)
+					};
+				}
+			)
 		)
-		.map((progression): CoreProgressionWithStats | null => {
-			const parsed = romanTokensToParsedProgression(
-				progression.chordProgression.split("-"),
-				progression.scale
-			);
-			if (!parsed) return null;
-
-			const stats = computeStatsForParsedProgression(song, parsed);
-			const coversFullSection = fullyCoversAnySection(song, parsed);
-
-			return {
-				...progression,
-				parsedProgression: parsed,
-				matchCount: stats.matchCount,
-				coveragePercent: stats.coveragePercent,
-				isFullSectionSingleMatch:
-					stats.matchCount < MIN_PROGRESSION_OCCURRENCES && coversFullSection,
-				...matchHighlightForCoreProgression(true)
-			};
-		})
 		.filter(
 			(match): match is CoreProgressionWithStats =>
 				match !== null &&
@@ -213,18 +222,19 @@ export type ParsedCoreProgression = {
 export const parseCoreProgressions = (
 	coreProgressions: CoreProgression[]
 ): ParsedCoreProgression[] =>
-	coreProgressions
-		.filter(
-			(progression) => !isSelfRepeatingProgression(progression.chordProgression)
+	coreProgressions.flatMap((progression) =>
+		chordProgressionVariants(progression.chordProgression).flatMap(
+			(variant) => {
+				if (isSelfRepeatingProgression(variant)) return [];
+				const parsed = romanTokensToParsedProgression(
+					variant.split("-"),
+					progression.scale
+				);
+				if (!parsed) return [];
+				return [{ chordProgression: variant, parsed }];
+			}
 		)
-		.flatMap((progression) => {
-			const parsed = romanTokensToParsedProgression(
-				progression.chordProgression.split("-"),
-				progression.scale
-			);
-			if (!parsed) return [];
-			return [{ chordProgression: progression.chordProgression, parsed }];
-		});
+	);
 
 export const findMatchingCoreProgressionsForSong = (
 	song: GroupedSong,
@@ -272,28 +282,31 @@ export const buildCoreProgressionDisplayMatches = (
 	song: GroupedSong | null
 ): ProgressionWithMatchStats[] =>
 	coreProgressions
-		.filter(
-			(progression) => !isSelfRepeatingProgression(progression.chordProgression)
+		.flatMap((progression) =>
+			chordProgressionVariants(progression.chordProgression).map(
+				(variant): ProgressionWithMatchStats | null => {
+					if (isSelfRepeatingProgression(variant)) return null;
+					const parsed = romanTokensToParsedProgression(
+						variant.split("-"),
+						progression.scale
+					);
+					if (!parsed) return null;
+
+					const stats = song
+						? computeStatsForParsedProgression(song, parsed)
+						: { matchCount: 0, coveragePercent: 0 };
+
+					return {
+						...progression,
+						chordProgression: variant,
+						parsedProgression: parsed,
+						matchCount: stats.matchCount,
+						coveragePercent: stats.coveragePercent,
+						...matchHighlightForCoreProgression(true)
+					};
+				}
+			)
 		)
-		.map((progression): ProgressionWithMatchStats | null => {
-			const parsed = romanTokensToParsedProgression(
-				progression.chordProgression.split("-"),
-				progression.scale
-			);
-			if (!parsed) return null;
-
-			const stats = song
-				? computeStatsForParsedProgression(song, parsed)
-				: { matchCount: 0, coveragePercent: 0 };
-
-			return {
-				...progression,
-				parsedProgression: parsed,
-				matchCount: stats.matchCount,
-				coveragePercent: stats.coveragePercent,
-				...matchHighlightForCoreProgression(true)
-			};
-		})
 		.filter((match): match is ProgressionWithMatchStats => match !== null);
 
 export function getSectionMatches(
