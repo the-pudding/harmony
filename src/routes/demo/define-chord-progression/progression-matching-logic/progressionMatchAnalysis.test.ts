@@ -6,6 +6,8 @@ import type {
 } from "../../../../data/songBrowser.js";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import {
+	aggregateVariantMatchStats,
+	collapseDisplayMatchesByName,
 	computeProgressionMatches,
 	computeStatsForParsedProgression,
 	computeGapOnlyCoveredPositionsBySection,
@@ -13,7 +15,9 @@ import {
 	parseCoreProgressions,
 	findMatchingCoreProgressionsForSong,
 	buildProgressionMatchRates,
-	formatMatchRatePercent
+	formatMatchRatePercent,
+	pickPrimaryVariant,
+	type ProgressionWithMatchStats
 } from "./progressionMatchAnalysis.js";
 import coreProgressions, {
 	chordProgressionVariants
@@ -336,6 +340,83 @@ describe("buildProgressionMatchRates", () => {
 			2
 		);
 		expect(progressionMatchRates["I-vi-iii-V"]).toBeUndefined();
+	});
+});
+
+describe("aggregateVariantMatchStats", () => {
+	const coverages = [
+		{ matchingProgressions: ["ii-V-I"] },
+		{ matchingProgressions: ["ii-V-I"] },
+		{ matchingProgressions: ["ii7-V7-Imaj7"] },
+		{ matchingProgressions: ["I-V-vi-IV"] }
+	];
+
+	it("counts a song once when any sibling variant matched", () => {
+		expect(
+			aggregateVariantMatchStats(
+				["ii7-V7-Imaj7", "ii-V-I"],
+				coverages,
+				coverages.length
+			)
+		).toEqual({ matchingSongCount: 3, matchRatePercent: 75 });
+	});
+
+	it("does not shrink when a zero-match exact variant is included", () => {
+		const liberalOnly = aggregateVariantMatchStats(
+			["ii-V-I"],
+			coverages,
+			coverages.length
+		);
+		const withExact = aggregateVariantMatchStats(
+			["ii7-V7-Imaj7", "ii-V-I"],
+			coverages,
+			coverages.length
+		);
+		expect(withExact.matchingSongCount).toBeGreaterThanOrEqual(
+			liberalOnly.matchingSongCount
+		);
+	});
+});
+
+describe("collapseDisplayMatchesByName", () => {
+	const match = (
+		name: string,
+		chordProgression: string
+	): ProgressionWithMatchStats =>
+		({
+			name,
+			chordProgression,
+			parsedProgression: [],
+			scale: "major",
+			description: "",
+			matchCount: 0,
+			coveragePercent: 0,
+			isCoreProgression: true,
+			highlightPalette: { fill: "", border: "" }
+		}) as ProgressionWithMatchStats;
+
+	it("keeps one row per name, preferring the higher-count variant", () => {
+		const collapsed = collapseDisplayMatchesByName(
+			[
+				match("jazz ii-V-I", "ii7-V7-Imaj7"),
+				match("jazz ii-V-I", "ii-V-I"),
+				match("doo wop", "I-vi-IV-V")
+			],
+			{ "ii7-V7-Imaj7": 0, "ii-V-I": 12, "I-vi-IV-V": 4 }
+		);
+		expect(collapsed.map((row) => row.chordProgression)).toEqual([
+			"ii-V-I",
+			"I-vi-IV-V"
+		]);
+	});
+
+	it("pickPrimaryVariant falls back to the first variant when counts tie at zero", () => {
+		expect(
+			pickPrimaryVariant(
+				[match("jazz ii-V-I", "ii7-V7-Imaj7"), match("jazz ii-V-I", "ii-V-I")],
+				null
+			).chordProgression
+		).toBe("ii7-V7-Imaj7");
 	});
 });
 

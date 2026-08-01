@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { ProgressionGroup } from "$data/core-progressions.js";
-	import { chordProgressionVariants } from "$data/core-progressions.js";
+	import {
+		chordProgressionVariants,
+		siblingVariantsForProgression
+	} from "$data/core-progressions.js";
 	import type { AllSongsCoverageResult } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import { filterCoverageResultForProgressions } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import CoreProgressionRow from "../define-chord-progression/components/CoreProgressionRow.svelte";
@@ -41,6 +44,12 @@
 	const groupMatchPercent = $derived(
 		totalSongCount > 0 ? Math.round((groupMatchingSongCount / totalSongCount) * 100) : 0
 	);
+
+	const highlightedProgressions = $derived(
+		pinnedProgression
+			? siblingVariantsForProgression(group.progressions, pinnedProgression)
+			: null
+	);
 </script>
 
 <section class="group-section">
@@ -67,17 +76,18 @@
 		coreProgressions={group.progressions}
 		selectedSong={null}
 		activeProgression={pinnedProgression}
-		progressionMatchRates={filteredCoverage?.progressionMatchRates ?? null}
 		progressionMatchCounts={filteredCoverage?.progressionMatchCounts ?? null}
+		songCoverages={coverageResult?.songCoverages ?? null}
+		{totalSongCount}
 		onselect={onSelectProgression}
 	/>
 
 	<SongCoverageBeeswarm
 		songs={filteredCoverage?.songCoverages ?? null}
 		{selectedSongKey}
-		highlightedProgression={pinnedProgression}
+		{highlightedProgressions}
 		{onSelectSong}
-		chartHeight={BEESWARM_HEIGHT}
+		maxHeight={BEESWARM_HEIGHT}
 	/>
 </section>
 

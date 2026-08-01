@@ -3,6 +3,13 @@
 	import { humanizeScale } from "../../../../data/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
 
+	export type VariantTooltipRow = {
+		chordProgression: string;
+		matchingSongCount: number;
+	};
+
+	const TOOLTIP_GAP_PX = 6;
+
 	type Props = {
 		match: ProgressionWithMatchStats;
 		active: boolean;
@@ -11,7 +18,7 @@
 		onunhover?: () => void;
 		borderColor?: string;
 		dashed?: boolean;
-		otherVariants?: string[];
+		variantTooltipRows?: VariantTooltipRow[];
 		stats?: Snippet<[{ active: boolean }]>;
 	};
 
@@ -23,9 +30,14 @@
 		onunhover,
 		borderColor,
 		dashed = false,
-		otherVariants,
+		variantTooltipRows = [],
 		stats
 	}: Props = $props();
+
+	let badgeElement = $state<HTMLSpanElement | null>(null);
+	let tooltipVisible = $state(false);
+	let tooltipLeftPx = $state(0);
+	let tooltipTopPx = $state(0);
 
 	const scaleName = $derived(humanizeScale(match.scale));
 	const scaleLabel = $derived(`scale: ${scaleName}`);
@@ -35,6 +47,39 @@
 			? `${match.chordProgression} (${scaleLabel})`
 			: match.chordProgression
 	);
+
+	const otherVariantCount = $derived(
+		Math.max(0, variantTooltipRows.length - 1)
+	);
+
+	const sortedTooltipRows = $derived(
+		[...variantTooltipRows].sort(
+			(a, b) =>
+				b.matchingSongCount - a.matchingSongCount ||
+				a.chordProgression.localeCompare(b.chordProgression)
+		)
+	);
+
+	const portalToBody = (node: HTMLElement) => {
+		document.body.appendChild(node);
+		return {
+			destroy() {
+				node.remove();
+			}
+		};
+	};
+
+	const showVariantTooltip = () => {
+		if (!badgeElement) return;
+		const rect = badgeElement.getBoundingClientRect();
+		tooltipLeftPx = rect.left;
+		tooltipTopPx = rect.top - TOOLTIP_GAP_PX;
+		tooltipVisible = true;
+	};
+
+	const hideVariantTooltip = () => {
+		tooltipVisible = false;
+	};
 </script>
 
 <button
@@ -46,7 +91,7 @@
 	onclick={() => onselect(match.chordProgression)}
 	onmouseenter={() => onhover?.(match.chordProgression)}
 	onmouseleave={() => onunhover?.()}
-	title={buttonTitle}
+	title={otherVariantCount > 0 ? undefined : buttonTitle}
 >
 	{#if match.name}
 		<span class="prog-name">{match.name}</span>
@@ -58,19 +103,50 @@
 	{/if}
 	<span class="prog-chords-row">
 		<span class="prog-chords">{match.chordProgression}</span>
-		{#if otherVariants && otherVariants.length > 0}
+		{#if otherVariantCount > 0}
 			<span
+				bind:this={badgeElement}
 				class="variants-badge"
-				data-variants={otherVariants.join(" · ")}
 				role="img"
-				aria-label="other variants: {otherVariants.join(', ')}"
-			>+{otherVariants.length}</span>
+				aria-label="variants: {sortedTooltipRows
+					.map(
+						(row) =>
+							`${row.matchingSongCount} songs — ${row.chordProgression}`
+					)
+					.join('; ')}"
+				onmouseenter={showVariantTooltip}
+				onmouseleave={hideVariantTooltip}
+			>
+				+{otherVariantCount}
+			</span>
 		{/if}
 	</span>
 	{#if stats}
 		{@render stats({ active })}
 	{/if}
 </button>
+
+{#if tooltipVisible}
+	<div
+		class="progression-variant-tooltip"
+		role="tooltip"
+		style:left="{tooltipLeftPx}px"
+		style:top="{tooltipTopPx}px"
+		use:portalToBody
+	>
+		{#each sortedTooltipRows as row (row.chordProgression)}
+			<div class="progression-variant-tooltip-row">
+				<span class="progression-variant-tooltip-count"
+					>{row.matchingSongCount}</span
+				>
+				<span class="progression-variant-tooltip-sep">-</span>
+				<span class="progression-variant-tooltip-progression"
+					>{row.chordProgression}</span
+				>
+			</div>
+		{/each}
+	</div>
+{/if}
 
 <style>
 	.prog-btn {
@@ -146,7 +222,6 @@
 	}
 
 	.variants-badge {
-		position: relative;
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.6rem;
 		color: rgba(161, 161, 170, 0.45);
@@ -167,27 +242,47 @@
 		border-color: rgba(228, 228, 231, 0.25);
 	}
 
-	.variants-badge::after {
-		content: attr(data-variants);
-		position: absolute;
-		bottom: calc(100% + 5px);
-		left: 0;
+	:global(.progression-variant-tooltip) {
+		position: fixed;
+		transform: translateY(-100%);
 		background: #18181b;
 		border: 1px solid rgba(255, 255, 255, 0.15);
 		color: rgba(228, 228, 231, 0.9);
+		padding: 0.4rem 0.5rem;
+		border-radius: 0.25rem;
+		pointer-events: none;
+		z-index: 1000;
+		width: max-content;
+		max-width: min(20rem, calc(100vw - 1rem));
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.65rem;
-		padding: 0.25rem 0.4rem;
-		border-radius: 0.25rem;
-		white-space: nowrap;
-		opacity: 0;
-		pointer-events: none;
-		transition: opacity 0.1s ease;
-		z-index: 10;
+		line-height: 1.5;
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
 	}
 
-	.variants-badge:hover::after {
-		opacity: 1;
+	:global(.progression-variant-tooltip-row) {
+		display: grid;
+		grid-template-columns: max-content max-content max-content;
+		column-gap: 0.4rem;
+		align-items: baseline;
+		white-space: nowrap;
+	}
+
+	:global(.progression-variant-tooltip-count) {
+		color: rgba(255, 255, 255, 0.95);
+		font-variant-numeric: tabular-nums;
+		text-align: left;
+	}
+
+	:global(.progression-variant-tooltip-sep) {
+		color: rgba(161, 161, 170, 0.55);
+	}
+
+	:global(.progression-variant-tooltip-progression) {
+		color: rgba(228, 228, 231, 0.85);
 	}
 
 	.prog-scale {

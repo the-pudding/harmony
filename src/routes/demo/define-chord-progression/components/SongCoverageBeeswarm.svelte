@@ -30,7 +30,8 @@
 	type Props = {
 		songs: SongEntry[] | null;
 		selectedSongKey: string;
-		highlightedProgression: string | null;
+		highlightedProgressions?: string[] | null;
+		highlightedProgression?: string | null;
 		onSelectSong?: (key: string) => void;
 		maxHeight?: number;
 	};
@@ -38,10 +39,16 @@
 	let {
 		songs,
 		selectedSongKey,
-		highlightedProgression,
+		highlightedProgressions = null,
+		highlightedProgression = null,
 		onSelectSong,
 		maxHeight
 	}: Props = $props();
+
+	const activeHighlightProgressions = $derived(
+		highlightedProgressions ??
+			(highlightedProgression !== null ? [highlightedProgression] : null)
+	);
 
 	let containerWidth = $state(0);
 	let hoveredSongKey = $state<string | null>(null);
@@ -273,8 +280,10 @@
 				{@const isHovered = node.songKey === hoveredSongKey}
 				{@const hasIssues = node.chordProgressionIssues !== undefined}
 				{@const isCoreMatched =
-					highlightedProgression !== null &&
-					node.matchingProgressions.includes(highlightedProgression)}
+					activeHighlightProgressions !== null &&
+					node.matchingProgressions.some((progression) =>
+						activeHighlightProgressions.includes(progression)
+					)}
 				{@const r = isSelected ? SELECTED_DOT_RADIUS : DOT_RADIUS}
 				{@const cy = AXIS_Y - DOT_RADIUS - node.y}
 				<circle

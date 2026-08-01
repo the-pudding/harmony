@@ -148,7 +148,7 @@ const minoryProgressions: ProgressionGroup = {
 				"experimental: game up in Good 4 U prominently, it's sort of a spin on ii-V-I, but doesn't require the jazzy extensions to sound fresh..."
 		},
 		{
-			name: "andalusian cadence",
+			name: "andalusian walk down",
 			chordProgression: "i-VII-VI-V",
 			scale: "minor",
 			description: ""
@@ -198,21 +198,13 @@ const jazzyProgressions: ProgressionGroup = {
 	progressions: [
 		{
 			name: "neo-soul",
-			chordProgression: "IVmaj7-iii7-vi7-ii7",
+			chordProgression: "IV-iii-vi-ii",
 			scale: "major",
-			description: ""
-		},
-
-		{
-			name: "minor ii-V-i",
-			// todo: handle diminished chords, which seem not to work
-			chordProgression: "ii°7-V7-i",
-			scale: "minor",
 			description: ""
 		},
 		{
 			name: "jazz ii-V-I",
-			chordProgression: "ii7-V7-Imaj7",
+			chordProgression: ["ii7-V7-Imaj7", "ii-V-I"],
 			scale: "major",
 			description: ""
 		},
@@ -317,6 +309,20 @@ export const chordProgressionVariants = (
 	chordProgression: string | string[]
 ): string[] =>
 	Array.isArray(chordProgression) ? chordProgression : [chordProgression];
+
+export const siblingVariantsForProgression = (
+	progressions: readonly CoreProgression[],
+	chordProgression: string
+): string[] => {
+	const owner = progressions.find((progression) =>
+		chordProgressionVariants(progression.chordProgression).includes(
+			chordProgression
+		)
+	);
+	return owner
+		? chordProgressionVariants(owner.chordProgression)
+		: [chordProgression];
+};
 
 export const allProgressionGroups: ProgressionGroup[] = [
 	happyMajoryProgressions,

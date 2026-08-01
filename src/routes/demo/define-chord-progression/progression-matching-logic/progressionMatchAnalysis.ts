@@ -260,6 +260,64 @@ export const buildProgressionMatchRates = (
 	return { progressionMatchRates, progressionMatchCounts };
 };
 
+export type SongProgressionMatchList = {
+	matchingProgressions: string[];
+};
+
+// Union stats across sibling variants of one named core progression: a song
+// counts once if any variant was selected. Adding a rarer exact-extension
+// variant must never reduce the displayed match count.
+export const aggregateVariantMatchStats = (
+	variants: readonly string[],
+	songCoverages: readonly SongProgressionMatchList[] | null,
+	totalSongs: number
+): { matchRatePercent: number; matchingSongCount: number } => {
+	if (!songCoverages || totalSongs === 0 || variants.length === 0) {
+		return { matchRatePercent: 0, matchingSongCount: 0 };
+	}
+	const variantSet = new Set(variants);
+	const matchingSongCount = songCoverages.filter((song) =>
+		song.matchingProgressions.some((progression) => variantSet.has(progression))
+	).length;
+	return {
+		matchingSongCount,
+		matchRatePercent: (matchingSongCount / totalSongs) * PERCENT_MULTIPLIER
+	};
+};
+
+export const pickPrimaryVariant = <T extends { chordProgression: string }>(
+	variants: readonly T[],
+	progressionMatchCounts: Record<string, number> | null
+): T => {
+	const [first, ...rest] = variants;
+	return rest.reduce(
+		(best, candidate) =>
+			(progressionMatchCounts?.[candidate.chordProgression] ?? 0) >
+			(progressionMatchCounts?.[best.chordProgression] ?? 0)
+				? candidate
+				: best,
+		first
+	);
+};
+
+export const collapseDisplayMatchesByName = (
+	matches: ProgressionWithMatchStats[],
+	progressionMatchCounts: Record<string, number> | null
+): ProgressionWithMatchStats[] => {
+	const variantsByName = matches.reduce<
+		Record<string, ProgressionWithMatchStats[]>
+	>(
+		(acc, match) => ({
+			...acc,
+			[match.name]: [...(acc[match.name] ?? []), match]
+		}),
+		{}
+	);
+	return Object.values(variantsByName).map((variants) =>
+		pickPrimaryVariant(variants, progressionMatchCounts)
+	);
+};
+
 export const buildCoreProgressionDisplayMatches = (
 	coreProgressions: CoreProgression[],
 	song: GroupedSong | null

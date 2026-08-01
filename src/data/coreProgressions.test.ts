@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import coreProgressions, {
 	progressionsThatDidntMatchAnything,
-	chordProgressionVariants
+	chordProgressionVariants,
+	siblingVariantsForProgression
 } from "./core-progressions.js";
 import { romanTokensToParsedProgression } from "../chord-processing/romanNumerals.js";
 
@@ -38,5 +39,12 @@ describe("core progressions — schema validation", () => {
 			);
 			expect(parsed).not.toBeNull();
 		}
+	});
+
+	it("siblingVariantsForProgression returns every variant for a named progression", () => {
+		expect(siblingVariantsForProgression(coreProgressions, "ii-V-I")).toEqual([
+			"ii7-V7-Imaj7",
+			"ii-V-I"
+		]);
 	});
 });

@@ -1,5 +1,7 @@
 <script lang="ts">
-	import coreProgressionsData from "$data/core-progressions.js";
+	import coreProgressionsData, {
+		siblingVariantsForProgression
+	} from "$data/core-progressions.js";
 	import type { CoreProgression } from "$data/core-progressions.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
@@ -105,6 +107,12 @@
 		...flaggedGapSelected
 	]);
 
+	const pinnedProgressionVariants = $derived(
+		pinnedProgression
+			? siblingVariantsForProgression(coreProgressions, pinnedProgression)
+			: null
+	);
+
 	const songAnnotations = $derived<ChordAnnotation[]>(
 		selectedSong ? buildFinalChordAnnotations(selectedSong, finalSelection) : []
 	);
@@ -119,8 +127,14 @@
 	}
 
 	function handleProgressionSelect(chordProgression: string) {
+		const siblings = siblingVariantsForProgression(
+			coreProgressions,
+			chordProgression
+		);
 		pinnedProgression =
-			pinnedProgression === chordProgression ? null : chordProgression;
+			pinnedProgression !== null && siblings.includes(pinnedProgression)
+				? null
+				: chordProgression;
 	}
 </script>
 
@@ -182,17 +196,17 @@
 						{coreProgressions}
 						selectedSong={selectedSong ?? null}
 						activeProgression={pinnedProgression}
-						progressionMatchRates={allSongsCoverageResult?.progressionMatchRates ??
-							null}
 						progressionMatchCounts={allSongsCoverageResult?.progressionMatchCounts ??
 							null}
+						songCoverages={allSongsCoverageResult?.songCoverages ?? null}
+						totalSongCount={allSongsCoverageResult?.songCoverages.length ?? 0}
 						onselect={handleProgressionSelect}
 					/>
 
 					<SongCoverageBeeswarm
 						songs={allSongsCoverageResult?.songCoverages ?? null}
 						selectedSongKey={selectedKey}
-						highlightedProgression={pinnedProgression}
+						highlightedProgressions={pinnedProgressionVariants}
 						onSelectSong={handleSongSelect}
 					/>
 				</CollapsiblePanel>

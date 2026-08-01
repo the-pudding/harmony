@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { allProgressionGroups, type ProgressionGroup, chordProgressionVariants } from "$data/core-progressions.js";
+	import coreProgressions, {
+		allProgressionGroups,
+		type ProgressionGroup,
+		chordProgressionVariants,
+		siblingVariantsForProgression
+	} from "$data/core-progressions.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
@@ -27,7 +32,11 @@
 	let selectedSongKey = $state("");
 
 	function handleSelectProgression(p: string) {
-		pinnedProgression = pinnedProgression === p ? null : p;
+		const siblings = siblingVariantsForProgression(coreProgressions, p);
+		pinnedProgression =
+			pinnedProgression !== null && siblings.includes(pinnedProgression)
+				? null
+				: p;
 	}
 
 	function handleSelectSong(key: string) {

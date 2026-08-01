@@ -1,7 +1,13 @@
 <script lang="ts">
 	import type { CoreProgression } from "$data/core-progressions.js";
+	import { chordProgressionVariants } from "$data/core-progressions.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
-	import { buildCoreProgressionDisplayMatches } from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import {
+		aggregateVariantMatchStats,
+		buildCoreProgressionDisplayMatches,
+		collapseDisplayMatchesByName,
+		type SongProgressionMatchList
+	} from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import { matchOutline } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import GlobalProgressionStats from "./progression-match-stats/GlobalProgressionStats.svelte";
@@ -14,8 +20,9 @@
 		coreProgressions: CoreProgression[];
 		selectedSong: GroupedSong | null;
 		activeProgression: string | null;
-		progressionMatchRates: Record<string, number> | null;
 		progressionMatchCounts: Record<string, number> | null;
+		songCoverages: SongProgressionMatchList[] | null;
+		totalSongCount: number;
 		onselect: (chordProgression: string) => void;
 	};
 
@@ -23,57 +30,84 @@
 		coreProgressions,
 		selectedSong,
 		activeProgression,
-		progressionMatchRates,
 		progressionMatchCounts,
+		songCoverages,
+		totalSongCount,
 		onselect
 	}: Props = $props();
 
-	const displayMatches = $derived.by(() => {
-		const matches = buildCoreProgressionDisplayMatches(
-			coreProgressions,
-			selectedSong
-		);
-		if (!progressionMatchRates) return matches;
-		return [...matches].sort(
-			(a, b) =>
-				(progressionMatchRates[b.chordProgression] ?? 0) -
-				(progressionMatchRates[a.chordProgression] ?? 0)
-		);
-	});
-
 	const variantsByName = $derived(
-		displayMatches.reduce<Record<string, string[]>>(
-			(acc, m) => ({ ...acc, [m.name]: [...(acc[m.name] ?? []), m.chordProgression] }),
-			{}
-		)
+		Object.fromEntries(
+			coreProgressions.map((progression) => [
+				progression.name,
+				chordProgressionVariants(progression.chordProgression)
+			])
+		) as Record<string, string[]>
 	);
 
-	const otherVariantsFor = (match: { name: string; chordProgression: string }): string[] =>
-		(variantsByName[match.name] ?? []).filter((v) => v !== match.chordProgression);
+	const displayMatches = $derived.by(() => {
+		const matches = collapseDisplayMatchesByName(
+			buildCoreProgressionDisplayMatches(coreProgressions, selectedSong),
+			progressionMatchCounts
+		);
+		if (!songCoverages) return matches;
+		return [...matches].sort((a, b) => {
+			const aStats = aggregateVariantMatchStats(
+				variantsByName[a.name] ?? [a.chordProgression],
+				songCoverages,
+				totalSongCount
+			);
+			const bStats = aggregateVariantMatchStats(
+				variantsByName[b.name] ?? [b.chordProgression],
+				songCoverages,
+				totalSongCount
+			);
+			return bStats.matchRatePercent - aStats.matchRatePercent;
+		});
+	});
+
+	const variantTooltipRowsFor = (match: {
+		name: string;
+		chordProgression: string;
+	}) =>
+		(variantsByName[match.name] ?? [match.chordProgression]).map(
+			(chordProgression) => ({
+				chordProgression,
+				matchingSongCount: progressionMatchCounts?.[chordProgression] ?? 0
+			})
+		);
+
+	const isActive = (match: { name: string; chordProgression: string }): boolean =>
+		activeProgression !== null &&
+		(variantsByName[match.name] ?? [match.chordProgression]).includes(
+			activeProgression
+		);
 </script>
 
 <div
 	class="core-progression-row"
 	style="--core-progression-button-width: {CORE_PROGRESSION_ROW_BUTTON_WIDTH_REM}rem; --core-progression-row-gap: {CORE_PROGRESSION_ROW_GAP_REM}rem;"
 >
-	{#each displayMatches as match (match.chordProgression)}
+	{#each displayMatches as match (match.name)}
 		{@const outline = matchOutline(match)}
-		{@const matchRate = progressionMatchRates?.[match.chordProgression] ?? 0}
-		{@const matchingSongCount =
-			progressionMatchCounts?.[match.chordProgression] ?? 0}
+		{@const variantStats = aggregateVariantMatchStats(
+			variantsByName[match.name] ?? [match.chordProgression],
+			songCoverages,
+			totalSongCount
+		)}
 		<div class="core-progression-row-item">
 			<ProgressionMatchButton
 				{match}
-				active={activeProgression === match.chordProgression}
+				active={isActive(match)}
 				borderColor={outline.color}
 				dashed={outline.dashed}
-				otherVariants={otherVariantsFor(match)}
+				variantTooltipRows={variantTooltipRowsFor(match)}
 				{onselect}
 			>
 				{#snippet stats({ active })}
 					<GlobalProgressionStats
-						matchRatePercent={matchRate}
-						{matchingSongCount}
+						matchRatePercent={variantStats.matchRatePercent}
+						matchingSongCount={variantStats.matchingSongCount}
 						{active}
 					/>
 				{/snippet}
