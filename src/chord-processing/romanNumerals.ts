@@ -177,15 +177,28 @@ type ParsedToken = {
 	quality: string;
 	flat: boolean;
 	suffix: string;
+	bassDegree?: number;
+	bassFlat?: boolean;
 };
 
 export const parseRomanToken = (token: string): ParsedToken | null => {
 	// Strip outer parentheses: "(IV)" → "IV", "(IVmaj7)" → "IVmaj7"
 	let t = token.replace(/^\(([^)]+)\)$/, "$1");
 
-	// Strip slash annotations (inversion/applied): "IV/V" → "IV", "vi/V/3" → "vi"
+	// Slash bass as a roman numeral (I/V). Figured-bass / digit inversions (V/3)
+	// and secondary dominants with non-roman tails stay stripped.
+	let bassDegree: number | undefined;
+	let bassFlat: boolean | undefined;
 	const slashIdx = t.indexOf("/");
-	if (slashIdx !== -1) t = t.slice(0, slashIdx);
+	if (slashIdx !== -1) {
+		const bassToken = t.slice(slashIdx + 1);
+		t = t.slice(0, slashIdx);
+		const bassParsed = parseRomanToken(bassToken);
+		if (bassParsed) {
+			bassDegree = bassParsed.degree;
+			bassFlat = bassParsed.flat;
+		}
+	}
 
 	// Normalize parenthetical adds: "IV(add9)" → "IVadd9", "I(add6)" → "Iadd6"
 	t = t.replace(/\(add(\d+)\)/, "add$1");
@@ -223,8 +236,16 @@ export const parseRomanToken = (token: string): ParsedToken | null => {
 	const suffix = extensionSuffixForQuality(quality, ext);
 	if (!suffix) return null;
 
-	return { degree, quality, flat, suffix };
-};
+	return {
+		degree,
+		quality,
+		flat,
+		suffix,
+		...(bassDegree !== undefined
+			? { bassDegree, bassFlat: bassFlat ?? false }
+			: {})
+	};
+};;
 
 const pitchClassFromEntry = (
 	entry: ParsedToken,
@@ -282,9 +303,25 @@ export const romanTokensToParsedProgression = (
 	if (parsed.some((entry) => entry === null)) return null;
 
 	const chords = parsed.map((entry) => {
-		const { suffix } = entry!;
+		const { suffix, bassDegree, bassFlat } = entry!;
 		const rootPitchClass = pitchClassFromEntry(entry!, scale);
-		const chord = { rootPitchClass, suffix };
+		const bassPitchClass =
+			bassDegree !== undefined
+				? pitchClassFromEntry(
+						{
+							degree: bassDegree,
+							quality: "maj",
+							flat: bassFlat ?? false,
+							suffix: "major"
+						},
+						scale
+					)
+				: undefined;
+		const hasDistinctBass =
+			bassPitchClass !== undefined && bassPitchClass !== rootPitchClass;
+		const chord = hasDistinctBass
+			? { rootPitchClass, suffix, bassPitchClass }
+			: { rootPitchClass, suffix };
 		return { ...chord, display: formatChordName(chord) };
 	});
 

@@ -75,28 +75,34 @@
 			</tr>
 			<tr>
 				<td>
-					Matching ignores slash bass and normalizes extensions to base quality
+					Bare triad chords in a core progression match any voicing of that
+					function (extensions and slash bass ignored). If the core progression
+					specifies an extension or slash bass on a chord, that detail must match
+					exactly — so I-Imaj7 stays two chords and only matches when the maj7 is
+					present
 				</td>
 				<td>
 					<CodeReference
-						filename="progressionMatchAnalysis.ts"
+						filename="collapsedProgression.ts"
 						symbols={[
-							"matchProgressionIgnoringBassAndExtensions",
-							"SUFFIX_TO_BASE"
+							"matchProgressionSelectiveExactness",
+							"isLiberalMatchingChord",
+							"collapseMatchingTemplates"
 						]}
 					/>
 				</td>
 			</tr>
 			<tr>
 				<td>
-					Consecutive repeats of a chord (once extensions and slash bass are
-					ignored, e.g. I·Isus2·V·Vsus4) collapse to a single chord for
-					matching, so they read as I·V rather than I·V·V
+					Consecutive repeats of a bare-triad chord (once extensions and slash
+					bass are ignored, e.g. I·Isus2·V·Vsus4) collapse to a single chord for
+					matching, so they read as I·V rather than I·Isus2·V·Vsus4. Exact
+					extension chords do not collapse into a neighboring bare triad.
 				</td>
 				<td>
 					<CodeReference
 						filename="collapsedProgression.ts"
-						symbols={["collapseAdjacentCanonical"]}
+						symbols={["matchProgressionSelectiveExactness", "collapseAdjacentCanonical"]}
 					/>
 				</td>
 			</tr>

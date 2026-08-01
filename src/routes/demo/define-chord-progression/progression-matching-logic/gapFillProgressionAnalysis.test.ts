@@ -64,8 +64,6 @@ const chord = (
 
 const TONIC = chord(0, "major");
 const DOMINANT = chord(7, "major");
-const DOMINANT_SLASH_THIRD = chord(7, "major", 11);
-const SUBMEDIANT = chord(9, "minor");
 
 const NOTES_PER_OCTAVE = 12;
 const ROMAN_BASES = ["I", "II", "III", "IV", "V", "VI", "VII"];
@@ -138,8 +136,10 @@ describe("computeGapFillProgressionMatches — gap-only filtering with partial c
 });
 
 describe("computeGapFillProgressionMatches — I'm Yours", () => {
-	it("surfaces the previously-missing I-V-vi", () => {
-		expect(gapProgressions(imYours)).toContain("I-V-vi");
+	it("excludes axis-of-awesome core variants including I-V-vi", () => {
+		const found = gapProgressions(imYours);
+		expect(found).not.toContain("I-V-vi");
+		expect(found).not.toContain("I-V-vi-IV");
 	});
 
 	it("still surfaces the progressions that already worked", () => {
@@ -152,10 +152,10 @@ describe("computeGapFillProgressionMatches — I'm Yours", () => {
 		expect(gapProgressions(imYours)).not.toContain("I-V-vi-IV");
 	});
 
-	it("keeps sub-progressions alongside the longer progressions that contain them", () => {
+	it("keeps non-core sub-progressions alongside longer non-core progressions", () => {
 		const found = gapProgressions(imYours);
-		expect(found).toContain("I-V-vi");
-		expect(found).not.toContain("I-V-vi-IV");
+		expect(found).toContain("V-vi-IV");
+		expect(found).toContain("I-V-vi-V-IV");
 	});
 });
 
@@ -259,7 +259,8 @@ describe("computeGapFillProgressionMatches — recurrence detection", () => {
 	it("surfaces long recurring progressions, not just the minimum length", () => {
 		const song = makeSong([["I", "V", "vi", "IV", "I", "V", "vi", "IV"]]);
 		expect(gapProgressions(song)).not.toContain("I-V-vi-IV");
-		expect(gapProgressions(song)).toContain("I-V-vi");
+		expect(gapProgressions(song)).not.toContain("I-V-vi");
+		expect(gapProgressions(song)).toContain("V-vi-IV");
 	});
 
 	it("never returns progressions longer than the maximum length", () => {
@@ -276,45 +277,67 @@ describe("computeGapFillProgressionMatches — recurrence detection", () => {
 });
 
 describe("computeGapFillProgressionMatches — ignores slash bass", () => {
-	const invertedDominantSong: GroupedSong = {
+	const invertedSupertonicSong: GroupedSong = {
 		songKey: "test",
 		title: "Test Song",
 		artists: ["Tester"],
 		keyLabel: null,
 		sections: [
 			makeSectionWithParsed(
-				["I", "V", "vi", "I", "V", "vi"],
+				["I", "ii", "V", "I", "ii", "V"],
 				[
 					TONIC,
-					DOMINANT_SLASH_THIRD,
-					SUBMEDIANT,
+					{
+						rootPitchClass: 2,
+						suffix: "minor",
+						bassPitchClass: 5,
+						display: ""
+					},
+					DOMINANT,
 					TONIC,
-					DOMINANT_SLASH_THIRD,
-					SUBMEDIANT
+					{
+						rootPitchClass: 2,
+						suffix: "minor",
+						bassPitchClass: 5,
+						display: ""
+					},
+					DOMINANT
 				]
 			)
 		]
 	};
 
 	it("surfaces progressions whose only difference is an inverted (slash) chord", () => {
-		expect(gapProgressions(invertedDominantSong)).toContain("I-V-vi");
+		expect(gapProgressions(invertedSupertonicSong)).toContain("I-ii-V");
 	});
 
-	const mixedDominantSong: GroupedSong = {
+	const mixedSupertonicSong: GroupedSong = {
 		songKey: "test",
 		title: "Test Song",
 		artists: ["Tester"],
 		keyLabel: null,
 		sections: [
 			makeSectionWithParsed(
-				["I", "V", "vi", "I", "V", "vi"],
-				[TONIC, DOMINANT_SLASH_THIRD, SUBMEDIANT, TONIC, DOMINANT, SUBMEDIANT]
+				["I", "ii", "V", "I", "ii", "V"],
+				[
+					TONIC,
+					{
+						rootPitchClass: 2,
+						suffix: "minor",
+						bassPitchClass: 5,
+						display: ""
+					},
+					DOMINANT,
+					TONIC,
+					{ rootPitchClass: 2, suffix: "minor", display: "" },
+					DOMINANT
+				]
 			)
 		]
 	};
 
 	it("treats a slash chord and its root-position form as the same chord", () => {
-		expect(gapProgressions(mixedDominantSong)).toContain("I-V-vi");
+		expect(gapProgressions(mixedSupertonicSong)).toContain("I-ii-V");
 	});
 });
 

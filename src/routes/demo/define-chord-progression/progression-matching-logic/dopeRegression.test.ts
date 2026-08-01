@@ -113,11 +113,11 @@ describe("dope regression — extensions ignored and repeats collapsed", () => {
 		expect(result.explainedPercent).toBe(100);
 	});
 
-	it("gap-fill candidates are collapsed: I-V-vi appears, I-V-V never does", () => {
+	it("gap-fill candidates are collapsed: no spurious I-V-V, and I-V-vi is core so excluded", () => {
 		const gapProgressions = chordProgressionsIn(
 			computeGapFillProgressionMatches(dopeSong, emptyCoverage(dopeSong))
 		);
-		expect(gapProgressions).toContain("I-V-vi");
+		expect(gapProgressions).not.toContain("I-V-vi");
 		expect(gapProgressions).not.toContain("I-V-V");
 		for (const chordProgression of gapProgressions) {
 			expect(hasAdjacentDuplicate(chordProgression)).toBe(false);

@@ -203,9 +203,9 @@ describe("selectFinalProgressions — no-overlap invariants", () => {
 			imYours,
 			emptyCoverage(imYours)
 		);
-		const iVvi = fullSongMatches.find(
-			(match) => match.chordProgression === "I-V-vi"
+		const vViIv = fullSongMatches.find(
+			(match) => match.chordProgression === "V-vi-IV"
 		);
-		expect(iVvi?.matchCount).toBeGreaterThanOrEqual(2);
+		expect(vViIv?.matchCount).toBeGreaterThanOrEqual(2);
 	});
 });

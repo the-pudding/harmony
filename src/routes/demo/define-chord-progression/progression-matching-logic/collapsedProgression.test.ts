@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import {
 	collapseAdjacentCanonical,
+	collapseMatchingTemplates,
 	collapsedMatchToOriginalMatch,
+	isLiberalMatchingChord,
+	matchProgressionSelectiveExactness,
 	toBaseTriadSuffix,
 	toCanonicalMatchingChord
 } from "./collapsedProgression.js";
@@ -77,6 +80,86 @@ describe("toCanonicalMatchingChord", () => {
 			display: ""
 		});
 		expect("bassPitchClass" in canonical).toBe(false);
+	});
+});
+
+describe("isLiberalMatchingChord", () => {
+	it("treats bare triads without bass as liberal", () => {
+		expect(isLiberalMatchingChord(I)).toBe(true);
+		expect(isLiberalMatchingChord(VI)).toBe(true);
+	});
+
+	it("treats extensions and slash bass as exact", () => {
+		expect(isLiberalMatchingChord(I_MAJ7)).toBe(false);
+		expect(isLiberalMatchingChord(VI7)).toBe(false);
+		expect(isLiberalMatchingChord(chord(0, "major", 7))).toBe(false);
+	});
+});
+
+describe("collapseMatchingTemplates", () => {
+	it("keeps I and Imaj7 distinct", () => {
+		const templates = collapseMatchingTemplates([I, I_MAJ7, VI, V, IV]);
+		expect(templates.map((t) => [t.mode, t.chord.suffix])).toEqual([
+			["liberal", "major"],
+			["exact", "maj7"],
+			["liberal", "minor"],
+			["liberal", "major"],
+			["liberal", "major"]
+		]);
+	});
+
+	it("still merges adjacent identical bare triads", () => {
+		expect(collapseMatchingTemplates([I, I, V])).toHaveLength(2);
+	});
+});
+
+describe("matchProgressionSelectiveExactness", () => {
+	it("matches liberal search against extended song voicings", () => {
+		const matches = matchProgressionSelectiveExactness(
+			[I, VI7, V, IV],
+			[I, VI, V, IV]
+		);
+		expect(matches).toEqual([{ start: 0, length: 4 }]);
+	});
+
+	it("collapses adjacent song voicings under a liberal search chord", () => {
+		const matches = matchProgressionSelectiveExactness(
+			[I, I_SUS2, V, V_SUS4],
+			[I, V]
+		);
+		expect(matches).toContainEqual({ start: 0, length: 4 });
+	});
+
+	it("requires Imaj7 when the search specifies it (emo walk down)", () => {
+		const search = [I, I_MAJ7, VI, V, IV];
+		expect(
+			matchProgressionSelectiveExactness([I, I_MAJ7, VI, V, IV], search)
+		).toContainEqual({ start: 0, length: 5 });
+		expect(matchProgressionSelectiveExactness([I, VI, V, IV], search)).toEqual(
+			[]
+		);
+	});
+
+	it("still matches a fully liberal I-vi-V-IV against I-Imaj7-vi-V-IV", () => {
+		expect(
+			matchProgressionSelectiveExactness([I, I_MAJ7, VI, V, IV], [I, VI, V, IV])
+		).toContainEqual({ start: 0, length: 5 });
+	});
+
+	it("requires slash bass when the search specifies it", () => {
+		const I_OVER_V = chord(0, "major", 7);
+		expect(
+			matchProgressionSelectiveExactness([I_OVER_V, VI], [I_OVER_V, VI])
+		).toEqual([{ start: 0, length: 2 }]);
+		expect(matchProgressionSelectiveExactness([I, VI], [I_OVER_V, VI])).toEqual(
+			[]
+		);
+	});
+
+	it("ignores song slash bass when the search chord is a bare triad", () => {
+		expect(
+			matchProgressionSelectiveExactness([chord(0, "major", 7), VI], [I, VI])
+		).toEqual([{ start: 0, length: 2 }]);
 	});
 });
 

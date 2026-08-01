@@ -184,6 +184,29 @@ describe("parseRomanToken — extensions", () => {
 		]);
 	});
 
+	it("parses slash-bass roman numerals for core progressions", () => {
+		expect(parseRomanToken("I/V")).toMatchObject({
+			degree: 1,
+			suffix: "major",
+			bassDegree: 5
+		});
+		const parsed = romanTokensToParsedProgression(["I/V", "vi"]);
+		expect(parsed).not.toBeNull();
+		expect(parsed![0]).toMatchObject({
+			rootPitchClass: 0,
+			suffix: "major",
+			bassPitchClass: 7
+		});
+	});
+
+	it("still strips figured-bass style /digit inversions", () => {
+		expect(parseRomanToken("V/3")).toMatchObject({
+			degree: 5,
+			suffix: "major"
+		});
+		expect(parseRomanToken("V/3")?.bassDegree).toBeUndefined();
+	});
+
 	it("romanTokensToPrecomputedAbstract still agrees with toPrecomputedAbstractProgression for extended tokens", () => {
 		const tokens = ["IVmaj7", "ii7", "V7", "I"];
 		const parsed = romanTokensToParsedProgression(tokens);

@@ -246,10 +246,18 @@ const emoPopProgressions: ProgressionGroup = {
 
 		{
 			name: "emo walk down",
-			chordProgression: ["I-vi-V-IV", "I-vi-V-IV-V", "I-vi-IV"],
+			chordProgression: [
+				"I-Imaj7-vi-V-IV",
+				"I-Imaj7-vi-V-IV-V",
+				"I-Imaj7-vi-IV",
+				// Less stringent versions:
+				"I-vi-V-IV",
+				"I-vi-V-IV-V"
+				// "I-vi-IV",
+			],
 			scale: "major",
 			description:
-				"TODO: currently we merge eg I-Imaj7, but this progression is really I-Imaj7-vi-V-IV"
+				"The I→Imaj7 step is the signature — bare I then maj7 before the walk down"
 		},
 
 		{
