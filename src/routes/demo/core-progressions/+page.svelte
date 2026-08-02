@@ -17,8 +17,11 @@
 	const groupMatchCount = (group: ProgressionGroup): number => {
 		const result = coverage.allSongsCoverageResult;
 		if (!result) return 0;
-		const keys = group.progressions.flatMap((p) => chordProgressionVariants(p.chordProgression));
-		return filterCoverageResultForProgressions(result, keys).songCoverages.length;
+		const keys = group.progressions.flatMap((p) =>
+			chordProgressionVariants(p.chordProgression)
+		);
+		return filterCoverageResultForProgressions(result, keys).songCoverages
+			.length;
 	};
 
 	const sortedGroups = $derived.by(() => {
@@ -70,9 +73,7 @@
 				showPopularOnly={coverage.showPopularOnly}
 				onPopularChange={coverage.handlePopularToggleChange}
 				requireMultipleSections={coverage.requireMultipleSections}
-				onRequireMultipleSectionsChange={
-					coverage.handleRequireMultipleSectionsToggleChange
-				}
+				onRequireMultipleSectionsChange={coverage.handleRequireMultipleSectionsToggleChange}
 			/>
 			{#if coverage.loading}
 				<span class="status-text">Loading song dataset…</span>
@@ -81,7 +82,9 @@
 			{:else if coverage.loadError}
 				<span class="status-text error">{coverage.loadError}</span>
 			{:else}
-				<span class="status-text">{coverage.baseList.length.toLocaleString()} songs</span>
+				<span class="status-text"
+					>{coverage.baseList.length.toLocaleString()} songs</span
+				>
 			{/if}
 		</div>
 

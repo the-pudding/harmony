@@ -12,10 +12,7 @@ import {
 import type { SectionCoverage } from "./greedyProgressionSelection.js";
 import { computeGapFillProgressionMatches } from "./gapFillProgressionAnalysis.js";
 import { emptyCoverage } from "./greedyProgressionSelection.js";
-import type {
-	GroupedSong,
-	SongSection
-} from "../../../../data/songBrowser.js";
+import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 
 const assertNoOverlappingCoverage = (coverage: SectionCoverage): void => {

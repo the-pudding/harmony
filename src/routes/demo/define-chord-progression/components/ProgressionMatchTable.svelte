@@ -1,7 +1,10 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
-	import { matchOutline, NON_SELECTED_PROGRESSION_PALETTE } from "./progressionColors.js";
+	import {
+		matchOutline,
+		NON_SELECTED_PROGRESSION_PALETTE
+	} from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongProgressionStats from "./progression-match-stats/SongProgressionStats.svelte";
 	import ProgressionMatchScatterPlot from "./ProgressionMatchScatterPlot.svelte";
@@ -35,7 +38,10 @@
 
 	let showAll = $state(false);
 
-	const selectedKeys = $derived(new Set(matches.map((m) => m.chordProgression)));
+	const selectedByKey = $derived(
+		new Map(matches.map((m) => [m.chordProgression, m]))
+	);
+	const selectedKeys = $derived(new Set(selectedByKey.keys()));
 	const tableRows = $derived(showUnselectedRows ? allMatches : matches);
 
 	const total = $derived(allMatches.length);
@@ -80,8 +86,16 @@
 	<tbody>
 		{#each visibleMatches as match (match.chordProgression)}
 			{@const isSelected = selectedKeys.has(match.chordProgression)}
-			{@const effectivePalette = isSelected ? match.highlightPalette : NON_SELECTED_PROGRESSION_PALETTE}
-			{@const outline = isSelected ? matchOutline(match) : { color: NON_SELECTED_PROGRESSION_PALETTE.border, dashed: !!match.isStrictSubset }}
+			{@const selectedMatch = selectedByKey.get(match.chordProgression)}
+			{@const effectivePalette = isSelected
+				? match.highlightPalette
+				: NON_SELECTED_PROGRESSION_PALETTE}
+			{@const outline = isSelected
+				? matchOutline(match)
+				: {
+						color: NON_SELECTED_PROGRESSION_PALETTE.border,
+						dashed: !!match.isStrictSubset
+					}}
 			<tr
 				class="match-row"
 				class:match-row-active={activeProgression === match.chordProgression}
@@ -105,6 +119,11 @@
 					</ProgressionMatchButton>
 					{#if match.isFullSectionSingleMatch}
 						<span class="full-section-badge">fills a section</span>
+					{/if}
+					{#if selectedMatch?.isSectionStartBiasWinner}
+						<span class="section-start-badge"
+							>starts more sections, within {selectedMatch.sectionStartBiasSacrificedPercent}%</span
+						>
 					{/if}
 				</td>
 				<td class="match-chords-cell">
@@ -215,6 +234,17 @@
 		font-size: 0.6rem;
 		color: rgba(134, 239, 172, 0.7);
 		border: 1px solid rgba(134, 239, 172, 0.25);
+		border-radius: 0.25rem;
+		white-space: nowrap;
+	}
+
+	.section-start-badge {
+		display: inline-block;
+		margin-top: 0.25rem;
+		padding: 0.1rem 0.35rem;
+		font-size: 0.6rem;
+		color: rgba(251, 191, 36, 0.7);
+		border: 1px solid rgba(251, 191, 36, 0.25);
 		border-radius: 0.25rem;
 		white-space: nowrap;
 	}

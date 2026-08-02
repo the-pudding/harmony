@@ -4,6 +4,7 @@
 		MIN_PROGRESSION_OCCURRENCES,
 		MIN_FULL_SECTION_OCCURRENCES
 	} from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import { PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT } from "../progression-matching-logic/greedyProgressionSelection.js";
 	import {
 		MIN_PROGRESSION_LENGTH,
 		MAX_PROGRESSION_LENGTH
@@ -47,10 +48,10 @@
 			<tr>
 				<td>
 					Appears at least
-					<span class="const-value">{MIN_PROGRESSION_OCCURRENCES}</span> times in
-					the song — or at least
-					<span class="const-value">{MIN_FULL_SECTION_OCCURRENCES}</span> time
-					if that single match fills an entire section (core progressions only)
+					<span class="const-value">{MIN_PROGRESSION_OCCURRENCES}</span> times
+					in the song — or at least
+					<span class="const-value">{MIN_FULL_SECTION_OCCURRENCES}</span> time if
+					that single match fills an entire section (core progressions only)
 				</td>
 				<td>
 					<CodeReference
@@ -77,9 +78,9 @@
 				<td>
 					Bare triad chords in a core progression match any voicing of that
 					function (extensions and slash bass ignored). If the core progression
-					specifies an extension or slash bass on a chord, that detail must match
-					exactly — so I-Imaj7 stays two chords and only matches when the maj7 is
-					present
+					specifies an extension or slash bass on a chord, that detail must
+					match exactly — so I-Imaj7 stays two chords and only matches when the
+					maj7 is present
 				</td>
 				<td>
 					<CodeReference
@@ -102,7 +103,10 @@
 				<td>
 					<CodeReference
 						filename="collapsedProgression.ts"
-						symbols={["matchProgressionSelectiveExactness", "collapseAdjacentCanonical"]}
+						symbols={[
+							"matchProgressionSelectiveExactness",
+							"collapseAdjacentCanonical"
+						]}
 					/>
 				</td>
 			</tr>
@@ -149,6 +153,28 @@
 						<CodeReference
 							filename="coreProgressionSelection.ts"
 							symbols={["selectCoreProgressions"]}
+						/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Within a <span class="const-value"
+							>{PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}%</span
+						> coverage tolerance each greedy round, prefer the candidate that starts
+						the most sections — since the vast majority of real progressions begin
+						at the top of a section
+					</td>
+					<td>
+						<CodeReference
+							filename="greedyProgressionSelection.ts"
+							symbols={[
+								"PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT",
+								"greedilySelectProgressions"
+							]}
+						/>
+						<CodeReference
+							filename="progressionMatchAnalysis.ts"
+							symbols={["countSectionsStartedByProgression"]}
 						/>
 					</td>
 				</tr>

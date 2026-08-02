@@ -110,8 +110,7 @@
 				role="img"
 				aria-label="variants: {sortedTooltipRows
 					.map(
-						(row) =>
-							`${row.matchingSongCount} songs — ${row.chordProgression}`
+						(row) => `${row.matchingSongCount} songs — ${row.chordProgression}`
 					)
 					.join('; ')}"
 				onmouseenter={showVariantTooltip}

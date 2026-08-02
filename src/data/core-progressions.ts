@@ -1,6 +1,5 @@
 import type { ScaleName } from "../chord-processing/scales.js";
 
-
 export type ProgressionGroup = {
 	name: string;
 	description: string;

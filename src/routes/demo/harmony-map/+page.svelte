@@ -41,7 +41,8 @@
 			<div class="header-left">
 				<h1 class="page-title">Harmony map</h1>
 				<p class="page-subtitle">
-					Force graph of progression groups, core progressions, and songs. Drag to explore, scroll to zoom.
+					Force graph of progression groups, core progressions, and songs. Drag
+					to explore, scroll to zoom.
 				</p>
 			</div>
 
@@ -50,17 +51,15 @@
 					showPopularOnly={coverage.showPopularOnly}
 					onPopularChange={coverage.handlePopularToggleChange}
 					requireMultipleSections={coverage.requireMultipleSections}
-					onRequireMultipleSectionsChange={
-						coverage.handleRequireMultipleSectionsToggleChange
-					}
+					onRequireMultipleSectionsChange={coverage.handleRequireMultipleSectionsToggleChange}
 				/>
 				<span class="status-text" class:error={isError}>{statusText}</span>
 			</div>
 		</div>
 
 		<div class="graph-wrap">
-		{#if coverage.allSongsCoverageResult}
-			<ForceGraph data={networkData} songs={coverage.baseList} />
+			{#if coverage.allSongsCoverageResult}
+				<ForceGraph data={networkData} songs={coverage.baseList} />
 			{:else}
 				<div class="loading-overlay">
 					<span class="loading-text">

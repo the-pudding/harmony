@@ -135,7 +135,9 @@
 	);
 
 	const chartHeight = $derived(
-		maxHeight !== undefined ? Math.min(requiredHeight, maxHeight) : requiredHeight
+		maxHeight !== undefined
+			? Math.min(requiredHeight, maxHeight)
+			: requiredHeight
 	);
 
 	const AXIS_Y = $derived(chartHeight - AXIS_HEIGHT);
@@ -241,7 +243,10 @@
 
 <div class="beeswarm" bind:clientWidth={containerWidth}>
 	{#if songs === null}
-		<div class="loading-shell" style:height={(maxHeight ?? LOADING_HEIGHT) + "px"}>
+		<div
+			class="loading-shell"
+			style:height={(maxHeight ?? LOADING_HEIGHT) + "px"}
+		>
 			<span class="loading-text">Computing coverage…</span>
 		</div>
 	{:else if containerWidth > 0 && songs.length > 0}

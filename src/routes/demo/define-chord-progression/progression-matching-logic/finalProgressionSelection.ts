@@ -4,6 +4,7 @@ import {
 	computeCoveredPositionsBySection,
 	computeGapOnlyCoveredPositionsBySection,
 	computeProgressionMatches,
+	countSectionsStartedByGapOnlyProgression,
 	type ChordAnnotation,
 	type ProgressionWithMatchStats
 } from "./progressionMatchAnalysis.js";
@@ -90,6 +91,12 @@ export const selectFinalProgressions = (
 		{
 			getCandidateCoverage: (candidate) =>
 				computeGapOnlyCoveredPositionsBySection(
+					song,
+					candidate.parsedProgression,
+					coreSelection.coverage
+				),
+			getCandidateSectionStartCount: (candidate) =>
+				countSectionsStartedByGapOnlyProgression(
 					song,
 					candidate.parsedProgression,
 					coreSelection.coverage

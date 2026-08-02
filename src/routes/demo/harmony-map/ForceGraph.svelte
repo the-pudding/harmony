@@ -39,15 +39,21 @@
 	const songByKey = $derived(new Map(songs.map((s) => [s.songKey, s])));
 
 	const hoveredNode = $derived(
-		hoveredInfo ? (data.nodes.find((n) => n.id === hoveredInfo!.id) ?? null) : null
+		hoveredInfo
+			? (data.nodes.find((n) => n.id === hoveredInfo!.id) ?? null)
+			: null
 	);
 
 	const hoveredSong = $derived(
-		hoveredNode?.type === "song" ? (songByKey.get(hoveredNode.songKey) ?? null) : null
+		hoveredNode?.type === "song"
+			? (songByKey.get(hoveredNode.songKey) ?? null)
+			: null
 	);
 
 	const finalSelection = $derived(
-		hoveredSong ? selectFinalProgressions(hoveredSong, coreProgressionsData) : null
+		hoveredSong
+			? selectFinalProgressions(hoveredSong, coreProgressionsData)
+			: null
 	);
 
 	const songAnnotations = $derived(
@@ -59,7 +65,9 @@
 	const explainedPercent = $derived(finalSelection?.explainedPercent ?? 0);
 	const isExplained = $derived(explainedPercent > EXPLAINED_THRESHOLD_PERCENT);
 	const finalMatches = $derived(
-		finalSelection ? [...finalSelection.coreSelected, ...finalSelection.gapSelected] : []
+		finalSelection
+			? [...finalSelection.coreSelected, ...finalSelection.gapSelected]
+			: []
 	);
 
 	const groupProgressionNodes = $derived.by(() => {
@@ -70,23 +78,27 @@
 				.filter((l) => l.type === "group-progression" && l.source === groupId)
 				.map((l) => l.target)
 		);
-		return data.nodes.filter((n) => n.type === "progression" && progressionIds.has(n.id));
+		return data.nodes.filter(
+			(n) => n.type === "progression" && progressionIds.has(n.id)
+		);
 	});
 
-	const progressionMatchStub = $derived.by((): ProgressionWithMatchStats | null => {
-		if (hoveredNode?.type !== "progression") return null;
-		return {
-			name: hoveredNode.label,
-			chordProgression: hoveredNode.chordProgression,
-			scale: hoveredNode.scale as ScaleName,
-			description: "",
-			matchCount: 0,
-			coveragePercent: 0,
-			isCoreProgression: true,
-			highlightPalette: CORE_PROGRESSION_PALETTE,
-			parsedProgression: []
-		};
-	});
+	const progressionMatchStub = $derived.by(
+		(): ProgressionWithMatchStats | null => {
+			if (hoveredNode?.type !== "progression") return null;
+			return {
+				name: hoveredNode.label,
+				chordProgression: hoveredNode.chordProgression,
+				scale: hoveredNode.scale as ScaleName,
+				description: "",
+				matchCount: 0,
+				coveragePercent: 0,
+				isCoreProgression: true,
+				highlightPalette: CORE_PROGRESSION_PALETTE,
+				parsedProgression: []
+			};
+		}
+	);
 
 	const GROUP_SIZE = 22;
 	const PROGRESSION_SIZE = 12;
@@ -105,7 +117,8 @@
 	const tooltipStyle = $derived.by(() => {
 		if (!tooltipAnchor || !containerEl) return "";
 		const containerWidth = containerEl.clientWidth;
-		const flipLeft = tooltipAnchor.x + TOOLTIP_OFFSET + TOOLTIP_WIDTH > containerWidth;
+		const flipLeft =
+			tooltipAnchor.x + TOOLTIP_OFFSET + TOOLTIP_WIDTH > containerWidth;
 		const left = flipLeft
 			? tooltipAnchor.x - TOOLTIP_OFFSET - TOOLTIP_WIDTH
 			: tooltipAnchor.x + TOOLTIP_OFFSET;
@@ -138,7 +151,8 @@
 	function buildBuffers(nodes: NetworkNode[], links: NetworkLink[]) {
 		const songCount = nodes.filter((n) => n.type === "song").length;
 		const songSize = clamp(
-			SONG_SIZE_AT_REF * Math.sqrt(SONG_SIZE_REF_COUNT / Math.max(songCount, 1)),
+			SONG_SIZE_AT_REF *
+				Math.sqrt(SONG_SIZE_REF_COUNT / Math.max(songCount, 1)),
 			MIN_SONG_SIZE,
 			MAX_SONG_SIZE
 		);
@@ -155,7 +169,11 @@
 						? PROGRESSION_COLOR
 						: SONG_COLOR;
 			const size =
-				n.type === "group" ? GROUP_SIZE : n.type === "progression" ? PROGRESSION_SIZE : songSize;
+				n.type === "group"
+					? GROUP_SIZE
+					: n.type === "progression"
+						? PROGRESSION_SIZE
+						: songSize;
 			const [r, g, b] = hexToRgb01(hex);
 			pointColors[i * 4] = r;
 			pointColors[i * 4 + 1] = g;
@@ -248,7 +266,10 @@
 				hoveredInfo = { id: node.id, type: node.type };
 				if (event instanceof MouseEvent) {
 					const rect = containerEl.getBoundingClientRect();
-					tooltipAnchor = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+					tooltipAnchor = {
+						x: event.clientX - rect.left,
+						y: event.clientY - rect.top
+					};
 				}
 			},
 			onPointMouseOut: () => {
@@ -259,7 +280,10 @@
 			onMouseMove: (_index, _pos, event) => {
 				if (hoveredInfo) {
 					const rect = containerEl.getBoundingClientRect();
-					tooltipAnchor = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+					tooltipAnchor = {
+						x: event.clientX - rect.left,
+						y: event.clientY - rect.top
+					};
 				}
 			},
 			onClick: (index) => {
@@ -267,7 +291,10 @@
 				const node = nodes[index];
 				if (!node) return;
 				if (node.type === "song") {
-					window.open(`/demo/define-chord-progression/?song=${node.songKey}`, "_blank");
+					window.open(
+						`/demo/define-chord-progression/?song=${node.songKey}`,
+						"_blank"
+					);
 				} else {
 					window.open("/demo/core-progressions/", "_blank");
 				}
@@ -284,8 +311,16 @@
 				const spaceX = allPositions[idx * 2];
 				const spaceY = allPositions[idx * 2 + 1];
 				if (spaceX == null || spaceY == null) continue;
-				const [screenX, screenY] = graph.spaceToScreenPosition([spaceX, spaceY]);
-				newLabels.push({ index: idx, x: screenX, y: screenY, node: nodes[idx] });
+				const [screenX, screenY] = graph.spaceToScreenPosition([
+					spaceX,
+					spaceY
+				]);
+				newLabels.push({
+					index: idx,
+					x: screenX,
+					y: screenY,
+					node: nodes[idx]
+				});
 			}
 			labelPositions = newLabels;
 		};

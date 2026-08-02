@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 import songs from "../../../../../static/data/songs.json";
 import coreProgressions from "$data/core-progressions.js";
-import type {
-	GroupedSong,
-	SongSection
-} from "../../../../data/songBrowser.js";
+import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import { groupSongs } from "../../../../data/songBrowser.js";
 import {
 	buildColoredHighlightSegments,

@@ -7,8 +7,18 @@ const groupA: ProgressionGroup = {
 	name: "Test Group",
 	description: "A test group",
 	progressions: [
-		{ name: "axis of awesome", chordProgression: "I-V-vi-IV", scale: "major", description: "" },
-		{ name: "doo wop", chordProgression: "I-vi-IV-V", scale: "major", description: "" }
+		{
+			name: "axis of awesome",
+			chordProgression: "I-V-vi-IV",
+			scale: "major",
+			description: ""
+		},
+		{
+			name: "doo wop",
+			chordProgression: "I-vi-IV-V",
+			scale: "major",
+			description: ""
+		}
 	]
 };
 
@@ -35,7 +45,10 @@ const unknownProgressionSong: SongNetworkInput = {
 
 describe("buildProgressionNetwork", () => {
 	it("produces the right node counts by type", () => {
-		const { nodes } = buildProgressionNetwork([groupA], [multiMatchSong, emptyMatchSong]);
+		const { nodes } = buildProgressionNetwork(
+			[groupA],
+			[multiMatchSong, emptyMatchSong]
+		);
 		expect(nodes.filter((n) => n.type === "group")).toHaveLength(1);
 		expect(nodes.filter((n) => n.type === "progression")).toHaveLength(2);
 		expect(nodes.filter((n) => n.type === "song")).toHaveLength(2);
@@ -58,18 +71,27 @@ describe("buildProgressionNetwork", () => {
 	});
 
 	it("includes a song node even when it has no matches", () => {
-		const { nodes, links } = buildProgressionNetwork([groupA], [emptyMatchSong]);
+		const { nodes, links } = buildProgressionNetwork(
+			[groupA],
+			[emptyMatchSong]
+		);
 		expect(nodes.some((n) => n.id === "song:artist__song-b")).toBe(true);
 		expect(links.filter((l) => l.type === "song-progression")).toHaveLength(0);
 	});
 
 	it("ignores song-progression links for progression strings not in any group", () => {
-		const { links } = buildProgressionNetwork([groupA], [unknownProgressionSong]);
+		const { links } = buildProgressionNetwork(
+			[groupA],
+			[unknownProgressionSong]
+		);
 		expect(links.filter((l) => l.type === "song-progression")).toHaveLength(0);
 	});
 
 	it("node ids are stable and unique", () => {
-		const { nodes } = buildProgressionNetwork([groupA], [multiMatchSong, emptyMatchSong]);
+		const { nodes } = buildProgressionNetwork(
+			[groupA],
+			[multiMatchSong, emptyMatchSong]
+		);
 		const ids = nodes.map((n) => n.id);
 		expect(new Set(ids).size).toBe(ids.length);
 	});

@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import coreProgressions from "$data/core-progressions.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
-import type {
-	GroupedSong,
-	SongSection
-} from "../../../../data/songBrowser.js";
+import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import { groupSongs } from "../../../../data/songBrowser.js";
 import { computeGapFillProgressionMatches } from "./gapFillProgressionAnalysis.js";
 import { selectFinalProgressions } from "./finalProgressionSelection.js";

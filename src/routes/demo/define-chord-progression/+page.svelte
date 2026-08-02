@@ -15,6 +15,7 @@
 	import SongCoverageBeeswarm from "./components/SongCoverageBeeswarm.svelte";
 	import { createAllSongsCoverageState } from "./compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
 	import { MIN_PROGRESSION_OCCURRENCES } from "./progression-matching-logic/progressionMatchAnalysis.js";
+	import { PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT } from "./progression-matching-logic/greedyProgressionSelection.js";
 	import {
 		MIN_PROGRESSION_LENGTH,
 		MAX_PROGRESSION_LENGTH
@@ -59,8 +60,7 @@
 		findGroupedSongByKey(searchableSongs, selectedKey)
 	);
 
-	const GREEDY_SORT_LABEL =
-		"highest song coverage first (length of progression as tiebreaker)";
+	const GREEDY_SORT_LABEL = `highest song coverage first — but within ${PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}% coverage, prefer progressions that start more sections (length as final tiebreaker)`;
 
 	const allSongsCoverageResult = $derived(coverage.allSongsCoverageResult);
 
@@ -223,9 +223,7 @@
 						showPopularOnly={coverage.showPopularOnly}
 						onPopularChange={coverage.handlePopularToggleChange}
 						requireMultipleSections={coverage.requireMultipleSections}
-						onRequireMultipleSectionsChange={
-							coverage.handleRequireMultipleSectionsToggleChange
-						}
+						onRequireMultipleSectionsChange={coverage.handleRequireMultipleSectionsToggleChange}
 					/>
 				</div>
 
@@ -277,40 +275,47 @@
 				<h3 class="walkthrough-heading">WALKTHROUGH OF ALGORITHM</h3>
 
 				<section class="step-section">
-				<h2 class="section-heading">
-					1. Greedily select any non-overlapping core-progressions that appear
-					at least <span class="const-value"
-						>{MIN_PROGRESSION_OCCURRENCES}</span
-					>
-					times (or just once if it fills an entire section), by {GREEDY_SORT_LABEL}
-				</h2>
-				<p class="section-description">
-					Being "greedy" with core-progressions incentivizes us to really
-					expand the coverage of
-					<CodeReference filename="core-progressions.ts" />, and also makes it
-					so we maximize classified chords over random ones that might happen
-					to be better/longer for some reason. The single-occurrence exception
-					only applies to core progressions — not gap-fill candidates — to
-					avoid spuriously claiming any section with no other matches.
-				</p>
+					<h2 class="section-heading">
+						1. Greedily select any non-overlapping core-progressions that appear
+						at least <span class="const-value"
+							>{MIN_PROGRESSION_OCCURRENCES}</span
+						>
+						times (or just once if it fills an entire section), by {GREEDY_SORT_LABEL}
+					</h2>
+					<p class="section-description">
+						Being "greedy" with core-progressions incentivizes us to really
+						expand the coverage of
+						<CodeReference filename="core-progressions.ts" />, and also makes it
+						so we maximize classified chords over random ones that might happen
+						to be better/longer for some reason. The single-occurrence exception
+						only applies to core progressions — not gap-fill candidates — to
+						avoid spuriously claiming any section with no other matches. Within
+						the
+						<span class="const-value"
+							>{PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}%</span
+						> tolerance, we bias toward progressions that begin at the start of a
+						section, since the vast majority of real progressions do — this avoids
+						stranding the first chord of a section when a slightly longer match happens
+						to skip it.
+					</p>
 
-				{#if flaggedCoreMatches.length > 0}
-					<ProgressionMatchTable
-						matches={flaggedCoreSelected}
-						allMatches={flaggedCoreMatches}
-						song={selectedSong}
-						activeProgression={pinnedProgression}
-						onselect={handleProgressionSelect}
-						showUnselectedRows={true}
-					/>
-				{:else}
-					<p class="list-meta">No core progressions matched this song.</p>
-				{/if}
+					{#if flaggedCoreMatches.length > 0}
+						<ProgressionMatchTable
+							matches={flaggedCoreSelected}
+							allMatches={flaggedCoreMatches}
+							song={selectedSong}
+							activeProgression={pinnedProgression}
+							onselect={handleProgressionSelect}
+							showUnselectedRows={true}
+						/>
+					{:else}
+						<p class="list-meta">No core progressions matched this song.</p>
+					{/if}
 				</section>
 
 				<section class="step-section">
 					<h2 class="section-heading">
-						2. Look for any other recurring progressions in the to gaps not
+						2. Look for any other recurring progressions in the gaps not
 						occupied by core-progressions, selecting them greedily by {GREEDY_SORT_LABEL}
 					</h2>
 					<p class="section-description">
@@ -324,16 +329,21 @@
 						— no chord position is ever claimed by more than one progression. A valid
 						progression cannot consist of consecutive
 						<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>+
-						progressions repeating more than once.
+						progressions repeating more than once. Within the
+						<span class="const-value"
+							>{PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}%</span
+						> tolerance, gap progressions that start at an uncovered section boundary
+						are also preferred.
 					</p>
 
-					{#if flaggedGapSelected.length > 0}
+					{#if flaggedGapCandidates.length > 0}
 						<ProgressionMatchTable
 							matches={flaggedGapSelected}
 							allMatches={flaggedGapCandidates}
 							song={selectedSong}
 							activeProgression={pinnedProgression}
 							onselect={handleProgressionSelect}
+							showUnselectedRows={true}
 						/>
 					{:else}
 						<p class="list-meta">No additional non-core progressions to add.</p>

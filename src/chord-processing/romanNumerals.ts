@@ -245,7 +245,7 @@ export const parseRomanToken = (token: string): ParsedToken | null => {
 			? { bassDegree, bassFlat: bassFlat ?? false }
 			: {})
 	};
-};;
+};
 
 const pitchClassFromEntry = (
 	entry: ParsedToken,

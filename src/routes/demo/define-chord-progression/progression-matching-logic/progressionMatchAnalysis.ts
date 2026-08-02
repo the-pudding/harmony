@@ -53,6 +53,8 @@ export type ProgressionWithMatchStats = {
 	isCoreProgression: boolean;
 	isStrictSubset?: boolean;
 	isFullSectionSingleMatch?: boolean;
+	isSectionStartBiasWinner?: boolean;
+	sectionStartBiasSacrificedPercent?: number;
 	highlightPalette: ChordHighlightPalette;
 };
 
@@ -65,7 +67,9 @@ export type ChordHighlightSegment = {
 
 // Keyed on the selective matching shape: bare triads collapse to base quality,
 // but specified extensions / slash bass are preserved so I-Imaj7 ≠ I-vi.
-export const abstractProgressionKey = (parsed: ParsedProgressionChord[]): string =>
+export const abstractProgressionKey = (
+	parsed: ParsedProgressionChord[]
+): string =>
 	JSON.stringify(
 		toAbstractProgression(
 			collapseMatchingTemplates(parsed).map(({ chord }) => chord)
@@ -433,6 +437,27 @@ export const computeGapOnlyCoveredPositionsBySection = (
 			section.parsedProgression.length
 		)
 	);
+
+export const countSectionsStartedByProgression = (
+	song: GroupedSong,
+	parsed: ParsedProgressionChord[]
+): number =>
+	song.sections.filter((section) =>
+		getSectionMatches(section, parsed).some((match) => match.start === 0)
+	).length;
+
+export const countSectionsStartedByGapOnlyProgression = (
+	song: GroupedSong,
+	parsed: ParsedProgressionChord[],
+	occupiedCoverage: number[][]
+): number =>
+	song.sections.filter((section, sectionIndex) =>
+		getGapOnlySectionMatches(
+			section,
+			parsed,
+			occupiedCoverage[sectionIndex] ?? []
+		).some((match) => match.start === 0)
+	).length;
 
 export const computeGapOnlyStats = (
 	song: GroupedSong,

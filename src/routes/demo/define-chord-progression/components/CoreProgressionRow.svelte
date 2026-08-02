@@ -77,7 +77,10 @@
 			})
 		);
 
-	const isActive = (match: { name: string; chordProgression: string }): boolean =>
+	const isActive = (match: {
+		name: string;
+		chordProgression: string;
+	}): boolean =>
 		activeProgression !== null &&
 		(variantsByName[match.name] ?? [match.chordProgression]).includes(
 			activeProgression

@@ -30,19 +30,28 @@
 	}: Props = $props();
 
 	const groupProgressionKeys = $derived(
-		group.progressions.flatMap((p) => chordProgressionVariants(p.chordProgression))
+		group.progressions.flatMap((p) =>
+			chordProgressionVariants(p.chordProgression)
+		)
 	);
 
 	const filteredCoverage = $derived(
 		coverageResult
-			? filterCoverageResultForProgressions(coverageResult, groupProgressionKeys)
+			? filterCoverageResultForProgressions(
+					coverageResult,
+					groupProgressionKeys
+				)
 			: null
 	);
 
-	const groupMatchingSongCount = $derived(filteredCoverage?.songCoverages.length ?? 0);
+	const groupMatchingSongCount = $derived(
+		filteredCoverage?.songCoverages.length ?? 0
+	);
 	const totalSongCount = $derived(coverageResult?.songCoverages.length ?? 0);
 	const groupMatchPercent = $derived(
-		totalSongCount > 0 ? Math.round((groupMatchingSongCount / totalSongCount) * 100) : 0
+		totalSongCount > 0
+			? Math.round((groupMatchingSongCount / totalSongCount) * 100)
+			: 0
 	);
 
 	const highlightedProgressions = $derived(
@@ -58,7 +67,12 @@
 			{group.name}
 			{#if coverageResult}
 				<span class="group-stat"
-					>— at least one of its progressions is matched in <span class="group-stat-value">{groupMatchPercent}% of all songs</span> <span class="group-stat-count">({groupMatchingSongCount.toLocaleString()} songs)</span></span
+					>— at least one of its progressions is matched in <span
+						class="group-stat-value">{groupMatchPercent}% of all songs</span
+					>
+					<span class="group-stat-count"
+						>({groupMatchingSongCount.toLocaleString()} songs)</span
+					></span
 				>
 			{/if}
 		</h2>
