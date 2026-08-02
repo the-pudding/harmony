@@ -80,6 +80,34 @@ describe("buildProgressionVocabulary", () => {
 		expect(vocabulary.entries.map((entry) => entry.index)).toEqual([0, 1]);
 	});
 
+	it("gives sibling variants of one named progression a single dimension", () => {
+		const vocabulary = buildProgressionVocabulary(
+			[makeSong("a", [["ii7-V7-Imaj7", 3, true]])],
+			1
+		);
+		const canonicalIndex =
+			vocabulary.indexByChordProgression.get("ii7-V7-Imaj7");
+		expect(vocabulary.indexByChordProgression.get("ii-V-I")).toBe(
+			canonicalIndex
+		);
+		expect(
+			vocabulary.entries.filter((entry) => entry.name === "jazz ii-V-I")
+		).toHaveLength(1);
+	});
+
+	it("counts a song once when it matches two variants of one progression", () => {
+		const vocabulary = buildProgressionVocabulary(
+			[
+				makeSong("a", [
+					["ii7-V7-Imaj7", 3, true],
+					["ii-V-I", 2, true]
+				])
+			],
+			1
+		);
+		expect(vocabulary.entries[0].documentFrequency).toBe(1);
+	});
+
 	it("reports the document count used for idf", () => {
 		const vocabulary = buildProgressionVocabulary([
 			makeSong("a", [["I-V-vi-IV", 2, true]]),

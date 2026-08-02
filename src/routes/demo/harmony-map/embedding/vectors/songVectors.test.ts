@@ -48,6 +48,42 @@ describe("buildSongVectors", () => {
 		expect(vectorBySongKey.get("b")!.counts[index]).toBe(2);
 	});
 
+	it("sums sibling variants of one named progression into one dimension", () => {
+		const bothVariants = [
+			makeSong("a", [
+				["ii7-V7-Imaj7", 3],
+				["ii-V-I", 2]
+			])
+		];
+		const variantVocabulary = buildProgressionVocabulary(bothVariants, 1);
+		const { vectorBySongKey } = buildSongVectors(
+			bothVariants,
+			variantVocabulary,
+			RAW_UNNORMALIZED
+		);
+		const index = variantVocabulary.indexByChordProgression.get("ii-V-I")!;
+		expect(vectorBySongKey.get("a")!.counts[index]).toBe(5);
+		expect(
+			vectorBySongKey.get("a")!.counts.filter((count) => count > 0)
+		).toHaveLength(1);
+	});
+
+	it("counts sibling variants as one occurrence when weighting is binary", () => {
+		const bothVariants = [
+			makeSong("a", [
+				["ii7-V7-Imaj7", 3],
+				["ii-V-I", 2]
+			])
+		];
+		const variantVocabulary = buildProgressionVocabulary(bothVariants, 1);
+		const { vectorBySongKey } = buildSongVectors(
+			bothVariants,
+			variantVocabulary,
+			{ ...RAW_UNNORMALIZED, weighting: "binary" }
+		);
+		expect(vectorBySongKey.get("a")!.counts).toEqual([1]);
+	});
+
 	it("collapses counts to presence when weighting is binary", () => {
 		const { vectorBySongKey } = buildSongVectors(songs, vocabulary, {
 			...RAW_UNNORMALIZED,

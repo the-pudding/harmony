@@ -70,6 +70,8 @@
 
 	type VectorDimension = {
 		chordProgression: string;
+		name: string;
+		siblingVariants: string[];
 		isCore: boolean;
 		count: number;
 		inverseDocumentFrequency: number;
@@ -88,6 +90,10 @@
 		return vocabulary.entries
 			.map((entry) => ({
 				chordProgression: entry.chordProgression,
+				name: entry.name,
+				siblingVariants: entry.variants.filter(
+					(variant) => variant !== entry.chordProgression
+				),
 				isCore: entry.isCore,
 				count: vector.counts[entry.index],
 				inverseDocumentFrequency:
@@ -194,6 +200,15 @@
 								{dimension.isCore ? "core" : "gap"}
 							</span>
 						</div>
+						{#if dimension.name}
+							<span class="dimension-subtitle">
+								{dimension.name}{#if dimension.siblingVariants.length > 0}
+									<span class="dimension-variants">
+										· merged with {dimension.siblingVariants.join(", ")}
+									</span>
+								{/if}
+							</span>
+						{/if}
 						<div class="dimension-bar">
 							<div
 								class="dimension-fill"
@@ -461,6 +476,16 @@
 	.dimension-name {
 		font-size: 0.7rem;
 		color: #e4e4e7;
+	}
+
+	.dimension-subtitle {
+		font-size: 0.6rem;
+		color: #71717a;
+		line-height: 1.4;
+	}
+
+	.dimension-variants {
+		color: rgba(99, 102, 241, 0.85);
 	}
 
 	.dimension-badge {

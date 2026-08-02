@@ -1,4 +1,5 @@
 export * from "./constants.js";
+export * from "./coreProgressionIdentity.js";
 export * from "./featureAxes.js";
 export * from "./nearestNeighbors.js";
 export * from "./progressionGroups.js";

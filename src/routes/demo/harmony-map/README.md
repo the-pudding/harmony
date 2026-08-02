@@ -58,6 +58,7 @@ harmony-map/
   embedding/
     vectors/                     pure, unit-tested, no Svelte — importable from workers + tests
       constants.ts               every threshold and weight lives here
+      coreProgressionIdentity.ts sibling variants → one canonical key per named progression
       progressionVocabulary.ts   distinct progressions → ordered indices
       songVectors.ts             counts → TF-IDF → L2-normalized vectors
       nearestNeighbors.ts        cosine kNN
@@ -119,6 +120,18 @@ The coverage state (`createAllSongsCoverageState()`) is instantiated **once in `
 - **Gap-fill progressions need `documentFrequency >= MIN_GAP_DOCUMENT_FREQUENCY`** (default `4`, in `constants.ts`). Gap progressions are arbitrary chord windows discovered per song, so without this gate the dimension count explodes with one-offs.
 - Document frequency counts **songs**, not occurrences.
 - Entries are sorted core-first then by frequency, so index 0 is the most common core progression. Handy when reading loadings.
+
+### Variants share one dimension
+
+A named core progression in `$data/core-progressions.ts` can list several variants (`"jazz ii-V-I"` is `["ii7-V7-Imaj7", "ii-V-I"]`). **All of a name's variants collapse into a single dimension**, keyed by the first authored variant — `coreProgressionIdentity.ts` owns that mapping. Concretely:
+
+- `indexByChordProgression` contains an entry for _every_ variant pointing at the shared index, so callers can look up by whichever variant the matcher selected.
+- `occurrencesByIndex` in `songVectors.ts` sums them: a song matching `ii7-V7-Imaj7` ×3 and `ii-V-I` ×2 contributes 5 to that one dimension.
+- Document frequency counts such a song **once**, and `weighting: "binary"` yields 1, not 2.
+
+Without this, one musical idea splits across two axes: two songs playing "the same" progression in different voicings look less similar than they are, and each half looks artificially rare to IDF.
+
+The canonical key is the first authored variant rather than the most-matched one, so the vocabulary stays stable as the corpus changes. Gap-fill progressions have no name or variants, so each distinct one remains its own dimension. `featureAxes.ts` deliberately keeps reading the **raw** variant strings, since variants genuinely differ in length, harmonic breadth and extensions — exactly the signals those axes measure.
 
 ### Song vectors
 
@@ -200,6 +213,8 @@ Other things to know:
 ### `SongVectorInspector.svelte`
 
 The explainability panel: search box, then for the selected song its nonzero dimensions (progression, core/gap badge, raw count, IDF, weight, contribution bar), its coordinates and dominant group, its top-8 cosine neighbors, and — when PCA is active — the top progression loadings per component.
+
+Core dimensions also show their progression name and, when the name has multiple variants, a "merged with …" note so the collapsed variants aren't invisible.
 
 ### `SongTooltip.svelte`
 

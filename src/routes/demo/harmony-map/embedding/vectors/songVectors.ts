@@ -24,7 +24,7 @@ export type SongVectorSet = {
 const termWeight = (
 	matchCount: number,
 	weighting: ProgressionWeighting
-): number => (weighting === "binary" ? 1 : matchCount);
+): number => (weighting === "binary" ? (matchCount > 0 ? 1 : 0) : matchCount);
 
 export const inverseDocumentFrequency = (
 	documentCount: number,
@@ -38,16 +38,16 @@ const buildInverseDocumentFrequencies = (
 		inverseDocumentFrequency(vocabulary.documentCount, entry.documentFrequency)
 	);
 
-const countsByIndex = (
+// Sibling variants of one named core progression share a vocabulary index, so
+// their occurrences sum into a single dimension rather than splitting across two.
+const occurrencesByIndex = (
 	song: SongProgressionCounts,
-	vocabulary: ProgressionVocabulary,
-	weighting: ProgressionWeighting
+	vocabulary: ProgressionVocabulary
 ): Map<number, number> =>
 	song.progressionCounts.reduce((counts, { chordProgression, matchCount }) => {
 		const index = vocabulary.indexByChordProgression.get(chordProgression);
 		if (index === undefined) return counts;
-		const weight = termWeight(matchCount, weighting);
-		return counts.set(index, (counts.get(index) ?? 0) + weight);
+		return counts.set(index, (counts.get(index) ?? 0) + matchCount);
 	}, new Map<number, number>());
 
 const l2Normalized = (values: number[]): number[] => {
@@ -61,9 +61,9 @@ const buildSongVector = (
 	inverseDocumentFrequencies: number[],
 	options: SongVectorOptions
 ): SongVector => {
-	const indexedCounts = countsByIndex(song, vocabulary, options.weighting);
-	const counts = vocabulary.entries.map(
-		({ index }) => indexedCounts.get(index) ?? 0
+	const occurrences = occurrencesByIndex(song, vocabulary);
+	const counts = vocabulary.entries.map(({ index }) =>
+		termWeight(occurrences.get(index) ?? 0, options.weighting)
 	);
 	const scaled = options.useTfIdf
 		? counts.map((count, index) => count * inverseDocumentFrequencies[index])
