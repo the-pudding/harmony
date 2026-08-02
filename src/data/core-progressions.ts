@@ -12,25 +12,25 @@ const happyMajoryProgressions: ProgressionGroup = {
 	description: "Progressions that are happy and major-y",
 	progressions: [
 		{
-			name: "basic plagal",
+			name: "I-IV vamp",
 			chordProgression: "I-IV-I-IV",
 			scale: "major",
 			description: ""
 		},
 		{
-			name: "basic perfect",
+			name: "I-V vamp",
 			chordProgression: "I-V-I-V",
 			scale: "major",
 			description: ""
 		},
 		{
-			name: "Cheerleader Verse",
+			name: "Cheerleader (verse)",
 			chordProgression: "I-V-IV",
 			scale: "major",
 			description: ""
 		},
 		{
-			name: "Cheerleader Chorus",
+			name: "Cheerleader (chorus)",
 			chordProgression: "I-IV-V-IV",
 			scale: "major",
 			description: ""
@@ -57,7 +57,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			name: "sweet home mixolydian",
 			chordProgression: "I-bVII-IV",
 			scale: "major",
-			description: "Sweet Home Alabama..."
+			description: "Sweet Home Alabama... can also be thought of as a V-IV-I"
 		} // also could be thought of as a V-IV-I
 	]
 };
@@ -148,13 +148,13 @@ const minoryProgressions: ProgressionGroup = {
 				"experimental: game up in Good 4 U prominently, it's sort of a spin on ii-V-I, but doesn't require the jazzy extensions to sound fresh..."
 		},
 		{
-			name: "andalusian walk down",
+			name: "flamenco walk down",
 			chordProgression: "i-VII-VI-V",
 			scale: "minor",
 			description: ""
 		},
 		{
-			name: "call me by your (andalusian) name",
+			name: "call me by your (flamenco) name",
 			chordProgression: "I-bII-I-bII",
 			scale: "major", // we could re-write as phrygian dominant, but is that actually clearer?
 			description: ""
@@ -172,7 +172,7 @@ const minoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
-			name: "pop minor (poker face)",
+			name: "poker face (chorus)",
 			chordProgression: "i-VI-III-VII",
 			scale: "minor",
 			description: ""
