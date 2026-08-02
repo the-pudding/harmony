@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
-	import { matchOutline } from "./progressionColors.js";
+	import { matchOutline, DIM_MATCH_COLOR } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongProgressionStats from "./progression-match-stats/SongProgressionStats.svelte";
 
@@ -50,7 +50,7 @@
 		return [...new Set(vals)];
 	});
 
-	const DIM_COLOR = "rgb(113, 113, 122)";
+	const DIM_COLOR = DIM_MATCH_COLOR;
 	const DIM_OPACITY = 0.5;
 	const HIGHLIGHT_OPACITY = 1;
 	const JITTER_RANGE_PX = 8;

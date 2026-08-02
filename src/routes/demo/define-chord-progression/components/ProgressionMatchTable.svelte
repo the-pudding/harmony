@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
-	import { matchOutline } from "./progressionColors.js";
+	import { matchOutline, NON_SELECTED_PROGRESSION_PALETTE } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongProgressionStats from "./progression-match-stats/SongProgressionStats.svelte";
 	import ProgressionMatchScatterPlot from "./ProgressionMatchScatterPlot.svelte";
@@ -21,12 +21,22 @@
 		song: GroupedSong;
 		activeProgression: string | null;
 		onselect: (chordProgression: string) => void;
+		showUnselectedRows?: boolean;
 	};
 
-	let { matches, allMatches, song, activeProgression, onselect }: Props =
-		$props();
+	let {
+		matches,
+		allMatches,
+		song,
+		activeProgression,
+		onselect,
+		showUnselectedRows = false
+	}: Props = $props();
 
 	let showAll = $state(false);
+
+	const selectedKeys = $derived(new Set(matches.map((m) => m.chordProgression)));
+	const tableRows = $derived(showUnselectedRows ? allMatches : matches);
 
 	const total = $derived(allMatches.length);
 	const highlighted = $derived(matches.length);
@@ -38,9 +48,9 @@
 		allMatches.filter((m) => m.isStrictSubset).length
 	);
 
-	const hasMore = $derived(highlighted > MAX_COLLAPSED_RESULTS);
+	const hasMore = $derived(tableRows.length > MAX_COLLAPSED_RESULTS);
 	const visibleMatches = $derived(
-		showAll ? matches : matches.slice(0, MAX_COLLAPSED_RESULTS)
+		showAll ? tableRows : tableRows.slice(0, MAX_COLLAPSED_RESULTS)
 	);
 </script>
 
@@ -69,10 +79,13 @@
 	</colgroup>
 	<tbody>
 		{#each visibleMatches as match (match.chordProgression)}
-			{@const outline = matchOutline(match)}
+			{@const isSelected = selectedKeys.has(match.chordProgression)}
+			{@const effectivePalette = isSelected ? match.highlightPalette : NON_SELECTED_PROGRESSION_PALETTE}
+			{@const outline = isSelected ? matchOutline(match) : { color: NON_SELECTED_PROGRESSION_PALETTE.border, dashed: !!match.isStrictSubset }}
 			<tr
 				class="match-row"
 				class:match-row-active={activeProgression === match.chordProgression}
+				class:match-row-unselected={!isSelected}
 			>
 				<td class="match-button-cell">
 					<ProgressionMatchButton
@@ -98,7 +111,7 @@
 					<SongChordsDisplay
 						{song}
 						parsedProgression={match.parsedProgression}
-						highlightPalette={match.highlightPalette}
+						highlightPalette={effectivePalette}
 						isStrictSubset={match.isStrictSubset}
 					/>
 				</td>
@@ -115,9 +128,9 @@
 		}}
 	>
 		{#if showAll}
-			Collapse to {MAX_COLLAPSED_RESULTS} / {highlighted}
+			Collapse to {MAX_COLLAPSED_RESULTS} / {tableRows.length}
 		{:else}
-			{MAX_COLLAPSED_RESULTS} / {highlighted} results. Click to show all {highlighted}
+			{MAX_COLLAPSED_RESULTS} / {tableRows.length} results. Click to show all {tableRows.length}
 		{/if}
 	</button>
 {/if}
@@ -148,6 +161,10 @@
 	.match-row:hover,
 	.match-row-active {
 		background: rgba(255, 255, 255, 0.03);
+	}
+
+	.match-row-unselected {
+		opacity: 0.5;
 	}
 
 	.match-button-cell {

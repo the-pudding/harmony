@@ -15,6 +15,13 @@ export const DEFAULT_PROGRESSION_PALETTE: ChordHighlightPalette = {
 	border: "rgba(99, 102, 241, 0.55)"
 };
 
+export const DIM_MATCH_COLOR = "rgb(113, 113, 122)";
+
+export const NON_SELECTED_PROGRESSION_PALETTE: ChordHighlightPalette = {
+	fill: "#3f3f46",
+	border: DIM_MATCH_COLOR
+};
+
 export const matchHighlightForCoreProgression = (
 	isCoreProgression: boolean
 ): {

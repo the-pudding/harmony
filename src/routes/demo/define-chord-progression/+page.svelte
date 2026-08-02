@@ -294,17 +294,18 @@
 					avoid spuriously claiming any section with no other matches.
 				</p>
 
-					{#if flaggedCoreSelected.length > 0}
-						<ProgressionMatchTable
-							matches={flaggedCoreSelected}
-							allMatches={flaggedCoreMatches}
-							song={selectedSong}
-							activeProgression={pinnedProgression}
-							onselect={handleProgressionSelect}
-						/>
-					{:else}
-						<p class="list-meta">No core progressions matched this song.</p>
-					{/if}
+				{#if flaggedCoreMatches.length > 0}
+					<ProgressionMatchTable
+						matches={flaggedCoreSelected}
+						allMatches={flaggedCoreMatches}
+						song={selectedSong}
+						activeProgression={pinnedProgression}
+						onselect={handleProgressionSelect}
+						showUnselectedRows={true}
+					/>
+				{:else}
+					<p class="list-meta">No core progressions matched this song.</p>
+				{/if}
 				</section>
 
 				<section class="step-section">
