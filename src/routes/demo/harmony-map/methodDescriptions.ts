@@ -52,3 +52,9 @@ export const embeddingMethodDescriptions: Record<
 			"Reflects only the two chosen features rather than the full vector, so songs that differ in every other respect can collide. The weights are editorial choices, not learned from the corpus."
 	}
 };
+
+export const METHOD_DESCRIPTION_SECTIONS = [
+	{ key: "rationale", label: "Why" },
+	{ key: "approach", label: "How" },
+	{ key: "tradeoffs", label: "Tradeoffs" }
+] as const;
