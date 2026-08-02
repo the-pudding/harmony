@@ -8,36 +8,26 @@
 	import { createEmbeddingState } from "./embedding/state/createEmbeddingState.svelte.js";
 	import {
 		readHarmonyMapUrlState,
-		replaceHarmonyMapStateInUrl,
-		type HarmonyMapView
+		replaceHarmonyMapStateInUrl
 	} from "./harmonyMapUrlState.js";
-	import TabBar from "./tabs/TabBar.svelte";
 	import EmbeddingView from "./views/EmbeddingView.svelte";
-	import ForceGraphView from "./views/ForceGraphView.svelte";
 
 	const initialUrlState = readHarmonyMapUrlState(page.url.searchParams);
 
 	const coverage = createAllSongsCoverageState();
 
-	let view = $state<HarmonyMapView>(initialUrlState.view);
-
 	const embedding = createEmbeddingState({
 		getEntries: () => coverage.allSongsCoverageResult?.songCoverages ?? null,
 		initialMethod: initialUrlState.method,
-		onMethodChange: (method) => replaceHarmonyMapStateInUrl({ view, method })
+		onMethodChange: (method) => replaceHarmonyMapStateInUrl({ method })
 	});
-
-	const selectView = (nextView: HarmonyMapView) => {
-		view = nextView;
-		replaceHarmonyMapStateInUrl({ view: nextView, method: embedding.method });
-	};
 
 	$effect(() => {
 		page.url.search;
 		untrack(() => {
 			const urlState = readHarmonyMapUrlState(page.url.searchParams);
-			view = urlState.view;
 			embedding.setMethod(urlState.method);
+			replaceHarmonyMapStateInUrl(urlState);
 		});
 	});
 
@@ -77,8 +67,8 @@
 			<div class="header-left">
 				<h1 class="page-title">Harmony map</h1>
 				<p class="page-subtitle">
-					Two ways to lay out the same corpus: a song ↔ progression force graph,
-					and a 2D embedding of every song's matched-progression vector.
+					A 2D embedding of every song's matched-progression vector — switch
+					between UMAP, PCA, and hand-designed feature axes.
 				</p>
 			</div>
 
@@ -91,21 +81,13 @@
 			</div>
 		</div>
 
-		<div class="tab-bar-wrap">
-			<TabBar {view} onSelect={selectView} />
-		</div>
-
 		<div class="view-wrap">
 			{#if coverage.allSongsCoverageResult}
-				{#if view === "graph"}
-					<ForceGraphView {songCoverages} songs={coverage.baseList} />
-				{:else}
-					<EmbeddingView
-						{songCoverages}
-						songs={coverage.baseList}
-						{embedding}
-					/>
-				{/if}
+				<EmbeddingView
+					{songCoverages}
+					songs={coverage.baseList}
+					{embedding}
+				/>
 			{:else}
 				<div class="loading-overlay">
 					<span class="loading-text">{loadingText}</span>
@@ -189,11 +171,6 @@
 
 	.status-text.error {
 		color: #fca5a5;
-	}
-
-	.tab-bar-wrap {
-		flex-shrink: 0;
-		padding: 0 1.25rem;
 	}
 
 	.view-wrap {

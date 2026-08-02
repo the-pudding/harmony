@@ -1,8 +1,8 @@
 <script lang="ts">
 	import CollapsiblePanel from "../../define-chord-progression/components/CollapsiblePanel.svelte";
-	import type { ViewDescription } from "./tabDescriptions.js";
+	import type { MethodDescription } from "../methodDescriptions.js";
 
-	type Props = { description: ViewDescription };
+	type Props = { description: MethodDescription };
 
 	const { description }: Props = $props();
 

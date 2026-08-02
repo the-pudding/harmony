@@ -18,11 +18,11 @@
 		GROUP_COLOR_LEGEND_TITLE,
 		groupLegendItems
 	} from "../progressionGroupColors.js";
-	import TabInfoPanel from "../tabs/TabInfoPanel.svelte";
+	import MethodInfoPanel from "../components/MethodInfoPanel.svelte";
 	import {
 		embeddingMethodDescriptions,
 		embeddingMethodLabels
-	} from "../tabs/tabDescriptions.js";
+	} from "../methodDescriptions.js";
 
 	type Props = {
 		songCoverages: SongCoverageEntry[];
@@ -159,7 +159,7 @@
 	</div>
 
 	<div class="info">
-		<TabInfoPanel description={embeddingMethodDescriptions[embedding.method]} />
+		<MethodInfoPanel description={embeddingMethodDescriptions[embedding.method]} />
 	</div>
 
 	<div class="body">

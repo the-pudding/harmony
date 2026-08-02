@@ -1,17 +1,11 @@
-import type { EmbeddingMethod } from "../embedding/reducers/types.js";
-import type { HarmonyMapView } from "../harmonyMapUrlState.js";
+import type { EmbeddingMethod } from "./embedding/reducers/types.js";
 
-export type ViewDescription = {
+export type MethodDescription = {
 	title: string;
 	summary: string;
 	rationale: string;
 	approach: string;
 	tradeoffs: string;
-};
-
-export const viewLabels: Record<HarmonyMapView, string> = {
-	graph: "Force graph",
-	embedding: "Embedding map"
 };
 
 export const embeddingMethodLabels: Record<EmbeddingMethod, string> = {
@@ -20,21 +14,9 @@ export const embeddingMethodLabels: Record<EmbeddingMethod, string> = {
 	feature: "Feature axes"
 };
 
-export const forceGraphDescription: ViewDescription = {
-	title: viewLabels.graph,
-	summary:
-		"A bipartite song ↔ progression network laid out by physical simulation.",
-	rationale:
-		"Shows which core progressions act as bridges between songs. Because songs attach directly to the progressions they match, clusters read as families of shared harmonic vocabulary rather than as abstract coordinates.",
-	approach:
-		"Groups, core progressions and songs become nodes; a link joins a song to every core progression selected for it. A GPU force simulation repels nodes and pulls linked pairs together until it settles.",
-	tradeoffs:
-		"Positions are not a metric space — distance between two songs is an artifact of the layout, not a similarity measurement. The simulation is non-deterministic, so the picture differs between runs, and dense hubs overlap heavily."
-};
-
 export const embeddingMethodDescriptions: Record<
 	EmbeddingMethod,
-	ViewDescription
+	MethodDescription
 > = {
 	umap: {
 		title: embeddingMethodLabels.umap,
@@ -70,11 +52,3 @@ export const embeddingMethodDescriptions: Record<
 			"Reflects only the two chosen features rather than the full vector, so songs that differ in every other respect can collide. The weights are editorial choices, not learned from the corpus."
 	}
 };
-
-export const descriptionForView = (
-	view: HarmonyMapView,
-	method: EmbeddingMethod
-): ViewDescription =>
-	view === "graph"
-		? forceGraphDescription
-		: embeddingMethodDescriptions[method];
