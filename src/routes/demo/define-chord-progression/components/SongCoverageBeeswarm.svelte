@@ -10,6 +10,10 @@
 		EXPLAINED_THRESHOLD_PERCENT,
 		HIGH_COVERAGE_THRESHOLD_PERCENT
 	} from "../constants.js";
+	import {
+		dodgeBeeswarm,
+		tallestStackHeight
+	} from "../../shared/charts/dodgeBeeswarm.js";
 
 	type SongEntry = {
 		songKey: string;
@@ -21,11 +25,7 @@
 		looksGoodAsIs?: boolean;
 	};
 
-	type DodgedNode = SongEntry & {
-		x: number;
-		y: number;
-		next: DodgedNode | null;
-	};
+	type DodgedNode = SongEntry & { x: number; y: number };
 
 	type Props = {
 		songs: SongEntry[] | null;
@@ -74,61 +74,24 @@
 		(pct: number) => PADDING_LEFT + (pct / 100) * plotWidth
 	);
 
-	const dodgedNodes = $derived.by(() => {
-		if (plotWidth <= 0 || songs === null) return [] as DodgedNode[];
+	const dodgedNodes = $derived.by((): DodgedNode[] => {
+		if (plotWidth <= 0 || songs === null) return [];
 
-		const diameter = DOT_RADIUS * 2 + DOT_SPACING;
-		const radius2 = diameter ** 2;
-		const epsilon = 1e-3;
+		const annotated = songs.map((s) => ({
+			...s,
+			chordProgressionIssues: getChordProgressionIssues(s.songKey),
+			looksGoodAsIs: isSongLooksGoodAsIs(s.songKey)
+		}));
 
-		const nodes: DodgedNode[] = songs
-			.map((s) => ({
-				...s,
-				chordProgressionIssues: getChordProgressionIssues(s.songKey),
-				looksGoodAsIs: isSongLooksGoodAsIs(s.songKey),
-				x: xScale(s.coveragePercent),
-				y: 0,
-				next: null as DodgedNode | null
-			}))
-			.sort((a, b) => a.x - b.x);
-
-		let head: DodgedNode | null = null;
-		let tail: DodgedNode | null = null;
-
-		function intersects(x: number, y: number): boolean {
-			let a = head;
-			while (a) {
-				if (radius2 - epsilon > (a.x - x) ** 2 + (a.y - y) ** 2) return true;
-				a = a.next;
-			}
-			return false;
-		}
-
-		for (const b of nodes) {
-			while (head && head.x < b.x - radius2) head = head.next;
-
-			if (intersects(b.x, 0)) {
-				let a = head;
-				b.y = Infinity;
-				do {
-					const candidateY = a!.y + Math.sqrt(radius2 - (a!.x - b.x) ** 2);
-					if (candidateY < b.y && !intersects(b.x, candidateY))
-						b.y = candidateY;
-					a = a!.next;
-				} while (a);
-			}
-
-			b.next = null;
-			if (!head) head = tail = b;
-			else tail = tail!.next = b;
-		}
-
-		return nodes;
+		return dodgeBeeswarm(
+			annotated,
+			(song) => xScale(song.coveragePercent),
+			DOT_RADIUS,
+			DOT_SPACING
+		).map(({ item, x, y }) => ({ ...item, x, y }));
 	});
 
-	const tallestStackY = $derived(
-		dodgedNodes.length > 0 ? Math.max(0, ...dodgedNodes.map((n) => n.y)) : 0
-	);
+	const tallestStackY = $derived(tallestStackHeight(dodgedNodes));
 
 	const requiredHeight = $derived(
 		TOP_PADDING + tallestStackY + DOT_RADIUS * 2 + AXIS_HEIGHT

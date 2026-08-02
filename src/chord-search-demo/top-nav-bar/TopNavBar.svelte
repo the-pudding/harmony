@@ -63,6 +63,11 @@
 				class="page-link"
 				class:active={page.url.pathname === "/demo/harmony-map"}>harmony map</a
 			>
+			<a
+				href="/demo/artists"
+				class="page-link"
+				class:active={page.url.pathname === "/demo/artists"}>artists</a
+			>
 		</div>
 	</div>
 	{#if showSearch}

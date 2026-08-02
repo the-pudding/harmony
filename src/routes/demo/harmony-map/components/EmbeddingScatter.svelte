@@ -9,12 +9,12 @@
 	} from "d3";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import { colorForGroupName } from "../progressionGroupColors.js";
-	import SongTooltip from "./SongTooltip.svelte";
+	import SongTooltip from "../../shared/SongTooltip.svelte";
 	import {
 		anchorFromMouseEvent,
 		hoverCardStyle,
 		type HoverCardAnchor
-	} from "./hoverCardPosition.js";
+	} from "../../shared/hoverCardPosition.js";
 	import type { ScatterAxisLabels, ScatterPoint } from "./scatterPoint.js";
 
 	type Props = {
@@ -22,6 +22,7 @@
 		songByKey: Map<string, GroupedSong>;
 		selectedSongKey: string | null;
 		neighborSongKeys: Set<string>;
+		visibleSongKeys?: Set<string> | null;
 		axisLabels?: ScatterAxisLabels | null;
 		onSelect: (songKey: string | null) => void;
 	};
@@ -31,6 +32,7 @@
 		songByKey,
 		selectedSongKey,
 		neighborSongKeys,
+		visibleSongKeys = null,
 		axisLabels = null,
 		onSelect
 	}: Props = $props();
@@ -106,8 +108,15 @@
 		});
 	});
 
+	// Bounds stay based on every point so filtering never rescales the map.
+	const drawablePoints = $derived(
+		visibleSongKeys === null
+			? normalizedPoints
+			: normalizedPoints.filter((point) => visibleSongKeys.has(point.songKey))
+	);
+
 	const pointBySongKey = $derived(
-		new Map(normalizedPoints.map((point) => [point.songKey, point]))
+		new Map(drawablePoints.map((point) => [point.songKey, point]))
 	);
 
 	const plotWidth = $derived(Math.max(0, width - PLOT_MARGIN * 2));
@@ -159,7 +168,7 @@
 
 		drawAxisLabels(context);
 
-		for (const point of normalizedPoints) {
+		for (const point of drawablePoints) {
 			const position = displayedPositions.get(point.songKey);
 			if (!position) continue;
 			const screen = toScreen(position);
@@ -171,7 +180,8 @@
 		}
 
 		const emphasized = [selectedSongKey, hoveredSongKey].filter(
-			(songKey): songKey is string => songKey !== null
+			(songKey): songKey is string =>
+				songKey !== null && pointBySongKey.has(songKey)
 		);
 		for (const songKey of emphasized) {
 			const position = displayedPositions.get(songKey);
@@ -234,7 +244,7 @@
 	};
 
 	const findPointAt = (anchor: HoverCardAnchor): string | null => {
-		const hit = normalizedPoints.reduce<{
+		const hit = drawablePoints.reduce<{
 			songKey: string | null;
 			distance: number;
 		}>(
@@ -295,6 +305,7 @@
 		void hoveredSongKey;
 		void selectedSongKey;
 		void neighborSongKeys;
+		void drawablePoints;
 		draw();
 	});
 

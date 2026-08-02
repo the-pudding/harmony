@@ -1,6 +1,7 @@
 import {
 	allProgressionGroups,
-	chordProgressionVariants
+	dominantProgressionGroupName,
+	progressionGroupNameByChordProgression
 } from "$data/core-progressions.js";
 
 export type ProgressionGroupProfile = {
@@ -27,15 +28,8 @@ export const progressionGroupProfileByName = new Map(
 	progressionGroupProfiles.map((profile) => [profile.name, profile])
 );
 
-export const groupNameByChordProgression = new Map(
-	allProgressionGroups.flatMap((group) =>
-		group.progressions.flatMap((progression) =>
-			chordProgressionVariants(progression.chordProgression).map(
-				(variant): [string, string] => [variant, group.name]
-			)
-		)
-	)
-);
+export const groupNameByChordProgression =
+	progressionGroupNameByChordProgression;
 
 export const progressionGroupProfileFor = (
 	chordProgression: string
@@ -46,27 +40,6 @@ export const progressionGroupProfileFor = (
 		: null;
 };
 
-export type WeightedProgression = {
-	chordProgression: string;
-	matchCount: number;
-};
+export type { WeightedProgression } from "$data/core-progressions.js";
 
-export const dominantGroupName = (
-	progressions: readonly WeightedProgression[]
-): string | null => {
-	const totalsByGroup = progressions.reduce(
-		(totals, { chordProgression, matchCount }) => {
-			const groupName = groupNameByChordProgression.get(chordProgression);
-			if (!groupName) return totals;
-			return totals.set(groupName, (totals.get(groupName) ?? 0) + matchCount);
-		},
-		new Map<string, number>()
-	);
-
-	return (
-		[...totalsByGroup.entries()].sort(
-			(first, second) =>
-				second[1] - first[1] || first[0].localeCompare(second[0])
-		)[0]?.[0] ?? null
-	);
-};
+export const dominantGroupName = dominantProgressionGroupName;

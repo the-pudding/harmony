@@ -10,9 +10,10 @@
 		readHarmonyMapUrlState,
 		replaceHarmonyMapStateInUrl
 	} from "./harmonyMapUrlState.js";
+	import { currentSearchParams } from "../shared/currentSearchParams.js";
 	import EmbeddingView from "./views/EmbeddingView.svelte";
 
-	const initialUrlState = readHarmonyMapUrlState(page.url.searchParams);
+	const initialUrlState = readHarmonyMapUrlState(currentSearchParams());
 
 	const coverage = createAllSongsCoverageState();
 

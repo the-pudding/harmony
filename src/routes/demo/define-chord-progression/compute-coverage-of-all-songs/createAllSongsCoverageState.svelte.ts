@@ -13,6 +13,7 @@ import {
 	replaceSongCorpusFilterInUrl,
 	type SongCorpusFilterUrlState
 } from "../../songCorpusFilterUrlParams.js";
+import { currentSearchParams } from "../../shared/currentSearchParams.js";
 import {
 	initCoverageWorkerPool,
 	computeCoverageOfAllSongs,
@@ -21,7 +22,7 @@ import {
 } from "./index.js";
 
 export const createAllSongsCoverageState = () => {
-	const initialFilters = readSongCorpusFilterUrlState(page.url.searchParams);
+	const initialFilters = readSongCorpusFilterUrlState(currentSearchParams());
 
 	let recentSongs = $state<GroupedSong[]>([]);
 	let fullSongs = $state<GroupedSong[] | null>(null);
