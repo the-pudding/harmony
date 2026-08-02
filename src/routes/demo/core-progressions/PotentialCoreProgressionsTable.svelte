@@ -1,8 +1,7 @@
 <script lang="ts">
 	import type { PotentialCoreProgressionRow } from "./buildPotentialCoreProgressions.js";
 	import CoveragePercentHistogram from "./CoveragePercentHistogram.svelte";
-
-	const SONG_URL_BASE = "/demo/define-chord-progression/?song=";
+	import { buildDefineChordProgressionSongUrl } from "../shared/defineChordProgressionSongUrl.js";
 
 	type Props = {
 		rows: PotentialCoreProgressionRow[];
@@ -50,7 +49,7 @@
 								{#each row.topSongs as song (song.songKey)}
 									<li>
 										<a
-											href="{SONG_URL_BASE}{song.songKey}"
+											href={buildDefineChordProgressionSongUrl(song.songKey)}
 											target="_blank"
 											rel="noopener"
 											class="song-link"

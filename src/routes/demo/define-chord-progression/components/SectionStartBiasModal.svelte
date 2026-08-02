@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { SongBiasOverride } from "../compute-coverage-of-all-songs/index.js";
+	import { buildDefineChordProgressionSongUrl } from "../../shared/defineChordProgressionSongUrl.js";
 
 	type Props = {
 		biasOverrides: SongBiasOverride[];
@@ -56,7 +57,7 @@
 								<td>
 									<a
 										class="song-link"
-										href="/demo/define-chord-progression/?song={row.songKey}"
+										href={buildDefineChordProgressionSongUrl(row.songKey)}
 										target="_blank"
 										rel="noreferrer">{row.title}</a
 									>

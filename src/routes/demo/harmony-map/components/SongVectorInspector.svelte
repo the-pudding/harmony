@@ -1,5 +1,7 @@
 <script lang="ts">
+	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { SongCoverageEntry } from "../../define-chord-progression/compute-coverage-of-all-songs/index.js";
+	import SongIdentityLabel from "../../shared/SongIdentityLabel.svelte";
 	import type {
 		ComponentLoading,
 		Coords
@@ -17,6 +19,7 @@
 
 	type Props = {
 		songs: SongCoverageEntry[];
+		songByKey: Map<string, GroupedSong>;
 		vocabulary: ProgressionVocabulary;
 		vectorSet: SongVectorSet;
 		selectedSongKey: string | null;
@@ -29,6 +32,7 @@
 
 	const {
 		songs,
+		songByKey,
 		vocabulary,
 		vectorSet,
 		selectedSongKey,
@@ -112,6 +116,10 @@
 		selectedEntry ? dominantGroupName(selectedEntry.progressionCounts) : null
 	);
 
+	const selectedSong = $derived(
+		selectedSongKey === null ? null : (songByKey.get(selectedSongKey) ?? null)
+	);
+
 	const loadingLabel = (loading: ComponentLoading): string =>
 		vocabulary.entries[loading.featureIndex]?.chordProgression ?? "";
 
@@ -155,10 +163,20 @@
 	{:else}
 		<div class="selected-header">
 			<div class="selected-identity">
-				<span class="selected-title">{selectedEntry.title}</span>
+				{#if selectedSong}
+					<SongIdentityLabel
+						title={selectedSong.title}
+						artists={selectedSong.artists}
+						year={selectedSong.year}
+						source={selectedSong.source}
+						songKey={selectedSong.songKey}
+						titleAsLink
+					/>
+				{:else}
+					<span class="selected-title">{selectedEntry.title}</span>
+				{/if}
 				<span class="selected-artists">{selectedEntry.artists.join(", ")}</span>
 			</div>
-			<button class="clear-button" onclick={() => onSelect(null)}>clear</button>
 		</div>
 
 		<dl class="facts">
@@ -362,7 +380,6 @@
 	.selected-header {
 		display: flex;
 		align-items: flex-start;
-		justify-content: space-between;
 		gap: 0.5rem;
 	}
 
@@ -381,23 +398,6 @@
 	.selected-artists {
 		font-size: 0.7rem;
 		color: #71717a;
-	}
-
-	.clear-button {
-		flex-shrink: 0;
-		border: 1px solid rgba(63, 63, 70, 0.9);
-		border-radius: 0.25rem;
-		background: transparent;
-		color: #a1a1aa;
-		font-family: inherit;
-		font-size: 0.65rem;
-		padding: 0.125rem 0.375rem;
-		cursor: pointer;
-	}
-
-	.clear-button:hover {
-		color: #f4f4f5;
-		border-color: rgba(113, 113, 122, 0.9);
 	}
 
 	.facts {

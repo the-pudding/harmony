@@ -10,6 +10,7 @@
 	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
 	import { createAllSongsCoverageState } from "../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
 	import { filterCoverageResultForProgressions } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
+	import { openDefineChordProgressionSong } from "../shared/defineChordProgressionSongUrl.js";
 	import ProgressionGroupSection from "./ProgressionGroupSection.svelte";
 	import PotentialCoreProgressionsTable from "./PotentialCoreProgressionsTable.svelte";
 	import { buildPotentialCoreProgressions } from "./buildPotentialCoreProgressions.js";
@@ -57,7 +58,7 @@
 
 	function handleSelectSong(key: string) {
 		selectedSongKey = key;
-		window.open(`/demo/define-chord-progression/?song=${key}`, "_blank");
+		openDefineChordProgressionSong(key);
 	}
 </script>
 

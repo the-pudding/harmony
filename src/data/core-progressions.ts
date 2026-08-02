@@ -339,6 +339,50 @@ export const allProgressionGroups: ProgressionGroup[] = [
 	emoPopProgressions
 ];
 
+const TABLEAU10_COLORS = [
+	"#4e79a7",
+	"#f28e2c",
+	"#e15759",
+	"#76b7b2",
+	"#59a14f",
+	"#edc948",
+	"#b07aa1",
+	"#ff9da7",
+	"#9c755f",
+	"#bab0ac"
+] as const;
+
+export const UNGROUPED_PROGRESSION_GROUP_COLOR = "#52525b";
+export const UNGROUPED_PROGRESSION_GROUP_LABEL = "no core match";
+
+export const progressionGroupColorByName = new Map(
+	allProgressionGroups.map((group, index) => [
+		group.name,
+		TABLEAU10_COLORS[index % TABLEAU10_COLORS.length]
+	])
+);
+
+export const colorForProgressionGroupName = (
+	groupName: string | null
+): string =>
+	groupName === null
+		? UNGROUPED_PROGRESSION_GROUP_COLOR
+		: (progressionGroupColorByName.get(groupName) ??
+			UNGROUPED_PROGRESSION_GROUP_COLOR);
+
+export type ProgressionGroupLegendItem = { label: string; color: string };
+
+export const progressionGroupLegendItems: ProgressionGroupLegendItem[] = [
+	...allProgressionGroups.map((group) => ({
+		label: group.name,
+		color: colorForProgressionGroupName(group.name)
+	})),
+	{
+		label: UNGROUPED_PROGRESSION_GROUP_LABEL,
+		color: UNGROUPED_PROGRESSION_GROUP_COLOR
+	}
+];
+
 const coreProgressions: CoreProgression[] = allProgressionGroups.flatMap(
 	(group) => group.progressions
 );

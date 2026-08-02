@@ -3,7 +3,9 @@
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { SongCoverageEntry } from "../../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import EmbeddingScatter from "../components/EmbeddingScatter.svelte";
+	import GroupColorLegend from "../components/GroupColorLegend.svelte";
 	import SongVectorInspector from "../components/SongVectorInspector.svelte";
+	import WeightingControls from "../components/WeightingControls.svelte";
 	import type { ScatterPoint } from "../components/scatterPoint.js";
 	import {
 		EMBEDDING_METHODS,
@@ -14,11 +16,6 @@
 		dominantGroupName,
 		findNearestNeighbors
 	} from "../embedding/vectors/index.js";
-	import {
-		GROUP_COLOR_LEGEND_EXPLANATION,
-		GROUP_COLOR_LEGEND_TITLE,
-		groupLegendItems
-	} from "../progressionGroupColors.js";
 	import {
 		embeddingMethodDescriptions,
 		embeddingMethodLabels
@@ -97,20 +94,6 @@
 	);
 
 	const isComputing = $derived(embedding.status === "computing");
-
-	const toggleOption = (key: "useTfIdf" | "l2Normalize") => {
-		embedding.setOptions({
-			...embedding.options,
-			[key]: !embedding.options[key]
-		});
-	};
-
-	const toggleBinaryWeighting = () => {
-		embedding.setOptions({
-			...embedding.options,
-			weighting: embedding.options.weighting === "binary" ? "raw" : "binary"
-		});
-	};
 </script>
 
 <div class="embedding-view">
@@ -149,32 +132,10 @@
 				{/each}
 			</div>
 
-			<div class="weighting-controls">
-				<label class="toggle">
-					<input
-						type="checkbox"
-						checked={embedding.options.useTfIdf}
-						onchange={() => toggleOption("useTfIdf")}
-					/>
-					TF-IDF
-				</label>
-				<label class="toggle">
-					<input
-						type="checkbox"
-						checked={embedding.options.l2Normalize}
-						onchange={() => toggleOption("l2Normalize")}
-					/>
-					L2 norm
-				</label>
-				<label class="toggle">
-					<input
-						type="checkbox"
-						checked={embedding.options.weighting === "binary"}
-						onchange={toggleBinaryWeighting}
-					/>
-					binary counts
-				</label>
-			</div>
+			<WeightingControls
+				options={embedding.options}
+				onChange={embedding.setOptions}
+			/>
 
 			<span class="dimension-count">
 				{embedding.vocabulary.entries.length} dimensions
@@ -205,32 +166,13 @@
 					<span class="plot-overlay-text">Computing embedding…</span>
 				</div>
 			{/if}
-			<div class="legend">
-				<div class="legend-header">
-					<span class="legend-title">{GROUP_COLOR_LEGEND_TITLE}</span>
-					<button
-						class="legend-info"
-						type="button"
-						aria-label={GROUP_COLOR_LEGEND_EXPLANATION}
-					>
-						<span aria-hidden="true">i</span>
-						<span class="legend-info-tooltip" aria-hidden="true"
-							>{GROUP_COLOR_LEGEND_EXPLANATION}</span
-						>
-					</button>
-				</div>
-				{#each groupLegendItems as item (item.label)}
-					<div class="legend-item">
-						<span class="legend-dot" style:background={item.color}></span>
-						<span>{item.label}</span>
-					</div>
-				{/each}
-			</div>
+			<GroupColorLegend />
 		</div>
 
 		<aside class="inspector-column">
 			<SongVectorInspector
 				songs={songCoverages}
+				{songByKey}
 				vocabulary={embedding.vocabulary}
 				vectorSet={embedding.vectorSet}
 				{selectedSongKey}
@@ -366,20 +308,6 @@
 		color: #71717a;
 	}
 
-	.weighting-controls {
-		display: flex;
-		gap: 0.75rem;
-	}
-
-	.toggle {
-		display: flex;
-		align-items: center;
-		gap: 0.3125rem;
-		font-size: 0.7rem;
-		color: #a1a1aa;
-		cursor: pointer;
-	}
-
 	.dimension-count {
 		font-size: 0.7rem;
 		color: #71717a;
@@ -413,107 +341,6 @@
 	.plot-overlay-text {
 		font-size: 0.75rem;
 		color: #a1a1aa;
-	}
-
-	.legend {
-		position: absolute;
-		bottom: 0.75rem;
-		left: 0.75rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		background: rgba(9, 9, 11, 0.75);
-		border: 1px solid rgba(63, 63, 70, 0.6);
-		border-radius: 0.375rem;
-		padding: 0.5rem 0.75rem;
-		pointer-events: none;
-		max-width: 14rem;
-	}
-
-	.legend-header {
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-		padding-bottom: 0.25rem;
-		margin-bottom: 0.125rem;
-		border-bottom: 1px solid rgba(63, 63, 70, 0.6);
-	}
-
-	.legend-title {
-		font-size: 0.6rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: #a1a1aa;
-	}
-
-	.legend-info {
-		position: relative;
-		pointer-events: auto;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-		width: 0.875rem;
-		height: 0.875rem;
-		padding: 0;
-		border-radius: 50%;
-		border: 1px solid rgba(113, 113, 122, 0.8);
-		background: transparent;
-		color: #a1a1aa;
-		font-family: inherit;
-		font-size: 0.55rem;
-		font-style: italic;
-		cursor: help;
-	}
-
-	.legend-info:hover,
-	.legend-info:focus-visible {
-		color: #f4f4f5;
-		border-color: rgba(161, 161, 170, 0.9);
-	}
-
-	.legend-info-tooltip {
-		position: absolute;
-		bottom: calc(100% + 0.5rem);
-		left: 0;
-		width: 16rem;
-		padding: 0.5rem 0.625rem;
-		border-radius: 0.375rem;
-		border: 1px solid rgba(63, 63, 70, 0.9);
-		background: rgba(9, 9, 11, 0.98);
-		color: #d4d4d8;
-		font-size: 0.65rem;
-		font-style: normal;
-		line-height: 1.5;
-		text-transform: none;
-		letter-spacing: normal;
-		opacity: 0;
-		visibility: hidden;
-		transition:
-			opacity 0.15s ease,
-			visibility 0.15s ease;
-	}
-
-	.legend-info:hover .legend-info-tooltip,
-	.legend-info:focus-visible .legend-info-tooltip {
-		opacity: 1;
-		visibility: visible;
-	}
-
-	.legend-item {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.6rem;
-		color: #a1a1aa;
-	}
-
-	.legend-dot {
-		width: 0.5rem;
-		height: 0.5rem;
-		border-radius: 50%;
-		flex-shrink: 0;
 	}
 
 	.inspector-column {
