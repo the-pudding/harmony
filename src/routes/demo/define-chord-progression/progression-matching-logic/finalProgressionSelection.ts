@@ -15,7 +15,8 @@ import {
 	emptyCoverage,
 	greedilySelectProgressions,
 	mergeCoverage,
-	type SectionCoverage
+	type SectionCoverage,
+	type SectionStartBiasOverride
 } from "./greedyProgressionSelection.js";
 
 export type FinalProgressionSelection = {
@@ -25,6 +26,7 @@ export type FinalProgressionSelection = {
 	gapSelected: ProgressionWithMatchStats[];
 	coverage: SectionCoverage;
 	explainedPercent: number;
+	biasOverrides: SectionStartBiasOverride[];
 };
 
 export const buildFinalChordAnnotations = (
@@ -110,6 +112,10 @@ export const selectFinalProgressions = (
 		coreSelected: coreSelection.selected,
 		gapSelected: gapSelection.selected,
 		coverage: gapSelection.coverage,
-		explainedPercent: Math.round(coveragePercent(song, gapSelection.coverage))
+		explainedPercent: Math.round(coveragePercent(song, gapSelection.coverage)),
+		biasOverrides: [
+			...coreSelection.biasOverrides,
+			...gapSelection.biasOverrides
+		]
 	};
 };

@@ -1,6 +1,13 @@
 import coreProgressionsData from "$data/core-progressions.js";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 import { selectFinalProgressions } from "../progression-matching-logic/finalProgressionSelection.js";
+import type { SectionStartBiasOverride } from "../progression-matching-logic/greedyProgressionSelection.js";
+
+export type SongBiasOverride = SectionStartBiasOverride & {
+	songKey: string;
+	title: string;
+	artists: string[];
+};
 
 export type SongCoverageEntry = {
 	songKey: string;
@@ -8,6 +15,7 @@ export type SongCoverageEntry = {
 	artists: string[];
 	coveragePercent: number;
 	matchingProgressions: string[];
+	biasOverrides: SongBiasOverride[];
 };
 
 export type CoverageWorkerInitMessage = {
@@ -49,7 +57,13 @@ const computeOneSong = (song: GroupedSong): SongCoverageEntry => {
 		title: song.title,
 		artists: song.artists,
 		coveragePercent: selection.explainedPercent,
-		matchingProgressions: selection.coreSelected.map((m) => m.chordProgression)
+		matchingProgressions: selection.coreSelected.map((m) => m.chordProgression),
+		biasOverrides: selection.biasOverrides.map((override) => ({
+			...override,
+			songKey: song.songKey,
+			title: song.title,
+			artists: song.artists
+		}))
 	};
 };
 

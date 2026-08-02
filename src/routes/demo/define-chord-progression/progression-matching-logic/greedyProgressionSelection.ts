@@ -7,9 +7,16 @@ import {
 
 export type SectionCoverage = number[][];
 
+export type SectionStartBiasOverride = {
+	winnerProgression: string;
+	leaderProgression: string;
+	sacrificedPercent: number;
+};
+
 export type SelectionResult = {
 	selected: ProgressionWithMatchStats[];
 	coverage: SectionCoverage;
+	biasOverrides: SectionStartBiasOverride[];
 };
 
 export const emptyCoverage = (song: GroupedSong): SectionCoverage =>
@@ -52,24 +59,6 @@ export const mergeCoverage = (
 	]);
 
 export const PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT = 5;
-
-const LOG_SECTION_START_BIAS_OVERRIDES = true;
-
-const logBiasOverride = (
-	song: GroupedSong,
-	winner: ProgressionWithMatchStats,
-	leader: ProgressionWithMatchStats,
-	winnerStartCount: number,
-	coverageDiff: number
-): void => {
-	if (!LOG_SECTION_START_BIAS_OVERRIDES) return;
-	const origin =
-		typeof location !== "undefined" ? location.origin : "http://localhost:5173";
-	const url = `${origin}/demo/define-chord-progression/?song=${song.songKey}`;
-	console.log(
-		`[section-start bias] ${song.title} — ${winner.chordProgression} (starts ${winnerStartCount} section${winnerStartCount === 1 ? "" : "s"}) over ${leader.chordProgression} (-${coverageDiff} chord${coverageDiff === 1 ? "" : "s"})\n  ${url}`
-	);
-};
 
 type GreedySelectOptions = {
 	getCandidateCoverage?: (
@@ -141,7 +130,9 @@ export const greedilySelectProgressions = (
 			);
 		});
 
-		if (selectable.length === 0) return { selected: [], coverage };
+		if (selectable.length === 0) {
+			return { selected: [], coverage, biasOverrides: [] };
+		}
 
 		const leaderCount = Math.max(
 			...selectable.map((c) => totalMatchedChords(c.chordProgression))
@@ -177,19 +168,16 @@ export const greedilySelectProgressions = (
 
 		const coverageDiff =
 			leaderCount - totalMatchedChords(winner.chordProgression);
-
-		if (biasApplied) {
-			logBiasOverride(
-				song,
-				winner,
-				leader,
-				sectionStartCount(winner.chordProgression),
-				coverageDiff
-			);
-		}
-
 		const sacrificedPercent =
 			totalChords > 0 ? Math.round((coverageDiff / totalChords) * 100) : 0;
+
+		const roundOverride: SectionStartBiasOverride | null = biasApplied
+			? {
+					winnerProgression: winner.chordProgression,
+					leaderProgression: leader.chordProgression,
+					sacrificedPercent
+				}
+			: null;
 
 		const markedWinner = biasApplied
 			? {
@@ -208,7 +196,10 @@ export const greedilySelectProgressions = (
 		const rest = pickBest(nextRemaining, nextCoverage);
 		return {
 			selected: [markedWinner, ...rest.selected],
-			coverage: rest.coverage
+			coverage: rest.coverage,
+			biasOverrides: roundOverride
+				? [roundOverride, ...rest.biasOverrides]
+				: rest.biasOverrides
 		};
 	};
 

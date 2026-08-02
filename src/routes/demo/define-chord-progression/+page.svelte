@@ -9,6 +9,7 @@
 	import ProgressionMatchTable from "./components/ProgressionMatchTable.svelte";
 	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
 	import ProgressionDefinitionCriteriaTable from "./components/ProgressionDefinitionCriteriaTable.svelte";
+	import type { SongBiasOverride } from "./compute-coverage-of-all-songs/index.js";
 	import CodeReference from "./components/CodeReference.svelte";
 	import CollapsiblePanel from "./components/CollapsiblePanel.svelte";
 	import CoreProgressionRow from "./components/CoreProgressionRow.svelte";
@@ -63,6 +64,9 @@
 	const GREEDY_SORT_LABEL = `highest song coverage first — but within ${PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}% coverage, prefer progressions that start more sections (length as final tiebreaker)`;
 
 	const allSongsCoverageResult = $derived(coverage.allSongsCoverageResult);
+	const corpusBiasOverrides = $derived<SongBiasOverride[]>(
+		allSongsCoverageResult?.biasOverrides ?? []
+	);
 
 	const finalSelection = $derived(
 		selectedSong
@@ -269,7 +273,9 @@
 					expandLabel="Expand progression definition criteria"
 					collapseLabel="Collapse progression definition criteria"
 				>
-					<ProgressionDefinitionCriteriaTable />
+					<ProgressionDefinitionCriteriaTable
+						biasOverrides={corpusBiasOverrides}
+					/>
 				</CollapsiblePanel>
 
 				<h3 class="walkthrough-heading">WALKTHROUGH OF ALGORITHM</h3>

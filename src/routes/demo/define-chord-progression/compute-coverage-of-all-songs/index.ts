@@ -5,15 +5,17 @@ import type {
 	CoverageWorkerInitMessage,
 	CoverageWorkerComputeMessage,
 	CoverageWorkerResponse,
-	SongCoverageEntry
+	SongCoverageEntry,
+	SongBiasOverride
 } from "./worker.js";
 
-export type { SongCoverageEntry };
+export type { SongCoverageEntry, SongBiasOverride };
 
 export type AllSongsCoverageResult = {
 	songCoverages: SongCoverageEntry[];
 	progressionMatchRates: Record<string, number>;
 	progressionMatchCounts: Record<string, number>;
+	biasOverrides: SongBiasOverride[];
 };
 
 const WORKER_POOL_MAX = 8;
@@ -105,7 +107,8 @@ export const computeCoverageOfAllSongs = async (
 		return {
 			songCoverages: [],
 			progressionMatchRates: {},
-			progressionMatchCounts: {}
+			progressionMatchCounts: {},
+			biasOverrides: []
 		};
 	}
 
@@ -130,8 +133,14 @@ export const computeCoverageOfAllSongs = async (
 			songCoverages.map((s) => s.matchingProgressions),
 			songCoverages.length
 		);
+	const biasOverrides = songCoverages.flatMap((s) => s.biasOverrides);
 
-	return { songCoverages, progressionMatchRates, progressionMatchCounts };
+	return {
+		songCoverages,
+		progressionMatchRates,
+		progressionMatchCounts,
+		biasOverrides
+	};
 };
 
 export const terminateCoverageWorkerPool = (): void => {
@@ -150,9 +159,13 @@ export const filterCoverageResultForProgressions = (
 	const songCoverages = result.songCoverages.filter((s) =>
 		s.matchingProgressions.some((p) => progressionSet.has(p))
 	);
+	const filteredSongKeys = new Set(songCoverages.map((s) => s.songKey));
 	return {
 		songCoverages,
 		progressionMatchRates: result.progressionMatchRates,
-		progressionMatchCounts: result.progressionMatchCounts
+		progressionMatchCounts: result.progressionMatchCounts,
+		biasOverrides: result.biasOverrides.filter((o) =>
+			filteredSongKeys.has(o.songKey)
+		)
 	};
 };

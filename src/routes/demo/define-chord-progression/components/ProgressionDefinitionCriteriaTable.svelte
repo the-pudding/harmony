@@ -1,5 +1,6 @@
 <script lang="ts">
 	import CodeReference from "./CodeReference.svelte";
+	import SectionStartBiasModal from "./SectionStartBiasModal.svelte";
 	import {
 		MIN_PROGRESSION_OCCURRENCES,
 		MIN_FULL_SECTION_OCCURRENCES
@@ -9,6 +10,12 @@
 		MIN_PROGRESSION_LENGTH,
 		MAX_PROGRESSION_LENGTH
 	} from "../progression-matching-logic/progressionConstraints.js";
+	import type { SongBiasOverride } from "../compute-coverage-of-all-songs/index.js";
+
+	type Props = { biasOverrides: SongBiasOverride[] };
+	let { biasOverrides }: Props = $props();
+
+	let showBiasModal = $state(false);
 </script>
 
 <div class="criteria-tables">
@@ -160,9 +167,19 @@
 					<td>
 						Within a <span class="const-value"
 							>{PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}%</span
-						> coverage tolerance each greedy round, prefer the candidate that starts
+						>
+						coverage tolerance each greedy round, prefer the candidate that starts
 						the most sections — since the vast majority of real progressions begin
 						at the top of a section
+						<button
+							class="bias-songs-btn"
+							onclick={() => (showBiasModal = true)}
+							disabled={biasOverrides.length === 0}
+						>
+							{biasOverrides.length === 0
+								? "loading…"
+								: `${biasOverrides.length} override${biasOverrides.length === 1 ? "" : "s"} in corpus`}
+						</button>
 					</td>
 					<td>
 						<CodeReference
@@ -227,6 +244,13 @@
 		</table>
 	</section>
 </div>
+
+{#if showBiasModal}
+	<SectionStartBiasModal
+		{biasOverrides}
+		onclose={() => (showBiasModal = false)}
+	/>
+{/if}
 
 <style>
 	.criteria-tables {
@@ -305,5 +329,34 @@
 		text-decoration: underline;
 		text-underline-offset: 3px;
 		color: #f4f4f5;
+	}
+
+	.bias-songs-btn {
+		display: inline-block;
+		margin-top: 0.4rem;
+		padding: 0.15rem 0.45rem;
+		font-size: 0.6rem;
+		font-family: inherit;
+		color: rgba(251, 191, 36, 0.75);
+		background: transparent;
+		border: 1px solid rgba(251, 191, 36, 0.3);
+		border-radius: 0.25rem;
+		cursor: pointer;
+		white-space: nowrap;
+		transition:
+			color 0.15s ease,
+			border-color 0.15s ease,
+			background 0.15s ease;
+	}
+
+	.bias-songs-btn:hover:not(:disabled) {
+		color: rgba(251, 191, 36, 1);
+		border-color: rgba(251, 191, 36, 0.6);
+		background: rgba(251, 191, 36, 0.06);
+	}
+
+	.bias-songs-btn:disabled {
+		opacity: 0.45;
+		cursor: default;
 	}
 </style>
