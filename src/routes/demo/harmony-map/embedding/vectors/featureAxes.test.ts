@@ -12,6 +12,7 @@ const makeSong = (
 			scale:
 				scale as SongProgressionCounts["progressionCounts"][number]["scale"],
 			matchCount,
+			coveragePercent: 0,
 			isCore: true
 		})
 	)

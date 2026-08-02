@@ -11,8 +11,14 @@
 	import { createAllSongsCoverageState } from "../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
 	import { filterCoverageResultForProgressions } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import ProgressionGroupSection from "./ProgressionGroupSection.svelte";
+	import PotentialCoreProgressionsTable from "./PotentialCoreProgressionsTable.svelte";
+	import { buildPotentialCoreProgressions } from "./buildPotentialCoreProgressions.js";
+
+	type Tab = "core" | "potential";
 
 	const coverage = createAllSongsCoverageState();
+
+	let activeTab = $state<Tab>("core");
 
 	const groupMatchCount = (group: ProgressionGroup): number => {
 		const result = coverage.allSongsCoverageResult;
@@ -30,6 +36,13 @@
 			(a, b) => groupMatchCount(b) - groupMatchCount(a)
 		);
 	});
+
+	const potentialRows = $derived.by(() => {
+		if (!coverage.allSongsCoverageResult) return [];
+		return buildPotentialCoreProgressions(coverage.allSongsCoverageResult);
+	});
+
+	const totalSongs = $derived(coverage.allSongsCoverageResult?.songCoverages.length ?? 0);
 
 	let pinnedProgression = $state<string | null>(null);
 	let selectedSongKey = $state("");
@@ -59,13 +72,30 @@
 <div class="page" style="--top-nav-height: {TOP_NAV_HEIGHT};">
 	<TopNavBar showSearch={false} />
 
-	<div class="content">
+	<div class="content" class:content-wide={activeTab === "potential"}>
 		<div class="page-header">
 			<h1 class="page-title">Core progressions</h1>
-			<p class="page-subtitle">
-				Coverage of each progression group across the song corpus. Click a
-				progression to highlight matching songs in the beeswarm.
-			</p>
+		</div>
+
+		<div class="tab-bar" role="tablist">
+			<button
+				class="tab"
+				class:tab-active={activeTab === "core"}
+				role="tab"
+				aria-selected={activeTab === "core"}
+				onclick={() => (activeTab = "core")}
+			>
+				Core progressions
+			</button>
+			<button
+				class="tab"
+				class:tab-active={activeTab === "potential"}
+				role="tab"
+				aria-selected={activeTab === "potential"}
+				onclick={() => (activeTab = "potential")}
+			>
+				Potential core progressions
+			</button>
 		</div>
 
 		<div class="controls">
@@ -88,18 +118,22 @@
 			{/if}
 		</div>
 
-		<div class="groups">
-			{#each sortedGroups as group (group.name)}
-				<ProgressionGroupSection
-					{group}
-					coverageResult={coverage.allSongsCoverageResult}
-					{pinnedProgression}
-					{selectedSongKey}
-					onSelectProgression={handleSelectProgression}
-					onSelectSong={handleSelectSong}
-				/>
-			{/each}
-		</div>
+		{#if activeTab === "core"}
+			<div class="groups">
+				{#each sortedGroups as group (group.name)}
+					<ProgressionGroupSection
+						{group}
+						coverageResult={coverage.allSongsCoverageResult}
+						{pinnedProgression}
+						{selectedSongKey}
+						onSelectProgression={handleSelectProgression}
+						onSelectSong={handleSelectSong}
+					/>
+				{/each}
+			</div>
+		{:else}
+			<PotentialCoreProgressionsTable rows={potentialRows} {totalSongs} />
+		{/if}
 	</div>
 </div>
 
@@ -130,6 +164,11 @@
 		max-width: 56rem;
 		margin: 0 auto;
 		box-sizing: border-box;
+		transition: max-width 0.2s ease;
+	}
+
+	.content-wide {
+		max-width: 80rem;
 	}
 
 	.page-header {
@@ -145,11 +184,34 @@
 		color: #f4f4f5;
 	}
 
-	.page-subtitle {
-		font-size: 0.8125rem;
+	.tab-bar {
+		display: flex;
+		gap: 0.25rem;
+		border-bottom: 1px solid rgba(63, 63, 70, 0.7);
+		margin-bottom: -0.5rem;
+	}
+
+	.tab {
+		border: none;
+		border-bottom: 2px solid transparent;
+		background: transparent;
 		color: #71717a;
-		margin: 0;
-		line-height: 1.5;
+		font-family: inherit;
+		font-size: 0.75rem;
+		padding: 0.5rem 0.75rem;
+		cursor: pointer;
+		transition:
+			color 0.15s ease,
+			border-color 0.15s ease;
+	}
+
+	.tab:hover {
+		color: #d4d4d8;
+	}
+
+	.tab-active {
+		color: #f4f4f5;
+		border-bottom-color: #6366f1;
 	}
 
 	.controls {

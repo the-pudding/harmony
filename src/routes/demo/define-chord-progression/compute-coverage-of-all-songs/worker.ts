@@ -15,6 +15,7 @@ export type SongProgressionCount = {
 	chordProgression: string;
 	scale: ScaleName;
 	matchCount: number;
+	coveragePercent: number;
 	isCore: boolean;
 };
 
@@ -66,6 +67,7 @@ const toProgressionCount =
 		chordProgression: match.chordProgression,
 		scale: match.scale,
 		matchCount: match.matchCount,
+		coveragePercent: match.coveragePercent,
 		isCore
 	});
 

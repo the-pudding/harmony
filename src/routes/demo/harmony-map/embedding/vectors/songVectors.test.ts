@@ -16,6 +16,7 @@ const makeSong = (
 		chordProgression,
 		scale: "major",
 		matchCount,
+		coveragePercent: 0,
 		isCore: true
 	}))
 });
