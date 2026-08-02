@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from "svelte";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { SongCoverageEntry } from "../../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import EmbeddingScatter from "../components/EmbeddingScatter.svelte";
@@ -18,7 +19,6 @@
 		GROUP_COLOR_LEGEND_TITLE,
 		groupLegendItems
 	} from "../progressionGroupColors.js";
-	import MethodInfoPanel from "../components/MethodInfoPanel.svelte";
 	import {
 		embeddingMethodDescriptions,
 		embeddingMethodLabels
@@ -28,9 +28,16 @@
 		songCoverages: SongCoverageEntry[];
 		songs: GroupedSong[];
 		embedding: EmbeddingState;
+		trailingControls?: Snippet;
 	};
 
-	const { songCoverages, songs, embedding }: Props = $props();
+	const { songCoverages, songs, embedding, trailingControls }: Props = $props();
+
+	const METHOD_DESCRIPTION_SECTIONS = [
+		{ key: "rationale", label: "Why" },
+		{ key: "approach", label: "How" },
+		{ key: "tradeoffs", label: "Tradeoffs" }
+	] as const;
 
 	const AXIS_LABELS_BY_METHOD: Record<
 		EmbeddingMethod,
@@ -108,58 +115,77 @@
 
 <div class="embedding-view">
 	<div class="controls">
-		<div
-			class="method-selector"
-			role="radiogroup"
-			aria-label="Embedding method"
-		>
-			{#each EMBEDDING_METHODS as method (method)}
-				<button
-					class="method-button"
-					class:method-button-active={method === embedding.method}
-					role="radio"
-					aria-checked={method === embedding.method}
-					onclick={() => embedding.setMethod(method)}
-				>
-					{embeddingMethodLabels[method]}
-				</button>
-			{/each}
+		<div class="controls-left">
+			<div
+				class="method-selector"
+				role="radiogroup"
+				aria-label="Embedding method"
+			>
+				{#each EMBEDDING_METHODS as method (method)}
+					{@const description = embeddingMethodDescriptions[method]}
+					<button
+						class="method-button"
+						class:method-button-active={method === embedding.method}
+						role="radio"
+						aria-checked={method === embedding.method}
+						aria-describedby="method-tooltip-{method}"
+						onclick={() => embedding.setMethod(method)}
+					>
+						{embeddingMethodLabels[method]}
+						<span
+							id="method-tooltip-{method}"
+							class="method-tooltip"
+							role="tooltip"
+						>
+							<span class="method-tooltip-summary">{description.summary}</span>
+							{#each METHOD_DESCRIPTION_SECTIONS as section (section.key)}
+								<span class="method-tooltip-section">
+									<span class="method-tooltip-label">{section.label}</span>
+									{description[section.key]}
+								</span>
+							{/each}
+						</span>
+					</button>
+				{/each}
+			</div>
+
+			<div class="weighting-controls">
+				<label class="toggle">
+					<input
+						type="checkbox"
+						checked={embedding.options.useTfIdf}
+						onchange={() => toggleOption("useTfIdf")}
+					/>
+					TF-IDF
+				</label>
+				<label class="toggle">
+					<input
+						type="checkbox"
+						checked={embedding.options.l2Normalize}
+						onchange={() => toggleOption("l2Normalize")}
+					/>
+					L2 norm
+				</label>
+				<label class="toggle">
+					<input
+						type="checkbox"
+						checked={embedding.options.weighting === "binary"}
+						onchange={toggleBinaryWeighting}
+					/>
+					binary counts
+				</label>
+			</div>
+
+			<span class="dimension-count">
+				{embedding.vocabulary.entries.length} dimensions
+			</span>
 		</div>
 
-		<div class="weighting-controls">
-			<label class="toggle">
-				<input
-					type="checkbox"
-					checked={embedding.options.useTfIdf}
-					onchange={() => toggleOption("useTfIdf")}
-				/>
-				TF-IDF
-			</label>
-			<label class="toggle">
-				<input
-					type="checkbox"
-					checked={embedding.options.l2Normalize}
-					onchange={() => toggleOption("l2Normalize")}
-				/>
-				L2 norm
-			</label>
-			<label class="toggle">
-				<input
-					type="checkbox"
-					checked={embedding.options.weighting === "binary"}
-					onchange={toggleBinaryWeighting}
-				/>
-				binary counts
-			</label>
-		</div>
-
-		<span class="dimension-count">
-			{embedding.vocabulary.entries.length} dimensions
-		</span>
-	</div>
-
-	<div class="info">
-		<MethodInfoPanel description={embeddingMethodDescriptions[embedding.method]} />
+		{#if trailingControls}
+			<div class="controls-right">
+				{@render trailingControls()}
+			</div>
+		{/if}
 	</div>
 
 	<div class="body">
@@ -232,15 +258,29 @@
 	.controls {
 		display: flex;
 		align-items: center;
+		justify-content: space-between;
 		gap: 1.25rem;
 		flex-wrap: wrap;
 		padding: 0 1.25rem;
 		flex-shrink: 0;
+		position: relative;
+		z-index: 10;
 	}
 
-	.info {
+	.controls-left {
+		display: flex;
+		align-items: center;
+		gap: 1.25rem;
+		flex-wrap: wrap;
+		min-width: 0;
+	}
+
+	.controls-right {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
 		flex-shrink: 0;
-		padding: 0 1.25rem;
+		margin-left: auto;
 	}
 
 	.method-selector {
@@ -252,6 +292,7 @@
 	}
 
 	.method-button {
+		position: relative;
 		border: none;
 		border-radius: 0.25rem;
 		background: transparent;
@@ -272,6 +313,57 @@
 	.method-button-active {
 		background: rgba(99, 102, 241, 0.3);
 		color: #f4f4f5;
+	}
+
+	.method-tooltip {
+		position: absolute;
+		top: calc(100% + 0.5rem);
+		left: 0;
+		z-index: 20;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		width: 18rem;
+		padding: 0.625rem 0.75rem;
+		border-radius: 0.375rem;
+		border: 1px solid rgba(63, 63, 70, 0.9);
+		background: rgba(9, 9, 11, 0.98);
+		color: #d4d4d8;
+		font-size: 0.65rem;
+		font-weight: 400;
+		line-height: 1.5;
+		text-align: left;
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		transition:
+			opacity 0.15s ease,
+			visibility 0.15s ease;
+	}
+
+	.method-button:hover .method-tooltip,
+	.method-button:focus-visible .method-tooltip {
+		opacity: 1;
+		visibility: visible;
+	}
+
+	.method-tooltip-summary {
+		color: #f4f4f5;
+	}
+
+	.method-tooltip-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+		color: #a1a1aa;
+	}
+
+	.method-tooltip-label {
+		font-size: 0.6rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: #71717a;
 	}
 
 	.weighting-controls {

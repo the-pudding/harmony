@@ -68,7 +68,6 @@ harmony-map/
     EmbeddingScatter.svelte      canvas 2D + d3-zoom, animated position tween
     SongVectorInspector.svelte   per-song vector explainability panel
     SongTooltip.svelte           song hover card
-    MethodInfoPanel.svelte       collapsible method info panel (wraps CollapsiblePanel)
     hoverCardPosition.ts         tooltip placement math
     scatterPoint.ts              ScatterPoint type (separate file — Svelte can't export types)
 ```
@@ -174,7 +173,7 @@ The song hover card wraps `FinalAnnotatedSong` and recomputes `selectFinalProgre
 
 ## 7. Descriptions
 
-`methodDescriptions.ts` is the single source for `{ title, summary, rationale, approach, tradeoffs }` per embedding method, rendered by `MethodInfoPanel.svelte`. **If you change how a method works, update its copy here** — it's the only user-facing explanation of the tradeoffs.
+`methodDescriptions.ts` is the single source for `{ title, summary, rationale, approach, tradeoffs }` per embedding method, shown as a hover tooltip on each method radio button. **If you change how a method works, update its copy here** — it's the only user-facing explanation of the tradeoffs.
 
 ## Adding a new embedding method
 

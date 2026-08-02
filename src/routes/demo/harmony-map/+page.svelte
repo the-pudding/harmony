@@ -59,41 +59,33 @@
 	/>
 </svelte:head>
 
+{#snippet corpusControls()}
+	<SongCorpusFilterToggles
+		showRecentOnly={coverage.showRecentOnly}
+		onRecentChange={coverage.handleRecentToggleChange}
+	/>
+	<span class="status-text" class:error={isError}>{statusText}</span>
+{/snippet}
+
 <div class="page" style="--top-nav-height: {TOP_NAV_HEIGHT};">
 	<TopNavBar showSearch={false} />
 
 	<div class="page-body">
-		<div class="header">
-			<div class="header-left">
-				<h1 class="page-title">Harmony map</h1>
-				<p class="page-subtitle">
-					A 2D embedding of every song's matched-progression vector — switch
-					between UMAP, PCA, and hand-designed feature axes.
-				</p>
+		{#if coverage.allSongsCoverageResult}
+			<EmbeddingView
+				{songCoverages}
+				songs={coverage.baseList}
+				{embedding}
+				trailingControls={corpusControls}
+			/>
+		{:else}
+			<div class="loading-toolbar">
+				{@render corpusControls()}
 			</div>
-
-			<div class="controls">
-				<SongCorpusFilterToggles
-					showRecentOnly={coverage.showRecentOnly}
-					onRecentChange={coverage.handleRecentToggleChange}
-				/>
-				<span class="status-text" class:error={isError}>{statusText}</span>
+			<div class="loading-overlay">
+				<span class="loading-text">{loadingText}</span>
 			</div>
-		</div>
-
-		<div class="view-wrap">
-			{#if coverage.allSongsCoverageResult}
-				<EmbeddingView
-					{songCoverages}
-					songs={coverage.baseList}
-					{embedding}
-				/>
-			{:else}
-				<div class="loading-overlay">
-					<span class="loading-text">{loadingText}</span>
-				</div>
-			{/if}
-		</div>
+		{/if}
 	</div>
 </div>
 
@@ -124,44 +116,16 @@
 		padding: 1rem 0 0;
 		gap: 0.75rem;
 		box-sizing: border-box;
+		position: relative;
 	}
 
-	.header {
-		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 1.5rem;
-		flex-wrap: wrap;
-		flex-shrink: 0;
-		padding: 0 1.25rem;
-	}
-
-	.header-left {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		max-width: 40rem;
-	}
-
-	.page-title {
-		font-size: 1.125rem;
-		font-weight: 600;
-		margin: 0;
-		color: #f4f4f5;
-	}
-
-	.page-subtitle {
-		font-size: 0.75rem;
-		color: #71717a;
-		margin: 0;
-		line-height: 1.5;
-	}
-
-	.controls {
+	.loading-toolbar {
 		display: flex;
 		align-items: center;
+		justify-content: flex-end;
 		gap: 1rem;
 		flex-shrink: 0;
+		padding: 0 1.25rem;
 	}
 
 	.status-text {
@@ -173,19 +137,12 @@
 		color: #fca5a5;
 	}
 
-	.view-wrap {
-		flex: 1;
-		min-height: 0;
-		overflow: hidden;
-		position: relative;
-	}
-
 	.loading-overlay {
-		position: absolute;
-		inset: 0;
+		flex: 1;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		min-height: 0;
 	}
 
 	.loading-text {
