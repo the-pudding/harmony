@@ -222,7 +222,7 @@ The song hover card, extracted from `ForceGraph.svelte` so the graph and the sca
 
 ## 6. URL state
 
-`harmonyMapUrlState.ts` syncs `?view=graph|embedding` and `?method=umap|pca|feature` via `replaceState`, following the same pattern as `songCorpusFilterUrlParams.ts`. Defaults (`graph`, `umap`) are omitted from the URL. The corpus filter params (`popular`, `minSections`) are preserved because writes copy the existing `searchParams`.
+`harmonyMapUrlState.ts` syncs `?view=graph|embedding` and `?method=umap|pca|feature` via `replaceState`, following the same pattern as `songCorpusFilterUrlParams.ts`. Defaults (`graph`, `umap`) are omitted from the URL. The corpus filter param (`recent`) is preserved because writes copy the existing `searchParams`.
 
 ## 7. Descriptions
 
@@ -253,5 +253,5 @@ Note: `npm run build` currently fails while prerendering `/demo/core-progression
 
 - **Don't touch `matchingProgressions`.** It is core-only and load-bearing for the force graph, beeswarm and match-rate stats. Add to `progressionCounts` instead.
 - **No magic numbers.** Every threshold and weight belongs in `embedding/vectors/constants.ts` (or the constant block at the top of the component).
-- The corpus is filtered by the shared popular-only / multi-section toggles in the header. Changing them rebuilds coverage _and_ invalidates the embedding cache — expect a recompute.
+- The corpus is filtered by the shared "recent songs only" toggle in the header. Changing it rebuilds coverage _and_ invalidates the embedding cache — expect a recompute.
 - Vectors and the matrix are plain `number[][]`, structured-cloned to the worker. That's deliberate for readability; if the full corpus ever feels sluggish, typed arrays + transferables are the first optimization, not a different algorithm.

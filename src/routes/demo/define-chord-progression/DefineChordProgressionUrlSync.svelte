@@ -15,7 +15,7 @@
 
 	type Props = {
 		songsReady: boolean;
-		showPopularOnly: boolean;
+		showRecentOnly: boolean;
 		searchableSongs: GroupedSong[];
 		baseList: GroupedSong[];
 		fullSongs: GroupedSong[] | null;
@@ -27,7 +27,7 @@
 
 	let {
 		songsReady,
-		showPopularOnly,
+		showRecentOnly,
 		searchableSongs,
 		baseList,
 		fullSongs,
@@ -125,7 +125,7 @@
 	$effect(() => {
 		if (!urlInitialized || applyingFromUrl) return;
 
-		showPopularOnly;
+		showRecentOnly;
 		baseList;
 
 		if (selectedKey && isSongKeyKnown(selectedKey)) return;

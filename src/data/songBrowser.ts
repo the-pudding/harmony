@@ -92,12 +92,6 @@ export const inferKeyLabel = (
 	return null;
 };
 
-export type Top10Song = {
-	title: string;
-	artists: string[];
-	year: number;
-};
-
 const parseChord = (chord: ProgressionChordInput): ParsedProgressionChord => {
 	const rootPitchClass = noteNameToPitchClass(chord.noteName);
 	const bassPitchClass = chord.bassNoteName
@@ -184,51 +178,3 @@ export const groupSongs = (songs: SongInput[]): GroupedSong[] => {
 	});
 };
 
-const parseCsvLine = (line: string): string[] => {
-	const fields: string[] = [];
-	let current = "";
-	let inQuotes = false;
-	for (let i = 0; i < line.length; i++) {
-		const char = line[i];
-		if (inQuotes) {
-			if (char === '"') inQuotes = false;
-			else current += char;
-		} else if (char === '"') {
-			inQuotes = true;
-		} else if (char === ",") {
-			fields.push(current);
-			current = "";
-		} else {
-			current += char;
-		}
-	}
-	fields.push(current);
-	return fields;
-};
-
-export const parseTop10SongsCsv = (text: string): Top10Song[] =>
-	text
-		.trim()
-		.split("\n")
-		.slice(1)
-		.map((line) => {
-			const [title, artists, year] = parseCsvLine(line);
-			return {
-				title: title.trim(),
-				artists: artists.split(",").map((artist) => artist.trim()),
-				year: Number(year)
-			};
-		});
-
-const matchKey = (title: string, artists: string[]): string =>
-	`${title.trim().toLowerCase()}::${artists
-		.map((artist) => artist.trim().toLowerCase())
-		.join(",")}`;
-
-export const buildTop10MatchKeys = (top10Songs: Top10Song[]): Set<string> =>
-	new Set(top10Songs.map((song) => matchKey(song.title, song.artists)));
-
-export const isPopularRecentSong = (
-	song: GroupedSong,
-	top10Keys: Set<string>
-): boolean => top10Keys.has(matchKey(song.title, song.artists));

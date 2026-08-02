@@ -2,28 +2,19 @@
 	import ToggleSwitch from "./ToggleSwitch.svelte";
 
 	const {
-		showPopularOnly,
-		onPopularChange,
-		requireMultipleSections,
-		onRequireMultipleSectionsChange
+		showRecentOnly,
+		onRecentChange
 	}: {
-		showPopularOnly: boolean;
-		onPopularChange: (checked: boolean) => void;
-		requireMultipleSections: boolean;
-		onRequireMultipleSectionsChange: (checked: boolean) => void;
+		showRecentOnly: boolean;
+		onRecentChange: (checked: boolean) => void;
 	} = $props();
 </script>
 
 <div class="corpus-filters">
 	<ToggleSwitch
-		checked={showPopularOnly}
-		onchange={onPopularChange}
-		label="popular recent songs only"
-	/>
-	<ToggleSwitch
-		checked={requireMultipleSections}
-		onchange={onRequireMultipleSectionsChange}
-		label="2+ sections"
+		checked={showRecentOnly}
+		onchange={onRecentChange}
+		label="recent songs only"
 	/>
 </div>
 

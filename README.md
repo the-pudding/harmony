@@ -12,7 +12,7 @@ npm run dev
 
 ## Generating the song dataset locally
 
-Chord data lives in the sibling [`harmony-data`](../harmony-data) repo and is **not** committed to this project. The app reads generated files at `static/data/songs.json` and `static/data/popular-songs.json` (both gitignored).
+Chord data lives in the sibling [`harmony-data`](../harmony-data) repo and is **not** committed to this project. The app reads generated files at `static/data/songs.json` and `static/data/recent-songs.json` (both gitignored).
 
 To build or refresh the dataset from `harmony-data`:
 
@@ -22,11 +22,11 @@ npm run songs
 
 This runs [`tasks/build-songs.js`](tasks/build-songs.js), which:
 
-- reads scraped songs from `../harmony-data/songs/hooktheory/` and `../harmony-data/songs/ug/`
-- joins Billboard flags from `../harmony-data/data/tracker.csv`
-- converts HookTheory chord data into the format used by the chord-search matcher
-- writes `static/data/songs.json`
-- writes `static/data/popular-songs.json` (songs matching `static/top10-songs.csv`, for faster demo page loads)
+- reads corrected Top-10 songs from `../harmony-data/songs/corrected/`
+- joins Billboard flags and chart year from `../harmony-data/data/tracker.csv` and `billboard.csv`
+- converts chord data into the format used by the chord-search matcher
+- writes `static/data/songs.json` (full corrected Top-10 corpus, "all songs" in demos)
+- writes `static/data/recent-songs.json` (songs with Billboard year ≥ 2005, "recent songs only" toggle)
 
 Note: we have a file called `harmony/src/data/hand-reviewed-songs.ts` with `manuallyEnteredSongs`, `problematicSongs`, and `songLooksGoodAsIs` for reviewing and correcting song data before use in the UI.
 

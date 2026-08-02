@@ -108,7 +108,7 @@ describe("whatcha say — strict gap fill with whatcha say core progression", ()
 		expect(coversOpening).toBe(true);
 	});
 
-	it("highlights the opening IV-I-vi in pre-chorus, chorus, and bridge", () => {
+	it("highlights the opening IV-I-vi in chorus and hook sections", () => {
 		const result = selectFinalProgressions(whatchaSaySong, coreProgressions);
 		const annotations = buildFinalChordAnnotations(whatchaSaySong, result);
 
@@ -116,7 +116,7 @@ describe("whatcha say — strict gap fill with whatcha say core progression", ()
 			whatchaSaySong.sections.map((section, index) => [section.label, index])
 		);
 
-		for (const label of ["Pre-Chorus", "Chorus", "Bridge"] as const) {
+		for (const label of ["Chorus", "Hook"] as const) {
 			const sectionIndex = sectionIndexesByLabel.get(label);
 			expect(sectionIndex).toBeDefined();
 			expect(annotationsHighlightOpening(annotations, sectionIndex!)).toBe(

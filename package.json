@@ -3,7 +3,7 @@
 	"version": "6.23.0",
 	"scripts": {
 		"gdoc": "node tasks/fetch-google.js",
-		"songs": "node tasks/build-songs.js",
+		"songs": "vite-node tasks/build-songs.js",
 		"style": "node tasks/style-dictionary.js",
 		"dev": "vite dev",
 		"build": "vite build",

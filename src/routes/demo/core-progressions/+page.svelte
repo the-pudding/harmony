@@ -100,10 +100,8 @@
 
 		<div class="controls">
 			<SongCorpusFilterToggles
-				showPopularOnly={coverage.showPopularOnly}
-				onPopularChange={coverage.handlePopularToggleChange}
-				requireMultipleSections={coverage.requireMultipleSections}
-				onRequireMultipleSectionsChange={coverage.handleRequireMultipleSectionsToggleChange}
+				showRecentOnly={coverage.showRecentOnly}
+				onRecentChange={coverage.handleRecentToggleChange}
 			/>
 			{#if coverage.loading}
 				<span class="status-text">Loading song dataset…</span>

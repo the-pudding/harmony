@@ -3,13 +3,12 @@ import { page } from "$app/state";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 import {
 	fetchGroupedAllSongs,
-	fetchGroupedPopularSongs,
+	fetchGroupedRecentSongs,
 	sortAllSongs,
-	sortPopularSongs
+	sortRecentSongs
 } from "../../../../data/songBrowserData.js";
 import {
 	areSongCorpusFilterUrlStatesEqual,
-	MIN_SECTIONS_FOR_MULTI_SECTION_FILTER,
 	readSongCorpusFilterUrlState,
 	replaceSongCorpusFilterInUrl,
 	type SongCorpusFilterUrlState
@@ -21,34 +20,22 @@ import {
 	type AllSongsCoverageResult
 } from "./index.js";
 
-const applySectionCountFilter = (
-	songs: GroupedSong[],
-	requireMultipleSections: boolean
-): GroupedSong[] => {
-	if (!requireMultipleSections) return songs;
-	return songs.filter(
-		(song) => song.sections.length >= MIN_SECTIONS_FOR_MULTI_SECTION_FILTER
-	);
-};
-
 export const createAllSongsCoverageState = () => {
 	const initialFilters = readSongCorpusFilterUrlState(page.url.searchParams);
 
-	let popularSongs = $state<GroupedSong[]>([]);
+	let recentSongs = $state<GroupedSong[]>([]);
 	let fullSongs = $state<GroupedSong[] | null>(null);
 	let loading = $state(true);
 	let loadingFullSongs = $state(false);
 	let loadError = $state("");
-	let showPopularOnly = $state(initialFilters.showPopularOnly);
-	let requireMultipleSections = $state(initialFilters.requireMultipleSections);
+	let showRecentOnly = $state(initialFilters.showRecentOnly);
 	let fullSongsLoadPromise: Promise<GroupedSong[]> | null = null;
 	let allSongsCoverageResult = $state<AllSongsCoverageResult | null>(null);
 	let coverageRequestId = 0;
 	let applyingFromUrl = false;
 
 	const corpusFilterState = (): SongCorpusFilterUrlState => ({
-		showPopularOnly,
-		requireMultipleSections
+		showRecentOnly
 	});
 
 	const syncCorpusFiltersToUrl = () => {
@@ -85,9 +72,8 @@ export const createAllSongsCoverageState = () => {
 
 		applyingFromUrl = true;
 		try {
-			showPopularOnly = urlState.showPopularOnly;
-			requireMultipleSections = urlState.requireMultipleSections;
-			if (!showPopularOnly && fullSongs === null) {
+			showRecentOnly = urlState.showRecentOnly;
+			if (!showRecentOnly && fullSongs === null) {
 				void ensureFullSongsLoaded();
 			}
 		} finally {
@@ -95,12 +81,11 @@ export const createAllSongsCoverageState = () => {
 		}
 	};
 
-	const baseList = $derived.by((): GroupedSong[] => {
-		const dataset = showPopularOnly
-			? sortPopularSongs(popularSongs)
-			: sortAllSongs(fullSongs ?? []);
-		return applySectionCountFilter(dataset, requireMultipleSections);
-	});
+	const baseList = $derived.by((): GroupedSong[] =>
+		showRecentOnly
+			? sortRecentSongs(recentSongs)
+			: sortAllSongs(fullSongs ?? [])
+	);
 
 	$effect(() => {
 		const songs = baseList;
@@ -133,8 +118,8 @@ export const createAllSongsCoverageState = () => {
 	onMount(() => {
 		void (async () => {
 			try {
-				popularSongs = await fetchGroupedPopularSongs();
-				if (!showPopularOnly) {
+				recentSongs = await fetchGroupedRecentSongs();
+				if (!showRecentOnly) {
 					await ensureFullSongsLoaded();
 				}
 			} catch (err) {
@@ -147,22 +132,17 @@ export const createAllSongsCoverageState = () => {
 
 	onDestroy(() => terminateCoverageWorkerPool());
 
-	const handlePopularToggleChange = (checked: boolean) => {
-		showPopularOnly = checked;
+	const handleRecentToggleChange = (checked: boolean) => {
+		showRecentOnly = checked;
 		if (!checked && fullSongs === null) {
 			void ensureFullSongsLoaded();
 		}
 		syncCorpusFiltersToUrl();
 	};
 
-	const handleRequireMultipleSectionsToggleChange = (checked: boolean) => {
-		requireMultipleSections = checked;
-		syncCorpusFiltersToUrl();
-	};
-
 	return {
-		get popularSongs() {
-			return popularSongs;
+		get recentSongs() {
+			return recentSongs;
 		},
 		get fullSongs() {
 			return fullSongs;
@@ -176,11 +156,8 @@ export const createAllSongsCoverageState = () => {
 		get loadError() {
 			return loadError;
 		},
-		get showPopularOnly() {
-			return showPopularOnly;
-		},
-		get requireMultipleSections() {
-			return requireMultipleSections;
+		get showRecentOnly() {
+			return showRecentOnly;
 		},
 		get baseList() {
 			return baseList;
@@ -189,7 +166,6 @@ export const createAllSongsCoverageState = () => {
 			return allSongsCoverageResult;
 		},
 		ensureFullSongsLoaded,
-		handlePopularToggleChange,
-		handleRequireMultipleSectionsToggleChange
+		handleRecentToggleChange
 	};
 };

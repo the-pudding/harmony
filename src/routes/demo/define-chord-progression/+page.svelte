@@ -43,7 +43,7 @@
 	let showSongsContext = $state(false);
 	const coreProgressions: CoreProgression[] = coreProgressionsData;
 
-	const searchableSongs = $derived(coverage.fullSongs ?? coverage.popularSongs);
+	const searchableSongs = $derived(coverage.fullSongs ?? coverage.recentSongs);
 
 	const baseList = $derived(coverage.baseList);
 
@@ -152,8 +152,8 @@
 
 <div class="page" style="--top-nav-height: {TOP_NAV_HEIGHT};">
 	<DefineChordProgressionUrlSync
-		songsReady={!coverage.loading && coverage.popularSongs.length > 0}
-		showPopularOnly={coverage.showPopularOnly}
+		songsReady={!coverage.loading && coverage.recentSongs.length > 0}
+		showRecentOnly={coverage.showRecentOnly}
 		{searchableSongs}
 		{baseList}
 		fullSongs={coverage.fullSongs}
@@ -175,7 +175,7 @@
 
 		{#if coverage.loading}
 			<p class="dataset-status">Loading song dataset…</p>
-		{:else if coverage.loadingFullSongs && !coverage.showPopularOnly}
+		{:else if coverage.loadingFullSongs && !coverage.showRecentOnly}
 			<p class="dataset-status">Loading full song dataset…</p>
 		{:else if coverage.loadError}
 			<p class="dataset-status error">{coverage.loadError}</p>
@@ -224,10 +224,8 @@
 						onSelectedKeyChange={handleSongSelect}
 					/>
 					<SongCorpusFilterToggles
-						showPopularOnly={coverage.showPopularOnly}
-						onPopularChange={coverage.handlePopularToggleChange}
-						requireMultipleSections={coverage.requireMultipleSections}
-						onRequireMultipleSectionsChange={coverage.handleRequireMultipleSectionsToggleChange}
+						showRecentOnly={coverage.showRecentOnly}
+						onRecentChange={coverage.handleRecentToggleChange}
 					/>
 				</div>
 

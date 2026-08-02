@@ -6,20 +6,16 @@ import { SCALE_INTERVALS } from "../src/chord-processing/scale-intervals.js";
 const HARMONY_ROOT = process.cwd();
 const DATA_ROOT = path.join(HARMONY_ROOT, "../harmony-data");
 const OUTPUT_PATH = path.join(HARMONY_ROOT, "static/data/songs.json");
-const POPULAR_OUTPUT_PATH = path.join(
+const RECENT_OUTPUT_PATH = path.join(
 	HARMONY_ROOT,
-	"static/data/popular-songs.json"
+	"static/data/recent-songs.json"
 );
-const TOP10_CSV_PATH = path.join(HARMONY_ROOT, "static/top10-songs.csv");
-const SECTION_LABEL_SUFFIX_PATTERN = /^(.+) \(([^)]+)\)$/;
 const TRACKER_PATH = path.join(DATA_ROOT, "data/tracker.csv");
 const BILLBOARD_PATH = path.join(DATA_ROOT, "data/billboard.csv");
 const BILLBOARD_TOP_RANK = 100;
 const MISSING_POPULARITY_SCORE = 0;
-const SONG_SOURCE_DIRS = [
-	{ dirPath: path.join(DATA_ROOT, "songs/hooktheory"), source: "HT" },
-	{ dirPath: path.join(DATA_ROOT, "songs/ug"), source: "UG" }
-];
+const RECENT_SONGS_MIN_YEAR = 2005;
+const SONG_SOURCE_DIRS = [{ dirPath: path.join(DATA_ROOT, "songs/corrected") }];
 
 const NOTES_PER_OCTAVE = 12;
 const NOTE_NAMES = [
@@ -422,12 +418,9 @@ const buildSongs = () => {
 		unrecognizedSuffixes: new Map()
 	};
 
-	// Track which song keys have already been emitted. Since SONG_SOURCE_DIRS
-	// lists HookTheory first, any song present in both sources will use the HT
-	// transcription (more accurate) and the UG version will be skipped.
 	const seenSongKeys = new Set();
 
-	const songs = SONG_SOURCE_DIRS.flatMap(({ dirPath, source }) =>
+	const songs = SONG_SOURCE_DIRS.flatMap(({ dirPath }) =>
 		readSongFiles(dirPath).flatMap((filePath) => {
 			stats.filesRead += 1;
 			const songData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -441,6 +434,7 @@ const buildSongs = () => {
 
 			const trackerEntry = trackerIndex.get(lookupKey);
 			const billboardEntry = billboardIndex.get(lookupKey);
+			const resolvedSource = songData.source === "ug" ? "UG" : "HT";
 
 			return (songData.sections ?? []).flatMap((section) => {
 				const originalChordCount = section.chords?.length ?? 0;
@@ -450,7 +444,7 @@ const buildSongs = () => {
 					songData.artist,
 					songData.song,
 					billboardEntry,
-					source
+					resolvedSource
 				);
 
 				if (!songInput) {
@@ -480,71 +474,10 @@ const buildSongs = () => {
 	return { songs, stats };
 };
 
-const parseSongTitleAndSectionLabel = (title) => {
-	const match = title.match(SECTION_LABEL_SUFFIX_PATTERN);
-	if (!match) return { baseTitle: title, sectionLabel: null };
-	return { baseTitle: match[1], sectionLabel: match[2] };
-};
-
-const parseCsvLine = (line) => {
-	const fields = [];
-	let current = "";
-	let inQuotes = false;
-	for (let i = 0; i < line.length; i++) {
-		const char = line[i];
-		if (inQuotes) {
-			if (char === '"') inQuotes = false;
-			else current += char;
-		} else if (char === '"') {
-			inQuotes = true;
-		} else if (char === ",") {
-			fields.push(current);
-			current = "";
-		} else {
-			current += char;
-		}
-	}
-	fields.push(current);
-	return fields;
-};
-
-const matchKey = (title, artists) =>
-	`${title.trim().toLowerCase()}::${artists
-		.map((artist) => artist.trim().toLowerCase())
-		.join(",")}`;
-
-const loadTop10MatchKeys = () => {
-	if (!fs.existsSync(TOP10_CSV_PATH)) {
-		console.warn(
-			`Top 10 CSV not found at ${TOP10_CSV_PATH}; skipping popular songs output`
-		);
-		return new Set();
-	}
-
-	const top10Songs = fs
-		.readFileSync(TOP10_CSV_PATH, "utf-8")
-		.trim()
-		.split("\n")
-		.slice(1)
-		.map((line) => {
-			const [title, artists] = parseCsvLine(line);
-			return {
-				title: title.trim(),
-				artists: artists.split(",").map((artist) => artist.trim())
-			};
-		});
-
-	return new Set(top10Songs.map((song) => matchKey(song.title, song.artists)));
-};
-
-const filterPopularSongs = (songs, top10Keys) => {
-	if (top10Keys.size === 0) return [];
-
-	return songs.filter((song) => {
-		const { baseTitle } = parseSongTitleAndSectionLabel(song.title);
-		return top10Keys.has(matchKey(baseTitle, song.artists));
-	});
-};
+const filterRecentSongs = (songs) =>
+	songs.filter(
+		(song) => song.year !== undefined && song.year >= RECENT_SONGS_MIN_YEAR
+	);
 
 const ensureOutputDir = () => {
 	fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
@@ -556,9 +489,7 @@ const logSummary = (stats) => {
 	);
 	console.log(`Skipped ${stats.sectionsSkipped} empty sections`);
 	console.log(`Dropped ${stats.chordsDropped} unmapped chords`);
-	console.log(
-		`Deduped ${stats.songsDeduped} UG songs already covered by HookTheory`
-	);
+	console.log(`Deduped ${stats.songsDeduped} duplicate songs`);
 
 	if (stats.unrecognizedSuffixes.size > 0) {
 		const topUnrecognized = [...stats.unrecognizedSuffixes.entries()]
@@ -582,12 +513,11 @@ const main = () => {
 	logSummary(stats);
 	console.log(`Output: ${OUTPUT_PATH}`);
 
-	const top10Keys = loadTop10MatchKeys();
-	const popularSongs = filterPopularSongs(songs, top10Keys);
-	fs.writeFileSync(POPULAR_OUTPUT_PATH, JSON.stringify(popularSongs));
-	const popularSongKeys = new Set(popularSongs.map((song) => song.songKey));
+	const recentSongs = filterRecentSongs(songs);
+	fs.writeFileSync(RECENT_OUTPUT_PATH, JSON.stringify(recentSongs));
+	const recentSongKeys = new Set(recentSongs.map((song) => song.songKey));
 	console.log(
-		`Wrote ${popularSongs.length} popular sections (${popularSongKeys.size} songs) to ${POPULAR_OUTPUT_PATH}`
+		`Wrote ${recentSongs.length} recent sections (${recentSongKeys.size} songs, year >= ${RECENT_SONGS_MIN_YEAR}) to ${RECENT_OUTPUT_PATH}`
 	);
 };
 

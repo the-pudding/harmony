@@ -25,21 +25,21 @@ describe("burnin up — scale-aware core matching regression", () => {
 		expect(burninCore.scale).toBe("minor");
 	});
 
-	it("i-III-VII-VI parsed as minor matches all 4 instances in burnin up (Verse×2, Chorus×2)", () => {
+	it("i-III-VII-VI parsed as minor matches all 15 instances in burnin up across the UG section layout", () => {
 		const parsed = romanTokensToParsedProgression(
 			chordProgressionVariants(burninCore.chordProgression)[0].split("-"),
 			"minor"
 		)!;
 		const stats = computeStatsForParsedProgression(burninSong, parsed);
-		expect(stats.matchCount).toBe(4);
+		expect(stats.matchCount).toBe(15);
 		expect(stats.coveragePercent).toBeGreaterThan(65);
 	});
 
-	it("computeProgressionMatches surfaces burnin up with 4 matches", () => {
+	it("computeProgressionMatches surfaces burnin up with 15 matches", () => {
 		const matches = computeProgressionMatches(burninSong, coreProgressions);
 		const match = matches.find((m) => m.name === "burnin up with you");
 		expect(match).toBeDefined();
-		expect(match!.matchCount).toBe(4);
+		expect(match!.matchCount).toBe(15);
 		expect(match!.coveragePercent).toBeGreaterThan(65);
 	});
 
