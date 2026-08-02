@@ -391,15 +391,12 @@
 		display: grid;
 		grid-template-columns: 1fr 22rem;
 		gap: 0.75rem;
-		padding: 0 1.25rem 1rem;
 		box-sizing: border-box;
 	}
 
 	.plot {
 		position: relative;
 		min-height: 0;
-		border: 1px solid rgba(63, 63, 70, 0.7);
-		border-radius: 0.5rem;
 		overflow: hidden;
 	}
 
@@ -523,5 +520,7 @@
 		min-height: 0;
 		display: flex;
 		flex-direction: column;
+		padding: 0 1.25rem 1rem 0;
+		box-sizing: border-box;
 	}
 </style>
