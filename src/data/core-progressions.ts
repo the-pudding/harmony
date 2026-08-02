@@ -66,6 +66,13 @@ const fourFiveVampProgressions: ProgressionGroup = {
 	description: "we could do this all day, and still leave you hungry for I",
 	progressions: [
 		{
+			name: "V-IV vamp",
+			chordProgression: "V-IV-V-IV",
+			scale: "major",
+			description: "",
+			technicalNotes: "feels to me even fresher and edgier than the IV-V vamp"
+		},
+		{
 			name: "IV-V vamp",
 			chordProgression: "IV-V-IV-V",
 			scale: "major",
