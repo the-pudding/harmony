@@ -5,18 +5,17 @@
 		NetworkNode,
 		NetworkLink
 	} from "$data/progression-network.js";
-	import type { GroupedSong } from "../../../data/songBrowser.js";
-	import coreProgressionsData from "$data/core-progressions.js";
+	import type { GroupedSong } from "../../../../data/songBrowser.js";
+	import type { ProgressionWithMatchStats } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
+	import { CORE_PROGRESSION_PALETTE } from "../../define-chord-progression/components/progressionColors.js";
+	import type { ScaleName } from "../../../../chord-processing/scales.js";
+	import ProgressionMatchButton from "../../define-chord-progression/components/ProgressionMatchButton.svelte";
+	import SongTooltip from "../components/SongTooltip.svelte";
 	import {
-		selectFinalProgressions,
-		buildFinalChordAnnotations
-	} from "../define-chord-progression/progression-matching-logic/finalProgressionSelection.js";
-	import type { ProgressionWithMatchStats } from "../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
-	import { CORE_PROGRESSION_PALETTE } from "../define-chord-progression/components/progressionColors.js";
-	import { EXPLAINED_THRESHOLD_PERCENT } from "../define-chord-progression/constants.js";
-	import type { ScaleName } from "../../../chord-processing/scales.js";
-	import FinalAnnotatedSong from "../define-chord-progression/components/FinalAnnotatedSong.svelte";
-	import ProgressionMatchButton from "../define-chord-progression/components/ProgressionMatchButton.svelte";
+		anchorFromMouseEvent,
+		hoverCardStyle,
+		type HoverCardAnchor
+	} from "../components/hoverCardPosition.js";
 
 	type Props = {
 		data: ProgressionNetworkData;
@@ -25,13 +24,11 @@
 
 	const { data, songs }: Props = $props();
 
-	let containerEl: HTMLDivElement;
+	let containerEl = $state<HTMLDivElement | null>(null);
 
-	type TooltipAnchor = { x: number; y: number };
-	let tooltipAnchor = $state<TooltipAnchor | null>(null);
+	let tooltipAnchor = $state<HoverCardAnchor | null>(null);
 	type HoveredInfo = { id: string; type: NetworkNode["type"] };
 	let hoveredInfo = $state<HoveredInfo | null>(null);
-	let activeProgression = $state<string | null>(null);
 
 	type LabelData = { index: number; x: number; y: number; node: NetworkNode };
 	let labelPositions = $state<LabelData[]>([]);
@@ -48,26 +45,6 @@
 		hoveredNode?.type === "song"
 			? (songByKey.get(hoveredNode.songKey) ?? null)
 			: null
-	);
-
-	const finalSelection = $derived(
-		hoveredSong
-			? selectFinalProgressions(hoveredSong, coreProgressionsData)
-			: null
-	);
-
-	const songAnnotations = $derived(
-		hoveredSong && finalSelection
-			? buildFinalChordAnnotations(hoveredSong, finalSelection)
-			: []
-	);
-
-	const explainedPercent = $derived(finalSelection?.explainedPercent ?? 0);
-	const isExplained = $derived(explainedPercent > EXPLAINED_THRESHOLD_PERCENT);
-	const finalMatches = $derived(
-		finalSelection
-			? [...finalSelection.coreSelected, ...finalSelection.gapSelected]
-			: []
 	);
 
 	const groupProgressionNodes = $derived.by(() => {
@@ -111,20 +88,9 @@
 	const PROGRESSION_COLOR = "#34d399";
 	const SONG_COLOR = "#52525b";
 
-	const TOOLTIP_WIDTH = 400;
-	const TOOLTIP_OFFSET = 16;
-
-	const tooltipStyle = $derived.by(() => {
-		if (!tooltipAnchor || !containerEl) return "";
-		const containerWidth = containerEl.clientWidth;
-		const flipLeft =
-			tooltipAnchor.x + TOOLTIP_OFFSET + TOOLTIP_WIDTH > containerWidth;
-		const left = flipLeft
-			? tooltipAnchor.x - TOOLTIP_OFFSET - TOOLTIP_WIDTH
-			: tooltipAnchor.x + TOOLTIP_OFFSET;
-		const top = Math.max(8, tooltipAnchor.y - 24);
-		return `left: ${left}px; top: ${top}px; width: ${TOOLTIP_WIDTH}px;`;
-	});
+	const tooltipStyle = $derived(
+		containerEl ? hoverCardStyle(tooltipAnchor, containerEl.clientWidth) : ""
+	);
 
 	function hexToRgb01(hex: string): [number, number, number] {
 		return [
@@ -221,7 +187,8 @@
 		const nodes = data.nodes;
 		const links = data.links;
 
-		if (!containerEl) return;
+		const container = containerEl;
+		if (!container) return;
 
 		const buffers = buildBuffers(nodes, links);
 
@@ -265,11 +232,7 @@
 				graph.selectPointByIndex(index, true);
 				hoveredInfo = { id: node.id, type: node.type };
 				if (event instanceof MouseEvent) {
-					const rect = containerEl.getBoundingClientRect();
-					tooltipAnchor = {
-						x: event.clientX - rect.left,
-						y: event.clientY - rect.top
-					};
+					tooltipAnchor = anchorFromMouseEvent(event, container);
 				}
 			},
 			onPointMouseOut: () => {
@@ -279,11 +242,7 @@
 			},
 			onMouseMove: (_index, _pos, event) => {
 				if (hoveredInfo) {
-					const rect = containerEl.getBoundingClientRect();
-					tooltipAnchor = {
-						x: event.clientX - rect.left,
-						y: event.clientY - rect.top
-					};
+					tooltipAnchor = anchorFromMouseEvent(event, container);
 				}
 			},
 			onClick: (index) => {
@@ -301,7 +260,7 @@
 			}
 		};
 
-		const graph = new Graph(containerEl, config);
+		const graph = new Graph(container, config);
 
 		updateLabels = () => {
 			const allPositions = graph.getPointPositions();
@@ -362,18 +321,8 @@
 
 	{#if tooltipAnchor && hoveredNode}
 		<div class="tooltip" style={tooltipStyle}>
-			{#if hoveredNode.type === "song" && hoveredSong && finalSelection}
-				<FinalAnnotatedSong
-					song={hoveredSong}
-					matches={finalMatches}
-					annotations={songAnnotations}
-					{explainedPercent}
-					{isExplained}
-					{activeProgression}
-					onselect={(p) => {
-						activeProgression = activeProgression === p ? null : p;
-					}}
-				/>
+			{#if hoveredNode.type === "song" && hoveredSong}
+				<SongTooltip song={hoveredSong} />
 			{:else if hoveredNode.type === "group"}
 				<p class="group-name">{hoveredNode.label}</p>
 				<ul class="progression-list">

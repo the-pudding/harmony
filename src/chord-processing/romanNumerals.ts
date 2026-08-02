@@ -85,7 +85,7 @@ export const degreeQualityToRoman = (
 	return null;
 };
 
-const BASE_CHORD_SUFFIXES = new Set([
+export const BASE_CHORD_SUFFIXES = new Set([
 	"major",
 	"minor",
 	"diminished",

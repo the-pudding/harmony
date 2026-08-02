@@ -1,19 +1,49 @@
 <script lang="ts">
+	import { untrack } from "svelte";
+	import { page } from "$app/state";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
-	import { allProgressionGroups } from "$data/core-progressions.js";
 	import { createAllSongsCoverageState } from "../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
-	import { buildProgressionNetwork } from "$data/progression-network.js";
-	import ForceGraph from "./ForceGraph.svelte";
+	import { createEmbeddingState } from "./embedding/state/createEmbeddingState.svelte.js";
+	import {
+		readHarmonyMapUrlState,
+		replaceHarmonyMapStateInUrl,
+		type HarmonyMapView
+	} from "./harmonyMapUrlState.js";
+	import TabBar from "./tabs/TabBar.svelte";
+	import EmbeddingView from "./views/EmbeddingView.svelte";
+	import ForceGraphView from "./views/ForceGraphView.svelte";
+
+	const initialUrlState = readHarmonyMapUrlState(page.url.searchParams);
 
 	const coverage = createAllSongsCoverageState();
 
-	const networkData = $derived.by(() => {
-		const result = coverage.allSongsCoverageResult;
-		const songs = result?.songCoverages ?? [];
-		return buildProgressionNetwork(allProgressionGroups, songs);
+	let view = $state<HarmonyMapView>(initialUrlState.view);
+
+	const embedding = createEmbeddingState({
+		getEntries: () => coverage.allSongsCoverageResult?.songCoverages ?? null,
+		initialMethod: initialUrlState.method,
+		onMethodChange: (method) => replaceHarmonyMapStateInUrl({ view, method })
 	});
+
+	const selectView = (nextView: HarmonyMapView) => {
+		view = nextView;
+		replaceHarmonyMapStateInUrl({ view: nextView, method: embedding.method });
+	};
+
+	$effect(() => {
+		page.url.search;
+		untrack(() => {
+			const urlState = readHarmonyMapUrlState(page.url.searchParams);
+			view = urlState.view;
+			embedding.setMethod(urlState.method);
+		});
+	});
+
+	const songCoverages = $derived(
+		coverage.allSongsCoverageResult?.songCoverages ?? []
+	);
 
 	const statusText = $derived.by(() => {
 		if (coverage.loading) return "Loading song dataset…";
@@ -23,6 +53,12 @@
 	});
 
 	const isError = $derived(Boolean(coverage.loadError));
+
+	const loadingText = $derived(
+		coverage.loading || coverage.loadingFullSongs
+			? "Loading songs…"
+			: "Computing coverage…"
+	);
 </script>
 
 <svelte:head>
@@ -41,8 +77,8 @@
 			<div class="header-left">
 				<h1 class="page-title">Harmony map</h1>
 				<p class="page-subtitle">
-					Force graph of progression groups, core progressions, and songs. Drag
-					to explore, scroll to zoom.
+					Two ways to lay out the same corpus: a song ↔ progression force graph,
+					and a 2D embedding of every song's matched-progression vector.
 				</p>
 			</div>
 
@@ -57,16 +93,24 @@
 			</div>
 		</div>
 
-		<div class="graph-wrap">
+		<div class="tab-bar-wrap">
+			<TabBar {view} onSelect={selectView} />
+		</div>
+
+		<div class="view-wrap">
 			{#if coverage.allSongsCoverageResult}
-				<ForceGraph data={networkData} songs={coverage.baseList} />
+				{#if view === "graph"}
+					<ForceGraphView {songCoverages} songs={coverage.baseList} />
+				{:else}
+					<EmbeddingView
+						{songCoverages}
+						songs={coverage.baseList}
+						{embedding}
+					/>
+				{/if}
 			{:else}
 				<div class="loading-overlay">
-					<span class="loading-text">
-						{coverage.loading || coverage.loadingFullSongs
-							? "Loading songs…"
-							: "Computing coverage…"}
-					</span>
+					<span class="loading-text">{loadingText}</span>
 				</div>
 			{/if}
 		</div>
@@ -116,6 +160,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
+		max-width: 40rem;
 	}
 
 	.page-title {
@@ -148,7 +193,12 @@
 		color: #fca5a5;
 	}
 
-	.graph-wrap {
+	.tab-bar-wrap {
+		flex-shrink: 0;
+		padding: 0 1.25rem;
+	}
+
+	.view-wrap {
 		flex: 1;
 		min-height: 0;
 		overflow: hidden;

@@ -6,10 +6,11 @@ import type {
 	CoverageWorkerComputeMessage,
 	CoverageWorkerResponse,
 	SongCoverageEntry,
-	SongBiasOverride
+	SongBiasOverride,
+	SongProgressionCount
 } from "./worker.js";
 
-export type { SongCoverageEntry, SongBiasOverride };
+export type { SongCoverageEntry, SongBiasOverride, SongProgressionCount };
 
 export type AllSongsCoverageResult = {
 	songCoverages: SongCoverageEntry[];
