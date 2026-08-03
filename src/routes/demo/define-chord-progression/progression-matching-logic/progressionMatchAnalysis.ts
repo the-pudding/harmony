@@ -1,5 +1,5 @@
 import type { CoreProgression } from "$data/core-progressions.js";
-import { chordProgressionVariants } from "$data/core-progressions.js";
+import { chordProgressionVariants } from "$data/core-progressions.util.js";
 import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import type { ScaleName } from "../../../../chord-processing/scales.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";

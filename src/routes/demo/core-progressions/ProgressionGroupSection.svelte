@@ -3,7 +3,7 @@
 	import {
 		chordProgressionVariants,
 		siblingVariantsForProgression
-	} from "$data/core-progressions.js";
+	} from "$data/core-progressions.util.js";
 	import type { AllSongsCoverageResult } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import { filterCoverageResultForProgressions } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import CoreProgressionRow from "../define-chord-progression/components/CoreProgressionRow.svelte";

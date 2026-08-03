@@ -1,10 +1,12 @@
 <script lang="ts">
 	import coreProgressions, {
 		allProgressionGroups,
-		type ProgressionGroup,
+		type ProgressionGroup
+	} from "$data/core-progressions.js";
+	import {
 		chordProgressionVariants,
 		siblingVariantsForProgression
-	} from "$data/core-progressions.js";
+	} from "$data/core-progressions.util.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";

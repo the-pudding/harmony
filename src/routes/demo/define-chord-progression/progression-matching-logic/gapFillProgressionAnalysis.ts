@@ -1,5 +1,5 @@
 import coreProgressions from "$data/core-progressions.js";
-import { chordProgressionVariants } from "$data/core-progressions.js";
+import { chordProgressionVariants } from "$data/core-progressions.util.js";
 import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import type { ScaleName } from "../../../../chord-processing/scales.js";

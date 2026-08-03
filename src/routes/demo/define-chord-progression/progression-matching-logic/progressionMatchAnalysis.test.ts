@@ -16,9 +16,8 @@ import {
 	pickPrimaryVariant,
 	type ProgressionWithMatchStats
 } from "./progressionMatchAnalysis.js";
-import coreProgressions, {
-	chordProgressionVariants
-} from "$data/core-progressions.js";
+import coreProgressions from "$data/core-progressions.js";
+import { chordProgressionVariants } from "$data/core-progressions.util.js";
 
 const chord = (
 	rootPitchClass: number,

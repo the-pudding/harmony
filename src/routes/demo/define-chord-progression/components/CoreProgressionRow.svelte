@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { CoreProgression } from "$data/core-progressions.js";
-	import { chordProgressionVariants } from "$data/core-progressions.js";
+	import { chordProgressionVariants } from "$data/core-progressions.util.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import {
 		aggregateVariantMatchStats,

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import coreProgressions, {
-	progressionsThatDidntMatchAnything,
+	progressionsThatDidntMatchAnything
+} from "./core-progressions.js";
+import {
 	chordProgressionVariants,
 	siblingVariantsForProgression
-} from "./core-progressions.js";
+} from "./core-progressions.util.js";
 import { romanTokensToParsedProgression } from "../chord-processing/romanNumerals.js";
 
 const allProgressions = [

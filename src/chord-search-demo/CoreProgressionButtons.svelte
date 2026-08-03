@@ -1,8 +1,8 @@
 <script lang="ts">
 	import coreProgressions, {
-		type CoreProgression,
-		chordProgressionVariants
+		type CoreProgression
 	} from "$data/core-progressions.js";
+	import { chordProgressionVariants } from "$data/core-progressions.util.js";
 	import { romanTokensToParsedProgression } from "../chord-processing/romanNumerals.js";
 	import { chordSearchDemoStore } from "./chordSearchDemoStore.svelte.js";
 

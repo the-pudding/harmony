@@ -1,9 +1,9 @@
+import { colorForProgressionGroupName } from "$data/core-progressions.js";
 import {
-	colorForProgressionGroupName,
 	coreProgressionNameByChordProgression,
 	dominantProgressionGroupName,
 	progressionGroupNameByChordProgression
-} from "$data/core-progressions.js";
+} from "$data/core-progressions.util.js";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 import type { SongCoverageEntry } from "../../define-chord-progression/compute-coverage-of-all-songs/index.js";
 

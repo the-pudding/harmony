@@ -1,8 +1,7 @@
 <script lang="ts">
-	import coreProgressionsData, {
-		siblingVariantsForProgression
-	} from "$data/core-progressions.js";
+	import coreProgressionsData from "$data/core-progressions.js";
 	import type { CoreProgression } from "$data/core-progressions.js";
+	import { siblingVariantsForProgression } from "$data/core-progressions.util.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
 	import SongSelectDropdown from "./components/SongSelectDropdown.svelte";

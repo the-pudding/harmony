@@ -1,8 +1,8 @@
+import { allProgressionGroups } from "$data/core-progressions.js";
 import {
-	allProgressionGroups,
 	dominantProgressionGroupName,
 	progressionGroupNameByChordProgression
-} from "$data/core-progressions.js";
+} from "$data/core-progressions.util.js";
 
 export type ProgressionGroupProfile = {
 	name: string;
@@ -40,6 +40,6 @@ export const progressionGroupProfileFor = (
 		: null;
 };
 
-export type { WeightedProgression } from "$data/core-progressions.js";
+export type { WeightedProgression } from "$data/core-progressions.util.js";
 
 export const dominantGroupName = dominantProgressionGroupName;

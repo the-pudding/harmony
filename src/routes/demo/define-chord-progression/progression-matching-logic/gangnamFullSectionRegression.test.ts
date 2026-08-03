@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import songs from "../../../../../static/data/songs.json";
-import coreProgressions, {
-	chordProgressionVariants
-} from "$data/core-progressions.js";
+import coreProgressions from "$data/core-progressions.js";
+import { chordProgressionVariants } from "$data/core-progressions.util.js";
 import { groupSongs } from "../../../../data/songBrowser.js";
 
 const gangnamSong = groupSongs(
