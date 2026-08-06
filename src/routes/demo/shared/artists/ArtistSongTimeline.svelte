@@ -5,8 +5,8 @@
 	import SongTooltip from "../SongTooltip.svelte";
 	import { HOVER_CARD_WIDTH, hoverCardStyle } from "../hoverCardPosition.js";
 	import {
-		dodgeBeeswarm,
-		tallestStackHeight
+		beeswarmChartHeight,
+		dodgeBeeswarm
 	} from "../charts/dodgeBeeswarm.js";
 	import type { ArtistSongStat, YearDomain } from "./artistStats.js";
 
@@ -32,7 +32,6 @@
 		selectedSongKey?: string | null;
 		highlightedProgressions?: string[] | null;
 		onSelectSong: (songKey: string) => void;
-		maxHeight?: number;
 		tooltipVariant?: "rich" | "compact";
 	};
 
@@ -43,7 +42,6 @@
 		selectedSongKey = null,
 		highlightedProgressions = null,
 		onSelectSong,
-		maxHeight,
 		tooltipVariant = "rich"
 	}: Props = $props();
 
@@ -101,14 +99,9 @@
 		);
 	});
 
-	const chartHeight = $derived.by(() => {
-		const required =
-			TOP_PADDING +
-			tallestStackHeight(dodgedNodes) +
-			DOT_RADIUS * 2 +
-			AXIS_HEIGHT;
-		return maxHeight === undefined ? required : Math.min(required, maxHeight);
-	});
+	const chartHeight = $derived(
+		beeswarmChartHeight(dodgedNodes, TOP_PADDING, DOT_RADIUS, AXIS_HEIGHT)
+	);
 
 	const axisY = $derived(chartHeight - AXIS_HEIGHT);
 

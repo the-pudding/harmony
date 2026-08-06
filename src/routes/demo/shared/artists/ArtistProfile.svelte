@@ -16,7 +16,6 @@
 		onSelectSong: (songKey: string) => void;
 		onSelectProgression?: (chordProgression: string) => void;
 		layout?: "stacked" | "split";
-		timelineMaxHeight?: number;
 		timelineTooltipVariant?: "rich" | "compact";
 	};
 
@@ -30,7 +29,6 @@
 		onSelectSong,
 		onSelectProgression,
 		layout = "stacked",
-		timelineMaxHeight,
 		timelineTooltipVariant = "rich"
 	}: Props = $props();
 </script>
@@ -66,7 +64,6 @@
 				{selectedSongKey}
 				{highlightedProgressions}
 				{onSelectSong}
-				maxHeight={timelineMaxHeight}
 				tooltipVariant={timelineTooltipVariant}
 			/>
 		</section>

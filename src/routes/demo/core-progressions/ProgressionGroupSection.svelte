@@ -4,16 +4,19 @@
 		chordProgressionVariants,
 		siblingVariantsForProgression
 	} from "$data/core-progressions.util.js";
+	import type { GroupedSong } from "../../../data/songBrowser.js";
 	import type { AllSongsCoverageResult } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import { filterCoverageResultForProgressions } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import CoreProgressionRow from "../define-chord-progression/components/CoreProgressionRow.svelte";
 	import SongCoverageBeeswarm from "../define-chord-progression/components/SongCoverageBeeswarm.svelte";
-
-	const BEESWARM_HEIGHT = 125;
+	import SongReleaseTimeline from "../define-chord-progression/components/SongReleaseTimeline.svelte";
+	import type { YearDomain } from "../shared/artists/artistStats.js";
 
 	type Props = {
 		group: ProgressionGroup;
 		coverageResult: AllSongsCoverageResult | null;
+		songByKey: ReadonlyMap<string, GroupedSong>;
+		yearDomain: YearDomain | null;
 		pinnedProgression: string | null;
 		selectedSongKey: string;
 		onSelectProgression: (p: string) => void;
@@ -23,6 +26,8 @@
 	let {
 		group,
 		coverageResult,
+		songByKey,
+		yearDomain,
 		pinnedProgression,
 		selectedSongKey,
 		onSelectProgression,
@@ -58,6 +63,19 @@
 		pinnedProgression
 			? siblingVariantsForProgression(group.progressions, pinnedProgression)
 			: null
+	);
+
+	const timelineSongs = $derived(
+		filteredCoverage === null
+			? null
+			: filteredCoverage.songCoverages.map((song) => ({
+					songKey: song.songKey,
+					title: song.title,
+					artists: song.artists,
+					year: songByKey.get(song.songKey)?.year ?? null,
+					coveragePercent: song.coveragePercent,
+					matchingProgressions: song.matchingProgressions
+				}))
 	);
 </script>
 
@@ -101,7 +119,14 @@
 		{selectedSongKey}
 		{highlightedProgressions}
 		{onSelectSong}
-		maxHeight={BEESWARM_HEIGHT}
+	/>
+
+	<SongReleaseTimeline
+		songs={timelineSongs}
+		{selectedSongKey}
+		{highlightedProgressions}
+		{yearDomain}
+		{onSelectSong}
 	/>
 </section>
 

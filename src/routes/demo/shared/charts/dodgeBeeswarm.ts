@@ -67,3 +67,11 @@ export const dodgeBeeswarm = <Item>(
 
 export const tallestStackHeight = (points: readonly { y: number }[]): number =>
 	points.length > 0 ? Math.max(0, ...points.map((point) => point.y)) : 0;
+
+export const beeswarmChartHeight = (
+	points: readonly { y: number }[],
+	topPadding: number,
+	dotRadius: number,
+	axisHeight: number
+): number =>
+	topPadding + tallestStackHeight(points) + dotRadius * 2 + axisHeight;

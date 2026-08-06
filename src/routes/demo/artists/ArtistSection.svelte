@@ -7,7 +7,6 @@
 	} from "../shared/artists/artistStats.js";
 
 	const PROGRESSION_LIMIT = 8;
-	const TIMELINE_MAX_HEIGHT = 180;
 
 	type Props = {
 		rank: number;
@@ -52,7 +51,6 @@
 		{onSelectSong}
 		progressionLimit={PROGRESSION_LIMIT}
 		layout="split"
-		timelineMaxHeight={TIMELINE_MAX_HEIGHT}
 	/>
 </section>
 

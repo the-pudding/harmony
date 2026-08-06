@@ -518,6 +518,12 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "miley-cyrus__7-things",
 		chordProgressionIssues:
 			"looks good overall, except the 'chorus lead out' section matches HT website with the first 3 chords, but then adds a ton of extra chords after in our dataset"
+	},
+	// POST MICHELLE UPDATING TO JUST TOP 10 (and choosing most complete song from UG vs HT)
+	{
+		id: "whitney-houston__exhale-shoop-shoop-from-waiting-to-exhale",
+		chordProgressionIssues:
+			"blatantly wrong, the actual chords are more like iv-V-IV-I"
 	}
 ];
 

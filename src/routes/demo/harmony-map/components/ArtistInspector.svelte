@@ -1,16 +1,12 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import ArtistProfile from "../../shared/artists/ArtistProfile.svelte";
+	import ArtistsPageLink from "../../shared/artists/ArtistsPageLink.svelte";
 	import ArtistSearch from "../../shared/artists/ArtistSearch.svelte";
 	import type { ArtistSummary } from "../../shared/artists/artistStats.js";
-	import {
-		ARTISTS_PAGE_PATH,
-		buildArtistsPageUrl
-	} from "../../shared/artists/artistsPagePath.js";
 
 	const TOP_ARTIST_PREVIEW_COUNT = 25;
 	const PROGRESSION_LIMIT = 6;
-	const TIMELINE_MAX_HEIGHT = 120;
 
 	type Props = {
 		summaries: ArtistSummary[];
@@ -44,7 +40,7 @@
 		<p class="hint">
 			Pick an artist to filter the map to their songs. Full breakdowns for every
 			artist live on the
-			<a href={ARTISTS_PAGE_PATH}>artists page</a>.
+			<ArtistsPageLink />.
 		</p>
 
 		<section class="section">
@@ -66,11 +62,10 @@
 	{:else}
 		<div class="selected-header">
 			<span class="selected-name">{selectedSummary.artistName}</span>
-			<a
+			<ArtistsPageLink
+				artistName={selectedSummary.artistName}
 				class="page-link"
-				href={buildArtistsPageUrl(selectedSummary.artistName)}
-				>open on artists page</a
-			>
+			/>
 		</div>
 
 		<ArtistProfile
@@ -78,7 +73,6 @@
 			{songByKey}
 			{selectedSongKey}
 			progressionLimit={PROGRESSION_LIMIT}
-			timelineMaxHeight={TIMELINE_MAX_HEIGHT}
 			timelineTooltipVariant="compact"
 			{onSelectSong}
 		/>
@@ -125,14 +119,14 @@
 		line-height: 1.5;
 	}
 
-	.hint a,
-	.page-link {
+	.hint :global(a),
+	.selected-header :global(.page-link) {
 		color: rgba(129, 140, 248, 0.9);
 		text-decoration: none;
 	}
 
-	.hint a:hover,
-	.page-link:hover {
+	.hint :global(a):hover,
+	.selected-header :global(.page-link):hover {
 		text-decoration: underline;
 	}
 
@@ -147,7 +141,7 @@
 		color: #f4f4f5;
 	}
 
-	.page-link {
+	.selected-header :global(.page-link) {
 		font-size: 0.65rem;
 	}
 

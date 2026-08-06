@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { scaleLinear } from "d3";
 	import {
 		getChordProgressionIssues,
 		isSongLooksGoodAsIs,
@@ -6,10 +7,6 @@
 		LOOKS_GOOD_LABEL
 	} from "$data/hand-reviewed-songs.js";
 	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
-	import {
-		EXPLAINED_THRESHOLD_PERCENT,
-		HIGH_COVERAGE_THRESHOLD_PERCENT
-	} from "../constants.js";
 	import {
 		beeswarmChartHeight,
 		dodgeBeeswarm
@@ -19,19 +16,27 @@
 		songKey: string;
 		title: string;
 		artists: string[];
+		year: number | null;
 		coveragePercent: number;
 		matchingProgressions: string[];
+	};
+
+	type AnnotatedSong = SongEntry & {
+		year: number;
 		chordProgressionIssues?: string;
 		looksGoodAsIs?: boolean;
 	};
 
-	type DodgedNode = SongEntry & { x: number; y: number };
+	type DodgedNode = AnnotatedSong & { x: number; y: number };
+
+	type YearDomain = { min: number; max: number };
 
 	type Props = {
 		songs: SongEntry[] | null;
 		selectedSongKey: string;
 		highlightedProgressions?: string[] | null;
 		highlightedProgression?: string | null;
+		yearDomain?: YearDomain | null;
 		onSelectSong?: (key: string) => void;
 	};
 
@@ -40,6 +45,7 @@
 		selectedSongKey,
 		highlightedProgressions = null,
 		highlightedProgression = null,
+		yearDomain = null,
 		onSelectSong
 	}: Props = $props();
 
@@ -60,30 +66,71 @@
 	const AXIS_HEIGHT = 28;
 	const TOP_PADDING = 24;
 	const LOADING_HEIGHT = 120;
-	const TICK_VALUES = [0, 25, 50, 75, 100];
+	const EMPTY_HEIGHT = 48;
+	const YEAR_PADDING = 0.5;
+	const TICK_COUNT = 8;
 	const TOOLTIP_WIDTH = 200;
+	const TOOLTIP_EDGE_MARGIN = 4;
+	const TOOLTIP_VERTICAL_GAP = 6;
+	const TICK_MARK_LENGTH = 5;
+	const TICK_LABEL_OFFSET_Y = 16;
 	const HOVER_CLEAR_DELAY_MS = 120;
+
+	const datedSongs = $derived(
+		(songs ?? []).filter(
+			(song): song is SongEntry & { year: number } => song.year !== null
+		)
+	);
+
+	const undatedCount = $derived(
+		songs === null ? 0 : songs.length - datedSongs.length
+	);
+
+	const effectiveDomain = $derived.by((): YearDomain | null => {
+		if (yearDomain) return yearDomain;
+		if (datedSongs.length === 0) return null;
+		const years = datedSongs.map((song) => song.year);
+		return { min: Math.min(...years), max: Math.max(...years) };
+	});
 
 	const plotWidth = $derived(
 		Math.max(0, containerWidth - PADDING_LEFT - PADDING_RIGHT)
 	);
 
 	const xScale = $derived(
-		(pct: number) => PADDING_LEFT + (pct / 100) * plotWidth
+		scaleLinear()
+			.domain(
+				effectiveDomain
+					? [
+							effectiveDomain.min - YEAR_PADDING,
+							effectiveDomain.max + YEAR_PADDING
+						]
+					: [0, 1]
+			)
+			.range([PADDING_LEFT, PADDING_LEFT + plotWidth])
+	);
+
+	const ticks = $derived(
+		effectiveDomain === null
+			? []
+			: xScale
+					.ticks(TICK_COUNT)
+					.filter((tick) => Number.isInteger(tick))
+					.map((tick) => ({ year: tick, x: xScale(tick) }))
 	);
 
 	const dodgedNodes = $derived.by((): DodgedNode[] => {
-		if (plotWidth <= 0 || songs === null) return [];
+		if (plotWidth <= 0 || songs === null || effectiveDomain === null) return [];
 
-		const annotated = songs.map((s) => ({
-			...s,
-			chordProgressionIssues: getChordProgressionIssues(s.songKey),
-			looksGoodAsIs: isSongLooksGoodAsIs(s.songKey)
+		const annotated: AnnotatedSong[] = datedSongs.map((song) => ({
+			...song,
+			chordProgressionIssues: getChordProgressionIssues(song.songKey),
+			looksGoodAsIs: isSongLooksGoodAsIs(song.songKey)
 		}));
 
 		return dodgeBeeswarm(
 			annotated,
-			(song) => xScale(song.coveragePercent),
+			(song) => xScale(song.year),
 			DOT_RADIUS,
 			DOT_SPACING
 		).map(({ item, x, y }) => ({ ...item, x, y }));
@@ -104,9 +151,9 @@
 	const tooltipLeft = $derived.by(() => {
 		if (!hoveredNode) return 0;
 		return Math.max(
-			4,
+			TOOLTIP_EDGE_MARGIN,
 			Math.min(
-				containerWidth - TOOLTIP_WIDTH - 4,
+				containerWidth - TOOLTIP_WIDTH - TOOLTIP_EDGE_MARGIN,
 				hoveredNode.x - TOOLTIP_WIDTH / 2
 			)
 		);
@@ -115,55 +162,6 @@
 	const tooltipTopY = $derived(
 		hoveredNode ? AXIS_Y - DOT_RADIUS - hoveredNode.y : 0
 	);
-
-	const ANNOTATION_LINE_Y_TOP = 8;
-
-	type ChartAnnotation = {
-		x: number;
-		label: string;
-		textAnchor: "start" | "end";
-		textOffsetX: number;
-	};
-
-	const chartAnnotations = $derived.by((): ChartAnnotation[] => {
-		if (!songs || songs.length === 0) return [];
-		const total = songs.length;
-		const aboveThreshold = Math.round(
-			(songs.filter((s) => s.coveragePercent >= EXPLAINED_THRESHOLD_PERCENT)
-				.length /
-				total) *
-				100
-		);
-		const aboveHighCoverage = Math.round(
-			(songs.filter((s) => s.coveragePercent >= HIGH_COVERAGE_THRESHOLD_PERCENT)
-				.length /
-				total) *
-				100
-		);
-		const atZero = Math.round(
-			(songs.filter((s) => s.coveragePercent === 0).length / total) * 100
-		);
-		return [
-			{
-				x: xScale(0),
-				label: `${atZero}% of songs have 0% coverage`,
-				textAnchor: "start",
-				textOffsetX: 6
-			},
-			{
-				x: xScale(EXPLAINED_THRESHOLD_PERCENT),
-				label: `${aboveThreshold}% of songs above ${EXPLAINED_THRESHOLD_PERCENT}% coverage`,
-				textAnchor: "end",
-				textOffsetX: -6
-			},
-			{
-				x: xScale(HIGH_COVERAGE_THRESHOLD_PERCENT),
-				label: `${aboveHighCoverage}% above ${HIGH_COVERAGE_THRESHOLD_PERCENT}%`,
-				textAnchor: "end",
-				textOffsetX: -6
-			}
-		];
-	});
 
 	function handleDotEnter(songKey: string) {
 		if (clearHoverTimeout !== null) {
@@ -199,7 +197,11 @@
 		<div class="loading-shell" style:height={LOADING_HEIGHT + "px"}>
 			<span class="loading-text">Computing coverage…</span>
 		</div>
-	{:else if containerWidth > 0 && songs.length > 0}
+	{:else if datedSongs.length === 0}
+		<div class="empty" style:height={EMPTY_HEIGHT + "px"}>
+			No release years available for these songs.
+		</div>
+	{:else if containerWidth > 0}
 		<svg width={containerWidth} height={chartHeight}>
 			<line
 				x1={PADDING_LEFT}
@@ -208,29 +210,22 @@
 				y2={AXIS_Y}
 				class="axis-line"
 			/>
-			{#each chartAnnotations as annotation}
+			{#each ticks as tick (tick.year)}
 				<line
-					x1={annotation.x}
-					x2={annotation.x}
-					y1={ANNOTATION_LINE_Y_TOP}
-					y2={AXIS_Y}
-					class="threshold-line"
+					x1={tick.x}
+					x2={tick.x}
+					y1={AXIS_Y}
+					y2={AXIS_Y + TICK_MARK_LENGTH}
+					class="tick-mark"
 				/>
 				<text
-					x={annotation.x + annotation.textOffsetX}
-					y={ANNOTATION_LINE_Y_TOP + 9}
-					text-anchor={annotation.textAnchor}
-					class="threshold-label">{annotation.label}</text
+					x={tick.x}
+					y={AXIS_Y + TICK_LABEL_OFFSET_Y}
+					text-anchor="middle"
+					class="tick-label">{tick.year}</text
 				>
 			{/each}
-			{#each TICK_VALUES as tick}
-				{@const tx = xScale(tick)}
-				<line x1={tx} x2={tx} y1={AXIS_Y} y2={AXIS_Y + 5} class="tick-mark" />
-				<text x={tx} y={AXIS_Y + 16} text-anchor="middle" class="tick-label"
-					>{tick}%</text
-				>
-			{/each}
-			{#each dodgedNodes as node}
+			{#each dodgedNodes as node (node.songKey)}
 				{@const isSelected = node.songKey === selectedSongKey}
 				{@const isHovered = node.songKey === hoveredSongKey}
 				{@const hasIssues = node.chordProgressionIssues !== undefined}
@@ -259,18 +254,22 @@
 					}}
 					role="button"
 					tabindex={0}
-					aria-label="{node.title} — {Math.round(
+					aria-label="{node.title} ({node.year}) — {Math.round(
 						node.coveragePercent
 					)}% explained"
 				/>
 			{/each}
 		</svg>
 
+		{#if undatedCount > 0}
+			<p class="undated">{undatedCount} songs without a release year</p>
+		{/if}
+
 		{#if hoveredNode}
 			<div
 				class="tooltip"
 				style:left={tooltipLeft + "px"}
-				style:top={tooltipTopY - DOT_RADIUS - 6 + "px"}
+				style:top={tooltipTopY - DOT_RADIUS - TOOLTIP_VERTICAL_GAP + "px"}
 				style:width={TOOLTIP_WIDTH + "px"}
 				style:transform="translateY(-100%)"
 				onmouseenter={cancelHoverClear}
@@ -284,7 +283,8 @@
 					<span class="song-title">{hoveredNode.title}</span>
 					<span class="song-artists">{hoveredNode.artists.join(", ")}</span>
 					<span class="song-stats"
-						>{Math.round(hoveredNode.coveragePercent)}% chord coverage</span
+						>{hoveredNode.year} · {Math.round(hoveredNode.coveragePercent)}%
+						chord coverage</span
 					>
 					<ChordProgressionIssuesNote
 						songKey={hoveredNode.songKey}
@@ -328,21 +328,16 @@
 		color: rgba(161, 161, 170, 0.5);
 	}
 
+	.empty {
+		display: flex;
+		align-items: center;
+		font-size: 0.7rem;
+		color: rgba(161, 161, 170, 0.5);
+	}
+
 	svg {
 		display: block;
 		overflow: visible;
-	}
-
-	.threshold-line {
-		stroke: rgba(255, 255, 255, 0.2);
-		stroke-width: 1;
-		stroke-dasharray: 4 3;
-	}
-
-	.threshold-label {
-		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
-		font-size: 0.6rem;
-		fill: rgba(161, 161, 170, 0.55);
 	}
 
 	.axis-line {
@@ -414,6 +409,12 @@
 		fill: rgba(96, 165, 250, 0.95);
 		stroke: rgba(255, 255, 255, 0.6);
 		stroke-width: 1.5px;
+	}
+
+	.undated {
+		margin: 0.25rem 0 0;
+		font-size: 0.6rem;
+		color: #52525b;
 	}
 
 	.tooltip {

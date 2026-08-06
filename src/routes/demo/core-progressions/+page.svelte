@@ -16,12 +16,26 @@
 	import ProgressionGroupSection from "./ProgressionGroupSection.svelte";
 	import PotentialCoreProgressionsTable from "./PotentialCoreProgressionsTable.svelte";
 	import { buildPotentialCoreProgressions } from "./buildPotentialCoreProgressions.js";
+	import type { YearDomain } from "../shared/artists/artistStats.js";
 
 	type Tab = "core" | "potential";
 
 	const coverage = createAllSongsCoverageState();
 
 	let activeTab = $state<Tab>("core");
+
+	const songByKey = $derived(
+		new Map(coverage.baseList.map((song) => [song.songKey, song]))
+	);
+
+	const yearDomain = $derived.by((): YearDomain | null => {
+		const years = coverage.baseList.flatMap((song) =>
+			song.year === undefined ? [] : [song.year]
+		);
+		return years.length === 0
+			? null
+			: { min: Math.min(...years), max: Math.max(...years) };
+	});
 
 	const groupMatchCount = (group: ProgressionGroup): number => {
 		const result = coverage.allSongsCoverageResult;
@@ -75,9 +89,27 @@
 <div class="page" style="--top-nav-height: {TOP_NAV_HEIGHT};">
 	<TopNavBar showSearch={false} />
 
-	<div class="content" class:content-wide={activeTab === "potential"}>
+	<div class="content">
 		<div class="page-header">
 			<h1 class="page-title">Core progressions</h1>
+		</div>
+
+		<div class="controls">
+			<SongCorpusFilterToggles
+				showRecentOnly={coverage.showRecentOnly}
+				onRecentChange={coverage.handleRecentToggleChange}
+			/>
+			{#if coverage.loading}
+				<span class="status-text">Loading song dataset…</span>
+			{:else if coverage.loadingFullSongs}
+				<span class="status-text">Loading full song dataset…</span>
+			{:else if coverage.loadError}
+				<span class="status-text error">{coverage.loadError}</span>
+			{:else}
+				<span class="status-text"
+					>{coverage.baseList.length.toLocaleString()} songs</span
+				>
+			{/if}
 		</div>
 
 		<div class="tab-bar" role="tablist">
@@ -101,30 +133,14 @@
 			</button>
 		</div>
 
-		<div class="controls">
-			<SongCorpusFilterToggles
-				showRecentOnly={coverage.showRecentOnly}
-				onRecentChange={coverage.handleRecentToggleChange}
-			/>
-			{#if coverage.loading}
-				<span class="status-text">Loading song dataset…</span>
-			{:else if coverage.loadingFullSongs}
-				<span class="status-text">Loading full song dataset…</span>
-			{:else if coverage.loadError}
-				<span class="status-text error">{coverage.loadError}</span>
-			{:else}
-				<span class="status-text"
-					>{coverage.baseList.length.toLocaleString()} songs</span
-				>
-			{/if}
-		</div>
-
 		{#if activeTab === "core"}
 			<div class="groups">
 				{#each sortedGroups as group (group.name)}
 					<ProgressionGroupSection
 						{group}
 						coverageResult={coverage.allSongsCoverageResult}
+						songByKey={songByKey}
+						yearDomain={yearDomain}
 						{pinnedProgression}
 						{selectedSongKey}
 						onSelectProgression={handleSelectProgression}
@@ -162,14 +178,9 @@
 		flex-direction: column;
 		gap: 2rem;
 		width: 100%;
-		max-width: 56rem;
+		max-width: 80rem;
 		margin: 0 auto;
 		box-sizing: border-box;
-		transition: max-width 0.2s ease;
-	}
-
-	.content-wide {
-		max-width: 80rem;
 	}
 
 	.page-header {
