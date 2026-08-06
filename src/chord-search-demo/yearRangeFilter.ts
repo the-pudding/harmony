@@ -17,5 +17,5 @@ export const matchesYearRange = (
 	if (year === undefined) return false;
 
 	const [minYear, maxYear] = yearRange;
-	return year >= minYear && year <= maxYear;
+	return year >= minYear && year < maxYear + 1;
 };

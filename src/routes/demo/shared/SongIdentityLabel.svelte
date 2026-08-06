@@ -3,6 +3,7 @@
 	import { SONG_DATA_SOURCE_TITLE } from "../../../chord-search-demo/constants.js";
 	import { buildYouTubeSearchUrl } from "../../../chord-search-demo/youtubeSearch.js";
 	import type { SongDataSource } from "../../../chord-processing/types.js";
+	import { toCalendarYear } from "../../../data/songYear.js";
 	import { buildDefineChordProgressionSongUrl } from "./defineChordProgressionSongUrl.js";
 
 	type Props = {
@@ -31,8 +32,12 @@
 		trailing
 	}: Props = $props();
 
+	const calendarYear = $derived(
+		year === undefined ? undefined : toCalendarYear(year)
+	);
+
 	const youtubeSearchUrl = $derived(
-		buildYouTubeSearchUrl({ title, artists, year })
+		buildYouTubeSearchUrl({ title, artists, year: calendarYear })
 	);
 	const sourceTitle = $derived(
 		source ? SONG_DATA_SOURCE_TITLE[source] : undefined
@@ -73,8 +78,8 @@
 	{:else}
 		<span class="song-name">{title}</span>
 	{/if}
-	{#if year !== undefined}
-		<span class="year">({year})</span>
+	{#if calendarYear !== undefined}
+		<span class="year">({calendarYear})</span>
 	{/if}
 	{#if trailing}
 		{@render trailing()}

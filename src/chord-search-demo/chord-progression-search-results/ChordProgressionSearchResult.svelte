@@ -6,6 +6,7 @@
 	} from "../../chord-processing/types.js";
 	import { SONG_DATA_SOURCE_TITLE } from "../constants.js";
 	import { buildYouTubeSearchUrl } from "../youtubeSearch.js";
+	import { toCalendarYear } from "../../data/songYear.js";
 
 	let { result }: { result: GroupedSongSearchResult } = $props();
 
@@ -38,11 +39,14 @@
 		result.sections.reduce((sum, s) => sum + s.matches.length, 0)
 	);
 	const isMatched = $derived(totalMatchCount > 0);
+	const calendarYear = $derived(
+		result.year === undefined ? undefined : toCalendarYear(result.year)
+	);
 	const youtubeSearchUrl = $derived(
 		buildYouTubeSearchUrl({
 			title: result.title,
 			artists: result.artists,
-			year: result.year
+			year: calendarYear
 		})
 	);
 	const artistLabel = $derived(result.artists.join(", "));
@@ -66,8 +70,8 @@
 			title="Search on YouTube">🎵</a
 		>
 		<span class="song-title">{result.title}</span>
-		{#if result.year !== undefined}
-			<span class="year"> ({result.year})</span>
+		{#if calendarYear !== undefined}
+			<span class="year"> ({calendarYear})</span>
 		{/if}
 		{#if isMatched}
 			<span

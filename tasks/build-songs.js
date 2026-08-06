@@ -367,9 +367,24 @@ const loadTrackerIndex = () => {
 	);
 };
 
+const DECIMAL_YEAR_PRECISION = 1e6;
+
 const parseBillboardChartYear = (date) => {
-	const year = Number(String(date).slice(0, 4));
-	return Number.isFinite(year) ? year : undefined;
+	const isoDate = String(date).slice(0, 10);
+	const parsed = new Date(`${isoDate}T00:00:00Z`);
+	if (Number.isNaN(parsed.getTime())) return undefined;
+
+	const year = parsed.getUTCFullYear();
+	const yearStartMs = Date.UTC(year, 0, 1);
+	const yearEndMs = Date.UTC(year + 1, 0, 1);
+	const yearLengthMs = yearEndMs - yearStartMs;
+	if (yearLengthMs <= 0) return undefined;
+
+	const fraction = (parsed.getTime() - yearStartMs) / yearLengthMs;
+	return (
+		Math.round((year + fraction) * DECIMAL_YEAR_PRECISION) /
+		DECIMAL_YEAR_PRECISION
+	);
 };
 
 const loadBillboardIndex = () => {

@@ -32,6 +32,12 @@ describe("matchesYearRange", () => {
 		expect(matchesYearRange(2010, [2000, 2010])).toBe(true);
 		expect(matchesYearRange(1999, [2000, 2010])).toBe(false);
 	});
+
+	it("includes fractional years within the calendar-year range", () => {
+		expect(matchesYearRange(2010.999, [2000, 2010])).toBe(true);
+		expect(matchesYearRange(2011, [2000, 2010])).toBe(false);
+		expect(matchesYearRange(1999.9, [2000, 2010])).toBe(false);
+	});
 });
 
 describe("matchSongResultsChunk year filter", () => {

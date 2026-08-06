@@ -8,6 +8,7 @@
 		beeswarmChartHeight,
 		dodgeBeeswarm
 	} from "../charts/dodgeBeeswarm.js";
+	import { toCalendarYear } from "../../../../data/songYear.js";
 	import type { ArtistSongStat, YearDomain } from "./artistStats.js";
 
 	const DOT_RADIUS = 3;
@@ -181,7 +182,7 @@
 					opacity={isHighlighted(song) ? 1 : DIMMED_OPACITY}
 					role="button"
 					tabindex={0}
-					aria-label="{song.title} ({song.year})"
+					aria-label="{song.title} ({toCalendarYear(song.year)})"
 					onmouseenter={() => (hoveredSongKey = song.songKey)}
 					onmouseleave={() => (hoveredSongKey = null)}
 					onfocus={() => (hoveredSongKey = song.songKey)}
@@ -207,7 +208,9 @@
 				{:else}
 					<span class="compact-title">{song.title}</span>
 					<span class="compact-meta">
-						{song.year ?? "year unknown"} · {song.coveragePercent.toFixed(
+						{song.year !== null
+							? toCalendarYear(song.year)
+							: "year unknown"} · {song.coveragePercent.toFixed(
 							COVERAGE_DECIMALS
 						)}% coverage
 					</span>

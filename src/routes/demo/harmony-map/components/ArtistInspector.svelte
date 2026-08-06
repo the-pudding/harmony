@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
+	import { toCalendarYear } from "../../../../data/songYear.js";
 	import ArtistProfile from "../../shared/artists/ArtistProfile.svelte";
 	import ArtistsPageLink from "../../shared/artists/ArtistsPageLink.svelte";
 	import ArtistSearch from "../../shared/artists/ArtistSearch.svelte";
@@ -88,7 +89,9 @@
 							onclick={() => onSelectSong(song.songKey)}
 						>
 							<span class="song-title">{song.title}</span>
-							<span class="song-year">{song.year ?? "—"}</span>
+							<span class="song-year"
+								>{song.year !== null ? toCalendarYear(song.year) : "—"}</span
+							>
 						</button>
 					</li>
 				{/each}

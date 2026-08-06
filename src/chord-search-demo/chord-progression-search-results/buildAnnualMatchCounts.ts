@@ -1,4 +1,5 @@
 import type { GroupedSongSearchResult } from "../../chord-processing/types.js";
+import { toCalendarYear } from "../../data/songYear.js";
 
 export type AnnualMatchCount = {
 	year: number;
@@ -13,7 +14,8 @@ export const buildAnnualMatchCounts = (
 	for (const result of results) {
 		const { year } = result;
 		if (year === undefined) continue;
-		countsByYear.set(year, (countsByYear.get(year) ?? 0) + 1);
+		const calendarYear = toCalendarYear(year);
+		countsByYear.set(calendarYear, (countsByYear.get(calendarYear) ?? 0) + 1);
 	}
 
 	if (countsByYear.size === 0) return [];

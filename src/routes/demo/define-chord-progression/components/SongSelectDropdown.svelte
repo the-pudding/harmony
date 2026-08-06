@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
+	import { toCalendarYear } from "../../../../data/songYear.js";
 
 	const SONG_SELECT_DROPDOWN_OPTION_LIMIT = 20;
 
@@ -76,7 +77,8 @@
 	};
 
 	function songLabel(song: GroupedSong): string {
-		const year = song.year !== undefined ? ` (${song.year})` : "";
+		const year =
+			song.year !== undefined ? ` (${toCalendarYear(song.year)})` : "";
 		return `${song.title}${year} — ${song.artists.join(", ")}`;
 	}
 </script>

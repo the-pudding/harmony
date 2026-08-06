@@ -3,6 +3,7 @@
 		colorForProgressionGroupName,
 		UNGROUPED_PROGRESSION_GROUP_LABEL
 	} from "$data/core-progressions.js";
+	import { toCalendarYear } from "../../../../data/songYear.js";
 	import type { ArtistSummary } from "./artistStats.js";
 
 	const PERCENT_DECIMALS = 0;
@@ -14,13 +15,12 @@
 
 	const { summary, layout = "row" }: Props = $props();
 
-	const yearRangeLabel = $derived(
-		summary.firstYear === null || summary.lastYear === null
-			? "—"
-			: summary.firstYear === summary.lastYear
-				? `${summary.firstYear}`
-				: `${summary.firstYear}–${summary.lastYear}`
-	);
+	const yearRangeLabel = $derived.by(() => {
+		if (summary.firstYear === null || summary.lastYear === null) return "—";
+		const firstYear = toCalendarYear(summary.firstYear);
+		const lastYear = toCalendarYear(summary.lastYear);
+		return firstYear === lastYear ? `${firstYear}` : `${firstYear}–${lastYear}`;
+	});
 
 	const facts = $derived([
 		{ label: "songs", value: summary.songCount.toLocaleString() },

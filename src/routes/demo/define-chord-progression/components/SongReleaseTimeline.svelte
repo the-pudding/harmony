@@ -11,6 +11,7 @@
 		beeswarmChartHeight,
 		dodgeBeeswarm
 	} from "../../shared/charts/dodgeBeeswarm.js";
+	import { toCalendarYear } from "../../../../data/songYear.js";
 
 	type SongEntry = {
 		songKey: string;
@@ -254,7 +255,7 @@
 					}}
 					role="button"
 					tabindex={0}
-					aria-label="{node.title} ({node.year}) — {Math.round(
+					aria-label="{node.title} ({toCalendarYear(node.year)}) — {Math.round(
 						node.coveragePercent
 					)}% explained"
 				/>
@@ -283,7 +284,7 @@
 					<span class="song-title">{hoveredNode.title}</span>
 					<span class="song-artists">{hoveredNode.artists.join(", ")}</span>
 					<span class="song-stats"
-						>{hoveredNode.year} · {Math.round(hoveredNode.coveragePercent)}%
+						>{toCalendarYear(hoveredNode.year)} · {Math.round(hoveredNode.coveragePercent)}%
 						chord coverage</span
 					>
 					<ChordProgressionIssuesNote

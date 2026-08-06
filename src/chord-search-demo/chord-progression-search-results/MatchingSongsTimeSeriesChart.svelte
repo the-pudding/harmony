@@ -18,6 +18,7 @@
 		MATCHING_SONGS_TIME_SERIES_STROKE_COLOR,
 		MATCHING_SONGS_TIME_SERIES_TITLE
 	} from "../constants.js";
+	import { toCalendarYear } from "../../../data/songYear.js";
 	import type { YearRangeFilter } from "../yearRangeFilter.js";
 
 	type AnnualMatchPercentage = {
@@ -40,12 +41,14 @@
 			const { year, songKey, id, title } = song;
 			if (year === undefined) continue;
 
+			const calendarYear = toCalendarYear(year);
 			const uniqueKey = songKey ?? id ?? title;
-			const keysForYear = uniqueSongKeysByYear.get(year) ?? new Set<string>();
+			const keysForYear =
+				uniqueSongKeysByYear.get(calendarYear) ?? new Set<string>();
 			keysForYear.add(uniqueKey);
-			uniqueSongKeysByYear.set(year, keysForYear);
-			minYear = Math.min(minYear, year);
-			maxYear = Math.max(maxYear, year);
+			uniqueSongKeysByYear.set(calendarYear, keysForYear);
+			minYear = Math.min(minYear, calendarYear);
+			maxYear = Math.max(maxYear, calendarYear);
 		}
 
 		const totals = new SvelteMap<number, number>();
