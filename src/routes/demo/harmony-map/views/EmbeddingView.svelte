@@ -167,7 +167,7 @@
 					<span class="plot-overlay-text">Computing embedding…</span>
 				</div>
 			{/if}
-			<GroupColorLegend />
+			<GroupColorLegend {songCoverages} />
 		</div>
 
 		<aside class="inspector-column">
