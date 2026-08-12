@@ -14,6 +14,7 @@
 	import { filterCoverageResultForProgressions } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import { openDefineChordProgressionSong } from "../shared/defineChordProgressionSongUrl.js";
 	import ProgressionGroupSection from "./ProgressionGroupSection.svelte";
+	import ProgressionGroupsOverTimeChart from "./ProgressionGroupsOverTimeChart.svelte";
 	import PotentialCoreProgressionsTable from "./PotentialCoreProgressionsTable.svelte";
 	import { buildPotentialCoreProgressions } from "./buildPotentialCoreProgressions.js";
 	import type { YearDomain } from "../shared/artists/artistStats.js";
@@ -134,6 +135,11 @@
 		</div>
 
 		{#if activeTab === "core"}
+			<ProgressionGroupsOverTimeChart
+				coverageResult={coverage.allSongsCoverageResult}
+				songByKey={songByKey}
+			/>
+
 			<div class="groups">
 				{#each sortedGroups as group (group.name)}
 					<ProgressionGroupSection
