@@ -20,6 +20,13 @@ const ARTIST_SONGS_ROOT = path.join(DATA_ROOT, "songs/artist");
 const ARTIST_OUTPUT_DIR = path.join(HARMONY_ROOT, "static/data/artists");
 const ARTIST_MANIFEST_PATH = path.join(ARTIST_OUTPUT_DIR, "index.json");
 const ARTIST_FILE_NAME_PATTERN = /^(.+)__(.+)\.json$/;
+const POPULAR_UG_SOURCE_DIRS = [
+	{ dirPath: path.join(DATA_ROOT, "songs/popular-ug") }
+];
+const POPULAR_UG_OUTPUT_PATH = path.join(
+	HARMONY_ROOT,
+	"static/data/popular-ug.json"
+);
 
 const NOTES_PER_OCTAVE = 12;
 const NOTE_NAMES = [
@@ -472,7 +479,7 @@ const loadBillboardIndex = () => {
 	);
 };
 
-const buildSongs = (trackerIndex, billboardIndex) => {
+const buildSongs = (sourceDirs, trackerIndex, billboardIndex) => {
 	const stats = {
 		filesRead: 0,
 		sectionsWritten: 0,
@@ -484,7 +491,7 @@ const buildSongs = (trackerIndex, billboardIndex) => {
 
 	const seenSongKeys = new Set();
 
-	const songs = SONG_SOURCE_DIRS.flatMap(({ dirPath }) =>
+	const songs = sourceDirs.flatMap(({ dirPath }) =>
 		readSongFiles(dirPath).flatMap((filePath) => {
 			stats.filesRead += 1;
 			const songData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -676,7 +683,7 @@ const main = () => {
 	const trackerIndex = loadTrackerIndex();
 	const billboardIndex = loadBillboardIndex();
 
-	const { songs, stats } = buildSongs(trackerIndex, billboardIndex);
+	const { songs, stats } = buildSongs(SONG_SOURCE_DIRS, trackerIndex, billboardIndex);
 	ensureOutputDir();
 	fs.writeFileSync(OUTPUT_PATH, JSON.stringify(songs));
 	logSummary(stats);
@@ -690,6 +697,15 @@ const main = () => {
 	);
 
 	buildAndWriteArtistDatasets(trackerIndex, billboardIndex);
+
+	const { songs: popularUgSongs, stats: popularUgStats } = buildSongs(
+		POPULAR_UG_SOURCE_DIRS,
+		trackerIndex,
+		billboardIndex
+	);
+	fs.writeFileSync(POPULAR_UG_OUTPUT_PATH, JSON.stringify(popularUgSongs));
+	logSummary(popularUgStats);
+	console.log(`Output: ${POPULAR_UG_OUTPUT_PATH}`);
 };
 
 main();

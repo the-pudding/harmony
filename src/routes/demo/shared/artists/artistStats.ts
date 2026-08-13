@@ -66,7 +66,7 @@ const averageOf = (values: readonly number[]): number =>
 const definedYears = (songs: readonly ArtistSongStat[]): number[] =>
 	songs.flatMap((song) => (song.year === null ? [] : [song.year]));
 
-const toSongStat = (
+export const toSongStat = (
 	entry: SongCoverageEntry,
 	songByKey: ReadonlyMap<string, GroupedSong>
 ): ArtistSongStat => ({
