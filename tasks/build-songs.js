@@ -16,6 +16,10 @@ const BILLBOARD_TOP_RANK = 100;
 const MISSING_POPULARITY_SCORE = 0;
 const RECENT_SONGS_MIN_YEAR = 2005;
 const SONG_SOURCE_DIRS = [{ dirPath: path.join(DATA_ROOT, "songs/corrected") }];
+const ARTIST_SONGS_ROOT = path.join(DATA_ROOT, "songs/artist");
+const ARTIST_OUTPUT_DIR = path.join(HARMONY_ROOT, "static/data/artists");
+const ARTIST_MANIFEST_PATH = path.join(ARTIST_OUTPUT_DIR, "index.json");
+const ARTIST_FILE_NAME_PATTERN = /^(.+)__(.+)\.json$/;
 
 const NOTES_PER_OCTAVE = 12;
 const NOTE_NAMES = [
@@ -94,6 +98,12 @@ const humanizeSlug = (slug) =>
 		.filter(Boolean)
 		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
 		.join(" ");
+
+// Slugs collapse apostrophes into "-s-" (e.g. "taylor-s-version" for
+// "Taylor's Version"); this heuristic reconstructs the common contraction.
+// It's not a general slug-humanizer, but it's good enough for the small,
+// spot-checkable set of album slugs in songs/artist/.
+const humanizeAlbumSlug = (slug) => humanizeSlug(slug).replace(/ S\b/g, "'s");
 
 const trackerKey = (artist, song) => `${kebabCase(artist)}__${kebabCase(song)}`;
 
@@ -280,13 +290,15 @@ const toPrecomputedAbstractProgression = (progression) => {
 	return { suffixes, deltas, bassIntervals, wrapDelta };
 };
 
-const sectionToSongInput = (
+const sectionToSongInputCore = (
 	section,
 	trackerEntry,
 	artistSlug,
-	songSlug,
 	billboardEntry,
-	source
+	source,
+	songKey,
+	idPrefix,
+	baseTitle
 ) => {
 	const keptChords = (section.chords ?? []).filter(
 		(chord) =>
@@ -311,17 +323,15 @@ const sectionToSongInput = (
 	if (progression.length === 0) return null;
 
 	const artists = resolveArtists(trackerEntry, artistSlug);
-	const title = section.name
-		? `${section.songTitle} (${section.name})`
-		: section.songTitle;
+	const title = section.name ? `${baseTitle} (${section.name})` : baseTitle;
 	const abstractProgression = toPrecomputedAbstractProgression(progression);
 	const sectionId = section.id ?? section.name ?? title;
 	const popularityScore = billboardEntry?.popularityScore;
 	const year = billboardEntry?.year;
 
 	return {
-		id: `${artistSlug}__${songSlug}__${sectionId}`,
-		songKey: trackerKey(artistSlug, songSlug),
+		id: `${idPrefix}__${sectionId}`,
+		songKey,
 		source,
 		title,
 		artists,
@@ -340,6 +350,47 @@ const sectionToSongInput = (
 		scale: section.scale,
 		...abstractProgression
 	};
+};
+
+const sectionToSongInput = (
+	section,
+	trackerEntry,
+	artistSlug,
+	songSlug,
+	billboardEntry,
+	source
+) =>
+	sectionToSongInputCore(
+		section,
+		trackerEntry,
+		artistSlug,
+		billboardEntry,
+		source,
+		trackerKey(artistSlug, songSlug),
+		`${artistSlug}__${songSlug}`,
+		section.songTitle
+	);
+
+const sectionToArtistSongInput = (
+	section,
+	trackerEntry,
+	artistSlug,
+	songSlug,
+	albumSlug,
+	billboardEntry,
+	source
+) => {
+	const versionKey = `${trackerKey(artistSlug, songSlug)}__${kebabCase(albumSlug)}`;
+	return sectionToSongInputCore(
+		section,
+		trackerEntry,
+		artistSlug,
+		billboardEntry,
+		source,
+		versionKey,
+		versionKey,
+		`${section.songTitle} (${humanizeAlbumSlug(albumSlug)})`
+	);
 };
 
 const readSongFiles = (dirPath) => {
@@ -421,9 +472,7 @@ const loadBillboardIndex = () => {
 	);
 };
 
-const buildSongs = () => {
-	const trackerIndex = loadTrackerIndex();
-	const billboardIndex = loadBillboardIndex();
+const buildSongs = (trackerIndex, billboardIndex) => {
 	const stats = {
 		filesRead: 0,
 		sectionsWritten: 0,
@@ -464,15 +513,7 @@ const buildSongs = () => {
 
 				if (!songInput) {
 					stats.sectionsSkipped += 1;
-					(section.chords ?? []).forEach((chord) => {
-						if (!qualityExtensionToSuffix(chord)) {
-							const combo = `${chord.quality}|${chord.extension ?? "null"}|${(chord.suspensions ?? []).join(",")}`;
-							stats.unrecognizedSuffixes.set(
-								combo,
-								(stats.unrecognizedSuffixes.get(combo) ?? 0) + 1
-							);
-						}
-					});
+					trackUnrecognizedSuffixes(stats, section.chords);
 					return [];
 				}
 
@@ -487,6 +528,116 @@ const buildSongs = () => {
 	songs.sort(compareSongsByPopularity);
 
 	return { songs, stats };
+};
+
+const listArtistSlugs = () => {
+	if (!fs.existsSync(ARTIST_SONGS_ROOT)) return [];
+	return fs
+		.readdirSync(ARTIST_SONGS_ROOT, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => entry.name)
+		.sort();
+};
+
+const trackUnrecognizedSuffixes = (stats, chords) => {
+	(chords ?? []).forEach((chord) => {
+		if (qualityExtensionToSuffix(chord)) return;
+		const combo = `${chord.quality}|${chord.extension ?? "null"}|${(chord.suspensions ?? []).join(",")}`;
+		stats.unrecognizedSuffixes.set(
+			combo,
+			(stats.unrecognizedSuffixes.get(combo) ?? 0) + 1
+		);
+	});
+};
+
+// Every file under songs/artist/<slug>/ is already uniquely named
+// ("<song>__<album>.json"), so unlike buildSongs() there's no cross-file
+// dedup to do here — each file becomes its own distinct song version.
+const buildArtistSongs = (artistSlug, trackerIndex, billboardIndex) => {
+	const dirPath = path.join(ARTIST_SONGS_ROOT, artistSlug);
+	const stats = {
+		filesRead: 0,
+		sectionsWritten: 0,
+		sectionsSkipped: 0,
+		chordsDropped: 0,
+		unrecognizedSuffixes: new Map()
+	};
+
+	const songs = readSongFiles(dirPath).flatMap((filePath) => {
+		const fileName = path.basename(filePath);
+		const match = fileName.match(ARTIST_FILE_NAME_PATTERN);
+		if (!match) {
+			console.warn(
+				`[${artistSlug}] skipping "${fileName}": expected "<song>__<album>.json"`
+			);
+			return [];
+		}
+		stats.filesRead += 1;
+		const [, songSlug, albumSlug] = match;
+		const songData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+		const lookupKey = trackerKey(songData.artist, songData.song);
+		const trackerEntry = trackerIndex.get(lookupKey);
+		const billboardEntry = billboardIndex.get(lookupKey);
+		const resolvedSource = songData.source === "ug" ? "UG" : "HT";
+
+		return (songData.sections ?? []).flatMap((section) => {
+			const originalChordCount = section.chords?.length ?? 0;
+			const songInput = sectionToArtistSongInput(
+				section,
+				trackerEntry,
+				artistSlug,
+				songSlug,
+				albumSlug,
+				billboardEntry,
+				resolvedSource
+			);
+
+			if (!songInput) {
+				stats.sectionsSkipped += 1;
+				trackUnrecognizedSuffixes(stats, section.chords);
+				return [];
+			}
+
+			stats.chordsDropped += originalChordCount - songInput.progression.length;
+			stats.sectionsWritten += 1;
+			return [songInput];
+		});
+	});
+
+	songs.sort(compareSongsByPopularity);
+
+	return { songs, stats };
+};
+
+const buildAndWriteArtistDatasets = (trackerIndex, billboardIndex) => {
+	const artistSlugs = listArtistSlugs();
+	if (artistSlugs.length === 0) return;
+
+	fs.mkdirSync(ARTIST_OUTPUT_DIR, { recursive: true });
+
+	const manifestEntries = artistSlugs.map((artistSlug) => {
+		const { songs, stats } = buildArtistSongs(
+			artistSlug,
+			trackerIndex,
+			billboardIndex
+		);
+		const outputPath = path.join(ARTIST_OUTPUT_DIR, `${artistSlug}.json`);
+		fs.writeFileSync(outputPath, JSON.stringify(songs));
+		console.log(
+			`[${artistSlug}] wrote ${stats.sectionsWritten} sections from ${stats.filesRead} files ` +
+				`(${stats.sectionsSkipped} skipped, ${stats.chordsDropped} chords dropped) -> ${outputPath}`
+		);
+		return {
+			slug: artistSlug,
+			artistName: humanizeSlug(artistSlug),
+			songCount: new Set(songs.map((song) => song.songKey)).size
+		};
+	});
+
+	fs.writeFileSync(ARTIST_MANIFEST_PATH, JSON.stringify(manifestEntries));
+	console.log(
+		`Wrote artist manifest (${manifestEntries.length} artists) -> ${ARTIST_MANIFEST_PATH}`
+	);
 };
 
 const filterRecentSongs = (songs) =>
@@ -522,7 +673,10 @@ const main = () => {
 		throw new Error(`harmony-data not found at ${DATA_ROOT}`);
 	}
 
-	const { songs, stats } = buildSongs();
+	const trackerIndex = loadTrackerIndex();
+	const billboardIndex = loadBillboardIndex();
+
+	const { songs, stats } = buildSongs(trackerIndex, billboardIndex);
 	ensureOutputDir();
 	fs.writeFileSync(OUTPUT_PATH, JSON.stringify(songs));
 	logSummary(stats);
@@ -534,6 +688,8 @@ const main = () => {
 	console.log(
 		`Wrote ${recentSongs.length} recent sections (${recentSongKeys.size} songs, year >= ${RECENT_SONGS_MIN_YEAR}) to ${RECENT_OUTPUT_PATH}`
 	);
+
+	buildAndWriteArtistDatasets(trackerIndex, billboardIndex);
 };
 
 main();

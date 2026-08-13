@@ -17,6 +17,7 @@
 		selectedSongKey: string | null;
 		onSelectProgression: (chordProgression: string) => void;
 		onSelectSong: (songKey: string) => void;
+		catalogSlug?: string | null;
 	};
 
 	const {
@@ -27,7 +28,8 @@
 		pinnedProgression,
 		selectedSongKey,
 		onSelectProgression,
-		onSelectSong
+		onSelectSong,
+		catalogSlug = null
 	}: Props = $props();
 
 	const highlightedProgressions = $derived(
@@ -51,6 +53,7 @@
 		{onSelectSong}
 		progressionLimit={PROGRESSION_LIMIT}
 		layout="split"
+		{catalogSlug}
 	/>
 </section>
 

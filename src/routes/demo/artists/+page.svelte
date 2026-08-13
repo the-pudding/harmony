@@ -2,6 +2,7 @@
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
+	import { onMount } from "svelte";
 	import { createAllSongsCoverageState } from "../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
 	import { currentSearchParams } from "../shared/currentSearchParams.js";
 	import { openDefineChordProgressionSong } from "../shared/defineChordProgressionSongUrl.js";
@@ -10,6 +11,11 @@
 		buildArtistSummaries,
 		yearDomainFor
 	} from "../shared/artists/artistStats.js";
+	import {
+		artistCatalogSlugByName,
+		fetchArtistCatalogManifest,
+		type ArtistCatalogManifestEntry
+	} from "../shared/artists/artistCatalogManifest.js";
 	import {
 		readFocusedArtistFromUrl,
 		replaceFocusedArtistInUrl
@@ -22,6 +28,17 @@
 
 	let focusedArtistName = $state(
 		readFocusedArtistFromUrl(currentSearchParams())
+	);
+	let catalogManifest = $state<ArtistCatalogManifestEntry[]>([]);
+
+	onMount(() => {
+		fetchArtistCatalogManifest().then((manifest) => {
+			catalogManifest = manifest;
+		});
+	});
+
+	const catalogSlugByArtistName = $derived(
+		artistCatalogSlugByName(catalogManifest)
 	);
 	let pinnedProgression = $state<string | null>(null);
 	let selectedSongKey = $state<string | null>(null);
@@ -145,6 +162,7 @@
 						{selectedSongKey}
 						onSelectProgression={togglePinnedProgression}
 						onSelectSong={selectSong}
+						catalogSlug={catalogSlugByArtistName.get(summary.artistName) ?? null}
 					/>
 				{/each}
 			</div>
