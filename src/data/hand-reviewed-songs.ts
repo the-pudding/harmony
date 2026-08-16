@@ -524,6 +524,11 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "whitney-houston__exhale-shoop-shoop-from-waiting-to-exhale",
 		chordProgressionIssues:
 			"blatantly wrong, the actual chords are more like iv-V-IV-I"
+	},
+	{
+		id: "akon-featuring-eminem__smack-that",
+		chordProgressionIssues:
+			"blatantly wrong. it's actually in F minor, more like iv-i etc"
 	}
 ];
 
