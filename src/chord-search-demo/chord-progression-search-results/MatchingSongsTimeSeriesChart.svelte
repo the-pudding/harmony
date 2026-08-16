@@ -18,7 +18,7 @@
 		MATCHING_SONGS_TIME_SERIES_STROKE_COLOR,
 		MATCHING_SONGS_TIME_SERIES_TITLE
 	} from "../constants.js";
-	import { toCalendarYear } from "../../../data/songYear.js";
+	import { toCalendarYear } from "../../data/songYear.js";
 	import type { YearRangeFilter } from "../yearRangeFilter.js";
 
 	type AnnualMatchPercentage = {
