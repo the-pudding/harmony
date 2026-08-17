@@ -547,6 +547,22 @@ export const songLooksGoodAsIs: string[] = [
 export const LOOKS_GOOD_LABEL = "looks good as is";
 export const LOOKS_GOOD_EMOJI = "🔵";
 
+export type TrickySongToMatchCorrectly = {
+	id: string;
+	chordMatchingChallenges: string;
+};
+
+export const trickySongsToMatchCorrectly: TrickySongToMatchCorrectly[] = [
+	{
+		id: "justin-bieber__love-yourself",
+		chordMatchingChallenges:
+			"In the chorus, 'you should go and love yourself' progression ends on a chord (I) and then the next progression starts on that chord (I), but it's written just once and the algo isn't allowed to share a chord across multiple chord progression matches, even a musician would think about it as two (I) chords (ending and starting)."
+	}
+];
+
+export const CHORD_MATCHING_CHALLENGES_LABEL = "chordMatchingChallenges:";
+export const TRICKY_TO_MATCH_EMOJI = "🟡";
+
 const chordProgressionIssuesBySongId = new Map(
 	problematicSongs.map((song) => [song.id, song.chordProgressionIssues])
 );
@@ -559,3 +575,14 @@ const looksGoodSongIds = new Set(songLooksGoodAsIs);
 
 export const isSongLooksGoodAsIs = (songKey: string): boolean =>
 	looksGoodSongIds.has(songKey);
+
+const chordMatchingChallengesBySongId = new Map(
+	trickySongsToMatchCorrectly.map((song) => [
+		song.id,
+		song.chordMatchingChallenges
+	])
+);
+
+export const getChordMatchingChallenges = (
+	songKey: string
+): string | undefined => chordMatchingChallengesBySongId.get(songKey);

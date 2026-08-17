@@ -2,7 +2,9 @@
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import {
 		isSongLooksGoodAsIs,
-		LOOKS_GOOD_LABEL
+		LOOKS_GOOD_LABEL,
+		getChordMatchingChallenges,
+		CHORD_MATCHING_CHALLENGES_LABEL
 	} from "$data/hand-reviewed-songs.js";
 	import type {
 		ProgressionWithMatchStats,
@@ -51,11 +53,21 @@
 	const focusedProgression = $derived(hoveredProgression ?? activeProgression);
 
 	const looksGoodAsIs = $derived(isSongLooksGoodAsIs(song.songKey));
+	const chordMatchingChallenges = $derived(getChordMatchingChallenges(song.songKey));
 </script>
 
 <div class="final-annotated-song">
 	<SongMetadataHeader {song} />
 	<ChordProgressionIssuesNote songKey={song.songKey} />
+	{#if chordMatchingChallenges}
+		<ChordProgressionIssuesNote
+			songKey={song.songKey}
+			overrideText={chordMatchingChallenges}
+			overrideLabel={CHORD_MATCHING_CHALLENGES_LABEL}
+			overrideColor="rgba(251, 191, 36, 0.95)"
+			overrideColorHover="rgba(253, 224, 71, 0.95)"
+		/>
+	{/if}
 	{#if looksGoodAsIs}
 		<p class="looks-good-note">{LOOKS_GOOD_LABEL}</p>
 	{/if}

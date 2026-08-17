@@ -15,18 +15,31 @@
 		size?: "sm" | "md";
 		inline?: boolean;
 		brightensOnParentHover?: boolean;
+		overrideText?: string;
+		overrideLabel?: string;
+		overrideColor?: string;
+		overrideColorHover?: string;
 	};
 
 	let {
 		songKey,
 		size = "md",
 		inline = false,
-		brightensOnParentHover = false
+		brightensOnParentHover = false,
+		overrideText,
+		overrideLabel,
+		overrideColor,
+		overrideColorHover
 	}: Props = $props();
 
-	const text = $derived(getChordProgressionIssues(songKey));
+	const issuesText = $derived(getChordProgressionIssues(songKey));
+	const text = $derived(overrideText ?? issuesText);
+	const label = $derived(overrideLabel ?? CHORD_PROGRESSION_ISSUES_LABEL);
 	const fontSize = $derived(size === "sm" ? FONT_SIZE_SM : FONT_SIZE_MD);
-	const color = $derived(size === "sm" ? ISSUES_COLOR_SM : ISSUES_COLOR_MD);
+	const baseColor = $derived(
+		overrideColor ?? (size === "sm" ? ISSUES_COLOR_SM : ISSUES_COLOR_MD)
+	);
+	const hoverColor = $derived(overrideColorHover ?? ISSUES_COLOR_HOVER);
 </script>
 
 {#if text}
@@ -35,10 +48,10 @@
 		class="chord-progression-issues-note"
 		class:brightens-on-parent-hover={brightensOnParentHover}
 		style:font-size={fontSize}
-		style:color
-		style:--issues-color-hover={ISSUES_COLOR_HOVER}
+		style:color={baseColor}
+		style:--issues-color-hover={hoverColor}
 	>
-		<span class="label">{CHORD_PROGRESSION_ISSUES_LABEL}</span>
+		<span class="label">{label}</span>
 		{text}
 	</svelte:element>
 {/if}

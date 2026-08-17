@@ -4,7 +4,9 @@
 		isSongLooksGoodAsIs,
 		LOOKS_GOOD_EMOJI,
 		LOOKS_GOOD_LABEL,
-		manuallyEnteredSongs
+		manuallyEnteredSongs,
+		getChordMatchingChallenges,
+		TRICKY_TO_MATCH_EMOJI
 	} from "$data/hand-reviewed-songs.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import SongIdentityLabel from "../../shared/SongIdentityLabel.svelte";
@@ -30,6 +32,7 @@
 	);
 	const isProblematic = $derived(chordProgressionIssues !== undefined);
 	const looksGoodAsIs = $derived(isSongLooksGoodAsIs(song.songKey));
+	const chordMatchingChallenges = $derived(getChordMatchingChallenges(song.songKey));
 </script>
 
 <div class="song-title-row">
@@ -55,6 +58,13 @@
 					class="status-icon status-icon-problematic"
 					title={chordProgressionIssues}
 					aria-label={chordProgressionIssues}>{PROBLEMATIC_EMOJI}</span
+				>
+			{/if}
+			{#if chordMatchingChallenges}
+				<span
+					class="status-icon status-icon-tricky"
+					title={chordMatchingChallenges}
+					aria-label={chordMatchingChallenges}>{TRICKY_TO_MATCH_EMOJI}</span
 				>
 			{/if}
 			{#if looksGoodAsIs}
@@ -92,6 +102,10 @@
 
 	.status-icon-problematic {
 		opacity: 0.85;
+	}
+
+	.status-icon-tricky {
+		opacity: 0.8;
 	}
 
 	.status-icon-looks-good {

@@ -4,7 +4,9 @@
 		getChordProgressionIssues,
 		isSongLooksGoodAsIs,
 		LOOKS_GOOD_EMOJI,
-		LOOKS_GOOD_LABEL
+		LOOKS_GOOD_LABEL,
+		getChordMatchingChallenges,
+		CHORD_MATCHING_CHALLENGES_LABEL
 	} from "$data/hand-reviewed-songs.js";
 	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
 	import {
@@ -25,6 +27,7 @@
 	type AnnotatedSong = SongEntry & {
 		year: number;
 		chordProgressionIssues?: string;
+		chordMatchingChallenges?: string;
 		looksGoodAsIs?: boolean;
 	};
 
@@ -126,6 +129,7 @@
 		const annotated: AnnotatedSong[] = datedSongs.map((song) => ({
 			...song,
 			chordProgressionIssues: getChordProgressionIssues(song.songKey),
+			chordMatchingChallenges: getChordMatchingChallenges(song.songKey),
 			looksGoodAsIs: isSongLooksGoodAsIs(song.songKey)
 		}));
 
@@ -230,6 +234,7 @@
 				{@const isSelected = node.songKey === selectedSongKey}
 				{@const isHovered = node.songKey === hoveredSongKey}
 				{@const hasIssues = node.chordProgressionIssues !== undefined}
+				{@const isTricky = node.chordMatchingChallenges !== undefined}
 				{@const isCoreMatched =
 					activeHighlightProgressions !== null &&
 					node.matchingProgressions.some((progression) =>
@@ -246,7 +251,8 @@
 					class:core-matched={isCoreMatched}
 					class:hovered={isHovered}
 					class:has-issues={hasIssues && !isCoreMatched}
-					class:looks-good={node.looksGoodAsIs && !hasIssues && !isCoreMatched}
+					class:tricky={isTricky && !hasIssues && !isCoreMatched}
+					class:looks-good={node.looksGoodAsIs && !hasIssues && !isTricky && !isCoreMatched}
 					onmouseenter={() => handleDotEnter(node.songKey)}
 					onmouseleave={scheduleHoverClear}
 					onclick={() => selectSong(node.songKey)}
@@ -293,6 +299,18 @@
 						inline
 						brightensOnParentHover
 					/>
+					{#if hoveredNode.chordMatchingChallenges}
+						<ChordProgressionIssuesNote
+							songKey={hoveredNode.songKey}
+							size="sm"
+							inline
+							brightensOnParentHover
+							overrideText={hoveredNode.chordMatchingChallenges}
+							overrideLabel={CHORD_MATCHING_CHALLENGES_LABEL}
+							overrideColor="rgba(251, 191, 36, 0.9)"
+							overrideColorHover="rgba(253, 224, 71, 0.95)"
+						/>
+					{/if}
 					{#if hoveredNode.looksGoodAsIs}
 						<span class="looks-good-note"
 							>{LOOKS_GOOD_EMOJI} {LOOKS_GOOD_LABEL}</span
@@ -398,6 +416,16 @@
 
 	.dot.has-issues.hovered {
 		fill: rgba(239, 68, 68, 0.95);
+		stroke: rgba(255, 255, 255, 0.6);
+		stroke-width: 1.5px;
+	}
+
+	.dot.tricky {
+		fill: rgba(251, 191, 36, 0.65);
+	}
+
+	.dot.tricky.hovered {
+		fill: rgba(251, 191, 36, 0.95);
 		stroke: rgba(255, 255, 255, 0.6);
 		stroke-width: 1.5px;
 	}
