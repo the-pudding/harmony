@@ -1,7 +1,9 @@
 import { allProgressionGroups } from "$data/core-progressions.js";
 import {
 	dominantProgressionGroupName,
-	progressionGroupNameByChordProgression
+	progressionGroupNameByChordProgression,
+	progressionGroupShareVector,
+	progressionGroupSharesForSong
 } from "$data/core-progressions.util.js";
 
 export type ProgressionGroupProfile = {
@@ -40,6 +42,13 @@ export const progressionGroupProfileFor = (
 		: null;
 };
 
-export type { WeightedProgression } from "$data/core-progressions.util.js";
+export type {
+	ProgressionGroupShare,
+	WeightedProgression
+} from "$data/core-progressions.util.js";
 
 export const dominantGroupName = dominantProgressionGroupName;
+
+export const groupSharesForSong = progressionGroupSharesForSong;
+
+export const groupShareVectorForSong = progressionGroupShareVector;

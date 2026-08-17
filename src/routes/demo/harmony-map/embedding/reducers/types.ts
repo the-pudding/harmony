@@ -1,10 +1,11 @@
 export type ReducerMethod = "umap" | "pca";
-export type EmbeddingMethod = ReducerMethod | "feature";
+export type EmbeddingMethod = ReducerMethod | "feature" | "groupBlend";
 
 export const REDUCER_METHODS: ReducerMethod[] = ["umap", "pca"];
 export const EMBEDDING_METHODS: EmbeddingMethod[] = [
 	...REDUCER_METHODS,
-	"feature"
+	"feature",
+	"groupBlend"
 ];
 
 export const isEmbeddingMethod = (value: string): value is EmbeddingMethod =>

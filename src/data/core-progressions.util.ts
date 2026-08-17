@@ -47,18 +47,20 @@ export type WeightedProgression = {
 	matchCount: number;
 };
 
+const groupMatchTotals = (
+	progressions: readonly WeightedProgression[]
+): Map<string, number> =>
+	progressions.reduce((totals, { chordProgression, matchCount }) => {
+		const groupName =
+			progressionGroupNameByChordProgression.get(chordProgression);
+		if (!groupName) return totals;
+		return totals.set(groupName, (totals.get(groupName) ?? 0) + matchCount);
+	}, new Map<string, number>());
+
 export const dominantProgressionGroupName = (
 	progressions: readonly WeightedProgression[]
 ): string | null => {
-	const totalsByGroup = progressions.reduce(
-		(totals, { chordProgression, matchCount }) => {
-			const groupName =
-				progressionGroupNameByChordProgression.get(chordProgression);
-			if (!groupName) return totals;
-			return totals.set(groupName, (totals.get(groupName) ?? 0) + matchCount);
-		},
-		new Map<string, number>()
-	);
+	const totalsByGroup = groupMatchTotals(progressions);
 
 	return (
 		[...totalsByGroup.entries()].sort(
@@ -67,3 +69,31 @@ export const dominantProgressionGroupName = (
 		)[0]?.[0] ?? null
 	);
 };
+
+export type ProgressionGroupShare = { groupName: string; share: number };
+
+// Dense, ordered to match allProgressionGroups: one fraction per group
+// (zero for groups the song doesn't touch), summing to 1 across all groups.
+// This is also what feeds the group-blend embedding, so two songs with the
+// same blend get the same vector regardless of which progressions produced it.
+export const progressionGroupShareVector = (
+	progressions: readonly WeightedProgression[]
+): number[] => {
+	const totalsByGroup = groupMatchTotals(progressions);
+	const total = [...totalsByGroup.values()].reduce((sum, count) => sum + count, 0);
+	if (total === 0) return allProgressionGroups.map(() => 0);
+
+	return allProgressionGroups.map(
+		(group) => (totalsByGroup.get(group.name) ?? 0) / total
+	);
+};
+
+export const progressionGroupSharesForSong = (
+	progressions: readonly WeightedProgression[]
+): ProgressionGroupShare[] =>
+	progressionGroupShareVector(progressions)
+		.map((share, index) => ({
+			groupName: allProgressionGroups[index].name,
+			share
+		}))
+		.filter((entry) => entry.share > 0);

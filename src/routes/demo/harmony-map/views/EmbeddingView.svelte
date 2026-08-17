@@ -14,8 +14,8 @@
 	import type { EmbeddingMethod } from "../embedding/reducers/types.js";
 	import type { EmbeddingState } from "../embedding/state/createEmbeddingState.svelte.js";
 	import {
-		dominantGroupName,
-		findNearestNeighbors
+		findNearestNeighbors,
+		groupSharesForSong
 	} from "../embedding/vectors/index.js";
 
 	type Props = {
@@ -33,7 +33,8 @@
 	> = {
 		umap: null,
 		pca: { x: "PC1", y: "PC2" },
-		feature: { x: "dark ← harmony → bright", y: "simple ← harmony → complex" }
+		feature: { x: "dark ← harmony → bright", y: "simple ← harmony → complex" },
+		groupBlend: null
 	};
 
 	type InspectorTab = "song" | "artists";
@@ -69,11 +70,11 @@
 			: new Set(selectedArtistSummary.songs.map((song) => song.songKey))
 	);
 
-	const groupNameBySongKey = $derived(
+	const groupSharesBySongKey = $derived(
 		new Map(
 			songCoverages.map((entry) => [
 				entry.songKey,
-				dominantGroupName(entry.progressionCounts)
+				groupSharesForSong(entry.progressionCounts)
 			])
 		)
 	);
@@ -87,7 +88,7 @@
 					songKey: entry.songKey,
 					x: coords.x,
 					y: coords.y,
-					groupName: groupNameBySongKey.get(entry.songKey) ?? null
+					groupShares: groupSharesBySongKey.get(entry.songKey) ?? []
 				}
 			];
 		})

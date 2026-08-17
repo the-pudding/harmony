@@ -11,7 +11,8 @@ export type MethodDescription = {
 export const embeddingMethodLabels: Record<EmbeddingMethod, string> = {
 	umap: "UMAP",
 	pca: "PCA",
-	feature: "Feature axes"
+	feature: "Feature axes",
+	groupBlend: "Group blend"
 };
 
 export const embeddingMethodDescriptions: Record<
@@ -50,6 +51,17 @@ export const embeddingMethodDescriptions: Record<
 			"Brightness blends each matched progression's scale, chord qualities and flattened degrees with the brightness of the core group it belongs to. Complexity blends distinct progression count, harmonic breadth and the share of extended chords. Both are weighted by how often each progression occurs in the song.",
 		tradeoffs:
 			"Reflects only the two chosen features rather than the full vector, so songs that differ in every other respect can collide. The weights are editorial choices, not learned from the corpus."
+	},
+	groupBlend: {
+		title: embeddingMethodLabels.groupBlend,
+		summary:
+			"UMAP over each song's core-group mix, so proximity tracks the dot color blend.",
+		rationale:
+			"UMAP and PCA cluster by which exact progressions occur, so two songs with the same group blend can still land far apart if the underlying progressions differ. This clusters directly by that blend instead — songs colored similarly on the map tend to sit near each other.",
+		approach:
+			"Each song becomes a short vector of core-group shares (the same fractions used to color its dot), one dimension per group, summing to 1. UMAP builds a neighbor graph over those vectors under cosine distance and lays out the 2D result, same as the UMAP method but on group shares instead of per-progression counts.",
+		tradeoffs:
+			"Ignores everything else about a song — gap-fill progressions, exact chord identities, occurrence counts beyond their group. Two songs with an identical blend from very different chords will still land on top of each other."
 	}
 };
 

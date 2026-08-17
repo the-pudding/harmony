@@ -8,7 +8,7 @@
 		type ZoomTransform
 	} from "d3";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
-	import { colorForGroupName } from "../progressionGroupColors.js";
+	import { fillStyleForGroupShares } from "./groupColorBlend.js";
 	import SongTooltip from "../../shared/SongTooltip.svelte";
 	import {
 		anchorFromMouseEvent,
@@ -173,7 +173,12 @@
 			if (!position) continue;
 			const screen = toScreen(position);
 			context.globalAlpha = alphaFor(point.songKey);
-			context.fillStyle = colorForGroupName(point.groupName);
+			context.fillStyle = fillStyleForGroupShares(
+				context,
+				screen.x,
+				screen.y,
+				point.groupShares
+			);
 			context.beginPath();
 			context.arc(screen.x, screen.y, radiusFor(point.songKey), 0, Math.PI * 2);
 			context.fill();

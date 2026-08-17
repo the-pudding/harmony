@@ -5,6 +5,7 @@ import {
 	buildProgressionVocabulary,
 	buildSongVectors,
 	DEFAULT_SONG_VECTOR_OPTIONS,
+	groupShareVectorForSong,
 	toMatrix,
 	type SongVectorOptions,
 	type SongVectorSet
@@ -141,6 +142,34 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 					);
 					void setCachedEmbedding(idbKey, result);
 				}
+				return;
+			}
+
+			if (currentMethod === "groupBlend") {
+				status = "computing";
+				const matrix = currentSongs.map((song) =>
+					groupShareVectorForSong(song.progressionCounts)
+				);
+				void reduceOffMainThread("umap", matrix)
+					.then(async (reduction) => {
+						if (!active) return;
+						const result = toEmbeddingResult(
+							reduction,
+							currentSongs.map((song) => song.songKey)
+						);
+						cacheResult(key, result);
+						if (coverageCacheKey !== null) {
+							const idbKey = await buildEmbeddingCacheKey(
+								coverageCacheKey,
+								currentMethod,
+								options
+							);
+							void setCachedEmbedding(idbKey, result);
+						}
+					})
+					.catch(() => {
+						if (active) status = "idle";
+					});
 				return;
 			}
 

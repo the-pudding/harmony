@@ -8,10 +8,10 @@
 
 	const { songCoverages }: Props = $props();
 
-	const GROUP_COLOR_LEGEND_TITLE = "color = top core group";
+	const GROUP_COLOR_LEGEND_TITLE = "color = core group blend";
 
 	const GROUP_COLOR_LEGEND_EXPLANATION =
-		"Each matched core progression adds its occurrence count to the group it belongs to; the group with the highest total colors the song. Gap-fill progressions belong to no group and never count, so a song whose only matches are gap fills stays grey.";
+		"Each matched core progression adds its occurrence count to the group it belongs to; a song's dot blends the legend colors in proportion to those group totals, so a 50/50 song fades evenly between two colors. Gap-fill progressions belong to no group and never count, so a song whose only matches are gap fills stays grey.";
 
 	const LEGEND_MAX_HEIGHT = "40vh";
 

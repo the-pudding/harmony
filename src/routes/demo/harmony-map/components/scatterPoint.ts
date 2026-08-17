@@ -2,7 +2,7 @@ export type ScatterPoint = {
 	songKey: string;
 	x: number;
 	y: number;
-	groupName: string | null;
+	groupShares: { groupName: string; share: number }[];
 };
 
 export type ScatterAxisLabels = { x: string; y: string };
