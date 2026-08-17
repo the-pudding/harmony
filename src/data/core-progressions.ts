@@ -299,6 +299,12 @@ const emoPopProgressions: ProgressionGroup = {
 			scale: "major",
 			description:
 				"a sorta pop-y, emo ii-V-I (technically also matches looped axis of awesome)"
+		},
+		{
+			name: "if i aint got you",
+			chordProgression: "IV-iii-ii-I",
+			scale: "major",
+			description: ""
 		}
 	]
 };

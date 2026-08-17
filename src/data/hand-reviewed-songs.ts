@@ -529,6 +529,11 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "akon-featuring-eminem__smack-that",
 		chordProgressionIssues:
 			"blatantly wrong. it's actually in F minor, more like iv-i etc"
+	},
+	{
+		id: "duran-duran__new-moon-on-monday",
+		chordProgressionIssues:
+			"only has chorus (also, I feels it's wrong, should be I-II-vi-IV)"
 	}
 ];
 
