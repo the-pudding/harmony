@@ -6,15 +6,10 @@ import { SCALE_INTERVALS } from "../src/chord-processing/scale-intervals.js";
 const HARMONY_ROOT = process.cwd();
 const DATA_ROOT = path.join(HARMONY_ROOT, "../harmony-data");
 const OUTPUT_PATH = path.join(HARMONY_ROOT, "static/data/songs.json");
-const RECENT_OUTPUT_PATH = path.join(
-	HARMONY_ROOT,
-	"static/data/recent-songs.json"
-);
 const TRACKER_PATH = path.join(DATA_ROOT, "data/tracker.csv");
 const BILLBOARD_PATH = path.join(DATA_ROOT, "data/billboard.csv");
 const BILLBOARD_TOP_RANK = 100;
 const MISSING_POPULARITY_SCORE = 0;
-const RECENT_SONGS_MIN_YEAR = 2005;
 const SONG_SOURCE_DIRS = [{ dirPath: path.join(DATA_ROOT, "songs/corrected") }];
 const ARTIST_SONGS_ROOT = path.join(DATA_ROOT, "songs/artist");
 const ARTIST_OUTPUT_DIR = path.join(HARMONY_ROOT, "static/data/artists");
@@ -647,11 +642,6 @@ const buildAndWriteArtistDatasets = (trackerIndex, billboardIndex) => {
 	);
 };
 
-const filterRecentSongs = (songs) =>
-	songs.filter(
-		(song) => song.year !== undefined && song.year >= RECENT_SONGS_MIN_YEAR
-	);
-
 const ensureOutputDir = () => {
 	fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
 };
@@ -688,13 +678,6 @@ const main = () => {
 	fs.writeFileSync(OUTPUT_PATH, JSON.stringify(songs));
 	logSummary(stats);
 	console.log(`Output: ${OUTPUT_PATH}`);
-
-	const recentSongs = filterRecentSongs(songs);
-	fs.writeFileSync(RECENT_OUTPUT_PATH, JSON.stringify(recentSongs));
-	const recentSongKeys = new Set(recentSongs.map((song) => song.songKey));
-	console.log(
-		`Wrote ${recentSongs.length} recent sections (${recentSongKeys.size} songs, year >= ${RECENT_SONGS_MIN_YEAR}) to ${RECENT_OUTPUT_PATH}`
-	);
 
 	buildAndWriteArtistDatasets(trackerIndex, billboardIndex);
 

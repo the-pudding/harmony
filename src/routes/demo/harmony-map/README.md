@@ -169,7 +169,7 @@ The song hover card wraps `FinalAnnotatedSong` and recomputes `selectFinalProgre
 
 ## 6. URL state
 
-`harmonyMapUrlState.ts` syncs `?method=umap|pca|feature` via `replaceState`, following the same pattern as `songCorpusFilterUrlParams.ts`. The default (`umap`) is omitted from the URL. The corpus filter param (`recent`) is preserved because writes copy the existing `searchParams`.
+`harmonyMapUrlState.ts` syncs `?method=umap|pca|feature` via `replaceState`. The default (`umap`) is omitted from the URL.
 
 ## 7. Descriptions
 

@@ -12,7 +12,7 @@ npm run dev
 
 ## Generating the song dataset locally
 
-Chord data lives in the sibling [`harmony-data`](../harmony-data) repo and is **not** committed to this project. The app reads generated files at `static/data/songs.json` and `static/data/recent-songs.json` (both gitignored).
+Chord data lives in the sibling [`harmony-data`](../harmony-data) repo and is **not** committed to this project. The app reads `static/data/songs.json` (gitignored).
 
 To build or refresh the dataset from `harmony-data`:
 
@@ -25,10 +25,9 @@ This runs [`tasks/build-songs.js`](tasks/build-songs.js), which:
 - reads corrected Top-10 songs from `../harmony-data/songs/corrected/`
 - joins Billboard flags and chart year from `../harmony-data/data/tracker.csv` and `billboard.csv`
 - converts chord data into the format used by the chord-search matcher
-- writes `static/data/songs.json` (full corrected Top-10 corpus, "all songs" in demos)
-- writes `static/data/recent-songs.json` (songs with Billboard year ≥ 2005, "recent songs only" toggle)
+- writes `static/data/songs.json` (full corrected Top-10 corpus, used by all `/demo/` pages)
 
-Note: we have a file called `harmony/src/data/hand-reviewed-songs.ts` with `manuallyEnteredSongs`, `problematicSongs`, and `songLooksGoodAsIs` for reviewing and correcting song data before use in the UI.
+Note: `src/data/hand-reviewed-songs.ts` holds `manuallyEnteredSongs`, `problematicSongs`, and `songLooksGoodAsIs` for reviewing and correcting song data before use in the UI. These corrections are applied at runtime when loading `songs.json`.
 
 When `harmony-data` is updated (e.g. after pulling fresh scrapes):
 
@@ -39,6 +38,18 @@ npm run dev
 ```
 
 The `/demo/chord-search` route fetches `/data/songs.json` at runtime. If the file is missing, run `npm run songs` first.
+
+## Coverage cache (IndexedDB)
+
+All `/demo/` pages that run the core-progression coverage algorithm (`define-chord-progression`, `core-progressions`, `harmony-map`, `artists`) cache the result in the browser's IndexedDB so the worker-pool computation only runs once.
+
+The cache key is a SHA-256 fingerprint of:
+
+- **Core progression matching fields** — each progression's `name`, `chordProgression`, and `scale` (not group names, descriptions, or colors)
+- **Song corpus** — sorted `songKey` + section count + roman-token count per song, so re-running `npm run songs` or editing `hand-reviewed-songs.ts` automatically invalidates the cache
+- **Schema version** — `COVERAGE_CACHE_SCHEMA_VERSION` in `coverageCacheKey.ts`
+
+**When to bump `COVERAGE_CACHE_SCHEMA_VERSION`:** if you change matching algorithm logic (files under `progression-matching-logic/`) in a way that would produce different `SongCoverageEntry` results for the same input data, increment the constant to force all browsers to recompute.
 
 ## MIDI input, classification, search
 
