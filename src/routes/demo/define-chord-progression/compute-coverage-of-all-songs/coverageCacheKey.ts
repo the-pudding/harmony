@@ -1,16 +1,8 @@
 import type { CoreProgression } from "$data/core-progressions.js";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
+import { hashString } from "../../../../utils/hashString.js";
 
 export const COVERAGE_CACHE_SCHEMA_VERSION = 1;
-
-const hashString = async (input: string): Promise<string> => {
-	const encoded = new TextEncoder().encode(input);
-	const buffer = await crypto.subtle.digest("SHA-256", encoded);
-	return Array.from(new Uint8Array(buffer))
-		.map((b) => b.toString(16).padStart(2, "0"))
-		.join("")
-		.slice(0, 24);
-};
 
 const progressionFingerprint = (progressions: CoreProgression[]): string =>
 	progressions

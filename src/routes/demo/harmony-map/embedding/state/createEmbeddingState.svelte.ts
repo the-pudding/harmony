@@ -17,6 +17,11 @@ import {
 	type EmbeddingMethod,
 	type ReductionResult
 } from "../reducers/index.js";
+import { buildEmbeddingCacheKey } from "./embeddingCacheKey.js";
+import {
+	getCachedEmbedding,
+	setCachedEmbedding
+} from "./embeddingResultCache.js";
 
 export type EmbeddingStatus = "idle" | "computing" | "ready";
 
@@ -34,6 +39,7 @@ const EMPTY_RESULT: EmbeddingResult = {
 
 type EmbeddingStateConfig = {
 	getEntries: () => SongCoverageEntry[] | null;
+	getCoverageCacheKey: () => string | null;
 	initialMethod: EmbeddingMethod;
 	onMethodChange?: (method: EmbeddingMethod) => void;
 };
@@ -94,37 +100,73 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		const currentMethod = method;
 		const currentSongs = songs;
 		const { vectorSet } = dataset;
+		const coverageCacheKey = config.getCoverageCacheKey();
 
 		if (currentSongs.length === 0) {
 			status = "idle";
 			return;
 		}
 
-		if (currentMethod === "feature") {
-			cacheResult(key, {
-				...EMPTY_RESULT,
-				coordsByKey: buildFeatureAxesCoords(currentSongs)
-			});
-			return;
-		}
-
-		status = "computing";
 		let active = true;
 
-		void reduceOffMainThread(currentMethod, toMatrix(vectorSet.vectors))
-			.then((reduction) => {
+		void (async () => {
+			if (coverageCacheKey !== null) {
+				const idbKey = await buildEmbeddingCacheKey(
+					coverageCacheKey,
+					currentMethod,
+					options
+				);
 				if (!active) return;
-				cacheResult(
-					key,
-					toEmbeddingResult(
+
+				const cached = await getCachedEmbedding(idbKey);
+				if (!active) return;
+
+				if (cached) {
+					cacheResult(key, cached);
+					return;
+				}
+			}
+
+			if (currentMethod === "feature") {
+				const result: EmbeddingResult = {
+					...EMPTY_RESULT,
+					coordsByKey: buildFeatureAxesCoords(currentSongs)
+				};
+				cacheResult(key, result);
+				if (coverageCacheKey !== null) {
+					const idbKey = await buildEmbeddingCacheKey(
+						coverageCacheKey,
+						currentMethod,
+						options
+					);
+					void setCachedEmbedding(idbKey, result);
+				}
+				return;
+			}
+
+			status = "computing";
+
+			void reduceOffMainThread(currentMethod, toMatrix(vectorSet.vectors))
+				.then(async (reduction) => {
+					if (!active) return;
+					const result = toEmbeddingResult(
 						reduction,
 						vectorSet.vectors.map((vector) => vector.songKey)
-					)
-				);
-			})
-			.catch(() => {
-				if (active) status = "idle";
-			});
+					);
+					cacheResult(key, result);
+					if (coverageCacheKey !== null) {
+						const idbKey = await buildEmbeddingCacheKey(
+							coverageCacheKey,
+							currentMethod,
+							options
+						);
+						void setCachedEmbedding(idbKey, result);
+					}
+				})
+				.catch(() => {
+					if (active) status = "idle";
+				});
+		})();
 
 		return () => {
 			active = false;

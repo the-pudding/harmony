@@ -18,6 +18,7 @@ export const createAllSongsCoverageState = () => {
 	let loading = $state(true);
 	let loadError = $state("");
 	let allSongsCoverageResult = $state<AllSongsCoverageResult | null>(null);
+	let coverageCacheKey = $state<string | null>(null);
 	let coverageRequestId = 0;
 
 	const baseList = $derived(sortAllSongs(songs));
@@ -37,6 +38,7 @@ export const createAllSongsCoverageState = () => {
 			);
 
 			if (!active) return;
+			coverageCacheKey = key;
 
 			if (cached) {
 				allSongsCoverageResult = cached;
@@ -89,6 +91,9 @@ export const createAllSongsCoverageState = () => {
 		},
 		get allSongsCoverageResult() {
 			return allSongsCoverageResult;
+		},
+		get coverageCacheKey() {
+			return coverageCacheKey;
 		}
 	};
 };
