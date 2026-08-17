@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
-	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import { onMount } from "svelte";
 	import { createAllSongsCoverageState } from "../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
@@ -116,15 +115,8 @@
 				/>
 			</div>
 
-			<SongCorpusFilterToggles
-				showRecentOnly={coverage.showRecentOnly}
-				onRecentChange={coverage.handleRecentToggleChange}
-			/>
-
 			{#if coverage.loading}
 				<span class="status-text">Loading song dataset…</span>
-			{:else if coverage.loadingFullSongs}
-				<span class="status-text">Loading full song dataset…</span>
 			{:else if coverage.loadError}
 				<span class="status-text error">{coverage.loadError}</span>
 			{:else if coverage.allSongsCoverageResult === null}

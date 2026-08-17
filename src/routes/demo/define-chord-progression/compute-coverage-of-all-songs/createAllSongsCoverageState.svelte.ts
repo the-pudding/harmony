@@ -1,104 +1,57 @@
-import { onMount, onDestroy, untrack } from "svelte";
-import { page } from "$app/state";
+import { onMount, onDestroy } from "svelte";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 import {
 	fetchGroupedAllSongs,
-	fetchGroupedRecentSongs,
-	sortAllSongs,
-	sortRecentSongs
+	sortAllSongs
 } from "../../../../data/songBrowserData.js";
-import {
-	areSongCorpusFilterUrlStatesEqual,
-	readSongCorpusFilterUrlState,
-	replaceSongCorpusFilterInUrl,
-	type SongCorpusFilterUrlState
-} from "../../songCorpusFilterUrlParams.js";
-import { currentSearchParams } from "../../shared/currentSearchParams.js";
 import {
 	initCoverageWorkerPool,
 	computeCoverageOfAllSongs,
 	terminateCoverageWorkerPool,
 	type AllSongsCoverageResult
 } from "./index.js";
+import coreProgressionsData from "$data/core-progressions.js";
+import { getCachedCoverage, setCachedCoverage } from "./coverageResultCache.js";
 
 export const createAllSongsCoverageState = () => {
-	const initialFilters = readSongCorpusFilterUrlState(currentSearchParams());
-
-	let recentSongs = $state<GroupedSong[]>([]);
-	let fullSongs = $state<GroupedSong[] | null>(null);
+	let songs = $state<GroupedSong[]>([]);
 	let loading = $state(true);
-	let loadingFullSongs = $state(false);
 	let loadError = $state("");
-	let showRecentOnly = $state(initialFilters.showRecentOnly);
-	let fullSongsLoadPromise: Promise<GroupedSong[]> | null = null;
 	let allSongsCoverageResult = $state<AllSongsCoverageResult | null>(null);
 	let coverageRequestId = 0;
-	let applyingFromUrl = false;
 
-	const corpusFilterState = (): SongCorpusFilterUrlState => ({
-		showRecentOnly
-	});
-
-	const syncCorpusFiltersToUrl = () => {
-		replaceSongCorpusFilterInUrl(corpusFilterState());
-	};
-
-	const ensureFullSongsLoaded = (): Promise<GroupedSong[]> => {
-		if (fullSongs !== null) return Promise.resolve(fullSongs);
-		if (fullSongsLoadPromise) return fullSongsLoadPromise;
-
-		loadingFullSongs = true;
-		const promise = fetchGroupedAllSongs()
-			.then((songs) => {
-				fullSongs = songs;
-				return songs;
-			})
-			.catch((err) => {
-				loadError = err instanceof Error ? err.message : String(err);
-				throw err;
-			})
-			.finally(() => {
-				loadingFullSongs = false;
-				fullSongsLoadPromise = null;
-			});
-
-		fullSongsLoadPromise = promise;
-		return promise;
-	};
-
-	const applyCorpusFiltersFromUrl = (urlState: SongCorpusFilterUrlState) => {
-		if (areSongCorpusFilterUrlStatesEqual(urlState, corpusFilterState())) {
-			return;
-		}
-
-		applyingFromUrl = true;
-		try {
-			showRecentOnly = urlState.showRecentOnly;
-			if (!showRecentOnly && fullSongs === null) {
-				void ensureFullSongsLoaded();
-			}
-		} finally {
-			applyingFromUrl = false;
-		}
-	};
-
-	const baseList = $derived.by((): GroupedSong[] =>
-		showRecentOnly
-			? sortRecentSongs(recentSongs)
-			: sortAllSongs(fullSongs ?? [])
-	);
+	const baseList = $derived(sortAllSongs(songs));
 
 	$effect(() => {
-		const songs = baseList;
+		const songList = baseList;
+		if (songList.length === 0) return;
+
 		allSongsCoverageResult = null;
 		let active = true;
 		const requestId = ++coverageRequestId;
 
-		void initCoverageWorkerPool($state.snapshot(songs)).then(async () => {
+		void (async () => {
+			const { key, result: cached } = await getCachedCoverage(
+				coreProgressionsData,
+				songList
+			);
+
 			if (!active) return;
+
+			if (cached) {
+				allSongsCoverageResult = cached;
+				return;
+			}
+
+			await initCoverageWorkerPool($state.snapshot(songList));
+			if (!active) return;
+
 			const coverages = await computeCoverageOfAllSongs(requestId);
-			if (active) allSongsCoverageResult = coverages;
-		});
+			if (!active) return;
+
+			allSongsCoverageResult = coverages;
+			void setCachedCoverage(key, coverages);
+		})();
 
 		return () => {
 			active = false;
@@ -106,67 +59,36 @@ export const createAllSongsCoverageState = () => {
 		};
 	});
 
-	$effect(() => {
-		page.url.search;
-		if (applyingFromUrl) return;
-		untrack(() => {
-			applyCorpusFiltersFromUrl(
-				readSongCorpusFilterUrlState(page.url.searchParams)
-			);
-		});
-	});
-
 	onMount(() => {
-		void (async () => {
-			try {
-				recentSongs = await fetchGroupedRecentSongs();
-				if (!showRecentOnly) {
-					await ensureFullSongsLoaded();
-				}
-			} catch (err) {
+		void fetchGroupedAllSongs()
+			.then((fetched) => {
+				songs = fetched;
+			})
+			.catch((err) => {
 				loadError = err instanceof Error ? err.message : String(err);
-			} finally {
+			})
+			.finally(() => {
 				loading = false;
-			}
-		})();
+			});
 	});
 
 	onDestroy(() => terminateCoverageWorkerPool());
 
-	const handleRecentToggleChange = (checked: boolean) => {
-		showRecentOnly = checked;
-		if (!checked && fullSongs === null) {
-			void ensureFullSongsLoaded();
-		}
-		syncCorpusFiltersToUrl();
-	};
-
 	return {
-		get recentSongs() {
-			return recentSongs;
-		},
-		get fullSongs() {
-			return fullSongs;
-		},
-		get loading() {
-			return loading;
-		},
-		get loadingFullSongs() {
-			return loadingFullSongs;
-		},
-		get loadError() {
-			return loadError;
-		},
-		get showRecentOnly() {
-			return showRecentOnly;
+		get songs() {
+			return songs;
 		},
 		get baseList() {
 			return baseList;
 		},
+		get loading() {
+			return loading;
+		},
+		get loadError() {
+			return loadError;
+		},
 		get allSongsCoverageResult() {
 			return allSongsCoverageResult;
-		},
-		ensureFullSongsLoaded,
-		handleRecentToggleChange
+		}
 	};
 };

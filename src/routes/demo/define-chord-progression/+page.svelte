@@ -3,7 +3,6 @@
 	import type { CoreProgression } from "$data/core-progressions.js";
 	import { siblingVariantsForProgression } from "$data/core-progressions.util.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
-	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
 	import SongSelectDropdown from "./components/SongSelectDropdown.svelte";
 	import ProgressionMatchTable from "./components/ProgressionMatchTable.svelte";
 	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
@@ -42,8 +41,6 @@
 	let showSongsContext = $state(false);
 	const coreProgressions: CoreProgression[] = coreProgressionsData;
 
-	const searchableSongs = $derived(coverage.fullSongs ?? coverage.recentSongs);
-
 	const baseList = $derived(coverage.baseList);
 
 	const filteredSongs = $derived.by(() => {
@@ -57,7 +54,7 @@
 	});
 
 	const selectedSong = $derived(
-		findGroupedSongByKey(searchableSongs, selectedKey)
+		findGroupedSongByKey(coverage.songs, selectedKey)
 	);
 
 	const GREEDY_SORT_LABEL = `highest song coverage first — but within ${PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}% coverage, prefer progressions that start more sections (length as final tiebreaker)`;
@@ -151,13 +148,9 @@
 
 <div class="page" style="--top-nav-height: {TOP_NAV_HEIGHT};">
 	<DefineChordProgressionUrlSync
-		songsReady={!coverage.loading && coverage.recentSongs.length > 0}
-		showRecentOnly={coverage.showRecentOnly}
-		{searchableSongs}
+		songsReady={!coverage.loading && coverage.songs.length > 0}
+		songs={coverage.songs}
 		{baseList}
-		fullSongs={coverage.fullSongs}
-		loadingFullSongs={coverage.loadingFullSongs}
-		onEnsureFullSongsLoaded={coverage.ensureFullSongsLoaded}
 		bind:selectedKey
 		bind:showSongsContext
 	/>
@@ -174,8 +167,6 @@
 
 		{#if coverage.loading}
 			<p class="dataset-status">Loading song dataset…</p>
-		{:else if coverage.loadingFullSongs && !coverage.showRecentOnly}
-			<p class="dataset-status">Loading full song dataset…</p>
 		{:else if coverage.loadError}
 			<p class="dataset-status error">{coverage.loadError}</p>
 		{/if}
@@ -221,10 +212,6 @@
 						{selectedKey}
 						bind:searchQuery={titleFilter}
 						onSelectedKeyChange={handleSongSelect}
-					/>
-					<SongCorpusFilterToggles
-						showRecentOnly={coverage.showRecentOnly}
-						onRecentChange={coverage.handleRecentToggleChange}
 					/>
 				</div>
 

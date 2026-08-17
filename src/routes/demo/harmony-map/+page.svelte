@@ -2,7 +2,6 @@
 	import { untrack } from "svelte";
 	import { page } from "$app/state";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
-	import SongCorpusFilterToggles from "../../../chord-search-demo/SongCorpusFilterToggles.svelte";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import { createAllSongsCoverageState } from "../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
 	import { createEmbeddingState } from "./embedding/state/createEmbeddingState.svelte.js";
@@ -38,7 +37,6 @@
 
 	const statusText = $derived.by(() => {
 		if (coverage.loading) return "Loading song dataset…";
-		if (coverage.loadingFullSongs) return "Loading full song dataset…";
 		if (coverage.loadError) return coverage.loadError;
 		return `${coverage.baseList.length.toLocaleString()} songs`;
 	});
@@ -46,9 +44,7 @@
 	const isError = $derived(Boolean(coverage.loadError));
 
 	const loadingText = $derived(
-		coverage.loading || coverage.loadingFullSongs
-			? "Loading songs…"
-			: "Computing coverage…"
+		coverage.loading ? "Loading songs…" : "Computing coverage…"
 	);
 </script>
 
@@ -61,10 +57,6 @@
 </svelte:head>
 
 {#snippet corpusControls()}
-	<SongCorpusFilterToggles
-		showRecentOnly={coverage.showRecentOnly}
-		onRecentChange={coverage.handleRecentToggleChange}
-	/>
 	<span class="status-text" class:error={isError}>{statusText}</span>
 {/snippet}
 

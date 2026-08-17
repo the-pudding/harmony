@@ -7,7 +7,7 @@
 	import {
 		areDefineChordProgressionUrlStatesEqual,
 		buildDefineChordProgressionUrlState,
-		defineChordProgressionUrlStateToQueryStringPreservingCorpusFilters,
+		defineChordProgressionUrlStateToQueryString,
 		readDefineChordProgressionUrlState,
 		shouldPushSongHistoryChange,
 		type DefineChordProgressionUrlState
@@ -15,24 +15,16 @@
 
 	type Props = {
 		songsReady: boolean;
-		showRecentOnly: boolean;
-		searchableSongs: GroupedSong[];
+		songs: GroupedSong[];
 		baseList: GroupedSong[];
-		fullSongs: GroupedSong[] | null;
-		loadingFullSongs: boolean;
-		onEnsureFullSongsLoaded: () => Promise<GroupedSong[]>;
 		selectedKey?: string;
 		showSongsContext?: boolean;
 	};
 
 	let {
 		songsReady,
-		showRecentOnly,
-		searchableSongs,
+		songs,
 		baseList,
-		fullSongs,
-		loadingFullSongs,
-		onEnsureFullSongsLoaded,
 		selectedKey = $bindable(""),
 		showSongsContext = $bindable(false)
 	}: Props = $props();
@@ -47,7 +39,7 @@
 		});
 
 	const isSongKeyKnown = (songKey: string): boolean =>
-		isGroupedSongKeyKnown(searchableSongs, songKey);
+		isGroupedSongKeyKnown(songs, songKey);
 
 	const applyUrlStateToPage = (urlState: DefineChordProgressionUrlState) => {
 		if (
@@ -60,15 +52,6 @@
 		applyingFromUrl = true;
 		try {
 			const urlSongKey = urlState.song;
-			if (
-				urlSongKey &&
-				!isSongKeyKnown(urlSongKey) &&
-				fullSongs === null &&
-				!loadingFullSongs
-			) {
-				void onEnsureFullSongsLoaded();
-				return;
-			}
 			if (urlSongKey && isSongKeyKnown(urlSongKey)) {
 				selectedKey = urlSongKey;
 			} else if (!urlInitialized) {
@@ -90,11 +73,7 @@
 		if (areDefineChordProgressionUrlStatesEqual(desiredState, currentUrlState))
 			return;
 
-		const queryString =
-			defineChordProgressionUrlStateToQueryStringPreservingCorpusFilters(
-				desiredState,
-				page.url.searchParams
-			);
+		const queryString = defineChordProgressionUrlStateToQueryString(desiredState);
 		const nextUrl = queryString
 			? `${page.url.pathname}?${queryString}`
 			: page.url.pathname;
@@ -125,7 +104,6 @@
 	$effect(() => {
 		if (!urlInitialized || applyingFromUrl) return;
 
-		showRecentOnly;
 		baseList;
 
 		if (selectedKey && isSongKeyKnown(selectedKey)) return;
