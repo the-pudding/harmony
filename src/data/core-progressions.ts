@@ -35,6 +35,18 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
+			name: "happy walk up", // found as a "potential core progression" cuz it gets matched a lot by our algorithm
+			chordProgression: "I-IV-V",
+			scale: "major",
+			description: ""
+		},
+		{
+			name: "happy walk down", // found as a "potential core progression" cuz it gets matched a lot by our algorithm
+			chordProgression: "IV-V-I",
+			scale: "major",
+			description: ""
+		},
+		{
 			name: "major-y",
 			chordProgression: "I-V-IV-V",
 			scale: "major",
