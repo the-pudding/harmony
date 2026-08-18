@@ -186,7 +186,7 @@ export function computeProgressionMatches(
 						isFullSectionSingleMatch:
 							stats.matchCount < MIN_PROGRESSION_OCCURRENCES &&
 							coversFullSection,
-						...matchHighlightForCoreProgression(true)
+						...matchHighlightForCoreProgression(true, variant, progression.name)
 					};
 				}
 			)
@@ -347,7 +347,7 @@ export const buildCoreProgressionDisplayMatches = (
 						parsedProgression: parsed,
 						matchCount: stats.matchCount,
 						coveragePercent: stats.coveragePercent,
-						...matchHighlightForCoreProgression(true)
+						...matchHighlightForCoreProgression(true, variant, progression.name)
 					};
 				}
 			)

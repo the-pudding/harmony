@@ -1,3 +1,8 @@
+import {
+	colorForProgressionGroupName,
+	UNGROUPED_PROGRESSION_GROUP_COLOR
+} from "$data/core-progressions.js";
+import { progressionGroupNameFor } from "$data/core-progressions.util.js";
 import type {
 	ChordHighlightPalette,
 	ProgressionWithMatchStats
@@ -5,15 +10,27 @@ import type {
 
 export type { ChordHighlightPalette };
 
-export const CORE_PROGRESSION_PALETTE: ChordHighlightPalette = {
-	fill: "#15803d",
-	border: "rgba(134, 239, 172, 0.85)"
-};
+const HIGHLIGHT_FILL_GROUP_COLOR_PERCENT = 55;
 
-export const DEFAULT_PROGRESSION_PALETTE: ChordHighlightPalette = {
-	fill: "#4338ca",
-	border: "rgba(99, 102, 241, 0.55)"
-};
+export const highlightPaletteFromColor = (
+	color: string
+): ChordHighlightPalette => ({
+	fill: `color-mix(in srgb, ${color} ${HIGHLIGHT_FILL_GROUP_COLOR_PERCENT}%, black)`,
+	border: color
+});
+
+export const highlightPaletteForProgression = (
+	chordProgression: string,
+	progressionName?: string
+): ChordHighlightPalette =>
+	highlightPaletteFromColor(
+		colorForProgressionGroupName(
+			progressionGroupNameFor(chordProgression, progressionName)
+		)
+	);
+
+export const UNGROUPED_PROGRESSION_PALETTE: ChordHighlightPalette =
+	highlightPaletteFromColor(UNGROUPED_PROGRESSION_GROUP_COLOR);
 
 export const DIM_MATCH_COLOR = "rgb(113, 113, 122)";
 
@@ -23,15 +40,18 @@ export const NON_SELECTED_PROGRESSION_PALETTE: ChordHighlightPalette = {
 };
 
 export const matchHighlightForCoreProgression = (
-	isCoreProgression: boolean
+	isCoreProgression: boolean,
+	chordProgression: string,
+	progressionName?: string
 ): {
 	isCoreProgression: boolean;
 	highlightPalette: ChordHighlightPalette;
 } => ({
 	isCoreProgression,
-	highlightPalette: isCoreProgression
-		? CORE_PROGRESSION_PALETTE
-		: DEFAULT_PROGRESSION_PALETTE
+	highlightPalette: highlightPaletteForProgression(
+		chordProgression,
+		progressionName
+	)
 });
 
 export type MatchOutline = {
@@ -40,14 +60,8 @@ export type MatchOutline = {
 };
 
 export const matchOutline = (
-	match: Pick<
-		ProgressionWithMatchStats,
-		"isCoreProgression" | "isStrictSubset" | "highlightPalette"
-	>
+	match: Pick<ProgressionWithMatchStats, "isStrictSubset" | "highlightPalette">
 ): MatchOutline => ({
 	dashed: !!match.isStrictSubset,
-	color:
-		match.isStrictSubset || match.isCoreProgression
-			? match.highlightPalette.border
-			: undefined
+	color: match.highlightPalette.border
 });

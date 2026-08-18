@@ -153,7 +153,11 @@ const toGapFillMatch = (
 		description: "",
 		matchCount: stats.matchCount,
 		coveragePercent: stats.coveragePercent,
-		...matchHighlightForCoreProgression(isCoreProgression)
+		...matchHighlightForCoreProgression(
+			isCoreProgression,
+			chordProgression,
+			name
+		)
 	};
 };
 

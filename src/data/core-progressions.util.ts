@@ -42,6 +42,24 @@ export const coreProgressionNameByChordProgression = new Map(
 	)
 );
 
+export const progressionGroupNameByProgressionName = new Map(
+	allProgressionGroups.flatMap((group) =>
+		group.progressions.map((progression): [string, string] => [
+			progression.name,
+			group.name
+		])
+	)
+);
+
+export const progressionGroupNameFor = (
+	chordProgression: string,
+	progressionName?: string
+): string | null =>
+	progressionGroupNameByChordProgression.get(chordProgression) ??
+	(progressionName
+		? (progressionGroupNameByProgressionName.get(progressionName) ?? null)
+		: null);
+
 export type WeightedProgression = {
 	chordProgression: string;
 	matchCount: number;

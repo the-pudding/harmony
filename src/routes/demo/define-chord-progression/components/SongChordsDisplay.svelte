@@ -5,7 +5,7 @@
 	import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 	import { formatRomanTokenFromParsed } from "../../../../chord-processing/romanNumerals.js";
 	import { buildColoredHighlightSegments } from "../progression-matching-logic/progressionMatchAnalysis.js";
-	import { DEFAULT_PROGRESSION_PALETTE } from "./progressionColors.js";
+	import { UNGROUPED_PROGRESSION_PALETTE } from "./progressionColors.js";
 
 	const DIMMED_HIGHLIGHT_OPACITY = 0.22;
 
@@ -36,7 +36,7 @@
 				? [
 						{
 							parsedProgression,
-							palette: highlightPalette ?? DEFAULT_PROGRESSION_PALETTE,
+							palette: highlightPalette ?? UNGROUPED_PROGRESSION_PALETTE,
 							isStrictSubset
 						}
 					]
