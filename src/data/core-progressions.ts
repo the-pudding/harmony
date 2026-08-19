@@ -111,7 +111,13 @@ const axisOfAwesomeProgressions: ProgressionGroup = {
 	progressions: [
 		{
 			name: "axis of awesome",
-			chordProgression: ["I-V-vi-IV", "I-V-vi"],
+			chordProgression: "I-V-vi-IV",
+			scale: "major",
+			description: ""
+		},
+		{
+			name: "(mini)axis of awesome",
+			chordProgression: "I-V-vi",
 			scale: "major",
 			description: ""
 		},
@@ -126,6 +132,12 @@ const axisOfAwesomeProgressions: ProgressionGroup = {
 			chordProgression: "vi-IV-I-V",
 			scale: "major",
 			description: "repeats starting on vi instead of I"
+		},
+		{
+			name: "axis of angsty",
+			chordProgression: "I-iii-vi-IV",
+			scale: "major",
+			description: "darker version of Axis of Awesome: V swapped for iii"
 		}
 	]
 };
