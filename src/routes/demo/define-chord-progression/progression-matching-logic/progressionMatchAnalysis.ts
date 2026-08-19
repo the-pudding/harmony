@@ -2,7 +2,10 @@ import type { CoreProgression } from "$data/core-progressions.js";
 import { chordProgressionVariants } from "$data/core-progressions.util.js";
 import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import type { ScaleName } from "../../../../chord-processing/scales.js";
-import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
+import {
+	romanTokenOffsetFromTonic,
+	romanTokensToParsedProgression
+} from "../../../../chord-processing/romanNumerals.js";
 import {
 	isPositionInMatch,
 	toAbstractProgression
@@ -51,6 +54,7 @@ export type ProgressionWithMatchStats = {
 	matchCount: number;
 	coveragePercent: number;
 	isCoreProgression: boolean;
+	matchRomanNumeralsExactly?: boolean;
 	isStrictSubset?: boolean;
 	isFullSectionSingleMatch?: boolean;
 	isSectionStartBiasWinner?: boolean;
@@ -112,7 +116,8 @@ const toNonOverlappingMatches = (
 
 export const computeStatsForParsedProgression = (
 	song: GroupedSong,
-	parsed: ParsedProgressionChord[]
+	parsed: ParsedProgressionChord[],
+	matchRomanNumeralsExactly = false
 ): { matchCount: number; coveragePercent: number } => {
 	const totalChords = song.sections.reduce(
 		(sum, section) => sum + section.parsedProgression.length,
@@ -122,7 +127,11 @@ export const computeStatsForParsedProgression = (
 
 	const stats = song.sections.reduce(
 		(accumulator, section) => {
-			const matches = getSectionMatches(section, parsed);
+			const matches = getSectionMatches(
+				section,
+				parsed,
+				matchRomanNumeralsExactly
+			);
 			return {
 				matchCount: accumulator.matchCount + matches.length,
 				coveredPositions:
@@ -141,13 +150,14 @@ export const computeStatsForParsedProgression = (
 
 export const fullyCoversAnySection = (
 	song: GroupedSong,
-	parsed: ParsedProgressionChord[]
+	parsed: ParsedProgressionChord[],
+	matchRomanNumeralsExactly = false
 ): boolean =>
 	song.sections.some((section) => {
 		const sectionLength = section.parsedProgression.length;
 		if (sectionLength === 0) return false;
 		const covered = positionsFromMatches(
-			getSectionMatches(section, parsed),
+			getSectionMatches(section, parsed, matchRomanNumeralsExactly),
 			sectionLength
 		);
 		return covered.length === sectionLength;
@@ -174,8 +184,9 @@ export function computeProgressionMatches(
 					);
 					if (!parsed) return null;
 
-					const stats = computeStatsForParsedProgression(song, parsed);
-					const coversFullSection = fullyCoversAnySection(song, parsed);
+				const exact = progression.matchRomanNumeralsExactly ?? false;
+				const stats = computeStatsForParsedProgression(song, parsed, exact);
+				const coversFullSection = fullyCoversAnySection(song, parsed, exact);
 
 					return {
 						...progression,
@@ -204,6 +215,7 @@ export function computeProgressionMatches(
 export type ParsedCoreProgression = {
 	chordProgression: string;
 	parsed: ParsedProgressionChord[];
+	matchRomanNumeralsExactly: boolean;
 };
 
 export const parseCoreProgressions = (
@@ -218,7 +230,14 @@ export const parseCoreProgressions = (
 					progression.scale
 				);
 				if (!parsed) return [];
-				return [{ chordProgression: variant, parsed }];
+				return [
+					{
+						chordProgression: variant,
+						parsed,
+						matchRomanNumeralsExactly:
+							progression.matchRomanNumeralsExactly ?? false
+					}
+				];
 			}
 		)
 	);
@@ -228,12 +247,16 @@ export const findMatchingCoreProgressionsForSong = (
 	parsedCoreProgressions: ParsedCoreProgression[]
 ): string[] =>
 	parsedCoreProgressions
-		.filter(({ parsed }) => {
-			const { matchCount } = computeStatsForParsedProgression(song, parsed);
+		.filter(({ parsed, matchRomanNumeralsExactly }) => {
+			const { matchCount } = computeStatsForParsedProgression(
+				song,
+				parsed,
+				matchRomanNumeralsExactly
+			);
 			return (
 				matchCount >= MIN_PROGRESSION_OCCURRENCES ||
 				(matchCount >= MIN_FULL_SECTION_OCCURRENCES &&
-					fullyCoversAnySection(song, parsed))
+					fullyCoversAnySection(song, parsed, matchRomanNumeralsExactly))
 			);
 		})
 		.map(({ chordProgression }) => chordProgression);
@@ -337,9 +360,10 @@ export const buildCoreProgressionDisplayMatches = (
 					);
 					if (!parsed) return null;
 
-					const stats = song
-						? computeStatsForParsedProgression(song, parsed)
-						: { matchCount: 0, coveragePercent: 0 };
+				const exact = progression.matchRomanNumeralsExactly ?? false;
+				const stats = song
+					? computeStatsForParsedProgression(song, parsed, exact)
+					: { matchCount: 0, coveragePercent: 0 };
 
 					return {
 						...progression,
@@ -354,28 +378,54 @@ export const buildCoreProgressionDisplayMatches = (
 		)
 		.filter((match): match is ProgressionWithMatchStats => match !== null);
 
+const matchStartsOnExpectedTonic = (
+	section: SongSection,
+	matchStart: number,
+	expectedTonicOffset: number
+): boolean => {
+	const token = section.romanTokens[matchStart];
+	if (!token) return true;
+	const offset = romanTokenOffsetFromTonic(token, section.scale);
+	if (offset === null) return true;
+	return offset === expectedTonicOffset;
+};
+
 export function getSectionMatches(
 	section: SongSection,
-	searchProgression: ParsedProgressionChord[] | null
+	searchProgression: ParsedProgressionChord[] | null,
+	matchRomanNumeralsExactly = false
 ): SubProgressionMatch[] {
 	if (!searchProgression || searchProgression.length === 0) return [];
 	const sectionLength = section.parsedProgression.length;
-	return toNonOverlappingMatches(
-		matchProgressionSelectiveExactness(
-			section.parsedProgression,
-			searchProgression
-		),
-		sectionLength
+	const rawMatches = matchProgressionSelectiveExactness(
+		section.parsedProgression,
+		searchProgression
 	);
+	const filteredMatches =
+		matchRomanNumeralsExactly && searchProgression.length > 0
+			? rawMatches.filter((match) =>
+					matchStartsOnExpectedTonic(
+						section,
+						match.start,
+						searchProgression[0].rootPitchClass
+					)
+				)
+			: rawMatches;
+	return toNonOverlappingMatches(filteredMatches, sectionLength);
 }
 
 export const computeCoveredPositionsBySection = (
 	song: GroupedSong,
-	searchProgression: ParsedProgressionChord[]
+	searchProgression: ParsedProgressionChord[],
+	matchRomanNumeralsExactly = false
 ): number[][] =>
 	song.sections.map((section) => {
 		const sectionLength = section.parsedProgression.length;
-		const matches = getSectionMatches(section, searchProgression);
+		const matches = getSectionMatches(
+			section,
+			searchProgression,
+			matchRomanNumeralsExactly
+		);
 		return positionsFromMatches(matches, sectionLength);
 	});
 
@@ -478,6 +528,7 @@ export type ChordAnnotation = {
 	isStrictSubset?: boolean;
 	chordProgression?: string;
 	highlightPositionsBySection?: number[][];
+	matchRomanNumeralsExactly?: boolean;
 };
 
 export type ColoredHighlightSegment = {
@@ -504,8 +555,16 @@ export const buildColoredHighlightSegments = (
 	const sectionLength = section.parsedProgression.length;
 
 	const matchesByAnnotation = annotations.map(
-		({ parsedProgression, highlightPositionsBySection }) => {
-			const allMatches = getSectionMatches(section, parsedProgression);
+		({
+			parsedProgression,
+			highlightPositionsBySection,
+			matchRomanNumeralsExactly
+		}) => {
+			const allMatches = getSectionMatches(
+				section,
+				parsedProgression,
+				matchRomanNumeralsExactly ?? false
+			);
 			const allowedPositions = highlightPositionsBySection?.[sectionIndex];
 			if (allowedPositions === undefined) return allMatches;
 			const allowed = new Set(allowedPositions);

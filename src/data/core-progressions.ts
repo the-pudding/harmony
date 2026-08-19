@@ -119,6 +119,7 @@ const axisOfAwesomeProgressions: ProgressionGroup = {
 			name: "(mini)axis of awesome",
 			chordProgression: "I-V-vi",
 			scale: "major",
+			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
@@ -278,6 +279,13 @@ const minoryProgressions: ProgressionGroup = {
 			chordProgression: "i-v-i-v",
 			scale: "minor",
 			description: ""
+		},
+		{
+			name: "stay with me",
+			chordProgression: "i-VI-III",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: "a pop-y, emo minor progression"
 		}
 	]
 };
@@ -353,13 +361,6 @@ const emoPopProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
-			name: "stay with me",
-			chordProgression: "vi-IV-I",
-			scale: "major",
-			description:
-				"a sorta pop-y, emo ii-V-I (technically also matches looped axis of awesome)"
-		},
-		{
 			name: "if i aint got you",
 			chordProgression: "IV-iii-ii-I",
 			scale: "major",
@@ -374,6 +375,7 @@ export type CoreProgression = {
 	scale: ScaleName;
 	description: string;
 	technicalNotes?: string;
+	matchRomanNumeralsExactly?: boolean;
 };
 
 export const allProgressionGroups: ProgressionGroup[] = [

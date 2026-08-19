@@ -42,7 +42,8 @@ export const buildFinalChordAnnotations = (
 		palette: match.highlightPalette,
 		isStrictSubset: match.isStrictSubset,
 		chordProgression: match.chordProgression,
-		highlightPositionsBySection: claims[index]
+		highlightPositionsBySection: claims[index],
+		matchRomanNumeralsExactly: match.matchRomanNumeralsExactly ?? false
 	}));
 };
 

@@ -258,6 +258,15 @@ const pitchClassFromEntry = (
 	);
 };
 
+export const romanTokenOffsetFromTonic = (
+	token: string,
+	scale: ScaleName
+): number | null => {
+	const parsed = parseRomanToken(token);
+	if (!parsed) return null;
+	return pitchClassFromEntry(parsed, scale);
+};
+
 export const romanTokensToPrecomputedAbstract = (
 	tokens: string[],
 	scale: ScaleName = "major"

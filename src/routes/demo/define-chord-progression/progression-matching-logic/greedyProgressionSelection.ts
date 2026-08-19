@@ -69,7 +69,11 @@ export const progressionInstances = (
 	candidate: ProgressionWithMatchStats
 ): ProgressionInstance[] =>
 	song.sections.flatMap((section, sectionIndex) =>
-		getSectionMatches(section, candidate.parsedProgression).map((match) => ({
+		getSectionMatches(
+			section,
+			candidate.parsedProgression,
+			candidate.matchRomanNumeralsExactly ?? false
+		).map((match) => ({
 			sectionIndex,
 			positions: matchPositions(match, section.parsedProgression.length),
 			startsSection: match.start === 0

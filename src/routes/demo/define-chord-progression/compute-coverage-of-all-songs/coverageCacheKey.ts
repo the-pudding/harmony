@@ -6,7 +6,10 @@ export const COVERAGE_CACHE_SCHEMA_VERSION = 2;
 
 const progressionFingerprint = (progressions: CoreProgression[]): string =>
 	progressions
-		.map((p) => `${p.name}:${JSON.stringify(p.chordProgression)}:${p.scale}`)
+		.map(
+			(p) =>
+				`${p.name}:${JSON.stringify(p.chordProgression)}:${p.scale}:${p.matchRomanNumeralsExactly ?? false}`
+		)
 		.join("|");
 
 const songCorpusFingerprint = (songs: GroupedSong[]): string =>
