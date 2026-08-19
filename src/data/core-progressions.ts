@@ -190,6 +190,19 @@ const minoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
+			name: "beat it vamp",
+			chordProgression: "i-VII-i-VII",
+			scale: "minor",
+			description: ""
+		},
+		{
+			name: "somebody that i used to know",
+			chordProgression: "i-VII-VI-VII",
+			scale: "minor",
+			description: ""
+		},
+
+		{
 			name: "broody walk down",
 			chordProgression: "i-VI-V",
 			scale: "minor",

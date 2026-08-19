@@ -534,6 +534,11 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "duran-duran__new-moon-on-monday",
 		chordProgressionIssues:
 			"only has chorus (also, I feels it's wrong, should be I-II-vi-IV)"
+	},
+	{
+		id: "drake__hotline-bling",
+		chordProgressionIssues:
+			"blatantly wrong. pretty much all of it except for the bridge is just Gm-Am repeating"
 	}
 ];
 
