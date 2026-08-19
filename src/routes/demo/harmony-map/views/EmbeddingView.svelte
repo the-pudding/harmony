@@ -47,6 +47,14 @@
 	let selectedSongKey = $state<string | null>(null);
 	let inspectorTab = $state<InspectorTab>("song");
 	let selectedArtistName = $state<string | null>(null);
+	let highlightedSongKeys = $state<Set<string>>(new Set());
+
+	const toggleHighlightedSong = (songKey: string) => {
+		const next = new Set(highlightedSongKeys);
+		if (next.has(songKey)) next.delete(songKey);
+		else next.add(songKey);
+		highlightedSongKeys = next;
+	};
 
 	const songByKey = $derived(
 		new Map(songs.map((song) => [song.songKey, song]))
@@ -157,6 +165,7 @@
 				{songByKey}
 				{selectedSongKey}
 				{neighborSongKeys}
+				{highlightedSongKeys}
 				visibleSongKeys={artistSongKeys}
 				axisLabels={AXIS_LABELS_BY_METHOD[embedding.method]}
 				onSelect={(songKey) => {
@@ -189,6 +198,8 @@
 					coords={selectedCoords}
 					componentLoadings={embedding.result.componentLoadings}
 					explainedVariance={embedding.result.explainedVariance}
+					{highlightedSongKeys}
+					onToggleHighlight={toggleHighlightedSong}
 					onSelect={(songKey) => {
 						selectedSongKey = songKey;
 					}}

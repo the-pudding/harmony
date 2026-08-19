@@ -27,6 +27,8 @@
 		coords: Coords | null;
 		componentLoadings: ComponentLoading[][] | null;
 		explainedVariance: number[] | null;
+		highlightedSongKeys: Set<string>;
+		onToggleHighlight: (songKey: string) => void;
 		onSelect: (songKey: string | null) => void;
 	};
 
@@ -40,6 +42,8 @@
 		coords,
 		componentLoadings,
 		explainedVariance,
+		highlightedSongKeys,
+		onToggleHighlight,
 		onSelect
 	}: Props = $props();
 
@@ -120,6 +124,10 @@
 		selectedSongKey === null ? null : (songByKey.get(selectedSongKey) ?? null)
 	);
 
+	const isSelectedHighlighted = $derived(
+		selectedSongKey !== null && highlightedSongKeys.has(selectedSongKey)
+	);
+
 	const loadingLabel = (loading: ComponentLoading): string =>
 		vocabulary.entries[loading.featureIndex]?.chordProgression ?? "";
 
@@ -177,6 +185,14 @@
 				{/if}
 				<span class="selected-artists">{selectedEntry.artists.join(", ")}</span>
 			</div>
+			<button
+				class="highlight-toggle"
+				type="button"
+				aria-pressed={isSelectedHighlighted}
+				onclick={() => selectedSongKey && onToggleHighlight(selectedSongKey)}
+			>
+				{isSelectedHighlighted ? "highlighted ✓" : "highlight in cluster mode"}
+			</button>
 		</div>
 
 		<dl class="facts">
@@ -380,7 +396,32 @@
 	.selected-header {
 		display: flex;
 		align-items: flex-start;
+		justify-content: space-between;
 		gap: 0.5rem;
+	}
+
+	.highlight-toggle {
+		flex-shrink: 0;
+		font-family: inherit;
+		font-size: 0.6rem;
+		color: #a1a1aa;
+		padding: 0.1875rem 0.5rem;
+		border-radius: 9999px;
+		border: 1px solid rgba(63, 63, 70, 0.8);
+		background: rgba(9, 9, 11, 0.6);
+		cursor: pointer;
+		white-space: nowrap;
+	}
+
+	.highlight-toggle:hover {
+		color: #e4e4e7;
+		border-color: rgba(113, 113, 122, 0.9);
+	}
+
+	.highlight-toggle[aria-pressed="true"] {
+		border-color: rgba(251, 191, 36, 0.6);
+		background: rgba(251, 191, 36, 0.16);
+		color: #fde68a;
 	}
 
 	.selected-identity {
