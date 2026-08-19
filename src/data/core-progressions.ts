@@ -134,10 +134,33 @@ const axisOfAwesomeProgressions: ProgressionGroup = {
 			description: "repeats starting on vi instead of I"
 		},
 		{
-			name: "axis of angsty",
-			chordProgression: "I-iii-vi-IV",
+			name: "whatcha say",
+			chordProgression: "IV-I-vi-V",
 			scale: "major",
-			description: "darker version of Axis of Awesome: V swapped for iii"
+			description:
+				"Similar strengths to other four chord classics, but starting on the IV makes it feel fresh/yearn-y. Peaked in mid 2010s"
+		},
+		{
+			name: "emo walk down",
+			chordProgression: [
+				"I-Imaj7-vi-V-IV",
+				"I-Imaj7-vi-V-IV-V",
+				"I-Imaj7-vi-IV",
+				// Less stringent versions:
+				"I-vi-V-IV",
+				"I-vi-V-IV-V"
+				// "I-vi-IV",
+			],
+			scale: "major",
+			description:
+				"The I→Imaj7 step is the signature — bare I then maj7 before the walk down"
+		},
+		{
+			name: "viva la vida",
+			chordProgression: "IV-V-I-vi",
+			scale: "major",
+			description:
+				"starts with an optimistic IV-V lift, then sort of has this melancholy I-vi dip"
 		}
 	]
 };
@@ -231,6 +254,30 @@ const minoryProgressions: ProgressionGroup = {
 			chordProgression: "VI-V-i",
 			scale: "minor",
 			description: ""
+		},
+		{
+			name: "go your own way",
+			chordProgression: "vi-IV-V",
+			scale: "major",
+			description: ""
+		},
+		{
+			name: "rising sun",
+			chordProgression: "i-III-IV-VI",
+			scale: "minor",
+			description: ""
+		},
+		{
+			name: "kissed a girl",
+			chordProgression: "i-III-iv-VI",
+			scale: "minor",
+			description: ""
+		},
+		{
+			name: "i v vamp",
+			chordProgression: "i-v-i-v",
+			scale: "minor",
+			description: ""
 		}
 	]
 };
@@ -262,6 +309,12 @@ const jazzyProgressions: ProgressionGroup = {
 			chordProgression: "I-vi-ii-V",
 			scale: "major",
 			description: ""
+		},
+		{
+			name: "ii-V vamp",
+			chordProgression: "ii-V",
+			scale: "major",
+			description: ""
 		}
 	]
 };
@@ -271,37 +324,6 @@ const emoPopProgressions: ProgressionGroup = {
 	description:
 		"Honestly not fully sure if this should be a category, but didn't fit well into happy major-y",
 	progressions: [
-		{
-			name: "whatcha say",
-			chordProgression: "IV-I-vi-V",
-			scale: "major",
-			description:
-				"Similar strengths to other four chord classics, but starting on the IV makes it feel fresh/yearn-y. Peaked in mid 2010s"
-		},
-
-		{
-			name: "emo walk down",
-			chordProgression: [
-				"I-Imaj7-vi-V-IV",
-				"I-Imaj7-vi-V-IV-V",
-				"I-Imaj7-vi-IV",
-				// Less stringent versions:
-				"I-vi-V-IV",
-				"I-vi-V-IV-V"
-				// "I-vi-IV",
-			],
-			scale: "major",
-			description:
-				"The I→Imaj7 step is the signature — bare I then maj7 before the walk down"
-		},
-
-		{
-			name: "viva la vida",
-			chordProgression: "IV-V-I-vi",
-			scale: "major",
-			description:
-				"starts with an optimistic IV-V lift, then sort of has this melancholy I-vi dip"
-		},
 		{
 			name: "i want you to stay",
 			chordProgression: "I-ii-vi-IV",

@@ -93,37 +93,135 @@
 	type ClusterGeometry = { x: number; y: number; radius: number };
 	type ClusterHit = { cluster: DensityCluster; geometry: ClusterGeometry };
 	type NamingInputState = {
-		hash: string;
+		cluster: DensityCluster;
 		x: number;
 		y: number;
 		initialName: string;
 	};
 
+	// A cluster's `hash` is an exact fingerprint of its member songs, so it
+	// breaks the instant membership shifts even slightly — e.g. after editing
+	// core-progressions.ts, which can reshuffle embeddings for hundreds of
+	// songs. Named clusters keep their member list alongside the name so a
+	// drifted cluster can still be recognized by overlap and the record can
+	// heal itself onto the new hash, instead of the name just vanishing.
+	type NamedCluster = { hash: string; songKeys: string[]; name: string };
+
+	// Fraction of the smaller side that must overlap for two member sets to
+	// count as "the same" cluster after it has drifted.
+	const CLUSTER_NAME_OVERLAP_THRESHOLD = 0.5;
+
 	let hoveredClusterHit = $state<ClusterHit | null>(null);
 	let namingInput = $state<NamingInputState | null>(null);
 	let namingInputEl = $state<HTMLInputElement | null>(null);
 
-	const loadClusterNames = (): Record<string, string> => {
-		if (typeof localStorage === "undefined") return {};
+	const loadNamedClusters = (): NamedCluster[] => {
+		if (typeof localStorage === "undefined") return [];
 		try {
 			const raw = localStorage.getItem(CLUSTER_NAMES_STORAGE_KEY);
-			return raw ? JSON.parse(raw) : {};
+			if (!raw) return [];
+			const parsed: unknown = JSON.parse(raw);
+			if (Array.isArray(parsed)) return parsed as NamedCluster[];
+			// Migrate the old `{ hash: name }` shape — those entries have no
+			// stored membership, so they can only ever match by exact hash again.
+			return Object.entries(parsed as Record<string, string>).map(
+				([hash, name]): NamedCluster => ({ hash, songKeys: [], name })
+			);
 		} catch {
-			return {};
+			return [];
 		}
 	};
 
-	let clusterNames = $state<Record<string, string>>(loadClusterNames());
+	let namedClusters = $state<NamedCluster[]>(loadNamedClusters());
 
-	const setClusterName = (hash: string, name: string) => {
-		const next = { ...clusterNames };
-		if (name) next[hash] = name;
-		else delete next[hash];
-		clusterNames = next;
+	const persistNamedClusters = (next: NamedCluster[]) => {
+		namedClusters = next;
 		if (typeof localStorage !== "undefined") {
 			localStorage.setItem(CLUSTER_NAMES_STORAGE_KEY, JSON.stringify(next));
 		}
 	};
+
+	// Overlap coefficient: intersection size / the smaller set's size, so a
+	// cluster that grew or shrank but kept most of its core members still
+	// counts as a match.
+	const overlapRatio = (a: readonly string[], b: readonly string[]): number => {
+		if (a.length === 0 || b.length === 0) return 0;
+		const [smaller, larger] = a.length <= b.length ? [a, b] : [b, a];
+		const smallerSet = new Set(smaller);
+		let intersection = 0;
+		for (const key of larger) if (smallerSet.has(key)) intersection++;
+		return intersection / smaller.length;
+	};
+
+	const findNamedClusterFor = (
+		cluster: DensityCluster
+	): NamedCluster | null => {
+		const exact = namedClusters.find((entry) => entry.hash === cluster.hash);
+		if (exact) return exact;
+
+		return (
+			namedClusters.reduce<{ entry: NamedCluster; ratio: number } | null>(
+				(best, entry) => {
+					const ratio = overlapRatio(cluster.songKeys, entry.songKeys);
+					if (ratio < CLUSTER_NAME_OVERLAP_THRESHOLD) return best;
+					return !best || ratio > best.ratio ? { entry, ratio } : best;
+				},
+				null
+			)?.entry ?? null
+		);
+	};
+
+	const setClusterName = (cluster: DensityCluster, name: string) => {
+		const survivors = namedClusters.filter(
+			(entry) =>
+				entry.hash !== cluster.hash &&
+				overlapRatio(cluster.songKeys, entry.songKeys) <
+					CLUSTER_NAME_OVERLAP_THRESHOLD
+		);
+		persistNamedClusters(
+			name
+				? [
+						...survivors,
+						{ hash: cluster.hash, songKeys: cluster.songKeys, name }
+					]
+				: survivors
+		);
+	};
+
+	// Membership drifts a little at a time (a method switch, a corpus edit) —
+	// re-key any named cluster that no longer matches exactly but still
+	// substantially overlaps a current cluster, so the name keeps following
+	// it instead of going stale again next time.
+	$effect(() => {
+		const currentClusters = clusters;
+		untrack(() => {
+			const currentNamed = namedClusters;
+			let changed = false;
+			const next = currentNamed.map((entry) => {
+				if (currentClusters.some((cluster) => cluster.hash === entry.hash)) {
+					return entry;
+				}
+				const match = currentClusters.find(
+					(cluster) =>
+						overlapRatio(cluster.songKeys, entry.songKeys) >=
+						CLUSTER_NAME_OVERLAP_THRESHOLD
+				);
+				if (!match) return entry;
+				changed = true;
+				return { hash: match.hash, songKeys: match.songKeys, name: entry.name };
+			});
+			if (changed) persistNamedClusters(next);
+		});
+	});
+
+	const resolvedClusterNames = $derived.by((): Map<string, string> => {
+		const result = new Map<string, string>();
+		for (const cluster of clusters) {
+			const match = findNamedClusterFor(cluster);
+			if (match) result.set(cluster.hash, match.name);
+		}
+		return result;
+	});
 
 	// Live geometry (centroid + radius) per drawn cluster, recomputed once per
 	// draw() call from that frame's tween positions — cached here so hover and
@@ -265,7 +363,7 @@
 				geometry: { x: centroid.x, y: centroid.y, radius }
 			});
 
-			const name = clusterNames[cluster.hash];
+			const name = resolvedClusterNames.get(cluster.hash);
 
 			context.globalAlpha = name ? 1 : CLUSTER_UNNAMED_STROKE_ALPHA;
 			context.setLineDash(CLUSTER_DASH_PATTERN);
@@ -503,16 +601,16 @@
 
 	const openNamingInput = (hit: ClusterHit) => {
 		namingInput = {
-			hash: hit.cluster.hash,
+			cluster: hit.cluster,
 			x: hit.geometry.x,
 			y: Math.max(24, hit.geometry.y - hit.geometry.radius - CLUSTER_LABEL_GAP),
-			initialName: clusterNames[hit.cluster.hash] ?? ""
+			initialName: resolvedClusterNames.get(hit.cluster.hash) ?? ""
 		};
 	};
 
 	const commitNamingInput = () => {
 		if (!namingInput) return;
-		setClusterName(namingInput.hash, namingInputEl?.value.trim() ?? "");
+		setClusterName(namingInput.cluster, namingInputEl?.value.trim() ?? "");
 		namingInput = null;
 	};
 
@@ -574,7 +672,7 @@
 		void neighborSongKeys;
 		void drawablePoints;
 		void clusters;
-		void clusterNames;
+		void resolvedClusterNames;
 		void highlightedSongKeys;
 		void hoveredClusterHit;
 		draw();

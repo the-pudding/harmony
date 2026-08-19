@@ -478,12 +478,18 @@ const highestInTheRoomSong = groupSongs(
 )[0];
 
 describe("selectFinalProgressions — highest in the room outro regression", () => {
-	it("core progressions do not match this minor vamp (coreSelected is empty)", () => {
+	it("core progressions do not match the outro's i-v-VI-iv vamp", () => {
 		const result = selectFinalProgressions(
 			highestInTheRoomSong,
 			coreProgressions
 		);
-		expect(result.coreSelected).toHaveLength(0);
+		// The song does legitimately match other core progressions elsewhere
+		// (e.g. "i v vamp"), so this only checks that the specific outro
+		// pattern isn't swallowed by a core progression before gap-fill can
+		// claim it.
+		expect(
+			result.coreSelected.some((m) => m.chordProgression === "i-v-VI-iv")
+		).toBe(false);
 	});
 
 	it("surfaces i-v-VI-iv in gap candidates with 2 occurrences", () => {
