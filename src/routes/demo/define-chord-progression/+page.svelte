@@ -57,7 +57,7 @@
 		findGroupedSongByKey(coverage.songs, selectedKey)
 	);
 
-	const GREEDY_SORT_LABEL = `highest song coverage first — but within ${PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}% coverage, prefer progressions that start more sections (length as final tiebreaker)`;
+	const GREEDY_SORT_LABEL = `most still-unclaimed chords covered first — but within ${PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}% coverage, prefer progressions that start more sections (length as final tiebreaker)`;
 
 	const allSongsCoverageResult = $derived(coverage.allSongsCoverageResult);
 	const corpusBiasOverrides = $derived<SongBiasOverride[]>(
@@ -266,9 +266,8 @@
 
 				<section class="step-section">
 					<h2 class="section-heading">
-						1. Greedily select any non-overlapping core-progressions that appear
-						at least <span class="const-value"
-							>{MIN_PROGRESSION_OCCURRENCES}</span
+						1. Greedily select core-progressions that appear at least <span
+							class="const-value">{MIN_PROGRESSION_OCCURRENCES}</span
 						>
 						times (or just once if it fills an entire section), by {GREEDY_SORT_LABEL}
 					</h2>
@@ -277,7 +276,12 @@
 						expand the coverage of
 						<CodeReference filename="core-progressions.ts" />, and also makes it
 						so we maximize classified chords over random ones that might happen
-						to be better/longer for some reason. The single-occurrence exception
+						to be better/longer for some reason. Selection happens one instance
+						at a time rather than all-or-nothing: after each pick we re-score
+						every remaining candidate against the chords that are still free, so
+						a progression that owns a whole chorus still claims it even when one
+						stray instance elsewhere collides with an earlier winner. It just
+						forfeits the colliding instance. The single-occurrence exception
 						only applies to core progressions — not gap-fill candidates — to
 						avoid spuriously claiming any section with no other matches. Within
 						the
@@ -315,9 +319,10 @@
 							class="const-value">{MAX_PROGRESSION_LENGTH}</span
 						>
 						chords that recur at least twice as complete instances lying entirely
-						inside the gaps. Selected gap progressions are also pairwise non-overlapping
-						— no chord position is ever claimed by more than one progression. A valid
-						progression cannot consist of consecutive
+						inside the gaps. This stage uses the same instance-at-a-time greedy pass
+						as step 1, so gap progressions are pairwise non-overlapping — no chord
+						position is ever claimed by more than one progression — while still keeping
+						the instances that do fit. A valid progression cannot consist of consecutive
 						<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>+
 						progressions repeating more than once. Within the
 						<span class="const-value"

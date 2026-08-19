@@ -7,7 +7,10 @@ import { groupSongs } from "../../../../data/songBrowser.js";
 import { computeGapFillProgressionMatches } from "./gapFillProgressionAnalysis.js";
 import { selectFinalProgressions } from "./finalProgressionSelection.js";
 import { emptyCoverage } from "./greedyProgressionSelection.js";
-import { MIN_PROGRESSION_OCCURRENCES } from "./progressionMatchAnalysis.js";
+import {
+	computeProgressionMatches,
+	MIN_PROGRESSION_OCCURRENCES
+} from "./progressionMatchAnalysis.js";
 import {
 	MIN_PROGRESSION_LENGTH,
 	MAX_PROGRESSION_LENGTH
@@ -210,9 +213,22 @@ describe("computeGapFillProgressionMatches — invariants", () => {
 });
 
 describe("computeGapFillProgressionMatches — recurrence detection", () => {
+	const NON_CORE_RECURRING_TOKENS = ["ii", "iii", "vi"];
+	const nonCoreRecurring = NON_CORE_RECURRING_TOKENS.join("-");
+
+	it("uses a fixture progression that is genuinely not a core progression", () => {
+		const song = makeSong([NON_CORE_RECURRING_TOKENS]);
+		const coreNames = computeProgressionMatches(song, coreProgressions).map(
+			(match) => match.chordProgression
+		);
+		expect(coreNames).not.toContain(nonCoreRecurring);
+	});
+
 	it("surfaces a progression that appears exactly twice", () => {
-		const song = makeSong([["I", "IV", "V", "I", "IV", "V"]]);
-		expect(gapProgressions(song)).toContain("I-IV-V");
+		const song = makeSong([
+			[...NON_CORE_RECURRING_TOKENS, ...NON_CORE_RECURRING_TOKENS]
+		]);
+		expect(gapProgressions(song)).toContain(nonCoreRecurring);
 	});
 
 	it("does not surface a progression that appears only once", () => {

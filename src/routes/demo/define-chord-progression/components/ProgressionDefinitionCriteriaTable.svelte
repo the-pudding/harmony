@@ -155,11 +155,27 @@
 					<td>
 						<CodeReference
 							filename="greedyProgressionSelection.ts"
-							symbols={["greedilySelectProgressions", "hasOverlapWithCoverage"]}
+							symbols={["greedilySelectProgressions"]}
 						/>
 						<CodeReference
 							filename="coreProgressionSelection.ts"
 							symbols={["selectCoreProgressions"]}
+						/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Colliding with an earlier pick does not disqualify a progression.
+						Every greedy round re-scores each remaining candidate against the
+						chords that are still free, and the winner claims only its complete
+						instances that fit there — so a progression owning a whole chorus
+						still gets it even if one stray instance elsewhere overlaps the
+						round-one winner
+					</td>
+					<td>
+						<CodeReference
+							filename="greedyProgressionSelection.ts"
+							symbols={["greedilySelectProgressions", "progressionInstances"]}
 						/>
 					</td>
 				</tr>
@@ -186,12 +202,9 @@
 							filename="greedyProgressionSelection.ts"
 							symbols={[
 								"PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT",
-								"greedilySelectProgressions"
+								"greedilySelectProgressions",
+								"progressionInstances"
 							]}
-						/>
-						<CodeReference
-							filename="progressionMatchAnalysis.ts"
-							symbols={["countSectionsStartedByProgression"]}
 						/>
 					</td>
 				</tr>
@@ -216,8 +229,8 @@
 				<tr>
 					<td>
 						Selected gap progressions are also pairwise non-overlapping;
-						highlights show only the chord positions each selection actually
-						claims
+						highlights replay the selection order so each progression shows only
+						the chord positions it actually claimed on its turn
 					</td>
 					<td>
 						<CodeReference
@@ -229,14 +242,11 @@
 						/>
 						<CodeReference
 							filename="greedyProgressionSelection.ts"
-							symbols={["getCandidateCoverage"]}
+							symbols={["claimedPositionsInSelectionOrder"]}
 						/>
 						<CodeReference
 							filename="progressionMatchAnalysis.ts"
-							symbols={[
-								"computeGapOnlyCoveredPositionsBySection",
-								"buildColoredHighlightSegments"
-							]}
+							symbols={["buildColoredHighlightSegments"]}
 						/>
 					</td>
 				</tr>
