@@ -1,11 +1,20 @@
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
 import {
-	computeCoveredPositionsBySection,
-	countSectionsStartedByProgression
+	getSectionMatches,
+	matchPositions
 } from "./progressionMatchAnalysis.js";
 
 export type SectionCoverage = number[][];
+
+// One concrete occurrence of a progression inside one section. Selection works
+// at instance granularity so a progression that collides with already-claimed
+// chords in one spot can still claim the spots it does not compete for.
+export type ProgressionInstance = {
+	sectionIndex: number;
+	positions: number[];
+	startsSection: boolean;
+};
 
 export type SectionStartBiasOverride = {
 	winnerProgression: string;
@@ -22,14 +31,17 @@ export type SelectionResult = {
 export const emptyCoverage = (song: GroupedSong): SectionCoverage =>
 	song.sections.map(() => []);
 
+const songChordCount = (song: GroupedSong): number =>
+	song.sections.reduce(
+		(sum, section) => sum + section.parsedProgression.length,
+		0
+	);
+
 export const coveragePercent = (
 	song: GroupedSong,
 	coverage: SectionCoverage
 ): number => {
-	const totalChords = song.sections.reduce(
-		(sum, section) => sum + section.parsedProgression.length,
-		0
-	);
+	const totalChords = songChordCount(song);
 	if (totalChords === 0) return 0;
 	const coveredCount = coverage.reduce(
 		(sum, positions) => sum + positions.length,
@@ -40,14 +52,6 @@ export const coveragePercent = (
 
 const progressionChordCount = (chordProgression: string): number =>
 	chordProgression.split("-").length;
-
-const hasOverlapWithCoverage = (
-	newPositions: SectionCoverage,
-	existing: SectionCoverage
-): boolean =>
-	newPositions.some((positions, sectionIndex) =>
-		positions.some((pos) => (existing[sectionIndex] ?? []).includes(pos))
-	);
 
 export const mergeCoverage = (
 	existing: SectionCoverage,
@@ -60,140 +64,165 @@ export const mergeCoverage = (
 
 export const PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT = 5;
 
+export const progressionInstances = (
+	song: GroupedSong,
+	candidate: ProgressionWithMatchStats
+): ProgressionInstance[] =>
+	song.sections.flatMap((section, sectionIndex) =>
+		getSectionMatches(section, candidate.parsedProgression).map((match) => ({
+			sectionIndex,
+			positions: matchPositions(match, section.parsedProgression.length),
+			startsSection: match.start === 0
+		}))
+	);
+
+const toClaimedSets = (coverage: SectionCoverage): Set<number>[] =>
+	coverage.map((positions) => new Set(positions));
+
+const instancesLandingInFreeSpace = (
+	instances: ProgressionInstance[],
+	claimed: Set<number>[]
+): ProgressionInstance[] =>
+	instances.filter(({ sectionIndex, positions }) =>
+		positions.every((position) => !claimed[sectionIndex]?.has(position))
+	);
+
+const coverageFromInstances = (
+	song: GroupedSong,
+	instances: ProgressionInstance[]
+): SectionCoverage =>
+	song.sections.map((_, sectionIndex) =>
+		instances
+			.filter((instance) => instance.sectionIndex === sectionIndex)
+			.flatMap((instance) => instance.positions)
+			.sort((a, b) => a - b)
+	);
+
 type GreedySelectOptions = {
-	getCandidateCoverage?: (
+	getCandidateInstances?: (
 		candidate: ProgressionWithMatchStats
-	) => SectionCoverage;
-	getCandidateSectionStartCount?: (
-		candidate: ProgressionWithMatchStats
-	) => number;
+	) => ProgressionInstance[];
+};
+
+type ScoredCandidate = {
+	candidate: ProgressionWithMatchStats;
+	coverage: SectionCoverage;
+	matchedChords: number;
+	sectionStarts: number;
 };
 
 export const greedilySelectProgressions = (
 	song: GroupedSong,
 	candidates: ProgressionWithMatchStats[],
 	initialCoverage: SectionCoverage,
-	{
-		getCandidateCoverage,
-		getCandidateSectionStartCount
-	}: GreedySelectOptions = {}
+	{ getCandidateInstances }: GreedySelectOptions = {}
 ): SelectionResult => {
-	const totalChords = song.sections.reduce(
-		(sum, section) => sum + section.parsedProgression.length,
-		0
-	);
+	const totalChords = songChordCount(song);
 
 	const toleranceChords = Math.round(
 		(totalChords * PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT) / 100
 	);
 
-	const coverageMap = new Map(
+	const instancesByProgression = new Map(
 		candidates.map((candidate) => [
 			candidate.chordProgression,
-			getCandidateCoverage
-				? getCandidateCoverage(candidate)
-				: computeCoveredPositionsBySection(song, candidate.parsedProgression)
+			getCandidateInstances
+				? getCandidateInstances(candidate)
+				: progressionInstances(song, candidate)
 		])
 	);
 
-	const sectionStartCountMap = new Map(
-		candidates.map((candidate) => [
-			candidate.chordProgression,
-			getCandidateSectionStartCount
-				? getCandidateSectionStartCount(candidate)
-				: countSectionsStartedByProgression(song, candidate.parsedProgression)
-		])
-	);
-
-	const candidatePositions = (chordProgression: string): SectionCoverage =>
-		coverageMap.get(chordProgression) ?? [];
-
-	const totalMatchedChords = (chordProgression: string): number =>
-		candidatePositions(chordProgression).reduce(
-			(sum, positions) => sum + positions.length,
-			0
+	const scoreAgainstCoverage = (
+		candidate: ProgressionWithMatchStats,
+		claimed: Set<number>[]
+	): ScoredCandidate => {
+		const available = instancesLandingInFreeSpace(
+			instancesByProgression.get(candidate.chordProgression) ?? [],
+			claimed
 		);
+		return {
+			candidate,
+			coverage: coverageFromInstances(song, available),
+			matchedChords: available.reduce(
+				(sum, instance) => sum + instance.positions.length,
+				0
+			),
+			sectionStarts: new Set(
+				available
+					.filter((instance) => instance.startsSection)
+					.map((instance) => instance.sectionIndex)
+			).size
+		};
+	};
 
-	const sectionStartCount = (chordProgression: string): number =>
-		sectionStartCountMap.get(chordProgression) ?? 0;
+	const preferred = (best: ScoredCandidate, contender: ScoredCandidate) => {
+		if (contender.sectionStarts !== best.sectionStarts) {
+			return contender.sectionStarts > best.sectionStarts ? contender : best;
+		}
+		if (contender.matchedChords !== best.matchedChords) {
+			return contender.matchedChords > best.matchedChords ? contender : best;
+		}
+		return progressionChordCount(contender.candidate.chordProgression) >
+			progressionChordCount(best.candidate.chordProgression)
+			? contender
+			: best;
+	};
 
 	const pickBest = (
 		remaining: ProgressionWithMatchStats[],
 		coverage: SectionCoverage
 	): SelectionResult => {
-		const selectable = remaining.filter((candidate) => {
-			const count = totalMatchedChords(candidate.chordProgression);
-			if (count === 0) return false;
-			return !hasOverlapWithCoverage(
-				candidatePositions(candidate.chordProgression),
-				coverage
-			);
-		});
+		const claimed = toClaimedSets(coverage);
+		const selectable = remaining
+			.map((candidate) => scoreAgainstCoverage(candidate, claimed))
+			.filter((scored) => scored.matchedChords > 0);
 
 		if (selectable.length === 0) {
 			return { selected: [], coverage, biasOverrides: [] };
 		}
 
 		const leaderCount = Math.max(
-			...selectable.map((c) => totalMatchedChords(c.chordProgression))
+			...selectable.map((scored) => scored.matchedChords)
 		);
-
-		const window = selectable.filter(
-			(c) =>
-				leaderCount - totalMatchedChords(c.chordProgression) <= toleranceChords
-		);
-
-		const winner = window.reduce((best, candidate) => {
-			const bestStarts = sectionStartCount(best.chordProgression);
-			const candidateStarts = sectionStartCount(candidate.chordProgression);
-			if (candidateStarts > bestStarts) return candidate;
-			if (candidateStarts < bestStarts) return best;
-			const bestCount = totalMatchedChords(best.chordProgression);
-			const candidateCount = totalMatchedChords(candidate.chordProgression);
-			if (candidateCount > bestCount) return candidate;
-			if (candidateCount < bestCount) return best;
-			const bestLength = progressionChordCount(best.chordProgression);
-			const candidateLength = progressionChordCount(candidate.chordProgression);
-			return candidateLength > bestLength ? candidate : best;
-		});
-
 		const leader = selectable.find(
-			(c) => totalMatchedChords(c.chordProgression) === leaderCount
+			(scored) => scored.matchedChords === leaderCount
 		)!;
+		const winner = selectable
+			.filter((scored) => leaderCount - scored.matchedChords <= toleranceChords)
+			.reduce(preferred);
 
 		const biasApplied =
-			winner.chordProgression !== leader.chordProgression &&
-			sectionStartCount(winner.chordProgression) >
-				sectionStartCount(leader.chordProgression);
+			winner.candidate.chordProgression !== leader.candidate.chordProgression &&
+			winner.sectionStarts > leader.sectionStarts;
 
-		const coverageDiff =
-			leaderCount - totalMatchedChords(winner.chordProgression);
 		const sacrificedPercent =
-			totalChords > 0 ? Math.round((coverageDiff / totalChords) * 100) : 0;
+			totalChords > 0
+				? Math.round(((leaderCount - winner.matchedChords) / totalChords) * 100)
+				: 0;
 
 		const roundOverride: SectionStartBiasOverride | null = biasApplied
 			? {
-					winnerProgression: winner.chordProgression,
-					leaderProgression: leader.chordProgression,
+					winnerProgression: winner.candidate.chordProgression,
+					leaderProgression: leader.candidate.chordProgression,
 					sacrificedPercent
 				}
 			: null;
 
 		const markedWinner = biasApplied
 			? {
-					...winner,
+					...winner.candidate,
 					isSectionStartBiasWinner: true,
 					sectionStartBiasSacrificedPercent: sacrificedPercent
 				}
-			: winner;
+			: winner.candidate;
 
-		const winnerPositions = candidatePositions(winner.chordProgression);
-		const nextCoverage = mergeCoverage(coverage, winnerPositions);
-		const nextRemaining = remaining.filter(
-			(c) => c.chordProgression !== winner.chordProgression
+		const rest = pickBest(
+			remaining.filter(
+				(candidate) =>
+					candidate.chordProgression !== winner.candidate.chordProgression
+			),
+			mergeCoverage(coverage, winner.coverage)
 		);
-
-		const rest = pickBest(nextRemaining, nextCoverage);
 		return {
 			selected: [markedWinner, ...rest.selected],
 			coverage: rest.coverage,
@@ -205,3 +234,27 @@ export const greedilySelectProgressions = (
 
 	return pickBest(candidates, initialCoverage);
 };
+
+// A progression only owns the instances that were still free when its turn came,
+// so replaying selection order is the only way to recover each one's own share.
+export const claimedPositionsInSelectionOrder = (
+	song: GroupedSong,
+	selected: ProgressionWithMatchStats[],
+	initialCoverage: SectionCoverage
+): SectionCoverage[] =>
+	selected.reduce<{ claims: SectionCoverage[]; coverage: SectionCoverage }>(
+		({ claims, coverage }, candidate) => {
+			const claim = coverageFromInstances(
+				song,
+				instancesLandingInFreeSpace(
+					progressionInstances(song, candidate),
+					toClaimedSets(coverage)
+				)
+			);
+			return {
+				claims: [...claims, claim],
+				coverage: mergeCoverage(coverage, claim)
+			};
+		},
+		{ claims: [], coverage: initialCoverage }
+	).claims;

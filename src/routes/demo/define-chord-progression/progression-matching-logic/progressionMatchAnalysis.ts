@@ -438,27 +438,6 @@ export const computeGapOnlyCoveredPositionsBySection = (
 		)
 	);
 
-export const countSectionsStartedByProgression = (
-	song: GroupedSong,
-	parsed: ParsedProgressionChord[]
-): number =>
-	song.sections.filter((section) =>
-		getSectionMatches(section, parsed).some((match) => match.start === 0)
-	).length;
-
-export const countSectionsStartedByGapOnlyProgression = (
-	song: GroupedSong,
-	parsed: ParsedProgressionChord[],
-	occupiedCoverage: number[][]
-): number =>
-	song.sections.filter((section, sectionIndex) =>
-		getGapOnlySectionMatches(
-			section,
-			parsed,
-			occupiedCoverage[sectionIndex] ?? []
-		).some((match) => match.start === 0)
-	).length;
-
 export const computeGapOnlyStats = (
 	song: GroupedSong,
 	parsed: ParsedProgressionChord[],

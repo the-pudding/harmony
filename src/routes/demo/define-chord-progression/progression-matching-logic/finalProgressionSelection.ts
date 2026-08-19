@@ -1,20 +1,17 @@
 import type { CoreProgression } from "$data/core-progressions.js";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 import {
-	computeCoveredPositionsBySection,
-	computeGapOnlyCoveredPositionsBySection,
 	computeProgressionMatches,
-	countSectionsStartedByGapOnlyProgression,
 	type ChordAnnotation,
 	type ProgressionWithMatchStats
 } from "./progressionMatchAnalysis.js";
 import { selectCoreProgressions } from "./coreProgressionSelection.js";
 import { computeGapFillProgressionMatches } from "./gapFillProgressionAnalysis.js";
 import {
+	claimedPositionsInSelectionOrder,
 	coveragePercent,
 	emptyCoverage,
 	greedilySelectProgressions,
-	mergeCoverage,
 	type SectionCoverage,
 	type SectionStartBiasOverride
 } from "./greedyProgressionSelection.js";
@@ -33,47 +30,20 @@ export const buildFinalChordAnnotations = (
 	song: GroupedSong,
 	selection: Pick<FinalProgressionSelection, "coreSelected" | "gapSelected">
 ): ChordAnnotation[] => {
-	const annotations: ChordAnnotation[] = [];
-	let accumulatedCoverage = emptyCoverage(song);
+	const selectedInOrder = [...selection.coreSelected, ...selection.gapSelected];
+	const claims = claimedPositionsInSelectionOrder(
+		song,
+		selectedInOrder,
+		emptyCoverage(song)
+	);
 
-	for (const match of selection.coreSelected) {
-		const highlightPositionsBySection = computeCoveredPositionsBySection(
-			song,
-			match.parsedProgression
-		);
-		annotations.push({
-			parsedProgression: match.parsedProgression,
-			palette: match.highlightPalette,
-			isStrictSubset: match.isStrictSubset,
-			chordProgression: match.chordProgression,
-			highlightPositionsBySection
-		});
-		accumulatedCoverage = mergeCoverage(
-			accumulatedCoverage,
-			highlightPositionsBySection
-		);
-	}
-
-	for (const match of selection.gapSelected) {
-		const highlightPositionsBySection = computeGapOnlyCoveredPositionsBySection(
-			song,
-			match.parsedProgression,
-			accumulatedCoverage
-		);
-		annotations.push({
-			parsedProgression: match.parsedProgression,
-			palette: match.highlightPalette,
-			isStrictSubset: match.isStrictSubset,
-			chordProgression: match.chordProgression,
-			highlightPositionsBySection
-		});
-		accumulatedCoverage = mergeCoverage(
-			accumulatedCoverage,
-			highlightPositionsBySection
-		);
-	}
-
-	return annotations;
+	return selectedInOrder.map((match, index) => ({
+		parsedProgression: match.parsedProgression,
+		palette: match.highlightPalette,
+		isStrictSubset: match.isStrictSubset,
+		chordProgression: match.chordProgression,
+		highlightPositionsBySection: claims[index]
+	}));
 };
 
 export const selectFinalProgressions = (
@@ -89,21 +59,7 @@ export const selectFinalProgressions = (
 	const gapSelection = greedilySelectProgressions(
 		song,
 		gapCandidates,
-		coreSelection.coverage,
-		{
-			getCandidateCoverage: (candidate) =>
-				computeGapOnlyCoveredPositionsBySection(
-					song,
-					candidate.parsedProgression,
-					coreSelection.coverage
-				),
-			getCandidateSectionStartCount: (candidate) =>
-				countSectionsStartedByGapOnlyProgression(
-					song,
-					candidate.parsedProgression,
-					coreSelection.coverage
-				)
-		}
+		coreSelection.coverage
 	);
 
 	return {

@@ -4,7 +4,8 @@ import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
 import {
 	greedilySelectProgressions,
-	PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT
+	PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT,
+	type ProgressionInstance
 } from "./greedyProgressionSelection.js";
 
 const makeRomanSection = (
@@ -398,20 +399,28 @@ describe("section-start bias — demoted leader still selectable later", () => {
 		const candidateB = makeCandidate("V-I"); // section-starter: 10 chords, 1 section start
 
 		// Positions are the first and second halves of the section — fully disjoint.
-		const coverageA: number[][] = [Array.from({ length: 10 }, (_, i) => i)]; // 0-9
-		const coverageB: number[][] = [
-			Array.from({ length: 10 }, (_, i) => i + 10)
-		]; // 10-19
+		const instancesA: ProgressionInstance[] = [
+			{
+				sectionIndex: 0,
+				positions: Array.from({ length: 10 }, (_, i) => i), // 0-9
+				startsSection: false
+			}
+		];
+		const instancesB: ProgressionInstance[] = [
+			{
+				sectionIndex: 0,
+				positions: Array.from({ length: 10 }, (_, i) => i + 10), // 10-19
+				startsSection: true
+			}
+		];
 
 		const result = greedilySelectProgressions(
 			fakeSong,
 			[candidateA, candidateB],
 			fakeSong.sections.map(() => []),
 			{
-				getCandidateCoverage: (c) =>
-					c.chordProgression === "I-V" ? coverageA : coverageB,
-				getCandidateSectionStartCount: (c) =>
-					c.chordProgression === "V-I" ? 1 : 0
+				getCandidateInstances: (c) =>
+					c.chordProgression === "I-V" ? instancesA : instancesB
 			}
 		);
 

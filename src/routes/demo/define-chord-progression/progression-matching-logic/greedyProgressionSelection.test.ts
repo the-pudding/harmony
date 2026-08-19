@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
-import {
-	computeCoveredPositionsBySection,
-	computeGapOnlyCoveredPositionsBySection
-} from "./progressionMatchAnalysis.js";
+import { computeCoveredPositionsBySection } from "./progressionMatchAnalysis.js";
 import { greedilySelectProgressions } from "./greedyProgressionSelection.js";
 
 const makeRomanSection = (romanTokens: string[]): SongSection => ({
@@ -63,15 +60,7 @@ describe("greedilySelectProgressions — gap-only candidate coverage", () => {
 		const result = greedilySelectProgressions(
 			partialCoreSong,
 			candidates,
-			coreCoverage,
-			{
-				getCandidateCoverage: (candidate) =>
-					computeGapOnlyCoveredPositionsBySection(
-						partialCoreSong,
-						candidate.parsedProgression,
-						coreCoverage
-					)
-			}
+			coreCoverage
 		);
 		expect(result.selected.map((match) => match.chordProgression)).toEqual([
 			"IV-I-vi"
@@ -83,15 +72,7 @@ describe("greedilySelectProgressions — gap-only candidate coverage", () => {
 		const result = greedilySelectProgressions(
 			partialCoreSong,
 			candidates,
-			coreCoverage,
-			{
-				getCandidateCoverage: (candidate) =>
-					computeGapOnlyCoveredPositionsBySection(
-						partialCoreSong,
-						candidate.parsedProgression,
-						coreCoverage
-					)
-			}
+			coreCoverage
 		);
 		expect(result.selected).toHaveLength(0);
 	});
@@ -104,19 +85,11 @@ describe("greedilySelectProgressions — gap-only candidate coverage", () => {
 			keyLabel: null,
 			sections: [makeRomanSection(["I", "V", "vi", "IV", "I", "V"])]
 		};
-		const occupied = [[]];
 		const candidates = [
 			makeCandidate("I-V-vi", 1, 50),
 			makeCandidate("vi-IV-I", 1, 40)
 		];
-		const result = greedilySelectProgressions(song, candidates, occupied, {
-			getCandidateCoverage: (candidate) =>
-				computeGapOnlyCoveredPositionsBySection(
-					song,
-					candidate.parsedProgression,
-					occupied
-				)
-		});
+		const result = greedilySelectProgressions(song, candidates, [[]]);
 		const selectedKeys = result.selected.map((match) => match.chordProgression);
 		expect(selectedKeys).toHaveLength(1);
 	});
