@@ -47,13 +47,32 @@
 	let selectedSongKey = $state<string | null>(null);
 	let inspectorTab = $state<InspectorTab>("song");
 	let selectedArtistName = $state<string | null>(null);
-	let highlightedSongKeys = $state<Set<string>>(new Set());
+
+	const HIGHLIGHTED_SONGS_STORAGE_KEY = "harmony-map-highlighted-songs";
+
+	const loadHighlightedSongKeys = (): Set<string> => {
+		if (typeof localStorage === "undefined") return new Set();
+		try {
+			const raw = localStorage.getItem(HIGHLIGHTED_SONGS_STORAGE_KEY);
+			return raw ? new Set(JSON.parse(raw)) : new Set();
+		} catch {
+			return new Set();
+		}
+	};
+
+	let highlightedSongKeys = $state<Set<string>>(loadHighlightedSongKeys());
 
 	const toggleHighlightedSong = (songKey: string) => {
 		const next = new Set(highlightedSongKeys);
 		if (next.has(songKey)) next.delete(songKey);
 		else next.add(songKey);
 		highlightedSongKeys = next;
+		if (typeof localStorage !== "undefined") {
+			localStorage.setItem(
+				HIGHLIGHTED_SONGS_STORAGE_KEY,
+				JSON.stringify([...next])
+			);
+		}
 	};
 
 	const songByKey = $derived(
