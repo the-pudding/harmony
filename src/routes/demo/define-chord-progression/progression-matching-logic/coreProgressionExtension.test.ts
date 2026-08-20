@@ -82,6 +82,20 @@ describe("extendCoreProgressionsPastPrefix", () => {
 		expect(result.coreSelected).toHaveLength(0);
 	});
 
+	it("never extends a 4-chord core winner, even with an otherwise-unanimous trailing chord", () => {
+		// Same shape as the clean-extension test above, but starting from a
+		// 4-chord winner (i-VI-III-iv) instead of a 3-chord one — only 3-chord
+		// winners are eligible to extend (Forever Young regression: axis of
+		// awesome, I-V-vi-IV, must never be pushed to 5-6 chords).
+		const song = makeSong([
+			makeSection(repeat(["i", "VI", "III", "iv", "v"], 5))
+		]);
+		const extended = extendedChordProgressions(song, [
+			makeCoreCandidate("i-VI-III-iv")
+		]);
+		expect(extended).toEqual([]);
+	});
+
 	it("still extends using the remaining instances when one is cut off by a section boundary", () => {
 		const song = makeSong([
 			...Array.from({ length: 5 }, () => makeSection(["i", "VI", "III", "iv"])),
@@ -112,6 +126,19 @@ describe("extendCoreProgressionsPastPrefix", () => {
 			makeCoreCandidate("i-VI-III")
 		]);
 		expect(extended).toEqual(["i-VI-III-iv"]);
+	});
+
+	it("declines to extend into its own first chord, even when instances aren't adjacent (House of the Rising Sun shape)", () => {
+		// Two non-adjacent instances of i-III-IV-VI, each followed by "i" (its
+		// own tonic) — not self-claimed, since the instances aren't back-to-back,
+		// so without a dedicated guard this would extend into i-III-IV-VI-i.
+		const song = makeSong([
+			makeSection(["i", "III", "IV", "VI", "i", "v", "i", "III", "IV", "VI", "i", "v"])
+		]);
+		const extended = extendedChordProgressions(song, [
+			makeCoreCandidate("i-III-IV-VI")
+		]);
+		expect(extended).toEqual([]);
 	});
 
 	it("declines when the trailing chord is evenly split with no plurality above threshold", () => {
@@ -173,14 +200,22 @@ describe("extendCoreProgressionsPastPrefix", () => {
 		expect(result.extended[0].matchRomanNumeralsExactly).toBe(true);
 	});
 
-	it("declines when the extended shape collides with an already-registered core progression", () => {
+	it("promotes to the already-registered core progression instead of declining or minting a duplicate", () => {
 		// i-VI-III-VII is the real, registered "poker face (chorus)" progression.
+		// When the chain consistently lands on it, it should be credited as
+		// that named core progression, not silently dropped back to the
+		// shorter bare winner and not minted as an anonymous duplicate.
 		const song = makeSong([
 			makeSection(repeat(["i", "VI", "III", "VII"], 5))
 		]);
-		const extended = extendedChordProgressions(song, [
-			makeCoreCandidate("i-VI-III")
-		]);
-		expect(extended).toEqual([]);
+		const result = extendCoreProgressionsPastPrefix(
+			song,
+			selectCoreProgressions(song, [makeCoreCandidate("i-VI-III")])
+		);
+		expect(result.extended).toEqual([]);
+		expect(result.coreSelected).toHaveLength(1);
+		expect(result.coreSelected[0].name).toBe("poker face (chorus)");
+		expect(result.coreSelected[0].chordProgression).toBe("i-VI-III-VII");
+		expect(result.coreSelected[0].isCoreProgression).toBe(true);
 	});
 });

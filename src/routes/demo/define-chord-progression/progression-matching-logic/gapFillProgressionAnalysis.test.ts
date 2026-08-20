@@ -145,7 +145,7 @@ describe("computeGapFillProgressionMatches — I'm Yours", () => {
 	it("still surfaces the progressions that already worked", () => {
 		const found = gapProgressions(imYours);
 		expect(found).toContain("V-vi-IV");
-		expect(found).toContain("vi-V-IV");
+		expect(found).toContain("IV-I-V");
 	});
 
 	it("excludes core progressions from gap-fill candidates", () => {

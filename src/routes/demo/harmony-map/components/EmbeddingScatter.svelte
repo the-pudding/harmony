@@ -66,7 +66,6 @@
 	const MAX_ZOOM = 40;
 	const AXIS_LABEL_COLOR = "rgba(161, 161, 170, 0.7)";
 	const AXIS_LABEL_FONT = '10px "JetBrains Mono", ui-monospace, monospace';
-	const MAX_DRAWN_CLUSTERS = 60;
 	const CLUSTER_RADIUS_PADDING = 8;
 	const CLUSTER_STROKE_COLOR = "rgba(244, 244, 245, 0.55)";
 	const CLUSTER_STROKE_WIDTH = 1.25;
@@ -235,6 +234,8 @@
 
 	// Membership only — geometry is drawn from each frame's live tween
 	// positions in drawClusters(), so circles animate along with their dots.
+	// Every cluster DBSCAN finds gets drawn — findDensityClusters already
+	// bounds the count via MIN_CLUSTER_POINTS, so there's no separate cap here.
 	const clusters = $derived(
 		showClusters && clustersAvailable
 			? findDensityClusters(
@@ -243,7 +244,7 @@
 						x: point.nx,
 						y: point.ny
 					}))
-				).slice(0, MAX_DRAWN_CLUSTERS)
+				)
 			: []
 	);
 

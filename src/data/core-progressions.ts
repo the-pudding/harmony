@@ -18,6 +18,20 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
+			name: "I V I",
+			chordProgression: "I-V-I",
+			scale: "major",
+			matchRomanNumeralsExactly: true,
+			description: ""
+		},
+		{
+			name: "I IV I",
+			chordProgression: "I-IV-I",
+			scale: "major",
+			matchRomanNumeralsExactly: true,
+			description: ""
+		},
+		{
 			name: "I-V vamp",
 			chordProgression: "I-V-I-V",
 			scale: "major",
@@ -207,6 +221,13 @@ const minoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
+			name: "party rock",
+			chordProgression: "i-VII-VI",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: ""
+		},
+		{
 			name: "classic i-iv-V", // TODO: better name
 			chordProgression: "i-iv-V",
 			scale: "minor",
@@ -223,6 +244,13 @@ const minoryProgressions: ProgressionGroup = {
 		{
 			name: "i VI vamp",
 			chordProgression: "i-VI-i-VI",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: ""
+		},
+		{
+			name: "dangerous",
+			chordProgression: "i-III-VI",
 			scale: "minor",
 			matchRomanNumeralsExactly: true,
 			description: ""

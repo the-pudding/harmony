@@ -1,17 +1,20 @@
 import coreProgressionsData from "$data/core-progressions.js";
+import type { CoreProgression } from "$data/core-progressions.js";
+import { chordProgressionVariants } from "$data/core-progressions.util.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
-import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import { isChorusSectionLabel, type GroupedSong } from "../../../../data/songBrowser.js";
 import { matchHighlightForCoreProgression } from "../components/progressionColors.js";
 import {
 	abstractProgressionKey,
-	buildCoreNameByAbstractKey,
+	computeCoveredPositionsBySection,
+	computeStatsForParsedProgression,
 	MIN_PROGRESSION_OCCURRENCES,
 	type ProgressionWithMatchStats
 } from "./progressionMatchAnalysis.js";
 import {
 	isSelfRepeatingProgression,
-	MAX_PROGRESSION_LENGTH
+	MAX_PROGRESSION_LENGTH,
+	MIN_PROGRESSION_LENGTH
 } from "./progressionConstraints.js";
 import {
 	claimedInstancesInSelectionOrder,
@@ -31,13 +34,25 @@ import {
 // deliberately not 100%.
 export const EXTENSION_CONSISTENCY_MIN_PERCENT = 90;
 
-const coreNameByAbstractKey = buildCoreNameByAbstractKey(coreProgressionsData);
-
-// If the extended shape coincidentally matches an already-registered core
-// progression under a different name, decline rather than re-minting it as
-// non-core — let normal core selection speak for that shape on its own merits.
-const isRegisteredCoreShape = (parsed: ParsedProgressionChord[]): boolean =>
-	coreNameByAbstractKey.has(abstractProgressionKey(parsed));
+// Every registered core progression, keyed by abstract (interval + quality)
+// shape starting from its own first chord — lets an extension chain that
+// lands on an already-registered shape be promoted to that named entry
+// instead of either declining back to the shorter winner or minting an
+// anonymous duplicate.
+const coreProgressionByAbstractKey = new Map<string, CoreProgression>();
+for (const progression of coreProgressionsData) {
+	for (const variant of chordProgressionVariants(progression.chordProgression)) {
+		const parsedVariant = romanTokensToParsedProgression(
+			variant.split("-"),
+			progression.scale
+		);
+		if (!parsedVariant) continue;
+		coreProgressionByAbstractKey.set(
+			abstractProgressionKey(parsedVariant),
+			progression
+		);
+	}
+}
 
 type Vote = { token: string; supportive: ProgressionInstance[] };
 
@@ -142,6 +157,17 @@ const extendOneWinner = (
 	claimedElsewhere: SectionCoverage
 ): ExtensionOutcome | null => {
 	const originalTokens = winner.chordProgression.split("-");
+
+	// Only 3-chord winners are eligible to extend. A 3-chord progression is
+	// the shortest unit the matcher considers, so there's a real prior that
+	// it's an artificially-truncated prefix of a more natural longer idea
+	// (that's the whole reason this feature exists). A 4+-chord progression
+	// is already a complete, well-formed unit — pushing it further tends to
+	// just pick up incidental turnaround material (see "Forever Young",
+	// where axis of awesome, I-V-vi-IV, got shredded into I-V-vi-IV-V-ii
+	// plus a leftover fragment instead of just repeating cleanly).
+	if (originalTokens.length !== MIN_PROGRESSION_LENGTH) return null;
+
 	const originalTotal = initialInstances.length * originalTokens.length;
 
 	let tokens = originalTokens;
@@ -151,6 +177,15 @@ const extendOneWinner = (
 	while (tokens.length < MAX_PROGRESSION_LENGTH) {
 		const vote = trailingVote(song, instances, claimedElsewhere);
 		if (!vote) break;
+
+		// A cyclic progression's trailing chord tends to be its own tonic once it
+		// loops back to repeat — that's the loop restarting, not a genuinely
+		// longer unit. The adjacent-instance self-claim check below catches this
+		// when repeats are back-to-back, but not when a variation (like a
+		// different turnaround) breaks up the adjacency, so this needs its own
+		// guard: never extend into a chord that matches where the progression
+		// itself already started.
+		if (vote.token === tokens[0]) break;
 
 		const candidateTokens = [...tokens, vote.token];
 		if (isSelfRepeatingProgression(candidateTokens.join("-"))) break;
@@ -207,8 +242,50 @@ export const extendCoreProgressionsPastPrefix = (
 
 		const chordProgression = outcome.tokens.join("-");
 		const parsed = romanTokensToParsedProgression(outcome.tokens, winner.scale);
-		if (!parsed || isRegisteredCoreShape(parsed)) {
+		if (!parsed) {
 			coreSelected.push(winner);
+			return;
+		}
+
+		const registered = coreProgressionByAbstractKey.get(
+			abstractProgressionKey(parsed)
+		);
+		if (registered) {
+			// The chain rediscovered an already-registered, longer core
+			// progression under a different name (e.g. a 3-chord "I IV I"
+			// winner chaining into the shape of the registered "I-IV vamp") —
+			// promote to that named entry, computed with normal unconstrained
+			// core semantics, instead of either declining back to the shorter
+			// winner or minting an anonymous duplicate.
+			const registeredExact = registered.matchRomanNumeralsExactly ?? false;
+			const registeredStats = computeStatsForParsedProgression(
+				song,
+				parsed,
+				registeredExact
+			);
+			coreSelected.push({
+				...registered,
+				chordProgression,
+				parsedProgression: parsed,
+				matchCount: registeredStats.matchCount,
+				chorusMatchCount: registeredStats.chorusMatchCount,
+				coveragePercent: registeredStats.coveragePercent,
+				...matchHighlightForCoreProgression(
+					true,
+					chordProgression,
+					registered.name
+				)
+			});
+
+			const claimedSets = runningCoverage.map((positions) => new Set(positions));
+			const newPositionsOnly = computeCoveredPositionsBySection(
+				song,
+				parsed,
+				registeredExact
+			).map((positions, sectionIndex) =>
+				positions.filter((position) => !claimedSets[sectionIndex]?.has(position))
+			);
+			runningCoverage = mergeCoverage(runningCoverage, newPositionsOnly);
 			return;
 		}
 
