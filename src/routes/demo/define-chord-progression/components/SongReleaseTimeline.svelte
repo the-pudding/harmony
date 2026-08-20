@@ -386,7 +386,7 @@
 	}
 
 	.dot {
-		fill: rgba(99, 102, 241, 0.55);
+		fill: rgba(161, 161, 170, 0.5);
 		cursor: pointer;
 		outline: none;
 		transition: fill 0.1s ease;
@@ -398,7 +398,7 @@
 	}
 
 	.dot.hovered {
-		fill: rgba(99, 102, 241, 0.9);
+		fill: rgba(228, 228, 231, 0.9);
 		stroke: rgba(255, 255, 255, 0.6);
 		stroke-width: 1.5px;
 	}
