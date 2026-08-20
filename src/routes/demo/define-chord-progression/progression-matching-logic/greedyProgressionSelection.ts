@@ -2,7 +2,9 @@ import type { GroupedSong } from "../../../../data/songBrowser.js";
 import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
 import {
 	getSectionMatches,
-	matchPositions
+	matchPositions,
+	MIN_FULL_SECTION_OCCURRENCES,
+	MIN_PROGRESSION_OCCURRENCES
 } from "./progressionMatchAnalysis.js";
 
 export type SectionCoverage = number[][];
@@ -110,10 +112,29 @@ type GreedySelectOptions = {
 
 type ScoredCandidate = {
 	candidate: ProgressionWithMatchStats;
+	available: ProgressionInstance[];
 	coverage: SectionCoverage;
 	matchedChords: number;
 	sectionStarts: number;
 };
+
+const fillsEntireSection = (
+	song: GroupedSong,
+	{ sectionIndex, positions }: ProgressionInstance
+): boolean =>
+	positions.length === song.sections[sectionIndex].parsedProgression.length;
+
+// A progression earns its place by recurring, so it has to keep recurring in the
+// space earlier picks left behind — a lone surviving fragment is not a match.
+// The single-instance exception stays core-only, matching candidate intake.
+const stillEarnsItsPlace = (
+	song: GroupedSong,
+	{ candidate, available }: ScoredCandidate
+): boolean =>
+	available.length >= MIN_PROGRESSION_OCCURRENCES ||
+	(available.length === MIN_FULL_SECTION_OCCURRENCES &&
+		candidate.isCoreProgression &&
+		fillsEntireSection(song, available[0]));
 
 export const greedilySelectProgressions = (
 	song: GroupedSong,
@@ -146,6 +167,7 @@ export const greedilySelectProgressions = (
 		);
 		return {
 			candidate,
+			available,
 			coverage: coverageFromInstances(song, available),
 			matchedChords: available.reduce(
 				(sum, instance) => sum + instance.positions.length,
@@ -179,7 +201,7 @@ export const greedilySelectProgressions = (
 		const claimed = toClaimedSets(coverage);
 		const selectable = remaining
 			.map((candidate) => scoreAgainstCoverage(candidate, claimed))
-			.filter((scored) => scored.matchedChords > 0);
+			.filter((scored) => stillEarnsItsPlace(song, scored));
 
 		if (selectable.length === 0) {
 			return { selected: [], coverage, biasOverrides: [] };

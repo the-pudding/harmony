@@ -98,7 +98,7 @@
 	{/if}
 	{#if match.isCoreProgression}
 		<span class="prog-scale"
-			><span class="prog-scale-label">scale:</span> {scaleName}</span
+			><span class="prog-scale-label">scale:</span> {scaleName}{#if match.matchRomanNumeralsExactly}<span class="prog-exact-badge" title="Matches only when the first chord is the tonic of this scale — not just any rotation">exact</span>{/if}</span
 		>
 	{/if}
 	<span class="prog-chords-row">
@@ -291,6 +291,29 @@
 
 	.prog-scale-label {
 		color: rgba(161, 161, 170, 0.55);
+	}
+
+	.prog-exact-badge {
+		margin-left: 0.3rem;
+		font-size: 0.55rem;
+		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: rgba(250, 200, 80, 0.7);
+		border: 1px solid rgba(250, 200, 80, 0.3);
+		border-radius: 0.2rem;
+		padding: 0 0.25rem;
+		vertical-align: middle;
+	}
+
+	.prog-btn.active .prog-exact-badge {
+		color: rgba(250, 200, 80, 0.85);
+		border-color: rgba(250, 200, 80, 0.45);
+	}
+
+	.prog-btn:hover .prog-exact-badge {
+		color: rgba(250, 200, 80, 0.9);
+		border-color: rgba(250, 200, 80, 0.5);
 	}
 
 	.prog-btn.active .prog-scale {

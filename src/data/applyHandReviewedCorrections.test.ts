@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { correctedSongContentsToSongInputs } from "./applyHandReviewedCorrections.js";
 import { groupSongs } from "./songBrowser.js";
-import type { CorrectedSongContents } from "./hand-reviewed-songs.js";
+import type { CorrectedSongContents } from "./hand-corrected-songs.js";
 
 const DAMAGED_CONTENTS: CorrectedSongContents = {
 	sections: [

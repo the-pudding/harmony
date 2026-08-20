@@ -1,9 +1,6 @@
 <script lang="ts">
 	import {
 		getChordProgressionIssues,
-		isSongLooksGoodAsIs,
-		LOOKS_GOOD_EMOJI,
-		LOOKS_GOOD_LABEL,
 		getChordMatchingChallenges,
 		CHORD_MATCHING_CHALLENGES_LABEL
 	} from "$data/hand-reviewed-songs.js";
@@ -25,7 +22,6 @@
 		matchingProgressions: string[];
 		chordProgressionIssues?: string;
 		chordMatchingChallenges?: string;
-		looksGoodAsIs?: boolean;
 	};
 
 	type DodgedNode = SongEntry & { x: number; y: number };
@@ -75,18 +71,29 @@
 		(pct: number) => PADDING_LEFT + (pct / 100) * plotWidth
 	);
 
+	const isHighlighted = (song: SongEntry): boolean =>
+		activeHighlightProgressions !== null &&
+		song.matchingProgressions.some((p) => activeHighlightProgressions!.includes(p));
+
 	const dodgedNodes = $derived.by((): DodgedNode[] => {
 		if (plotWidth <= 0 || songs === null) return [];
 
 		const annotated = songs.map((s) => ({
 			...s,
 			chordProgressionIssues: getChordProgressionIssues(s.songKey),
-			chordMatchingChallenges: getChordMatchingChallenges(s.songKey),
-			looksGoodAsIs: isSongLooksGoodAsIs(s.songKey)
+			chordMatchingChallenges: getChordMatchingChallenges(s.songKey)
 		}));
 
+		const sorted =
+			activeHighlightProgressions !== null
+				? [
+						...annotated.filter(isHighlighted),
+						...annotated.filter((s) => !isHighlighted(s))
+					]
+				: annotated;
+
 		return dodgeBeeswarm(
-			annotated,
+			sorted,
 			(song) => xScale(song.coveragePercent),
 			DOT_RADIUS,
 			DOT_SPACING
@@ -234,16 +241,13 @@
 					>{tick}%</text
 				>
 			{/each}
-			{#each dodgedNodes as node}
+		{#each [false, true] as renderHighlighted}
+			{#each dodgedNodes.filter((n) => isHighlighted(n) === renderHighlighted) as node}
 				{@const isSelected = node.songKey === selectedSongKey}
 				{@const isHovered = node.songKey === hoveredSongKey}
 				{@const hasIssues = node.chordProgressionIssues !== undefined}
 				{@const isTricky = node.chordMatchingChallenges !== undefined}
-				{@const isCoreMatched =
-					activeHighlightProgressions !== null &&
-					node.matchingProgressions.some((progression) =>
-						activeHighlightProgressions.includes(progression)
-					)}
+				{@const isDimmed = activeHighlightProgressions !== null && !isHighlighted(node)}
 				{@const r = isSelected ? SELECTED_DOT_RADIUS : DOT_RADIUS}
 				{@const cy = AXIS_Y - DOT_RADIUS - node.y}
 				<circle
@@ -252,11 +256,10 @@
 					{r}
 					class="dot"
 					class:selected={isSelected}
-					class:core-matched={isCoreMatched}
+					class:dimmed={isDimmed}
 					class:hovered={isHovered}
-					class:has-issues={hasIssues && !isCoreMatched}
-					class:tricky={isTricky && !hasIssues && !isCoreMatched}
-					class:looks-good={node.looksGoodAsIs && !hasIssues && !isTricky && !isCoreMatched}
+					class:has-issues={hasIssues}
+					class:tricky={isTricky && !hasIssues}
 					onmouseenter={() => handleDotEnter(node.songKey)}
 					onmouseleave={scheduleHoverClear}
 					onclick={() => selectSong(node.songKey)}
@@ -270,6 +273,7 @@
 					)}% explained"
 				/>
 			{/each}
+		{/each}
 		</svg>
 
 		{#if hoveredNode}
@@ -309,11 +313,6 @@
 							overrideColor="rgba(251, 191, 36, 0.9)"
 							overrideColorHover="rgba(253, 224, 71, 0.95)"
 						/>
-					{/if}
-					{#if hoveredNode.looksGoodAsIs}
-						<span class="looks-good-note"
-							>{LOOKS_GOOD_EMOJI} {LOOKS_GOOD_LABEL}</span
-						>
 					{/if}
 					<div class="coverage-bar" aria-hidden="true">
 						<div
@@ -380,7 +379,7 @@
 	}
 
 	.dot {
-		fill: rgba(99, 102, 241, 0.55);
+		fill: rgba(161, 161, 170, 0.5);
 		cursor: pointer;
 		outline: none;
 		transition: fill 0.1s ease;
@@ -392,21 +391,13 @@
 	}
 
 	.dot.hovered {
-		fill: rgba(99, 102, 241, 0.9);
+		fill: rgba(228, 228, 231, 0.9);
 		stroke: rgba(255, 255, 255, 0.6);
 		stroke-width: 1.5px;
 	}
 
-	.dot.core-matched {
-		fill: rgba(21, 128, 61, 0.85);
-		stroke: rgba(134, 239, 172, 0.7);
-		stroke-width: 1px;
-	}
-
-	.dot.core-matched.hovered {
-		fill: rgba(21, 128, 61, 1);
-		stroke: rgba(134, 239, 172, 0.95);
-		stroke-width: 1.5px;
+	.dot.dimmed {
+		opacity: 0.4;
 	}
 
 	.dot.selected {
@@ -430,16 +421,6 @@
 
 	.dot.tricky.hovered {
 		fill: rgba(251, 191, 36, 0.95);
-		stroke: rgba(255, 255, 255, 0.6);
-		stroke-width: 1.5px;
-	}
-
-	.dot.looks-good {
-		fill: rgba(96, 165, 250, 0.65);
-	}
-
-	.dot.looks-good.hovered {
-		fill: rgba(96, 165, 250, 0.95);
 		stroke: rgba(255, 255, 255, 0.6);
 		stroke-width: 1.5px;
 	}
@@ -498,17 +479,6 @@
 
 	.song-card:hover .song-stats {
 		color: rgba(228, 228, 231, 0.85);
-	}
-
-	.looks-good-note {
-		font-size: 0.65rem;
-		font-style: italic;
-		line-height: 1.4;
-		color: rgba(96, 165, 250, 0.9);
-	}
-
-	.song-card:hover .looks-good-note {
-		color: rgba(147, 197, 253, 0.95);
 	}
 
 	.coverage-bar {

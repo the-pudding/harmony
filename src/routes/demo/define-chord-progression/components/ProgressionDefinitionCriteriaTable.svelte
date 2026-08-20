@@ -181,6 +181,24 @@
 				</tr>
 				<tr>
 					<td>
+						The recurrence bar above is re-applied to whatever survives, not
+						just to the raw song: a candidate still needs
+						<span class="const-value">{MIN_PROGRESSION_OCCURRENCES}</span>
+						instances in the free space — or
+						<span class="const-value">{MIN_FULL_SECTION_OCCURRENCES}</span> that fills
+						a whole section, core progressions only. A progression whose matches are
+						all consumed except one leftover fragment is dropped rather than credited
+						for that fragment
+					</td>
+					<td>
+						<CodeReference
+							filename="greedyProgressionSelection.ts"
+							symbols={["stillEarnsItsPlace", "fillsEntireSection"]}
+						/>
+					</td>
+				</tr>
+				<tr>
+					<td>
 						Within a <span class="const-value"
 							>{PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}%</span
 						>

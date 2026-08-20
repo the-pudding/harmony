@@ -399,18 +399,27 @@ describe("section-start bias — demoted leader still selectable later", () => {
 		const candidateB = makeCandidate("V-I"); // section-starter: 10 chords, 1 section start
 
 		// Positions are the first and second halves of the section — fully disjoint.
+		// Each candidate recurs twice so both clear the recurrence bar.
+		const instancePositions = (start: number): number[] =>
+			Array.from({ length: 5 }, (_, i) => start + i);
 		const instancesA: ProgressionInstance[] = [
 			{
 				sectionIndex: 0,
-				positions: Array.from({ length: 10 }, (_, i) => i), // 0-9
+				positions: instancePositions(0),
 				startsSection: false
-			}
+			},
+			{ sectionIndex: 0, positions: instancePositions(5), startsSection: false }
 		];
 		const instancesB: ProgressionInstance[] = [
 			{
 				sectionIndex: 0,
-				positions: Array.from({ length: 10 }, (_, i) => i + 10), // 10-19
+				positions: instancePositions(10),
 				startsSection: true
+			},
+			{
+				sectionIndex: 0,
+				positions: instancePositions(15),
+				startsSection: false
 			}
 		];
 
@@ -429,7 +438,7 @@ describe("section-start bias — demoted leader still selectable later", () => {
 		// A (I-V) is not discarded; it wins round 2 because its positions don't overlap B's.
 		expect(selected).toContain("V-I");
 		expect(selected).toContain("I-V");
-	});
+	};);
 });
 
 describe("section-start bias — wraparound match does not count as section start", () => {

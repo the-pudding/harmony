@@ -27,7 +27,7 @@ This runs [`tasks/build-songs.js`](tasks/build-songs.js), which:
 - converts chord data into the format used by the chord-search matcher
 - writes `static/data/songs.json` (full corrected Top-10 corpus, used by all `/demo/` pages)
 
-Note: `src/data/hand-reviewed-songs.ts` holds `manuallyEnteredSongs`, `problematicSongs`, `songLooksGoodAsIs`, and `trickySongsToMatchCorrectly` for reviewing and correcting song data before use in the UI. These corrections are applied at runtime when loading `songs.json`.
+Note: `src/data/hand-corrected-songs.ts` holds `handCorrectedSongs`; `src/data/hand-reviewed-songs.ts` holds `problematicSongs` and `trickySongsToMatchCorrectly` for reviewing song data before use in the UI. Hand corrections are applied at runtime when loading `songs.json`.
 
 When `harmony-data` is updated (e.g. after pulling fresh scrapes):
 
@@ -46,7 +46,7 @@ All `/demo/` pages that run the core-progression coverage algorithm (`define-cho
 The cache key is a SHA-256 fingerprint of:
 
 - **Core progression matching fields** — each progression's `name`, `chordProgression`, and `scale` (not group names, descriptions, or colors)
-- **Song corpus** — sorted `songKey` + section count + roman-token count per song, so re-running `npm run songs` or editing `hand-reviewed-songs.ts` automatically invalidates the cache
+- **Song corpus** — sorted `songKey` + section count + roman-token count per song, so re-running `npm run songs` or editing `hand-corrected-songs.ts` automatically invalidates the cache
 - **Schema version** — `COVERAGE_CACHE_SCHEMA_VERSION` in `coverageCacheKey.ts`
 
 **When to bump `COVERAGE_CACHE_SCHEMA_VERSION`:** if you change matching algorithm logic (files under `progression-matching-logic/`) in a way that would produce different `SongCoverageEntry` results for the same input data, increment the constant to force all browsers to recompute.
