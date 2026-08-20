@@ -140,6 +140,7 @@
 		if (typeof localStorage !== "undefined") {
 			localStorage.setItem(CLUSTER_NAMES_STORAGE_KEY, JSON.stringify(next));
 		}
+		console.log("named clusters:", next);
 	};
 
 	const findNamedClusterFor = (
@@ -547,11 +548,20 @@
 		hoveredClusterHit = null;
 	};
 
-	// The song closest to the cluster's live centroid — a representative core
-	// member, less likely than a fringe point to drift out on minor changes,
-	// so the anchor stays put across the same kinds of drift it's meant to
-	// survive.
+	// Prefer a highlighted song as the anchor — if you've highlighted it,
+	// you've picked it out as significant, so it's a more deliberate choice
+	// than a geometric guess. Ties (multiple highlighted members) just take
+	// whichever comes first; nothing distinguishes them. Otherwise fall back
+	// to the song closest to the cluster's live centroid — a representative
+	// core member, less likely than a fringe point to drift out on minor
+	// changes, so the anchor stays put across the same kinds of drift it's
+	// meant to survive.
 	const anchorSongKeyFor = (hit: ClusterHit): string | null => {
+		const highlightedMember = hit.cluster.songKeys.find((songKey) =>
+			highlightedSongKeys.has(songKey)
+		);
+		if (highlightedMember) return highlightedMember;
+
 		let closest: { songKey: string; distance: number } | null = null;
 		for (const songKey of hit.cluster.songKeys) {
 			const position = displayedPositions.get(songKey);

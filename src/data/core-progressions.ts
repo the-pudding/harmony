@@ -73,7 +73,6 @@ const happyMajoryProgressions: ProgressionGroup = {
 			name: "sweet home mixolydian",
 			chordProgression: "I-bVII-IV",
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description: "Sweet Home Alabama... can also be thought of as a V-IV-I"
 		} // also could be thought of as a V-IV-I
 	]
@@ -145,6 +144,12 @@ const axisOfAwesomeProgressions: ProgressionGroup = {
 			chordProgression: "vi-IV-I-V",
 			scale: "major",
 			description: "repeats starting on vi instead of I"
+		},
+		{
+			name: "mr. brightside",
+			chordProgression: "I-IV-vi-V",
+			scale: "major",
+			description: "reverse-direction axis of awesome cycle"
 		},
 		{
 			name: "whatcha say",
