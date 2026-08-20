@@ -2,9 +2,6 @@
 	import { handCorrectedSongs } from "$data/hand-corrected-songs.js";
 	import {
 		getChordProgressionIssues,
-		isSongLooksGoodAsIs,
-		LOOKS_GOOD_EMOJI,
-		LOOKS_GOOD_LABEL,
 		getChordMatchingChallenges,
 		TRICKY_TO_MATCH_EMOJI
 	} from "$data/hand-reviewed-songs.js";
@@ -31,7 +28,6 @@
 		getChordProgressionIssues(song.songKey)
 	);
 	const isProblematic = $derived(chordProgressionIssues !== undefined);
-	const looksGoodAsIs = $derived(isSongLooksGoodAsIs(song.songKey));
 	const chordMatchingChallenges = $derived(getChordMatchingChallenges(song.songKey));
 </script>
 
@@ -67,13 +63,6 @@
 					aria-label={chordMatchingChallenges}>{TRICKY_TO_MATCH_EMOJI}</span
 				>
 			{/if}
-			{#if looksGoodAsIs}
-				<span
-					class="status-icon status-icon-looks-good"
-					title={LOOKS_GOOD_LABEL}
-					aria-label={LOOKS_GOOD_LABEL}>{LOOKS_GOOD_EMOJI}</span
-				>
-			{/if}
 		{/snippet}
 		{#snippet trailing()}
 			<span class="artist">— {song.artists.join(", ")}</span>
@@ -106,10 +95,6 @@
 
 	.status-icon-tricky {
 		opacity: 0.8;
-	}
-
-	.status-icon-looks-good {
-		opacity: 0.75;
 	}
 
 	.artist,

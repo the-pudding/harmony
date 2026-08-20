@@ -11,52 +11,25 @@ export const problematicSongs: ProblematicSong[] = [
 		chordProgressionIssues: "eg chrous is i-iv but it's actually i-vi-V, etc"
 	},
 	{
-		id: "juice-wrld__wishing-wel",
-		chordProgressionIssues:
-			"Just has an intro, missing eg main progression: vi-IV-I"
-	},
-	{
-		id: "maroon-5__daylight",
-		chordProgressionIssues: "Chorus looks right, missing eg verse"
-	},
-	{
-		id: "lady-gaga__dope",
-		chordProgressionIssues: "Just has chorus, eg no verse (iv-iii-VI-V)"
-	},
-	{
-		id: "radiohead__creep",
-		chordProgressionIssues:
-			"at least the chorus is totally wrong (missed entire harmonic concept)"
-	},
-	{
-		id: "kelly-clarkson__walk-away",
-		chordProgressionIssues:
-			"at least verse is totally wrong (should be I-bVII-IV)"
-	},
-	{
-		id: "extreme__hole-hearted",
-		chordProgressionIssues: "at least chorus is totally wrong"
-	},
-	{
 		id: "bobby-caldwell__what-you-wont-do-for-love",
 		chordProgressionIssues:
 			"whole song looks way off. should be a dorian-y tune"
 	},
 	{
 		id: "carly-rae-jepsen__call-me-maybe",
-		chordProgressionIssues: "whole thing looks wrong, should be IV-vi-V-ish"
+		chordProgressionIssues: "not happy with the chorus, should be IV-vi-V-ish"
 	},
 	{
 		id: "psy__gangnam-style",
 		chordProgressionIssues:
 			"Nails chords. However, it lists the progression i-iv-v once for the intro and verse, when in fact its played thrice betwixt them. I updated our algo to catch that."
+		// so... just wrong-ish? fine?
 	},
 	{
 		id: "miley-cyrus__7-things",
 		chordProgressionIssues:
 			"looks good overall, except the 'chorus lead out' section matches HT website with the first 3 chords, but then adds a ton of extra chords after in our dataset"
 	},
-	// POST MICHELLE UPDATING TO JUST TOP 10 (and choosing most complete song from UG vs HT)
 	{
 		id: "whitney-houston__exhale-shoop-shoop-from-waiting-to-exhale",
 		chordProgressionIssues:
@@ -78,16 +51,6 @@ export const problematicSongs: ProblematicSong[] = [
 			"blatantly wrong. pretty much all of it except for the bridge is just Gm-Am repeating"
 	}
 ];
-
-export const songLooksGoodAsIs: string[] = [
-	"luke-combs__beer-never-broke-my-heart",
-	"beyonce__if-i-were-a-boy",
-	"katy-perry__roar",
-	"billie-eilish__bad-guy"
-];
-
-export const LOOKS_GOOD_LABEL = "looks good as is";
-export const LOOKS_GOOD_EMOJI = "🔵";
 
 export type TrickySongToMatchCorrectly = {
 	id: string;
@@ -122,11 +85,6 @@ const chordProgressionIssuesBySongId = new Map(
 export const getChordProgressionIssues = (
 	songKey: string
 ): string | undefined => chordProgressionIssuesBySongId.get(songKey);
-
-const looksGoodSongIds = new Set(songLooksGoodAsIs);
-
-export const isSongLooksGoodAsIs = (songKey: string): boolean =>
-	looksGoodSongIds.has(songKey);
 
 const chordMatchingChallengesBySongId = new Map(
 	trickySongsToMatchCorrectly.map((song) => [

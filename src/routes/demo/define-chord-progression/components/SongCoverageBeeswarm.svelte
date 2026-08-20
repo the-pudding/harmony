@@ -1,9 +1,6 @@
 <script lang="ts">
 	import {
 		getChordProgressionIssues,
-		isSongLooksGoodAsIs,
-		LOOKS_GOOD_EMOJI,
-		LOOKS_GOOD_LABEL,
 		getChordMatchingChallenges,
 		CHORD_MATCHING_CHALLENGES_LABEL
 	} from "$data/hand-reviewed-songs.js";
@@ -25,7 +22,6 @@
 		matchingProgressions: string[];
 		chordProgressionIssues?: string;
 		chordMatchingChallenges?: string;
-		looksGoodAsIs?: boolean;
 	};
 
 	type DodgedNode = SongEntry & { x: number; y: number };
@@ -85,8 +81,7 @@
 		const annotated = songs.map((s) => ({
 			...s,
 			chordProgressionIssues: getChordProgressionIssues(s.songKey),
-			chordMatchingChallenges: getChordMatchingChallenges(s.songKey),
-			looksGoodAsIs: isSongLooksGoodAsIs(s.songKey)
+			chordMatchingChallenges: getChordMatchingChallenges(s.songKey)
 		}));
 
 		const sorted =
@@ -265,7 +260,6 @@
 					class:hovered={isHovered}
 					class:has-issues={hasIssues}
 					class:tricky={isTricky && !hasIssues}
-					class:looks-good={node.looksGoodAsIs && !hasIssues && !isTricky}
 					onmouseenter={() => handleDotEnter(node.songKey)}
 					onmouseleave={scheduleHoverClear}
 					onclick={() => selectSong(node.songKey)}
@@ -319,11 +313,6 @@
 							overrideColor="rgba(251, 191, 36, 0.9)"
 							overrideColorHover="rgba(253, 224, 71, 0.95)"
 						/>
-					{/if}
-					{#if hoveredNode.looksGoodAsIs}
-						<span class="looks-good-note"
-							>{LOOKS_GOOD_EMOJI} {LOOKS_GOOD_LABEL}</span
-						>
 					{/if}
 					<div class="coverage-bar" aria-hidden="true">
 						<div
@@ -436,16 +425,6 @@
 		stroke-width: 1.5px;
 	}
 
-	.dot.looks-good {
-		fill: rgba(96, 165, 250, 0.65);
-	}
-
-	.dot.looks-good.hovered {
-		fill: rgba(96, 165, 250, 0.95);
-		stroke: rgba(255, 255, 255, 0.6);
-		stroke-width: 1.5px;
-	}
-
 	.tooltip {
 		position: absolute;
 		z-index: 10;
@@ -500,17 +479,6 @@
 
 	.song-card:hover .song-stats {
 		color: rgba(228, 228, 231, 0.85);
-	}
-
-	.looks-good-note {
-		font-size: 0.65rem;
-		font-style: italic;
-		line-height: 1.4;
-		color: rgba(96, 165, 250, 0.9);
-	}
-
-	.song-card:hover .looks-good-note {
-		color: rgba(147, 197, 253, 0.95);
 	}
 
 	.coverage-bar {

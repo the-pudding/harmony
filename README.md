@@ -27,7 +27,7 @@ This runs [`tasks/build-songs.js`](tasks/build-songs.js), which:
 - converts chord data into the format used by the chord-search matcher
 - writes `static/data/songs.json` (full corrected Top-10 corpus, used by all `/demo/` pages)
 
-Note: `src/data/hand-corrected-songs.ts` holds `handCorrectedSongs`; `src/data/hand-reviewed-songs.ts` holds `problematicSongs`, `songLooksGoodAsIs`, and `trickySongsToMatchCorrectly` for reviewing song data before use in the UI. Hand corrections are applied at runtime when loading `songs.json`.
+Note: `src/data/hand-corrected-songs.ts` holds `handCorrectedSongs`; `src/data/hand-reviewed-songs.ts` holds `problematicSongs` and `trickySongsToMatchCorrectly` for reviewing song data before use in the UI. Hand corrections are applied at runtime when loading `songs.json`.
 
 When `harmony-data` is updated (e.g. after pulling fresh scrapes):
 

@@ -1,8 +1,6 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import {
-		isSongLooksGoodAsIs,
-		LOOKS_GOOD_LABEL,
 		getChordMatchingChallenges,
 		CHORD_MATCHING_CHALLENGES_LABEL
 	} from "$data/hand-reviewed-songs.js";
@@ -52,7 +50,6 @@
 
 	const focusedProgression = $derived(hoveredProgression ?? activeProgression);
 
-	const looksGoodAsIs = $derived(isSongLooksGoodAsIs(song.songKey));
 	const chordMatchingChallenges = $derived(getChordMatchingChallenges(song.songKey));
 </script>
 
@@ -67,9 +64,6 @@
 			overrideColor="rgba(251, 191, 36, 0.95)"
 			overrideColorHover="rgba(253, 224, 71, 0.95)"
 		/>
-	{/if}
-	{#if looksGoodAsIs}
-		<p class="looks-good-note">{LOOKS_GOOD_LABEL}</p>
 	{/if}
 	<div
 		class="final-layout"
@@ -122,14 +116,6 @@
 		flex-direction: column;
 		gap: 0.625rem;
 		width: 100%;
-	}
-
-	.looks-good-note {
-		margin: 0;
-		font-size: 0.75rem;
-		font-style: italic;
-		line-height: 1.4;
-		color: rgba(96, 165, 250, 0.95);
 	}
 
 	.final-layout {
