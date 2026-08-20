@@ -85,6 +85,7 @@ export type SongProgressionCount = {
 	chordProgression: string; // e.g. "I-V-vi-IV"
 	scale: ScaleName; // "major" | "minor" | …
 	matchCount: number; // occurrences within this song
+	chorusMatchCount: number; // subset of matchCount that landed in a chorus section
 	isCore: boolean; // from coreSelected vs gapSelected
 };
 
@@ -199,6 +200,7 @@ Note: `npm run build` currently fails while prerendering `/demo/core-progression
 ## Gotchas
 
 - **Don't touch `matchingProgressions`.** It is core-only and load-bearing for the beeswarm and match-rate stats. Add to `progressionCounts` instead.
+- The "chorus × 3" toggle (`weightChorus`) has no visible effect while "binary counts" is on — binary mode collapses every dimension to presence/absence before the chorus multiplier would matter, so the two toggles interact silently rather than conflicting.
 - **No magic numbers.** Every threshold and weight belongs in `embedding/vectors/constants.ts` (or the constant block at the top of the component).
 - The corpus is filtered by the shared "recent songs only" toggle in the header. Changing it rebuilds coverage _and_ invalidates the embedding cache — expect a recompute.
 - Vectors and the matrix are plain `number[][]`, structured-cloned to the worker. That's deliberate for readability; if the full corpus ever feels sluggish, typed arrays + transferables are the first optimization, not a different algorithm.

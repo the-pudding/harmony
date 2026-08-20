@@ -8,14 +8,15 @@
 
 export type ClusterPoint = { songKey: string; x: number; y: number };
 
-// hash identifies a cluster by its exact membership (order-independent), so a
-// name given to a cluster survives as long as the same set of songs keeps
-// getting grouped together — across reloads of the same method, since UMAP is
-// seeded/deterministic — even though `id` (discovery order) is not stable.
+// hash is a fingerprint of a cluster's exact membership (order-independent),
+// used only as a per-render React-like key (e.g. to key the resolved-name
+// map) — not for cluster identity. Persisted cluster names are instead
+// anchored to one member song (see EmbeddingScatter's NamedCluster), so a
+// name survives membership drift even though this hash does not.
 export type DensityCluster = { id: number; songKeys: string[]; hash: string };
 
 // Not cryptographic — just a fast, deterministic fingerprint of a song-key
-// set, used only to key persisted cluster names.
+// set, used only as a render key.
 const hashSongKeys = (songKeys: readonly string[]): string => {
 	const sorted = [...songKeys].sort();
 	let hash = 0x811c9dc5; // FNV-1a offset basis

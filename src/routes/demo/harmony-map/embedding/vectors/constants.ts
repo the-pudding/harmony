@@ -1,17 +1,21 @@
 export const MIN_GAP_DOCUMENT_FREQUENCY = 4;
 
+export const CHORUS_MATCH_WEIGHT = 3;
+
 export type ProgressionWeighting = "raw" | "binary";
 
 export type SongVectorOptions = {
 	weighting: ProgressionWeighting;
 	useTfIdf: boolean;
 	l2Normalize: boolean;
+	weightChorus: boolean;
 };
 
 export const DEFAULT_SONG_VECTOR_OPTIONS: SongVectorOptions = {
 	weighting: "raw",
 	useTfIdf: true,
-	l2Normalize: true
+	l2Normalize: true,
+	weightChorus: true
 };
 
 export const DEFAULT_NEAREST_NEIGHBOR_COUNT = 8;

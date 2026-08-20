@@ -122,6 +122,11 @@ const sectionRank = (label: string | null): number => {
 	return idx === -1 ? SECTION_RANK_PATTERNS.length : idx;
 };
 
+// "pre-chorus" is deliberately excluded — only sections labeled as the chorus
+// itself should count as the chorus for weighting purposes.
+export const isChorusSectionLabel = (label: string | null): boolean =>
+	label !== null && label.toLowerCase().startsWith("chorus");
+
 export const groupSongs = (songs: SongInput[]): GroupedSong[] => {
 	const map = new Map<string, GroupedSong>();
 	for (const song of songs) {

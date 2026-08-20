@@ -1,4 +1,8 @@
-export type WeightingToggleKey = "useTfIdf" | "l2Normalize" | "binary";
+export type WeightingToggleKey =
+	| "useTfIdf"
+	| "l2Normalize"
+	| "binary"
+	| "weightChorus";
 
 export type WeightingDescription = {
 	label: string;
@@ -44,6 +48,17 @@ export const weightingDescriptions: Record<
 			"Any positive match count becomes 1 before TF-IDF. Sibling variants of one named core progression still share a vocabulary slot.",
 		tradeoffs:
 			"You ignore how central a progression is to the song. Off (raw counts) keeps frequency, so chorus-driving loops weigh more than a one-off bridge."
+	},
+	weightChorus: {
+		label: "chorus × 3",
+		summary:
+			"Counts matches inside chorus sections three times as much as other sections when building each song's vector.",
+		rationale:
+			"The chorus is usually the harmonic hook a song is remembered by. Weighting it more heavily makes clustering track the chorus's progression rather than being diluted by verses, bridges, or intros.",
+		approach:
+			'A section counts as chorus when its label starts with "chorus" (case-insensitive) — "pre-chorus" does not qualify. Matches inside chorus sections are multiplied by 3 before being summed into the song\'s vector.',
+		tradeoffs:
+			"Songs whose chorus is unlabeled or mislabeled in the source data get no boost. Has no visible effect when binary counts is on, since presence/absence ignores magnitude."
 	}
 };
 

@@ -39,9 +39,10 @@ const E_MINOR7 = chord(4, "minor7");
 const G_MAJOR = chord(7, "major");
 
 const makeSection = (
-	parsedProgression: ParsedProgressionChord[]
+	parsedProgression: ParsedProgressionChord[],
+	label: string | null = null
 ): SongSection => ({
-	label: null,
+	label,
 	chords: [],
 	romanTokens: [],
 	parsedProgression,
@@ -153,6 +154,39 @@ describe("computeStatsForParsedProgression — extension-stripping regression (s
 			darkDooWopParsed
 		);
 		expect(stats.coveragePercent).toBe(100);
+	});
+});
+
+describe("computeStatsForParsedProgression — chorusMatchCount", () => {
+	const ivviProgression = [C_MAJOR, G_MAJOR, A_MINOR, C_MAJOR];
+
+	it("counts matches inside a chorus-labeled section as chorus matches", () => {
+		const song: GroupedSong = {
+			songKey: "chorus-test",
+			title: "Chorus Test",
+			artists: [],
+			keyLabel: null,
+			sections: [
+				makeSection(ivviProgression, "Verse"),
+				makeSection(ivviProgression, "Chorus")
+			]
+		};
+		const stats = computeStatsForParsedProgression(song, ivviProgression);
+		expect(stats.matchCount).toBe(2);
+		expect(stats.chorusMatchCount).toBe(1);
+	});
+
+	it("excludes pre-chorus sections from chorusMatchCount", () => {
+		const song: GroupedSong = {
+			songKey: "pre-chorus-test",
+			title: "Pre-Chorus Test",
+			artists: [],
+			keyLabel: null,
+			sections: [makeSection(ivviProgression, "Pre-Chorus")]
+		};
+		const stats = computeStatsForParsedProgression(song, ivviProgression);
+		expect(stats.matchCount).toBe(1);
+		expect(stats.chorusMatchCount).toBe(0);
 	});
 });
 

@@ -35,6 +35,12 @@
 					...options,
 					weighting: options.weighting === "binary" ? "raw" : "binary"
 				})
+		},
+		{
+			key: "weightChorus" as const,
+			isActive: options.weightChorus,
+			toggle: () =>
+				onChange({ ...options, weightChorus: !options.weightChorus })
 		}
 	]);
 </script>

@@ -1,4 +1,5 @@
 import {
+	CHORUS_MATCH_WEIGHT,
 	DEFAULT_SONG_VECTOR_OPTIONS,
 	type ProgressionWeighting,
 	type SongVectorOptions
@@ -42,13 +43,22 @@ const buildInverseDocumentFrequencies = (
 // their occurrences sum into a single dimension rather than splitting across two.
 const occurrencesByIndex = (
 	song: SongProgressionCounts,
-	vocabulary: ProgressionVocabulary
+	vocabulary: ProgressionVocabulary,
+	options: SongVectorOptions
 ): Map<number, number> =>
-	song.progressionCounts.reduce((counts, { chordProgression, matchCount }) => {
-		const index = vocabulary.indexByChordProgression.get(chordProgression);
-		if (index === undefined) return counts;
-		return counts.set(index, (counts.get(index) ?? 0) + matchCount);
-	}, new Map<number, number>());
+	song.progressionCounts.reduce(
+		(counts, { chordProgression, matchCount, chorusMatchCount }) => {
+			const index = vocabulary.indexByChordProgression.get(chordProgression);
+			if (index === undefined) return counts;
+			const effective =
+				matchCount +
+				(options.weightChorus
+					? (chorusMatchCount ?? 0) * (CHORUS_MATCH_WEIGHT - 1)
+					: 0);
+			return counts.set(index, (counts.get(index) ?? 0) + effective);
+		},
+		new Map<number, number>()
+	);
 
 const l2Normalized = (values: number[]): number[] => {
 	const norm = Math.sqrt(values.reduce((sum, value) => sum + value * value, 0));
@@ -61,7 +71,7 @@ const buildSongVector = (
 	inverseDocumentFrequencies: number[],
 	options: SongVectorOptions
 ): SongVector => {
-	const occurrences = occurrencesByIndex(song, vocabulary);
+	const occurrences = occurrencesByIndex(song, vocabulary, options);
 	const counts = vocabulary.entries.map(({ index }) =>
 		termWeight(occurrences.get(index) ?? 0, options.weighting)
 	);

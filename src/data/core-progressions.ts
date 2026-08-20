@@ -320,7 +320,7 @@ const jazzyProgressions: ProgressionGroup = {
 		},
 		{
 			name: "ii-V vamp",
-			chordProgression: "ii-V",
+			chordProgression: "ii-V-ii-V",
 			scale: "major",
 			description: ""
 		}

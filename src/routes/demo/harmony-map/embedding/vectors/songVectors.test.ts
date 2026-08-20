@@ -9,16 +9,23 @@ import {
 
 const makeSong = (
 	songKey: string,
-	progressions: [chordProgression: string, matchCount: number][]
+	progressions: [
+		chordProgression: string,
+		matchCount: number,
+		chorusMatchCount?: number
+	][]
 ): SongProgressionCounts => ({
 	songKey,
-	progressionCounts: progressions.map(([chordProgression, matchCount]) => ({
-		chordProgression,
-		scale: "major",
-		matchCount,
-		coveragePercent: 0,
-		isCore: true
-	}))
+	progressionCounts: progressions.map(
+		([chordProgression, matchCount, chorusMatchCount = 0]) => ({
+			chordProgression,
+			scale: "major",
+			matchCount,
+			chorusMatchCount,
+			coveragePercent: 0,
+			isCore: true
+		})
+	)
 });
 
 const songs = [
@@ -34,7 +41,8 @@ const vocabulary = buildProgressionVocabulary(songs, 1);
 const RAW_UNNORMALIZED = {
 	weighting: "raw",
 	useTfIdf: false,
-	l2Normalize: false
+	l2Normalize: false,
+	weightChorus: false
 } as const;
 
 describe("buildSongVectors", () => {
@@ -113,7 +121,8 @@ describe("buildSongVectors", () => {
 		const { vectorBySongKey } = buildSongVectors(songs, vocabulary, {
 			weighting: "raw",
 			useTfIdf: true,
-			l2Normalize: true
+			l2Normalize: true,
+			weightChorus: false
 		});
 		const norm = Math.sqrt(
 			vectorBySongKey
@@ -131,6 +140,47 @@ describe("buildSongVectors", () => {
 		expect(
 			vectorBySongKey.get("c")!.weighted.every((value) => value === 0)
 		).toBe(true);
+	});
+
+	it("multiplies chorus matches by the chorus weight when weightChorus is on", () => {
+		const chorusSongs = [makeSong("a", [["I-V-vi-IV", 4, 3]])];
+		const chorusVocabulary = buildProgressionVocabulary(chorusSongs, 1);
+		const index = chorusVocabulary.indexByChordProgression.get("I-V-vi-IV")!;
+
+		const { vectorBySongKey: withWeighting } = buildSongVectors(
+			chorusSongs,
+			chorusVocabulary,
+			{ ...RAW_UNNORMALIZED, weightChorus: true }
+		);
+		const { vectorBySongKey: withoutWeighting } = buildSongVectors(
+			chorusSongs,
+			chorusVocabulary,
+			RAW_UNNORMALIZED
+		);
+
+		// 4 total matches, 3 of them in a chorus, weight 3x: 1 non-chorus + 3*3 chorus = 10
+		expect(withWeighting.get("a")!.counts[index]).toBe(10);
+		expect(withoutWeighting.get("a")!.counts[index]).toBe(4);
+	});
+
+	it("sums chorus matches from sibling variants into one dimension", () => {
+		const bothVariants = [
+			makeSong("a", [
+				["ii7-V7-Imaj7", 3, 1],
+				["ii-V-I", 2, 2]
+			])
+		];
+		const variantVocabulary = buildProgressionVocabulary(bothVariants, 1);
+		const index = variantVocabulary.indexByChordProgression.get("ii-V-I")!;
+
+		const { vectorBySongKey } = buildSongVectors(
+			bothVariants,
+			variantVocabulary,
+			{ ...RAW_UNNORMALIZED, weightChorus: true }
+		);
+
+		// (3 - 1) non-chorus + 1*3 chorus + (2 - 2) non-chorus + 2*3 chorus = 2 + 3 + 0 + 6 = 11
+		expect(vectorBySongKey.get("a")!.counts[index]).toBe(11);
 	});
 
 	it("emits one matrix row per song aligned with the vector order", () => {

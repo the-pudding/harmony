@@ -152,6 +152,7 @@ const toGapFillMatch = (
 		scale,
 		description: "",
 		matchCount: stats.matchCount,
+		chorusMatchCount: stats.chorusMatchCount,
 		coveragePercent: stats.coveragePercent,
 		...matchHighlightForCoreProgression(
 			isCoreProgression,

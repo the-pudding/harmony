@@ -16,6 +16,7 @@ const makeSong = (
 			chordProgression,
 			scale: "major",
 			matchCount,
+			chorusMatchCount: 0,
 			coveragePercent: 0,
 			isCore
 		})

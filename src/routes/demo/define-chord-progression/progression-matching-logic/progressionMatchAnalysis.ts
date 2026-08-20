@@ -1,6 +1,10 @@
 import type { CoreProgression } from "$data/core-progressions.js";
 import { chordProgressionVariants } from "$data/core-progressions.util.js";
-import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
+import {
+	isChorusSectionLabel,
+	type GroupedSong,
+	type SongSection
+} from "../../../../data/songBrowser.js";
 import type { ScaleName } from "../../../../chord-processing/scales.js";
 import {
 	romanTokenOffsetFromTonic,
@@ -52,6 +56,7 @@ export type ProgressionWithMatchStats = {
 	scale: ScaleName;
 	description: string;
 	matchCount: number;
+	chorusMatchCount?: number;
 	coveragePercent: number;
 	isCoreProgression: boolean;
 	matchRomanNumeralsExactly?: boolean;
@@ -118,12 +123,14 @@ export const computeStatsForParsedProgression = (
 	song: GroupedSong,
 	parsed: ParsedProgressionChord[],
 	matchRomanNumeralsExactly = false
-): { matchCount: number; coveragePercent: number } => {
+): { matchCount: number; chorusMatchCount: number; coveragePercent: number } => {
 	const totalChords = song.sections.reduce(
 		(sum, section) => sum + section.parsedProgression.length,
 		0
 	);
-	if (totalChords === 0) return { matchCount: 0, coveragePercent: 0 };
+	if (totalChords === 0) {
+		return { matchCount: 0, chorusMatchCount: 0, coveragePercent: 0 };
+	}
 
 	const stats = song.sections.reduce(
 		(accumulator, section) => {
@@ -134,16 +141,20 @@ export const computeStatsForParsedProgression = (
 			);
 			return {
 				matchCount: accumulator.matchCount + matches.length,
+				chorusMatchCount:
+					accumulator.chorusMatchCount +
+					(isChorusSectionLabel(section.label) ? matches.length : 0),
 				coveredPositions:
 					accumulator.coveredPositions +
 					matches.reduce((sum, m) => sum + m.length, 0)
 			};
 		},
-		{ matchCount: 0, coveredPositions: 0 }
+		{ matchCount: 0, chorusMatchCount: 0, coveredPositions: 0 }
 	);
 
 	return {
 		matchCount: stats.matchCount,
+		chorusMatchCount: stats.chorusMatchCount,
 		coveragePercent: (stats.coveredPositions / totalChords) * 100
 	};
 };
@@ -193,6 +204,7 @@ export function computeProgressionMatches(
 						chordProgression: variant,
 						parsedProgression: parsed,
 						matchCount: stats.matchCount,
+						chorusMatchCount: stats.chorusMatchCount,
 						coveragePercent: stats.coveragePercent,
 						isFullSectionSingleMatch:
 							stats.matchCount < MIN_PROGRESSION_OCCURRENCES &&
@@ -492,12 +504,14 @@ export const computeGapOnlyStats = (
 	song: GroupedSong,
 	parsed: ParsedProgressionChord[],
 	occupiedCoverage: number[][]
-): { matchCount: number; coveragePercent: number } => {
+): { matchCount: number; chorusMatchCount: number; coveragePercent: number } => {
 	const totalChords = song.sections.reduce(
 		(sum, section) => sum + section.parsedProgression.length,
 		0
 	);
-	if (totalChords === 0) return { matchCount: 0, coveragePercent: 0 };
+	if (totalChords === 0) {
+		return { matchCount: 0, chorusMatchCount: 0, coveragePercent: 0 };
+	}
 
 	const stats = song.sections.reduce(
 		(accumulator, section, sectionIndex) => {
@@ -508,16 +522,20 @@ export const computeGapOnlyStats = (
 			);
 			return {
 				matchCount: accumulator.matchCount + matches.length,
+				chorusMatchCount:
+					accumulator.chorusMatchCount +
+					(isChorusSectionLabel(section.label) ? matches.length : 0),
 				coveredPositions:
 					accumulator.coveredPositions +
 					matches.reduce((sum, match) => sum + match.length, 0)
 			};
 		},
-		{ matchCount: 0, coveredPositions: 0 }
+		{ matchCount: 0, chorusMatchCount: 0, coveredPositions: 0 }
 	);
 
 	return {
 		matchCount: stats.matchCount,
+		chorusMatchCount: stats.chorusMatchCount,
 		coveragePercent: (stats.coveredPositions / totalChords) * 100
 	};
 };

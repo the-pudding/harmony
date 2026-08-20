@@ -186,6 +186,7 @@
 				{neighborSongKeys}
 				{highlightedSongKeys}
 				visibleSongKeys={artistSongKeys}
+				method={embedding.method}
 				axisLabels={AXIS_LABELS_BY_METHOD[embedding.method]}
 				onSelect={(songKey) => {
 					selectedSongKey = songKey;
