@@ -75,6 +75,10 @@
 		(pct: number) => PADDING_LEFT + (pct / 100) * plotWidth
 	);
 
+	const isHighlighted = (song: SongEntry): boolean =>
+		activeHighlightProgressions !== null &&
+		song.matchingProgressions.some((p) => activeHighlightProgressions!.includes(p));
+
 	const dodgedNodes = $derived.by((): DodgedNode[] => {
 		if (plotWidth <= 0 || songs === null) return [];
 
@@ -85,8 +89,16 @@
 			looksGoodAsIs: isSongLooksGoodAsIs(s.songKey)
 		}));
 
+		const sorted =
+			activeHighlightProgressions !== null
+				? [
+						...annotated.filter(isHighlighted),
+						...annotated.filter((s) => !isHighlighted(s))
+					]
+				: annotated;
+
 		return dodgeBeeswarm(
-			annotated,
+			sorted,
 			(song) => xScale(song.coveragePercent),
 			DOT_RADIUS,
 			DOT_SPACING
@@ -234,16 +246,13 @@
 					>{tick}%</text
 				>
 			{/each}
-			{#each dodgedNodes as node}
+		{#each [false, true] as renderHighlighted}
+			{#each dodgedNodes.filter((n) => isHighlighted(n) === renderHighlighted) as node}
 				{@const isSelected = node.songKey === selectedSongKey}
 				{@const isHovered = node.songKey === hoveredSongKey}
 				{@const hasIssues = node.chordProgressionIssues !== undefined}
 				{@const isTricky = node.chordMatchingChallenges !== undefined}
-				{@const isCoreMatched =
-					activeHighlightProgressions !== null &&
-					node.matchingProgressions.some((progression) =>
-						activeHighlightProgressions.includes(progression)
-					)}
+				{@const isDimmed = activeHighlightProgressions !== null && !isHighlighted(node)}
 				{@const r = isSelected ? SELECTED_DOT_RADIUS : DOT_RADIUS}
 				{@const cy = AXIS_Y - DOT_RADIUS - node.y}
 				<circle
@@ -252,11 +261,11 @@
 					{r}
 					class="dot"
 					class:selected={isSelected}
-					class:core-matched={isCoreMatched}
+					class:dimmed={isDimmed}
 					class:hovered={isHovered}
-					class:has-issues={hasIssues && !isCoreMatched}
-					class:tricky={isTricky && !hasIssues && !isCoreMatched}
-					class:looks-good={node.looksGoodAsIs && !hasIssues && !isTricky && !isCoreMatched}
+					class:has-issues={hasIssues}
+					class:tricky={isTricky && !hasIssues}
+					class:looks-good={node.looksGoodAsIs && !hasIssues && !isTricky}
 					onmouseenter={() => handleDotEnter(node.songKey)}
 					onmouseleave={scheduleHoverClear}
 					onclick={() => selectSong(node.songKey)}
@@ -270,6 +279,7 @@
 					)}% explained"
 				/>
 			{/each}
+		{/each}
 		</svg>
 
 		{#if hoveredNode}
@@ -397,16 +407,8 @@
 		stroke-width: 1.5px;
 	}
 
-	.dot.core-matched {
-		fill: rgba(21, 128, 61, 0.85);
-		stroke: rgba(134, 239, 172, 0.7);
-		stroke-width: 1px;
-	}
-
-	.dot.core-matched.hovered {
-		fill: rgba(21, 128, 61, 1);
-		stroke: rgba(134, 239, 172, 0.95);
-		stroke-width: 1.5px;
+	.dot.dimmed {
+		opacity: 0.4;
 	}
 
 	.dot.selected {
