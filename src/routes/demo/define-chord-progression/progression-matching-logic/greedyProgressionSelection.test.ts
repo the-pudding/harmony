@@ -78,20 +78,22 @@ describe("greedilySelectProgressions — gap-only candidate coverage", () => {
 	});
 
 	it("keeps gap selections disjoint from each other", () => {
+		// Both candidates recur twice, but every vi-IV-I instance straddles the
+		// chords I-V-vi claims first, so only one of them can survive.
 		const song: GroupedSong = {
 			songKey: "test__disjoint-gap",
 			title: "Disjoint Gap",
 			artists: ["Tester"],
 			keyLabel: null,
-			sections: [makeRomanSection(["I", "V", "vi", "IV", "I", "V"])]
+			sections: [makeRomanSection(["I", "V", "vi", "IV", "I", "V", "vi", "IV"])]
 		};
 		const candidates = [
-			makeCandidate("I-V-vi", 1, 50),
-			makeCandidate("vi-IV-I", 1, 40)
+			makeCandidate("I-V-vi", 2, 50),
+			makeCandidate("vi-IV-I", 2, 40)
 		];
 		const result = greedilySelectProgressions(song, candidates, [[]]);
 		const selectedKeys = result.selected.map((match) => match.chordProgression);
-		expect(selectedKeys).toHaveLength(1);
+		expect(selectedKeys).toEqual(["I-V-vi"]);
 	});
 
 	it("uses full coverage for core-style selection by default", () => {

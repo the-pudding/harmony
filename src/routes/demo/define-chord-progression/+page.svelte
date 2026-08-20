@@ -281,10 +281,12 @@
 						every remaining candidate against the chords that are still free, so
 						a progression that owns a whole chorus still claims it even when one
 						stray instance elsewhere collides with an earlier winner. It just
-						forfeits the colliding instance. The single-occurrence exception
-						only applies to core progressions — not gap-fill candidates — to
-						avoid spuriously claiming any section with no other matches. Within
-						the
+						forfeits the colliding instance. The occurrence bar is then
+						re-checked against whatever survived, so a progression left with a
+						single leftover fragment is dropped rather than credited for it. The
+						single-occurrence exception only applies to core progressions — not
+						gap-fill candidates — to avoid spuriously claiming any section with
+						no other matches. Within the
 						<span class="const-value"
 							>{PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}%</span
 						> tolerance, we bias toward progressions that begin at the start of a
