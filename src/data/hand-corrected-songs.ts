@@ -1,4 +1,21 @@
-export const manuallyEnteredSongs: ManuallyEnteredSong[] = [
+export type CorrectedSongSection = {
+	name: string;
+	key: string;
+	scale: string;
+	romanTokens: string[];
+};
+
+export type CorrectedSongContents = {
+	sections: CorrectedSongSection[];
+};
+
+export type HandCorrectedSong = {
+	id: string;
+	correctedSongContents: CorrectedSongContents;
+	technicalNotes?: string;
+};
+
+export const handCorrectedSongs: HandCorrectedSong[] = [
 	{
 		id: "desiigner__panda",
 		technicalNotes: "",

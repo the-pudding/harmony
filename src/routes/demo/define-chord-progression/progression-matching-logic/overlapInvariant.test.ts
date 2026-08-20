@@ -3,7 +3,7 @@ import songs from "../../../../../static/data/songs.json";
 import coreProgressions from "$data/core-progressions.js";
 import { groupSongs } from "../../../../data/songBrowser.js";
 import { correctedSongContentsToSongInputs } from "../../../../data/applyHandReviewedCorrections.js";
-import { manuallyEnteredSongs } from "../../../../data/hand-reviewed-songs.js";
+import { handCorrectedSongs } from "../../../../data/hand-corrected-songs.js";
 import type { ChordAnnotation } from "./progressionMatchAnalysis.js";
 import {
 	buildFinalChordAnnotations,
@@ -116,7 +116,7 @@ const vampSong: GroupedSong = {
 	sections: [vampVerse, vampBridge, vampPreChorus]
 };
 
-const highestInTheRoomReview = manuallyEnteredSongs.find(
+const highestInTheRoomReview = handCorrectedSongs.find(
 	(s) => s.id === "travis-scott__highest-in-the-room"
 )!;
 const highestInTheRoomSong = groupSongs(

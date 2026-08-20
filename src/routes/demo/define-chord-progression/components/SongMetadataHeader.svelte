@@ -1,21 +1,21 @@
 <script lang="ts">
+	import { handCorrectedSongs } from "$data/hand-corrected-songs.js";
 	import {
 		getChordProgressionIssues,
 		isSongLooksGoodAsIs,
 		LOOKS_GOOD_EMOJI,
 		LOOKS_GOOD_LABEL,
-		manuallyEnteredSongs,
 		getChordMatchingChallenges,
 		TRICKY_TO_MATCH_EMOJI
 	} from "$data/hand-reviewed-songs.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import SongIdentityLabel from "../../shared/SongIdentityLabel.svelte";
 
-	const MANUALLY_CORRECTED_TITLE = "manually corrected";
-	const MANUALLY_CORRECTED_EMOJI = "✏️";
+	const HAND_CORRECTED_TITLE = "hand corrected";
+	const HAND_CORRECTED_EMOJI = "✏️";
 	const PROBLEMATIC_EMOJI = "🔴";
-	const MANUALLY_ENTERED_SONG_IDS = new Set(
-		manuallyEnteredSongs.map((song) => song.id)
+	const HAND_CORRECTED_SONG_IDS = new Set(
+		handCorrectedSongs.map((song) => song.id)
 	);
 
 	type Props = {
@@ -24,8 +24,8 @@
 
 	let { song }: Props = $props();
 
-	const isManuallyCorrected = $derived(
-		MANUALLY_ENTERED_SONG_IDS.has(song.songKey)
+	const isHandCorrected = $derived(
+		HAND_CORRECTED_SONG_IDS.has(song.songKey)
 	);
 	const chordProgressionIssues = $derived(
 		getChordProgressionIssues(song.songKey)
@@ -41,14 +41,14 @@
 		artists={song.artists}
 		year={song.year}
 		source={song.source}
-		showSource={!isManuallyCorrected}
+		showSource={!isHandCorrected}
 	>
 		{#snippet beforeSource()}
-			{#if isManuallyCorrected}
+			{#if isHandCorrected}
 				<span
 					class="status-icon"
-					title={MANUALLY_CORRECTED_TITLE}
-					aria-label={MANUALLY_CORRECTED_TITLE}>{MANUALLY_CORRECTED_EMOJI}</span
+					title={HAND_CORRECTED_TITLE}
+					aria-label={HAND_CORRECTED_TITLE}>{HAND_CORRECTED_EMOJI}</span
 				>
 			{/if}
 		{/snippet}

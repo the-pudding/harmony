@@ -1,21 +1,4 @@
-export type CorrectedSongSection = {
-	name: string;
-	key: string;
-	scale: string;
-	romanTokens: string[];
-};
-
-export type CorrectedSongContents = {
-	sections: CorrectedSongSection[];
-};
-
 export const CHORD_PROGRESSION_ISSUES_LABEL = "chordProgressionIssues:";
-
-export type ManuallyEnteredSong = {
-	id: string;
-	correctedSongContents: CorrectedSongContents;
-	technicalNotes?: string;
-};
 
 export type ProblematicSong = {
 	id: string;

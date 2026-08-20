@@ -4,14 +4,14 @@ import {
 } from "../chord-processing/songIdentity.js";
 import type { SongInput } from "../chord-processing/types.js";
 import { romanTokensToProgressionInKey } from "../chord-processing/scales.js";
-import { manuallyEnteredSongs } from "./hand-reviewed-songs.js";
-import type { CorrectedSongContents } from "./hand-reviewed-songs.js";
+import { handCorrectedSongs } from "./hand-corrected-songs.js";
+import type { CorrectedSongContents } from "./hand-corrected-songs.js";
 
 export const applyHandReviewedCorrections = (
 	songs: SongInput[]
 ): SongInput[] => {
 	const corrections = new Map(
-		manuallyEnteredSongs.map((song) => [song.id, song.correctedSongContents])
+		handCorrectedSongs.map((song) => [song.id, song.correctedSongContents])
 	);
 
 	if (corrections.size === 0) return songs;
