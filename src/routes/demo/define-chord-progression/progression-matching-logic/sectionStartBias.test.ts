@@ -438,7 +438,7 @@ describe("section-start bias — demoted leader still selectable later", () => {
 		// A (I-V) is not discarded; it wins round 2 because its positions don't overlap B's.
 		expect(selected).toContain("V-I");
 		expect(selected).toContain("I-V");
-	};);
+	});
 });
 
 describe("section-start bias — wraparound match does not count as section start", () => {
