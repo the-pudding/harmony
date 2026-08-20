@@ -25,6 +25,13 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
+			name: "I-vi vamp",
+			chordProgression: "I-vi-I-vi",
+			scale: "major",
+			matchRomanNumeralsExactly: true,
+			description: ""
+		},
+		{
 			name: "Cheerleader (verse)",
 			chordProgression: "I-V-IV",
 			scale: "major",
@@ -34,6 +41,12 @@ const happyMajoryProgressions: ProgressionGroup = {
 		{
 			name: "Cheerleader (chorus)",
 			chordProgression: "I-IV-V-IV",
+			scale: "major",
+			description: ""
+		},
+		{
+			name: "silly love songs",
+			chordProgression: "I-iii-IV",
 			scale: "major",
 			description: ""
 		},
@@ -203,6 +216,20 @@ const minoryProgressions: ProgressionGroup = {
 		{
 			name: "gangnam verse i-iv-v",
 			chordProgression: "i-iv-v",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: ""
+		},
+		{
+			name: "i VI vamp",
+			chordProgression: "i-VI-i-VI",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: ""
+		},
+		{
+			name: "i VI VII",
+			chordProgression: "i-VI-VII",
 			scale: "minor",
 			matchRomanNumeralsExactly: true,
 			description: ""

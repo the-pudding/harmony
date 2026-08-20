@@ -195,6 +195,21 @@ describe("selectFinalProgressions — no-overlap invariants", () => {
 		expect(result.explainedPercent).toBeGreaterThan(52);
 	});
 
+	it("just like fire has disjoint coverage after core-progression extension", () => {
+		// Regression: extending "stay with me" (i-VI-III) into i-VI-III-iv
+		// re-merged the winner's own original 3-chord claim into runningCoverage
+		// on top of what coreSelection.coverage already had, duplicating those
+		// positions and pushing explainedPercent past 100%.
+		const justLikeFireSong = groupSongs(
+			(songs as { songKey: string }[]).filter(
+				(s) => s.songKey === "p-nk__just-like-fire"
+			) as Parameters<typeof groupSongs>[0]
+		)[0];
+		const result = selectFinalProgressions(justLikeFireSong, coreProgressions);
+		assertNoOverlappingCoverage(result.coverage);
+		expect(result.explainedPercent).toBeLessThanOrEqual(100);
+	});
+
 	it("gap candidates on empty coverage match full-song recurrence stats", () => {
 		const fullSongMatches = computeGapFillProgressionMatches(
 			imYours,
