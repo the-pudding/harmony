@@ -14,12 +14,14 @@ const happyMajoryProgressions: ProgressionGroup = {
 			name: "I-IV vamp",
 			chordProgression: "I-IV-I-IV",
 			scale: "major",
+			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "I-V vamp",
 			chordProgression: "I-V-I-V",
 			scale: "major",
+			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
