@@ -123,6 +123,12 @@ const axisOfAwesomeProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
+			name: "axis of angsty",
+			chordProgression: "I-iii-vi-IV",
+			scale: "major",
+			description: "swaps out the V for an angsty iii"
+		},
+		{
 			name: "never getting back together",
 			chordProgression: "IV-I-V-vi",
 			scale: "major",
