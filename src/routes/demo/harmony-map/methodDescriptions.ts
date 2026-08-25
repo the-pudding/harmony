@@ -12,7 +12,9 @@ export const embeddingMethodLabels: Record<EmbeddingMethod, string> = {
 	umap: "UMAP",
 	pca: "PCA",
 	feature: "Feature axes",
-	groupBlend: "Group blend"
+	groupBlend: "Group blend",
+	ngram: "Chord grams",
+	scaleSplit: "Major/minor"
 };
 
 export const embeddingMethodDescriptions: Record<
@@ -62,6 +64,28 @@ export const embeddingMethodDescriptions: Record<
 			"Each song becomes a short vector of core-group shares (the same fractions used to color its dot), one dimension per group, summing to 1. UMAP builds a neighbor graph over those vectors under cosine distance and lays out the 2D result, same as the UMAP method but on group shares instead of per-progression counts.",
 		tradeoffs:
 			"Ignores everything else about a song — gap-fill progressions, exact chord identities, occurrence counts beyond their group. Two songs with an identical blend from very different chords will still land on top of each other."
+	},
+	ngram: {
+		title: embeddingMethodLabels.ngram,
+		summary:
+			"UMAP over each song's raw chord-to-chord transitions (2–3 chord windows), independent of core-progressions.ts entirely.",
+		rationale:
+			"Every other method's vector is built from which registered progressions matched a song — so the map is partly shaped by whatever's already been decided as core. This method skips named-progression matching altogether and looks at the raw sequence of chords instead, so it isn't biased by, or circular with, the current core-progressions.ts list.",
+		approach:
+			"For every song section, every 2- and 3-chord consecutive window of roman-numeral tokens (scale-qualified) becomes a 'gram.' Grams occurring in fewer than 4 songs corpus-wide are dropped; the rest form the vocabulary. Each song's gram-occurrence counts are TF-IDF-weighted and L2-normalized, the same formula as the standard method, then UMAP runs under cosine distance.",
+		tradeoffs:
+			"Loses the notion of a 'complete' progression — a song built on a real 4-chord vamp and one that just happens to share a couple of its transitions can look similar here. Chord direction matters (ii→V is a different gram from V→ii), so it won't unify songs that traverse the same chords in reverse."
+	},
+	scaleSplit: {
+		title: embeddingMethodLabels.scaleSplit,
+		summary:
+			"One axis is a real UMAP clustering of chord grams; the other is a deliberate major ↔ minor score, so similar songs still group together but always split left/right by scale.",
+		rationale:
+			"Chord grams clusters by similarity but leaves scale to fall out however the layout happens to land. This forces the one axis you actually care about — major vs. minor — to always be legible, while keeping genuine similarity-based grouping on the other axis, the same idea as feature axes' hand-designed dimensions but built on chord-gram similarity instead of a fully hand-designed one.",
+		approach:
+			"The horizontal position is a majorness score per song: (major chord count − minor chord count) / total chord count, so +1 is entirely major, −1 entirely minor, 0 is an even split or unmatched. The vertical position is UMAP run on the same chord-gram vectors as the Chord grams method, keeping only one of its two natural output axes.",
+		tradeoffs:
+			"Discards half of what UMAP would normally show — whatever structure lived on the dropped axis is gone, so clusters can look flatter or more merged than under Chord grams. The horizontal position only counts scale, not chord quality or borrowed chords, so it's a cruder brightness signal than feature axes' — and because one axis is hand-designed, density clustering (the dashed circles) isn't available here."
 	}
 };
 

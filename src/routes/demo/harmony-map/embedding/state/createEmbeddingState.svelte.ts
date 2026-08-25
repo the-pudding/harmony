@@ -1,12 +1,17 @@
 import { onDestroy } from "svelte";
+import type { GroupedSong } from "../../../../../data/songBrowser.js";
 import type { SongCoverageEntry } from "../../../define-chord-progression/compute-coverage-of-all-songs/index.js";
 import {
+	buildChordNgramVectors,
+	buildChordNgramVocabulary,
 	buildFeatureAxesCoords,
 	buildProgressionVocabulary,
 	buildSongVectors,
+	computeMajornessScore,
 	DEFAULT_SONG_VECTOR_OPTIONS,
 	groupShareVectorForSong,
 	toMatrix,
+	type NgramSongInput,
 	type SongVectorOptions,
 	type SongVectorSet
 } from "../vectors/index.js";
@@ -16,6 +21,7 @@ import {
 	type ComponentLoading,
 	type Coords,
 	type EmbeddingMethod,
+	type ReducerMethod,
 	type ReductionResult
 } from "../reducers/index.js";
 import { buildEmbeddingCacheKey } from "./embeddingCacheKey.js";
@@ -40,10 +46,19 @@ const EMPTY_RESULT: EmbeddingResult = {
 
 type EmbeddingStateConfig = {
 	getEntries: () => SongCoverageEntry[] | null;
+	getSongs: () => GroupedSong[];
 	getCoverageCacheKey: () => string | null;
 	initialMethod: EmbeddingMethod;
 	onMethodChange?: (method: EmbeddingMethod) => void;
 };
+
+const toNgramInput = (song: GroupedSong): NgramSongInput => ({
+	songKey: song.songKey,
+	sections: song.sections.map((section) => ({
+		romanTokens: section.romanTokens,
+		scale: section.scale
+	}))
+});
 
 const toEmbeddingResult = (
 	result: ReductionResult,
@@ -145,18 +160,37 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 				return;
 			}
 
-			if (currentMethod === "groupBlend") {
+			if (currentMethod === "scaleSplit") {
 				status = "computing";
-				const matrix = currentSongs.map((song) =>
-					groupShareVectorForSong(song.progressionCounts)
+				const ngramInputs = config.getSongs().map(toNgramInput);
+				const ngramVocabulary = buildChordNgramVocabulary(ngramInputs);
+				const ngramVectors = buildChordNgramVectors(ngramInputs, ngramVocabulary);
+				const majornessBySongKey = new Map(
+					ngramInputs.map((input) => [
+						input.songKey,
+						computeMajornessScore(input)
+					])
 				);
-				void reduceOffMainThread("umap", matrix)
+
+				void reduceOffMainThread(
+					"umap",
+					ngramVectors.map((vector) => vector.weighted)
+				)
 					.then(async (reduction) => {
 						if (!active) return;
-						const result = toEmbeddingResult(
-							reduction,
-							currentSongs.map((song) => song.songKey)
+						// Horizontal position is the deliberate majorness score;
+						// vertical keeps only one of UMAP's two natural axes, since
+						// the other is spoken for by scale.
+						const coordsByKey = new Map(
+							ngramVectors.map((vector, index) => [
+								vector.songKey,
+								{
+									x: majornessBySongKey.get(vector.songKey) ?? 0,
+									y: reduction.coords[index]?.x ?? 0
+								}
+							])
 						);
+						const result: EmbeddingResult = { ...EMPTY_RESULT, coordsByKey };
 						cacheResult(key, result);
 						if (coverageCacheKey !== null) {
 							const idbKey = await buildEmbeddingCacheKey(
@@ -173,15 +207,38 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 				return;
 			}
 
+			// Every remaining method reduces via UMAP or PCA over some matrix —
+			// they differ only in how that matrix is built. groupBlend reuses the
+			// standard per-progression vectors already built above; ngram builds
+			// its own independent vocabulary from raw chord sequences, so it
+			// needs the underlying GroupedSong data instead.
+			let reducerMethod: ReducerMethod = "umap";
+			let matrix: number[][];
+			let songKeys: string[];
+
+			if (currentMethod === "groupBlend") {
+				matrix = currentSongs.map((song) =>
+					groupShareVectorForSong(song.progressionCounts)
+				);
+				songKeys = currentSongs.map((song) => song.songKey);
+			} else if (currentMethod === "ngram") {
+				const ngramInputs = config.getSongs().map(toNgramInput);
+				const ngramVocabulary = buildChordNgramVocabulary(ngramInputs);
+				const ngramVectors = buildChordNgramVectors(ngramInputs, ngramVocabulary);
+				matrix = ngramVectors.map((vector) => vector.weighted);
+				songKeys = ngramVectors.map((vector) => vector.songKey);
+			} else {
+				reducerMethod = currentMethod;
+				matrix = toMatrix(vectorSet.vectors);
+				songKeys = vectorSet.vectors.map((vector) => vector.songKey);
+			}
+
 			status = "computing";
 
-			void reduceOffMainThread(currentMethod, toMatrix(vectorSet.vectors))
+			void reduceOffMainThread(reducerMethod, matrix)
 				.then(async (reduction) => {
 					if (!active) return;
-					const result = toEmbeddingResult(
-						reduction,
-						vectorSet.vectors.map((vector) => vector.songKey)
-					);
+					const result = toEmbeddingResult(reduction, songKeys);
 					cacheResult(key, result);
 					if (coverageCacheKey !== null) {
 						const idbKey = await buildEmbeddingCacheKey(

@@ -18,6 +18,7 @@
 
 	const embedding = createEmbeddingState({
 		getEntries: () => coverage.allSongsCoverageResult?.songCoverages ?? null,
+		getSongs: () => coverage.baseList,
 		getCoverageCacheKey: () => coverage.coverageCacheKey,
 		initialMethod: initialUrlState.method,
 		onMethodChange: (method) => replaceHarmonyMapStateInUrl({ method })

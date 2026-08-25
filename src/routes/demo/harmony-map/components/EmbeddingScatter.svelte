@@ -12,7 +12,10 @@
 		findDensityClusters,
 		type DensityCluster
 	} from "../embedding/clustering/densityClusters.js";
-	import type { EmbeddingMethod } from "../embedding/reducers/types.js";
+	import {
+		UMAP_DRIVEN_METHODS,
+		type EmbeddingMethod
+	} from "../embedding/reducers/types.js";
 	import { fillStyleForGroupShares } from "./groupColorBlend.js";
 	import SongTooltip from "../../shared/SongTooltip.svelte";
 	import {
@@ -46,11 +49,12 @@
 		onSelect
 	}: Props = $props();
 
-	// Density clustering is only meaningful over UMAP's neighbor-preserving
-	// layout — PCA/feature-axis/group-blend positions are linear projections or
-	// hand-designed axes where geometric proximity doesn't mean "similar songs",
-	// so DBSCAN circles there would be visually plausible but semantically noise.
-	const CLUSTERABLE_METHOD: EmbeddingMethod = "umap";
+	// Density clustering is only meaningful over layouts UMAP actually produced
+	// (see UMAP_DRIVEN_METHODS) — PCA/feature-axis positions are linear
+	// projections or hand-designed axes where geometric proximity doesn't mean
+	// "similar songs", so DBSCAN circles there would be visually plausible but
+	// semantically noise.
+	const CLUSTERABLE_METHODS = new Set<EmbeddingMethod>(UMAP_DRIVEN_METHODS);
 
 	const PLOT_MARGIN = 32;
 	const POINT_RADIUS = 3;
@@ -230,7 +234,7 @@
 		new Map(drawablePoints.map((point) => [point.songKey, point]))
 	);
 
-	const clustersAvailable = $derived(method === CLUSTERABLE_METHOD);
+	const clustersAvailable = $derived(CLUSTERABLE_METHODS.has(method));
 
 	// Membership only — geometry is drawn from each frame's live tween
 	// positions in drawClusters(), so circles animate along with their dots.

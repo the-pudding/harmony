@@ -34,7 +34,9 @@
 		umap: null,
 		pca: { x: "PC1", y: "PC2" },
 		feature: { x: "dark ← harmony → bright", y: "simple ← harmony → complex" },
-		groupBlend: null
+		groupBlend: null,
+		ngram: null,
+		scaleSplit: { x: "minor ← scale → major", y: "chord-gram UMAP" }
 	};
 
 	type InspectorTab = "song" | "artists";
