@@ -91,3 +91,39 @@ export const buildProgressionGroupShares = (
 			(a, b) => b.sharePercent - a.sharePercent || a.label.localeCompare(b.label)
 		);
 };
+
+// Returns song keys whose dominant group matches groupLabel, optionally further
+// narrowed to songs that include any variant of progressionName.
+export const songKeysMatchingGroupFilter = (
+	songCoverages: readonly SongCoverageEntry[],
+	groupLabel: string,
+	progressionName: string | null
+): Set<string> => {
+	const progressionVariants =
+		progressionName === null
+			? null
+			: (() => {
+					for (const group of allProgressionGroups) {
+						const match = group.progressions.find(
+							(progression) => progression.name === progressionName
+						);
+						if (match)
+							return new Set(chordProgressionVariants(match.chordProgression));
+					}
+					return null;
+				})();
+
+	return new Set(
+		songCoverages
+			.filter((entry) => {
+				const dominant = dominantProgressionGroupName(entry.progressionCounts);
+				const dominantLabel = dominant ?? UNGROUPED_PROGRESSION_GROUP_LABEL;
+				if (dominantLabel !== groupLabel) return false;
+				if (progressionVariants === null) return true;
+				return entry.progressionCounts.some((count) =>
+					progressionVariants.has(count.chordProgression)
+				);
+			})
+			.map((entry) => entry.songKey)
+	);
+};

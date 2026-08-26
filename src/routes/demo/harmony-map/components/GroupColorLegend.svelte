@@ -4,9 +4,19 @@
 
 	type Props = {
 		songCoverages: SongCoverageEntry[];
+		selectedGroupLabel: string | null;
+		selectedProgressionName: string | null;
+		onSelectGroup: (label: string | null) => void;
+		onSelectProgression: (name: string | null) => void;
 	};
 
-	const { songCoverages }: Props = $props();
+	const {
+		songCoverages,
+		selectedGroupLabel,
+		selectedProgressionName,
+		onSelectGroup,
+		onSelectProgression
+	}: Props = $props();
 
 	const GROUP_COLOR_LEGEND_TITLE = "color = core group blend";
 
@@ -17,15 +27,15 @@
 
 	const sortedLegendItems = $derived(buildProgressionGroupShares(songCoverages));
 
-	let expandedGroupLabels = $state(new Set<string>());
-
 	const formatShareAsPercent = (sharePercent: number): string =>
 		`${Math.round(sharePercent)}%`;
 
-	const toggleGroupExpanded = (label: string) => {
-		expandedGroupLabels = expandedGroupLabels.has(label)
-			? new Set([...expandedGroupLabels].filter((item) => item !== label))
-			: new Set([...expandedGroupLabels, label]);
+	const handleGroupClick = (label: string) => {
+		onSelectGroup(selectedGroupLabel === label ? null : label);
+	};
+
+	const handleProgressionClick = (name: string) => {
+		onSelectProgression(selectedProgressionName === name ? null : name);
 	};
 </script>
 
@@ -45,14 +55,15 @@
 	</div>
 	{#each sortedLegendItems as item (item.label)}
 		{@const isExpandable = item.progressions.length > 0}
-		{@const isExpanded = expandedGroupLabels.has(item.label)}
+		{@const isSelected = selectedGroupLabel === item.label}
 		<div class="legend-group">
 			{#if isExpandable}
 				<button
 					class="legend-item legend-item-button"
+					class:legend-item-selected={isSelected}
 					type="button"
-					aria-expanded={isExpanded}
-					onclick={() => toggleGroupExpanded(item.label)}
+					aria-expanded={isSelected}
+					onclick={() => handleGroupClick(item.label)}
 				>
 					<span class="legend-dot" style:background={item.color}></span>
 					<span class="legend-share">{formatShareAsPercent(item.sharePercent)}</span>
@@ -65,14 +76,22 @@
 					<span class="legend-label">{item.label}</span>
 				</div>
 			{/if}
-			{#if isExpanded}
+			{#if isSelected}
 				<ul class="legend-children">
 					{#each item.progressions as progression (progression.name)}
+						{@const isProgressionSelected = selectedProgressionName === progression.name}
 						<li class="legend-child">
-							<span class="legend-share"
-								>{formatShareAsPercent(progression.sharePercent)}</span
+							<button
+								class="legend-child-button"
+								class:legend-child-selected={isProgressionSelected}
+								type="button"
+								onclick={() => handleProgressionClick(progression.name)}
 							>
-							<span class="legend-child-label">{progression.name}</span>
+								<span class="legend-share"
+									>{formatShareAsPercent(progression.sharePercent)}</span
+								>
+								<span class="legend-child-label">{progression.name}</span>
+							</button>
 						</li>
 					{/each}
 				</ul>
@@ -200,6 +219,14 @@
 		color: #e4e4e7;
 	}
 
+	.legend-item-selected .legend-label {
+		color: #f4f4f5;
+	}
+
+	.legend-item-selected .legend-share {
+		color: #a1a1aa;
+	}
+
 	.legend-dot {
 		width: 0.5rem;
 		height: 0.5rem;
@@ -231,10 +258,37 @@
 	.legend-child {
 		display: flex;
 		align-items: center;
+	}
+
+	.legend-child-button {
+		pointer-events: auto;
+		display: flex;
+		align-items: center;
 		gap: 0.5rem;
+		width: 100%;
+		padding: 0.0625rem 0;
+		border: none;
+		background: transparent;
+		font-family: inherit;
 		font-size: 0.55rem;
 		color: #71717a;
 		line-height: 1.35;
+		text-align: left;
+		cursor: pointer;
+		border-radius: 0.1875rem;
+	}
+
+	.legend-child-button:hover .legend-child-label,
+	.legend-child-button:focus-visible .legend-child-label {
+		color: #d4d4d8;
+	}
+
+	.legend-child-selected .legend-child-label {
+		color: #e4e4e7;
+	}
+
+	.legend-child-selected .legend-share {
+		color: #a1a1aa;
 	}
 
 	.legend-child-label {

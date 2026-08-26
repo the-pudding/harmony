@@ -10,6 +10,7 @@
 	import SongVectorInspector from "../components/SongVectorInspector.svelte";
 	import WeightingControls from "../components/WeightingControls.svelte";
 	import { buildArtistSummaries } from "../../shared/artists/artistStats.js";
+	import { songKeysMatchingGroupFilter } from "../../shared/progressionGroupShare.js";
 	import type { ScatterPoint } from "../components/scatterPoint.js";
 	import type { EmbeddingMethod } from "../embedding/reducers/types.js";
 	import type { EmbeddingState } from "../embedding/state/createEmbeddingState.svelte.js";
@@ -49,6 +50,8 @@
 	let selectedSongKey = $state<string | null>(null);
 	let inspectorTab = $state<InspectorTab>("song");
 	let selectedArtistName = $state<string | null>(null);
+	let selectedGroupLabel = $state<string | null>(null);
+	let selectedProgressionName = $state<string | null>(null);
 
 	const HIGHLIGHTED_SONGS_STORAGE_KEY = "harmony-map-highlighted-songs";
 
@@ -98,6 +101,28 @@
 			? null
 			: new Set(selectedArtistSummary.songs.map((song) => song.songKey))
 	);
+
+	const groupFilterSongKeys = $derived(
+		selectedGroupLabel === null
+			? null
+			: songKeysMatchingGroupFilter(songCoverages, selectedGroupLabel, selectedProgressionName)
+	);
+
+	const visibleSongKeys = $derived.by((): Set<string> | null => {
+		if (artistSongKeys === null && groupFilterSongKeys === null) return null;
+		if (artistSongKeys === null) return groupFilterSongKeys;
+		if (groupFilterSongKeys === null) return artistSongKeys;
+		return new Set([...artistSongKeys].filter((key) => groupFilterSongKeys.has(key)));
+	});
+
+	const onSelectGroup = (label: string | null) => {
+		selectedGroupLabel = label;
+		selectedProgressionName = null;
+	};
+
+	const onSelectProgression = (name: string | null) => {
+		selectedProgressionName = name;
+	};
 
 	const groupSharesBySongKey = $derived(
 		new Map(
@@ -187,7 +212,7 @@
 				{selectedSongKey}
 				{neighborSongKeys}
 				{highlightedSongKeys}
-				visibleSongKeys={artistSongKeys}
+				{visibleSongKeys}
 				method={embedding.method}
 				axisLabels={AXIS_LABELS_BY_METHOD[embedding.method]}
 				onSelect={(songKey) => {
@@ -199,7 +224,13 @@
 					<span class="plot-overlay-text">Computing embedding…</span>
 				</div>
 			{/if}
-			<GroupColorLegend {songCoverages} />
+			<GroupColorLegend
+				{songCoverages}
+				{selectedGroupLabel}
+				{selectedProgressionName}
+				{onSelectGroup}
+				{onSelectProgression}
+			/>
 		</div>
 
 		<aside class="inspector-column">
