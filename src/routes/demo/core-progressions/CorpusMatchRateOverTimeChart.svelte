@@ -296,9 +296,14 @@
 				style:left="{tooltipPosition.x + TOOLTIP_OFFSET_X}px"
 				style:top="{tooltipPosition.y + TOOLTIP_OFFSET_Y}px"
 			>
-				<p class="tooltip-title">{hoveredPoint.year}</p>
 				<p class="tooltip-row">
-					{Math.round(hoveredPoint.matchPercent)}% matched ({hoveredPoint.matchedCount}/{hoveredPoint.totalCount})
+					In <span class="tooltip-emphasis">{hoveredPoint.year}</span>
+				</p>
+				<p class="tooltip-row">
+					<span class="tooltip-emphasis"
+						>{Math.round(hoveredPoint.matchPercent)}%</span
+					>
+					of songs matched
 				</p>
 			</div>
 		{/if}
@@ -382,17 +387,15 @@
 		z-index: 2;
 	}
 
-	.tooltip-title {
-		margin: 0;
-		font-size: 0.65rem;
-		font-weight: 600;
-		color: #d4d4d8;
-	}
-
 	.tooltip-row {
 		margin: 0;
 		font-size: 0.625rem;
 		color: #a1a1aa;
 		white-space: nowrap;
+	}
+
+	.tooltip-emphasis {
+		font-weight: 700;
+		color: #e4e4e7;
 	}
 </style>

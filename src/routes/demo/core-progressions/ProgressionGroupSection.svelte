@@ -60,10 +60,18 @@
 			: 0
 	);
 
-	const highlightedProgressions = $derived(
-		pinnedProgression
-			? siblingVariantsForProgression(group.progressions, pinnedProgression)
-			: null
+	const highlightedProgressions = $derived.by(() => {
+		if (
+			pinnedProgression === null ||
+			!groupProgressionKeys.includes(pinnedProgression)
+		) {
+			return null;
+		}
+		return siblingVariantsForProgression(group.progressions, pinnedProgression);
+	});
+
+	const activeProgressionInGroup = $derived(
+		highlightedProgressions !== null ? pinnedProgression : null
 	);
 
 	const corpusMatchProgressions = $derived(
@@ -112,7 +120,7 @@
 	<CoreProgressionRow
 		coreProgressions={group.progressions}
 		selectedSong={null}
-		activeProgression={pinnedProgression}
+		activeProgression={activeProgressionInGroup}
 		progressionMatchCounts={filteredCoverage?.progressionMatchCounts ?? null}
 		songCoverages={coverageResult?.songCoverages ?? null}
 		{totalSongCount}
