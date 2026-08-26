@@ -7,6 +7,10 @@
 	} from "$data/hand-reviewed-songs.js";
 	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
 	import {
+		CHART_DOT_FILL,
+		CHART_DOT_HOVER_FILL
+	} from "../constants.js";
+	import {
 		beeswarmChartHeight,
 		dodgeBeeswarm
 	} from "../../shared/charts/dodgeBeeswarm.js";
@@ -204,7 +208,11 @@
 	}
 </script>
 
-<div class="beeswarm" bind:clientWidth={containerWidth}>
+<div
+	class="beeswarm"
+	style="--chart-dot-fill: {CHART_DOT_FILL}; --chart-dot-hover-fill: {CHART_DOT_HOVER_FILL};"
+	bind:clientWidth={containerWidth}
+>
 	{#if songs === null}
 		<div class="loading-shell" style:height={LOADING_HEIGHT + "px"}>
 			<span class="loading-text">Computing coverage…</span>
@@ -375,7 +383,7 @@
 	}
 
 	.dot {
-		fill: rgba(161, 161, 170, 0.5);
+		fill: var(--chart-dot-fill);
 		cursor: pointer;
 		outline: none;
 		transition: fill 0.1s ease;
@@ -387,13 +395,13 @@
 	}
 
 	.dot.hovered {
-		fill: rgba(228, 228, 231, 0.9);
+		fill: var(--chart-dot-hover-fill);
 		stroke: rgba(255, 255, 255, 0.6);
 		stroke-width: 1.5px;
 	}
 
 	.dot.dimmed {
-		opacity: 0.4;
+		opacity: 0.35;
 	}
 
 	.dot.selected {

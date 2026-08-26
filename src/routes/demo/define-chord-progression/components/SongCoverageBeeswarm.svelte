@@ -7,7 +7,9 @@
 	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
 	import {
 		EXPLAINED_THRESHOLD_PERCENT,
-		HIGH_COVERAGE_THRESHOLD_PERCENT
+		HIGH_COVERAGE_THRESHOLD_PERCENT,
+		CHART_DOT_FILL,
+		CHART_DOT_HOVER_FILL
 	} from "../constants.js";
 	import {
 		beeswarmChartHeight,
@@ -62,6 +64,10 @@
 	const TICK_VALUES = [0, 25, 50, 75, 100];
 	const TOOLTIP_WIDTH = 200;
 	const HOVER_CLEAR_DELAY_MS = 120;
+	const ISSUES_DOT_FILL = "rgba(239, 68, 68, 0.65)";
+	const ISSUES_DOT_HOVER_FILL = "rgba(239, 68, 68, 0.95)";
+	const TRICKY_DOT_FILL = "rgba(251, 191, 36, 0.65)";
+	const TRICKY_DOT_HOVER_FILL = "rgba(251, 191, 36, 0.95)";
 
 	const plotWidth = $derived(
 		Math.max(0, containerWidth - PADDING_LEFT - PADDING_RIGHT)
@@ -176,6 +182,14 @@
 		];
 	});
 
+	const dotFillFor = (node: DodgedNode, isHovered: boolean): string => {
+		const hasIssues = node.chordProgressionIssues !== undefined;
+		const isTricky = node.chordMatchingChallenges !== undefined;
+		if (hasIssues) return isHovered ? ISSUES_DOT_HOVER_FILL : ISSUES_DOT_FILL;
+		if (isTricky) return isHovered ? TRICKY_DOT_HOVER_FILL : TRICKY_DOT_FILL;
+		return isHovered ? CHART_DOT_HOVER_FILL : CHART_DOT_FILL;
+	};
+
 	function handleDotEnter(songKey: string) {
 		if (clearHoverTimeout !== null) {
 			clearTimeout(clearHoverTimeout);
@@ -254,6 +268,7 @@
 					cx={node.x}
 					{cy}
 					{r}
+					fill={dotFillFor(node, isHovered)}
 					class="dot"
 					class:selected={isSelected}
 					class:dimmed={isDimmed}
@@ -379,7 +394,6 @@
 	}
 
 	.dot {
-		fill: rgba(161, 161, 170, 0.5);
 		cursor: pointer;
 		outline: none;
 		transition: fill 0.1s ease;
@@ -391,13 +405,12 @@
 	}
 
 	.dot.hovered {
-		fill: rgba(228, 228, 231, 0.9);
 		stroke: rgba(255, 255, 255, 0.6);
 		stroke-width: 1.5px;
 	}
 
 	.dot.dimmed {
-		opacity: 0.4;
+		opacity: 0.35;
 	}
 
 	.dot.selected {
@@ -405,22 +418,12 @@
 		stroke-width: 1.5px;
 	}
 
-	.dot.has-issues {
-		fill: rgba(239, 68, 68, 0.65);
-	}
-
 	.dot.has-issues.hovered {
-		fill: rgba(239, 68, 68, 0.95);
 		stroke: rgba(255, 255, 255, 0.6);
 		stroke-width: 1.5px;
 	}
 
-	.dot.tricky {
-		fill: rgba(251, 191, 36, 0.65);
-	}
-
 	.dot.tricky.hovered {
-		fill: rgba(251, 191, 36, 0.95);
 		stroke: rgba(255, 255, 255, 0.6);
 		stroke-width: 1.5px;
 	}

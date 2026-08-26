@@ -11,6 +11,7 @@
 	import SongCoverageBeeswarm from "../define-chord-progression/components/SongCoverageBeeswarm.svelte";
 	import SongReleaseTimeline from "../define-chord-progression/components/SongReleaseTimeline.svelte";
 	import type { YearDomain } from "../shared/artists/artistStats.js";
+	import CorpusMatchRateOverTimeChart from "./CorpusMatchRateOverTimeChart.svelte";
 
 	type Props = {
 		group: ProgressionGroup;
@@ -63,6 +64,10 @@
 		pinnedProgression
 			? siblingVariantsForProgression(group.progressions, pinnedProgression)
 			: null
+	);
+
+	const corpusMatchProgressions = $derived(
+		highlightedProgressions ?? groupProgressionKeys
 	);
 
 	const timelineSongs = $derived(
@@ -127,6 +132,14 @@
 		{highlightedProgressions}
 		{yearDomain}
 		{onSelectSong}
+	/>
+
+	<CorpusMatchRateOverTimeChart
+		corpusSongs={coverageResult?.songCoverages ?? null}
+		{songByKey}
+		matchProgressions={corpusMatchProgressions}
+		filtered={highlightedProgressions !== null}
+		{yearDomain}
 	/>
 </section>
 
