@@ -10,6 +10,9 @@
 
 	const TOOLTIP_GAP_PX = 6;
 
+	const EXACT_BADGE_COLOR = "#fac850";
+	const CONTIGUITY_BADGE_COLOR = "#5fd4c0";
+
 	type Props = {
 		match: ProgressionWithMatchStats;
 		active: boolean;
@@ -82,6 +85,12 @@
 	};
 </script>
 
+{#snippet criterionBadge(label: string, hint: string, color: string)}<span
+		class="prog-badge"
+		style:--prog-badge-color={color}
+		title={hint}>{label}</span
+	>{/snippet}
+
 <button
 	class="prog-btn"
 	class:active
@@ -98,7 +107,16 @@
 	{/if}
 	{#if match.isCoreProgression}
 		<span class="prog-scale"
-			><span class="prog-scale-label">scale:</span> {scaleName}{#if match.matchRomanNumeralsExactly}<span class="prog-exact-badge" title="Matches only when the first chord is the tonic of this scale — not just any rotation">exact</span>{/if}</span
+			><span class="prog-scale-label">scale:</span>
+			{scaleName}{#if match.matchRomanNumeralsExactly}{@render criterionBadge(
+					"exact",
+					"Matches only when the first chord is the tonic of this scale — not just any rotation",
+					EXACT_BADGE_COLOR
+				)}{/if}{#if match.minimumContiguousMatches}{@render criterionBadge(
+					`${match.minimumContiguousMatches}× in a row`,
+					`Only counts when at least ${match.minimumContiguousMatches} occurrences repeat immediately back-to-back within one section — a shape this short turns up twice somewhere in almost any song by coincidence`,
+					CONTIGUITY_BADGE_COLOR
+				)}{/if}</span
 		>
 	{/if}
 	<span class="prog-chords-row">
@@ -293,27 +311,25 @@
 		color: rgba(161, 161, 170, 0.55);
 	}
 
-	.prog-exact-badge {
+	.prog-badge {
 		margin-left: 0.3rem;
 		font-size: 0.55rem;
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
-		color: rgba(250, 200, 80, 0.7);
-		border: 1px solid rgba(250, 200, 80, 0.3);
+		white-space: nowrap;
+		color: color-mix(in srgb, var(--prog-badge-color) 70%, transparent);
+		border: 1px solid
+			color-mix(in srgb, var(--prog-badge-color) 30%, transparent);
 		border-radius: 0.2rem;
 		padding: 0 0.25rem;
 		vertical-align: middle;
 	}
 
-	.prog-btn.active .prog-exact-badge {
-		color: rgba(250, 200, 80, 0.85);
-		border-color: rgba(250, 200, 80, 0.45);
-	}
-
-	.prog-btn:hover .prog-exact-badge {
-		color: rgba(250, 200, 80, 0.9);
-		border-color: rgba(250, 200, 80, 0.5);
+	.prog-btn.active .prog-badge,
+	.prog-btn:hover .prog-badge {
+		color: color-mix(in srgb, var(--prog-badge-color) 90%, transparent);
+		border-color: color-mix(in srgb, var(--prog-badge-color) 50%, transparent);
 	}
 
 	.prog-btn.active .prog-scale {

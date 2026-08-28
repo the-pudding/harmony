@@ -252,8 +252,8 @@ export const extendCoreProgressionsPastPrefix = (
 		);
 		if (registered) {
 			// The chain rediscovered an already-registered, longer core
-			// progression under a different name (e.g. a 3-chord "I IV I"
-			// winner chaining into the shape of the registered "I-IV vamp") —
+			// progression under a different name (e.g. a 3-chord winner
+			// chaining into the shape of a registered 4-chord vamp) —
 			// promote to that named entry, computed with normal unconstrained
 			// core semantics, instead of either declining back to the shorter
 			// winner or minting an anonymous duplicate.

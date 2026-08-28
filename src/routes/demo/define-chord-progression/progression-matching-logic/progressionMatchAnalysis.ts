@@ -60,6 +60,7 @@ export type ProgressionWithMatchStats = {
 	coveragePercent: number;
 	isCoreProgression: boolean;
 	matchRomanNumeralsExactly?: boolean;
+	minimumContiguousMatches?: number;
 	isStrictSubset?: boolean;
 	isFullSectionSingleMatch?: boolean;
 	isSectionStartBiasWinner?: boolean;
@@ -119,11 +120,115 @@ const toNonOverlappingMatches = (
 	});
 };
 
+// One occurrence's footprint inside one section — the shape both raw song
+// scans and greedy-selection survivors reduce to, so contiguity can be judged
+// identically at intake and after earlier picks have eaten into the song.
+export type PlacedOccurrence = {
+	sectionIndex: number;
+	positions: number[];
+};
+
+const occurrencesBySection = (
+	occurrences: readonly PlacedOccurrence[]
+): Record<number, PlacedOccurrence[]> =>
+	occurrences.reduce<Record<number, PlacedOccurrence[]>>(
+		(acc, occurrence) => ({
+			...acc,
+			[occurrence.sectionIndex]: [
+				...(acc[occurrence.sectionIndex] ?? []),
+				occurrence
+			]
+		}),
+		{}
+	);
+
+const lastPosition = (positions: number[]): number =>
+	positions[positions.length - 1];
+
+const longestRunInSection = (
+	sectionLength: number,
+	occurrences: readonly PlacedOccurrence[]
+): number =>
+	[...occurrences]
+		.sort((a, b) => a.positions[0] - b.positions[0])
+		.reduce(
+			(run, occurrence, index, sorted) => {
+				const previous = sorted[index - 1];
+				const continuesPrevious =
+					previous !== undefined &&
+					occurrence.positions[0] ===
+						(lastPosition(previous.positions) + 1) % sectionLength;
+				const current = continuesPrevious ? run.current + 1 : 1;
+				return { current, longest: Math.max(run.longest, current) };
+			},
+			{ current: 0, longest: 0 }
+		).longest;
+
+// The length of the longest chain of occurrences that sit immediately
+// back-to-back within a single section.
+export const longestContiguousRun = (
+	song: GroupedSong,
+	occurrences: readonly PlacedOccurrence[]
+): number =>
+	Object.entries(occurrencesBySection(occurrences)).reduce(
+		(longest, [sectionIndex, sectionOccurrences]) =>
+			Math.max(
+				longest,
+				longestRunInSection(
+					song.sections[Number(sectionIndex)].parsedProgression.length,
+					sectionOccurrences
+				)
+			),
+		0
+	);
+
+export const meetsContiguityRequirement = (
+	song: GroupedSong,
+	occurrences: readonly PlacedOccurrence[],
+	minimumContiguousMatches: number | undefined
+): boolean =>
+	minimumContiguousMatches === undefined ||
+	longestContiguousRun(song, occurrences) >= minimumContiguousMatches;
+
+export const occurrencesInSong = (
+	song: GroupedSong,
+	parsed: ParsedProgressionChord[],
+	matchRomanNumeralsExactly = false
+): PlacedOccurrence[] =>
+	song.sections.flatMap((section, sectionIndex) =>
+		getSectionMatches(section, parsed, matchRomanNumeralsExactly).map(
+			(match) => ({
+				sectionIndex,
+				positions: matchPositions(match, section.parsedProgression.length)
+			})
+		)
+	);
+
+// A short progression (e.g. the 3-chord I-V-vi) turns up twice almost anywhere
+// by coincidence, so those entries additionally demand proof of a real loop:
+// at least one run of N occurrences with nothing between them.
+export const songMeetsContiguityRequirement = (
+	song: GroupedSong,
+	parsed: ParsedProgressionChord[],
+	matchRomanNumeralsExactly: boolean,
+	minimumContiguousMatches: number | undefined
+): boolean =>
+	minimumContiguousMatches === undefined ||
+	meetsContiguityRequirement(
+		song,
+		occurrencesInSong(song, parsed, matchRomanNumeralsExactly),
+		minimumContiguousMatches
+	);
+
 export const computeStatsForParsedProgression = (
 	song: GroupedSong,
 	parsed: ParsedProgressionChord[],
 	matchRomanNumeralsExactly = false
-): { matchCount: number; chorusMatchCount: number; coveragePercent: number } => {
+): {
+	matchCount: number;
+	chorusMatchCount: number;
+	coveragePercent: number;
+} => {
 	const totalChords = song.sections.reduce(
 		(sum, section) => sum + section.parsedProgression.length,
 		0
@@ -195,9 +300,19 @@ export function computeProgressionMatches(
 					);
 					if (!parsed) return null;
 
-				const exact = progression.matchRomanNumeralsExactly ?? false;
-				const stats = computeStatsForParsedProgression(song, parsed, exact);
-				const coversFullSection = fullyCoversAnySection(song, parsed, exact);
+					const exact = progression.matchRomanNumeralsExactly ?? false;
+					const stats = computeStatsForParsedProgression(song, parsed, exact);
+					const coversFullSection = fullyCoversAnySection(song, parsed, exact);
+					if (
+						!songMeetsContiguityRequirement(
+							song,
+							parsed,
+							exact,
+							progression.minimumContiguousMatches
+						)
+					) {
+						return null;
+					}
 
 					return {
 						...progression,
@@ -228,6 +343,7 @@ export type ParsedCoreProgression = {
 	chordProgression: string;
 	parsed: ParsedProgressionChord[];
 	matchRomanNumeralsExactly: boolean;
+	minimumContiguousMatches: number | undefined;
 };
 
 export const parseCoreProgressions = (
@@ -247,7 +363,8 @@ export const parseCoreProgressions = (
 						chordProgression: variant,
 						parsed,
 						matchRomanNumeralsExactly:
-							progression.matchRomanNumeralsExactly ?? false
+							progression.matchRomanNumeralsExactly ?? false,
+						minimumContiguousMatches: progression.minimumContiguousMatches
 					}
 				];
 			}
@@ -259,18 +376,28 @@ export const findMatchingCoreProgressionsForSong = (
 	parsedCoreProgressions: ParsedCoreProgression[]
 ): string[] =>
 	parsedCoreProgressions
-		.filter(({ parsed, matchRomanNumeralsExactly }) => {
-			const { matchCount } = computeStatsForParsedProgression(
-				song,
-				parsed,
-				matchRomanNumeralsExactly
-			);
-			return (
-				matchCount >= MIN_PROGRESSION_OCCURRENCES ||
-				(matchCount >= MIN_FULL_SECTION_OCCURRENCES &&
-					fullyCoversAnySection(song, parsed, matchRomanNumeralsExactly))
-			);
-		})
+		.filter(
+			({ parsed, matchRomanNumeralsExactly, minimumContiguousMatches }) => {
+				const { matchCount } = computeStatsForParsedProgression(
+					song,
+					parsed,
+					matchRomanNumeralsExactly
+				);
+				const recurs =
+					matchCount >= MIN_PROGRESSION_OCCURRENCES ||
+					(matchCount >= MIN_FULL_SECTION_OCCURRENCES &&
+						fullyCoversAnySection(song, parsed, matchRomanNumeralsExactly));
+				return (
+					recurs &&
+					songMeetsContiguityRequirement(
+						song,
+						parsed,
+						matchRomanNumeralsExactly,
+						minimumContiguousMatches
+					)
+				);
+			}
+		)
 		.map(({ chordProgression }) => chordProgression);
 
 export const buildProgressionMatchRates = (
@@ -372,10 +499,10 @@ export const buildCoreProgressionDisplayMatches = (
 					);
 					if (!parsed) return null;
 
-				const exact = progression.matchRomanNumeralsExactly ?? false;
-				const stats = song
-					? computeStatsForParsedProgression(song, parsed, exact)
-					: { matchCount: 0, coveragePercent: 0 };
+					const exact = progression.matchRomanNumeralsExactly ?? false;
+					const stats = song
+						? computeStatsForParsedProgression(song, parsed, exact)
+						: { matchCount: 0, coveragePercent: 0 };
 
 					return {
 						...progression,
@@ -504,7 +631,11 @@ export const computeGapOnlyStats = (
 	song: GroupedSong,
 	parsed: ParsedProgressionChord[],
 	occupiedCoverage: number[][]
-): { matchCount: number; chorusMatchCount: number; coveragePercent: number } => {
+): {
+	matchCount: number;
+	chorusMatchCount: number;
+	coveragePercent: number;
+} => {
 	const totalChords = song.sections.reduce(
 		(sum, section) => sum + section.parsedProgression.length,
 		0

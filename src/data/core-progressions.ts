@@ -1,5 +1,9 @@
 import type { ScaleName } from "../chord-processing/scales.js";
 
+// Three-chord shapes are short enough that two stray occurrences turn up almost
+// anywhere, so they only count when at least one pair repeats back-to-back.
+export const BACK_TO_BACK_REPEAT = 2;
+
 export type ProgressionGroup = {
 	name: string;
 	description: string;
@@ -17,20 +21,26 @@ const happyMajoryProgressions: ProgressionGroup = {
 			matchRomanNumeralsExactly: true,
 			description: ""
 		},
-		{
-			name: "I V I",
-			chordProgression: "I-V-I",
-			scale: "major",
-			matchRomanNumeralsExactly: true,
-			description: ""
-		},
-		{
-			name: "I IV I",
-			chordProgression: "I-IV-I",
-			scale: "major",
-			matchRomanNumeralsExactly: true,
-			description: ""
-		},
+		// Disabled: a shape that starts and ends on the same chord can never
+		// satisfy BACK_TO_BACK_REPEAT — two instances in a row would read
+		// I-V-I-I-V-I, which the adjacent-duplicate collapse rewrites as
+		// I-V-I-V-I. Their coverage moved to "I-V vamp" / "I-IV vamp" instead.
+		// {
+		// 	name: "I V I",
+		// 	chordProgression: "I-V-I",
+		// 	scale: "major",
+		// 	matchRomanNumeralsExactly: true,
+		// 	minimumContiguousMatches: BACK_TO_BACK_REPEAT,
+		// 	description: ""
+		// },
+		// {
+		// 	name: "I IV I",
+		// 	chordProgression: "I-IV-I",
+		// 	scale: "major",
+		// 	matchRomanNumeralsExactly: true,
+		// 	minimumContiguousMatches: BACK_TO_BACK_REPEAT,
+		// 	description: ""
+		// },
 		{
 			name: "I-V vamp",
 			chordProgression: "I-V-I-V",
@@ -50,6 +60,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			chordProgression: "I-V-IV",
 			scale: "major",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -62,6 +73,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			name: "silly love songs",
 			chordProgression: "I-iii-IV",
 			scale: "major",
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -69,6 +81,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			chordProgression: "I-IV-V",
 			scale: "major",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -76,6 +89,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			chordProgression: "IV-V-I",
 			scale: "major",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -100,6 +114,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			name: "sweet home mixolydian",
 			chordProgression: "I-bVII-IV",
 			scale: "major",
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: "Sweet Home Alabama... can also be thought of as a V-IV-I"
 		} // also could be thought of as a V-IV-I
 	]
@@ -152,6 +167,7 @@ const axisOfAwesomeProgressions: ProgressionGroup = {
 			chordProgression: "I-V-vi",
 			scale: "major",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -225,6 +241,7 @@ const minoryProgressions: ProgressionGroup = {
 			chordProgression: "i-VII-VI",
 			scale: "minor",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -232,6 +249,7 @@ const minoryProgressions: ProgressionGroup = {
 			chordProgression: "i-iv-V",
 			scale: "minor",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -239,6 +257,7 @@ const minoryProgressions: ProgressionGroup = {
 			chordProgression: "i-iv-v",
 			scale: "minor",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -253,6 +272,7 @@ const minoryProgressions: ProgressionGroup = {
 			chordProgression: "i-III-VI",
 			scale: "minor",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -260,6 +280,7 @@ const minoryProgressions: ProgressionGroup = {
 			chordProgression: "i-VI-VII",
 			scale: "minor",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -273,6 +294,7 @@ const minoryProgressions: ProgressionGroup = {
 			chordProgression: "ii-I-V",
 			scale: "major",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description:
 				"experimental: game up in Good 4 U prominently, it's sort of a spin on ii-V-I, but doesn't require the jazzy extensions to sound fresh..."
 		},
@@ -306,6 +328,7 @@ const minoryProgressions: ProgressionGroup = {
 			chordProgression: "i-VI-V",
 			scale: "minor",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: "Similar to i-VII-VI-V, but jumps to the VI"
 		},
 		{
@@ -331,6 +354,7 @@ const minoryProgressions: ProgressionGroup = {
 			chordProgression: "VI-V-i",
 			scale: "minor",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -338,6 +362,7 @@ const minoryProgressions: ProgressionGroup = {
 			chordProgression: "vi-IV-V",
 			scale: "major",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -363,6 +388,7 @@ const minoryProgressions: ProgressionGroup = {
 			chordProgression: "i-VI-III",
 			scale: "minor",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: "a pop-y, emo minor progression"
 		}
 	]
@@ -382,6 +408,7 @@ const jazzyProgressions: ProgressionGroup = {
 			name: "jazz ii-V-I",
 			chordProgression: ["ii7-V7-Imaj7", "ii-V-I"],
 			scale: "major",
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -430,6 +457,7 @@ const emoPopProgressions: ProgressionGroup = {
 			chordProgression: "IV-iv-I",
 			scale: "major",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description:
 				"TODO: try to match just IV-iv? (often I only arrives in a subsequent section)"
 		},
@@ -438,6 +466,7 @@ const emoPopProgressions: ProgressionGroup = {
 			chordProgression: "I-III-IV",
 			scale: "major",
 			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
 		{
@@ -456,6 +485,7 @@ export type CoreProgression = {
 	description: string;
 	technicalNotes?: string;
 	matchRomanNumeralsExactly?: boolean;
+	minimumContiguousMatches?: number;
 };
 
 export const allProgressionGroups: ProgressionGroup[] = [

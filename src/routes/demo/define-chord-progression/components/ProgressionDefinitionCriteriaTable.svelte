@@ -11,6 +11,7 @@
 		MAX_PROGRESSION_LENGTH
 	} from "../progression-matching-logic/progressionConstraints.js";
 	import { EXTENSION_CONSISTENCY_MIN_PERCENT } from "../progression-matching-logic/coreProgressionExtension.js";
+	import { BACK_TO_BACK_REPEAT } from "$data/core-progressions.js";
 	import type { SongBiasOverride } from "../compute-coverage-of-all-songs/index.js";
 
 	type Props = { biasOverrides: SongBiasOverride[] };
@@ -70,6 +71,29 @@
 							"fullyCoversAnySection",
 							"computeStatsForParsedProgression"
 						]}
+					/>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					A core progression carrying a minimum-contiguous-matches setting
+					additionally needs at least one run of that many occurrences sitting
+					immediately back-to-back inside a single section. All
+					<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>-chord core
+					progressions require
+					<span class="const-value">{BACK_TO_BACK_REPEAT}</span>, since a shape
+					that short turns up twice somewhere in almost any song by coincidence
+					— repeating right after itself is what makes it a real loop rather
+					than a greedy misfire
+				</td>
+				<td>
+					<CodeReference
+						filename="core-progressions.ts"
+						symbols={["minimumContiguousMatches", "BACK_TO_BACK_REPEAT"]}
+					/>
+					<CodeReference
+						filename="progressionMatchAnalysis.ts"
+						symbols={["songMeetsContiguityRequirement", "longestContiguousRun"]}
 					/>
 				</td>
 			</tr>
@@ -189,12 +213,18 @@
 						<span class="const-value">{MIN_FULL_SECTION_OCCURRENCES}</span> that fills
 						a whole section, core progressions only. A progression whose matches are
 						all consumed except one leftover fragment is dropped rather than credited
-						for that fragment
+						for that fragment. The back-to-back requirement is re-applied the same
+						way, so a candidate whose only contiguous run was claimed by an earlier
+						pick is dropped even if scattered occurrences survive
 					</td>
 					<td>
 						<CodeReference
 							filename="greedyProgressionSelection.ts"
 							symbols={["stillEarnsItsPlace", "fillsEntireSection"]}
+						/>
+						<CodeReference
+							filename="progressionMatchAnalysis.ts"
+							symbols={["meetsContiguityRequirement"]}
 						/>
 					</td>
 				</tr>
@@ -273,17 +303,14 @@
 		</table>
 	</section>
 
-	<section
-		class="overlap-section"
-		aria-labelledby="extension-criteria-heading"
-	>
+	<section class="overlap-section" aria-labelledby="extension-criteria-heading">
 		<h3 id="extension-criteria-heading" class="overlap-heading">
 			Core-progression extension
 		</h3>
 		<p class="overlap-description">
-			After core progressions are selected, each winner is checked for a
-			longer unit it might be a mere prefix of — but the result is never
-			treated as core.
+			After core progressions are selected, each winner is checked for a longer
+			unit it might be a mere prefix of — but the result is never treated as
+			core.
 		</p>
 		<table class="criteria-table overlap-table">
 			<thead>
@@ -295,9 +322,10 @@
 			<tbody>
 				<tr>
 					<td>
-						A core-progression winner extends by one chord when the chord
-						right after at least
-						<span class="const-value">{EXTENSION_CONSISTENCY_MIN_PERCENT}%</span>
+						A core-progression winner extends by one chord when the chord right
+						after at least
+						<span class="const-value">{EXTENSION_CONSISTENCY_MIN_PERCENT}%</span
+						>
 						of its eligible claimed instances agrees, and doing so covers strictly
 						more chords than leaving it un-extended. Chains up to
 						<span class="const-value">{MAX_PROGRESSION_LENGTH}</span> chords total.
@@ -314,12 +342,12 @@
 				</tr>
 				<tr>
 					<td>
-						An extended progression is tagged non-core — no name, not looked
-						up in <CodeReference filename="core-progressions.ts" /> — even though
-						it was derived from a core-progression winner. It behaves exactly like
-						a gap-fill match downstream: it doesn't populate the song's core-matching
-						list, and it must clear the same document-frequency bar as any other
-						gap pattern to appear on the harmony map.
+						An extended progression is tagged non-core — no name, not looked up
+						in <CodeReference filename="core-progressions.ts" /> — even though it
+						was derived from a core-progression winner. It behaves exactly like a
+						gap-fill match downstream: it doesn't populate the song's core-matching
+						list, and it must clear the same document-frequency bar as any other gap
+						pattern to appear on the harmony map.
 					</td>
 					<td>
 						<CodeReference
@@ -330,10 +358,9 @@
 				</tr>
 				<tr>
 					<td>
-						Instances that don't share the consistent trailing chord — a
-						section boundary, a slot another core progression already owns, or
-						a genuine exception in the song — simply fall back out of coverage
-						there.
+						Instances that don't share the consistent trailing chord — a section
+						boundary, a slot another core progression already owns, or a genuine
+						exception in the song — simply fall back out of coverage there.
 					</td>
 					<td>
 						<CodeReference

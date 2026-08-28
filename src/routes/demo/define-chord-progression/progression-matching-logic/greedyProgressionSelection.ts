@@ -3,6 +3,7 @@ import type { ProgressionWithMatchStats } from "./progressionMatchAnalysis.js";
 import {
 	getSectionMatches,
 	matchPositions,
+	meetsContiguityRequirement,
 	MIN_FULL_SECTION_OCCURRENCES,
 	MIN_PROGRESSION_OCCURRENCES
 } from "./progressionMatchAnalysis.js";
@@ -126,15 +127,21 @@ const fillsEntireSection = (
 
 // A progression earns its place by recurring, so it has to keep recurring in the
 // space earlier picks left behind — a lone surviving fragment is not a match.
-// The single-instance exception stays core-only, matching candidate intake.
+// The single-instance exception stays core-only, matching candidate intake, and
+// a back-to-back requirement has to survive the same erosion.
 const stillEarnsItsPlace = (
 	song: GroupedSong,
 	{ candidate, available }: ScoredCandidate
 ): boolean =>
-	available.length >= MIN_PROGRESSION_OCCURRENCES ||
-	(available.length === MIN_FULL_SECTION_OCCURRENCES &&
-		candidate.isCoreProgression &&
-		fillsEntireSection(song, available[0]));
+	(available.length >= MIN_PROGRESSION_OCCURRENCES ||
+		(available.length === MIN_FULL_SECTION_OCCURRENCES &&
+			candidate.isCoreProgression &&
+			fillsEntireSection(song, available[0]))) &&
+	meetsContiguityRequirement(
+		song,
+		available,
+		candidate.minimumContiguousMatches
+	);
 
 export const greedilySelectProgressions = (
 	song: GroupedSong,
@@ -268,7 +275,10 @@ export const claimedInstancesInSelectionOrder = (
 	selected: ProgressionWithMatchStats[],
 	initialCoverage: SectionCoverage
 ): ProgressionInstance[][] =>
-	selected.reduce<{ claims: ProgressionInstance[][]; coverage: SectionCoverage }>(
+	selected.reduce<{
+		claims: ProgressionInstance[][];
+		coverage: SectionCoverage;
+	}>(
 		({ claims, coverage }, candidate) => {
 			const instances = instancesLandingInFreeSpace(
 				progressionInstances(song, candidate),
@@ -276,7 +286,10 @@ export const claimedInstancesInSelectionOrder = (
 			);
 			return {
 				claims: [...claims, instances],
-				coverage: mergeCoverage(coverage, coverageFromInstances(song, instances))
+				coverage: mergeCoverage(
+					coverage,
+					coverageFromInstances(song, instances)
+				)
 			};
 		},
 		{ claims: [], coverage: initialCoverage }
