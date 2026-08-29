@@ -252,6 +252,13 @@ const minoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
+			name: "come & get it",
+			chordProgression: "i-III-VI-iv",
+			scale: "minor",
+			// matchRomanNumeralsExactly: true,
+			description: ""
+		},
+		{
 			name: "classic i-iv-V", // TODO: better name
 			chordProgression: "i-iv-V",
 			scale: "minor",
@@ -423,6 +430,14 @@ const minoryProgressions: ProgressionGroup = {
 			name: "i v vamp",
 			chordProgression: "i-v-i-v",
 			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: ""
+		},
+		{
+			name: "i iv vamp",
+			chordProgression: "i-iv-i-iv",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{

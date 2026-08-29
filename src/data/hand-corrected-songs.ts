@@ -15,6 +15,9 @@ export type HandCorrectedSong = {
 	technicalNotes?: string;
 };
 
+const repeatNTimes = (chordArray: string[], nTimes: number): string[] =>
+	Array.from({ length: nTimes }, () => chordArray).flat();
+
 export const handCorrectedSongs: HandCorrectedSong[] = [
 	{
 		id: "desiigner__panda",
@@ -52,6 +55,26 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 					key: "F#",
 					scale: "major",
 					romanTokens: ["I", "V", "I", "V", "IV", "V"]
+				}
+			]
+		}
+	},
+	{
+		id: "kanye-west__yikes",
+		technicalNotes: "Original chorus was right, but not verse",
+		correctedSongContents: {
+			sections: [
+				...["Intro", "Verse 1", "Verse 2"].map((name) => ({
+					name,
+					key: "C#",
+					scale: "minor",
+					romanTokens: repeatNTimes(["i", "iv", "i", "iv"], 4)
+				})),
+				{
+					name: "Chorus",
+					key: "C#",
+					scale: "minor",
+					romanTokens: repeatNTimes(["i", "III", "VI", "iv"], 2)
 				}
 			]
 		}
