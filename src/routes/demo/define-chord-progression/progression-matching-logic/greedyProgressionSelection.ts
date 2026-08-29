@@ -94,7 +94,7 @@ const instancesLandingInFreeSpace = (
 		positions.every((position) => !claimed[sectionIndex]?.has(position))
 	);
 
-export const coverageFromInstances = (
+const coverageFromInstances = (
 	song: GroupedSong,
 	instances: ProgressionInstance[]
 ): SectionCoverage =>
@@ -270,36 +270,24 @@ export const greedilySelectProgressions = (
 
 // A progression only owns the instances that were still free when its turn came,
 // so replaying selection order is the only way to recover each one's own share.
-export const claimedInstancesInSelectionOrder = (
-	song: GroupedSong,
-	selected: ProgressionWithMatchStats[],
-	initialCoverage: SectionCoverage
-): ProgressionInstance[][] =>
-	selected.reduce<{
-		claims: ProgressionInstance[][];
-		coverage: SectionCoverage;
-	}>(
-		({ claims, coverage }, candidate) => {
-			const instances = instancesLandingInFreeSpace(
-				progressionInstances(song, candidate),
-				toClaimedSets(coverage)
-			);
-			return {
-				claims: [...claims, instances],
-				coverage: mergeCoverage(
-					coverage,
-					coverageFromInstances(song, instances)
-				)
-			};
-		},
-		{ claims: [], coverage: initialCoverage }
-	).claims;
-
 export const claimedPositionsInSelectionOrder = (
 	song: GroupedSong,
 	selected: ProgressionWithMatchStats[],
 	initialCoverage: SectionCoverage
 ): SectionCoverage[] =>
-	claimedInstancesInSelectionOrder(song, selected, initialCoverage).map(
-		(instances) => coverageFromInstances(song, instances)
-	);
+	selected.reduce<{ claims: SectionCoverage[]; coverage: SectionCoverage }>(
+		({ claims, coverage }, candidate) => {
+			const claim = coverageFromInstances(
+				song,
+				instancesLandingInFreeSpace(
+					progressionInstances(song, candidate),
+					toClaimedSets(coverage)
+				)
+			);
+			return {
+				claims: [...claims, claim],
+				coverage: mergeCoverage(coverage, claim)
+			};
+		},
+		{ claims: [], coverage: initialCoverage }
+	).claims;

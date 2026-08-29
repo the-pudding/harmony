@@ -9,6 +9,7 @@ import {
 	buildCoreNameByAbstractKey,
 	computeGapOnlyStats,
 	MIN_PROGRESSION_OCCURRENCES,
+	scopedToScale,
 	type ProgressionWithMatchStats
 } from "./progressionMatchAnalysis.js";
 import {
@@ -25,7 +26,7 @@ import type { SectionCoverage } from "./greedyProgressionSelection.js";
 const coreProgressionNameByChordProgression = new Map(
 	coreProgressions.flatMap((progression) =>
 		chordProgressionVariants(progression.chordProgression).map((variant) => [
-			variant,
+			scopedToScale(variant, progression.scale),
 			progression.name
 		])
 	)
@@ -138,9 +139,11 @@ const toGapFillMatch = (
 	if (stats.matchCount < MIN_PROGRESSION_OCCURRENCES) return null;
 
 	const name =
-		coreProgressionNameByChordProgression.get(chordProgression) ??
+		coreProgressionNameByChordProgression.get(
+			scopedToScale(chordProgression, scale)
+		) ??
 		coreProgressionNameByAbstractKey.get(
-			abstractProgressionKey(parsedProgression)
+			scopedToScale(abstractProgressionKey(parsedProgression), scale)
 		) ??
 		"";
 	const isCoreProgression = name !== "";

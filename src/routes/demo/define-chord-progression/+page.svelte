@@ -21,7 +21,6 @@
 		MIN_PROGRESSION_LENGTH,
 		MAX_PROGRESSION_LENGTH
 	} from "./progression-matching-logic/progressionConstraints.js";
-	import { EXTENSION_CONSISTENCY_MIN_PERCENT } from "./progression-matching-logic/coreProgressionExtension.js";
 	import type { ChordAnnotation } from "./progression-matching-logic/progressionMatchAnalysis.js";
 	import {
 		selectFinalProgressions,
@@ -300,10 +299,7 @@
 						> tolerance, we bias toward progressions that begin at the start of a
 						section, since the vast majority of real progressions do — this avoids
 						stranding the first chord of a section when a slightly longer match happens
-						to skip it. Because this round only ever compares registered core progressions
-						against each other, a short registered progression (e.g. "stay with me,"
-						i-VI-III) can still win here even when the song is really built on a longer
-						cycle that happens to share it as a prefix — the next step catches that.
+						to skip it.
 					</p>
 
 					{#if flaggedCoreMatches.length > 0}
@@ -322,45 +318,8 @@
 
 				<section class="step-section">
 					<h2 class="section-heading">
-						2. Check whether each core-progression winner's claimed instances
-						share one consistent next chord, and extend by that chord if so
-					</h2>
-					<p class="section-description">
-						A registered core progression is often just the shortest shared
-						prefix of a longer repeating unit — "stay with me" (i-VI-III) is a
-						strict prefix of the 4-chord i-VI-III-iv cycle that songs like "Just
-						Like Fire" actually repeat. After core selection finishes, we look
-						at every instance each core winner actually claimed and check the
-						chord immediately after it. If that trailing chord is the same roman
-						numeral for at least
-						<span class="const-value">{EXTENSION_CONSISTENCY_MIN_PERCENT}%</span
-						>
-						of the instances that have one (instances at a section boundary, or whose
-						next slot is already claimed by a different core progression, don't count
-						against it — they just don't vote), we extend the winner by that chord
-						— and if the newly-extended pattern still ends on a stable, repeating
-						tail, we keep extending one chord at a time, up to
-						<span class="const-value">{MAX_PROGRESSION_LENGTH}</span> chords
-						total, but only as long as doing so still covers strictly more
-						chords than the un-extended version did. Any instance that doesn't
-						have the consistent trailing chord falls back out of coverage there
-						rather than being force-fit. Unlike a normal core progression, the
-						extended result isn't looked up in <CodeReference
-							filename="core-progressions.ts"
-						/> and doesn't get a name — it's treated exactly like any other non-core
-						match below. That's deliberate: this surfaces a strong candidate for a
-						human to later promote into <CodeReference
-							filename="core-progressions.ts"
-						/>; it doesn't get promoted automatically.
-					</p>
-					<CodeReference filename="coreProgressionExtension.ts" />
-				</section>
-
-				<section class="step-section">
-					<h2 class="section-heading">
-						3. Look for any other recurring progressions in the gaps not
-						occupied by core-progressions (including any extensions from step 2
-						above), selecting them greedily by {GREEDY_SORT_LABEL}
+						2. Look for any other recurring progressions in the gaps not
+						occupied by core-progressions, selecting them greedily by {GREEDY_SORT_LABEL}
 					</h2>
 					<p class="section-description">
 						Among chords not yet covered by core progressions, we look for

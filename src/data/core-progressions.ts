@@ -116,7 +116,14 @@ const happyMajoryProgressions: ProgressionGroup = {
 			scale: "major",
 			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: "Sweet Home Alabama... can also be thought of as a V-IV-I"
-		} // also could be thought of as a V-IV-I
+		}, // also could be thought of as a V-IV-I
+		{
+			name: "addicted to love",
+			chordProgression: "I-bVII-IV-V",
+			scale: "major",
+			description:
+				"the mixolydian walk down, but resolved by a V that pulls it back home"
+		}
 	]
 };
 
@@ -284,6 +291,41 @@ const minoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
+			name: "rockabye",
+			chordProgression: "i-VI-VII-v",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: "the i-VI-VII climb, landing on a minor v instead of home"
+		},
+		{
+			name: "tainted love",
+			chordProgression: "i-III-VI-IV",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: "lifts out of the i, then brightens onto a major IV"
+		},
+		{
+			name: "adore you",
+			chordProgression: "i-III-VI-VII",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: "a full lift out of the i, rising all the way to the VII"
+		},
+		{
+			name: "lean on",
+			chordProgression: "VI-VII-i-III",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: "the adore you cycle, rotated to start on the VI"
+		},
+		{
+			name: "come undone",
+			chordProgression: "III-VI-VII-i",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: "the adore you cycle, rotated to land on the i"
+		},
+		{
 			name: "burnin up with you",
 			chordProgression: "i-III-VII-VI",
 			scale: "minor",
@@ -390,6 +432,13 @@ const minoryProgressions: ProgressionGroup = {
 			matchRomanNumeralsExactly: true,
 			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: "a pop-y, emo minor progression"
+		},
+		{
+			name: "just like fire",
+			chordProgression: "i-VI-III-iv",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: "stay with me, but sinking into a iv rather than resolving"
 		}
 	]
 };
@@ -410,6 +459,13 @@ const jazzyProgressions: ProgressionGroup = {
 			scale: "major",
 			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
+		},
+		{
+			name: "roxanne",
+			chordProgression: "ii-V-I-IV",
+			scale: "major",
+			matchRomanNumeralsExactly: true,
+			description: "resolves the ii-V-I, then keeps moving with a plagal IV"
 		},
 		{
 			name: "jazz changes (turnaround)",

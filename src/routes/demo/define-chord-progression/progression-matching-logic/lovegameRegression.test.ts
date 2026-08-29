@@ -4,24 +4,25 @@ import coreProgressions from "$data/core-progressions.js";
 import { groupSongs } from "../../../../data/songBrowser.js";
 import { selectFinalProgressions } from "./finalProgressionSelection.js";
 
-// "LoveGame" (Lady Gaga) — the real unit is a 6-chord cycle,
-// i-VI-III-iv-v-III, three extensions past the 3-chord "stay with me" core
-// progression. Confirms the extension check chains multiple rounds up to
-// MAX_PROGRESSION_LENGTH instead of stopping after a single +1 chord.
+// "LoveGame" (Lady Gaga) — the song's own unit is a 6-chord cycle,
+// i-VI-III-iv-v-III, which opens with the registered "just like fire"
+// (i-VI-III-iv). Registering that 4-chord shape is a deliberate trade: it names
+// the opening here rather than leaving gap-fill to mint the whole anonymous
+// cycle, at the cost of the two trailing chords going unexplained.
 const song = groupSongs(
 	(songs as { songKey: string }[]).filter(
 		(s) => s.songKey === "lady-gaga__lovegame"
 	) as Parameters<typeof groupSongs>[0]
 )[0];
 
-describe("lovegame regression — chained core-progression extension", () => {
-	it("surfaces the full 6-chord extended pattern", () => {
+describe("lovegame regression — a registered 4-chord shape names the cycle's opening", () => {
+	it("selects just like fire rather than an anonymous 6-chord cycle", () => {
 		const result = selectFinalProgressions(song, coreProgressions);
-		const extended = result.gapSelected.find(
-			(match) => match.chordProgression === "i-VI-III-iv-v-III"
+		const opening = result.coreSelected.find(
+			(match) => match.chordProgression === "i-VI-III-iv"
 		);
-		expect(extended).toBeDefined();
-		expect(extended!.name).toBe("");
+		expect(opening).toBeDefined();
+		expect(opening!.name).toBe("just like fire");
 	});
 
 	it("no longer selects the bare i-VI-III core progression", () => {

@@ -6,7 +6,6 @@ import {
 	type ProgressionWithMatchStats
 } from "./progressionMatchAnalysis.js";
 import { selectCoreProgressions } from "./coreProgressionSelection.js";
-import { extendCoreProgressionsPastPrefix } from "./coreProgressionExtension.js";
 import { computeGapFillProgressionMatches } from "./gapFillProgressionAnalysis.js";
 import {
 	claimedPositionsInSelectionOrder,
@@ -54,22 +53,21 @@ export const selectFinalProgressions = (
 ): FinalProgressionSelection => {
 	const coreMatches = computeProgressionMatches(song, coreProgressions);
 	const coreSelection = selectCoreProgressions(song, coreMatches);
-	const extension = extendCoreProgressionsPastPrefix(song, coreSelection);
 	const gapCandidates = computeGapFillProgressionMatches(
 		song,
-		extension.coverage
+		coreSelection.coverage
 	);
 	const gapSelection = greedilySelectProgressions(
 		song,
 		gapCandidates,
-		extension.coverage
+		coreSelection.coverage
 	);
 
 	return {
 		coreMatches,
 		gapCandidates,
-		coreSelected: extension.coreSelected,
-		gapSelected: [...extension.extended, ...gapSelection.selected],
+		coreSelected: coreSelection.selected,
+		gapSelected: gapSelection.selected,
 		coverage: gapSelection.coverage,
 		explainedPercent: Math.round(coveragePercent(song, gapSelection.coverage)),
 		biasOverrides: [

@@ -86,6 +86,13 @@ export const abstractProgressionKey = (
 		)
 	);
 
+// The abstract key is pitch-based, so a progression and its relative-key
+// rotation collapse onto one entry — VI-VII-i-III in minor is the very same run
+// of chords as IV-V-vi-I in major. Everything else here matches scale-sensitively,
+// so the scale belongs in the key too.
+export const scopedToScale = (key: string, scale: ScaleName): string =>
+	`${scale}|${key}`;
+
 export const buildCoreNameByAbstractKey = (
 	coreProgressions: CoreProgression[]
 ): Map<string, string> =>
@@ -98,7 +105,12 @@ export const buildCoreNameByAbstractKey = (
 						progression.scale
 					);
 					if (!parsed) return [];
-					return [[abstractProgressionKey(parsed), progression.name]] as const;
+					return [
+						[
+							scopedToScale(abstractProgressionKey(parsed), progression.scale),
+							progression.name
+						]
+					] as const;
 				}
 			)
 		)

@@ -23,10 +23,12 @@ describe("suddenly regression — back-to-back requirement on a noisier real son
 		).not.toContain("i-VI-III");
 	});
 
-	it("surfaces the real 4-chord i-VI-III-iv verse unit instead", () => {
+	it("selects the real 4-chord i-VI-III-iv verse unit instead", () => {
 		const result = selectFinalProgressions(song, coreProgressions);
-		expect(result.gapSelected.map((match) => match.chordProgression)).toContain(
-			"i-VI-III-iv"
+		const verseUnit = result.coreSelected.find(
+			(match) => match.chordProgression === "i-VI-III-iv"
 		);
+		expect(verseUnit).toBeDefined();
+		expect(verseUnit!.name).toBe("just like fire");
 	});
 });
