@@ -8,6 +8,7 @@ import {
 	abstractProgressionKey,
 	buildCoreNameByAbstractKey,
 	computeGapOnlyStats,
+	dedupeMatchesByChordProgression,
 	MIN_PROGRESSION_OCCURRENCES,
 	scopedToScale,
 	type ProgressionWithMatchStats
@@ -189,15 +190,16 @@ export const computeGapFillProgressionMatches = (
 		(window) => `${window.romanTokens.join("-")}|${window.scale}`
 	);
 
-	return uniqueWindows
-		.map((window) => toGapFillMatch(song, initialCoverage, window))
-		.filter((match): match is ProgressionWithMatchStats => match !== null)
-		.filter((match) => !isSelfRepeatingProgression(match.chordProgression))
-		.filter((match) => !match.isCoreProgression)
-		.sort(
-			(a, b) =>
-				b.coveragePercent - a.coveragePercent ||
-				progressionLength(b) - progressionLength(a) ||
-				a.chordProgression.localeCompare(b.chordProgression)
-		);
+	return dedupeMatchesByChordProgression(
+		uniqueWindows
+			.map((window) => toGapFillMatch(song, initialCoverage, window))
+			.filter((match): match is ProgressionWithMatchStats => match !== null)
+			.filter((match) => !isSelfRepeatingProgression(match.chordProgression))
+			.filter((match) => !match.isCoreProgression)
+	).sort(
+		(a, b) =>
+			b.coveragePercent - a.coveragePercent ||
+			progressionLength(b) - progressionLength(a) ||
+			a.chordProgression.localeCompare(b.chordProgression)
+	);
 };

@@ -4,9 +4,10 @@
 		getChordMatchingChallenges,
 		CHORD_MATCHING_CHALLENGES_LABEL
 	} from "$data/hand-reviewed-songs.js";
-	import type {
-		ProgressionWithMatchStats,
-		ChordAnnotation
+	import {
+		progressionMatchListKey,
+		type ProgressionWithMatchStats,
+		type ChordAnnotation
 	} from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
 	import { matchOutline } from "./progressionColors.js";
@@ -72,7 +73,7 @@
 	>
 		{#if hasMatches}
 			<div class="buttons-column">
-				{#each sortedMatches as match (match.chordProgression)}
+				{#each sortedMatches as match (progressionMatchListKey(match))}
 					{@const outline = matchOutline(match)}
 					<ProgressionMatchButton
 						{match}

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
+import type { ScaleName } from "../../../../chord-processing/scales.js";
 import {
 	aggregateVariantMatchStats,
 	collapseDisplayMatchesByName,
@@ -9,6 +10,7 @@ import {
 	computeStatsForParsedProgression,
 	computeGapOnlyCoveredPositionsBySection,
 	computeGapOnlyStats,
+	dedupeMatchesByChordProgression,
 	parseCoreProgressions,
 	findMatchingCoreProgressionsForSong,
 	buildProgressionMatchRates,
@@ -405,6 +407,44 @@ describe("aggregateVariantMatchStats", () => {
 		expect(withExact.matchingSongCount).toBeGreaterThanOrEqual(
 			liberalOnly.matchingSongCount
 		);
+	});
+});
+
+describe("dedupeMatchesByChordProgression", () => {
+	const match = (
+		chordProgression: string,
+		scale: ScaleName,
+		coveragePercent: number,
+		matchCount: number
+	): ProgressionWithMatchStats =>
+		({
+			name: "",
+			chordProgression,
+			parsedProgression: [],
+			scale,
+			description: "",
+			matchCount,
+			coveragePercent,
+			isCoreProgression: false,
+			highlightPalette: { fill: "", border: "" }
+		}) as ProgressionWithMatchStats;
+
+	it("collapses same roman string across scales to one row", () => {
+		const deduped = dedupeMatchesByChordProgression([
+			match("VII-i-III", "minor", 40, 5),
+			match("VII-i-III", "dorian", 40, 5)
+		]);
+		expect(deduped).toHaveLength(1);
+		expect(deduped[0].scale).toBe("minor");
+	});
+
+	it("keeps the stronger coverage when scales collide", () => {
+		const deduped = dedupeMatchesByChordProgression([
+			match("VII-i-III", "minor", 30, 4),
+			match("VII-i-III", "dorian", 45, 4)
+		]);
+		expect(deduped).toHaveLength(1);
+		expect(deduped[0].scale).toBe("dorian");
 	});
 });
 

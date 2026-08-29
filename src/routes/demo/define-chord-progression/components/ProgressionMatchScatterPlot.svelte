@@ -1,5 +1,8 @@
 <script lang="ts">
-	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import {
+		progressionMatchListKey,
+		type ProgressionWithMatchStats
+	} from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import { matchOutline, DIM_MATCH_COLOR } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
 	import SongProgressionStats from "./progression-match-stats/SongProgressionStats.svelte";
@@ -15,7 +18,7 @@
 		$props();
 
 	const highlightedKeys = $derived(
-		new Set(highlightedMatches.map((m) => m.chordProgression))
+		new Set(highlightedMatches.map((m) => progressionMatchListKey(m)))
 	);
 
 	const CHART_HEIGHT = 160;
@@ -192,18 +195,19 @@
 			>
 
 			<!-- Dim (non-highlighted) points -->
-			{#each allMatches as match (match.chordProgression)}
-				{@const isHighlighted = highlightedKeys.has(match.chordProgression)}
+			{#each allMatches as match (progressionMatchListKey(match))}
+				{@const matchKey = progressionMatchListKey(match)}
+				{@const isHighlighted = highlightedKeys.has(matchKey)}
 				{#if !isHighlighted}
 					{@const cx =
 						PAD_LEFT +
 						(match.coveragePercent / 100) * innerWidth +
-						stableJitter(match.chordProgression, "x")}
+						stableJitter(matchKey, "x")}
 					{@const cy =
 						PAD_TOP +
 						innerHeight -
 						(match.matchCount / maxMatchCount) * innerHeight +
-						stableJitter(match.chordProgression, "y")}
+						stableJitter(matchKey, "y")}
 					<circle
 						{cx}
 						{cy}
@@ -228,8 +232,9 @@
 			{/each}
 
 			<!-- Highlighted points -->
-			{#each allMatches as match (match.chordProgression)}
-				{@const isHighlighted = highlightedKeys.has(match.chordProgression)}
+			{#each allMatches as match (progressionMatchListKey(match))}
+				{@const matchKey = progressionMatchListKey(match)}
+				{@const isHighlighted = highlightedKeys.has(matchKey)}
 				{#if isHighlighted}
 					{@const cx = PAD_LEFT + (match.coveragePercent / 100) * innerWidth}
 					{@const cy =
@@ -237,7 +242,8 @@
 						innerHeight -
 						(match.matchCount / maxMatchCount) * innerHeight}
 					{@const isHovered =
-						hoveredMatch?.chordProgression === match.chordProgression}
+						hoveredMatch !== null &&
+						progressionMatchListKey(hoveredMatch) === matchKey}
 					{@const isActive = activeProgression === match.chordProgression}
 					<circle
 						{cx}

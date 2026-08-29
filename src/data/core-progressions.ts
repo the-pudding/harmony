@@ -301,8 +301,8 @@ const minoryProgressions: ProgressionGroup = {
 			name: "rockabye",
 			chordProgression: "i-VI-VII-v",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
-			description: "the i-VI-VII climb, landing on a minor v instead of home"
+			description:
+				"[in a major key reference point] starts on a darker minor six, and the V doesn't take us home but to the melancholy iii"
 		},
 		{
 			name: "tainted love",

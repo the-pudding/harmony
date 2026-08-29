@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import { progressionMatchListKey } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import {
 		matchOutline,
 		NON_SELECTED_PROGRESSION_PALETTE
@@ -39,7 +40,7 @@
 	let showAll = $state(false);
 
 	const selectedByKey = $derived(
-		new Map(matches.map((m) => [m.chordProgression, m]))
+		new Map(matches.map((m) => [progressionMatchListKey(m), m]))
 	);
 	const selectedKeys = $derived(new Set(selectedByKey.keys()));
 	const tableRows = $derived(showUnselectedRows ? allMatches : matches);
@@ -84,9 +85,10 @@
 		<col class="match-chords-column" />
 	</colgroup>
 	<tbody>
-		{#each visibleMatches as match (match.chordProgression)}
-			{@const isSelected = selectedKeys.has(match.chordProgression)}
-			{@const selectedMatch = selectedByKey.get(match.chordProgression)}
+		{#each visibleMatches as match (progressionMatchListKey(match))}
+			{@const matchKey = progressionMatchListKey(match)}
+			{@const isSelected = selectedKeys.has(matchKey)}
+			{@const selectedMatch = selectedByKey.get(matchKey)}
 			{@const effectivePalette = isSelected
 				? match.highlightPalette
 				: NON_SELECTED_PROGRESSION_PALETTE}

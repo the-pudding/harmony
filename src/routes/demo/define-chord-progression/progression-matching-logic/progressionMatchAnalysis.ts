@@ -93,6 +93,47 @@ export const abstractProgressionKey = (
 export const scopedToScale = (key: string, scale: ScaleName): string =>
 	`${scale}|${key}`;
 
+export const progressionMatchListKey = (
+	match: Pick<ProgressionWithMatchStats, "chordProgression" | "scale">
+): string => scopedToScale(match.chordProgression, match.scale);
+
+const progressionChordCountFromString = (chordProgression: string): number =>
+	chordProgression.split("-").length;
+
+export const preferProgressionMatch = <T extends ProgressionWithMatchStats>(
+	left: T,
+	right: T
+): T => {
+	if (right.coveragePercent !== left.coveragePercent) {
+		return right.coveragePercent > left.coveragePercent ? right : left;
+	}
+	if (right.matchCount !== left.matchCount) {
+		return right.matchCount > left.matchCount ? right : left;
+	}
+	const rightLength = progressionChordCountFromString(right.chordProgression);
+	const leftLength = progressionChordCountFromString(left.chordProgression);
+	if (rightLength !== leftLength) {
+		return rightLength > leftLength ? right : left;
+	}
+	return left;
+};
+
+export const dedupeMatchesByChordProgression = <
+	T extends ProgressionWithMatchStats
+>(
+	matches: readonly T[]
+): T[] => {
+	const byChordProgression = new Map<string, T>();
+	for (const match of matches) {
+		const existing = byChordProgression.get(match.chordProgression);
+		byChordProgression.set(
+			match.chordProgression,
+			existing ? preferProgressionMatch(existing, match) : match
+		);
+	}
+	return [...byChordProgression.values()];
+};
+
 export const buildCoreNameByAbstractKey = (
 	coreProgressions: CoreProgression[]
 ): Map<string, string> =>

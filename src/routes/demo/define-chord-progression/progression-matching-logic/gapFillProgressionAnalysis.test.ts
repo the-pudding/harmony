@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import songs from "../../../../../static/data/songs.json";
 import coreProgressions from "$data/core-progressions.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import { groupSongs } from "../../../../data/songBrowser.js";
+import { applyHandReviewedCorrections } from "../../../../data/applyHandReviewedCorrections.js";
 import { computeGapFillProgressionMatches } from "./gapFillProgressionAnalysis.js";
 import { selectFinalProgressions } from "./finalProgressionSelection.js";
 import { emptyCoverage } from "./greedyProgressionSelection.js";
@@ -606,5 +608,30 @@ describe("selectFinalProgressions — vamp regression (gods plan)", () => {
 	it("reaches 100% explained coverage with iv-v-iv-v and iv-v-VI-i together", () => {
 		const result = selectFinalProgressions(vampSong, coreProgressions);
 		expect(result.explainedPercent).toBe(100);
+	});
+});
+
+describe("computeGapFillProgressionMatches — land of confusion modal scales", () => {
+	const landOfConfusion = groupSongs(
+		applyHandReviewedCorrections(
+			songs as Parameters<typeof applyHandReviewedCorrections>[0]
+		)
+	).find((song) => song.songKey === "genesis__land-of-confusion");
+
+	it("does not surface duplicate roman strings across minor and dorian sections", () => {
+		expect(landOfConfusion).toBeDefined();
+		const gapCandidates = computeGapFillProgressionMatches(
+			landOfConfusion!,
+			emptyCoverage(landOfConfusion!)
+		);
+		const chordProgressions = gapCandidates.map(
+			(candidate) => candidate.chordProgression
+		);
+		expect(new Set(chordProgressions).size).toBe(chordProgressions.length);
+		expect(
+			gapCandidates.filter(
+				(candidate) => candidate.chordProgression === "VII-i-III"
+			)
+		).toHaveLength(1);
 	});
 });
