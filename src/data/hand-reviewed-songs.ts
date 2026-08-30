@@ -102,6 +102,11 @@ export const trickySongsToMatchCorrectly: TrickySongToMatchCorrectly[] = [
 		id: "sia__chandelier",
 		chordMatchingChallenges:
 			"Is really (in a major key) IV-V-I/3rd-IV ie Gb-Ab-Db/F-Gb. But is notated as just IV-V-I repeating, which is technically correct but not how a musician would think about it."
+	},
+	{
+		id: "natasha-bedingfield__pocketful-of-sunshine",
+		chordMatchingChallenges:
+			"Tricky because there are genuinely occurances of 'i-VII-VI' in the outro, but that gets applied to the intro and verses, too, which are in fact the fuller 'i-VII-VI-iv'. The aglo isn't sophisticated to intelligently match both, so it goes with the shorter one (i-VII-VI) which technically covers more chords in total. All that said, practically speaking, i-VII-VI is actually a decent match for i-VII-VI-iv, given the longer one really just adds a bit of dark color turnaround chord at the end, but otherwise feels the same."
 	}
 ];
 
