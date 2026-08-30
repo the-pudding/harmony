@@ -53,7 +53,12 @@ export const problematicSongs: ProblematicSong[] = [
 	{
 		id: "billy-joel__a-matter-of-trust",
 		chordProgressionIssues:
-			"First, it's all one giant (wrong). Next, the main chord progression should be I-vi-I-vi-iii-V"
+			"First, it's all one giant (wrong) section. Next, the main chord progression should be I-vi-I-vi-iii-V"
+	},
+	{
+		id: "connie-francis__many-tears-ago",
+		chordProgressionIssues:
+			"Chords are correct, but since the original UG webpage didn't list a key, it somehow ended up with 'D major' when it should say 'G major'."
 	}
 ];
 
@@ -77,6 +82,26 @@ export const trickySongsToMatchCorrectly: TrickySongToMatchCorrectly[] = [
 		id: "feist__1234",
 		chordMatchingChallenges:
 			"Here, we're trying to capture the essence of that iconic sort of 'tonic walks down in half-ish steps' feeling"
+	},
+	{
+		id: "passenger__let-her-go",
+		chordMatchingChallenges:
+			"Overall, great matching. However, this is the classic 'chose a 3 chord match when a 4 chord match is available' challenge. This is extra tricky because the song genuinely DOES use a 3 chord progression, as well as the 4 chord superset of it: vi-IV-V(-iii). This fails because the algorithm has no notion of 'sharing' some chords with one progression and the rest with others, it greedily takes all or none. The conflict here is about choosing chords to maximize within a section vs globally across the song"
+	},
+	{
+		id: "the-main-ingredient__just-don-t-want-to-be-lonely",
+		chordMatchingChallenges:
+			"The real progression of this song is I-vi-ii-V repeating, but the algo can find slightly more instances of vi-ii-V-I (conveniently, those are both variants of the same single core progression currently)"
+	},
+	{
+		id: "paper-lace__the-night-chicago-died",
+		chordMatchingChallenges:
+			"The chord progression is really 'I-ii-V-I' repeating, but it's notated (and then the algo finds) 'ii-V-I'. Which is probably acceptable, if not exactly how a musician would think about it."
+	},
+	{
+		id: "sia__chandelier",
+		chordMatchingChallenges:
+			"Is really (in a major key) IV-V-I/3rd-IV ie Gb-Ab-Db/F-Gb. But is notated as just IV-V-I repeating, which is technically correct but not how a musician would think about it."
 	}
 ];
 

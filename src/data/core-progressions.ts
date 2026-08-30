@@ -470,8 +470,9 @@ const jazzyProgressions: ProgressionGroup = {
 		},
 		{
 			name: "jazz ii-V-I",
-			chordProgression: ["ii7-V7-Imaj7", "ii-V-I"],
+			chordProgression: "ii-V-I",
 			scale: "major",
+			matchRomanNumeralsExactly: true,
 			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description: ""
 		},
@@ -483,14 +484,29 @@ const jazzyProgressions: ProgressionGroup = {
 			description: "resolves the ii-V-I, then keeps moving with a plagal IV"
 		},
 		{
-			name: "jazz changes (turnaround)",
+			name: "jazz doo wop",
+			chordProgression: "I-vi-ii-V",
+			scale: "major",
+			description: ""
+		},
+		{
+			name: "jazz changes (diatonic)",
 			chordProgression: "vi-ii-V-I",
 			scale: "major",
 			description: ""
 		},
 		{
-			name: "jazz changes (start on I)",
-			chordProgression: "I-vi-ii-V",
+			name: "jazz changes (dominant-y)",
+			chordProgression: [
+				// with the III
+				"III-VI-II-V",
+				"III-VI-II-V-I",
+				// without the III
+				"VI-II-V-I",
+				// with the 1 as the starting chord:
+				"I-III-VI-II-V",
+				"I-VI-II-V"
+			],
 			scale: "major",
 			description: ""
 		},
