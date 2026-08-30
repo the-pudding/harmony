@@ -481,5 +481,20 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 				}
 			]
 		}
+	},
+	{
+		id: "sia__cheap-thrills",
+		technicalNotes:
+			"Originally from HT, which got it right, technically in terms of chords, but made a tiny mistake with sectioning: they included the two lead in chords as part of the verse (really, they are a 1 bar intro), which made the algo pick Axis of Awesome instead of the true *Minor* Axis of Awesome",
+		correctedSongContents: {
+			sections: [
+				...["Intro", "Chorus", "Post-Chorus", "Verse"].map((name) => ({
+					name,
+					key: "F#",
+					scale: "minor",
+					romanTokens: repeatNTimes(["i", "VI", "III", "VII"], 2)
+				}))
+			]
+		}
 	}
 ];
