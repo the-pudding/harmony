@@ -107,6 +107,11 @@ export const trickySongsToMatchCorrectly: TrickySongToMatchCorrectly[] = [
 		id: "natasha-bedingfield__pocketful-of-sunshine",
 		chordMatchingChallenges:
 			"Tricky because there are genuinely occurances of 'i-VII-VI' in the outro, but that gets applied to the intro and verses, too, which are in fact the fuller 'i-VII-VI-iv'. The aglo isn't sophisticated to intelligently match both, so it goes with the shorter one (i-VII-VI) which technically covers more chords in total. All that said, practically speaking, i-VII-VI is actually a decent match for i-VII-VI-iv, given the longer one really just adds a bit of dark color turnaround chord at the end, but otherwise feels the same."
+	},
+	{
+		id: "stevie-wonder__superstition",
+		chordMatchingChallenges:
+			"The chords are basically right, the whole song is really just a vamp on Ebm7, or just Eb funk, and after a long time it hits the V7 as a turnaround. So, you could say there's not real 'progression', just a funk vamp."
 	}
 ];
 

@@ -14,6 +14,7 @@
 		parsedProgression?: ParsedProgressionChord[] | null;
 		highlightPalette?: ChordHighlightPalette;
 		isStrictSubset?: boolean;
+		matchRomanNumeralsExactly?: boolean;
 		annotations?: ChordAnnotation[];
 		focusedProgression?: string | null;
 	};
@@ -23,6 +24,7 @@
 		parsedProgression = null,
 		highlightPalette,
 		isStrictSubset = false,
+		matchRomanNumeralsExactly = false,
 		annotations,
 		focusedProgression = null
 	}: Props = $props();
@@ -37,7 +39,8 @@
 						{
 							parsedProgression,
 							palette: highlightPalette ?? UNGROUPED_PROGRESSION_PALETTE,
-							isStrictSubset
+							isStrictSubset,
+							matchRomanNumeralsExactly
 						}
 					]
 				: [])

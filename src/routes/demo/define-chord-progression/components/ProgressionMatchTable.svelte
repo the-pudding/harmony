@@ -134,6 +134,8 @@
 						parsedProgression={match.parsedProgression}
 						highlightPalette={effectivePalette}
 						isStrictSubset={match.isStrictSubset}
+						matchRomanNumeralsExactly={match.matchRomanNumeralsExactly ??
+							false}
 					/>
 				</td>
 			</tr>

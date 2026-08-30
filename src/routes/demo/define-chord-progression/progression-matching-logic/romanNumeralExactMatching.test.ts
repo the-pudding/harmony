@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
+import songs from "../../../../../static/data/songs.json";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
+import { groupSongs } from "../../../../data/songBrowser.js";
 import {
+	buildColoredHighlightSegments,
 	computeProgressionMatches,
 	getSectionMatches
 } from "./progressionMatchAnalysis.js";
@@ -171,5 +174,98 @@ describe("core-progressions data assertions", () => {
 		expect(p!.chordProgression).toBe("I-V-vi");
 		expect(p!.scale).toBe("major");
 		expect(p!.matchRomanNumeralsExactly).toBe(true);
+	});
+});
+
+describe("buildColoredHighlightSegments — matchRomanNumeralsExactly in annotations", () => {
+	const paulAnkaSong = groupSongs(
+		(songs as { songKey: string }[]).filter(
+			(s) => s.songKey === "paul-anka__my-home-town"
+		) as Parameters<typeof groupSongs>[0]
+	)[0];
+
+	const jazzProgression: CoreProgression = {
+		name: "jazz ii-V-I",
+		chordProgression: ["ii-bii-I", "ii-bII-I", "ii-V-I"],
+		scale: "major",
+		matchRomanNumeralsExactly: true,
+		description: ""
+	};
+
+	const iiBiiIParsed = romanTokensToParsedProgression(
+		["ii", "bII", "I"],
+		"major"
+	)!;
+
+	const highlightedRomanTokens = (
+		section: SongSection,
+		matchRomanNumeralsExactly: boolean
+	): string[] => {
+		const segments = buildColoredHighlightSegments(section, 0, [
+			{
+				parsedProgression: iiBiiIParsed,
+				palette: { fill: "#000", border: "#000" },
+				matchRomanNumeralsExactly
+			}
+		]);
+		return segments
+			.filter((segment) => segment.palette !== null)
+			.flatMap((segment) =>
+				segment.indices.map((position) => section.romanTokens[position])
+			);
+	};
+
+	it("does not highlight biii-bVI-bII when exact roman matching is enabled", () => {
+		const section = paulAnkaSong.sections[0];
+		const highlighted = highlightedRomanTokens(section, true);
+		expect(highlighted).not.toContain("biii");
+		expect(highlighted).not.toContain("bVI");
+	});
+
+	it("computeProgressionMatches stats for ii-bII-I ignore interval-only hits", () => {
+		const matches = computeProgressionMatches(paulAnkaSong, [jazzProgression]);
+		const iiBiiI = matches.find(
+			(match) => match.chordProgression === "ii-bII-I"
+		);
+		expect(iiBiiI?.matchCount ?? 0).toBe(0);
+	});
+
+	it("ii-V-I row display respects exact matching at the chromatic tail", () => {
+		const iiVIParsed = romanTokensToParsedProgression(
+			["ii", "V", "I"],
+			"major"
+		)!;
+		const section = paulAnkaSong.sections[0];
+		const chromaticTailStart = section.romanTokens.findIndex(
+			(token) => token === "biii"
+		);
+		expect(chromaticTailStart).toBeGreaterThan(-1);
+
+		const looseHighlights = buildColoredHighlightSegments(section, 0, [
+			{
+				parsedProgression: iiVIParsed,
+				palette: { fill: "#000", border: "#000" },
+				matchRomanNumeralsExactly: false
+			}
+		])
+			.filter((segment) => segment.palette !== null)
+			.filter((segment) =>
+				segment.indices.some((position) => position >= chromaticTailStart)
+			);
+
+		const exactHighlights = buildColoredHighlightSegments(section, 0, [
+			{
+				parsedProgression: iiVIParsed,
+				palette: { fill: "#000", border: "#000" },
+				matchRomanNumeralsExactly: true
+			}
+		])
+			.filter((segment) => segment.palette !== null)
+			.filter((segment) =>
+				segment.indices.some((position) => position >= chromaticTailStart)
+			);
+
+		expect(looseHighlights.length).toBeGreaterThan(0);
+		expect(exactHighlights).toHaveLength(0);
 	});
 });
