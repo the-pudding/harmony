@@ -496,5 +496,18 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 				}))
 			]
 		}
+	},
+	{
+		id: "justin-timberlake__sexyback",
+		correctedSongContents: {
+			sections: [
+				...["Intro", "Verse 1", "Chorus", "Verse 2"].map((name) => ({
+					name,
+					key: "A",
+					scale: "phrygianDominant",
+					romanTokens: ["I", "II", "I", "II"]
+				}))
+			]
+		}
 	}
 ];
