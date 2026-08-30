@@ -84,12 +84,14 @@ describe("buildProgressionVocabulary", () => {
 
 	it("gives sibling variants of one named progression a single dimension", () => {
 		const vocabulary = buildProgressionVocabulary(
-			[makeSong("a", [["ii7-V7-Imaj7", 3, true]])],
+			[makeSong("a", [["ii-bii-I", 3, true]])],
 			1
 		);
-		const canonicalIndex =
-			vocabulary.indexByChordProgression.get("ii7-V7-Imaj7");
+		const canonicalIndex = vocabulary.indexByChordProgression.get("ii-bii-I");
 		expect(vocabulary.indexByChordProgression.get("ii-V-I")).toBe(
+			canonicalIndex
+		);
+		expect(vocabulary.indexByChordProgression.get("ii-bII-I")).toBe(
 			canonicalIndex
 		);
 		expect(
@@ -101,7 +103,7 @@ describe("buildProgressionVocabulary", () => {
 		const vocabulary = buildProgressionVocabulary(
 			[
 				makeSong("a", [
-					["ii7-V7-Imaj7", 3, true],
+					["ii-bii-I", 3, true],
 					["ii-V-I", 2, true]
 				])
 			],

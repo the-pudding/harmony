@@ -379,14 +379,14 @@ describe("aggregateVariantMatchStats", () => {
 	const coverages = [
 		{ matchingProgressions: ["ii-V-I"] },
 		{ matchingProgressions: ["ii-V-I"] },
-		{ matchingProgressions: ["ii7-V7-Imaj7"] },
+		{ matchingProgressions: ["ii-bii-I"] },
 		{ matchingProgressions: ["I-V-vi-IV"] }
 	];
 
 	it("counts a song once when any sibling variant matched", () => {
 		expect(
 			aggregateVariantMatchStats(
-				["ii7-V7-Imaj7", "ii-V-I"],
+				["ii-bii-I", "ii-bII-I", "ii-V-I"],
 				coverages,
 				coverages.length
 			)
@@ -400,7 +400,7 @@ describe("aggregateVariantMatchStats", () => {
 			coverages.length
 		);
 		const withExact = aggregateVariantMatchStats(
-			["ii7-V7-Imaj7", "ii-V-I"],
+			["ii-bii-I", "ii-bII-I", "ii-V-I"],
 			coverages,
 			coverages.length
 		);
@@ -468,11 +468,11 @@ describe("collapseDisplayMatchesByName", () => {
 	it("keeps one row per name, preferring the higher-count variant", () => {
 		const collapsed = collapseDisplayMatchesByName(
 			[
-				match("jazz ii-V-I", "ii7-V7-Imaj7"),
+				match("jazz ii-V-I", "ii-bii-I"),
 				match("jazz ii-V-I", "ii-V-I"),
 				match("doo wop", "I-vi-IV-V")
 			],
-			{ "ii7-V7-Imaj7": 0, "ii-V-I": 12, "I-vi-IV-V": 4 }
+			{ "ii-bii-I": 0, "ii-V-I": 12, "I-vi-IV-V": 4 }
 		);
 		expect(collapsed.map((row) => row.chordProgression)).toEqual([
 			"ii-V-I",
@@ -483,10 +483,10 @@ describe("collapseDisplayMatchesByName", () => {
 	it("pickPrimaryVariant falls back to the first variant when counts tie at zero", () => {
 		expect(
 			pickPrimaryVariant(
-				[match("jazz ii-V-I", "ii7-V7-Imaj7"), match("jazz ii-V-I", "ii-V-I")],
+				[match("jazz ii-V-I", "ii-bii-I"), match("jazz ii-V-I", "ii-V-I")],
 				null
 			).chordProgression
-		).toBe("ii7-V7-Imaj7");
+		).toBe("ii-bii-I");
 	});
 });
 

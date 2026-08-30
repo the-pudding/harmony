@@ -470,7 +470,7 @@ const jazzyProgressions: ProgressionGroup = {
 		},
 		{
 			name: "jazz ii-V-I",
-			chordProgression: ["ii7-V7-Imaj7", "ii-V-I"],
+			chordProgression: ["ii-bii-I", "ii-bII-I", "ii-V-I"],
 			scale: "major",
 			matchRomanNumeralsExactly: true,
 			minimumContiguousMatches: BACK_TO_BACK_REPEAT,

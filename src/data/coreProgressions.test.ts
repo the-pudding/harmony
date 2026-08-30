@@ -45,7 +45,8 @@ describe("core progressions — schema validation", () => {
 
 	it("siblingVariantsForProgression returns every variant for a named progression", () => {
 		expect(siblingVariantsForProgression(coreProgressions, "ii-V-I")).toEqual([
-			"ii7-V7-Imaj7",
+			"ii-bii-I",
+			"ii-bII-I",
 			"ii-V-I"
 		]);
 	});

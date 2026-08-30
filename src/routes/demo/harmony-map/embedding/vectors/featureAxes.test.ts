@@ -32,8 +32,9 @@ describe("progressionFeatures", () => {
 	});
 
 	it("detects extended chords as a share of the progression", () => {
-		expect(progressionFeatures("ii7-V7-Imaj7", "major").extensionShare).toBe(1);
+		expect(progressionFeatures("ii7-V7-I7", "major").extensionShare).toBe(1);
 		expect(progressionFeatures("ii-V-I", "major").extensionShare).toBe(0);
+		expect(progressionFeatures("ii-bii-I", "major").extensionShare).toBe(0);
 	});
 });
 
@@ -48,7 +49,7 @@ describe("computeFeatureAxes", () => {
 		const simple = computeFeatureAxes(makeSong([["I-IV-I-IV", "major", 8]]));
 		const complex = computeFeatureAxes(
 			makeSong([
-				["ii7-V7-Imaj7", "major", 2],
+				["ii-bii-I", "major", 2],
 				["IV-iii-vi-ii", "major", 2],
 				["I-vi-ii-V", "major", 2]
 			])

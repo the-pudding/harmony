@@ -60,7 +60,7 @@ describe("buildSongVectors", () => {
 	it("sums sibling variants of one named progression into one dimension", () => {
 		const bothVariants = [
 			makeSong("a", [
-				["ii7-V7-Imaj7", 3],
+				["ii-bii-I", 3],
 				["ii-V-I", 2]
 			])
 		];
@@ -80,7 +80,7 @@ describe("buildSongVectors", () => {
 	it("counts sibling variants as one occurrence when weighting is binary", () => {
 		const bothVariants = [
 			makeSong("a", [
-				["ii7-V7-Imaj7", 3],
+				["ii-bii-I", 3],
 				["ii-V-I", 2]
 			])
 		];
@@ -166,7 +166,7 @@ describe("buildSongVectors", () => {
 	it("sums chorus matches from sibling variants into one dimension", () => {
 		const bothVariants = [
 			makeSong("a", [
-				["ii7-V7-Imaj7", 3, 1],
+				["ii-bii-I", 3, 1],
 				["ii-V-I", 2, 2]
 			])
 		];
