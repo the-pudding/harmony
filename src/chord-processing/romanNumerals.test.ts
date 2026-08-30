@@ -3,6 +3,7 @@ import { toPrecomputedAbstractProgression } from "./match-chord-progressions/mat
 import {
 	formatRomanTokenFromParsed,
 	parseRomanToken,
+	romanTokenOffsetFromTonic,
 	romanTokensToParsedProgression,
 	romanTokensToPrecomputedAbstract
 } from "./romanNumerals.js";
@@ -77,6 +78,19 @@ describe("parseRomanToken — extensions", () => {
 		expect(parseRomanToken("bVI")).toMatchObject({
 			degree: 6,
 			flat: true,
+			sharp: false,
+			suffix: "major"
+		});
+		expect(parseRomanToken("bV")).toMatchObject({
+			degree: 5,
+			flat: true,
+			sharp: false,
+			suffix: "major"
+		});
+		expect(parseRomanToken("#IV")).toMatchObject({
+			degree: 4,
+			flat: false,
+			sharp: true,
 			suffix: "major"
 		});
 		expect(parseRomanToken("vii°")).toMatchObject({
@@ -165,6 +179,12 @@ describe("parseRomanToken — extensions", () => {
 			degree: 2,
 			suffix: "minor"
 		});
+	});
+
+	it("maps bIII one semitone below diatonic III, distinct from II", () => {
+		expect(romanTokenOffsetFromTonic("bIII", "major")).toBe(3);
+		expect(romanTokenOffsetFromTonic("III", "major")).toBe(4);
+		expect(romanTokenOffsetFromTonic("II", "major")).toBe(2);
 	});
 
 	it("romanTokensToParsedProgression produces correct pitch classes in C major", () => {

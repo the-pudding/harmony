@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "node:url";
 import { csvParse } from "d3";
 import { SCALE_INTERVALS } from "../src/chord-processing/scale-intervals.js";
 
@@ -82,7 +83,7 @@ const pitchClassToNoteName = (pitchClass) =>
 		((pitchClass % NOTES_PER_OCTAVE) + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE
 	];
 
-const degreeToPitchClass = (degree, key, scale) => {
+const degreeToPitchClass = (degree, key, scale, accidental = 0) => {
 	const intervals = SCALE_INTERVALS[scale];
 	if (!intervals) {
 		throw new Error(
@@ -91,7 +92,10 @@ const degreeToPitchClass = (degree, key, scale) => {
 	}
 	const offset = intervals[degree - 1];
 	if (offset === undefined) return null;
-	return (tonicToPitchClass(key) + offset) % NOTES_PER_OCTAVE;
+	return (
+		(tonicToPitchClass(key) + offset + accidental + NOTES_PER_OCTAVE * 2) %
+		NOTES_PER_OCTAVE
+	);
 };
 
 const humanizeSlug = (slug) =>
@@ -186,17 +190,56 @@ const compareSongsByPopularity = (a, b) => {
 
 const ROMAN_BASE = ["I", "II", "III", "IV", "V", "VI", "VII"];
 
-const degreeQualityToRoman = (degree, quality) => {
+const PARALLEL_HOME_SCALE = {
+	major: "minor",
+	minor: "major"
+};
+
+const degreeQualityToRoman = (degree, quality, accidental = 0) => {
 	if (degree < 1 || degree > ROMAN_BASE.length) return null;
 
 	const base = ROMAN_BASE[degree - 1];
+	let roman = null;
 
-	if (quality === "maj") return base;
-	if (quality === "min") return base.toLowerCase();
-	if (quality === "dim") return `${base.toLowerCase()}°`;
-	if (quality === "aug") return `${base}+`;
+	if (quality === "maj") roman = base;
+	else if (quality === "min") roman = base.toLowerCase();
+	else if (quality === "dim") roman = `${base.toLowerCase()}°`;
+	else if (quality === "aug") roman = `${base}+`;
 
-	return null;
+	if (!roman) return null;
+
+	if (accidental === -1) return `b${roman}`;
+	if (accidental === 1) return `#${roman}`;
+	return roman;
+};
+
+const resolveAccidental = (chord, key, scale) => {
+	if (chord.accidental !== undefined && chord.accidental !== 0) {
+		return chord.accidental;
+	}
+
+	if (!chord.borrowed) return 0;
+
+	const parallelScale = PARALLEL_HOME_SCALE[scale];
+	if (!parallelScale) return 0;
+
+	const homeIntervals = SCALE_INTERVALS[scale];
+	const parallelIntervals = SCALE_INTERVALS[parallelScale];
+	if (!homeIntervals || !parallelIntervals) return 0;
+
+	const homeOffset = homeIntervals[chord.degree - 1];
+	const parallelOffset = parallelIntervals[chord.degree - 1];
+	if (homeOffset === undefined || parallelOffset === undefined) return 0;
+
+	const tonic = tonicToPitchClass(key);
+	const homePc = (tonic + homeOffset) % NOTES_PER_OCTAVE;
+	const parallelPc = (tonic + parallelOffset) % NOTES_PER_OCTAVE;
+	if (homePc === parallelPc) return 0;
+
+	const diff = (parallelPc - homePc + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE;
+	if (diff === 11) return -1;
+	if (diff === 1) return 1;
+	return 0;
 };
 
 const progressionChordInputsAreEqual = (a, b) =>
@@ -204,9 +247,15 @@ const progressionChordInputsAreEqual = (a, b) =>
 	a.suffix === b.suffix &&
 	(a.bassNoteName ?? undefined) === (b.bassNoteName ?? undefined);
 
-const chordsToRomanTokens = (chords) =>
+const chordsToRomanTokens = (chords, key, scale) =>
 	(chords ?? [])
-		.map(({ degree, quality }) => degreeQualityToRoman(degree, quality))
+		.map((chord) =>
+			degreeQualityToRoman(
+				chord.degree,
+				chord.quality,
+				resolveAccidental(chord, key, scale)
+			)
+		)
 		.filter(Boolean);
 
 const qualityExtensionToSuffix = ({ quality, extension, suspensions }) => {
@@ -240,12 +289,34 @@ const qualityExtensionToSuffix = ({ quality, extension, suspensions }) => {
 	return null;
 };
 
+const parseSlashBassNoteName = (chordName) => {
+	if (!chordName?.includes("/")) return null;
+	const bassPart = chordName.slice(chordName.indexOf("/") + 1).trim();
+	const match = bassPart.match(/^([A-G][#b]?)/);
+	if (!match) return null;
+	return match[1];
+};
+
 const chordToProgressionInput = (chord, key, scale) => {
 	const suffix = qualityExtensionToSuffix(chord);
 	if (!suffix) return null;
 
-	const rootPitchClass = degreeToPitchClass(chord.degree, key, scale);
-	const bassPitchClass = degreeToPitchClass(chord.bass_degree, key, scale);
+	const accidental = resolveAccidental(chord, key, scale);
+	const rootPitchClass = degreeToPitchClass(
+		chord.degree,
+		key,
+		scale,
+		accidental
+	);
+	const slashBassNoteName = parseSlashBassNoteName(chord.name);
+	const bassPitchClass = slashBassNoteName
+		? parseNoteToPitchClass(slashBassNoteName)
+		: degreeToPitchClass(
+				chord.bass_degree,
+				key,
+				scale,
+				chord.bass_accidental ?? accidental
+			);
 	if (rootPitchClass === null || bassPitchClass === null) return null;
 
 	const noteName = pitchClassToNoteName(rootPitchClass);
@@ -320,7 +391,11 @@ const sectionToSongInputCore = (
 	);
 	const progression = normalizedPairs.map(({ input }) => input);
 	const normalizedChords = normalizedPairs.map(({ chord }) => chord);
-	const romanTokens = chordsToRomanTokens(normalizedChords);
+	const romanTokens = chordsToRomanTokens(
+		normalizedChords,
+		section.key,
+		section.scale
+	);
 
 	if (progression.length === 0) return null;
 
@@ -691,4 +766,15 @@ const main = () => {
 	console.log(`Output: ${POPULAR_UG_OUTPUT_PATH}`);
 };
 
-main();
+const isMain = process.argv[1] === fileURLToPath(import.meta.url);
+if (isMain) {
+	main();
+}
+
+export {
+	chordToProgressionInput,
+	chordsToRomanTokens,
+	degreeQualityToRoman,
+	degreeToPitchClass,
+	resolveAccidental
+};

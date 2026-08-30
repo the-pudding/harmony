@@ -23,6 +23,7 @@ const MAJOR_SCALE_PITCH_CLASSES = [0, 2, 4, 5, 7, 9, 11] as const;
 const FLAT_PITCH_CLASS_TO_DEGREE: Partial<Record<number, number>> = {
 	1: 2, // bII  (C#/Db)
 	3: 3, // bIII (D#/Eb)
+	6: 5, // bV   (F#/Gb)
 	8: 6, // bVI  (G#/Ab)
 	10: 7 // bVII (A#/Bb)
 };

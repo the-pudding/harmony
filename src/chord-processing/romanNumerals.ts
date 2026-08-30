@@ -134,7 +134,7 @@ const bareRomanNumeralFromToken = (token: string): string | null => {
 	const base = degreeQualityToRoman(parsed.degree, parsed.quality);
 	if (!base) return null;
 
-	return parsed.flat ? `b${base}` : base;
+	return parsed.flat ? `b${base}` : parsed.sharp ? `#${base}` : base;
 };
 
 export const formatRomanTokenFromParsed = (
@@ -176,9 +176,11 @@ type ParsedToken = {
 	degree: number;
 	quality: string;
 	flat: boolean;
+	sharp: boolean;
 	suffix: string;
 	bassDegree?: number;
 	bassFlat?: boolean;
+	bassSharp?: boolean;
 };
 
 export const parseRomanToken = (token: string): ParsedToken | null => {
@@ -189,6 +191,7 @@ export const parseRomanToken = (token: string): ParsedToken | null => {
 	// and secondary dominants with non-roman tails stay stripped.
 	let bassDegree: number | undefined;
 	let bassFlat: boolean | undefined;
+	let bassSharp: boolean | undefined;
 	const slashIdx = t.indexOf("/");
 	if (slashIdx !== -1) {
 		const bassToken = t.slice(slashIdx + 1);
@@ -197,6 +200,7 @@ export const parseRomanToken = (token: string): ParsedToken | null => {
 		if (bassParsed) {
 			bassDegree = bassParsed.degree;
 			bassFlat = bassParsed.flat;
+			bassSharp = bassParsed.sharp;
 		}
 	}
 
@@ -208,11 +212,19 @@ export const parseRomanToken = (token: string): ParsedToken | null => {
 	t = base;
 
 	let flat = false;
+	let sharp = false;
 	if (t.startsWith("b") && t.length > 1) {
 		const rest = t.slice(1);
 		const baseForCheck = rest.replace(/[°+]$/, "");
 		if (romanBaseToDegree(baseForCheck) !== null) {
 			flat = true;
+			t = rest;
+		}
+	} else if (t.startsWith("#") && t.length > 1) {
+		const rest = t.slice(1);
+		const baseForCheck = rest.replace(/[°+]$/, "");
+		if (romanBaseToDegree(baseForCheck) !== null) {
+			sharp = true;
 			t = rest;
 		}
 	}
@@ -240,9 +252,14 @@ export const parseRomanToken = (token: string): ParsedToken | null => {
 		degree,
 		quality,
 		flat,
+		sharp,
 		suffix,
 		...(bassDegree !== undefined
-			? { bassDegree, bassFlat: bassFlat ?? false }
+			? {
+					bassDegree,
+					bassFlat: bassFlat ?? false,
+					bassSharp: bassSharp ?? false
+				}
 			: {})
 	};
 };
@@ -253,7 +270,10 @@ const pitchClassFromEntry = (
 ): number => {
 	const intervals = SCALE_INTERVALS[scale];
 	return (
-		(intervals[entry.degree - 1] - (entry.flat ? 1 : 0) + NOTES_PER_OCTAVE) %
+		(intervals[entry.degree - 1] +
+			(entry.sharp ? 1 : 0) -
+			(entry.flat ? 1 : 0) +
+			NOTES_PER_OCTAVE) %
 		NOTES_PER_OCTAVE
 	);
 };
@@ -312,7 +332,7 @@ export const romanTokensToParsedProgression = (
 	if (parsed.some((entry) => entry === null)) return null;
 
 	const chords = parsed.map((entry) => {
-		const { suffix, bassDegree, bassFlat } = entry!;
+		const { suffix, bassDegree, bassFlat, bassSharp } = entry!;
 		const rootPitchClass = pitchClassFromEntry(entry!, scale);
 		const bassPitchClass =
 			bassDegree !== undefined
@@ -321,6 +341,7 @@ export const romanTokensToParsedProgression = (
 							degree: bassDegree,
 							quality: "maj",
 							flat: bassFlat ?? false,
+							sharp: bassSharp ?? false,
 							suffix: "major"
 						},
 						scale

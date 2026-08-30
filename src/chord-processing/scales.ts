@@ -23,13 +23,17 @@ export const romanTokensToProgressionInKey = (
 		const parsed = parseRomanToken(token);
 		if (!parsed) throw new Error(`Cannot parse roman token: "${token}"`);
 
-		const { degree, flat, suffix } = parsed;
+		const { degree, flat, sharp, suffix } = parsed;
 		const interval = intervals[degree - 1];
 		if (interval === undefined)
 			throw new Error(`Degree ${degree} out of range for scale "${scale}"`);
 
 		const rootPitchClass =
-			(tonic + interval - (flat ? 1 : 0) + NOTES_PER_OCTAVE * 2) %
+			(tonic +
+				interval +
+				(sharp ? 1 : 0) -
+				(flat ? 1 : 0) +
+				NOTES_PER_OCTAVE * 2) %
 			NOTES_PER_OCTAVE;
 
 		return { noteName: NOTE_NAMES[rootPitchClass], suffix };
