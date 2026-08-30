@@ -24,11 +24,23 @@
 		"Each matched core progression adds its occurrence count to the group it belongs to; a song's dot blends the legend colors in proportion to those group totals, so a 50/50 song fades evenly between two colors. Gap-fill progressions belong to no group and never count, so a song whose only matches are gap fills stays grey.";
 
 	const LEGEND_MAX_HEIGHT = "40vh";
+	const PERCENT_WHOLE_THRESHOLD = 1;
+	const SUB_ONE_PERCENT_DECIMAL_PLACES = 2;
 
 	const sortedLegendItems = $derived(buildProgressionGroupShares(songCoverages));
 
-	const formatShareAsPercent = (sharePercent: number): string =>
-		`${Math.round(sharePercent)}%`;
+	const formatShareAsPercent = (sharePercent: number): string => {
+		if (sharePercent === 0) {
+			return "0%";
+		}
+
+		if (sharePercent < PERCENT_WHOLE_THRESHOLD) {
+			const rounded = sharePercent.toFixed(SUB_ONE_PERCENT_DECIMAL_PLACES);
+			return `${rounded.slice(rounded.indexOf("."))}%`;
+		}
+
+		return `${Math.round(sharePercent)}%`;
+	};
 
 	const handleGroupClick = (label: string) => {
 		onSelectGroup(selectedGroupLabel === label ? null : label);
@@ -236,9 +248,11 @@
 
 	.legend-share {
 		flex-shrink: 0;
-		min-width: 1.75rem;
+		min-width: 2.5rem;
 		color: #71717a;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 		font-variant-numeric: tabular-nums;
+		text-align: right;
 	}
 
 	.legend-label {
