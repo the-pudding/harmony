@@ -10,6 +10,7 @@
 		yearDomain: YearDomain | null;
 		selectedSongKey: string | null;
 		rankByClusterHash: Map<string, number>;
+		clusterNamesByHash?: Map<string, string>;
 		onSelectAllClusters: () => void;
 		onDeselectAllClusters: () => void;
 		onToggleClusterVisibility: (clusterHash: string) => void;
@@ -23,6 +24,7 @@
 		yearDomain,
 		selectedSongKey,
 		rankByClusterHash,
+		clusterNamesByHash = new Map(),
 		onSelectAllClusters,
 		onDeselectAllClusters,
 		onToggleClusterVisibility,
@@ -45,6 +47,7 @@
 			{yearDomain}
 			{selectedSongKey}
 			{rankByClusterHash}
+			{clusterNamesByHash}
 			showGlobalToggle
 			{onSelectAllClusters}
 			{onDeselectAllClusters}

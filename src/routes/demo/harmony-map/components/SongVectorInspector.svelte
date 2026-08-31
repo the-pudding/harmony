@@ -36,6 +36,7 @@
 		hiddenClusterHashes: Set<string>;
 		yearDomain: YearDomain | null;
 		clusterRankByHash: Map<string, number>;
+		clusterNamesByHash?: Map<string, string>;
 		onToggleHighlight: (songKey: string) => void;
 		onToggleClusterVisibility: (clusterHash: string) => void;
 		onSelect: (songKey: string | null) => void;
@@ -57,6 +58,7 @@
 		hiddenClusterHashes,
 		yearDomain,
 		clusterRankByHash,
+		clusterNamesByHash = new Map(),
 		onToggleHighlight,
 		onToggleClusterVisibility,
 		onSelect
@@ -250,6 +252,7 @@
 					{yearDomain}
 					{selectedSongKey}
 					rankByClusterHash={clusterRankByHash}
+					{clusterNamesByHash}
 					{onToggleClusterVisibility}
 					onSelectSong={(songKey) => onSelect(songKey)}
 				/>

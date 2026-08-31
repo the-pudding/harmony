@@ -15,6 +15,10 @@
 	import type { YearDomain } from "../../shared/artists/artistStats.js";
 	import { songKeysMatchingGroupFilter } from "../../shared/progressionGroupShare.js";
 	import type { ScatterPoint } from "../components/scatterPoint.js";
+	import {
+		getNamedClusters,
+		resolveClusterNames
+	} from "../components/namedClusters.svelte.js";
 	import type { EmbeddingMethod } from "../embedding/reducers/types.js";
 	import { UMAP_DRIVEN_METHODS } from "../embedding/reducers/types.js";
 	import { buildClusterInputPoints } from "../embedding/clustering/clusterInputPoints.js";
@@ -302,6 +306,10 @@
 		);
 	});
 
+	const clusterNamesByHash = $derived(
+		resolveClusterNames(allClusters, getNamedClusters())
+	);
+
 	const clusterRankByHash = $derived(
 		new Map(
 			clusterSummaries.map((summary, index) => [
@@ -438,6 +446,7 @@
 					{hiddenClusterHashes}
 					{yearDomain}
 					{clusterRankByHash}
+					{clusterNamesByHash}
 					onToggleHighlight={toggleHighlightedSong}
 					onToggleClusterVisibility={toggleClusterVisibility}
 					onSelect={selectSong}
@@ -450,6 +459,7 @@
 					{yearDomain}
 					{selectedSongKey}
 					rankByClusterHash={clusterRankByHash}
+					{clusterNamesByHash}
 					onSelectAllClusters={selectAllClusters}
 					onDeselectAllClusters={deselectAllClusters}
 					onToggleClusterVisibility={toggleClusterVisibility}

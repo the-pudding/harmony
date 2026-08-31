@@ -43,6 +43,12 @@
 		HIGHLIGHT_RING_WIDTH_PX,
 		truncateLabelToWidth
 	} from "./highlightSongMarker.js";
+	import {
+		findNamedClusterFor,
+		getNamedClusters,
+		resolveClusterNames,
+		setClusterName
+	} from "./namedClusters.svelte.js";
 
 	type Props = {
 		points: ScatterPoint[];
@@ -101,7 +107,6 @@
 		'600 11px "JetBrains Mono", ui-monospace, monospace';
 	const CLUSTER_NAME_COLOR = "#f4f4f5";
 	const CLUSTER_LABEL_GAP = 6;
-	const CLUSTER_NAMES_STORAGE_KEY = "harmony-map-cluster-names-v2";
 
 	type NormalizedPoint = ScatterPoint & { nx: number; ny: number };
 	type Position = { nx: number; ny: number };
@@ -127,66 +132,13 @@
 		initialName: string;
 	};
 
-	// A cluster is defined by containing its anchor song, not by its exact
-	// membership — so a named cluster survives points drifting in and out
-	// (a method switch, an embedding-weight tweak, a corpus edit) as long as
-	// the one song it's anchored to is still grouped there. No membership
-	// snapshot or drift-healing is needed: matching is just "is this song in
-	// the current cluster," checked live every render.
-	type NamedCluster = { anchorSongKey: string; name: string };
-
 	let hoveredClusterHit = $state<ClusterHit | null>(null);
 	let namingInput = $state<NamingInputState | null>(null);
 	let namingInputEl = $state<HTMLInputElement | null>(null);
 
-	const loadNamedClusters = (): NamedCluster[] => {
-		if (typeof localStorage === "undefined") return [];
-		try {
-			const raw = localStorage.getItem(CLUSTER_NAMES_STORAGE_KEY);
-			if (!raw) return [];
-			const parsed: unknown = JSON.parse(raw);
-			return Array.isArray(parsed) ? (parsed as NamedCluster[]) : [];
-		} catch {
-			return [];
-		}
-	};
-
-	let namedClusters = $state<NamedCluster[]>(loadNamedClusters());
-
-	const persistNamedClusters = (next: NamedCluster[]) => {
-		namedClusters = next;
-		if (typeof localStorage !== "undefined") {
-			localStorage.setItem(CLUSTER_NAMES_STORAGE_KEY, JSON.stringify(next));
-		}
-		console.log("named clusters:", next);
-	};
-
-	const findNamedClusterFor = (
-		cluster: DensityCluster
-	): NamedCluster | null => {
-		const memberSet = new Set(cluster.songKeys);
-		return (
-			namedClusters.find((entry) => memberSet.has(entry.anchorSongKey)) ?? null
-		);
-	};
-
-	const setClusterName = (anchorSongKey: string, name: string) => {
-		const survivors = namedClusters.filter(
-			(entry) => entry.anchorSongKey !== anchorSongKey
-		);
-		persistNamedClusters(
-			name ? [...survivors, { anchorSongKey, name }] : survivors
-		);
-	};
-
-	const resolvedClusterNames = $derived.by((): Map<string, string> => {
-		const result = new Map<string, string>();
-		for (const cluster of clusters) {
-			const match = findNamedClusterFor(cluster);
-			if (match) result.set(cluster.hash, match.name);
-		}
-		return result;
-	});
+	const resolvedClusterNames = $derived(
+		resolveClusterNames(clusters, getNamedClusters())
+	);
 
 	// Live geometry (centroid + radius) per drawn cluster, recomputed once per
 	// draw() call from that frame's tween positions — cached here so hover and
@@ -594,7 +546,8 @@
 		// of picking a fresh one, so it doesn't leave the old anchor's entry
 		// behind as an orphaned duplicate.
 		const anchorSongKey =
-			findNamedClusterFor(hit.cluster)?.anchorSongKey ?? anchorSongKeyFor(hit);
+			findNamedClusterFor(hit.cluster, getNamedClusters())?.anchorSongKey ??
+			anchorSongKeyFor(hit);
 		namingInput = {
 			cluster: hit.cluster,
 			anchorSongKey,

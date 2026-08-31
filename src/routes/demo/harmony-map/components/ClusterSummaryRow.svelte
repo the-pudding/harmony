@@ -8,6 +8,7 @@
 		summary: ClusterSummary;
 		visible: boolean;
 		rank: number | undefined;
+		name?: string | null;
 		yearDomain: YearDomain | null;
 		selectedSongKey: string | null;
 		onToggleClusterVisibility: (clusterHash: string) => void;
@@ -18,11 +19,15 @@
 		summary,
 		visible,
 		rank,
+		name = null,
 		yearDomain,
 		selectedSongKey,
 		onToggleClusterVisibility,
 		onSelectSong
 	}: Props = $props();
+
+	const songCountLabel = $derived(`${summary.songCount.toLocaleString()} songs`);
+	const title = $derived(name ? `${name} - ${songCountLabel}` : songCountLabel);
 </script>
 
 <li class="cluster-row" class:cluster-row-hidden={!visible}>
@@ -39,7 +44,7 @@
 	<div class="cluster-body">
 		<div class="cluster-header">
 			<span class="cluster-rank">#{rank ?? "?"}</span>
-			<span class="cluster-count">{summary.songCount.toLocaleString()} songs</span>
+			<span class="cluster-title">{title}</span>
 		</div>
 
 		{#if summary.groupShares.length > 0}
@@ -123,9 +128,12 @@
 		color: #71717a;
 	}
 
-	.cluster-count {
+	.cluster-title {
 		font-weight: 600;
 		color: #f4f4f5;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.group-blend-bar {
