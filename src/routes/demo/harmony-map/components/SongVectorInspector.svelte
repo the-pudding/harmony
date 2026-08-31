@@ -16,6 +16,9 @@
 		colorForGroupName,
 		UNGROUPED_LABEL
 	} from "../progressionGroupColors.js";
+	import type { ClusterSummary } from "../embedding/clustering/clusterSummaries.js";
+	import type { YearDomain } from "../../shared/artists/artistStats.js";
+	import ClusterSummaryList from "./ClusterSummaryList.svelte";
 
 	type Props = {
 		songs: SongCoverageEntry[];
@@ -29,8 +32,14 @@
 		explainedVariance: number[] | null;
 		highlightedSongKeys: Set<string>;
 		highlightNeighborsOnMap: boolean;
+		clusterSummaries: ClusterSummary[];
+		clustersAvailable: boolean;
+		hiddenClusterHashes: Set<string>;
+		yearDomain: YearDomain | null;
+		clusterRankByHash: Map<string, number>;
 		onHighlightNeighborsOnMapChange: (highlightNeighborsOnMap: boolean) => void;
 		onToggleHighlight: (songKey: string) => void;
+		onToggleClusterVisibility: (clusterHash: string) => void;
 		onSelect: (songKey: string | null) => void;
 	};
 
@@ -46,8 +55,14 @@
 		explainedVariance,
 		highlightedSongKeys,
 		highlightNeighborsOnMap,
+		clusterSummaries,
+		clustersAvailable,
+		hiddenClusterHashes,
+		yearDomain,
+		clusterRankByHash,
 		onHighlightNeighborsOnMapChange,
 		onToggleHighlight,
+		onToggleClusterVisibility,
 		onSelect
 	}: Props = $props();
 
@@ -223,6 +238,27 @@
 				<dd>{dimensions.length} / {vocabulary.entries.length}</dd>
 			</div>
 		</dl>
+
+		<section class="section">
+			<h3 class="section-title">density clusters</h3>
+			{#if !clustersAvailable}
+				<p class="section-hint">
+					Clusters are only available for UMAP-driven layouts.
+				</p>
+			{:else if clusterSummaries.length === 0}
+				<p class="section-hint">This song is not in any dense cluster.</p>
+			{:else}
+				<ClusterSummaryList
+					summaries={clusterSummaries}
+					{hiddenClusterHashes}
+					{yearDomain}
+					{selectedSongKey}
+					rankByClusterHash={clusterRankByHash}
+					{onToggleClusterVisibility}
+					onSelectSong={(songKey) => onSelect(songKey)}
+				/>
+			{/if}
+		</section>
 
 		<section class="section">
 			<h3 class="section-title">vector dimensions</h3>
@@ -503,6 +539,12 @@
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		color: #71717a;
+	}
+
+	.section-hint {
+		margin: 0;
+		color: #71717a;
+		line-height: 1.5;
 	}
 
 	.section-header {

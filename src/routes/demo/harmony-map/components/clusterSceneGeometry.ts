@@ -1,24 +1,16 @@
 import * as THREE from "three";
 import type { DensityCluster } from "../embedding/clustering/densityClusters.js";
+import { fitClusterEllipsoid3D } from "../embedding/clustering/clusterBounds.js";
 
 export type ClusterSceneGeometry = {
 	cluster: DensityCluster;
 	centroid: THREE.Vector3;
 	memberPositions: THREE.Vector3[];
-	radius: number;
+	semiAxes: THREE.Vector3;
+	quaternion: THREE.Quaternion;
 };
 
 export const CLUSTER_SCENE_RADIUS_PADDING = 0.06;
-
-export const computeClusterRadius = (
-	memberPositions: readonly THREE.Vector3[],
-	centroid: THREE.Vector3,
-	padding: number = CLUSTER_SCENE_RADIUS_PADDING
-): number =>
-	memberPositions.reduce(
-		(max, position) => Math.max(max, position.distanceTo(centroid)),
-		0
-	) + padding;
 
 export const buildClusterSceneGeometries = <T extends { songKey: string }>(
 	clusters: readonly DensityCluster[],
@@ -32,12 +24,19 @@ export const buildClusterSceneGeometries = <T extends { songKey: string }>(
 			.map((point) => toScenePosition(point));
 		if (scenePositions.length === 0) return [];
 
-		const centroid = scenePositions.reduce(
-			(sum, position) => sum.add(position),
-			new THREE.Vector3()
+		const ellipsoid = fitClusterEllipsoid3D(
+			scenePositions,
+			CLUSTER_SCENE_RADIUS_PADDING
 		);
-		centroid.divideScalar(scenePositions.length);
-		const radius = computeClusterRadius(scenePositions, centroid);
+		if (!ellipsoid) return [];
 
-		return [{ cluster, centroid, memberPositions: scenePositions, radius }];
+		return [
+			{
+				cluster,
+				centroid: ellipsoid.centroid,
+				memberPositions: scenePositions,
+				semiAxes: ellipsoid.semiAxes,
+				quaternion: ellipsoid.quaternion
+			}
+		];
 	});

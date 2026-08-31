@@ -12,10 +12,17 @@
 		type DensityCluster
 	} from "../embedding/clustering/densityClusters.js";
 	import {
+		clusterEllipseBoundingRadius,
+		fitClusterEllipse2D,
+		pointInsideClusterEllipse2D,
+		type ClusterEllipse2D
+	} from "../embedding/clustering/clusterBounds.js";
+	import {
 		UMAP_DRIVEN_METHODS,
 		type EmbeddingMethod
 	} from "../embedding/reducers/types.js";
 	import { fillStyleForGroupShares } from "./groupColorBlend.js";
+	import { clusterAnnotationAlpha } from "./clusterAnnotationStyle.js";
 	import SongTooltip from "../../shared/SongTooltip.svelte";
 	import { createDelayedHoverTooltip } from "../../shared/delayedHoverTooltip.svelte.js";
 	import { createClickAfterDragGuard } from "../../shared/clickAfterDragGuard.js";
@@ -47,6 +54,7 @@
 		axisLabels?: ScatterAxisLabels | null;
 		method: EmbeddingMethod;
 		clusters: DensityCluster[];
+		emphasizedClusterHashes: Set<string> | null;
 		onSelect: (songKey: string | null) => void;
 	};
 
@@ -60,6 +68,7 @@
 		axisLabels = null,
 		method,
 		clusters,
+		emphasizedClusterHashes,
 		onSelect
 	}: Props = $props();
 
@@ -109,7 +118,7 @@
 	const clickGuard = createClickAfterDragGuard();
 	onDestroy(() => delayedTooltip.dispose());
 
-	type ClusterGeometry = { x: number; y: number; radius: number };
+	type ClusterGeometry = ClusterEllipse2D;
 	type ClusterHit = { cluster: DensityCluster; geometry: ClusterGeometry };
 	type NamingInputState = {
 		cluster: DensityCluster;
@@ -290,60 +299,68 @@
 				.map((position) => toScreen(position));
 			if (screenPositions.length === 0) continue;
 
-			const centroid = screenPositions.reduce(
-				(sum, point) => ({ x: sum.x + point.x, y: sum.y + point.y }),
-				{ x: 0, y: 0 }
+			const ellipse = fitClusterEllipse2D(
+				screenPositions,
+				CLUSTER_RADIUS_PADDING
 			);
-			centroid.x /= screenPositions.length;
-			centroid.y /= screenPositions.length;
-			const radius =
-				screenPositions.reduce(
-					(max, point) =>
-						Math.max(
-							max,
-							Math.hypot(point.x - centroid.x, point.y - centroid.y)
-						),
-					0
-				) + CLUSTER_RADIUS_PADDING;
+			if (!ellipse) continue;
+
+			const boundingRadius = clusterEllipseBoundingRadius(ellipse);
 
 			clusterGeometryCache.push({
 				cluster,
-				geometry: { x: centroid.x, y: centroid.y, radius }
+				geometry: ellipse
 			});
 
 			const name = resolvedClusterNames.get(cluster.hash);
+			const strokeAlpha = clusterAnnotationAlpha(
+				emphasizedClusterHashes,
+				cluster.hash,
+				name !== undefined,
+				CLUSTER_UNNAMED_STROKE_ALPHA
+			);
 
-			context.globalAlpha = name ? 1 : CLUSTER_UNNAMED_STROKE_ALPHA;
+			context.globalAlpha = strokeAlpha;
 			context.setLineDash(CLUSTER_DASH_PATTERN);
 			context.strokeStyle = CLUSTER_STROKE_COLOR;
 			context.lineWidth = CLUSTER_STROKE_WIDTH;
 			context.beginPath();
-			context.arc(centroid.x, centroid.y, radius, 0, Math.PI * 2);
+			context.ellipse(
+				ellipse.centroid.x,
+				ellipse.centroid.y,
+				ellipse.semiAxisX,
+				ellipse.semiAxisY,
+				ellipse.rotationRadians,
+				0,
+				Math.PI * 2
+			);
 			context.stroke();
 			context.setLineDash([]);
 			context.globalAlpha = 1;
 
 			if (name) {
+				context.globalAlpha = strokeAlpha;
 				context.fillStyle = CLUSTER_NAME_COLOR;
 				context.font = CLUSTER_NAME_FONT;
 				context.textAlign = "center";
 				context.textBaseline = "alphabetic";
 				context.fillText(
 					name,
-					centroid.x,
-					centroid.y - radius - CLUSTER_LABEL_GAP
+					ellipse.centroid.x,
+					ellipse.centroid.y - boundingRadius - CLUSTER_LABEL_GAP
 				);
 			}
 
 			if (hoveredClusterHit?.cluster.hash === cluster.hash) {
+				context.globalAlpha = strokeAlpha;
 				context.fillStyle = CLUSTER_LABEL_COLOR;
 				context.font = CLUSTER_LABEL_FONT;
 				context.textAlign = "center";
 				context.textBaseline = "top";
 				context.fillText(
 					`${screenPositions.length}`,
-					centroid.x,
-					centroid.y + radius + CLUSTER_LABEL_GAP
+					ellipse.centroid.x,
+					ellipse.centroid.y + boundingRadius + CLUSTER_LABEL_GAP
 				);
 				context.textBaseline = "alphabetic";
 			}
@@ -493,14 +510,15 @@
 		step();
 	};
 
+	const clusterHitArea = (geometry: ClusterGeometry): number =>
+		geometry.semiAxisX * geometry.semiAxisY;
+
 	const findClusterAt = (anchor: HoverCardAnchor): ClusterHit | null =>
 		clusterGeometryCache.reduce<ClusterHit | null>((best, hit) => {
-			const distance = Math.hypot(
-				hit.geometry.x - anchor.x,
-				hit.geometry.y - anchor.y
-			);
-			if (distance > hit.geometry.radius) return best;
-			return !best || hit.geometry.radius < best.geometry.radius ? hit : best;
+			if (!pointInsideClusterEllipse2D(anchor, hit.geometry)) return best;
+			return !best || clusterHitArea(hit.geometry) < clusterHitArea(best.geometry)
+				? hit
+				: best;
 		}, null);
 
 	const findPointAt = (anchor: HoverCardAnchor): string | null => {
@@ -558,8 +576,8 @@
 			if (!position) continue;
 			const screen = toScreen(position);
 			const distance = Math.hypot(
-				screen.x - hit.geometry.x,
-				screen.y - hit.geometry.y
+				screen.x - hit.geometry.centroid.x,
+				screen.y - hit.geometry.centroid.y
 			);
 			if (!closest || distance < closest.distance) {
 				closest = { songKey, distance };
@@ -577,8 +595,13 @@
 		namingInput = {
 			cluster: hit.cluster,
 			anchorSongKey,
-			x: hit.geometry.x,
-			y: Math.max(24, hit.geometry.y - hit.geometry.radius - CLUSTER_LABEL_GAP),
+			x: hit.geometry.centroid.x,
+			y: Math.max(
+				24,
+				hit.geometry.centroid.y -
+					clusterEllipseBoundingRadius(hit.geometry) -
+					CLUSTER_LABEL_GAP
+			),
 			initialName: resolvedClusterNames.get(hit.cluster.hash) ?? ""
 		};
 	};
@@ -665,6 +688,7 @@
 		void neighborSongKeys;
 		void drawablePoints;
 		void clusters;
+		void emphasizedClusterHashes;
 		void resolvedClusterNames;
 		void highlightedSongKeys;
 		void hoveredClusterHit;

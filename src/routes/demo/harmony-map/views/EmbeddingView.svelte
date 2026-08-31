@@ -279,6 +279,38 @@
 	const deselectAllClusters = () => {
 		hiddenClusterHashes = new Set(allClusters.map((cluster) => cluster.hash));
 	};
+
+	const selectSong = (songKey: string | null) => {
+		selectedSongKey = songKey;
+		if (songKey !== null) inspectorTab = "song";
+	};
+
+	const emphasizedClusterHashes = $derived.by((): Set<string> | null => {
+		const songKey = selectedSongKey;
+		if (songKey === null) return null;
+		return new Set(
+			allClusters
+				.filter((cluster) => cluster.songKeys.includes(songKey))
+				.map((cluster) => cluster.hash)
+		);
+	});
+
+	const clusterRankByHash = $derived(
+		new Map(
+			clusterSummaries.map((summary, index) => [
+				summary.cluster.hash,
+				index + 1
+			])
+		)
+	);
+
+	const selectedSongClusterSummaries = $derived.by(() => {
+		const songKey = selectedSongKey;
+		if (songKey === null) return [];
+		return clusterSummaries.filter((summary) =>
+			summary.cluster.songKeys.includes(songKey)
+		);
+	});
 </script>
 
 <div class="embedding-view">
@@ -341,11 +373,10 @@
 					{highlightedSongKeys}
 					{visibleSongKeys}
 					clusters={mapClusters}
+					{emphasizedClusterHashes}
 					showTimeAxisGizmo={viewMode === "3dTime"}
 					enableSceneLighting={viewMode === "3d"}
-					onSelect={(songKey) => {
-						selectedSongKey = songKey;
-					}}
+					onSelect={selectSong}
 				/>
 			{:else}
 				<EmbeddingScatter
@@ -357,10 +388,9 @@
 					{visibleSongKeys}
 					method={embedding.method}
 					clusters={mapClusters}
+					{emphasizedClusterHashes}
 					axisLabels={AXIS_LABELS_BY_METHOD[embedding.method]}
-					onSelect={(songKey) => {
-						selectedSongKey = songKey;
-					}}
+					onSelect={selectSong}
 				/>
 			{/if}
 			{#if isComputing}
@@ -397,13 +427,17 @@
 					explainedVariance={embedding.result.explainedVariance}
 					{highlightedSongKeys}
 					highlightNeighborsOnMap={highlightNeighborsOnMap}
+					clusterSummaries={selectedSongClusterSummaries}
+					{clustersAvailable}
+					{hiddenClusterHashes}
+					{yearDomain}
+					{clusterRankByHash}
 					onHighlightNeighborsOnMapChange={(next) => {
 						highlightNeighborsOnMap = next;
 					}}
 					onToggleHighlight={toggleHighlightedSong}
-					onSelect={(songKey) => {
-						selectedSongKey = songKey;
-					}}
+					onToggleClusterVisibility={toggleClusterVisibility}
+					onSelect={selectSong}
 				/>
 			{:else if inspectorTab === "clusters"}
 				<ClusterInspector
@@ -412,12 +446,11 @@
 					{hiddenClusterHashes}
 					{yearDomain}
 					{selectedSongKey}
+					rankByClusterHash={clusterRankByHash}
 					onSelectAllClusters={selectAllClusters}
 					onDeselectAllClusters={deselectAllClusters}
 					onToggleClusterVisibility={toggleClusterVisibility}
-					onSelectSong={(songKey) => {
-						selectedSongKey = songKey;
-					}}
+					onSelectSong={selectSong}
 				/>
 			{:else}
 				<ArtistInspector
@@ -428,9 +461,7 @@
 					onSelectArtist={(artistName) => {
 						selectedArtistName = artistName;
 					}}
-					onSelectSong={(songKey) => {
-						selectedSongKey = songKey;
-					}}
+					onSelectSong={selectSong}
 				/>
 			{/if}
 		</aside>

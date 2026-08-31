@@ -27,8 +27,10 @@
 	import { SCATTER_DIMMED_ALPHA, SCATTER_NORMAL_ALPHA } from "./scatterPoint.js";
 	import type { DensityCluster } from "../embedding/clustering/densityClusters.js";
 	import { buildClusterSceneGeometries } from "./clusterSceneGeometry.js";
+	import { clusterMeshOpacity } from "./clusterAnnotationStyle.js";
 	import {
 		createSceneClusterSpheres,
+		CLUSTER_SPHERE_OPACITY,
 		type SceneClusterSpheres
 	} from "./sceneClusterSpheres.js";
 	import { createTimeAxisGizmo, type TimeAxisGizmo } from "./timeAxisGizmo.js";
@@ -47,6 +49,7 @@
 		highlightedSongKeys: Set<string>;
 		visibleSongKeys?: Set<string> | null;
 		clusters: DensityCluster[];
+		emphasizedClusterHashes: Set<string> | null;
 		showTimeAxisGizmo?: boolean;
 		enableSceneLighting?: boolean;
 		onSelect: (songKey: string | null) => void;
@@ -60,6 +63,7 @@
 		highlightedSongKeys,
 		visibleSongKeys = null,
 		clusters,
+		emphasizedClusterHashes,
 		showTimeAxisGizmo = false,
 		enableSceneLighting = false,
 		onSelect
@@ -203,7 +207,13 @@
 			sceneClusterSpheres.clear();
 			return;
 		}
-		sceneClusterSpheres.sync(clusterSceneGeometries);
+		sceneClusterSpheres.sync(clusterSceneGeometries, (clusterHash) =>
+			clusterMeshOpacity(
+				emphasizedClusterHashes,
+				clusterHash,
+				CLUSTER_SPHERE_OPACITY
+			)
+		);
 	};
 
 	const hexToThreeColor = (hex: string): THREE.Color => new THREE.Color(hex);
@@ -684,6 +694,7 @@
 
 	$effect(() => {
 		void clusters;
+		void emphasizedClusterHashes;
 		void drawablePoints;
 		untrack(() => {
 			rebuildClusterSceneGeometries();
