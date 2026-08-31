@@ -9,7 +9,6 @@
 	} from "d3";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import {
-		findDensityClusters,
 		type DensityCluster
 	} from "../embedding/clustering/densityClusters.js";
 	import {
@@ -47,6 +46,7 @@
 		visibleSongKeys?: Set<string> | null;
 		axisLabels?: ScatterAxisLabels | null;
 		method: EmbeddingMethod;
+		clusters: DensityCluster[];
 		onSelect: (songKey: string | null) => void;
 	};
 
@@ -59,6 +59,7 @@
 		visibleSongKeys = null,
 		axisLabels = null,
 		method,
+		clusters,
 		onSelect
 	}: Props = $props();
 
@@ -107,7 +108,6 @@
 	const delayedTooltip = createDelayedHoverTooltip();
 	const clickGuard = createClickAfterDragGuard();
 	onDestroy(() => delayedTooltip.dispose());
-	let showClusters = $state(true);
 
 	type ClusterGeometry = { x: number; y: number; radius: number };
 	type ClusterHit = { cluster: DensityCluster; geometry: ClusterGeometry };
@@ -245,20 +245,6 @@
 
 	// Membership only — geometry is drawn from each frame's live tween
 	// positions in drawClusters(), so circles animate along with their dots.
-	// Every cluster DBSCAN finds gets drawn — findDensityClusters already
-	// bounds the count via MIN_CLUSTER_POINTS, so there's no separate cap here.
-	const clusters = $derived(
-		showClusters && clustersAvailable
-			? findDensityClusters(
-					drawablePoints.map((point) => ({
-						songKey: point.songKey,
-						x: point.nx,
-						y: point.ny
-					}))
-				)
-			: []
-	);
-
 	const plotWidth = $derived(Math.max(0, width - PLOT_MARGIN * 2));
 	const plotHeight = $derived(Math.max(0, height - PLOT_MARGIN * 2));
 
@@ -724,17 +710,6 @@
 	<canvas bind:this={canvasEl} style:width="{width}px" style:height="{height}px"
 	></canvas>
 
-	{#if clustersAvailable}
-		<button
-			class="cluster-toggle"
-			type="button"
-			aria-pressed={showClusters}
-			onclick={() => (showClusters = !showClusters)}
-		>
-			clusters: {showClusters ? "on" : "off"}
-		</button>
-	{/if}
-
 	{#if tooltipSong && tooltipVisible && delayedTooltip.tooltipAnchor}
 		<div class="tooltip" style={tooltipStyle}>
 			<SongTooltip song={tooltipSong} />
@@ -793,31 +768,6 @@
 	.cluster-name-input:focus {
 		outline: none;
 		border-color: rgba(129, 140, 248, 0.9);
-	}
-
-	.cluster-toggle {
-		position: absolute;
-		top: 0.75rem;
-		right: 0.75rem;
-		font-family: inherit;
-		font-size: 0.65rem;
-		color: #a1a1aa;
-		padding: 0.25rem 0.625rem;
-		border-radius: 9999px;
-		border: 1px solid rgba(63, 63, 70, 0.8);
-		background: rgba(9, 9, 11, 0.75);
-		cursor: pointer;
-	}
-
-	.cluster-toggle:hover {
-		color: #e4e4e7;
-		border-color: rgba(113, 113, 122, 0.9);
-	}
-
-	.cluster-toggle[aria-pressed="true"] {
-		border-color: rgba(99, 102, 241, 0.5);
-		background: rgba(99, 102, 241, 0.18);
-		color: #e4e4e7;
 	}
 
 	.tooltip {

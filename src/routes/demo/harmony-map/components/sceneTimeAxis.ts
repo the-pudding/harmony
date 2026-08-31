@@ -4,14 +4,16 @@ import {
 	axisValueToSceneZ,
 	buildDecadeAxisTicks,
 	buildYearAxisExtent,
-	type DecadeAxisTick,
-	type YearAxisExtent
+	type DecadeAxisTick
 } from "../embedding/vectors/songYearAxis.js";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 
 const TIME_AXIS_LINE_COLOR = 0x52525b;
 const TIME_AXIS_TICK_COLOR = 0x71717a;
-const TIME_AXIS_TICK_HALF_LENGTH = 0.06;
+const TIME_AXIS_LINE_THICKNESS = 0.022;
+const TIME_AXIS_TICK_HALF_LENGTH = 0.09;
+const TIME_AXIS_TICK_THICKNESS = 0.014;
+const TIME_DECADE_LABEL_FONT_SIZE_REM = 0.75;
 
 export type SceneTimeAxis = {
 	sync: (songs: readonly GroupedSong[], sceneScale: number) => void;
@@ -23,51 +25,49 @@ const createDecadeLabelElement = (label: string): HTMLDivElement => {
 	const element = document.createElement("div");
 	element.className = "harmony-time-decade-label";
 	element.textContent = label;
+	element.style.fontSize = `${TIME_DECADE_LABEL_FONT_SIZE_REM}rem`;
 	return element;
 };
 
-const buildAxisLineGeometry = (
-	extent: YearAxisExtent,
-	sceneScale: number
-): THREE.BufferGeometry => {
-	const minZ = axisValueToSceneZ(0, sceneScale);
-	const maxZ = axisValueToSceneZ(1, sceneScale);
-	const positions = new Float32Array([0, 0, minZ, 0, 0, maxZ]);
-	const geometry = new THREE.BufferGeometry();
-	geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-	return geometry;
+const createAxisLineMesh = (
+	minZ: number,
+	maxZ: number,
+	material: THREE.MeshBasicMaterial
+): THREE.Mesh => {
+	const length = Math.abs(maxZ - minZ);
+	const geometry = new THREE.BoxGeometry(
+		TIME_AXIS_LINE_THICKNESS,
+		TIME_AXIS_LINE_THICKNESS,
+		length
+	);
+	const mesh = new THREE.Mesh(geometry, material);
+	mesh.position.set(0, 0, (minZ + maxZ) / 2);
+	return mesh;
 };
 
-const buildTickGeometries = (
+const createTickMeshes = (
 	ticks: DecadeAxisTick[],
-	sceneScale: number
-): THREE.BufferGeometry => {
-	const positions: number[] = [];
-	for (const tick of ticks) {
+	sceneScale: number,
+	material: THREE.MeshBasicMaterial
+): THREE.Mesh[] =>
+	ticks.map((tick) => {
 		const z = axisValueToSceneZ(tick.axisValue, sceneScale);
-		positions.push(
-			-TIME_AXIS_TICK_HALF_LENGTH,
-			0,
-			z,
-			TIME_AXIS_TICK_HALF_LENGTH,
-			0,
-			z
+		const geometry = new THREE.BoxGeometry(
+			TIME_AXIS_TICK_HALF_LENGTH * 2,
+			TIME_AXIS_TICK_THICKNESS,
+			TIME_AXIS_TICK_THICKNESS
 		);
-	}
-	const geometry = new THREE.BufferGeometry();
-	geometry.setAttribute(
-		"position",
-		new THREE.BufferAttribute(new Float32Array(positions), 3)
-	);
-	return geometry;
-};
+		const mesh = new THREE.Mesh(geometry, material);
+		mesh.position.set(0, 0, z);
+		return mesh;
+	});
 
 export const createSceneTimeAxis = (scene: THREE.Scene): SceneTimeAxis => {
 	const axisGroup = new THREE.Group();
 	scene.add(axisGroup);
 
-	let axisLine: THREE.Line | null = null;
-	let tickLines: THREE.LineSegments | null = null;
+	let axisLine: THREE.Mesh | null = null;
+	const tickMeshes: THREE.Mesh[] = [];
 	const decadeLabels = new Map<number, CSS2DObject>();
 	const disposables: Array<THREE.Material | THREE.BufferGeometry> = [];
 
@@ -75,9 +75,9 @@ export const createSceneTimeAxis = (scene: THREE.Scene): SceneTimeAxis => {
 		for (const label of decadeLabels.values()) axisGroup.remove(label);
 		decadeLabels.clear();
 		if (axisLine) axisGroup.remove(axisLine);
-		if (tickLines) axisGroup.remove(tickLines);
+		for (const tickMesh of tickMeshes) axisGroup.remove(tickMesh);
+		tickMeshes.length = 0;
 		axisLine = null;
-		tickLines = null;
 		for (const disposable of disposables) disposable.dispose();
 		disposables.length = 0;
 	};
@@ -87,29 +87,36 @@ export const createSceneTimeAxis = (scene: THREE.Scene): SceneTimeAxis => {
 		const extent = buildYearAxisExtent(songs);
 		if (extent === null) return;
 
-		const axisGeometry = buildAxisLineGeometry(extent, sceneScale);
-		const axisMaterial = new THREE.LineBasicMaterial({
+		const minZ = axisValueToSceneZ(0, sceneScale);
+		const maxZ = axisValueToSceneZ(1, sceneScale);
+		const axisMaterial = new THREE.MeshBasicMaterial({
 			color: TIME_AXIS_LINE_COLOR,
 			transparent: true,
-			opacity: 0.85,
+			opacity: 0.9,
 			depthWrite: false
 		});
-		axisLine = new THREE.Line(axisGeometry, axisMaterial);
+		axisLine = createAxisLineMesh(minZ, maxZ, axisMaterial);
 		axisGroup.add(axisLine);
-		disposables.push(axisGeometry, axisMaterial);
+		disposables.push(axisLine.geometry, axisMaterial);
 
 		const ticks = buildDecadeAxisTicks(extent);
 		if (ticks.length > 0) {
-			const tickGeometry = buildTickGeometries(ticks, sceneScale);
-			const tickMaterial = new THREE.LineBasicMaterial({
+			const tickMaterial = new THREE.MeshBasicMaterial({
 				color: TIME_AXIS_TICK_COLOR,
 				transparent: true,
-				opacity: 0.9,
+				opacity: 0.95,
 				depthWrite: false
 			});
-			tickLines = new THREE.LineSegments(tickGeometry, tickMaterial);
-			axisGroup.add(tickLines);
-			disposables.push(tickGeometry, tickMaterial);
+			disposables.push(tickMaterial);
+			for (const tickMesh of createTickMeshes(
+				ticks,
+				sceneScale,
+				tickMaterial
+			)) {
+				axisGroup.add(tickMesh);
+				tickMeshes.push(tickMesh);
+				disposables.push(tickMesh.geometry);
+			}
 		}
 
 		for (const tick of ticks) {

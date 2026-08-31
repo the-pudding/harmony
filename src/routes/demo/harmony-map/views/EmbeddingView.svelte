@@ -3,6 +3,7 @@
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { SongCoverageEntry } from "../../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import ArtistInspector from "../components/ArtistInspector.svelte";
+	import ClusterInspector from "../components/ClusterInspector.svelte";
 	import EmbeddingMethodSelector from "../components/EmbeddingMethodSelector.svelte";
 	import EmbeddingScatter from "../components/EmbeddingScatter.svelte";
 	import EmbeddingScatter3D from "../components/EmbeddingScatter3D.svelte";
@@ -14,6 +15,10 @@
 	import { songKeysMatchingGroupFilter } from "../../shared/progressionGroupShare.js";
 	import type { ScatterPoint } from "../components/scatterPoint.js";
 	import type { EmbeddingMethod } from "../embedding/reducers/types.js";
+	import { UMAP_DRIVEN_METHODS } from "../embedding/reducers/types.js";
+	import { buildClusterInputPoints } from "../embedding/clustering/clusterInputPoints.js";
+	import { buildClusterSummaries } from "../embedding/clustering/clusterSummaries.js";
+	import { findDensityClusters } from "../embedding/clustering/densityClusters.js";
 	import type { EmbeddingState } from "../embedding/state/createEmbeddingState.svelte.js";
 	import {
 		findNearestNeighbors,
@@ -56,11 +61,12 @@
 		scaleSplit: { x: "minor ← scale → major", y: "chord-gram UMAP" }
 	};
 
-	type InspectorTab = "song" | "artists";
+	type InspectorTab = "song" | "artists" | "clusters";
 
 	const INSPECTOR_TABS: { id: InspectorTab; label: string }[] = [
 		{ id: "song", label: "song" },
-		{ id: "artists", label: "artists" }
+		{ id: "artists", label: "artists" },
+		{ id: "clusters", label: "clusters" }
 	];
 
 	let selectedSongKey = $state<string | null>(null);
@@ -88,6 +94,9 @@
 
 	let highlightedSongKeys = $state<Set<string>>(loadHighlightedSongKeys());
 	let highlightNeighborsOnMap = $state(false);
+	let hiddenClusterHashes = $state<Set<string>>(new Set());
+
+	const CLUSTERABLE_METHODS = new Set<EmbeddingMethod>(UMAP_DRIVEN_METHODS);
 
 	const toggleHighlightedSong = (songKey: string) => {
 		const next = new Set(highlightedSongKeys);
@@ -202,6 +211,49 @@
 	);
 
 	const isComputing = $derived(embedding.status === "computing");
+
+	const clustersAvailable = $derived(
+		CLUSTERABLE_METHODS.has(embedding.method) && viewMode !== "3dTime"
+	);
+
+	const clusterInputPoints = $derived(
+		buildClusterInputPoints(
+			visibleSongKeys === null
+				? points
+				: points.filter((point) => visibleSongKeys.has(point.songKey))
+		)
+	);
+
+	const allClusters = $derived(
+		clustersAvailable ? findDensityClusters(clusterInputPoints) : []
+	);
+
+	const mapClusters = $derived(
+		allClusters.filter((cluster) => !hiddenClusterHashes.has(cluster.hash))
+	);
+
+	const clusterSummaries = $derived(
+		buildClusterSummaries(
+			allClusters,
+			(songKey) => groupSharesBySongKey.get(songKey) ?? [],
+			(songKey) => songByKey.get(songKey)?.year ?? null
+		)
+	);
+
+	const toggleClusterVisibility = (clusterHash: string) => {
+		const next = new Set(hiddenClusterHashes);
+		if (next.has(clusterHash)) next.delete(clusterHash);
+		else next.add(clusterHash);
+		hiddenClusterHashes = next;
+	};
+
+	const selectAllClusters = () => {
+		hiddenClusterHashes = new Set();
+	};
+
+	const deselectAllClusters = () => {
+		hiddenClusterHashes = new Set(allClusters.map((cluster) => cluster.hash));
+	};
 </script>
 
 <div class="embedding-view">
@@ -263,6 +315,7 @@
 					{neighborSongKeys}
 					{highlightedSongKeys}
 					{visibleSongKeys}
+					clusters={mapClusters}
 					showTimeAxisGizmo={viewMode === "3dTime"}
 					onSelect={(songKey) => {
 						selectedSongKey = songKey;
@@ -277,6 +330,7 @@
 					{highlightedSongKeys}
 					{visibleSongKeys}
 					method={embedding.method}
+					clusters={mapClusters}
 					axisLabels={AXIS_LABELS_BY_METHOD[embedding.method]}
 					onSelect={(songKey) => {
 						selectedSongKey = songKey;
@@ -324,6 +378,15 @@
 					onSelect={(songKey) => {
 						selectedSongKey = songKey;
 					}}
+				/>
+			{:else if inspectorTab === "clusters"}
+				<ClusterInspector
+					summaries={clusterSummaries}
+					{clustersAvailable}
+					{hiddenClusterHashes}
+					onSelectAllClusters={selectAllClusters}
+					onDeselectAllClusters={deselectAllClusters}
+					onToggleClusterVisibility={toggleClusterVisibility}
 				/>
 			{:else}
 				<ArtistInspector

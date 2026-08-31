@@ -25,6 +25,12 @@
 	} from "../../shared/hoverCardPosition.js";
 	import type { ScatterPoint } from "./scatterPoint.js";
 	import { SCATTER_DIMMED_ALPHA, SCATTER_NORMAL_ALPHA } from "./scatterPoint.js";
+	import type { DensityCluster } from "../embedding/clustering/densityClusters.js";
+	import { buildClusterSceneGeometries } from "./clusterSceneGeometry.js";
+	import {
+		createSceneClusterSpheres,
+		type SceneClusterSpheres
+	} from "./sceneClusterSpheres.js";
 	import { createTimeAxisGizmo, type TimeAxisGizmo } from "./timeAxisGizmo.js";
 	import { createSceneTimeAxis, type SceneTimeAxis } from "./sceneTimeAxis.js";
 
@@ -35,6 +41,7 @@
 		neighborSongKeys: Set<string>;
 		highlightedSongKeys: Set<string>;
 		visibleSongKeys?: Set<string> | null;
+		clusters: DensityCluster[];
 		showTimeAxisGizmo?: boolean;
 		onSelect: (songKey: string | null) => void;
 	};
@@ -46,6 +53,7 @@
 		neighborSongKeys,
 		highlightedSongKeys,
 		visibleSongKeys = null,
+		clusters,
 		showTimeAxisGizmo = false,
 		onSelect
 	}: Props = $props();
@@ -95,6 +103,8 @@
 
 	const highlightLabels = new Map<string, CSS2DObject>();
 	const emphasisRings = new Map<string, CSS2DObject>();
+	let clusterSceneGeometries: ReturnType<typeof buildClusterSceneGeometries> = [];
+	let sceneClusterSpheres: SceneClusterSpheres | null = null;
 
 	const normalize = (value: number, min: number, max: number): number =>
 		max === min ? 0.5 : (value - min) / (max - min);
@@ -170,6 +180,23 @@
 			(point.ny - 0.5) * SCENE_SCALE,
 			(point.nz - 0.5) * SCENE_SCALE
 		);
+
+	const rebuildClusterSceneGeometries = () => {
+		clusterSceneGeometries = buildClusterSceneGeometries(
+			clusters,
+			pointBySongKey,
+			toScenePosition
+		);
+	};
+
+	const syncClusterSpheres = () => {
+		if (!sceneClusterSpheres) return;
+		if (clusters.length === 0) {
+			sceneClusterSpheres.clear();
+			return;
+		}
+		sceneClusterSpheres.sync(clusterSceneGeometries);
+	};
 
 	const hexToThreeColor = (hex: string): THREE.Color => new THREE.Color(hex);
 
@@ -512,6 +539,8 @@
 		timeAxisGizmo = null;
 		sceneTimeAxis?.dispose();
 		sceneTimeAxis = null;
+		sceneClusterSpheres?.dispose();
+		sceneClusterSpheres = null;
 		scene = null;
 		camera = null;
 		renderer = null;
@@ -573,6 +602,7 @@
 			);
 			scene.add(pointsMesh);
 			sceneTimeAxis = createSceneTimeAxis(scene);
+			sceneClusterSpheres = createSceneClusterSpheres(scene);
 
 			resizeObserver = new ResizeObserver((entries) => {
 				const entry = entries[0];
@@ -605,6 +635,15 @@
 			labelRenderer?.domElement.remove();
 			disposeScene();
 		};
+	});
+
+	$effect(() => {
+		void clusters;
+		void drawablePoints;
+		untrack(() => {
+			rebuildClusterSceneGeometries();
+			syncClusterSpheres();
+		});
 	});
 
 	$effect(() => {
@@ -761,7 +800,7 @@
 	.scatter-3d :global(.harmony-time-decade-label) {
 		transform: translate(-50%, -50%);
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
-		font-size: 0.6rem;
+		font-size: 0.75rem;
 		color: #a1a1aa;
 		white-space: nowrap;
 		pointer-events: none;
