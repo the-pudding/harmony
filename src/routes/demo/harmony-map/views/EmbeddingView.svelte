@@ -12,6 +12,7 @@
 	import SongVectorInspector from "../components/SongVectorInspector.svelte";
 	import WeightingControls from "../components/WeightingControls.svelte";
 	import { buildArtistSummaries } from "../../shared/artists/artistStats.js";
+	import type { YearDomain } from "../../shared/artists/artistStats.js";
 	import { songKeysMatchingGroupFilter } from "../../shared/progressionGroupShare.js";
 	import type { ScatterPoint } from "../components/scatterPoint.js";
 	import type { EmbeddingMethod } from "../embedding/reducers/types.js";
@@ -114,6 +115,19 @@
 	const songByKey = $derived(
 		new Map(songs.map((song) => [song.songKey, song]))
 	);
+
+	const coverageByKey = $derived(
+		new Map(songCoverages.map((coverage) => [coverage.songKey, coverage]))
+	);
+
+	const yearDomain = $derived.by((): YearDomain | null => {
+		const years = songs.flatMap((song) =>
+			song.year === undefined ? [] : [song.year]
+		);
+		return years.length === 0
+			? null
+			: { min: Math.min(...years), max: Math.max(...years) };
+	});
 
 	const artistSummaries = $derived(
 		buildArtistSummaries(songCoverages, songByKey)
@@ -236,7 +250,18 @@
 		buildClusterSummaries(
 			allClusters,
 			(songKey) => groupSharesBySongKey.get(songKey) ?? [],
-			(songKey) => songByKey.get(songKey)?.year ?? null
+			(songKey) => songByKey.get(songKey)?.year ?? null,
+			(songKey) => {
+				const coverage = coverageByKey.get(songKey);
+				const song = songByKey.get(songKey);
+				if (!coverage && !song) return null;
+				return {
+					title: coverage?.title ?? song?.title ?? songKey,
+					artists: coverage?.artists ?? song?.artists ?? [],
+					coveragePercent: coverage?.coveragePercent ?? 0,
+					matchingProgressions: coverage?.matchingProgressions ?? []
+				};
+			}
 		)
 	);
 
@@ -384,9 +409,14 @@
 					summaries={clusterSummaries}
 					{clustersAvailable}
 					{hiddenClusterHashes}
+					{yearDomain}
+					{selectedSongKey}
 					onSelectAllClusters={selectAllClusters}
 					onDeselectAllClusters={deselectAllClusters}
 					onToggleClusterVisibility={toggleClusterVisibility}
+					onSelectSong={(songKey) => {
+						selectedSongKey = songKey;
+					}}
 				/>
 			{:else}
 				<ArtistInspector

@@ -1,8 +1,16 @@
-import { toCalendarYear } from "../../../../../data/songYear.js";
 import type { GroupShare } from "../../components/groupColorBlend.js";
 import type { DensityCluster } from "./densityClusters.js";
 
 const TOP_GROUP_SHARE_COUNT = 4;
+
+export type ClusterTimelineSong = {
+	songKey: string;
+	title: string;
+	artists: string[];
+	year: number | null;
+	coveragePercent: number;
+	matchingProgressions: string[];
+};
 
 export type ClusterSummary = {
 	cluster: DensityCluster;
@@ -10,32 +18,42 @@ export type ClusterSummary = {
 	groupShares: GroupShare[];
 	dominantGroupName: string | null;
 	yearRange: { min: number; max: number } | null;
-	medianYear: number | null;
+	timelineSongs: ClusterTimelineSong[];
 };
 
-const median = (values: readonly number[]): number => {
-	const sorted = [...values].sort((first, second) => first - second);
-	const middle = Math.floor(sorted.length / 2);
-	return sorted.length % 2 === 0
-		? (sorted[middle - 1] + sorted[middle]) / 2
-		: sorted[middle];
+type ClusterSongMetadata = {
+	title: string;
+	artists: string[];
+	coveragePercent: number;
+	matchingProgressions: string[];
 };
 
 export const buildClusterSummaries = (
 	clusters: readonly DensityCluster[],
 	getGroupShares: (songKey: string) => readonly GroupShare[],
-	getYear: (songKey: string) => number | null
+	getYear: (songKey: string) => number | null,
+	getSongMetadata: (songKey: string) => ClusterSongMetadata | null
 ): ClusterSummary[] =>
 	clusters.map((cluster) => {
 		const groupTotals = new Map<string, number>();
 		const years: number[] = [];
+		const timelineSongs: ClusterTimelineSong[] = [];
 
 		for (const songKey of cluster.songKeys) {
 			for (const { groupName, share } of getGroupShares(songKey)) {
 				groupTotals.set(groupName, (groupTotals.get(groupName) ?? 0) + share);
 			}
 			const year = getYear(songKey);
-			if (year !== null) years.push(toCalendarYear(year));
+			if (year !== null) years.push(year);
+			const metadata = getSongMetadata(songKey);
+			timelineSongs.push({
+				songKey,
+				title: metadata?.title ?? songKey,
+				artists: metadata?.artists ?? [],
+				year,
+				coveragePercent: metadata?.coveragePercent ?? 0,
+				matchingProgressions: metadata?.matchingProgressions ?? []
+			});
 		}
 
 		const groupTotal = [...groupTotals.values()].reduce(
@@ -67,6 +85,6 @@ export const buildClusterSummaries = (
 							min: sortedYears[0],
 							max: sortedYears[sortedYears.length - 1]
 						},
-			medianYear: sortedYears.length === 0 ? null : median(sortedYears)
+			timelineSongs
 		};
 	});

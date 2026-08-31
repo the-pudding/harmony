@@ -1,4 +1,6 @@
 <script lang="ts">
+	import SongReleaseTimeline from "../../define-chord-progression/components/SongReleaseTimeline.svelte";
+	import type { YearDomain } from "../../shared/artists/artistStats.js";
 	import type { ClusterSummary } from "../embedding/clustering/clusterSummaries.js";
 	import { colorForGroupName } from "../progressionGroupColors.js";
 
@@ -6,18 +8,24 @@
 		summaries: ClusterSummary[];
 		clustersAvailable: boolean;
 		hiddenClusterHashes: Set<string>;
+		yearDomain: YearDomain | null;
+		selectedSongKey: string | null;
 		onSelectAllClusters: () => void;
 		onDeselectAllClusters: () => void;
 		onToggleClusterVisibility: (clusterHash: string) => void;
+		onSelectSong: (songKey: string) => void;
 	};
 
 	const {
 		summaries,
 		clustersAvailable,
 		hiddenClusterHashes,
+		yearDomain,
+		selectedSongKey,
 		onSelectAllClusters,
 		onDeselectAllClusters,
-		onToggleClusterVisibility
+		onToggleClusterVisibility,
+		onSelectSong
 	}: Props = $props();
 
 	const formatYearRange = (summary: ClusterSummary): string => {
@@ -100,15 +108,17 @@
 								<span class="dominant-group"
 									>{summary.dominantGroupName ?? "ungrouped"}</span
 								>
-								{#if summary.medianYear !== null}
-									<span class="median-year"
-										>median {Math.round(summary.medianYear)}</span
-									>
-								{/if}
 							</div>
 						{:else}
 							<p class="cluster-meta cluster-meta-muted">no core group matches</p>
 						{/if}
+
+						<SongReleaseTimeline
+							songs={summary.timelineSongs}
+							selectedSongKey={selectedSongKey ?? ""}
+							{yearDomain}
+							{onSelectSong}
+						/>
 					</div>
 				</li>
 			{/each}
@@ -252,7 +262,6 @@
 	.cluster-meta {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
 		gap: 0.5rem;
 		font-size: 0.65rem;
 		color: #a1a1aa;
@@ -267,10 +276,5 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-	}
-
-	.median-year {
-		flex-shrink: 0;
-		color: #71717a;
 	}
 </style>
