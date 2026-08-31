@@ -42,9 +42,8 @@ export const DEFAULT_BLEND_WEIGHTS: BlendWeights = {
 };
 
 // UMAP nNeighbors used for content/blend methods. Larger values improve global
-// cluster placement at the cost of local structure; 40 is the sweet spot for
-// corpora in the hundreds-of-songs range.
-export const GLOBAL_STRUCTURE_NEIGHBOR_COUNT = 40;
+// cluster placement at the cost of local structure.
+export const GLOBAL_STRUCTURE_NEIGHBOR_COUNT = 20;
 
 export const MINOR_SCALE_DARKNESS_WEIGHT = 0.5;
 export const MINOR_QUALITY_DARKNESS_WEIGHT = 0.35;

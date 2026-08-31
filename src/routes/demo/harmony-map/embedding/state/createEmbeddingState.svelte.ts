@@ -27,7 +27,6 @@ import {
 	reduceOffMainThread,
 	terminateReduceWorker,
 	PCA_COMPONENT_COUNT_3D,
-	PRE_REDUCE_COMPONENT_COUNT,
 	UMAP_COMPONENT_COUNT_2D,
 	UMAP_COMPONENT_COUNT_3D,
 	type ComponentLoading,
@@ -337,8 +336,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 					contentVectors.vectors.map((v) => v.weighted),
 					reducerComponentCount(currentDimension),
 					{
-						nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT,
-						preReduceComponents: PRE_REDUCE_COMPONENT_COUNT
+						nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT
 					}
 				)
 					.then(async (reduction) => {
@@ -395,7 +393,6 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 					reducerComponentCount(currentDimension),
 					{
 						nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT,
-						preReduceComponents: PRE_REDUCE_COMPONENT_COUNT,
 						supervisedLabels,
 						supervisedWeight: currentBlendWeights.groupPull
 					}
