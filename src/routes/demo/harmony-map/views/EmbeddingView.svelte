@@ -11,6 +11,7 @@
 	import InspectorTabs from "../components/InspectorTabs.svelte";
 	import SongVectorInspector from "../components/SongVectorInspector.svelte";
 	import WeightingControls from "../components/WeightingControls.svelte";
+	import BlendControls from "../components/BlendControls.svelte";
 	import { buildArtistSummaries } from "../../shared/artists/artistStats.js";
 	import type { YearDomain } from "../../shared/artists/artistStats.js";
 	import { songKeysMatchingGroupFilter } from "../../shared/progressionGroupShare.js";
@@ -64,7 +65,9 @@
 		feature: { x: "dark ← harmony → bright", y: "simple ← harmony → complex" },
 		groupBlend: null,
 		ngram: null,
-		scaleSplit: { x: "minor ← scale → major", y: "chord-gram UMAP" }
+		scaleSplit: { x: "minor ← scale → major", y: "chord-gram UMAP" },
+		content: { x: "dark ← harmony → bright", y: "simple ← harmony → complex" },
+		blend: { x: "dark ← harmony → bright", y: "simple ← harmony → complex" }
 	};
 
 	type InspectorTab = "song" | "artists" | "clusters";
@@ -340,6 +343,13 @@
 				options={embedding.options}
 				onChange={embedding.setOptions}
 			/>
+
+			{#if embedding.method === "blend"}
+				<BlendControls
+					weights={embedding.blendWeights}
+					onChange={embedding.setBlendWeights}
+				/>
+			{/if}
 
 			<span class="dimension-count">
 				{embedding.vocabulary.entries.length} dimensions

@@ -1,6 +1,7 @@
 import { UMAP } from "umap-js";
 import { cosineSimilarity } from "../vectors/nearestNeighbors.js";
-import { EMPTY_REDUCTION_RESULT, type ReductionResult } from "./types.js";
+import { preReduce } from "./preReduce.js";
+import { EMPTY_REDUCTION_RESULT, type ReductionResult, type UmapOptions } from "./types.js";
 
 export const UMAP_RANDOM_SEED = 42;
 export const UMAP_NEIGHBOR_COUNT = 15;
@@ -29,26 +30,44 @@ const cosineDistance = (first: number[], second: number[]): number =>
 
 export const runUmap = (
 	matrix: number[][],
-	componentCount: number = UMAP_COMPONENT_COUNT_2D
+	componentCount: number = UMAP_COMPONENT_COUNT_2D,
+	options: UmapOptions = {}
 ): ReductionResult => {
 	if (matrix.length < MIN_ROWS_FOR_UMAP || (matrix[0]?.length ?? 0) === 0) {
 		return EMPTY_REDUCTION_RESULT;
 	}
 
+	const inputMatrix =
+		options.preReduceComponents !== undefined
+			? preReduce(matrix, options.preReduceComponents)
+			: matrix;
+
+	const nNeighbors = Math.max(
+		MIN_NEIGHBORS,
+		Math.min(options.nNeighbors ?? UMAP_NEIGHBOR_COUNT, inputMatrix.length - 1)
+	);
+
 	const umap = new UMAP({
 		nComponents: componentCount,
-		nNeighbors: Math.max(
-			MIN_NEIGHBORS,
-			Math.min(UMAP_NEIGHBOR_COUNT, matrix.length - 1)
-		),
-		minDist: UMAP_MIN_DISTANCE,
-		spread: UMAP_SPREAD,
+		nNeighbors,
+		minDist: options.minDist ?? UMAP_MIN_DISTANCE,
+		spread: options.spread ?? UMAP_SPREAD,
 		distanceFn: cosineDistance,
 		random: seededRandom(UMAP_RANDOM_SEED)
 	});
 
+	if (
+		options.supervisedLabels &&
+		options.supervisedLabels.length === inputMatrix.length &&
+		(options.supervisedWeight ?? 0) > 0
+	) {
+		umap.setSupervisedProjection(options.supervisedLabels, {
+			targetWeight: options.supervisedWeight
+		});
+	}
+
 	return {
-		coords: umap.fit(matrix).map(([x, y, z]) =>
+		coords: umap.fit(inputMatrix).map(([x, y, z]) =>
 			componentCount >= UMAP_COMPONENT_COUNT_3D
 				? { x, y: y ?? 0, z: z ?? 0 }
 				: { x, y: y ?? 0 }

@@ -2,23 +2,32 @@ import { onDestroy } from "svelte";
 import type { GroupedSong } from "../../../../../data/songBrowser.js";
 import type { SongCoverageEntry } from "../../../define-chord-progression/compute-coverage-of-all-songs/index.js";
 import {
+	buildBlendedMatrix,
 	buildChordNgramVectors,
 	buildChordNgramVocabulary,
 	buildFeatureAxesCoords,
+	buildProgressionContentVectors,
 	buildProgressionVocabulary,
 	buildSongVectors,
 	computeMajornessScore,
+	DEFAULT_BLEND_WEIGHTS,
 	DEFAULT_SONG_VECTOR_OPTIONS,
+	GLOBAL_STRUCTURE_NEIGHBOR_COUNT,
 	groupShareVectorForSong,
+	dominantGroupName,
+	progressionGroupProfileByName,
 	toMatrix,
+	type BlendWeights,
 	type NgramSongInput,
 	type SongVectorOptions,
 	type SongVectorSet
 } from "../vectors/index.js";
 import {
+	orientCoords,
 	reduceOffMainThread,
 	terminateReduceWorker,
 	PCA_COMPONENT_COUNT_3D,
+	PRE_REDUCE_COMPONENT_COUNT,
 	UMAP_COMPONENT_COUNT_2D,
 	UMAP_COMPONENT_COUNT_3D,
 	type ComponentLoading,
@@ -53,7 +62,9 @@ type EmbeddingStateConfig = {
 	getSongs: () => GroupedSong[];
 	getCoverageCacheKey: () => string | null;
 	initialMethod: EmbeddingMethod;
+	initialBlendWeights?: BlendWeights;
 	onMethodChange?: (method: EmbeddingMethod) => void;
+	onBlendWeightsChange?: (weights: BlendWeights) => void;
 };
 
 const toNgramInput = (song: GroupedSong): NgramSongInput => ({
@@ -91,6 +102,7 @@ const persistEmbedding = async (
 	currentMethod: EmbeddingMethod,
 	currentDimension: EmbeddingDimension,
 	currentOptions: SongVectorOptions,
+	currentBlendWeights: BlendWeights | undefined,
 	key: string,
 	result: EmbeddingResult,
 	cacheResult: (key: string, result: EmbeddingResult) => void
@@ -101,16 +113,28 @@ const persistEmbedding = async (
 			coverageCacheKey,
 			currentMethod,
 			currentOptions,
-			currentDimension
+			currentDimension,
+			currentBlendWeights
 		);
 		void setCachedEmbedding(idbKey, result);
 	}
+};
+
+// Each song's dominant editorial group as an integer index for supervised UMAP.
+// Songs without a core group match get -1 (treated as "unknown" by umap-js).
+const supervisedLabel = (song: SongCoverageEntry): number => {
+	const groupName = dominantGroupName(song.progressionCounts);
+	if (!groupName) return -1;
+	return progressionGroupProfileByName.get(groupName)?.index ?? -1;
 };
 
 export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 	let method = $state<EmbeddingMethod>(config.initialMethod);
 	let dimension = $state<EmbeddingDimension>(2);
 	let options = $state<SongVectorOptions>(DEFAULT_SONG_VECTOR_OPTIONS);
+	let blendWeights = $state<BlendWeights>(
+		config.initialBlendWeights ?? DEFAULT_BLEND_WEIGHTS
+	);
 	let resultCache = $state(new Map<string, EmbeddingResult>());
 	let status = $state<EmbeddingStatus>("idle");
 
@@ -126,7 +150,14 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		})
 	);
 
-	const cacheKey = $derived(`${dataset.token}|${method}|${dimension}`);
+	// Only blend method includes weights in the cache key; content method uses
+	// only the standard options and does not read blendWeights.
+	const blendCacheComponent = $derived(
+		method === "blend" ? JSON.stringify(blendWeights) : ""
+	);
+	const cacheKey = $derived(
+		`${dataset.token}|${method}|${dimension}|${blendCacheComponent}`
+	);
 
 	const cacheResult = (key: string, result: EmbeddingResult) => {
 		resultCache = withOnlyCurrentDataset(resultCache, dataset.token).set(
@@ -147,6 +178,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		const currentSongs = songs;
 		const { vectorSet } = dataset;
 		const coverageCacheKey = config.getCoverageCacheKey();
+		const currentBlendWeights = blendWeights;
+		const currentOptions = options;
 
 		if (currentSongs.length === 0) {
 			status = "idle";
@@ -155,13 +188,17 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 
 		let active = true;
 
+		const blendWeightsForCache =
+			currentMethod === "blend" ? currentBlendWeights : undefined;
+
 		void (async () => {
 			if (coverageCacheKey !== null) {
 				const idbKey = await buildEmbeddingCacheKey(
 					coverageCacheKey,
 					currentMethod,
-					options,
-					currentDimension
+					currentOptions,
+					currentDimension,
+					blendWeightsForCache
 				);
 				if (!active) return;
 
@@ -184,7 +221,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 						coverageCacheKey,
 						currentMethod,
 						currentDimension,
-						options,
+						currentOptions,
+						undefined,
 						key,
 						result,
 						cacheResult
@@ -216,7 +254,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 							coverageCacheKey,
 							currentMethod,
 							currentDimension,
-							options,
+							currentOptions,
+							undefined,
 							key,
 							result,
 							cacheResult
@@ -232,7 +271,10 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 				status = "computing";
 				const ngramInputs = config.getSongs().map(toNgramInput);
 				const ngramVocabulary = buildChordNgramVocabulary(ngramInputs);
-				const ngramVectors = buildChordNgramVectors(ngramInputs, ngramVocabulary);
+				const ngramVectors = buildChordNgramVectors(
+					ngramInputs,
+					ngramVocabulary
+				);
 				const majornessBySongKey = new Map(
 					ngramInputs.map((input) => [
 						input.songKey,
@@ -271,7 +313,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 							coverageCacheKey,
 							currentMethod,
 							currentDimension,
-							options,
+							currentOptions,
+							undefined,
 							key,
 							result,
 							cacheResult
@@ -283,11 +326,114 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 				return;
 			}
 
-			// Every remaining method reduces via UMAP or PCA over some matrix —
-			// they differ only in how that matrix is built. groupBlend reuses the
-			// standard per-progression vectors already built above; ngram builds
-			// its own independent vocabulary from raw chord sequences, so it
-			// needs the underlying GroupedSong data instead.
+			if (currentMethod === "content") {
+				status = "computing";
+				const contentVectors = buildProgressionContentVectors(
+					currentSongs,
+					currentOptions
+				);
+				void reduceOffMainThread(
+					"umap",
+					contentVectors.vectors.map((v) => v.weighted),
+					reducerComponentCount(currentDimension),
+					{
+						nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT,
+						preReduceComponents: PRE_REDUCE_COMPONENT_COUNT
+					}
+				)
+					.then(async (reduction) => {
+						if (!active) return;
+						const songKeys = contentVectors.vectors.map((v) => v.songKey);
+						const rawCoords = new Map(
+							songKeys.map((key, i) => [
+								key,
+								reduction.coords[i] ?? { x: 0, y: 0 }
+							])
+						);
+						const featureAxesCoords = buildFeatureAxesCoords(currentSongs);
+						const coordsByKey =
+							currentDimension === 2
+								? orientCoords(rawCoords, featureAxesCoords)
+								: rawCoords;
+						const result: EmbeddingResult = { ...EMPTY_RESULT, coordsByKey };
+						await persistEmbedding(
+							coverageCacheKey,
+							currentMethod,
+							currentDimension,
+							currentOptions,
+							undefined,
+							key,
+							result,
+							cacheResult
+						);
+					})
+					.catch(() => {
+						if (active) status = "idle";
+					});
+				return;
+			}
+
+			if (currentMethod === "blend") {
+				status = "computing";
+				const contentVectors = buildProgressionContentVectors(
+					currentSongs,
+					currentOptions
+				);
+				const { matrix, songKeys } = buildBlendedMatrix(
+					currentSongs,
+					vectorSet,
+					contentVectors,
+					currentBlendWeights
+				);
+				const supervisedLabels =
+					currentBlendWeights.groupPull > 0
+						? currentSongs.map(supervisedLabel)
+						: undefined;
+				void reduceOffMainThread(
+					"umap",
+					matrix,
+					reducerComponentCount(currentDimension),
+					{
+						nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT,
+						preReduceComponents: PRE_REDUCE_COMPONENT_COUNT,
+						supervisedLabels,
+						supervisedWeight: currentBlendWeights.groupPull
+					}
+				)
+					.then(async (reduction) => {
+						if (!active) return;
+						const rawCoords = new Map(
+							songKeys.map((key, i) => [
+								key,
+								reduction.coords[i] ?? { x: 0, y: 0 }
+							])
+						);
+						const featureAxesCoords = buildFeatureAxesCoords(currentSongs);
+						const coordsByKey =
+							currentDimension === 2
+								? orientCoords(rawCoords, featureAxesCoords)
+								: rawCoords;
+						const result: EmbeddingResult = { ...EMPTY_RESULT, coordsByKey };
+						await persistEmbedding(
+							coverageCacheKey,
+							currentMethod,
+							currentDimension,
+							currentOptions,
+							currentBlendWeights,
+							key,
+							result,
+							cacheResult
+						);
+					})
+					.catch(() => {
+						if (active) status = "idle";
+					});
+				return;
+			}
+
+			// All remaining methods reduce via UMAP or PCA over some matrix.
+			// groupBlend reuses the standard per-progression vectors; ngram builds
+			// its own independent vocabulary from raw chord sequences.
 			let reducerMethod: ReducerMethod = "umap";
 			let matrix: number[][];
 			let songKeys: string[];
@@ -300,7 +446,10 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 			} else if (currentMethod === "ngram") {
 				const ngramInputs = config.getSongs().map(toNgramInput);
 				const ngramVocabulary = buildChordNgramVocabulary(ngramInputs);
-				const ngramVectors = buildChordNgramVectors(ngramInputs, ngramVocabulary);
+				const ngramVectors = buildChordNgramVectors(
+					ngramInputs,
+					ngramVocabulary
+				);
 				matrix = ngramVectors.map((vector) => vector.weighted);
 				songKeys = ngramVectors.map((vector) => vector.songKey);
 			} else {
@@ -323,7 +472,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 						coverageCacheKey,
 						currentMethod,
 						currentDimension,
-						options,
+						currentOptions,
+						undefined,
 						key,
 						result,
 						cacheResult
@@ -356,6 +506,11 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		dimension = nextDimension;
 	};
 
+	const setBlendWeights = (nextWeights: BlendWeights) => {
+		blendWeights = nextWeights;
+		config.onBlendWeightsChange?.(nextWeights);
+	};
+
 	return {
 		get method() {
 			return method;
@@ -365,6 +520,9 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		},
 		get options() {
 			return options;
+		},
+		get blendWeights() {
+			return blendWeights;
 		},
 		get status() {
 			return status;
@@ -380,8 +538,9 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		},
 		setMethod,
 		setDimension,
-		setOptions
+		setOptions,
+		setBlendWeights
 	};
-};
+};;
 
 export type EmbeddingState = ReturnType<typeof createEmbeddingState>;

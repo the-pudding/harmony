@@ -20,6 +20,32 @@ export const DEFAULT_SONG_VECTOR_OPTIONS: SongVectorOptions = {
 
 export const DEFAULT_NEAREST_NEIGHBOR_COUNT = 8;
 
+// Per-block blend weights for the "blend" embedding method.
+// Each weight scales one L2-normalized block before concatenation; cosine on the
+// result is a weighted average of per-block cosines with weights proportional to
+// weight². A weight of 0 removes that block entirely.
+export type BlendWeights = {
+	identity: number;
+	content: number;
+	groupShare: number;
+	axes: number;
+	// 0–1: supervised UMAP pull towards core-progression groups. 0 = off.
+	groupPull: number;
+};
+
+export const DEFAULT_BLEND_WEIGHTS: BlendWeights = {
+	identity: 1,
+	content: 1,
+	groupShare: 0,
+	axes: 0,
+	groupPull: 0
+};
+
+// UMAP nNeighbors used for content/blend methods. Larger values improve global
+// cluster placement at the cost of local structure; 40 is the sweet spot for
+// corpora in the hundreds-of-songs range.
+export const GLOBAL_STRUCTURE_NEIGHBOR_COUNT = 40;
+
 export const MINOR_SCALE_DARKNESS_WEIGHT = 0.5;
 export const MINOR_QUALITY_DARKNESS_WEIGHT = 0.35;
 export const FLAT_DEGREE_DARKNESS_WEIGHT = 0.15;

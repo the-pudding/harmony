@@ -3,7 +3,7 @@ import type {
 	ReduceWorkerRequest,
 	ReduceWorkerResponse
 } from "./reduceWorker.js";
-import type { ReducerMethod, ReductionResult } from "./types.js";
+import type { ReducerMethod, ReductionResult, UmapOptions } from "./types.js";
 
 export * from "./types.js";
 export {
@@ -18,6 +18,8 @@ export {
 	UMAP_NEIGHBOR_COUNT,
 	UMAP_RANDOM_SEED
 } from "./umap.js";
+export { orientCoords } from "./orientCoords.js";
+export { PRE_REDUCE_COMPONENT_COUNT } from "./preReduce.js";
 
 let reduceWorker: Worker | null = null;
 let nextRequestId = 0;
@@ -31,7 +33,8 @@ const ensureReduceWorker = (): Worker => {
 export const reduceOffMainThread = (
 	method: ReducerMethod,
 	matrix: number[][],
-	componentCount: number
+	componentCount: number,
+	umapOptions?: UmapOptions
 ): Promise<ReductionResult> => {
 	const worker = ensureReduceWorker();
 	const requestId = ++nextRequestId;
@@ -60,7 +63,8 @@ export const reduceOffMainThread = (
 			requestId,
 			method,
 			matrix,
-			componentCount
+			componentCount,
+			umapOptions
 		};
 		worker.postMessage(request);
 	});

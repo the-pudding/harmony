@@ -14,7 +14,9 @@ export const embeddingMethodLabels: Record<EmbeddingMethod, string> = {
 	feature: "Feature axes",
 	groupBlend: "Group blend",
 	ngram: "Chord grams",
-	scaleSplit: "Major/minor"
+	scaleSplit: "Major/minor",
+	content: "Content",
+	blend: "Blend"
 };
 
 export const embeddingMethodDescriptions: Record<
@@ -86,6 +88,28 @@ export const embeddingMethodDescriptions: Record<
 			"The horizontal position is a majorness score per song: (major chord count − minor chord count) / total chord count, so +1 is entirely major, −1 entirely minor, 0 is an even split or unmatched. The vertical position is UMAP run on the same chord-gram vectors as the Chord grams method, keeping only one of its two natural output axes.",
 		tradeoffs:
 			"Discards half of what UMAP would normally show — whatever structure lived on the dropped axis is gone, so clusters can look flatter or more merged than under Chord grams. The horizontal position only counts scale, not chord quality or borrowed chords, so it's a cruder brightness signal than feature axes' — and because one axis is hand-designed, density clustering (the dashed circles) isn't available here."
+	},
+	content: {
+		title: embeddingMethodLabels.content,
+		summary:
+			"UMAP over harmonic content of matched progressions — cyclic chord-grams, degree sets and cadences — rather than their identities.",
+		rationale:
+			"UMAP and Chord grams treat each progression as a bag of raw chord transitions, so vi-ii-V-I and ii-V-I share almost nothing. This method expands each matched progression into content features shared across related progressions, then weights by match count and chorus emphasis — so it inherits UMAP's noise filtering but gains harmonic relatedness. A larger neighbor count and SVD pre-reduction give it better global structure than the standard UMAP method.",
+		approach:
+			"For each song's selected progressions (core + gap-fill), every 2- and 3-chord cyclic window, sorted degree set, and cadence pair is extracted as a content key (scale-qualified). Keys are TF-IDF weighted and L2-normalised per song, then UMAP runs on the resulting matrix — pre-reduced to ~40 dims via SVD and with nNeighbors = 40 for global structure. The 2D output is rotated via Procrustes alignment so that dark-to-bright harmony points along +x and simple-to-complex along +y.",
+		tradeoffs:
+			"Loses exact progression identity: two songs with very different named progressions but similar chord vocabulary will land near each other. Cyclic grams make rotation-invariant loops identical, which is usually desirable but can merge intentionally reversed progressions. The orientation is a best-fit rotation, not exact, so the axes are approximate."
+	},
+	blend: {
+		title: embeddingMethodLabels.blend,
+		summary:
+			"UMAP over a weighted mix of progression identity, harmonic content, core-group shares and brightness/complexity axes.",
+		rationale:
+			"The existing UMAP method clusters by exact progression identity while Content clusters by harmonic relatedness, but neither alone gives the full picture. Blend lets you dial in how much each family contributes, so you can start from today's identity clustering and gradually pull related progressions closer by increasing the content weight, or anchor the layout to the editorially-chosen groups by raising the group-share weight.",
+		approach:
+			"Each of the four feature families (identity, content, group share, hand axes) is L2-normalised independently, scaled by its slider weight, and concatenated. Cosine on the resulting vector is a weighted average of per-family cosine similarities (weights proportional to weight²). SVD pre-reduction to ~40 dims and UMAP with nNeighbors = 40 improve global structure. An optional group-pull slider activates supervised UMAP toward the core-progression groups. The 2D output is Procrustes-aligned to the brightness/complexity frame.",
+		tradeoffs:
+			"Four weights plus a group-pull make the parameter space large and easy to overfit by hand. Pre-reduction discards some within-family variance before UMAP, which can flatten fine cluster detail. Caching is per weight configuration, so each slider position triggers a fresh UMAP run."
 	}
 };
 

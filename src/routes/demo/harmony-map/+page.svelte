@@ -22,7 +22,10 @@
 		getSongs: () => coverage.baseList,
 		getCoverageCacheKey: () => coverage.coverageCacheKey,
 		initialMethod: initialUrlState.method,
-		onMethodChange: (method) => replaceHarmonyMapStateInUrl({ method })
+		initialBlendWeights: initialUrlState.blendWeights,
+		onMethodChange: (method) => replaceHarmonyMapStateInUrl({ method }),
+		onBlendWeightsChange: (blendWeights) =>
+			replaceHarmonyMapStateInUrl({ blendWeights })
 	});
 
 	embedding.setDimension(embeddingDimensionForViewMode(initialUrlState.view));
@@ -34,6 +37,7 @@
 		untrack(() => {
 			const urlState = readHarmonyMapUrlState(page.url.searchParams);
 			embedding.setMethod(urlState.method);
+			embedding.setBlendWeights(urlState.blendWeights);
 			viewMode = urlState.view;
 			embedding.setDimension(embeddingDimensionForViewMode(urlState.view));
 			replaceHarmonyMapStateInUrl(urlState);
