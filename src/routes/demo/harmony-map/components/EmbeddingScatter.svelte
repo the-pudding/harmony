@@ -48,7 +48,7 @@
 		points: ScatterPoint[];
 		songByKey: Map<string, GroupedSong>;
 		selectedSongKey: string | null;
-		neighborSongKeys: Set<string>;
+		coClusterSongKeys: Set<string>;
 		highlightedSongKeys: Set<string>;
 		visibleSongKeys?: Set<string> | null;
 		axisLabels?: ScatterAxisLabels | null;
@@ -62,7 +62,7 @@
 		points,
 		songByKey,
 		selectedSongKey,
-		neighborSongKeys,
+		coClusterSongKeys,
 		highlightedSongKeys,
 		visibleSongKeys = null,
 		axisLabels = null,
@@ -82,7 +82,6 @@
 	const PLOT_MARGIN = 32;
 	const POINT_RADIUS = 3;
 	const SELECTED_POINT_RADIUS = 6;
-	const NEIGHBOR_POINT_RADIUS = 4.5;
 	const HOVER_PICK_RADIUS = 12;
 	const RING_WIDTH = 1.5;
 	const TWEEN_DURATION_MS = 700;
@@ -264,14 +263,13 @@
 
 	const radiusFor = (songKey: string): number => {
 		if (songKey === selectedSongKey) return SELECTED_POINT_RADIUS;
-		if (neighborSongKeys.has(songKey)) return NEIGHBOR_POINT_RADIUS;
 		return POINT_RADIUS;
 	};
 
 	const alphaFor = (songKey: string): number => {
 		if (hoveredSongKey === songKey || highlightedSongKeys.has(songKey)) return 1;
 		if (selectedSongKey === null) return SCATTER_NORMAL_ALPHA;
-		if (songKey === selectedSongKey || neighborSongKeys.has(songKey)) return 1;
+		if (songKey === selectedSongKey || coClusterSongKeys.has(songKey)) return 1;
 		return SCATTER_DIMMED_ALPHA;
 	};
 
@@ -693,7 +691,7 @@
 		void transform;
 		void hoveredSongKey;
 		void selectedSongKey;
-		void neighborSongKeys;
+		void coClusterSongKeys;
 		void drawablePoints;
 		void clusters;
 		void emphasizedClusterHashes;

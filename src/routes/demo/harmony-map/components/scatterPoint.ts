@@ -9,4 +9,4 @@ export type ScatterPoint = {
 export type ScatterAxisLabels = { x: string; y: string };
 
 export const SCATTER_NORMAL_ALPHA = 0.8;
-export const SCATTER_DIMMED_ALPHA = 0.5;
+export const SCATTER_DIMMED_ALPHA = 0.18;

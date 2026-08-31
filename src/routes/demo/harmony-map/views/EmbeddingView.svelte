@@ -95,7 +95,6 @@
 	};
 
 	let highlightedSongKeys = $state<Set<string>>(loadHighlightedSongKeys());
-	let highlightNeighborsOnMap = $state(false);
 	let hiddenClusterHashes = $state<Set<string>>(new Set());
 
 	const CLUSTERABLE_METHODS = new Set<EmbeddingMethod>(UMAP_DRIVEN_METHODS);
@@ -213,12 +212,6 @@
 			: [];
 	});
 
-	const neighborSongKeys = $derived(
-		highlightNeighborsOnMap
-			? new Set(neighbors.map((neighbor) => neighbor.songKey))
-			: new Set<string>()
-	);
-
 	const selectedCoords = $derived(
 		selectedSongKey === null
 			? null
@@ -299,6 +292,16 @@
 		);
 	});
 
+	const coClusterSongKeys = $derived.by((): Set<string> => {
+		const songKey = selectedSongKey;
+		if (songKey === null) return new Set();
+		return new Set(
+			allClusters
+				.filter((cluster) => cluster.songKeys.includes(songKey))
+				.flatMap((cluster) => cluster.songKeys)
+		);
+	});
+
 	const clusterRankByHash = $derived(
 		new Map(
 			clusterSummaries.map((summary, index) => [
@@ -373,7 +376,7 @@
 					{points}
 					{songByKey}
 					{selectedSongKey}
-					{neighborSongKeys}
+					{coClusterSongKeys}
 					{highlightedSongKeys}
 					{visibleSongKeys}
 					clusters={mapClusters}
@@ -387,7 +390,7 @@
 					{points}
 					{songByKey}
 					{selectedSongKey}
-					{neighborSongKeys}
+					{coClusterSongKeys}
 					{highlightedSongKeys}
 					{visibleSongKeys}
 					method={embedding.method}
@@ -430,15 +433,11 @@
 					componentLoadings={embedding.result.componentLoadings}
 					explainedVariance={embedding.result.explainedVariance}
 					{highlightedSongKeys}
-					highlightNeighborsOnMap={highlightNeighborsOnMap}
 					clusterSummaries={selectedSongClusterSummaries}
 					{clustersAvailable}
 					{hiddenClusterHashes}
 					{yearDomain}
 					{clusterRankByHash}
-					onHighlightNeighborsOnMapChange={(next) => {
-						highlightNeighborsOnMap = next;
-					}}
 					onToggleHighlight={toggleHighlightedSong}
 					onToggleClusterVisibility={toggleClusterVisibility}
 					onSelect={selectSong}

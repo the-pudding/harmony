@@ -45,7 +45,7 @@
 		points: ScatterPoint[];
 		songByKey: Map<string, GroupedSong>;
 		selectedSongKey: string | null;
-		neighborSongKeys: Set<string>;
+		coClusterSongKeys: Set<string>;
 		highlightedSongKeys: Set<string>;
 		visibleSongKeys?: Set<string> | null;
 		clusters: DensityCluster[];
@@ -59,7 +59,7 @@
 		points,
 		songByKey,
 		selectedSongKey,
-		neighborSongKeys,
+		coClusterSongKeys,
 		highlightedSongKeys,
 		visibleSongKeys = null,
 		clusters,
@@ -76,11 +76,9 @@
 	const POINT_SIZE_SCALE = 5;
 	const BASE_POINT_SIZE = 0.04;
 	const BASE_SELECTED_POINT_SIZE = 0.075;
-	const BASE_NEIGHBOR_POINT_SIZE = 0.055;
 	const BASE_HIGHLIGHT_POINT_SIZE = 0.06;
 	const POINT_SIZE = BASE_POINT_SIZE * POINT_SIZE_SCALE;
 	const SELECTED_POINT_SIZE = BASE_SELECTED_POINT_SIZE * POINT_SIZE_SCALE;
-	const NEIGHBOR_POINT_SIZE = BASE_NEIGHBOR_POINT_SIZE * POINT_SIZE_SCALE;
 	const HIGHLIGHT_POINT_SIZE = BASE_HIGHLIGHT_POINT_SIZE * POINT_SIZE_SCALE;
 	const HOVER_PICK_RADIUS_PX = 12;
 	const JITTER_AMPLITUDE = 0.02;
@@ -221,13 +219,12 @@
 	const alphaFor = (songKey: string): number => {
 		if (hoveredSongKey === songKey || highlightedSongKeys.has(songKey)) return 1;
 		if (selectedSongKey === null) return SCATTER_NORMAL_ALPHA;
-		if (songKey === selectedSongKey || neighborSongKeys.has(songKey)) return 1;
+		if (songKey === selectedSongKey || coClusterSongKeys.has(songKey)) return 1;
 		return SCATTER_DIMMED_ALPHA;
 	};
 
 	const sizeFor = (songKey: string): number => {
 		if (songKey === selectedSongKey) return SELECTED_POINT_SIZE;
-		if (neighborSongKeys.has(songKey)) return NEIGHBOR_POINT_SIZE;
 		if (highlightedSongKeys.has(songKey)) return HIGHLIGHT_POINT_SIZE;
 		return POINT_SIZE;
 	};
@@ -705,7 +702,7 @@
 	$effect(() => {
 		if (!pointsMesh) return;
 		void selectedSongKey;
-		void neighborSongKeys;
+		void coClusterSongKeys;
 		void highlightedSongKeys;
 		void showTimeAxisGizmo;
 		updateMeshGeometry(pointsMesh, drawablePoints);
