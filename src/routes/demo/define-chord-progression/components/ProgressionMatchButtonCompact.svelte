@@ -2,6 +2,11 @@
 	import { humanizeScale } from "../../../../data/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
 
+	const COVERAGE_PERCENT_MAX = 100;
+	const COVERAGE_FILL_INACTIVE_OPACITY = 0.12;
+	const COVERAGE_FILL_ACTIVE_OPACITY = 0.22;
+	const COVERAGE_FILL_HOVER_OPACITY = 0.1;
+
 	type Props = {
 		match: ProgressionWithMatchStats;
 		active: boolean;
@@ -23,6 +28,9 @@
 	);
 
 	const coveragePercentRounded = $derived(Math.round(match.coveragePercent));
+	const coverageFillWidth = $derived(
+		`${Math.min(Math.max(match.coveragePercent, 0), COVERAGE_PERCENT_MAX)}%`
+	);
 </script>
 
 <button
@@ -31,20 +39,27 @@
 	class:custom-border={borderColor !== undefined}
 	class:dashed
 	style:--prog-btn-border-color={borderColor}
+	style:--coverage-fill-inactive-opacity={COVERAGE_FILL_INACTIVE_OPACITY}
+	style:--coverage-fill-active-opacity={COVERAGE_FILL_ACTIVE_OPACITY}
+	style:--coverage-fill-hover-opacity={COVERAGE_FILL_HOVER_OPACITY}
 	onclick={() => onselect(match.chordProgression)}
 	onmouseenter={() => onhover?.(match.chordProgression)}
 	onmouseleave={() => onunhover?.()}
 	title={buttonTitle}
 >
-	{#if match.name}
-		<span class="prog-name">{match.name}</span>
-	{/if}
-	<span class="prog-chords">{match.chordProgression}</span>
-	<span class="prog-percent">{coveragePercentRounded}%</span>
+	<div class="coverage-fill" aria-hidden="true" style:width={coverageFillWidth}></div>
+	<span class="prog-btn-content">
+		{#if match.name}
+			<span class="prog-name">{match.name}</span>
+		{/if}
+		<span class="prog-chords">{match.chordProgression}</span>
+		<span class="prog-percent">{coveragePercentRounded}%</span>
+	</span>
 </button>
 
 <style>
 	.prog-btn {
+		position: relative;
 		display: flex;
 		flex-direction: row;
 		align-items: baseline;
@@ -64,12 +79,40 @@
 			color 0.15s ease;
 		text-align: left;
 		overflow-wrap: anywhere;
+		overflow: hidden;
+	}
+
+	.coverage-fill {
+		position: absolute;
+		top: 0;
+		left: 0;
+		bottom: 0;
+		z-index: 0;
+		border-radius: inherit;
+		background: rgba(161, 161, 170, var(--coverage-fill-inactive-opacity));
+		transition: width 0.2s ease;
+		pointer-events: none;
+	}
+
+	.prog-btn-content {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		flex-direction: row;
+		align-items: baseline;
+		gap: 0.375rem;
+		width: 100%;
+		min-width: 0;
 	}
 
 	.prog-btn:hover {
 		background: rgba(255, 255, 255, 0.09);
 		border-color: rgba(255, 255, 255, 0.2);
 		color: #e4e4e7;
+	}
+
+	.prog-btn:hover .coverage-fill {
+		background: rgba(228, 228, 231, var(--coverage-fill-hover-opacity));
 	}
 
 	.prog-btn.custom-border:not(.active) {
@@ -88,6 +131,10 @@
 		background: rgba(137, 180, 250, 0.15);
 		border-color: rgba(137, 180, 250, 0.4);
 		color: #89b4fa;
+	}
+
+	.prog-btn.active .coverage-fill {
+		background: rgba(137, 180, 250, var(--coverage-fill-active-opacity));
 	}
 
 	.prog-name {

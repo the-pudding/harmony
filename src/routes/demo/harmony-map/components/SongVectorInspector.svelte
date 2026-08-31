@@ -1,6 +1,12 @@
 <script lang="ts">
+	import coreProgressionsData from "$data/core-progressions.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { SongCoverageEntry } from "../../define-chord-progression/compute-coverage-of-all-songs/index.js";
+	import FinalAnnotatedSong from "../../define-chord-progression/components/FinalAnnotatedSong.svelte";
+	import {
+		buildFinalChordAnnotations,
+		selectFinalProgressions
+	} from "../../define-chord-progression/progression-matching-logic/finalProgressionSelection.js";
 	import SongIdentityLabel from "../../shared/SongIdentityLabel.svelte";
 	import type {
 		ComponentLoading,
@@ -150,6 +156,24 @@
 
 	const formatSimilarity = (similarity: number): string =>
 		`${Math.round(similarity * SIMILARITY_PERCENT_MULTIPLIER)}%`;
+
+	let activeProgression = $state<string | null>(null);
+
+	const finalSelection = $derived(
+		selectedSong
+			? selectFinalProgressions(selectedSong, coreProgressionsData)
+			: null
+	);
+	const finalAnnotations = $derived(
+		selectedSong && finalSelection
+			? buildFinalChordAnnotations(selectedSong, finalSelection)
+			: []
+	);
+	const finalMatches = $derived(
+		finalSelection
+			? [...finalSelection.coreSelected, ...finalSelection.gapSelected]
+			: []
+	);
 </script>
 
 <div class="inspector">
@@ -237,6 +261,21 @@
 			</div>
 		</dl>
 
+		{#if selectedSong && finalSelection}
+			<FinalAnnotatedSong
+				compact
+				song={selectedSong}
+				matches={finalMatches}
+				annotations={finalAnnotations}
+				explainedPercent={finalSelection.explainedPercent}
+				{activeProgression}
+				onselect={(chordProgression) => {
+					activeProgression =
+						activeProgression === chordProgression ? null : chordProgression;
+				}}
+			/>
+		{/if}
+
 		<section class="section">
 			<h3 class="section-title">density clusters</h3>
 			{#if !clustersAvailable}
@@ -251,6 +290,7 @@
 					{hiddenClusterHashes}
 					{yearDomain}
 					{selectedSongKey}
+					{songByKey}
 					rankByClusterHash={clusterRankByHash}
 					{clusterNamesByHash}
 					{onToggleClusterVisibility}

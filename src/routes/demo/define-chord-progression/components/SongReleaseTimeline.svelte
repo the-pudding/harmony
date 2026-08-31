@@ -3,10 +3,10 @@
 	import { colorForProgressionGroupName } from "$data/core-progressions.js";
 	import {
 		getChordProgressionIssues,
-		getChordMatchingChallenges,
-		CHORD_MATCHING_CHALLENGES_LABEL
+		getChordMatchingChallenges
 	} from "$data/hand-reviewed-songs.js";
-	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
+	import type { GroupedSong } from "../../../../data/songBrowser.js";
+	import SongTooltip from "../../shared/SongTooltip.svelte";
 	import {
 		CHART_DOT_FILL,
 		CHART_DOT_HOVER_FILL
@@ -16,6 +16,10 @@
 		dodgeBeeswarm
 	} from "../../shared/charts/dodgeBeeswarm.js";
 	import { toCalendarYear } from "../../../../data/songYear.js";
+	import {
+		HOVER_CARD_WIDTH,
+		hoverCardStyle
+	} from "../../shared/hoverCardPosition.js";
 
 	type SongEntry = {
 		songKey: string;
@@ -39,6 +43,7 @@
 
 	type Props = {
 		songs: SongEntry[] | null;
+		songByKey: ReadonlyMap<string, GroupedSong>;
 		selectedSongKey: string;
 		highlightedProgressions?: string[] | null;
 		highlightedProgression?: string | null;
@@ -49,6 +54,7 @@
 
 	let {
 		songs,
+		songByKey,
 		selectedSongKey,
 		highlightedProgressions = null,
 		highlightedProgression = null,
@@ -64,7 +70,6 @@
 
 	let containerWidth = $state(0);
 	let hoveredSongKey = $state<string | null>(null);
-	let clearHoverTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	const DOT_RADIUS = 2.5;
 	const SELECTED_DOT_RADIUS = 4.5;
@@ -77,12 +82,9 @@
 	const EMPTY_HEIGHT = 48;
 	const YEAR_PADDING = 0.5;
 	const TICK_COUNT = 8;
-	const TOOLTIP_WIDTH = 200;
-	const TOOLTIP_EDGE_MARGIN = 4;
-	const TOOLTIP_VERTICAL_GAP = 6;
+	const TOOLTIP_EDGE_MARGIN = 16;
 	const TICK_MARK_LENGTH = 5;
 	const TICK_LABEL_OFFSET_Y = 16;
-	const HOVER_CLEAR_DELAY_MS = 120;
 	const ISSUES_DOT_FILL = "rgba(239, 68, 68, 0.65)";
 	const ISSUES_DOT_HOVER_FILL = "rgba(239, 68, 68, 0.95)";
 	const TRICKY_DOT_FILL = "rgba(251, 191, 36, 0.65)";
@@ -172,19 +174,25 @@
 			: null
 	);
 
-	const tooltipLeft = $derived.by(() => {
-		if (!hoveredNode) return 0;
-		return Math.max(
-			TOOLTIP_EDGE_MARGIN,
-			Math.min(
-				containerWidth - TOOLTIP_WIDTH - TOOLTIP_EDGE_MARGIN,
-				hoveredNode.x - TOOLTIP_WIDTH / 2
-			)
-		);
-	});
+	const hoveredSong = $derived(
+		hoveredSongKey === null ? null : (songByKey.get(hoveredSongKey) ?? null)
+	);
 
-	const tooltipTopY = $derived(
-		hoveredNode ? AXIS_Y - DOT_RADIUS - hoveredNode.y : 0
+	const tooltipWidth = $derived(
+		Math.min(
+			HOVER_CARD_WIDTH,
+			Math.max(0, containerWidth - TOOLTIP_EDGE_MARGIN)
+		)
+	);
+
+	const tooltipStyle = $derived(
+		hoveredNode === null
+			? ""
+			: hoverCardStyle(
+					{ x: hoveredNode.x, y: AXIS_Y - DOT_RADIUS - hoveredNode.y },
+					containerWidth,
+					tooltipWidth
+				)
 	);
 
 	const dotFillFor = (node: DodgedNode, isHovered: boolean): string | null => {
@@ -196,30 +204,7 @@
 		return colorForProgressionGroupName(node.dominantGroupName ?? null);
 	};
 
-	function handleDotEnter(songKey: string) {
-		if (clearHoverTimeout !== null) {
-			clearTimeout(clearHoverTimeout);
-			clearHoverTimeout = null;
-		}
-		hoveredSongKey = songKey;
-	}
-
-	function scheduleHoverClear() {
-		clearHoverTimeout = setTimeout(() => {
-			hoveredSongKey = null;
-			clearHoverTimeout = null;
-		}, HOVER_CLEAR_DELAY_MS);
-	}
-
-	function cancelHoverClear() {
-		if (clearHoverTimeout !== null) {
-			clearTimeout(clearHoverTimeout);
-			clearHoverTimeout = null;
-		}
-	}
-
 	function selectSong(songKey: string) {
-		cancelHoverClear();
 		hoveredSongKey = null;
 		onSelectSong?.(songKey);
 	}
@@ -284,8 +269,8 @@
 					class:has-issues={hasIssues && !colorByProgressionGroup}
 					class:tricky={isTricky && !hasIssues && !colorByProgressionGroup}
 					fill={colorByProgressionGroup ? (dotFill ?? undefined) : undefined}
-					onmouseenter={() => handleDotEnter(node.songKey)}
-					onmouseleave={scheduleHoverClear}
+					onmouseenter={() => (hoveredSongKey = node.songKey)}
+					onmouseleave={() => (hoveredSongKey = null)}
 					onclick={() => selectSong(node.songKey)}
 					onkeydown={(e) => {
 						if (e.key === "Enter" || e.key === " ") selectSong(node.songKey);
@@ -304,52 +289,9 @@
 			<p class="undated">{undatedCount} songs without a release year</p>
 		{/if}
 
-		{#if hoveredNode}
-			<div
-				class="tooltip"
-				style:left={tooltipLeft + "px"}
-				style:top={tooltipTopY - DOT_RADIUS - TOOLTIP_VERTICAL_GAP + "px"}
-				style:width={TOOLTIP_WIDTH + "px"}
-				style:transform="translateY(-100%)"
-				onmouseenter={cancelHoverClear}
-				onmouseleave={scheduleHoverClear}
-				role="none"
-			>
-				<button
-					class="song-card"
-					onclick={() => selectSong(hoveredNode.songKey)}
-				>
-					<span class="song-title">{hoveredNode.title}</span>
-					<span class="song-artists">{hoveredNode.artists.join(", ")}</span>
-					<span class="song-stats"
-						>{toCalendarYear(hoveredNode.year)} · {Math.round(hoveredNode.coveragePercent)}%
-						chord coverage</span
-					>
-					<ChordProgressionIssuesNote
-						songKey={hoveredNode.songKey}
-						size="sm"
-						inline
-						brightensOnParentHover
-					/>
-					{#if hoveredNode.chordMatchingChallenges}
-						<ChordProgressionIssuesNote
-							songKey={hoveredNode.songKey}
-							size="sm"
-							inline
-							brightensOnParentHover
-							overrideText={hoveredNode.chordMatchingChallenges}
-							overrideLabel={CHORD_MATCHING_CHALLENGES_LABEL}
-							overrideColor="rgba(251, 191, 36, 0.9)"
-							overrideColorHover="rgba(253, 224, 71, 0.95)"
-						/>
-					{/if}
-					<div class="coverage-bar" aria-hidden="true">
-						<div
-							class="coverage-fill"
-							style:width={Math.min(hoveredNode.coveragePercent, 100) + "%"}
-						></div>
-					</div>
-				</button>
+		{#if hoveredNode && hoveredSong}
+			<div class="tooltip" style={tooltipStyle}>
+				<SongTooltip song={hoveredSong} />
 			</div>
 		{/if}
 	{/if}
@@ -463,77 +405,16 @@
 
 	.tooltip {
 		position: absolute;
+		pointer-events: none;
 		z-index: 10;
-	}
-
-	.song-card {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 0.125rem;
-		width: 100%;
-		box-sizing: border-box;
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 0.375rem;
-		color: #a1a1aa;
-		padding: 0.375rem 0.625rem;
-		cursor: pointer;
-		text-align: left;
-		overflow-wrap: anywhere;
-		transition:
-			background 0.15s ease,
-			border-color 0.15s ease,
-			color 0.15s ease;
-	}
-
-	.song-card:hover {
-		background: rgba(255, 255, 255, 0.09);
-		border-color: rgba(255, 255, 255, 0.2);
-		color: #e4e4e7;
-	}
-
-	.song-title {
-		font-size: 0.75rem;
-		color: inherit;
-	}
-
-	.song-artists {
+		background: rgba(9, 9, 11, 0.96);
+		border: 1px solid rgba(63, 63, 70, 0.8);
+		border-radius: 0.5rem;
+		padding: 0.875rem 1rem;
+		backdrop-filter: blur(8px);
+		overflow-y: auto;
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
-		font-size: 0.65rem;
-		color: rgba(161, 161, 170, 0.7);
-	}
-
-	.song-card:hover .song-artists {
-		color: rgba(228, 228, 231, 0.7);
-	}
-
-	.song-stats {
-		font-size: 0.65rem;
-		color: rgba(161, 161, 170, 0.85);
-	}
-
-	.song-card:hover .song-stats {
-		color: rgba(228, 228, 231, 0.85);
-	}
-
-	.coverage-bar {
-		width: 100%;
-		height: 0.25rem;
-		margin-top: 0.125rem;
-		border-radius: 9999px;
-		background: rgba(255, 255, 255, 0.08);
-		overflow: hidden;
-	}
-
-	.coverage-fill {
-		height: 100%;
-		border-radius: inherit;
-		background: rgba(161, 161, 170, 0.75);
-		transition: width 0.2s ease;
-	}
-
-	.song-card:hover .coverage-fill {
-		background: rgba(228, 228, 231, 0.75);
+		font-size: 0.75rem;
+		color: #f4f4f5;
 	}
 </style>

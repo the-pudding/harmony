@@ -74,7 +74,6 @@
 			{songByKey}
 			{selectedSongKey}
 			progressionLimit={PROGRESSION_LIMIT}
-			timelineTooltipVariant="compact"
 			{onSelectSong}
 		/>
 

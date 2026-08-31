@@ -501,6 +501,7 @@
 					{hiddenClusterHashes}
 					{yearDomain}
 					{selectedSongKey}
+					{songByKey}
 					rankByClusterHash={clusterRankByHash}
 					{clusterNamesByHash}
 					onSelectAllClusters={selectAllClusters}

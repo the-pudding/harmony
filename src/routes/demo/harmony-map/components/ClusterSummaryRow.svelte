@@ -1,5 +1,6 @@
 <script lang="ts">
 	import SongReleaseTimeline from "../../define-chord-progression/components/SongReleaseTimeline.svelte";
+	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { YearDomain } from "../../shared/artists/artistStats.js";
 	import type { ClusterSummary } from "../embedding/clustering/clusterSummaries.js";
 	import { colorForGroupName } from "../progressionGroupColors.js";
@@ -11,6 +12,7 @@
 		name?: string | null;
 		yearDomain: YearDomain | null;
 		selectedSongKey: string | null;
+		songByKey: Map<string, GroupedSong>;
 		onToggleClusterVisibility: (clusterHash: string) => void;
 		onSelectSong: (songKey: string) => void;
 	};
@@ -22,6 +24,7 @@
 		name = null,
 		yearDomain,
 		selectedSongKey,
+		songByKey,
 		onToggleClusterVisibility,
 		onSelectSong
 	}: Props = $props();
@@ -67,6 +70,7 @@
 
 		<SongReleaseTimeline
 			songs={summary.timelineSongs}
+			{songByKey}
 			selectedSongKey={selectedSongKey ?? ""}
 			colorByProgressionGroup
 			{yearDomain}

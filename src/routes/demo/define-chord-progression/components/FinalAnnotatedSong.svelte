@@ -26,7 +26,6 @@
 		matches: ProgressionWithMatchStats[];
 		annotations: ChordAnnotation[];
 		explainedPercent: number;
-		isExplained: boolean;
 		activeProgression: string | null;
 		onselect: (chordProgression: string) => void;
 		compact?: boolean;
@@ -37,7 +36,6 @@
 		matches,
 		annotations,
 		explainedPercent,
-		isExplained,
 		activeProgression,
 		onselect,
 		compact = false
@@ -79,9 +77,17 @@
 			<div class="buttons-column">
 				{#each sortedMatches as match (progressionMatchListKey(match))}
 					{@const outline = matchOutline(match)}
+					{#snippet progressionStats({ active }: { active: boolean })}
+						<SongProgressionStats
+							matchCount={match.matchCount}
+							coveragePercent={match.coveragePercent}
+							{active}
+						/>
+					{/snippet}
 					<ProgressionMatchButton
 						{match}
 						{compact}
+						stats={compact ? undefined : progressionStats}
 						active={activeProgression === match.chordProgression}
 						borderColor={outline.color}
 						dashed={outline.dashed}
@@ -92,22 +98,12 @@
 						onunhover={() => {
 							hoveredProgression = null;
 						}}
-					>
-						{#if !compact}
-							{#snippet stats({ active })}
-								<SongProgressionStats
-									matchCount={match.matchCount}
-									coveragePercent={match.coveragePercent}
-									{active}
-								/>
-							{/snippet}
-						{/if}
-					</ProgressionMatchButton>
+					/>
 				{/each}
 				<div class="total-row">
 					<span class="total-label"
 						>= <strong class="total-percent">{explainedPercent}%</strong> of the
-						song{#if isExplained}<span class="checkmark">✅</span>{/if}</span
+						song</span
 					>
 				</div>
 			</div>
@@ -174,10 +170,6 @@
 	.total-percent {
 		font-weight: 700;
 		color: #fff;
-	}
-
-	.checkmark {
-		margin-left: 0.375rem;
 	}
 
 	.chords-column {

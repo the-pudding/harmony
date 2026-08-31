@@ -19,7 +19,6 @@
 		onSelectSong: (songKey: string) => void;
 		onSelectProgression?: (chordProgression: string) => void;
 		layout?: "stacked" | "split";
-		timelineTooltipVariant?: "rich" | "compact";
 		catalogSlug?: string | null;
 	};
 
@@ -33,7 +32,6 @@
 		onSelectSong,
 		onSelectProgression,
 		layout = "stacked",
-		timelineTooltipVariant = "rich",
 		catalogSlug = null
 	}: Props = $props();
 
@@ -117,7 +115,6 @@
 				{selectedSongKey}
 				{highlightedProgressions}
 				{onSelectSong}
-				tooltipVariant={timelineTooltipVariant}
 			/>
 		</section>
 	</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { YearDomain } from "../../shared/artists/artistStats.js";
 	import type { ClusterSummary } from "../embedding/clustering/clusterSummaries.js";
 	import ClusterSummaryRow from "./ClusterSummaryRow.svelte";
@@ -8,6 +9,7 @@
 		hiddenClusterHashes: Set<string>;
 		yearDomain: YearDomain | null;
 		selectedSongKey: string | null;
+		songByKey: Map<string, GroupedSong>;
 		rankByClusterHash: Map<string, number>;
 		clusterNamesByHash?: Map<string, string>;
 		showGlobalToggle?: boolean;
@@ -22,6 +24,7 @@
 		hiddenClusterHashes,
 		yearDomain,
 		selectedSongKey,
+		songByKey,
 		rankByClusterHash,
 		clusterNamesByHash = new Map(),
 		showGlobalToggle = false,
@@ -62,6 +65,7 @@
 			name={clusterNamesByHash.get(summary.cluster.hash) ?? null}
 			{yearDomain}
 			{selectedSongKey}
+			{songByKey}
 			{onToggleClusterVisibility}
 			{onSelectSong}
 		/>

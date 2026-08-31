@@ -129,6 +129,7 @@
 
 	<SongCoverageBeeswarm
 		songs={filteredCoverage?.songCoverages ?? null}
+		{songByKey}
 		{selectedSongKey}
 		{highlightedProgressions}
 		{onSelectSong}
@@ -136,6 +137,7 @@
 
 	<SongReleaseTimeline
 		songs={timelineSongs}
+		{songByKey}
 		{selectedSongKey}
 		{highlightedProgressions}
 		{yearDomain}

@@ -778,12 +778,8 @@
 	<div class="hint">drag to rotate · scroll to zoom · shift+drag to pan</div>
 
 	{#if tooltipSong && tooltipVisible && delayedTooltip.tooltipAnchor}
-		<div
-			class="tooltip"
-			class:tooltip-collapsed={!delayedTooltip.tooltipExpanded}
-			style={tooltipStyle}
-		>
-			<SongTooltip song={tooltipSong} expanded={delayedTooltip.tooltipExpanded} />
+		<div class="tooltip" style={tooltipStyle}>
+			<SongTooltip song={tooltipSong} />
 		</div>
 	{/if}
 </div>
@@ -795,6 +791,10 @@
 		height: 100%;
 		overflow: hidden;
 		cursor: grab;
+	}
+
+	.scatter-3d:has(.tooltip) {
+		overflow: visible;
 	}
 
 	.scatter-3d:active {
@@ -893,15 +893,10 @@
 		padding: 0.875rem 1rem;
 		z-index: 20;
 		backdrop-filter: blur(8px);
-		max-height: calc(100% - 2rem);
 		overflow-y: auto;
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.75rem;
 		color: #f4f4f5;
 	}
 
-	.tooltip-collapsed {
-		padding: 0.5rem 0.75rem;
-		overflow: hidden;
-	}
 </style>

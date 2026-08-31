@@ -45,6 +45,10 @@
 
 	const baseList = $derived(coverage.baseList);
 
+	const songByKey = $derived(
+		new Map(baseList.map((song) => [song.songKey, song]))
+	);
+
 	const filteredSongs = $derived.by(() => {
 		const q = titleFilter.trim().toLowerCase();
 		if (!q) return baseList;
@@ -201,6 +205,7 @@
 
 					<SongCoverageBeeswarm
 						songs={allSongsCoverageResult?.songCoverages ?? null}
+						{songByKey}
 						selectedSongKey={selectedKey}
 						highlightedProgressions={pinnedProgressionVariants}
 						onSelectSong={handleSongSelect}
@@ -247,7 +252,6 @@
 						matches={finalMatches}
 						annotations={songAnnotations}
 						{explainedPercent}
-						isExplained={explainedPercent > EXPLAINED_THRESHOLD_PERCENT}
 						activeProgression={pinnedProgression}
 						onselect={handleProgressionSelect}
 					/>

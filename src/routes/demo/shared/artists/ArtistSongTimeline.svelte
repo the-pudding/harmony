@@ -23,8 +23,6 @@
 	const TICK_COUNT = 8;
 	const DIMMED_OPACITY = 0.25;
 	const TOOLTIP_EDGE_MARGIN = 16;
-	const COMPACT_TOOLTIP_WIDTH = 190;
-	const COVERAGE_DECIMALS = 0;
 
 	type Props = {
 		songs: ArtistSongStat[];
@@ -33,7 +31,6 @@
 		selectedSongKey?: string | null;
 		highlightedProgressions?: string[] | null;
 		onSelectSong: (songKey: string) => void;
-		tooltipVariant?: "rich" | "compact";
 	};
 
 	const {
@@ -42,8 +39,7 @@
 		yearDomain = null,
 		selectedSongKey = null,
 		highlightedProgressions = null,
-		onSelectSong,
-		tooltipVariant = "rich"
+		onSelectSong
 	}: Props = $props();
 
 	let containerWidth = $state(0);
@@ -125,7 +121,7 @@
 
 	const tooltipWidth = $derived(
 		Math.min(
-			tooltipVariant === "rich" ? HOVER_CARD_WIDTH : COMPACT_TOOLTIP_WIDTH,
+			HOVER_CARD_WIDTH,
 			Math.max(0, containerWidth - TOOLTIP_EDGE_MARGIN)
 		)
 	);
@@ -200,30 +196,9 @@
 			<p class="undated">{undatedCount} songs without a release year</p>
 		{/if}
 
-		{#if hoveredNode && (tooltipVariant === "compact" || hoveredSong)}
-			{@const song = hoveredNode.item}
+		{#if hoveredNode && hoveredSong}
 			<div class="tooltip" style={tooltipStyle}>
-				{#if tooltipVariant === "rich" && hoveredSong}
-					<SongTooltip song={hoveredSong} />
-				{:else}
-					<span class="compact-title">{song.title}</span>
-					<span class="compact-meta">
-						{song.year !== null
-							? toCalendarYear(song.year)
-							: "year unknown"} · {song.coveragePercent.toFixed(
-							COVERAGE_DECIMALS
-						)}% coverage
-					</span>
-					{#if song.groupName}
-						<span class="compact-group">
-							<span
-								class="compact-dot"
-								style:background={colorForProgressionGroupName(song.groupName)}
-							></span>
-							{song.groupName}
-						</span>
-					{/if}
-				{/if}
+				<SongTooltip song={hoveredSong} />
 			</div>
 		{/if}
 	{/if}
@@ -290,42 +265,14 @@
 		position: absolute;
 		pointer-events: none;
 		z-index: 20;
-		display: flex;
-		flex-direction: column;
-		gap: 0.125rem;
 		background: rgba(9, 9, 11, 0.96);
 		border: 1px solid rgba(63, 63, 70, 0.8);
 		border-radius: 0.5rem;
-		padding: 0.75rem 0.875rem;
+		padding: 0.875rem 1rem;
 		backdrop-filter: blur(8px);
-		max-height: 22rem;
 		overflow-y: auto;
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.75rem;
 		color: #f4f4f5;
-	}
-
-	.compact-title {
-		font-weight: 600;
-	}
-
-	.compact-meta {
-		font-size: 0.65rem;
-		color: #a1a1aa;
-	}
-
-	.compact-group {
-		display: flex;
-		align-items: center;
-		gap: 0.3125rem;
-		font-size: 0.65rem;
-		color: #a1a1aa;
-	}
-
-	.compact-dot {
-		width: 0.5rem;
-		height: 0.5rem;
-		border-radius: 50%;
-		flex-shrink: 0;
 	}
 </style>
