@@ -342,6 +342,7 @@
 					{visibleSongKeys}
 					clusters={mapClusters}
 					showTimeAxisGizmo={viewMode === "3dTime"}
+					enableSceneLighting={viewMode === "3d"}
 					onSelect={(songKey) => {
 						selectedSongKey = songKey;
 					}}

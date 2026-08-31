@@ -33,6 +33,11 @@
 	} from "./sceneClusterSpheres.js";
 	import { createTimeAxisGizmo, type TimeAxisGizmo } from "./timeAxisGizmo.js";
 	import { createSceneTimeAxis, type SceneTimeAxis } from "./sceneTimeAxis.js";
+	import {
+		createSceneLighting,
+		type SceneLighting,
+		type SceneLightingShaderUniforms
+	} from "./sceneLighting.js";
 
 	type Props = {
 		points: ScatterPoint[];
@@ -43,6 +48,7 @@
 		visibleSongKeys?: Set<string> | null;
 		clusters: DensityCluster[];
 		showTimeAxisGizmo?: boolean;
+		enableSceneLighting?: boolean;
 		onSelect: (songKey: string | null) => void;
 	};
 
@@ -55,6 +61,7 @@
 		visibleSongKeys = null,
 		clusters,
 		showTimeAxisGizmo = false,
+		enableSceneLighting = false,
 		onSelect
 	}: Props = $props();
 
@@ -99,6 +106,7 @@
 	let resizeObserver: ResizeObserver | null = null;
 	let timeAxisGizmo: TimeAxisGizmo | null = null;
 	let sceneTimeAxis: SceneTimeAxis | null = null;
+	let sceneLighting: SceneLighting | null = null;
 	let controlsInteractionActive = false;
 
 	const highlightLabels = new Map<string, CSS2DObject>();
@@ -267,11 +275,18 @@
 		return geometry;
 	};
 
-	const pointsMaterial = () =>
+	const pointsMaterial = (lightingUniforms: SceneLightingShaderUniforms) =>
 		new THREE.ShaderMaterial({
 			transparent: true,
 			depthWrite: false,
-			uniforms: {},
+			uniforms: {
+				uLightingEnabled: lightingUniforms.uLightingEnabled,
+				uKeyLightDirectionView: lightingUniforms.uKeyLightDirectionView,
+				uFillLightDirectionView: lightingUniforms.uFillLightDirectionView,
+				uAmbient: lightingUniforms.uAmbient,
+				uKeyStrength: lightingUniforms.uKeyStrength,
+				uFillStrength: lightingUniforms.uFillStrength
+			},
 			vertexShader: `
 				attribute float size;
 				attribute float alpha;
@@ -287,6 +302,12 @@
 				}
 			`,
 			fragmentShader: `
+				uniform float uLightingEnabled;
+				uniform vec3 uKeyLightDirectionView;
+				uniform vec3 uFillLightDirectionView;
+				uniform float uAmbient;
+				uniform float uKeyStrength;
+				uniform float uFillStrength;
 				varying vec3 vColor;
 				varying float vAlpha;
 				void main() {
@@ -294,7 +315,25 @@
 					float dist = length(centered);
 					if (dist > 0.5) discard;
 					float edgeAlpha = smoothstep(0.5, 0.35, dist);
-					gl_FragColor = vec4(vColor, vAlpha * edgeAlpha);
+					vec3 litColor = vColor;
+					if (uLightingEnabled > 0.5) {
+						vec3 sphereNormal = normalize(vec3(
+							centered * 2.0,
+							sqrt(max(0.0, 1.0 - dot(centered * 2.0, centered * 2.0)))
+						));
+						float keyDiffuse = max(
+							dot(sphereNormal, normalize(uKeyLightDirectionView)),
+							0.0
+						);
+						float fillDiffuse = max(
+							dot(sphereNormal, normalize(uFillLightDirectionView)),
+							0.0
+						);
+						float lighting =
+							uAmbient + uKeyStrength * keyDiffuse + uFillStrength * fillDiffuse;
+						litColor = vColor * lighting;
+					}
+					gl_FragColor = vec4(litColor, vAlpha * edgeAlpha);
 				}
 			`
 		});
@@ -498,6 +537,7 @@
 	const renderFrame = () => {
 		if (!renderer || !labelRenderer || !scene || !camera || !controls) return;
 		controls.update();
+		sceneLighting?.updateForCamera(camera);
 		updateMeshVisualAttributes();
 		syncHighlightLabels();
 		syncEmphasisRings();
@@ -539,6 +579,8 @@
 		timeAxisGizmo = null;
 		sceneTimeAxis?.dispose();
 		sceneTimeAxis = null;
+		sceneLighting?.dispose();
+		sceneLighting = null;
 		sceneClusterSpheres?.dispose();
 		sceneClusterSpheres = null;
 		scene = null;
@@ -596,9 +638,12 @@
 			controls.addEventListener("change", handleControlsChange);
 			controls.addEventListener("end", handleControlsEnd);
 
+			sceneLighting = createSceneLighting(scene);
+			if (enableSceneLighting) sceneLighting.enable();
+
 			pointsMesh = new THREE.Points(
 				new THREE.BufferGeometry(),
-				pointsMaterial()
+				pointsMaterial(sceneLighting.shaderUniforms)
 			);
 			scene.add(pointsMesh);
 			sceneTimeAxis = createSceneTimeAxis(scene);
@@ -670,6 +715,16 @@
 		void showTimeAxisGizmo;
 		void songs;
 		syncSceneTimeAxis();
+	});
+
+	$effect(() => {
+		if (!sceneLighting || !sceneClusterSpheres) return;
+		if (enableSceneLighting) {
+			sceneLighting.enable();
+		} else {
+			sceneLighting.disable();
+		}
+		sceneClusterSpheres.setLightingEnabled(enableSceneLighting);
 	});
 
 	const tooltipSong = $derived(
