@@ -15,11 +15,46 @@
 	const snap = (value: number) => Math.round(value / SNAP_STEP) * SNAP_STEP;
 
 	const sliders = $derived([
-		{ key: "identity" as const, label: "identity", min: 0, max: 2, step: SNAP_STEP },
-		{ key: "content" as const, label: "content", min: 0, max: 2, step: SNAP_STEP },
-		{ key: "groupShare" as const, label: "groups", min: 0, max: 2, step: SNAP_STEP },
-		{ key: "axes" as const, label: "axes", min: 0, max: 2, step: SNAP_STEP },
-		{ key: "groupPull" as const, label: "pull", min: 0, max: 1, step: SNAP_STEP }
+		{
+			key: "identity" as const,
+			label: "identity",
+			min: 0,
+			max: 2,
+			step: SNAP_STEP,
+			description: "Weight for exact progression identity — songs sharing the same chord progressions are pulled together."
+		},
+		{
+			key: "content" as const,
+			label: "content",
+			min: 0,
+			max: 2,
+			step: SNAP_STEP,
+			description: "Weight for progression content similarity — shared chord patterns, n-grams, and cadences across progressions, even when they aren't identical."
+		},
+		{
+			key: "groupShare" as const,
+			label: "groups",
+			min: 0,
+			max: 2,
+			step: SNAP_STEP,
+			description: "Weight for editorial group membership — songs sharing the same core-progression family are pulled closer."
+		},
+		{
+			key: "axes" as const,
+			label: "axes",
+			min: 0,
+			max: 2,
+			step: SNAP_STEP,
+			description: "Weight for hand-crafted harmonic axes (brightness and complexity), placing songs with similar overall harmonic character nearby."
+		},
+		{
+			key: "groupPull" as const,
+			label: "pull",
+			min: 0,
+			max: 1,
+			step: SNAP_STEP,
+			description: "Supervised pull strength — how hard UMAP pulls songs toward their editorial group center. 0 = off, higher values enforce tighter group clusters."
+		}
 	]);
 
 	let localWeights = $state<BlendWeights>(untrack(() => ({ ...weights })));
@@ -43,7 +78,11 @@
 <div class="blend-controls" role="group" aria-label="Blend weights">
 	{#each sliders as slider (slider.key)}
 		<label class="blend-slider">
-			<span class="blend-label">{slider.label}</span>
+			<span class="blend-label-group">
+				<span class="blend-label">{slider.label}</span>
+				<span class="info-icon" role="img" aria-label="info about {slider.label}">ⓘ</span>
+				<span class="tooltip">{slider.description}</span>
+			</span>
 			<input
 				type="range"
 				min={slider.min}
@@ -76,8 +115,46 @@
 		cursor: pointer;
 	}
 
+	.blend-label-group {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 0.15rem;
+	}
+
 	.blend-label {
 		font-size: 0.7rem;
+	}
+
+	.info-icon {
+		font-size: 0.6rem;
+		cursor: help;
+		color: rgba(165, 180, 252, 0.5);
+		line-height: 1;
+	}
+
+	.tooltip {
+		display: none;
+		position: absolute;
+		top: calc(100% + 6px);
+		left: 50%;
+		transform: translateX(-50%);
+		background: #1c1c1e;
+		color: #d4d4d8;
+		border: 1px solid #3f3f46;
+		border-radius: 0.375rem;
+		padding: 0.375rem 0.5rem;
+		font-size: 0.65rem;
+		width: 12rem;
+		z-index: 20;
+		pointer-events: none;
+		white-space: normal;
+		text-align: center;
+		line-height: 1.4;
+	}
+
+	.blend-label-group:hover .tooltip {
+		display: block;
 	}
 
 	.blend-value {
