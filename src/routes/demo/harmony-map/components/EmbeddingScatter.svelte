@@ -92,11 +92,11 @@
 	const AXIS_LABEL_COLOR = "rgba(161, 161, 170, 0.7)";
 	const AXIS_LABEL_FONT = '10px "JetBrains Mono", ui-monospace, monospace';
 	const CLUSTER_RADIUS_PADDING = 8;
-	const CLUSTER_STROKE_COLOR = "rgba(244, 244, 245, 0.55)";
-	const CLUSTER_STROKE_WIDTH = 1.25;
-	const CLUSTER_UNNAMED_STROKE_ALPHA = 0.3;
-	const CLUSTER_DASH_PATTERN = [5, 4];
-	const CLUSTER_LABEL_COLOR = "rgba(244, 244, 245, 0.75)";
+	const CLUSTER_STROKE_COLOR = "#e4e4e7";
+	const CLUSTER_STROKE_WIDTH = 2;
+	const CLUSTER_UNNAMED_STROKE_ALPHA = 0.72;
+	const CLUSTER_DASH_PATTERN = [7, 5];
+	const CLUSTER_LABEL_COLOR = "rgba(244, 244, 245, 0.9)";
 	const CLUSTER_LABEL_FONT = '10px "JetBrains Mono", ui-monospace, monospace';
 	const CLUSTER_NAME_FONT =
 		'600 11px "JetBrains Mono", ui-monospace, monospace';
@@ -521,7 +521,7 @@
 				: best;
 		}, null);
 
-	const findPointAt = (anchor: HoverCardAnchor): string | null => {
+	const findPointAtAnchor = (anchor: HoverCardAnchor): string | null => {
 		const hit = drawablePoints.reduce<{
 			songKey: string | null;
 			distance: number;
@@ -540,11 +540,16 @@
 		return hit.songKey;
 	};
 
+	const findPointAt = (event: MouseEvent): string | null => {
+		if (!containerEl) return null;
+		return findPointAtAnchor(anchorFromMouseEvent(event, containerEl));
+	};
+
 	const handlePointerMove = (event: MouseEvent) => {
 		if (!containerEl) return;
 		clickGuard.onPointerMove(event);
 		const anchor = anchorFromMouseEvent(event, containerEl);
-		const songKey = findPointAt(anchor);
+		const songKey = findPointAtAnchor(anchor);
 		hoveredSongKey = songKey;
 		delayedTooltip.setHover(songKey, songKey === null ? null : anchor);
 		hoveredClusterHit = songKey === null ? findClusterAt(anchor) : null;
@@ -628,14 +633,18 @@
 		}
 	};
 
-	const handleClick = () => {
+	const handleClick = (event: MouseEvent) => {
 		if (clickGuard.shouldSuppressClick()) return;
-		if (hoveredSongKey !== null) {
-			onSelect(hoveredSongKey === selectedSongKey ? null : hoveredSongKey);
+		if (!containerEl) return;
+		const anchor = anchorFromMouseEvent(event, containerEl);
+		const songKey = findPointAt(event);
+		if (songKey !== null) {
+			onSelect(songKey === selectedSongKey ? null : songKey);
 			return;
 		}
-		if (hoveredClusterHit !== null) {
-			openNamingInput(hoveredClusterHit);
+		const clusterHit = findClusterAt(anchor);
+		if (clusterHit !== null) {
+			openNamingInput(clusterHit);
 			return;
 		}
 		onSelect(null);
@@ -667,7 +676,6 @@
 		const zoomBehavior = zoom<HTMLCanvasElement, unknown>()
 			.scaleExtent([MIN_ZOOM, MAX_ZOOM])
 			.on("start", () => {
-				clickGuard.onInteractionDragStart();
 				delayedTooltip.startDrag();
 			})
 			.on("end", delayedTooltip.endDrag)
@@ -727,7 +735,11 @@
 	onmouseleave={handlePointerLeave}
 	onclick={handleClick}
 	onkeydown={(event) => {
-		if (event.key === "Enter" || event.key === " ") handleClick();
+		if (event.key === "Enter" || event.key === " ") {
+			if (hoveredSongKey !== null) {
+				onSelect(hoveredSongKey === selectedSongKey ? null : hoveredSongKey);
+			}
+		}
 		if (event.key === "Escape") onSelect(null);
 	}}
 >
