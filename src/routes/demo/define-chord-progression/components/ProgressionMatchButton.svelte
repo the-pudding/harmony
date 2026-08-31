@@ -2,6 +2,7 @@
 	import type { Snippet } from "svelte";
 	import { humanizeScale } from "../../../../data/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import ProgressionMatchButtonCompact from "./ProgressionMatchButtonCompact.svelte";
 
 	export type VariantTooltipRow = {
 		chordProgression: string;
@@ -23,6 +24,7 @@
 		dashed?: boolean;
 		variantTooltipRows?: VariantTooltipRow[];
 		stats?: Snippet<[{ active: boolean }]>;
+		compact?: boolean;
 	};
 
 	let {
@@ -34,7 +36,8 @@
 		borderColor,
 		dashed = false,
 		variantTooltipRows = [],
-		stats
+		stats,
+		compact = false
 	}: Props = $props();
 
 	let badgeElement = $state<HTMLSpanElement | null>(null);
@@ -84,6 +87,18 @@
 		tooltipVisible = false;
 	};
 </script>
+
+{#if compact}
+	<ProgressionMatchButtonCompact
+		{match}
+		{active}
+		{onselect}
+		{onhover}
+		{onunhover}
+		{borderColor}
+		{dashed}
+	/>
+{:else}
 
 {#snippet criterionBadge(label: string, hint: string, color: string)}<span
 		class="prog-badge"
@@ -163,6 +178,8 @@
 			</div>
 		{/each}
 	</div>
+{/if}
+
 {/if}
 
 <style>

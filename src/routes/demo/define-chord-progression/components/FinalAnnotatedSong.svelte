@@ -29,6 +29,7 @@
 		isExplained: boolean;
 		activeProgression: string | null;
 		onselect: (chordProgression: string) => void;
+		compact?: boolean;
 	};
 
 	let {
@@ -38,7 +39,8 @@
 		explainedPercent,
 		isExplained,
 		activeProgression,
-		onselect
+		onselect,
+		compact = false
 	}: Props = $props();
 
 	const sortedMatches = $derived(
@@ -54,9 +56,9 @@
 	const chordMatchingChallenges = $derived(getChordMatchingChallenges(song.songKey));
 </script>
 
-<div class="final-annotated-song">
+<div class="final-annotated-song" class:compact>
 	<SongMetadataHeader {song} />
-	<ChordProgressionIssuesNote songKey={song.songKey} />
+	<ChordProgressionIssuesNote songKey={song.songKey} size={compact ? "sm" : "md"} />
 	{#if chordMatchingChallenges}
 		<ChordProgressionIssuesNote
 			songKey={song.songKey}
@@ -64,12 +66,14 @@
 			overrideLabel={CHORD_MATCHING_CHALLENGES_LABEL}
 			overrideColor="rgba(251, 191, 36, 0.95)"
 			overrideColorHover="rgba(253, 224, 71, 0.95)"
+			size={compact ? "sm" : "md"}
 		/>
 	{/if}
 	<div
 		class="final-layout"
-		class:final-layout-chords-only={!hasMatches}
-		style="--button-col-width: {BUTTON_COLUMN_WIDTH_PERCENT}%; --chords-col-width: {CHORDS_COLUMN_WIDTH_PERCENT}%; --column-gap: {COLUMN_GAP_REM}rem;"
+		class:final-layout-chords-only={!hasMatches && !compact}
+		class:final-layout-compact={compact}
+		style={compact ? undefined : `--button-col-width: ${BUTTON_COLUMN_WIDTH_PERCENT}%; --chords-col-width: ${CHORDS_COLUMN_WIDTH_PERCENT}%; --column-gap: ${COLUMN_GAP_REM}rem;`}
 	>
 		{#if hasMatches}
 			<div class="buttons-column">
@@ -77,6 +81,7 @@
 					{@const outline = matchOutline(match)}
 					<ProgressionMatchButton
 						{match}
+						{compact}
 						active={activeProgression === match.chordProgression}
 						borderColor={outline.color}
 						dashed={outline.dashed}
@@ -88,13 +93,15 @@
 							hoveredProgression = null;
 						}}
 					>
-						{#snippet stats({ active })}
-							<SongProgressionStats
-								matchCount={match.matchCount}
-								coveragePercent={match.coveragePercent}
-								{active}
-							/>
-						{/snippet}
+						{#if !compact}
+							{#snippet stats({ active })}
+								<SongProgressionStats
+									matchCount={match.matchCount}
+									coveragePercent={match.coveragePercent}
+									{active}
+								/>
+							{/snippet}
+						{/if}
 					</ProgressionMatchButton>
 				{/each}
 				<div class="total-row">
@@ -106,7 +113,7 @@
 			</div>
 		{/if}
 		<div class="chords-column">
-			<SongChordsDisplay {song} {annotations} {focusedProgression} />
+			<SongChordsDisplay {song} {annotations} {focusedProgression} {compact} />
 		</div>
 	</div>
 </div>
@@ -117,6 +124,10 @@
 		flex-direction: column;
 		gap: 0.625rem;
 		width: 100%;
+	}
+
+	.final-annotated-song.compact {
+		gap: 0.375rem;
 	}
 
 	.final-layout {
@@ -130,11 +141,22 @@
 		grid-template-columns: 1fr;
 	}
 
+	.final-layout-compact {
+		display: flex;
+		flex-direction: column;
+		gap: 0.375rem;
+		width: 100%;
+	}
+
 	.buttons-column {
 		display: flex;
 		flex-direction: column;
 		gap: 0.375rem;
 		min-width: 0;
+	}
+
+	.final-layout-compact .buttons-column {
+		gap: 0.25rem;
 	}
 
 	.total-row {

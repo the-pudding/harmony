@@ -9,6 +9,14 @@
 
 	const DIMMED_HIGHLIGHT_OPACITY = 0.22;
 
+	const COMPACT_CHORDS_FONT_SIZE = "0.5625rem";
+	const COMPACT_CHORD_PADDING = "0.0625rem 0.2rem";
+	const COMPACT_MATCH_GROUP_PADDING = "0.1rem";
+	const COMPACT_MATCH_GROUP_BORDER_RADIUS = "0.25rem";
+	const COMPACT_SECTION_LABEL_FONT_SIZE = "0.5rem";
+	const COMPACT_ROW_GAP = "0.15rem";
+	const COMPACT_CHORD_GAP = "0.0625rem";
+
 	type Props = {
 		song: GroupedSong;
 		parsedProgression?: ParsedProgressionChord[] | null;
@@ -17,6 +25,7 @@
 		matchRomanNumeralsExactly?: boolean;
 		annotations?: ChordAnnotation[];
 		focusedProgression?: string | null;
+		compact?: boolean;
 	};
 
 	let {
@@ -26,7 +35,8 @@
 		isStrictSubset = false,
 		matchRomanNumeralsExactly = false,
 		annotations,
-		focusedProgression = null
+		focusedProgression = null,
+		compact = false
 	}: Props = $props();
 
 	const SECTION_LABEL_CHORD_GAP_PX = 2;
@@ -68,7 +78,8 @@
 
 <div
 	class="song-chords"
-	style="--section-label-chord-gap: {SECTION_LABEL_CHORD_GAP_PX}px; --section-label-right-padding: {SECTION_LABEL_RIGHT_PADDING_PX}px; --dimmed-highlight-opacity: {DIMMED_HIGHLIGHT_OPACITY};"
+	class:compact
+	style="--section-label-chord-gap: {SECTION_LABEL_CHORD_GAP_PX}px; --section-label-right-padding: {SECTION_LABEL_RIGHT_PADDING_PX}px; --dimmed-highlight-opacity: {DIMMED_HIGHLIGHT_OPACITY}; {compact ? `--compact-chords-font: ${COMPACT_CHORDS_FONT_SIZE}; --compact-chord-padding: ${COMPACT_CHORD_PADDING}; --compact-match-group-padding: ${COMPACT_MATCH_GROUP_PADDING}; --compact-match-group-radius: ${COMPACT_MATCH_GROUP_BORDER_RADIUS}; --compact-section-label-font: ${COMPACT_SECTION_LABEL_FONT_SIZE}; --compact-row-gap: ${COMPACT_ROW_GAP}; --compact-chord-gap: ${COMPACT_CHORD_GAP};` : ''}"
 >
 	<div class="sections">
 		{#each song.sections as section, sectionIndex (sectionIndex)}
@@ -145,6 +156,10 @@
 		align-items: baseline;
 	}
 
+	.compact .sections {
+		row-gap: var(--compact-row-gap);
+	}
+
 	.section-label-cell {
 		display: flex;
 		flex-direction: column;
@@ -160,6 +175,10 @@
 		white-space: nowrap;
 		text-align: right;
 		padding-right: var(--section-label-right-padding);
+	}
+
+	.compact .section-label {
+		font-size: var(--compact-section-label-font);
 	}
 
 	.section-key {
@@ -184,9 +203,18 @@
 		min-width: 0;
 	}
 
+	.compact .chords {
+		font-size: var(--compact-chords-font);
+		gap: var(--compact-chord-gap);
+	}
+
 	.chord {
 		color: #a1a1aa;
 		padding: 0.125rem 0.375rem;
+	}
+
+	.compact .chord {
+		padding: var(--compact-chord-padding);
 	}
 
 	.chord.highlighted {
@@ -204,6 +232,12 @@
 		border-radius: 0.375rem;
 		padding: 0.2rem;
 		transition: opacity 0.15s ease;
+	}
+
+	.compact .match-group {
+		padding: var(--compact-match-group-padding);
+		border-radius: var(--compact-match-group-radius);
+		gap: var(--compact-chord-gap);
 	}
 
 	.match-group.dimmed {

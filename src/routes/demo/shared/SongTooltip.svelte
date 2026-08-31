@@ -30,6 +30,7 @@
 
 {#if expanded}
 	<FinalAnnotatedSong
+		compact
 		{song}
 		{matches}
 		{annotations}
