@@ -1,66 +1,72 @@
 import type { HoverCardAnchor } from "./hoverCardPosition.js";
 
-export const TOOLTIP_SETTLE_DELAY_MS = 500;
+export const TOOLTIP_CONTENT_EXPAND_DELAY_MS = 500;
 
 export const createDelayedHoverTooltip = () => {
 	let pendingSongKey = $state<string | null>(null);
 	let pendingAnchor = $state<HoverCardAnchor | null>(null);
 	let tooltipSongKey = $state<string | null>(null);
 	let tooltipAnchor = $state<HoverCardAnchor | null>(null);
+	let tooltipExpanded = $state(false);
 	let isDragging = $state(false);
-	let settleTimeoutId: ReturnType<typeof setTimeout> | null = null;
+	let expandTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-	const clearSettleTimeout = () => {
-		if (settleTimeoutId === null) return;
-		clearTimeout(settleTimeoutId);
-		settleTimeoutId = null;
+	const clearExpandTimeout = () => {
+		if (expandTimeoutId === null) return;
+		clearTimeout(expandTimeoutId);
+		expandTimeoutId = null;
 	};
 
-	const hideTooltip = () => {
-		tooltipSongKey = null;
-		tooltipAnchor = null;
-	};
-
-	const scheduleSettle = () => {
-		clearSettleTimeout();
+	const syncTooltipVisibility = () => {
 		if (pendingSongKey === null || pendingAnchor === null || isDragging) {
-			hideTooltip();
+			tooltipSongKey = null;
+			tooltipAnchor = null;
 			return;
 		}
-		settleTimeoutId = setTimeout(() => {
+		tooltipSongKey = pendingSongKey;
+		tooltipAnchor = pendingAnchor;
+	};
+
+	const scheduleExpand = () => {
+		clearExpandTimeout();
+		tooltipExpanded = false;
+		if (pendingSongKey === null || pendingAnchor === null || isDragging) return;
+		expandTimeoutId = setTimeout(() => {
 			if (pendingSongKey === null || pendingAnchor === null || isDragging) return;
-			tooltipSongKey = pendingSongKey;
-			tooltipAnchor = pendingAnchor;
-		}, TOOLTIP_SETTLE_DELAY_MS);
+			tooltipExpanded = true;
+		}, TOOLTIP_CONTENT_EXPAND_DELAY_MS);
 	};
 
 	const setHover = (songKey: string | null, anchor: HoverCardAnchor | null) => {
 		pendingSongKey = songKey;
 		pendingAnchor = anchor;
-		hideTooltip();
-		scheduleSettle();
+		syncTooltipVisibility();
+		scheduleExpand();
 	};
 
 	const clearHover = () => {
 		pendingSongKey = null;
 		pendingAnchor = null;
-		clearSettleTimeout();
-		hideTooltip();
+		tooltipExpanded = false;
+		clearExpandTimeout();
+		syncTooltipVisibility();
 	};
 
 	const startDrag = () => {
 		isDragging = true;
-		clearSettleTimeout();
-		hideTooltip();
+		tooltipExpanded = false;
+		clearExpandTimeout();
+		syncTooltipVisibility();
 	};
 
 	const endDrag = () => {
 		isDragging = false;
-		scheduleSettle();
+		syncTooltipVisibility();
+		scheduleExpand();
 	};
 
 	const dispose = () => {
-		clearSettleTimeout();
+		clearExpandTimeout();
 	};
 
 	return {
@@ -69,6 +75,9 @@ export const createDelayedHoverTooltip = () => {
 		},
 		get tooltipAnchor() {
 			return tooltipAnchor;
+		},
+		get tooltipExpanded() {
+			return tooltipExpanded;
 		},
 		setHover,
 		clearHover,

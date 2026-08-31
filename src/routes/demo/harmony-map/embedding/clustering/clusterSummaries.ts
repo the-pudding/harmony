@@ -10,6 +10,7 @@ export type ClusterTimelineSong = {
 	year: number | null;
 	coveragePercent: number;
 	matchingProgressions: string[];
+	dominantGroupName: string | null;
 };
 
 export type ClusterSummary = {
@@ -26,6 +27,7 @@ type ClusterSongMetadata = {
 	artists: string[];
 	coveragePercent: number;
 	matchingProgressions: string[];
+	dominantGroupName: string | null;
 };
 
 export const buildClusterSummaries = (
@@ -52,7 +54,8 @@ export const buildClusterSummaries = (
 				artists: metadata?.artists ?? [],
 				year,
 				coveragePercent: metadata?.coveragePercent ?? 0,
-				matchingProgressions: metadata?.matchingProgressions ?? []
+				matchingProgressions: metadata?.matchingProgressions ?? [],
+				dominantGroupName: metadata?.dominantGroupName ?? null
 			});
 		}
 

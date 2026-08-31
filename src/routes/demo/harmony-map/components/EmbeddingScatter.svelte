@@ -747,8 +747,12 @@
 	></canvas>
 
 	{#if tooltipSong && tooltipVisible && delayedTooltip.tooltipAnchor}
-		<div class="tooltip" style={tooltipStyle}>
-			<SongTooltip song={tooltipSong} />
+		<div
+			class="tooltip"
+			class:tooltip-collapsed={!delayedTooltip.tooltipExpanded}
+			style={tooltipStyle}
+		>
+			<SongTooltip song={tooltipSong} expanded={delayedTooltip.tooltipExpanded} />
 		</div>
 	{/if}
 
@@ -820,5 +824,10 @@
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.75rem;
 		color: #f4f4f5;
+	}
+
+	.tooltip-collapsed {
+		padding: 0.5rem 0.75rem;
+		overflow: hidden;
 	}
 </style>

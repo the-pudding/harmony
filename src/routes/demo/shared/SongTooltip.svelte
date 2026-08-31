@@ -7,10 +7,14 @@
 	} from "../define-chord-progression/progression-matching-logic/finalProgressionSelection.js";
 	import { EXPLAINED_THRESHOLD_PERCENT } from "../define-chord-progression/constants.js";
 	import FinalAnnotatedSong from "../define-chord-progression/components/FinalAnnotatedSong.svelte";
+	import SongMetadataHeader from "../define-chord-progression/components/SongMetadataHeader.svelte";
 
-	type Props = { song: GroupedSong };
+	type Props = {
+		song: GroupedSong;
+		expanded?: boolean;
+	};
 
-	const { song }: Props = $props();
+	const { song, expanded = true }: Props = $props();
 
 	let activeProgression = $state<string | null>(null);
 
@@ -24,15 +28,19 @@
 	]);
 </script>
 
-<FinalAnnotatedSong
-	{song}
-	{matches}
-	{annotations}
-	explainedPercent={selection.explainedPercent}
-	isExplained={selection.explainedPercent > EXPLAINED_THRESHOLD_PERCENT}
-	{activeProgression}
-	onselect={(chordProgression) => {
-		activeProgression =
-			activeProgression === chordProgression ? null : chordProgression;
-	}}
-/>
+{#if expanded}
+	<FinalAnnotatedSong
+		{song}
+		{matches}
+		{annotations}
+		explainedPercent={selection.explainedPercent}
+		isExplained={selection.explainedPercent > EXPLAINED_THRESHOLD_PERCENT}
+		{activeProgression}
+		onselect={(chordProgression) => {
+			activeProgression =
+				activeProgression === chordProgression ? null : chordProgression;
+		}}
+	/>
+{:else}
+	<SongMetadataHeader {song} />
+{/if}

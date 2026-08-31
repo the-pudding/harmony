@@ -23,7 +23,8 @@
 	import type { EmbeddingState } from "../embedding/state/createEmbeddingState.svelte.js";
 	import {
 		findNearestNeighbors,
-		groupSharesForSong
+		groupSharesForSong,
+		dominantGroupName
 	} from "../embedding/vectors/index.js";
 	import { buildYearAxisBySongKey } from "../embedding/vectors/songYearAxis.js";
 	import {
@@ -259,7 +260,10 @@
 					title: coverage?.title ?? song?.title ?? songKey,
 					artists: coverage?.artists ?? song?.artists ?? [],
 					coveragePercent: coverage?.coveragePercent ?? 0,
-					matchingProgressions: coverage?.matchingProgressions ?? []
+					matchingProgressions: coverage?.matchingProgressions ?? [],
+					dominantGroupName: coverage
+						? dominantGroupName(coverage.progressionCounts)
+						: null
 				};
 			}
 		)

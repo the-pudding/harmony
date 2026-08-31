@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { scaleLinear } from "d3";
+	import { colorForProgressionGroupName } from "$data/core-progressions.js";
 	import {
 		getChordProgressionIssues,
 		getChordMatchingChallenges,
@@ -23,6 +24,7 @@
 		year: number | null;
 		coveragePercent: number;
 		matchingProgressions: string[];
+		dominantGroupName?: string | null;
 	};
 
 	type AnnotatedSong = SongEntry & {
@@ -41,6 +43,7 @@
 		highlightedProgressions?: string[] | null;
 		highlightedProgression?: string | null;
 		yearDomain?: YearDomain | null;
+		colorByProgressionGroup?: boolean;
 		onSelectSong?: (key: string) => void;
 	};
 
@@ -50,6 +53,7 @@
 		highlightedProgressions = null,
 		highlightedProgression = null,
 		yearDomain = null,
+		colorByProgressionGroup = false,
 		onSelectSong
 	}: Props = $props();
 
@@ -79,6 +83,10 @@
 	const TICK_MARK_LENGTH = 5;
 	const TICK_LABEL_OFFSET_Y = 16;
 	const HOVER_CLEAR_DELAY_MS = 120;
+	const ISSUES_DOT_FILL = "rgba(239, 68, 68, 0.65)";
+	const ISSUES_DOT_HOVER_FILL = "rgba(239, 68, 68, 0.95)";
+	const TRICKY_DOT_FILL = "rgba(251, 191, 36, 0.65)";
+	const TRICKY_DOT_HOVER_FILL = "rgba(251, 191, 36, 0.95)";
 
 	const datedSongs = $derived(
 		(songs ?? []).filter(
@@ -179,6 +187,15 @@
 		hoveredNode ? AXIS_Y - DOT_RADIUS - hoveredNode.y : 0
 	);
 
+	const dotFillFor = (node: DodgedNode, isHovered: boolean): string | null => {
+		if (!colorByProgressionGroup) return null;
+		const hasIssues = node.chordProgressionIssues !== undefined;
+		const isTricky = node.chordMatchingChallenges !== undefined;
+		if (hasIssues) return isHovered ? ISSUES_DOT_HOVER_FILL : ISSUES_DOT_FILL;
+		if (isTricky) return isHovered ? TRICKY_DOT_HOVER_FILL : TRICKY_DOT_FILL;
+		return colorForProgressionGroupName(node.dominantGroupName ?? null);
+	};
+
 	function handleDotEnter(songKey: string) {
 		if (clearHoverTimeout !== null) {
 			clearTimeout(clearHoverTimeout);
@@ -245,7 +262,7 @@
 					class="tick-label">{tick.year}</text
 				>
 			{/each}
-		{#each [false, true] as renderHighlighted}
+		{#each [false, true] as renderHighlighted (renderHighlighted)}
 			{#each dodgedNodes.filter((n) => isHighlighted(n) === renderHighlighted) as node (node.songKey)}
 				{@const isSelected = node.songKey === selectedSongKey}
 				{@const isHovered = node.songKey === hoveredSongKey}
@@ -254,6 +271,7 @@
 				{@const isDimmed = activeHighlightProgressions !== null && !isHighlighted(node)}
 				{@const r = isSelected ? SELECTED_DOT_RADIUS : DOT_RADIUS}
 				{@const cy = AXIS_Y - DOT_RADIUS - node.y}
+				{@const dotFill = dotFillFor(node, isHovered)}
 				<circle
 					cx={node.x}
 					{cy}
@@ -262,8 +280,10 @@
 					class:selected={isSelected}
 					class:dimmed={isDimmed}
 					class:hovered={isHovered}
-					class:has-issues={hasIssues}
-					class:tricky={isTricky && !hasIssues}
+					class:color-by-group={colorByProgressionGroup}
+					class:has-issues={hasIssues && !colorByProgressionGroup}
+					class:tricky={isTricky && !hasIssues && !colorByProgressionGroup}
+					fill={colorByProgressionGroup ? (dotFill ?? undefined) : undefined}
 					onmouseenter={() => handleDotEnter(node.songKey)}
 					onmouseleave={scheduleHoverClear}
 					onclick={() => selectSong(node.songKey)}
@@ -383,10 +403,13 @@
 	}
 
 	.dot {
-		fill: var(--chart-dot-fill);
 		cursor: pointer;
 		outline: none;
 		transition: fill 0.1s ease;
+	}
+
+	.dot:not(.color-by-group) {
+		fill: var(--chart-dot-fill);
 	}
 
 	.dot:focus-visible {
@@ -394,8 +417,11 @@
 		stroke-width: 2px;
 	}
 
-	.dot.hovered {
+	.dot.hovered:not(.color-by-group) {
 		fill: var(--chart-dot-hover-fill);
+	}
+
+	.dot.hovered {
 		stroke: rgba(255, 255, 255, 0.6);
 		stroke-width: 1.5px;
 	}
