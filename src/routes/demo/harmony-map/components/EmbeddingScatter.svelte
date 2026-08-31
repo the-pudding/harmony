@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { untrack } from "svelte";
+	import { onDestroy, untrack } from "svelte";
 	import {
 		easeCubicInOut,
 		select,
@@ -18,12 +18,25 @@
 	} from "../embedding/reducers/types.js";
 	import { fillStyleForGroupShares } from "./groupColorBlend.js";
 	import SongTooltip from "../../shared/SongTooltip.svelte";
+	import { createDelayedHoverTooltip } from "../../shared/delayedHoverTooltip.svelte.js";
+	import { createClickAfterDragGuard } from "../../shared/clickAfterDragGuard.js";
 	import {
 		anchorFromMouseEvent,
 		hoverCardStyle,
 		type HoverCardAnchor
 	} from "../../shared/hoverCardPosition.js";
 	import type { ScatterAxisLabels, ScatterPoint } from "./scatterPoint.js";
+	import { SCATTER_DIMMED_ALPHA, SCATTER_NORMAL_ALPHA } from "./scatterPoint.js";
+	import {
+		HIGHLIGHT_LABEL_COLOR,
+		HIGHLIGHT_LABEL_FONT,
+		HIGHLIGHT_LABEL_GAP_PX,
+		HIGHLIGHT_LABEL_MAX_WIDTH_PX,
+		HIGHLIGHT_RING_COLOR,
+		HIGHLIGHT_RING_OFFSET_PX,
+		HIGHLIGHT_RING_WIDTH_PX,
+		truncateLabelToWidth
+	} from "./highlightSongMarker.js";
 
 	type Props = {
 		points: ScatterPoint[];
@@ -61,8 +74,6 @@
 	const SELECTED_POINT_RADIUS = 6;
 	const NEIGHBOR_POINT_RADIUS = 4.5;
 	const HOVER_PICK_RADIUS = 12;
-	const DIMMED_ALPHA = 0.18;
-	const NORMAL_ALPHA = 0.8;
 	const RING_WIDTH = 1.5;
 	const TWEEN_DURATION_MS = 700;
 	const JITTER_AMPLITUDE = 0.004;
@@ -82,13 +93,6 @@
 	const CLUSTER_NAME_COLOR = "#f4f4f5";
 	const CLUSTER_LABEL_GAP = 6;
 	const CLUSTER_NAMES_STORAGE_KEY = "harmony-map-cluster-names-v2";
-	const HIGHLIGHT_RING_COLOR = "#fbbf24";
-	const HIGHLIGHT_RING_WIDTH = 1.25;
-	const HIGHLIGHT_RING_OFFSET = 3;
-	const HIGHLIGHT_LABEL_COLOR = "#fde68a";
-	const HIGHLIGHT_LABEL_FONT = '10px "JetBrains Mono", ui-monospace, monospace';
-	const HIGHLIGHT_LABEL_MAX_WIDTH = 90;
-	const HIGHLIGHT_LABEL_GAP = 4;
 
 	type NormalizedPoint = ScatterPoint & { nx: number; ny: number };
 	type Position = { nx: number; ny: number };
@@ -99,7 +103,10 @@
 	let height = $state(0);
 	let transform = $state<ZoomTransform>(zoomIdentity);
 	let hoveredSongKey = $state<string | null>(null);
-	let hoverAnchor = $state<HoverCardAnchor | null>(null);
+
+	const delayedTooltip = createDelayedHoverTooltip();
+	const clickGuard = createClickAfterDragGuard();
+	onDestroy(() => delayedTooltip.dispose());
 	let showClusters = $state(true);
 
 	type ClusterGeometry = { x: number; y: number; radius: number };
@@ -267,9 +274,10 @@
 	};
 
 	const alphaFor = (songKey: string): number => {
-		if (selectedSongKey === null) return NORMAL_ALPHA;
+		if (hoveredSongKey === songKey || highlightedSongKeys.has(songKey)) return 1;
+		if (selectedSongKey === null) return SCATTER_NORMAL_ALPHA;
 		if (songKey === selectedSongKey || neighborSongKeys.has(songKey)) return 1;
-		return DIMMED_ALPHA;
+		return SCATTER_DIMMED_ALPHA;
 	};
 
 	const drawAxisLabels = (context: CanvasRenderingContext2D) => {
@@ -356,23 +364,6 @@
 		}
 	};
 
-	const truncateToWidth = (
-		context: CanvasRenderingContext2D,
-		text: string,
-		maxWidth: number
-	): string => {
-		if (context.measureText(text).width <= maxWidth) return text;
-		const ellipsis = "…";
-		let truncated = text;
-		while (
-			truncated.length > 0 &&
-			context.measureText(truncated + ellipsis).width > maxWidth
-		) {
-			truncated = truncated.slice(0, -1);
-		}
-		return truncated.length > 0 ? truncated + ellipsis : ellipsis;
-	};
-
 	const drawHighlightedSongs = (context: CanvasRenderingContext2D) => {
 		if (highlightedSongKeys.size === 0) return;
 
@@ -389,24 +380,31 @@
 
 			context.globalAlpha = 1;
 			context.strokeStyle = HIGHLIGHT_RING_COLOR;
-			context.lineWidth = HIGHLIGHT_RING_WIDTH;
+			context.lineWidth = HIGHLIGHT_RING_WIDTH_PX;
 			context.beginPath();
 			context.arc(
 				screen.x,
 				screen.y,
-				radius + HIGHLIGHT_RING_OFFSET,
+				radius + HIGHLIGHT_RING_OFFSET_PX,
 				0,
 				Math.PI * 2
 			);
 			context.stroke();
 
 			const title = songByKey.get(songKey)?.title ?? songKey;
-			const label = truncateToWidth(context, title, HIGHLIGHT_LABEL_MAX_WIDTH);
+			const label = truncateLabelToWidth(
+				context,
+				title,
+				HIGHLIGHT_LABEL_MAX_WIDTH_PX
+			);
 			context.fillStyle = HIGHLIGHT_LABEL_COLOR;
 			context.fillText(
 				label,
 				screen.x,
-				screen.y - radius - HIGHLIGHT_RING_OFFSET - HIGHLIGHT_LABEL_GAP
+				screen.y -
+					radius -
+					HIGHLIGHT_RING_OFFSET_PX -
+					HIGHLIGHT_LABEL_GAP_PX
 			);
 		}
 	};
@@ -540,16 +538,17 @@
 
 	const handlePointerMove = (event: MouseEvent) => {
 		if (!containerEl) return;
+		clickGuard.onPointerMove(event);
 		const anchor = anchorFromMouseEvent(event, containerEl);
 		const songKey = findPointAt(anchor);
 		hoveredSongKey = songKey;
-		hoverAnchor = songKey === null ? null : anchor;
+		delayedTooltip.setHover(songKey, songKey === null ? null : anchor);
 		hoveredClusterHit = songKey === null ? findClusterAt(anchor) : null;
 	};
 
 	const handlePointerLeave = () => {
 		hoveredSongKey = null;
-		hoverAnchor = null;
+		delayedTooltip.clearHover();
 		hoveredClusterHit = null;
 	};
 
@@ -621,6 +620,7 @@
 	};
 
 	const handleClick = () => {
+		if (clickGuard.shouldSuppressClick()) return;
 		if (hoveredSongKey !== null) {
 			onSelect(hoveredSongKey === selectedSongKey ? null : hoveredSongKey);
 			return;
@@ -657,6 +657,11 @@
 		if (!canvas) return;
 		const zoomBehavior = zoom<HTMLCanvasElement, unknown>()
 			.scaleExtent([MIN_ZOOM, MAX_ZOOM])
+			.on("start", () => {
+				clickGuard.onInteractionDragStart();
+				delayedTooltip.startDrag();
+			})
+			.on("end", delayedTooltip.endDrag)
 			.on("zoom", (event) => {
 				transform = event.transform;
 			});
@@ -680,14 +685,19 @@
 		draw();
 	});
 
-	const hoveredSong = $derived(
-		hoveredSongKey === null ? null : (songByKey.get(hoveredSongKey) ?? null)
+	const tooltipSong = $derived(
+		delayedTooltip.tooltipSongKey === null
+			? null
+			: (songByKey.get(delayedTooltip.tooltipSongKey) ?? null)
 	);
 
-	const tooltipStyle = $derived(hoverCardStyle(hoverAnchor, width));
+	const tooltipStyle = $derived(
+		hoverCardStyle(delayedTooltip.tooltipAnchor, width)
+	);
 
-	const hoveredPointExists = $derived(
-		hoveredSongKey !== null && pointBySongKey.has(hoveredSongKey)
+	const tooltipVisible = $derived(
+		delayedTooltip.tooltipSongKey !== null &&
+			pointBySongKey.has(delayedTooltip.tooltipSongKey)
 	);
 </script>
 
@@ -701,6 +711,9 @@
 	tabindex="0"
 	aria-label="Song embedding scatter plot"
 	onmousemove={handlePointerMove}
+	onpointerdown={(event) => clickGuard.onPointerDown(event)}
+	onpointerup={() => clickGuard.onPointerUp()}
+	onpointercancel={() => clickGuard.onPointerUp()}
 	onmouseleave={handlePointerLeave}
 	onclick={handleClick}
 	onkeydown={(event) => {
@@ -722,9 +735,9 @@
 		</button>
 	{/if}
 
-	{#if hoveredSong && hoveredPointExists && hoverAnchor}
+	{#if tooltipSong && tooltipVisible && delayedTooltip.tooltipAnchor}
 		<div class="tooltip" style={tooltipStyle}>
-			<SongTooltip song={hoveredSong} />
+			<SongTooltip song={tooltipSong} />
 		</div>
 	{/if}
 

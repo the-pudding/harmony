@@ -18,8 +18,12 @@ import {
 import {
 	reduceOffMainThread,
 	terminateReduceWorker,
+	PCA_COMPONENT_COUNT_3D,
+	UMAP_COMPONENT_COUNT_2D,
+	UMAP_COMPONENT_COUNT_3D,
 	type ComponentLoading,
 	type Coords,
+	type EmbeddingDimension,
 	type EmbeddingMethod,
 	type ReducerMethod,
 	type ReductionResult
@@ -79,8 +83,33 @@ const withOnlyCurrentDataset = (
 		[...cache.entries()].filter(([key]) => key.startsWith(`${datasetToken}|`))
 	);
 
+const reducerComponentCount = (targetDimension: EmbeddingDimension): number =>
+	targetDimension === 3 ? PCA_COMPONENT_COUNT_3D : UMAP_COMPONENT_COUNT_2D;
+
+const persistEmbedding = async (
+	coverageCacheKey: string | null,
+	currentMethod: EmbeddingMethod,
+	currentDimension: EmbeddingDimension,
+	currentOptions: SongVectorOptions,
+	key: string,
+	result: EmbeddingResult,
+	cacheResult: (key: string, result: EmbeddingResult) => void
+) => {
+	cacheResult(key, result);
+	if (coverageCacheKey !== null) {
+		const idbKey = await buildEmbeddingCacheKey(
+			coverageCacheKey,
+			currentMethod,
+			currentOptions,
+			currentDimension
+		);
+		void setCachedEmbedding(idbKey, result);
+	}
+};
+
 export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 	let method = $state<EmbeddingMethod>(config.initialMethod);
+	let dimension = $state<EmbeddingDimension>(2);
 	let options = $state<SongVectorOptions>(DEFAULT_SONG_VECTOR_OPTIONS);
 	let resultCache = $state(new Map<string, EmbeddingResult>());
 	let status = $state<EmbeddingStatus>("idle");
@@ -97,7 +126,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		})
 	);
 
-	const cacheKey = $derived(`${dataset.token}|${method}`);
+	const cacheKey = $derived(`${dataset.token}|${method}|${dimension}`);
 
 	const cacheResult = (key: string, result: EmbeddingResult) => {
 		resultCache = withOnlyCurrentDataset(resultCache, dataset.token).set(
@@ -114,6 +143,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		}
 
 		const currentMethod = method;
+		const currentDimension = dimension;
 		const currentSongs = songs;
 		const { vectorSet } = dataset;
 		const coverageCacheKey = config.getCoverageCacheKey();
@@ -130,7 +160,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 				const idbKey = await buildEmbeddingCacheKey(
 					coverageCacheKey,
 					currentMethod,
-					options
+					options,
+					currentDimension
 				);
 				if (!active) return;
 
@@ -144,19 +175,56 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 			}
 
 			if (currentMethod === "feature") {
-				const result: EmbeddingResult = {
-					...EMPTY_RESULT,
-					coordsByKey: buildFeatureAxesCoords(currentSongs)
-				};
-				cacheResult(key, result);
-				if (coverageCacheKey !== null) {
-					const idbKey = await buildEmbeddingCacheKey(
+				if (currentDimension === 2) {
+					const result: EmbeddingResult = {
+						...EMPTY_RESULT,
+						coordsByKey: buildFeatureAxesCoords(currentSongs)
+					};
+					await persistEmbedding(
 						coverageCacheKey,
 						currentMethod,
-						options
+						currentDimension,
+						options,
+						key,
+						result,
+						cacheResult
 					);
-					void setCachedEmbedding(idbKey, result);
+					return;
 				}
+
+				status = "computing";
+				const featureCoords = buildFeatureAxesCoords(currentSongs);
+				const matrix = toMatrix(vectorSet.vectors);
+				void reduceOffMainThread("pca", matrix, 1)
+					.then(async (reduction) => {
+						if (!active) return;
+						const coordsByKey = new Map(
+							vectorSet.vectors.map((vector, index) => {
+								const axes = featureCoords.get(vector.songKey);
+								return [
+									vector.songKey,
+									{
+										x: axes?.x ?? 0,
+										y: axes?.y ?? 0,
+										z: reduction.coords[index]?.x ?? 0
+									}
+								];
+							})
+						);
+						const result: EmbeddingResult = { ...EMPTY_RESULT, coordsByKey };
+						await persistEmbedding(
+							coverageCacheKey,
+							currentMethod,
+							currentDimension,
+							options,
+							key,
+							result,
+							cacheResult
+						);
+					})
+					.catch(() => {
+						if (active) status = "idle";
+					});
 				return;
 			}
 
@@ -171,35 +239,43 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 						computeMajornessScore(input)
 					])
 				);
+				const umapComponentCount = UMAP_COMPONENT_COUNT_2D;
 
 				void reduceOffMainThread(
 					"umap",
-					ngramVectors.map((vector) => vector.weighted)
+					ngramVectors.map((vector) => vector.weighted),
+					umapComponentCount
 				)
 					.then(async (reduction) => {
 						if (!active) return;
-						// Horizontal position is the deliberate majorness score;
-						// vertical keeps only one of UMAP's two natural axes, since
-						// the other is spoken for by scale.
 						const coordsByKey = new Map(
-							ngramVectors.map((vector, index) => [
-								vector.songKey,
-								{
-									x: majornessBySongKey.get(vector.songKey) ?? 0,
-									y: reduction.coords[index]?.x ?? 0
-								}
-							])
+							ngramVectors.map((vector, index) => {
+								const umapCoords = reduction.coords[index];
+								return [
+									vector.songKey,
+									currentDimension === 3
+										? {
+												x: majornessBySongKey.get(vector.songKey) ?? 0,
+												y: umapCoords?.x ?? 0,
+												z: umapCoords?.y ?? 0
+											}
+										: {
+												x: majornessBySongKey.get(vector.songKey) ?? 0,
+												y: umapCoords?.x ?? 0
+											}
+								];
+							})
 						);
 						const result: EmbeddingResult = { ...EMPTY_RESULT, coordsByKey };
-						cacheResult(key, result);
-						if (coverageCacheKey !== null) {
-							const idbKey = await buildEmbeddingCacheKey(
-								coverageCacheKey,
-								currentMethod,
-								options
-							);
-							void setCachedEmbedding(idbKey, result);
-						}
+						await persistEmbedding(
+							coverageCacheKey,
+							currentMethod,
+							currentDimension,
+							options,
+							key,
+							result,
+							cacheResult
+						);
 					})
 					.catch(() => {
 						if (active) status = "idle";
@@ -235,19 +311,23 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 
 			status = "computing";
 
-			void reduceOffMainThread(reducerMethod, matrix)
+			void reduceOffMainThread(
+				reducerMethod,
+				matrix,
+				reducerComponentCount(currentDimension)
+			)
 				.then(async (reduction) => {
 					if (!active) return;
 					const result = toEmbeddingResult(reduction, songKeys);
-					cacheResult(key, result);
-					if (coverageCacheKey !== null) {
-						const idbKey = await buildEmbeddingCacheKey(
-							coverageCacheKey,
-							currentMethod,
-							options
-						);
-						void setCachedEmbedding(idbKey, result);
-					}
+					await persistEmbedding(
+						coverageCacheKey,
+						currentMethod,
+						currentDimension,
+						options,
+						key,
+						result,
+						cacheResult
+					);
 				})
 				.catch(() => {
 					if (active) status = "idle";
@@ -271,9 +351,17 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		options = nextOptions;
 	};
 
+	const setDimension = (nextDimension: EmbeddingDimension) => {
+		if (nextDimension === dimension) return;
+		dimension = nextDimension;
+	};
+
 	return {
 		get method() {
 			return method;
+		},
+		get dimension() {
+			return dimension;
 		},
 		get options() {
 			return options;
@@ -291,6 +379,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 			return resultCache.get(cacheKey) ?? EMPTY_RESULT;
 		},
 		setMethod,
+		setDimension,
 		setOptions
 	};
 };

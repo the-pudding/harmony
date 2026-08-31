@@ -6,6 +6,7 @@ export type ReduceWorkerRequest = {
 	requestId: number;
 	method: ReducerMethod;
 	matrix: number[][];
+	componentCount: number;
 };
 
 export type ReduceWorkerResponse = {
@@ -13,14 +14,20 @@ export type ReduceWorkerResponse = {
 	result: ReductionResult;
 };
 
-const reduce = (method: ReducerMethod, matrix: number[][]): ReductionResult =>
-	method === "pca" ? runPca(matrix) : runUmap(matrix);
+const reduce = (
+	method: ReducerMethod,
+	matrix: number[][],
+	componentCount: number
+): ReductionResult =>
+	method === "pca"
+		? runPca(matrix, componentCount)
+		: runUmap(matrix, componentCount);
 
 self.onmessage = (event: MessageEvent<ReduceWorkerRequest>) => {
-	const { requestId, method, matrix } = event.data;
+	const { requestId, method, matrix, componentCount } = event.data;
 	const response: ReduceWorkerResponse = {
 		requestId,
-		result: reduce(method, matrix)
+		result: reduce(method, matrix, componentCount)
 	};
 	self.postMessage(response);
 };

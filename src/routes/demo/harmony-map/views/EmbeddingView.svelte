@@ -5,6 +5,7 @@
 	import ArtistInspector from "../components/ArtistInspector.svelte";
 	import EmbeddingMethodSelector from "../components/EmbeddingMethodSelector.svelte";
 	import EmbeddingScatter from "../components/EmbeddingScatter.svelte";
+	import EmbeddingScatter3D from "../components/EmbeddingScatter3D.svelte";
 	import GroupColorLegend from "../components/GroupColorLegend.svelte";
 	import InspectorTabs from "../components/InspectorTabs.svelte";
 	import SongVectorInspector from "../components/SongVectorInspector.svelte";
@@ -18,15 +19,30 @@
 		findNearestNeighbors,
 		groupSharesForSong
 	} from "../embedding/vectors/index.js";
+	import { buildYearAxisBySongKey } from "../embedding/vectors/songYearAxis.js";
+	import {
+		MAP_VIEW_MODE_LABELS,
+		MAP_VIEW_MODES,
+		type MapViewMode
+	} from "../viewMode.js";
 
 	type Props = {
 		songCoverages: SongCoverageEntry[];
 		songs: GroupedSong[];
 		embedding: EmbeddingState;
+		viewMode: MapViewMode;
+		onViewModeChange: (viewMode: MapViewMode) => void;
 		trailingControls?: Snippet;
 	};
 
-	const { songCoverages, songs, embedding, trailingControls }: Props = $props();
+	const {
+		songCoverages,
+		songs,
+		embedding,
+		viewMode,
+		onViewModeChange,
+		trailingControls
+	}: Props = $props();
 
 	const AXIS_LABELS_BY_METHOD: Record<
 		EmbeddingMethod,
@@ -53,6 +69,11 @@
 	let selectedGroupLabel = $state<string | null>(null);
 	let selectedProgressionName = $state<string | null>(null);
 
+	const setViewMode = (nextMode: MapViewMode) => {
+		if (nextMode === viewMode) return;
+		onViewModeChange(nextMode);
+	};
+
 	const HIGHLIGHTED_SONGS_STORAGE_KEY = "harmony-map-highlighted-songs";
 
 	const loadHighlightedSongKeys = (): Set<string> => {
@@ -66,6 +87,7 @@
 	};
 
 	let highlightedSongKeys = $state<Set<string>>(loadHighlightedSongKeys());
+	let highlightNeighborsOnMap = $state(false);
 
 	const toggleHighlightedSong = (songKey: string) => {
 		const next = new Set(highlightedSongKeys);
@@ -133,20 +155,31 @@
 		)
 	);
 
+	const yearAxisBySongKey = $derived(buildYearAxisBySongKey(songs));
+
 	const points = $derived.by((): ScatterPoint[] =>
 		songCoverages.flatMap((entry) => {
 			const coords = embedding.result.coordsByKey.get(entry.songKey);
 			if (!coords) return [];
+			const z =
+				viewMode === "3dTime"
+					? yearAxisBySongKey.get(entry.songKey)
+					: viewMode === "3d"
+						? coords.z
+						: undefined;
 			return [
 				{
 					songKey: entry.songKey,
 					x: coords.x,
 					y: coords.y,
+					z,
 					groupShares: groupSharesBySongKey.get(entry.songKey) ?? []
 				}
 			];
 		})
 	);
+
+	const is3D = $derived(viewMode === "3d" || viewMode === "3dTime");
 
 	const neighbors = $derived.by(() => {
 		if (selectedSongKey === null) return [];
@@ -157,7 +190,9 @@
 	});
 
 	const neighborSongKeys = $derived(
-		new Set(neighbors.map((neighbor) => neighbor.songKey))
+		highlightNeighborsOnMap
+			? new Set(neighbors.map((neighbor) => neighbor.songKey))
+			: new Set<string>()
 	);
 
 	const selectedCoords = $derived(
@@ -186,6 +221,20 @@
 				{embedding.vocabulary.entries.length} dimensions
 			</span>
 
+			<div class="view-dimension-toggle" role="radiogroup" aria-label="View dimension">
+				{#each MAP_VIEW_MODES as mode (mode)}
+					<button
+						type="button"
+						class="view-dimension-button"
+						class:view-dimension-button-active={viewMode === mode}
+						aria-pressed={viewMode === mode}
+						onclick={() => setViewMode(mode)}
+					>
+						{MAP_VIEW_MODE_LABELS[mode]}
+					</button>
+				{/each}
+			</div>
+
 			{#if selectedArtistSummary}
 				<button
 					class="artist-filter-chip"
@@ -206,19 +255,34 @@
 
 	<div class="body">
 		<div class="plot">
-			<EmbeddingScatter
-				{points}
-				{songByKey}
-				{selectedSongKey}
-				{neighborSongKeys}
-				{highlightedSongKeys}
-				{visibleSongKeys}
-				method={embedding.method}
-				axisLabels={AXIS_LABELS_BY_METHOD[embedding.method]}
-				onSelect={(songKey) => {
-					selectedSongKey = songKey;
-				}}
-			/>
+			{#if is3D}
+				<EmbeddingScatter3D
+					{points}
+					{songByKey}
+					{selectedSongKey}
+					{neighborSongKeys}
+					{highlightedSongKeys}
+					{visibleSongKeys}
+					showTimeAxisGizmo={viewMode === "3dTime"}
+					onSelect={(songKey) => {
+						selectedSongKey = songKey;
+					}}
+				/>
+			{:else}
+				<EmbeddingScatter
+					{points}
+					{songByKey}
+					{selectedSongKey}
+					{neighborSongKeys}
+					{highlightedSongKeys}
+					{visibleSongKeys}
+					method={embedding.method}
+					axisLabels={AXIS_LABELS_BY_METHOD[embedding.method]}
+					onSelect={(songKey) => {
+						selectedSongKey = songKey;
+					}}
+				/>
+			{/if}
 			{#if isComputing}
 				<div class="plot-overlay">
 					<span class="plot-overlay-text">Computing embedding…</span>
@@ -252,6 +316,10 @@
 					componentLoadings={embedding.result.componentLoadings}
 					explainedVariance={embedding.result.explainedVariance}
 					{highlightedSongKeys}
+					highlightNeighborsOnMap={highlightNeighborsOnMap}
+					onHighlightNeighborsOnMapChange={(next) => {
+						highlightNeighborsOnMap = next;
+					}}
 					onToggleHighlight={toggleHighlightedSong}
 					onSelect={(songKey) => {
 						selectedSongKey = songKey;
@@ -315,6 +383,32 @@
 	.dimension-count {
 		font-size: 0.7rem;
 		color: #71717a;
+	}
+
+	.view-dimension-toggle {
+		display: inline-flex;
+		border: 1px solid rgba(63, 63, 70, 0.8);
+		border-radius: 9999px;
+		overflow: hidden;
+	}
+
+	.view-dimension-button {
+		font-family: inherit;
+		font-size: 0.65rem;
+		color: #a1a1aa;
+		padding: 0.25rem 0.625rem;
+		border: none;
+		background: transparent;
+		cursor: pointer;
+	}
+
+	.view-dimension-button:hover {
+		color: #e4e4e7;
+	}
+
+	.view-dimension-button-active {
+		background: rgba(99, 102, 241, 0.18);
+		color: #e4e4e7;
 	}
 
 	.artist-filter-chip {

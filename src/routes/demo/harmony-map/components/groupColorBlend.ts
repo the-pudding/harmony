@@ -72,3 +72,19 @@ export const fillStyleForGroupShares = (
 
 	return gradient;
 };
+
+export const dominantColorForGroupShares = (
+	shares: readonly GroupShare[]
+): string => {
+	const colored = shares
+		.filter((entry) => entry.share > 0)
+		.map((entry) => ({
+			color: colorForGroupName(entry.groupName),
+			share: entry.share
+		}));
+
+	if (colored.length === 0) return UNGROUPED_COLOR;
+	return colored.reduce((best, entry) =>
+		entry.share > best.share ? entry : best
+	).color;
+};

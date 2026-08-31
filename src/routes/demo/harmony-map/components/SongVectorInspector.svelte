@@ -28,6 +28,8 @@
 		componentLoadings: ComponentLoading[][] | null;
 		explainedVariance: number[] | null;
 		highlightedSongKeys: Set<string>;
+		highlightNeighborsOnMap: boolean;
+		onHighlightNeighborsOnMapChange: (highlightNeighborsOnMap: boolean) => void;
 		onToggleHighlight: (songKey: string) => void;
 		onSelect: (songKey: string | null) => void;
 	};
@@ -43,6 +45,8 @@
 		componentLoadings,
 		explainedVariance,
 		highlightedSongKeys,
+		highlightNeighborsOnMap,
+		onHighlightNeighborsOnMapChange,
 		onToggleHighlight,
 		onSelect
 	}: Props = $props();
@@ -264,7 +268,18 @@
 		</section>
 
 		<section class="section">
-			<h3 class="section-title">nearest neighbors (cosine)</h3>
+			<div class="section-header">
+				<h3 class="section-title">nearest neighbors (cosine)</h3>
+				<button
+					class="neighbor-map-toggle"
+					type="button"
+					aria-pressed={highlightNeighborsOnMap}
+					onclick={() =>
+						onHighlightNeighborsOnMapChange(!highlightNeighborsOnMap)}
+				>
+					{highlightNeighborsOnMap ? "shown on map ✓" : "show on map"}
+				</button>
+			</div>
 			<ul class="neighbor-list">
 				{#each neighbors as neighbor (neighbor.songKey)}
 					{@const entry = entryBySongKey.get(neighbor.songKey)}
@@ -488,6 +503,37 @@
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		color: #71717a;
+	}
+
+	.section-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+
+	.neighbor-map-toggle {
+		flex-shrink: 0;
+		font-family: inherit;
+		font-size: 0.6rem;
+		color: #a1a1aa;
+		padding: 0.1875rem 0.5rem;
+		border-radius: 9999px;
+		border: 1px solid rgba(63, 63, 70, 0.8);
+		background: rgba(9, 9, 11, 0.6);
+		cursor: pointer;
+		white-space: nowrap;
+	}
+
+	.neighbor-map-toggle:hover {
+		color: #e4e4e7;
+		border-color: rgba(113, 113, 122, 0.9);
+	}
+
+	.neighbor-map-toggle[aria-pressed="true"] {
+		color: #fde68a;
+		border-color: rgba(251, 191, 36, 0.45);
+		background: rgba(251, 191, 36, 0.08);
 	}
 
 	.dimension-list,

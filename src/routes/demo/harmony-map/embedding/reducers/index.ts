@@ -6,8 +6,14 @@ import type {
 import type { ReducerMethod, ReductionResult } from "./types.js";
 
 export * from "./types.js";
-export { PCA_COMPONENT_COUNT, TOP_LOADINGS_PER_COMPONENT } from "./pca.js";
 export {
+	PCA_COMPONENT_COUNT_2D,
+	PCA_COMPONENT_COUNT_3D,
+	TOP_LOADINGS_PER_COMPONENT
+} from "./pca.js";
+export {
+	UMAP_COMPONENT_COUNT_2D,
+	UMAP_COMPONENT_COUNT_3D,
 	UMAP_MIN_DISTANCE,
 	UMAP_NEIGHBOR_COUNT,
 	UMAP_RANDOM_SEED
@@ -24,7 +30,8 @@ const ensureReduceWorker = (): Worker => {
 
 export const reduceOffMainThread = (
 	method: ReducerMethod,
-	matrix: number[][]
+	matrix: number[][],
+	componentCount: number
 ): Promise<ReductionResult> => {
 	const worker = ensureReduceWorker();
 	const requestId = ++nextRequestId;
@@ -49,7 +56,12 @@ export const reduceOffMainThread = (
 		worker.addEventListener("message", onMessage);
 		worker.addEventListener("error", onError);
 
-		const request: ReduceWorkerRequest = { requestId, method, matrix };
+		const request: ReduceWorkerRequest = {
+			requestId,
+			method,
+			matrix,
+			componentCount
+		};
 		worker.postMessage(request);
 	});
 };

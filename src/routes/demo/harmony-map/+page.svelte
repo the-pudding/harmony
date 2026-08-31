@@ -9,6 +9,7 @@
 		readHarmonyMapUrlState,
 		replaceHarmonyMapStateInUrl
 	} from "./harmonyMapUrlState.js";
+	import { embeddingDimensionForViewMode } from "./viewMode.js";
 	import { currentSearchParams } from "../shared/currentSearchParams.js";
 	import EmbeddingView from "./views/EmbeddingView.svelte";
 
@@ -24,11 +25,17 @@
 		onMethodChange: (method) => replaceHarmonyMapStateInUrl({ method })
 	});
 
+	embedding.setDimension(embeddingDimensionForViewMode(initialUrlState.view));
+
+	let viewMode = $state(initialUrlState.view);
+
 	$effect(() => {
 		page.url.search;
 		untrack(() => {
 			const urlState = readHarmonyMapUrlState(page.url.searchParams);
 			embedding.setMethod(urlState.method);
+			viewMode = urlState.view;
+			embedding.setDimension(embeddingDimensionForViewMode(urlState.view));
 			replaceHarmonyMapStateInUrl(urlState);
 		});
 	});
@@ -71,6 +78,12 @@
 				{songCoverages}
 				songs={coverage.baseList}
 				{embedding}
+				{viewMode}
+				onViewModeChange={(nextViewMode) => {
+					viewMode = nextViewMode;
+					embedding.setDimension(embeddingDimensionForViewMode(nextViewMode));
+					replaceHarmonyMapStateInUrl({ view: nextViewMode });
+				}}
 				trailingControls={corpusControls}
 			/>
 		{:else}

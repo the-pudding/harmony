@@ -6,7 +6,8 @@ export const UMAP_RANDOM_SEED = 42;
 export const UMAP_NEIGHBOR_COUNT = 15;
 export const UMAP_MIN_DISTANCE = 0.15;
 export const UMAP_SPREAD = 1.2;
-export const UMAP_COMPONENT_COUNT = 2;
+export const UMAP_COMPONENT_COUNT_2D = 2;
+export const UMAP_COMPONENT_COUNT_3D = 3;
 
 const MIN_ROWS_FOR_UMAP = 3;
 const MIN_NEIGHBORS = 2;
@@ -26,13 +27,16 @@ const seededRandom = (seed: number): (() => number) => {
 const cosineDistance = (first: number[], second: number[]): number =>
 	1 - cosineSimilarity(first, second);
 
-export const runUmap = (matrix: number[][]): ReductionResult => {
+export const runUmap = (
+	matrix: number[][],
+	componentCount: number = UMAP_COMPONENT_COUNT_2D
+): ReductionResult => {
 	if (matrix.length < MIN_ROWS_FOR_UMAP || (matrix[0]?.length ?? 0) === 0) {
 		return EMPTY_REDUCTION_RESULT;
 	}
 
 	const umap = new UMAP({
-		nComponents: UMAP_COMPONENT_COUNT,
+		nComponents: componentCount,
 		nNeighbors: Math.max(
 			MIN_NEIGHBORS,
 			Math.min(UMAP_NEIGHBOR_COUNT, matrix.length - 1)
@@ -44,7 +48,11 @@ export const runUmap = (matrix: number[][]): ReductionResult => {
 	});
 
 	return {
-		coords: umap.fit(matrix).map(([x, y]) => ({ x, y: y ?? 0 })),
+		coords: umap.fit(matrix).map(([x, y, z]) =>
+			componentCount >= UMAP_COMPONENT_COUNT_3D
+				? { x, y: y ?? 0, z: z ?? 0 }
+				: { x, y: y ?? 0 }
+		),
 		componentLoadings: null,
 		explainedVariance: null
 	};

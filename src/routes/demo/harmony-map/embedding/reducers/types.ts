@@ -26,7 +26,10 @@ export const UMAP_DRIVEN_METHODS: EmbeddingMethod[] = ["umap", "groupBlend", "ng
 export const isEmbeddingMethod = (value: string): value is EmbeddingMethod =>
 	(EMBEDDING_METHODS as string[]).includes(value);
 
-export type Coords = { x: number; y: number };
+export const EMBEDDING_DIMENSIONS = [2, 3] as const;
+export type EmbeddingDimension = (typeof EMBEDDING_DIMENSIONS)[number];
+
+export type Coords = { x: number; y: number; z?: number };
 
 export type ComponentLoading = {
 	featureIndex: number;
