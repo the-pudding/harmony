@@ -26,6 +26,7 @@
 	import { buildClusterSummaries } from "../embedding/clustering/clusterSummaries.js";
 	import { findDensityClusters } from "../embedding/clustering/densityClusters.js";
 	import type { EmbeddingState } from "../embedding/state/createEmbeddingState.svelte.js";
+	import { EMBEDDING_COMPUTING_STEPS } from "../embedding/state/createEmbeddingState.svelte.js";
 	import {
 		findNearestNeighbors,
 		groupSharesForSong,
@@ -227,6 +228,24 @@
 
 	const isComputing = $derived(embedding.status === "computing");
 
+	let elapsedSeconds = $state(0);
+
+	$effect(() => {
+		if (embedding.status !== "computing") return;
+		elapsedSeconds = 0;
+		const start = Date.now();
+		const interval = setInterval(() => {
+			elapsedSeconds = Math.floor((Date.now() - start) / 1000);
+		}, 1000);
+		return () => clearInterval(interval);
+	});
+
+	const formatElapsed = (seconds: number): string => {
+		const m = Math.floor(seconds / 60);
+		const s = seconds % 60;
+		return `${m}:${String(s).padStart(2, "0")}`;
+	};
+
 	const clustersAvailable = $derived(
 		CLUSTERABLE_METHODS.has(embedding.method) && viewMode !== "3dTime"
 	);
@@ -420,7 +439,21 @@
 			{/if}
 			{#if isComputing}
 				<div class="plot-overlay">
-					<span class="plot-overlay-text">Computing embedding…</span>
+					<div class="flex flex-col items-center gap-2">
+						<span class="plot-overlay-text">Computing embedding…</span>
+						{#if embedding.computingStep !== null}
+							<ol class="flex flex-col gap-1 list-none">
+								{#each EMBEDDING_COMPUTING_STEPS as step, i (step)}
+									{@const isActive = step === embedding.computingStep}
+									<li class="flex items-center gap-2 text-xs tabular-nums">
+										<span class={isActive ? "text-indigo-400 font-semibold" : "text-zinc-600"}>{i + 1}.</span>
+										<span class={isActive ? "text-indigo-300 font-semibold" : "text-zinc-600"}>{step}</span>
+									</li>
+								{/each}
+							</ol>
+						{/if}
+						<span class="text-xs text-zinc-500 tabular-nums">{formatElapsed(elapsedSeconds)}</span>
+					</div>
 				</div>
 			{/if}
 			<GroupColorLegend

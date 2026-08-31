@@ -127,6 +127,8 @@ const supervisedLabel = (song: SongCoverageEntry): number => {
 	return progressionGroupProfileByName.get(groupName)?.index ?? -1;
 };
 
+export const EMBEDDING_COMPUTING_STEPS = ["Building vectors…", "Running UMAP…"] as const;
+
 export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 	let method = $state<EmbeddingMethod>(config.initialMethod);
 	let dimension = $state<EmbeddingDimension>(2);
@@ -136,6 +138,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 	);
 	let resultCache = $state(new Map<string, EmbeddingResult>());
 	let status = $state<EmbeddingStatus>("idle");
+	let computingStep = $state<string | null>(null);
 
 	let datasetSequence = 0;
 
@@ -325,108 +328,120 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 				return;
 			}
 
-			if (currentMethod === "content") {
-				status = "computing";
-				const contentVectors = buildProgressionContentVectors(
-					currentSongs,
-					currentOptions
-				);
-				void reduceOffMainThread(
-					"umap",
-					contentVectors.vectors.map((v) => v.weighted),
-					reducerComponentCount(currentDimension),
-					{
-						nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT
-					}
-				)
-					.then(async (reduction) => {
-						if (!active) return;
-						const songKeys = contentVectors.vectors.map((v) => v.songKey);
-						const rawCoords = new Map(
-							songKeys.map((key, i) => [
-								key,
-								reduction.coords[i] ?? { x: 0, y: 0 }
-							])
-						);
-						const featureAxesCoords = buildFeatureAxesCoords(currentSongs);
-						const coordsByKey =
-							currentDimension === 2
-								? orientCoords(rawCoords, featureAxesCoords)
-								: rawCoords;
-						const result: EmbeddingResult = { ...EMPTY_RESULT, coordsByKey };
-						await persistEmbedding(
-							coverageCacheKey,
-							currentMethod,
-							currentDimension,
-							currentOptions,
-							undefined,
+		if (currentMethod === "content") {
+			status = "computing";
+			computingStep = EMBEDDING_COMPUTING_STEPS[0];
+			const contentVectors = buildProgressionContentVectors(
+				currentSongs,
+				currentOptions
+			);
+			computingStep = EMBEDDING_COMPUTING_STEPS[1];
+			void reduceOffMainThread(
+				"umap",
+				contentVectors.vectors.map((v) => v.weighted),
+				reducerComponentCount(currentDimension),
+				{
+					nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT
+				}
+			)
+				.then(async (reduction) => {
+					if (!active) return;
+					computingStep = null;
+					const songKeys = contentVectors.vectors.map((v) => v.songKey);
+					const rawCoords = new Map(
+						songKeys.map((key, i) => [
 							key,
-							result,
-							cacheResult
-						);
-					})
-					.catch(() => {
-						if (active) status = "idle";
-					});
-				return;
-			}
+							reduction.coords[i] ?? { x: 0, y: 0 }
+						])
+					);
+					const featureAxesCoords = buildFeatureAxesCoords(currentSongs);
+					const coordsByKey =
+						currentDimension === 2
+							? orientCoords(rawCoords, featureAxesCoords)
+							: rawCoords;
+					const result: EmbeddingResult = { ...EMPTY_RESULT, coordsByKey };
+					await persistEmbedding(
+						coverageCacheKey,
+						currentMethod,
+						currentDimension,
+						currentOptions,
+						undefined,
+						key,
+						result,
+						cacheResult
+					);
+				})
+				.catch(() => {
+					if (active) {
+						status = "idle";
+						computingStep = null;
+					}
+				});
+			return;
+		}
 
-			if (currentMethod === "blend") {
-				status = "computing";
-				const contentVectors = buildProgressionContentVectors(
-					currentSongs,
-					currentOptions
-				);
-				const { matrix, songKeys } = buildBlendedMatrix(
-					currentSongs,
-					vectorSet,
-					contentVectors,
-					currentBlendWeights
-				);
-				const supervisedLabels =
-					currentBlendWeights.groupPull > 0
-						? currentSongs.map(supervisedLabel)
-						: undefined;
-				void reduceOffMainThread(
-					"umap",
-					matrix,
-					reducerComponentCount(currentDimension),
-					{
-						nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT,
-						supervisedLabels,
-						supervisedWeight: currentBlendWeights.groupPull
-					}
-				)
-					.then(async (reduction) => {
-						if (!active) return;
-						const rawCoords = new Map(
-							songKeys.map((key, i) => [
-								key,
-								reduction.coords[i] ?? { x: 0, y: 0 }
-							])
-						);
-						const featureAxesCoords = buildFeatureAxesCoords(currentSongs);
-						const coordsByKey =
-							currentDimension === 2
-								? orientCoords(rawCoords, featureAxesCoords)
-								: rawCoords;
-						const result: EmbeddingResult = { ...EMPTY_RESULT, coordsByKey };
-						await persistEmbedding(
-							coverageCacheKey,
-							currentMethod,
-							currentDimension,
-							currentOptions,
-							currentBlendWeights,
+		if (currentMethod === "blend") {
+			status = "computing";
+			computingStep = EMBEDDING_COMPUTING_STEPS[0];
+			const contentVectors = buildProgressionContentVectors(
+				currentSongs,
+				currentOptions
+			);
+			const { matrix, songKeys } = buildBlendedMatrix(
+				currentSongs,
+				vectorSet,
+				contentVectors,
+				currentBlendWeights
+			);
+			const supervisedLabels =
+				currentBlendWeights.groupPull > 0
+					? currentSongs.map(supervisedLabel)
+					: undefined;
+			computingStep = EMBEDDING_COMPUTING_STEPS[1];
+			void reduceOffMainThread(
+				"umap",
+				matrix,
+				reducerComponentCount(currentDimension),
+				{
+					nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT,
+					supervisedLabels,
+					supervisedWeight: currentBlendWeights.groupPull
+				}
+			)
+				.then(async (reduction) => {
+					if (!active) return;
+					computingStep = null;
+					const rawCoords = new Map(
+						songKeys.map((key, i) => [
 							key,
-							result,
-							cacheResult
-						);
-					})
-					.catch(() => {
-						if (active) status = "idle";
-					});
-				return;
-			}
+							reduction.coords[i] ?? { x: 0, y: 0 }
+						])
+					);
+					const featureAxesCoords = buildFeatureAxesCoords(currentSongs);
+					const coordsByKey =
+						currentDimension === 2
+							? orientCoords(rawCoords, featureAxesCoords)
+							: rawCoords;
+					const result: EmbeddingResult = { ...EMPTY_RESULT, coordsByKey };
+					await persistEmbedding(
+						coverageCacheKey,
+						currentMethod,
+						currentDimension,
+						currentOptions,
+						currentBlendWeights,
+						key,
+						result,
+						cacheResult
+					);
+				})
+				.catch(() => {
+					if (active) {
+						status = "idle";
+						computingStep = null;
+					}
+				});
+			return;
+		}
 
 			// All remaining methods reduce via UMAP or PCA over some matrix.
 			// groupBlend reuses the standard per-progression vectors; ngram builds
@@ -483,6 +498,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 
 		return () => {
 			active = false;
+			computingStep = null;
 		};
 	});
 
@@ -523,6 +539,9 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		},
 		get status() {
 			return status;
+		},
+		get computingStep() {
+			return computingStep;
 		},
 		get vocabulary() {
 			return vocabulary;
