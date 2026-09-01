@@ -27,7 +27,30 @@
 	const PERCENT_WHOLE_THRESHOLD = 1;
 	const SUB_ONE_PERCENT_DECIMAL_PLACES = 2;
 
-	const sortedLegendItems = $derived(buildProgressionGroupShares(songCoverages));
+	// Top-level groups stay sorted by share; a sub-group (e.g. "Axis of
+	// awesome") is displayed immediately after its parent instead of sorted
+	// independently into the flat list, so nesting reads visually.
+	const sortedLegendItems = $derived.by(() => {
+		const shares = buildProgressionGroupShares(songCoverages);
+		const childrenByParent = new Map<string, typeof shares>();
+		const topLevel: typeof shares = [];
+		for (const item of shares) {
+			if (item.parentGroupName === null) {
+				topLevel.push(item);
+				continue;
+			}
+			const siblings = childrenByParent.get(item.parentGroupName) ?? [];
+			siblings.push(item);
+			childrenByParent.set(item.parentGroupName, siblings);
+		}
+		return topLevel.flatMap((item) => [
+			{ ...item, isSubGroup: false },
+			...(childrenByParent.get(item.label) ?? []).map((child) => ({
+				...child,
+				isSubGroup: true
+			}))
+		]);
+	});
 
 	const formatShareAsPercent = (sharePercent: number): string => {
 		if (sharePercent === 0) {
@@ -68,7 +91,7 @@
 	{#each sortedLegendItems as item (item.label)}
 		{@const isExpandable = item.progressions.length > 0}
 		{@const isSelected = selectedGroupLabel === item.label}
-		<div class="legend-group">
+		<div class="legend-group" class:legend-group-nested={item.isSubGroup}>
 			{#if isExpandable}
 				<button
 					class="legend-item legend-item-button"
@@ -205,6 +228,12 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.125rem;
+	}
+
+	.legend-group-nested {
+		padding-left: 0.875rem;
+		border-left: 1px solid rgba(63, 63, 70, 0.6);
+		margin-left: 0.1875rem;
 	}
 
 	.legend-item {

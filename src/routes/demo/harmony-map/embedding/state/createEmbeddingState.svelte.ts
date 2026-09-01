@@ -12,8 +12,9 @@ import {
 	computeMajornessScore,
 	DEFAULT_BLEND_WEIGHTS,
 	DEFAULT_SONG_VECTOR_OPTIONS,
+	EMPTY_SONG_VECTOR_SET,
 	GLOBAL_STRUCTURE_NEIGHBOR_COUNT,
-	groupShareVectorForSong,
+	GROUP_BLEND_WEIGHTS,
 	dominantGroupName,
 	progressionGroupProfileByName,
 	toMatrix,
@@ -380,21 +381,26 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 			return;
 		}
 
-		if (currentMethod === "blend") {
+		// blend blends four user-weighted feature families via UMAP; groupBlend
+		// is a fixed point in that same weight space (identity + group share
+		// only) — content vectors are skipped there since their weight is 0.
+		if (currentMethod === "blend" || currentMethod === "groupBlend") {
 			status = "computing";
 			computingStep = EMBEDDING_COMPUTING_STEPS[0];
-			const contentVectors = buildProgressionContentVectors(
-				currentSongs,
-				currentOptions
-			);
+			const activeBlendWeights =
+				currentMethod === "groupBlend" ? GROUP_BLEND_WEIGHTS : currentBlendWeights;
+			const contentVectors =
+				activeBlendWeights.content > 0
+					? buildProgressionContentVectors(currentSongs, currentOptions)
+					: EMPTY_SONG_VECTOR_SET;
 			const { matrix, songKeys } = buildBlendedMatrix(
 				currentSongs,
 				vectorSet,
 				contentVectors,
-				currentBlendWeights
+				activeBlendWeights
 			);
 			const supervisedLabels =
-				currentBlendWeights.groupPull > 0
+				activeBlendWeights.groupPull > 0
 					? currentSongs.map(supervisedLabel)
 					: undefined;
 			computingStep = EMBEDDING_COMPUTING_STEPS[1];
@@ -405,7 +411,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 				{
 					nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT,
 					supervisedLabels,
-					supervisedWeight: currentBlendWeights.groupPull
+					supervisedWeight: activeBlendWeights.groupPull
 				}
 			)
 				.then(async (reduction) => {
@@ -428,7 +434,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 						currentMethod,
 						currentDimension,
 						currentOptions,
-						currentBlendWeights,
+						currentMethod === "blend" ? currentBlendWeights : undefined,
 						key,
 						result,
 						cacheResult
@@ -444,18 +450,12 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		}
 
 			// All remaining methods reduce via UMAP or PCA over some matrix.
-			// groupBlend reuses the standard per-progression vectors; ngram builds
-			// its own independent vocabulary from raw chord sequences.
+			// ngram builds its own independent vocabulary from raw chord sequences.
 			let reducerMethod: ReducerMethod = "umap";
 			let matrix: number[][];
 			let songKeys: string[];
 
-			if (currentMethod === "groupBlend") {
-				matrix = currentSongs.map((song) =>
-					groupShareVectorForSong(song.progressionCounts)
-				);
-				songKeys = currentSongs.map((song) => song.songKey);
-			} else if (currentMethod === "ngram") {
+			if (currentMethod === "ngram") {
 				const ngramInputs = config.getSongs().map(toNgramInput);
 				const ngramVocabulary = buildChordNgramVocabulary(ngramInputs);
 				const ngramVectors = buildChordNgramVectors(

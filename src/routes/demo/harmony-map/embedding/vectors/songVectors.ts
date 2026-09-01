@@ -22,6 +22,16 @@ export type SongVectorSet = {
 	options: SongVectorOptions;
 };
 
+// Stands in for a vector set whose block weight is 0, so callers can skip the
+// (potentially expensive) build step entirely — blendedRow looks up a missing
+// song key as [] regardless, same as a real zero-weighted block would.
+export const EMPTY_SONG_VECTOR_SET: SongVectorSet = {
+	vectors: [],
+	vectorBySongKey: new Map(),
+	inverseDocumentFrequencies: [],
+	options: DEFAULT_SONG_VECTOR_OPTIONS
+};
+
 const termWeight = (
 	matchCount: number,
 	weighting: ProgressionWeighting

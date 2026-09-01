@@ -2,7 +2,7 @@ import { hashString } from "../../../../../utils/hashString.js";
 import type { EmbeddingDimension, EmbeddingMethod } from "../reducers/index.js";
 import type { BlendWeights, SongVectorOptions } from "../vectors/index.js";
 
-export const EMBEDDING_SCHEMA_VERSION = 3;
+export const EMBEDDING_SCHEMA_VERSION = 6;
 
 export const buildEmbeddingCacheKey = async (
 	coverageCacheKey: string,

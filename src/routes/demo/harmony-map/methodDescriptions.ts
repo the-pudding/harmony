@@ -59,13 +59,13 @@ export const embeddingMethodDescriptions: Record<
 	groupBlend: {
 		title: embeddingMethodLabels.groupBlend,
 		summary:
-			"UMAP over each song's core-group mix, so proximity tracks the dot color blend.",
+			"UMAP over exact progression identity blended with each song's core-group mix, so proximity tracks both what a song plays and the dot color blend.",
 		rationale:
-			"UMAP and PCA cluster by which exact progressions occur, so two songs with the same group blend can still land far apart if the underlying progressions differ. This clusters directly by that blend instead — songs colored similarly on the map tend to sit near each other.",
+			"UMAP alone clusters by which exact progressions occur, so two songs with the same editorial group blend can still land far apart if the underlying progressions differ; group shares alone lose exact chord identity. This is a fixed point of the Blend method — group share weighted twice as heavily as identity, content and hand axes off — combining both without exposing sliders, while still favoring the editorial grouping.",
 		approach:
-			"Each song becomes a short vector of core-group shares (the same fractions used to color its dot), one dimension per group, summing to 1. UMAP builds a neighbor graph over those vectors under cosine distance and lays out the 2D result, same as the UMAP method but on group shares instead of per-progression counts.",
+			"Each song's per-progression identity vector and its core-group share vector (the same fractions used to color its dot) are independently L2-normalized, concatenated, and passed to UMAP under cosine distance — identical machinery to Blend with identity at 1, groupShare at 2, and content/axes at 0. The 2D output is Procrustes-aligned to the brightness/complexity frame.",
 		tradeoffs:
-			"Ignores everything else about a song — gap-fill progressions, exact chord identities, occurrence counts beyond their group. Two songs with an identical blend from very different chords will still land on top of each other."
+			"Ignores harmonic content — progressions that sound alike but aren't identical get no credit for that. As with Blend, pre-reduction before UMAP can flatten some fine within-family structure. For full control over these weights, or to add content or hand-designed axes, use Blend directly."
 	},
 	ngram: {
 		title: embeddingMethodLabels.ngram,

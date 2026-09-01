@@ -1,5 +1,8 @@
 <script lang="ts">
-	import type { ProgressionGroup } from "$data/core-progressions.js";
+	import {
+		colorForProgressionGroupName,
+		type ProgressionGroup
+	} from "$data/core-progressions.js";
 	import {
 		chordProgressionVariants,
 		siblingVariantsForProgression
@@ -78,6 +81,9 @@
 		highlightedProgressions ?? groupProgressionKeys
 	);
 
+	const isSubGroup = $derived(group.parentGroupName !== undefined);
+	const groupColor = $derived(colorForProgressionGroupName(group.name));
+
 	const timelineSongs = $derived(
 		filteredCoverage === null
 			? null
@@ -92,9 +98,13 @@
 	);
 </script>
 
-<section class="group-section">
+<section class="group-section" class:group-section-sub={isSubGroup}>
 	<div class="group-header">
+		{#if isSubGroup}
+			<span class="group-sub-label">sub-family of {group.parentGroupName}</span>
+		{/if}
 		<h2 class="group-name">
+			<span class="group-dot" style:background={groupColor}></span>
 			{group.name}
 			{#if coverageResult}
 				<span class="group-stat"
@@ -160,17 +170,41 @@
 		gap: 0.75rem;
 	}
 
+	.group-section-sub {
+		padding-left: 1.25rem;
+		border-left: 2px solid rgba(63, 63, 70, 0.7);
+		margin-left: 0.25rem;
+	}
+
 	.group-header {
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
 	}
 
+	.group-sub-label {
+		font-size: 0.6875rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: #71717a;
+	}
+
 	.group-name {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
 		font-size: 1rem;
 		font-weight: 700;
 		margin: 0;
 		color: white;
+	}
+
+	.group-dot {
+		width: 0.625rem;
+		height: 0.625rem;
+		border-radius: 50%;
+		flex-shrink: 0;
 	}
 
 	.group-stat {

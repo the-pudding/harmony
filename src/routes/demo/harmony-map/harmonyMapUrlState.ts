@@ -19,7 +19,7 @@ export const HARMONY_MAP_URL_PARAM_METHOD = "method";
 export const HARMONY_MAP_URL_PARAM_VIEW = "view";
 export const HARMONY_MAP_URL_PARAM_BLEND = "bw";
 
-export const DEFAULT_EMBEDDING_METHOD: EmbeddingMethod = "umap";
+export const DEFAULT_EMBEDDING_METHOD: EmbeddingMethod = "groupBlend";
 
 export type HarmonyMapUrlState = {
 	method: EmbeddingMethod;

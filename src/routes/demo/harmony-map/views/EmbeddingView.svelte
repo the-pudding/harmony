@@ -64,7 +64,7 @@
 		umap: null,
 		pca: { x: "PC1", y: "PC2" },
 		feature: { x: "dark ← harmony → bright", y: "simple ← harmony → complex" },
-		groupBlend: null,
+		groupBlend: { x: "dark ← harmony → bright", y: "simple ← harmony → complex" },
 		ngram: null,
 		scaleSplit: { x: "minor ← scale → major", y: "chord-gram UMAP" },
 		content: { x: "dark ← harmony → bright", y: "simple ← harmony → complex" },

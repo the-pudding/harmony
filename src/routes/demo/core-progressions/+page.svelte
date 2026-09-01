@@ -47,11 +47,18 @@
 			.length;
 	};
 
+	// Top-level groups sort by match count; a sub-group (e.g. "Axis of
+	// awesome") is displayed immediately after its parent rather than sorted
+	// independently, so the nesting reads visually in the list.
 	const sortedGroups = $derived.by(() => {
-		if (!coverage.allSongsCoverageResult) return allProgressionGroups;
-		return [...allProgressionGroups].sort(
-			(a, b) => groupMatchCount(b) - groupMatchCount(a)
-		);
+		const topLevel = allProgressionGroups.filter((g) => !g.parentGroupName);
+		const sortedTopLevel = coverage.allSongsCoverageResult
+			? [...topLevel].sort((a, b) => groupMatchCount(b) - groupMatchCount(a))
+			: topLevel;
+		return sortedTopLevel.flatMap((group) => [
+			group,
+			...allProgressionGroups.filter((g) => g.parentGroupName === group.name)
+		]);
 	});
 
 	const potentialRows = $derived.by(() => {

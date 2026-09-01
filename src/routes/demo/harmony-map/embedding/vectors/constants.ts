@@ -41,6 +41,19 @@ export const DEFAULT_BLEND_WEIGHTS: BlendWeights = {
 	groupPull: 0
 };
 
+// Fixed weights behind the "groupBlend" preset: progression identity plus
+// editorial group membership, with content and hand-designed axes switched
+// off. Unlike "blend" these aren't user-adjustable — groupBlend is a single
+// opinionated point in the same weight space, reachable from "blend" by
+// setting identity to 1, groupShare to 2, and everything else to 0.
+export const GROUP_BLEND_WEIGHTS: BlendWeights = {
+	identity: 1,
+	content: 0,
+	groupShare: 2,
+	axes: 0,
+	groupPull: 0
+};
+
 // UMAP nNeighbors used for content/blend methods. Larger values improve global
 // cluster placement at the cost of local structure.
 export const GLOBAL_STRUCTURE_NEIGHBOR_COUNT = 20;

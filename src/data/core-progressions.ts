@@ -8,6 +8,10 @@ export type ProgressionGroup = {
 	name: string;
 	description: string;
 	progressions: CoreProgression[];
+	// When set, this is still its own group for matching/coloring/embedding
+	// purposes (it has its own entry in allProgressionGroups), but is
+	// displayed nested under the named parent group rather than as a peer.
+	parentGroupName?: string;
 };
 
 const happyMajoryProgressions: ProgressionGroup = {
@@ -123,14 +127,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			scale: "major",
 			description:
 				"the mixolydian walk down, but resolved by a V that pulls it back home"
-		}
-	]
-};
-
-const fourFiveVampProgressions: ProgressionGroup = {
-	name: "Four-five vamp progressions",
-	description: "we could do this all day, and still leave you hungry for I",
-	progressions: [
+		},
 		{
 			name: "V-IV vamp",
 			chordProgression: "V-IV-V-IV",
@@ -144,7 +141,7 @@ const fourFiveVampProgressions: ProgressionGroup = {
 			scale: "major",
 			description: "",
 			technicalNotes: "a hungry energy that never settles back to the I"
-		}
+		},
 		// TODO: matches Teenage Dream perfectly, should match Call Me Maybe perfectly once we hand correct it.
 		// However, I feel with our simplistic greeny match algorithm, it overall decreases general match percentage coverage.
 		// Maybe needs some rework (or a more stringent match criteria)
@@ -156,38 +153,11 @@ const fourFiveVampProgressions: ProgressionGroup = {
 		// 	technicalNotes:
 		// 		"just IV-V with a lil passing chord to keep it interesting"
 		// }
-	]
-};
-
-const axisOfAwesomeProgressions: ProgressionGroup = {
-	name: "Axis of Awesome family",
-	description: "Progressions that are axis of awesome",
-	progressions: [
-		{
-			name: "axis of awesome",
-			chordProgression: "I-V-vi-IV",
-			scale: "major",
-			description: ""
-		},
-		{
-			name: "(mini)axis of awesome",
-			chordProgression: "I-V-vi",
-			scale: "major",
-			matchRomanNumeralsExactly: true,
-			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
-			description: ""
-		},
 		{
 			name: "axis of angsty",
 			chordProgression: "I-iii-vi-IV",
 			scale: "major",
 			description: "swaps out the V for an angsty iii"
-		},
-		{
-			name: "never getting back together",
-			chordProgression: "IV-I-V-vi",
-			scale: "major",
-			description: ""
 		},
 		{
 			name: "(minor)axis of awesome",
@@ -229,6 +199,74 @@ const axisOfAwesomeProgressions: ProgressionGroup = {
 			scale: "major",
 			description:
 				"starts with an optimistic IV-V lift, then sort of has this melancholy I-vi dip"
+		},
+		{
+			name: "i want you to stay",
+			chordProgression: "I-ii-vi-IV",
+			scale: "major",
+			description:
+				"wonderfully complex, you can sort of think of I-ii and vi-IV as two inverted flavors of the same movement"
+		},
+		{
+			name: "save your tears",
+			chordProgression: "I-vi-iii-V",
+			scale: "major",
+			description: ""
+		},
+		{
+			name: "IV-iv-I turnaround",
+			chordProgression: "IV-iv-I",
+			scale: "major",
+			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
+			description:
+				"TODO: try to match just IV-iv? (often I only arrives in a subsequent section)"
+		},
+		{
+			name: "creep",
+			chordProgression: "I-III-IV",
+			scale: "major",
+			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
+			description: ""
+		},
+		{
+			name: "if i aint got you",
+			chordProgression: "IV-iii-ii-I",
+			scale: "major",
+			description: ""
+		}
+	]
+};
+
+// A sub-family of happyMajoryProgressions: still its own group for
+// matching/coloring/embedding, but nested under major-y for display since
+// it's a well-known, distinct pop cycle worth calling out on its own.
+const axisOfAwesomeProgressions: ProgressionGroup = {
+	name: "Axis of awesome",
+	description:
+		"The four-chord pop cycle immortalized by the Axis of Awesome medley — a sub-family of the major-y progressions",
+	parentGroupName: happyMajoryProgressions.name,
+	progressions: [
+		{
+			name: "axis of awesome",
+			chordProgression: "I-V-vi-IV",
+			scale: "major",
+			description: ""
+		},
+		{
+			name: "(mini)axis of awesome",
+			chordProgression: "I-V-vi",
+			scale: "major",
+			matchRomanNumeralsExactly: true,
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
+			description: ""
+		},
+		{
+			name: "never getting back together",
+			chordProgression: "IV-I-V-vi",
+			scale: "major",
+			description: ""
 		}
 	]
 };
@@ -519,52 +557,6 @@ const jazzyProgressions: ProgressionGroup = {
 	]
 };
 
-const emoPopProgressions: ProgressionGroup = {
-	name: "Emo pop progressions",
-	description:
-		"Honestly not fully sure if this should be a category, but didn't fit well into happy major-y",
-	progressions: [
-		{
-			name: "i want you to stay",
-			chordProgression: "I-ii-vi-IV",
-			scale: "major",
-			description:
-				"wonderfully complex, you can sort of think of I-ii and vi-IV as two inverted flavors of the same movement"
-		},
-
-		{
-			name: "save your tears",
-			chordProgression: "I-vi-iii-V",
-			scale: "major",
-			description: ""
-		},
-
-		{
-			name: "IV-iv-I turnaround",
-			chordProgression: "IV-iv-I",
-			scale: "major",
-			matchRomanNumeralsExactly: true,
-			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
-			description:
-				"TODO: try to match just IV-iv? (often I only arrives in a subsequent section)"
-		},
-		{
-			name: "creep",
-			chordProgression: "I-III-IV",
-			scale: "major",
-			matchRomanNumeralsExactly: true,
-			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
-			description: ""
-		},
-		{
-			name: "if i aint got you",
-			chordProgression: "IV-iii-ii-I",
-			scale: "major",
-			description: ""
-		}
-	]
-};
-
 export type CoreProgression = {
 	name: string;
 	chordProgression: string | string[];
@@ -577,33 +569,27 @@ export type CoreProgression = {
 
 export const allProgressionGroups: ProgressionGroup[] = [
 	happyMajoryProgressions,
-	fourFiveVampProgressions,
-	axisOfAwesomeProgressions,
 	minoryProgressions,
 	jazzyProgressions,
-	emoPopProgressions
+	axisOfAwesomeProgressions
 ];
 
-const TABLEAU10_COLORS = [
-	"#4e79a7",
-	"#f28e2c",
-	"#e15759",
-	"#76b7b2",
-	"#59a14f",
-	"#edc948",
-	"#b07aa1",
-	"#ff9da7",
-	"#9c755f",
-	"#bab0ac"
-] as const;
+// Explicit per-group colors rather than a cycling palette: axis-of-awesome is
+// a shade of major-y's blue since it's displayed as major-y's sub-family.
+const CORE_PROGRESSION_GROUP_COLORS: Record<string, string> = {
+	[happyMajoryProgressions.name]: "#4e79a7", // blue
+	[minoryProgressions.name]: "#f28e2c", // orange
+	[jazzyProgressions.name]: "#59a14f", // green
+	[axisOfAwesomeProgressions.name]: "#76b7b2" // light blue, sub-family of major-y
+};
 
 export const UNGROUPED_PROGRESSION_GROUP_COLOR = "#52525b";
 export const UNGROUPED_PROGRESSION_GROUP_LABEL = "no core match";
 
 export const progressionGroupColorByName = new Map(
-	allProgressionGroups.map((group, index) => [
+	allProgressionGroups.map((group) => [
 		group.name,
-		TABLEAU10_COLORS[index % TABLEAU10_COLORS.length]
+		CORE_PROGRESSION_GROUP_COLORS[group.name] ?? UNGROUPED_PROGRESSION_GROUP_COLOR
 	])
 );
 
@@ -615,16 +601,24 @@ export const colorForProgressionGroupName = (
 		: (progressionGroupColorByName.get(groupName) ??
 			UNGROUPED_PROGRESSION_GROUP_COLOR);
 
-export type ProgressionGroupLegendItem = { label: string; color: string };
+export type ProgressionGroupLegendItem = {
+	label: string;
+	color: string;
+	// The parent group's name if this is a nested sub-family (e.g. "Axis of
+	// awesome" under "Happy, major-y progressions"), else null.
+	parentGroupName: string | null;
+};
 
 export const progressionGroupLegendItems: ProgressionGroupLegendItem[] = [
 	...allProgressionGroups.map((group) => ({
 		label: group.name,
-		color: colorForProgressionGroupName(group.name)
+		color: colorForProgressionGroupName(group.name),
+		parentGroupName: group.parentGroupName ?? null
 	})),
 	{
 		label: UNGROUPED_PROGRESSION_GROUP_LABEL,
-		color: UNGROUPED_PROGRESSION_GROUP_COLOR
+		color: UNGROUPED_PROGRESSION_GROUP_COLOR,
+		parentGroupName: null
 	}
 ];
 

@@ -23,6 +23,7 @@ export type ProgressionGroupShare = {
 	sharePercent: number;
 	songCount: number;
 	progressions: ProgressionShareItem[];
+	parentGroupName: string | null;
 };
 
 // Family share is exclusive (one dominant group per song, via
@@ -84,7 +85,8 @@ export const buildProgressionGroupShares = (
 				color: item.color,
 				songCount: count,
 				sharePercent: (count / songCount) * PERCENT_SCALE,
-				progressions: progressionsByGroupName.get(item.label) ?? []
+				progressions: progressionsByGroupName.get(item.label) ?? [],
+				parentGroupName: item.parentGroupName
 			};
 		})
 		.sort(
