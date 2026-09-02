@@ -90,19 +90,11 @@
 		onViewModeChange(nextMode);
 	};
 
-	const HIGHLIGHTED_SONGS_STORAGE_KEY = "harmony-map-highlighted-songs";
-
-	const loadHighlightedSongKeys = (): Set<string> => {
-		if (typeof localStorage === "undefined") return new Set();
-		try {
-			const raw = localStorage.getItem(HIGHLIGHTED_SONGS_STORAGE_KEY);
-			return raw ? new Set(JSON.parse(raw)) : new Set();
-		} catch {
-			return new Set();
-		}
-	};
-
-	let highlightedSongKeys = $state<Set<string>>(loadHighlightedSongKeys());
+	// Session-only: a song only needs to stay highlighted long enough to name
+	// a cluster from it (see namedClusters.svelte.ts) — once that's done, the
+	// choice is durably captured as that cluster's anchorSongKey, so the
+	// highlight itself doesn't need to persist across reloads.
+	let highlightedSongKeys = $state<Set<string>>(new Set());
 	let hiddenClusterHashes = $state<Set<string>>(new Set());
 
 	const CLUSTERABLE_METHODS = new Set<EmbeddingMethod>(UMAP_DRIVEN_METHODS);
@@ -112,12 +104,6 @@
 		if (next.has(songKey)) next.delete(songKey);
 		else next.add(songKey);
 		highlightedSongKeys = next;
-		if (typeof localStorage !== "undefined") {
-			localStorage.setItem(
-				HIGHLIGHTED_SONGS_STORAGE_KEY,
-				JSON.stringify([...next])
-			);
-		}
 	};
 
 	const songByKey = $derived(

@@ -33,6 +33,12 @@ const hashSongKeys = (songKeys: readonly string[]): string => {
 // Minimum neighbors (within eps) for a point to seed/extend a cluster.
 export const MIN_CLUSTER_POINTS = 15;
 
+// A cluster larger than this stops being a meaningful "these songs are
+// alike" grouping — it's usually the diffuse core where many different
+// things blur together — so it's dropped from the result rather than drawn.
+// Its points remain visible on the map as ordinary (uncircled) dots.
+export const MAX_CLUSTER_POINTS = 200;
+
 // How many points to sample when estimating eps from k-distances. Bounds the
 // one-time estimation cost independent of corpus size.
 const EPS_SAMPLE_SIZE = 300;
@@ -215,7 +221,8 @@ const clustersFromLabels = (
 
 export const findDensityClusters = (
 	points: readonly ClusterPoint[],
-	minPoints: number = MIN_CLUSTER_POINTS
+	minPoints: number = MIN_CLUSTER_POINTS,
+	maxPoints: number = MAX_CLUSTER_POINTS
 ): DensityCluster[] => {
 	if (points.length < minPoints) return [];
 
@@ -249,5 +256,7 @@ export const findDensityClusters = (
 		}
 	}
 
-	return clustersFromLabels(points, labels);
+	return clustersFromLabels(points, labels).filter(
+		(cluster) => cluster.songKeys.length <= maxPoints
+	);
 };

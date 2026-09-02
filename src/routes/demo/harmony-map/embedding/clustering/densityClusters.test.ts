@@ -100,6 +100,16 @@ describe("findDensityClusters", () => {
 		expect(hashesFirst[0]).not.toBe(hashesFirst[1]);
 	});
 
+	it("drops a cluster larger than maxPoints, but keeps a smaller sibling", () => {
+		const huge = blobAround("huge", 0.1, 0.1, 30, 0.01);
+		const small = blobAround("small", 0.9, 0.9, 12, 0.01);
+
+		const clusters = findDensityClusters([...huge, ...small], 10, 20);
+
+		expect(clusters).toHaveLength(1);
+		expect(clusters[0].songKeys[0].startsWith("small")).toBe(true);
+	});
+
 	it("sorts clusters largest-first", () => {
 		const points = [
 			...blobAround("small", 0.1, 0.1, 12, 0.01),

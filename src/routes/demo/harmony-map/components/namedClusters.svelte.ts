@@ -1,3 +1,4 @@
+import { namedClusters as committedNamedClusters } from "$data/named-clusters.js";
 import type { DensityCluster } from "../embedding/clustering/densityClusters.js";
 
 // A cluster is defined by containing its anchor song, not by its exact
@@ -5,30 +6,14 @@ import type { DensityCluster } from "../embedding/clustering/densityClusters.js"
 // as long as the one song it's anchored to is still grouped there.
 export type NamedCluster = { anchorSongKey: string; name: string };
 
-const CLUSTER_NAMES_STORAGE_KEY = "harmony-map-cluster-names-v2";
-
-const loadNamedClusters = (): NamedCluster[] => {
-	if (typeof localStorage === "undefined") return [];
-	try {
-		const raw = localStorage.getItem(CLUSTER_NAMES_STORAGE_KEY);
-		if (!raw) return [];
-		const parsed: unknown = JSON.parse(raw);
-		return Array.isArray(parsed) ? (parsed as NamedCluster[]) : [];
-	} catch {
-		return [];
-	}
-};
-
-let namedClusters = $state<NamedCluster[]>(loadNamedClusters());
+// Source of truth is the committed src/data/named-clusters.ts file, so
+// everyone who loads the app sees the same names. The naming input on the
+// map still works for live preview within a session (setClusterName below),
+// but that edit isn't written back to disk — land it in named-clusters.ts by
+// hand to make it permanent for everyone.
+let namedClusters = $state<NamedCluster[]>([...committedNamedClusters]);
 
 export const getNamedClusters = (): NamedCluster[] => namedClusters;
-
-const persistNamedClusters = (next: NamedCluster[]) => {
-	namedClusters = next;
-	if (typeof localStorage !== "undefined") {
-		localStorage.setItem(CLUSTER_NAMES_STORAGE_KEY, JSON.stringify(next));
-	}
-};
 
 export const findNamedClusterFor = (
 	cluster: DensityCluster,
@@ -38,13 +23,15 @@ export const findNamedClusterFor = (
 	return entries.find((entry) => memberSet.has(entry.anchorSongKey)) ?? null;
 };
 
+// Drops any entry sharing either the new anchor or the new name before
+// adding the replacement, so re-anchoring a cluster (naming it from a newly
+// highlighted song) overwrites its one entry instead of leaving the old
+// anchor behind as an orphaned duplicate with the same name.
 export const setClusterName = (anchorSongKey: string, name: string) => {
 	const survivors = namedClusters.filter(
-		(entry) => entry.anchorSongKey !== anchorSongKey
+		(entry) => entry.anchorSongKey !== anchorSongKey && entry.name !== name
 	);
-	persistNamedClusters(
-		name ? [...survivors, { anchorSongKey, name }] : survivors
-	);
+	namedClusters = name ? [...survivors, { anchorSongKey, name }] : survivors;
 };
 
 export const resolveClusterNames = (
