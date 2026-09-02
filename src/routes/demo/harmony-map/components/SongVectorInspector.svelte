@@ -43,7 +43,6 @@
 		yearDomain: YearDomain | null;
 		clusterRankByHash: Map<string, number>;
 		clusterNamesByHash?: Map<string, string>;
-		onToggleHighlight: (songKey: string) => void;
 		onToggleClusterVisibility: (clusterHash: string) => void;
 		onSelect: (songKey: string | null) => void;
 	};
@@ -65,7 +64,6 @@
 		yearDomain,
 		clusterRankByHash,
 		clusterNamesByHash = new Map(),
-		onToggleHighlight,
 		onToggleClusterVisibility,
 		onSelect
 	}: Props = $props();
@@ -147,7 +145,10 @@
 		selectedSongKey === null ? null : (songByKey.get(selectedSongKey) ?? null)
 	);
 
-	const isSelectedHighlighted = $derived(
+	// highlightedSongKeys is every named cluster's anchor song
+	// (src/data/named-clusters.ts) — this just reads whether the selected
+	// song is one of them; editing that file is the only way to change it.
+	const isSelectedClusterAnchor = $derived(
 		selectedSongKey !== null && highlightedSongKeys.has(selectedSongKey)
 	);
 
@@ -226,14 +227,9 @@
 				{/if}
 				<span class="selected-artists">{selectedEntry.artists.join(", ")}</span>
 			</div>
-			<button
-				class="highlight-toggle"
-				type="button"
-				aria-pressed={isSelectedHighlighted}
-				onclick={() => selectedSongKey && onToggleHighlight(selectedSongKey)}
-			>
-				{isSelectedHighlighted ? "highlighted ✓" : "highlight in cluster mode"}
-			</button>
+			{#if isSelectedClusterAnchor}
+				<span class="anchor-badge">cluster anchor ✓</span>
+			{/if}
 		</div>
 
 		<dl class="facts">
@@ -479,28 +475,16 @@
 		gap: 0.5rem;
 	}
 
-	.highlight-toggle {
+	.anchor-badge {
 		flex-shrink: 0;
 		font-family: inherit;
 		font-size: 0.6rem;
-		color: #a1a1aa;
 		padding: 0.1875rem 0.5rem;
 		border-radius: 9999px;
-		border: 1px solid rgba(63, 63, 70, 0.8);
-		background: rgba(9, 9, 11, 0.6);
-		cursor: pointer;
-		white-space: nowrap;
-	}
-
-	.highlight-toggle:hover {
-		color: #e4e4e7;
-		border-color: rgba(113, 113, 122, 0.9);
-	}
-
-	.highlight-toggle[aria-pressed="true"] {
-		border-color: rgba(251, 191, 36, 0.6);
+		border: 1px solid rgba(251, 191, 36, 0.6);
 		background: rgba(251, 191, 36, 0.16);
 		color: #fde68a;
+		white-space: nowrap;
 	}
 
 	.selected-identity {

@@ -43,12 +43,7 @@
 		HIGHLIGHT_RING_WIDTH_PX,
 		truncateLabelToWidth
 	} from "./highlightSongMarker.js";
-	import {
-		findNamedClusterFor,
-		getNamedClusters,
-		resolveClusterNames,
-		setClusterName
-	} from "./namedClusters.svelte.js";
+	import { getNamedClusters, resolveClusterNames } from "./namedClusters.js";
 
 	type Props = {
 		points: ScatterPoint[];
@@ -124,17 +119,8 @@
 
 	type ClusterGeometry = ClusterEllipse2D;
 	type ClusterHit = { cluster: DensityCluster; geometry: ClusterGeometry };
-	type NamingInputState = {
-		cluster: DensityCluster;
-		anchorSongKey: string | null;
-		x: number;
-		y: number;
-		initialName: string;
-	};
 
 	let hoveredClusterHit = $state<ClusterHit | null>(null);
-	let namingInput = $state<NamingInputState | null>(null);
-	let namingInputEl = $state<HTMLInputElement | null>(null);
 
 	const resolvedClusterNames = $derived(
 		resolveClusterNames(clusters, getNamedClusters())
@@ -511,97 +497,15 @@
 		hoveredClusterHit = null;
 	};
 
-	// A cluster's anchor is a highlighted song within it — a deliberate,
-	// human choice of which song identifies the cluster, unlike a geometric
-	// guess that could quietly pick a different member on every re-run. Ties
-	// (multiple highlighted members) just take whichever comes first;
-	// nothing distinguishes them.
-	const highlightedAnchorFor = (cluster: DensityCluster): string | null =>
-		cluster.songKeys.find((songKey) => highlightedSongKeys.has(songKey)) ??
-		null;
-
-	const openNamingInput = (hit: ClusterHit) => {
-		const existing = findNamedClusterFor(hit.cluster, getNamedClusters());
-		// A highlighted member always wins, so renaming after re-highlighting
-		// swaps the anchor to it — setClusterName dedupes by name, so that
-		// swap replaces the existing entry instead of adding a second one.
-		// With nothing highlighted, fall back to the existing anchor (if any)
-		// so you can still edit or clear an already-named cluster; a brand
-		// new cluster with nothing highlighted has no anchor to offer yet.
-		const anchorSongKey =
-			highlightedAnchorFor(hit.cluster) ?? existing?.anchorSongKey ?? null;
-		namingInput = {
-			cluster: hit.cluster,
-			anchorSongKey,
-			x: hit.geometry.centroid.x,
-			y: Math.max(
-				24,
-				hit.geometry.centroid.y -
-					clusterEllipseBoundingRadius(hit.geometry) -
-					CLUSTER_LABEL_GAP
-			),
-			initialName: existing?.name ?? ""
-		};
-	};
-
-	const commitNamingInput = () => {
-		if (!namingInput) return;
-		if (namingInput.anchorSongKey) {
-			const name = namingInputEl?.value.trim() ?? "";
-			setClusterName(namingInput.anchorSongKey, name);
-			// This only updates the live session (see namedClusters.svelte.ts) —
-			// log a paste-ready entry so it can be landed in
-			// src/data/named-clusters.ts to persist for everyone.
-			if (name) {
-				console.info(
-					`Cluster named — add to src/data/named-clusters.ts to persist:\n{ anchorSongKey: ${JSON.stringify(namingInput.anchorSongKey)}, name: ${JSON.stringify(name)} }`
-				);
-			}
-		}
-		namingInput = null;
-	};
-
-	const handleNamingKeydown = (event: KeyboardEvent) => {
-		event.stopPropagation();
-		if (event.key === "Enter") {
-			event.preventDefault();
-			commitNamingInput();
-		} else if (event.key === "Escape") {
-			event.preventDefault();
-			namingInput = null;
-		}
-	};
-
 	const handleClick = (event: MouseEvent) => {
 		if (clickGuard.shouldSuppressClick()) return;
 		if (!containerEl) return;
-		// The "highlight a song first" hint has no input to blur, so it has to
-		// be cleared explicitly before handling whatever this click does next.
-		if (namingInput && namingInput.anchorSongKey === null) namingInput = null;
-		const anchor = anchorFromMouseEvent(event, containerEl);
 		const songKey = findPointAt(event);
-		if (songKey !== null) {
-			onSelect(songKey === selectedSongKey ? null : songKey);
-			return;
-		}
-		const clusterHit = findClusterAt(anchor);
-		if (clusterHit !== null) {
-			openNamingInput(clusterHit);
-			return;
-		}
-		onSelect(null);
+		onSelect(songKey === selectedSongKey ? null : songKey);
 	};
 
 	$effect(() => {
-		if (namingInput && namingInput.anchorSongKey !== null && namingInputEl) {
-			namingInputEl.focus();
-			namingInputEl.select();
-		}
-	});
-
-	$effect(() => {
 		if (!clustersAvailable) {
-			namingInput = null;
 			hoveredClusterHit = null;
 		}
 	});
@@ -663,7 +567,6 @@
 
 <div
 	class="scatter"
-	class:cluster-hover={hoveredClusterHit !== null}
 	bind:this={containerEl}
 	bind:clientWidth={width}
 	bind:clientHeight={height}
@@ -693,32 +596,6 @@
 			<SongTooltip song={tooltipSong} />
 		</div>
 	{/if}
-
-	{#if namingInput}
-		{#if namingInput.anchorSongKey === null}
-			<div
-				class="cluster-name-hint"
-				style:left="{namingInput.x}px"
-				style:top="{namingInput.y}px"
-			>
-				highlight a song in this cluster first
-			</div>
-		{:else}
-			<input
-				class="cluster-name-input"
-				style:left="{namingInput.x}px"
-				style:top="{namingInput.y}px"
-				value={namingInput.initialName}
-				placeholder="name this cluster…"
-				title="Preview only for this session — see console for a snippet to add to src/data/named-clusters.ts"
-				aria-label="Cluster name"
-				bind:this={namingInputEl}
-				onclick={(event) => event.stopPropagation()}
-				onkeydown={handleNamingKeydown}
-				onblur={commitNamingInput}
-			/>
-		{/if}
-	{/if}
 </div>
 
 <style>
@@ -736,49 +613,6 @@
 	canvas {
 		display: block;
 		cursor: crosshair;
-	}
-
-	.scatter.cluster-hover canvas {
-		cursor: text;
-	}
-
-	.cluster-name-input {
-		position: absolute;
-		transform: translate(-50%, -100%);
-		font-family: inherit;
-		font-size: 0.7rem;
-		font-weight: 600;
-		color: #f4f4f5;
-		background: rgba(9, 9, 11, 0.96);
-		border: 1px solid rgba(99, 102, 241, 0.6);
-		border-radius: 0.25rem;
-		padding: 0.2rem 0.4rem;
-		width: 10rem;
-		text-align: center;
-		z-index: 20;
-	}
-
-	.cluster-name-input:focus {
-		outline: none;
-		border-color: rgba(129, 140, 248, 0.9);
-	}
-
-	.cluster-name-hint {
-		position: absolute;
-		transform: translate(-50%, -100%);
-		font-family: inherit;
-		font-size: 0.65rem;
-		font-weight: 500;
-		font-style: italic;
-		color: #a1a1aa;
-		background: rgba(9, 9, 11, 0.96);
-		border: 1px solid rgba(63, 63, 70, 0.8);
-		border-radius: 0.25rem;
-		padding: 0.2rem 0.4rem;
-		width: 11rem;
-		text-align: center;
-		z-index: 20;
-		pointer-events: none;
 	}
 
 	.tooltip {

@@ -11,7 +11,7 @@ export type ClusterPoint = { songKey: string; x: number; y: number };
 // hash is a fingerprint of a cluster's exact membership (order-independent),
 // used only as a per-render React-like key (e.g. to key the resolved-name
 // map) — not for cluster identity. Persisted cluster names are instead
-// anchored to one member song (see namedClusters.svelte.ts), so a
+// anchored to one member song (see namedClusters.ts), so a
 // name survives membership drift even though this hash does not.
 export type DensityCluster = { id: number; songKeys: string[]; hash: string };
 

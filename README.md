@@ -55,18 +55,16 @@ The cache key is a SHA-256 fingerprint of:
 
 `/harmony-map` circles dense groups of songs and can label them (e.g. "doo wop", "axis"). Those names are shared, hand-curated data committed in [`src/data/named-clusters.ts`](src/data/named-clusters.ts) — not browser storage — so everyone who pulls the repo sees the same names.
 
-Each entry is `{ anchorSongKey, name }`. A cluster is identified by **one representative song**, not by its exact membership — membership shifts a little every time the embedding re-runs, but as long as that one song is still grouped there, the name still resolves. This also means there should only ever be **one entry per name** (and per anchor song); naming a cluster from a newly highlighted song replaces its existing entry rather than adding a second one.
+Each entry is `{ anchorSongKey, name }`. A cluster is identified by **one representative song**, not by its exact membership — membership shifts a little every time the embedding re-runs, but as long as that one song is still grouped there, the name still resolves. That song is also what shows as "highlighted" (a ring + label) on the map. Keep **one entry per name and per anchor song**; re-anchoring an existing cluster to a different song should replace its entry, not add a second one.
 
-To name or rename a cluster:
+There's no in-app editing — a browser page can't write to files on disk, and routing edits through the site only added a copy-paste step. To name, rename, or re-anchor a cluster:
 
-1. On `/harmony-map`, select a song in the cluster you want to name and hit **highlight** in the song inspector panel (a song must be highlighted — that's what becomes the anchor).
-2. Click an empty area inside the cluster's dashed circle. A text input appears; type the name and hit `Enter`.
-3. This updates the map live in your session, but a browser page can't write to files on disk, so it isn't saved yet. Open the devtools console — naming logs a paste-ready line, e.g.:
-   ```
-   Cluster named — add to src/data/named-clusters.ts to persist:
+1. On `/harmony-map`, find the song you want as the anchor (search, or click a point in the cluster) and copy its `songKey` — click through to its `/demo/define-chord-progression` page and read it out of the `?song=` URL param.
+2. Add or edit its entry directly in the `namedClusters` array in `src/data/named-clusters.ts`, e.g.:
+   ```ts
    { anchorSongKey: "jason-mraz__im-yours", name: "axis" }
    ```
-4. Copy that into the `namedClusters` array in `src/data/named-clusters.ts` (replacing the old entry if you're renaming/re-anchoring one that already exists), then commit and push as usual. Your collaborator picks it up on their next `git pull`.
+3. Commit and push as usual. Your collaborator picks it up on their next `git pull`.
 
 ## MIDI input, classification, search
 

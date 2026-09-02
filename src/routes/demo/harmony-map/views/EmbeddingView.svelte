@@ -18,8 +18,9 @@
 	import type { ScatterPoint } from "../components/scatterPoint.js";
 	import {
 		getNamedClusters,
+		namedClusterAnchorSongKeys,
 		resolveClusterNames
-	} from "../components/namedClusters.svelte.js";
+	} from "../components/namedClusters.js";
 	import type { EmbeddingMethod } from "../embedding/reducers/types.js";
 	import { UMAP_DRIVEN_METHODS } from "../embedding/reducers/types.js";
 	import { buildClusterInputPoints } from "../embedding/clustering/clusterInputPoints.js";
@@ -90,21 +91,13 @@
 		onViewModeChange(nextMode);
 	};
 
-	// Session-only: a song only needs to stay highlighted long enough to name
-	// a cluster from it (see namedClusters.svelte.ts) — once that's done, the
-	// choice is durably captured as that cluster's anchorSongKey, so the
-	// highlight itself doesn't need to persist across reloads.
-	let highlightedSongKeys = $state<Set<string>>(new Set());
+	// Every anchor song across named clusters (src/data/named-clusters.ts) is
+	// what shows highlighted on the map — editing happens in that file, not
+	// in the app, so there's no user-toggled highlight state anymore.
+	const highlightedSongKeys = namedClusterAnchorSongKeys;
 	let hiddenClusterHashes = $state<Set<string>>(new Set());
 
 	const CLUSTERABLE_METHODS = new Set<EmbeddingMethod>(UMAP_DRIVEN_METHODS);
-
-	const toggleHighlightedSong = (songKey: string) => {
-		const next = new Set(highlightedSongKeys);
-		if (next.has(songKey)) next.delete(songKey);
-		else next.add(songKey);
-		highlightedSongKeys = next;
-	};
 
 	const songByKey = $derived(
 		new Map(songs.map((song) => [song.songKey, song]))
@@ -476,7 +469,6 @@
 					{yearDomain}
 					{clusterRankByHash}
 					{clusterNamesByHash}
-					onToggleHighlight={toggleHighlightedSong}
 					onToggleClusterVisibility={toggleClusterVisibility}
 					onSelect={selectSong}
 				/>

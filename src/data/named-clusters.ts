@@ -1,16 +1,19 @@
 export type NamedClusterEntry = {
 	// The one song used to re-identify this cluster across re-clusterings — a
 	// name survives points drifting in and out as long as this song is still
-	// grouped there. See namedClusters.svelte.ts for how entries are matched
-	// back to a live cluster.
+	// grouped there. See namedClusters.ts for how entries are matched back to
+	// a live cluster. This song is also what shows as "highlighted" (ring +
+	// label) on the map for this cluster.
 	anchorSongKey: string;
 	name: string;
 };
 
-// Hand-curated cluster names for /harmony-map's density clusters, shared by
-// everyone who loads the app. To rename a cluster or add a new one: find its
-// anchor song key (hover/select it in the map's naming input, which still
-// works for live preview), then add or edit its entry here.
+// Hand-curated cluster names for /harmony-map's density clusters — the sole
+// source of truth, shared by everyone who loads the app. There's no in-app
+// editing: to name, rename, or re-anchor a cluster, find its anchor song key
+// (click through to it on the map) and add or edit its entry here directly,
+// then commit. Keep one entry per name and per anchor song — re-anchoring an
+// existing cluster should replace its entry, not add a new one.
 export const namedClusters: NamedClusterEntry[] = [
 	{ anchorSongKey: "lorde__royals", name: "sweet home mixolydian" },
 	{ anchorSongKey: "journey__dont-stop-believin", name: "axis mini" },
@@ -27,7 +30,6 @@ export const namedClusters: NamedClusterEntry[] = [
 		name: "jazz (I-vi-ii-V)"
 	},
 	{ anchorSongKey: "fleetwood-mac__go-your-own-way", name: "go your own way" },
-	{ anchorSongKey: "whitesnake__is-this-love", name: "if i ain't got you" },
 	{ anchorSongKey: "david-guetta__titanium-feat-sia", name: "royal road" },
 	{ anchorSongKey: "sam-smith__stay-with-me", name: "stay with me" },
 	{ anchorSongKey: "taylor-swift__lover", name: "I-V-IV" },

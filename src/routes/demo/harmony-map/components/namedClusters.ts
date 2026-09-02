@@ -1,4 +1,4 @@
-import { namedClusters as committedNamedClusters } from "$data/named-clusters.js";
+import { namedClusters } from "$data/named-clusters.js";
 import type { DensityCluster } from "../embedding/clustering/densityClusters.js";
 
 // A cluster is defined by containing its anchor song, not by its exact
@@ -6,13 +6,9 @@ import type { DensityCluster } from "../embedding/clustering/densityClusters.js"
 // as long as the one song it's anchored to is still grouped there.
 export type NamedCluster = { anchorSongKey: string; name: string };
 
-// Source of truth is the committed src/data/named-clusters.ts file, so
-// everyone who loads the app sees the same names. The naming input on the
-// map still works for live preview within a session (setClusterName below),
-// but that edit isn't written back to disk — land it in named-clusters.ts by
-// hand to make it permanent for everyone.
-let namedClusters = $state<NamedCluster[]>([...committedNamedClusters]);
-
+// src/data/named-clusters.ts is the sole source of truth — edit it directly
+// (and commit) to name, rename, or re-anchor a cluster. There's no in-app
+// editing: this module only reads the committed file.
 export const getNamedClusters = (): NamedCluster[] => namedClusters;
 
 export const findNamedClusterFor = (
@@ -21,17 +17,6 @@ export const findNamedClusterFor = (
 ): NamedCluster | null => {
 	const memberSet = new Set(cluster.songKeys);
 	return entries.find((entry) => memberSet.has(entry.anchorSongKey)) ?? null;
-};
-
-// Drops any entry sharing either the new anchor or the new name before
-// adding the replacement, so re-anchoring a cluster (naming it from a newly
-// highlighted song) overwrites its one entry instead of leaving the old
-// anchor behind as an orphaned duplicate with the same name.
-export const setClusterName = (anchorSongKey: string, name: string) => {
-	const survivors = namedClusters.filter(
-		(entry) => entry.anchorSongKey !== anchorSongKey && entry.name !== name
-	);
-	namedClusters = name ? [...survivors, { anchorSongKey, name }] : survivors;
 };
 
 export const resolveClusterNames = (
@@ -45,3 +30,11 @@ export const resolveClusterNames = (
 	}
 	return result;
 };
+
+// Every anchor song across all named clusters. These are the songs shown
+// highlighted (ring + label) on the map — a highlight now exists purely to
+// show which song defines a named cluster, so it's fully derived from the
+// committed file rather than a separate user-toggled selection.
+export const namedClusterAnchorSongKeys: Set<string> = new Set(
+	namedClusters.map((entry) => entry.anchorSongKey)
+);
