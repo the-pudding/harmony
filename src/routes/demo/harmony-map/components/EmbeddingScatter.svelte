@@ -45,6 +45,14 @@
 	} from "./highlightSongMarker.js";
 	import { getNamedClusters, resolveClusterNames } from "./namedClusters.js";
 
+	const DEFAULT_FOCUS_SCALE = 8;
+	const FOCUS_TRANSITION_MS = 900;
+	// When focusing a whole cluster, its bounding box is scaled to fill this
+	// fraction of the viewport's smaller dimension, so there's breathing room
+	// around the edge rather than the outermost points touching it.
+	const CLUSTER_FOCUS_PADDING = 0.65;
+	const MAX_CLUSTER_FOCUS_SCALE = 24;
+
 	type Props = {
 		points: ScatterPoint[];
 		songByKey: Map<string, GroupedSong>;
@@ -57,6 +65,31 @@
 		clusters: DensityCluster[];
 		emphasizedClusterHashes: Set<string> | null;
 		onSelect: (songKey: string | null) => void;
+		// Optional scripted zoom target (used by /story). Omitted entirely for
+		// normal interactive use — undefined means this feature is unused, so
+		// user-driven pan/zoom is never overridden. Pass a songKey to animate
+		// the view centered on it, or null to animate back out to the full view.
+		focusSongKey?: string | null;
+		focusScale?: number;
+		// Optional scripted zoom onto a whole named cluster (by its resolved
+		// display name, e.g. "axis") rather than one song — fits the cluster's
+		// current member bounds to the viewport. Same undefined/null contract
+		// as focusSongKey; takes priority over it when both are set.
+		focusClusterName?: string | null;
+		// Optional blanket emphasis set (used by /story to highlight a whole
+		// progression family rather than one song's cluster). When set,
+		// everything NOT in it dims — independent of selectedSongKey /
+		// coClusterSongKeys, so it works with no specific song selected at
+		// all. Omit (or null) for no effect.
+		emphasizedSongKeys?: Set<string> | null;
+		// Color dots by their progression-family blend. Defaults to true
+		// (existing behavior) so normal interactive use is unaffected; /story
+		// passes false by default so a highlighted song/family stands out
+		// starkly against a plain starfield instead of competing with color.
+		showFamilyColors?: boolean;
+		// Draw the dashed cluster outlines + names. Defaults to true (existing
+		// behavior); /story defaults this off per beat.
+		showClusterOutlines?: boolean;
 	};
 
 	const {
@@ -70,7 +103,13 @@
 		method,
 		clusters,
 		emphasizedClusterHashes,
-		onSelect
+		onSelect,
+		focusSongKey = undefined,
+		focusScale = DEFAULT_FOCUS_SCALE,
+		focusClusterName = undefined,
+		emphasizedSongKeys = null,
+		showFamilyColors = true,
+		showClusterOutlines = true
 	}: Props = $props();
 
 	// Density clustering is only meaningful over layouts UMAP actually produced
@@ -102,6 +141,10 @@
 		'600 11px "JetBrains Mono", ui-monospace, monospace';
 	const CLUSTER_NAME_COLOR = "#f4f4f5";
 	const CLUSTER_LABEL_GAP = 6;
+	// Used instead of the group-share color blend when showFamilyColors is
+	// false — a plain, star-like white so a highlighted song/family reads
+	// clearly against an otherwise uncolored field.
+	const STAR_FILL_COLOR = "#e4e4e7";
 
 	type NormalizedPoint = ScatterPoint & { nx: number; ny: number };
 	type Position = { nx: number; ny: number };
@@ -206,6 +249,9 @@
 
 	const alphaFor = (songKey: string): number => {
 		if (hoveredSongKey === songKey || highlightedSongKeys.has(songKey)) return 1;
+		if (emphasizedSongKeys) {
+			return emphasizedSongKeys.has(songKey) ? 1 : SCATTER_DIMMED_ALPHA;
+		}
 		if (selectedSongKey === null) return SCATTER_NORMAL_ALPHA;
 		if (songKey === selectedSongKey || coClusterSongKeys.has(songKey)) return 1;
 		return SCATTER_DIMMED_ALPHA;
@@ -227,6 +273,7 @@
 
 	const drawClusters = (context: CanvasRenderingContext2D) => {
 		clusterGeometryCache = [];
+		if (!showClusterOutlines) return;
 
 		for (const cluster of clusters) {
 			const screenPositions = cluster.songKeys
@@ -369,12 +416,9 @@
 			if (!position) continue;
 			const screen = toScreen(position);
 			context.globalAlpha = alphaFor(point.songKey);
-			context.fillStyle = fillStyleForGroupShares(
-				context,
-				screen.x,
-				screen.y,
-				point.groupShares
-			);
+			context.fillStyle = showFamilyColors
+				? fillStyleForGroupShares(context, screen.x, screen.y, point.groupShares)
+				: STAR_FILL_COLOR;
 			context.beginPath();
 			context.arc(screen.x, screen.y, radiusFor(point.songKey), 0, Math.PI * 2);
 			context.fill();
@@ -516,10 +560,16 @@
 		return () => cancelAnimationFrame(tweenFrame);
 	});
 
+	// Hoisted out of the effect below (rather than a local const inside it) so
+	// the scripted-zoom effect further down can drive the same behavior
+	// programmatically via zoomBehavior.transform.
+	let zoomBehavior: ReturnType<typeof zoom<HTMLCanvasElement, unknown>> | null =
+		null;
+
 	$effect(() => {
 		const canvas = canvasEl;
 		if (!canvas) return;
-		const zoomBehavior = zoom<HTMLCanvasElement, unknown>()
+		zoomBehavior = zoom<HTMLCanvasElement, unknown>()
 			.scaleExtent([MIN_ZOOM, MAX_ZOOM])
 			.on("start", () => {
 				delayedTooltip.startDrag();
@@ -529,7 +579,93 @@
 				transform = event.transform;
 			});
 		select(canvas).call(zoomBehavior);
-		return () => select(canvas).on(".zoom", null);
+		return () => {
+			select(canvas).on(".zoom", null);
+			zoomBehavior = null;
+		};
+	});
+
+	// Fits a cluster's current member bounds to the viewport (with padding),
+	// for focusClusterName below. Returns null if none of its songs have a
+	// known position yet.
+	const clusterFocusTransform = (
+		clusterSongKeys: readonly string[]
+	): ZoomTransform | null => {
+		let minX = Infinity;
+		let maxX = -Infinity;
+		let minY = Infinity;
+		let maxY = -Infinity;
+		for (const songKey of clusterSongKeys) {
+			const point = pointBySongKey.get(songKey);
+			if (!point) continue;
+			const rawX = PLOT_MARGIN + point.nx * plotWidth;
+			const rawY = PLOT_MARGIN + (1 - point.ny) * plotHeight;
+			minX = Math.min(minX, rawX);
+			maxX = Math.max(maxX, rawX);
+			minY = Math.min(minY, rawY);
+			maxY = Math.max(maxY, rawY);
+		}
+		if (!isFinite(minX)) return null;
+
+		const boxWidth = Math.max(maxX - minX, 1);
+		const boxHeight = Math.max(maxY - minY, 1);
+		const centerX = (minX + maxX) / 2;
+		const centerY = (minY + maxY) / 2;
+		const fitScale = Math.min(
+			(width * CLUSTER_FOCUS_PADDING) / boxWidth,
+			(height * CLUSTER_FOCUS_PADDING) / boxHeight
+		);
+		const scale = Math.min(Math.max(fitScale, MIN_ZOOM), MAX_CLUSTER_FOCUS_SCALE);
+		return zoomIdentity
+			.scale(scale)
+			.translate(
+				width / (2 * scale) - centerX,
+				height / (2 * scale) - centerY
+			);
+	};
+
+	// Scripted zoom (e.g. /story's beats): fully inert when both focusSongKey
+	// and focusClusterName are undefined (their prop defaults), so ordinary
+	// interactive pages never trigger this. focusClusterName takes priority
+	// when both are set. For either: a string animates the view to center on
+	// it (fitting the whole cluster, for focusClusterName), null animates
+	// back out to the full view.
+	$effect(() => {
+		if (focusClusterName === undefined && focusSongKey === undefined) return;
+		const canvas = canvasEl;
+		if (!canvas || !zoomBehavior || width === 0 || height === 0) return;
+
+		const targetTransform = ((): ZoomTransform | null => {
+			if (focusClusterName !== undefined) {
+				if (focusClusterName === null) return zoomIdentity;
+				const cluster = clusters.find(
+					(candidate) =>
+						resolvedClusterNames.get(candidate.hash) === focusClusterName
+				);
+				return cluster ? clusterFocusTransform(cluster.songKeys) : null;
+			}
+			if (focusSongKey === null) return zoomIdentity;
+			if (focusSongKey === undefined) return null;
+			const point = normalizedPoints.find((p) => p.songKey === focusSongKey);
+			if (!point) return null;
+			const rawX = PLOT_MARGIN + point.nx * plotWidth;
+			const rawY = PLOT_MARGIN + (1 - point.ny) * plotHeight;
+			// scale-then-translate composes so the translate offset ends up
+			// divided by focusScale — dividing it back out here centers
+			// (rawX, rawY) in the viewport at that scale.
+			return zoomIdentity
+				.scale(focusScale)
+				.translate(
+					width / (2 * focusScale) - rawX,
+					height / (2 * focusScale) - rawY
+				);
+		})();
+		if (!targetTransform) return;
+
+		select(canvas)
+			.transition()
+			.duration(FOCUS_TRANSITION_MS)
+			.call(zoomBehavior.transform, targetTransform);
 	});
 
 	$effect(() => {
@@ -546,6 +682,9 @@
 		void resolvedClusterNames;
 		void highlightedSongKeys;
 		void hoveredClusterHit;
+		void emphasizedSongKeys;
+		void showFamilyColors;
+		void showClusterOutlines;
 		draw();
 	});
 
