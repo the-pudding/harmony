@@ -1,11 +1,21 @@
 // A visual to show above the text box for this beat.
 export type StoryBeatMedia =
-	| { type: "youtube"; videoId: string; title?: string }
-	// Line chart of % of corpus songs matched by any of these chord
-	// progressions, by release year (reuses the same chart as
-	// /core-progressions). Progression strings are roman-numeral keys like
-	// "I-V-vi-IV" — see src/data/core-progressions.ts.
-	| { type: "prevalenceChart"; chordProgressions: string[]; title?: string };
+	| { type: "youtube"; videoId: string; title?: string; startSeconds?: number }
+	// Line chart of % of corpus songs matched by release year (reuses the
+	// same chart as /core-progressions). Specify exactly one of:
+	// - chordProgression: one progression's chord pattern, e.g. "I-V-vi-IV"
+	//   (the `chordProgression` field in src/data/core-progressions.ts). If
+	//   that progression has sibling variants, they're included
+	//   automatically — no need to list them out.
+	// - progressionFamily: a family's display name, e.g. "Minor-y
+	//   progressions" — covers every progression in that family, again with
+	//   no need to list them out (see src/data/core-progressions.ts).
+	| {
+			type: "prevalenceChart";
+			title?: string;
+			chordProgression?: string;
+			progressionFamily?: string;
+	  };
 
 export type StoryBeat = {
 	// A single paragraph, or multiple — each string in the array renders as
@@ -53,12 +63,11 @@ export const storyBeats: StoryBeat[] = [
 	{
 		text: "In 2009, an Australian comedy group called “Axis of Awesome” performed a sketch that demonstrated the surprising number of pop songs built off of the same 4 chords.",
 		focusCluster: "axis",
-		// TODO double-check this is the right video — grab the ID from the
-		// youtube.com/watch?v=<ID> URL and swap it in if not.
 		media: {
 			type: "youtube",
 			videoId: "5pidokakU4I",
-			title: "Axis of Awesome — 4 Four Chords"
+			title: "Axis of Awesome — 4 Four Chords",
+			startSeconds: 24
 		}
 	},
 	{
@@ -82,10 +91,8 @@ export const storyBeats: StoryBeat[] = [
 		],
 		focusCluster: "axis",
 	},
-		{
+	{
 		text: "Sure, it might be formulaic, but we found a whole lot more formulas than just “the 4 chords.” There’s a deep language/vocabulary in this galaxy that reveals what we find pleasing to listen to, why, and how that has shifted over time. Let’s go explore… 🔭",
-		focusSongKey: null,
-		highlightSongKey: null
 	},
 	{
 		text: [
@@ -119,18 +126,45 @@ export const storyBeats: StoryBeat[] = [
 		showClusterOutlines: true,
 		media: {
 			type: "prevalenceChart",
-			chordProgressions: ["I-V-vi-IV"],
+			chordProgression: "I-V-vi-IV",
 			title: "“Axis of awesome” (I-V-vi-IV) prevalence over time"
 		}
 	},
 	{
 		text: [
 			"There was a much more dominant set of progressions in the 60s – what we’re calling the “happy major-y” family of progressions.",
-			"These progressions are rooted in the major scale, classic patterns like I-IV and I-IV-V. They sound brighter and cheerful."
+			"These progressions are rooted in the major scale, classic patterns like I-IV and I-IV-V. They sound bright and cheerful."
 		],
-		focusSongKey: null,
-		highlightSongKey: null,
 		highlightFamily: "Happy, major-y progressions",
-		// showFamilyColors: true,
+		showClusterOutlines: true,
+		media: {
+			type: "prevalenceChart",
+			progressionFamily: "Happy, major-y progressions",
+			title: "“Happy, major-y” progressions prevalence over time"
+		}
 	},
+	{
+		text: "Tk walk through some major-y clusters",
+		highlightFamily: "Happy, major-y progressions",
+		showClusterOutlines: true,
+	},
+	{
+		text: "In the 2020s, “minor-y” progressions have overtaken the “major-y” ones. These progressions feature a darker, moodier sound rooted in the minor scale.",
+		highlightFamily: "Minor-y progressions",
+		showClusterOutlines: true,
+		media: {
+			type: "prevalenceChart",
+			progressionFamily: "Minor-y progressions",
+			title: "“Minor-y” progressions prevalence over time"
+		}
+	},
+	{
+		text: "Tk jazzy? Other neighborhoods?",
+	},
+	{
+		text: "Some harmonic structures carry such a strong cultural association that they typically get used for the same vibe or topic."
+	},
+	{
+		text: "But we also find some unlikely pairs. Here are some songs that unexpectedly share harmonic DNA."
+	}
 ];

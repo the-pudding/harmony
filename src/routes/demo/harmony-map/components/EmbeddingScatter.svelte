@@ -90,6 +90,15 @@
 		// Draw the dashed cluster outlines + names. Defaults to true (existing
 		// behavior); /story defaults this off per beat.
 		showClusterOutlines?: boolean;
+		// Optional song set used to judge, per cluster, whether it "heavily
+		// involves" a highlighted family (used by /story alongside
+		// highlightFamily + showClusterOutlines) — a cluster whose members
+		// are mostly NOT in this set draws a faint outline with its name
+		// hidden, rather than the normal full treatment. Distinct from
+		// emphasizedSongKeys (which fades dots) so a plain song highlight
+		// with outlines on doesn't also mute every other cluster's outline.
+		// Omit (or null) for normal treatment of every cluster.
+		familyEmphasisSongKeys?: Set<string> | null;
 	};
 
 	const {
@@ -109,7 +118,8 @@
 		focusClusterName = undefined,
 		emphasizedSongKeys = null,
 		showFamilyColors = true,
-		showClusterOutlines = true
+		showClusterOutlines = true,
+		familyEmphasisSongKeys = null
 	}: Props = $props();
 
 	// Density clustering is only meaningful over layouts UMAP actually produced
@@ -134,6 +144,11 @@
 	const CLUSTER_STROKE_COLOR = "#e4e4e7";
 	const CLUSTER_STROKE_WIDTH = 2;
 	const CLUSTER_UNNAMED_STROKE_ALPHA = 0.72;
+	// A cluster "heavily involves" a highlighted family when at least this
+	// fraction of its songs are in familyEmphasisSongKeys; below that its
+	// outline fades to CLUSTER_DEEMPHASIZED_STROKE_ALPHA and its name hides.
+	const FAMILY_INVOLVEMENT_THRESHOLD = 0.5;
+	const CLUSTER_DEEMPHASIZED_STROKE_ALPHA = 0.15;
 	const CLUSTER_DASH_PATTERN = [7, 5];
 	const CLUSTER_LABEL_COLOR = "rgba(244, 244, 245, 0.9)";
 	const CLUSTER_LABEL_FONT = '10px "JetBrains Mono", ui-monospace, monospace';
@@ -295,13 +310,24 @@
 				geometry: ellipse
 			});
 
-			const name = resolvedClusterNames.get(cluster.hash);
-			const strokeAlpha = clusterAnnotationAlpha(
-				emphasizedClusterHashes,
-				cluster.hash,
-				name !== undefined,
-				CLUSTER_UNNAMED_STROKE_ALPHA
-			);
+			const heavilyInvolvesFamily =
+				!familyEmphasisSongKeys ||
+				cluster.songKeys.filter((songKey) => familyEmphasisSongKeys.has(songKey))
+					.length /
+					cluster.songKeys.length >=
+					FAMILY_INVOLVEMENT_THRESHOLD;
+
+			const name = heavilyInvolvesFamily
+				? resolvedClusterNames.get(cluster.hash)
+				: undefined;
+			const strokeAlpha = !heavilyInvolvesFamily
+				? CLUSTER_DEEMPHASIZED_STROKE_ALPHA
+				: clusterAnnotationAlpha(
+						emphasizedClusterHashes,
+						cluster.hash,
+						name !== undefined,
+						CLUSTER_UNNAMED_STROKE_ALPHA
+					);
 
 			context.globalAlpha = strokeAlpha;
 			context.setLineDash(CLUSTER_DASH_PATTERN);
@@ -685,6 +711,7 @@
 		void emphasizedSongKeys;
 		void showFamilyColors;
 		void showClusterOutlines;
+		void familyEmphasisSongKeys;
 		draw();
 	});
 

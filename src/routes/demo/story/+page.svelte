@@ -11,6 +11,11 @@
 	import { songKeysMatchingGroupFilter } from "../shared/progressionGroupShare.js";
 	import CorpusMatchRateOverTimeChart from "../core-progressions/CorpusMatchRateOverTimeChart.svelte";
 	import type { YearDomain } from "../shared/artists/artistStats.js";
+	import coreProgressions, { allProgressionGroups } from "$data/core-progressions.js";
+	import {
+		chordProgressionVariants,
+		siblingVariantsForProgression
+	} from "$data/core-progressions.util.js";
 	import { storyBeats as STORY_BEATS } from "./storyBeats.js";
 
 	const coverage = createAllSongsCoverageState();
@@ -70,6 +75,17 @@
 	const clusterInputPoints = $derived(buildClusterInputPoints(points));
 	const allClusters = $derived(findDensityClusters(clusterInputPoints));
 
+	// EmbeddingScatter treats focusSongKey===undefined as "leave the camera
+	// alone" — fine for callers that never use the zoom feature, but here
+	// every beat should deterministically set the view. So: a beat with
+	// neither focusCluster nor focusSongKey resolves to an explicit null
+	// (zoom out), rather than inheriting wherever the previous beat left the
+	// camera. focusCluster (when set) takes priority in EmbeddingScatter
+	// regardless of this value.
+	const resolvedFocusSongKey = $derived(
+		beat.focusCluster === undefined ? (beat.focusSongKey ?? null) : beat.focusSongKey
+	);
+
 	const highlightedSongKeyList = $derived.by((): string[] => {
 		const value = beat.highlightSongKey;
 		if (!value) return [];
@@ -101,23 +117,26 @@
 		);
 	});
 
+	// Only set when a beat highlights a family — used both to fade dots
+	// (below) and, separately, to fade/unname clusters that don't heavily
+	// involve the family (passed as familyEmphasisSongKeys).
+	const familySongKeys = $derived(
+		beat.highlightFamily
+			? songKeysMatchingGroupFilter(songCoverages, beat.highlightFamily, null)
+			: null
+	);
+
 	// Fades everything except: songs in the highlighted family, and the
 	// union of every cluster containing any highlighted song (falling back
 	// to just that song if it isn't in a cluster). Combines both when a beat
 	// sets highlightFamily and highlightSongKey together.
 	const emphasizedSongKeys = $derived.by((): Set<string> | null => {
-		if (!beat.highlightFamily && highlightedSongKeyList.length === 0) {
+		if (!familySongKeys && highlightedSongKeyList.length === 0) {
 			return null;
 		}
 		const combined = new Set<string>();
-		if (beat.highlightFamily) {
-			for (const songKey of songKeysMatchingGroupFilter(
-				songCoverages,
-				beat.highlightFamily,
-				null
-			)) {
-				combined.add(songKey);
-			}
+		if (familySongKeys) {
+			for (const songKey of familySongKeys) combined.add(songKey);
 		}
 		for (const songKey of highlightedSongKeyList) {
 			const memberClusters = allClusters.filter((cluster) =>
@@ -141,6 +160,29 @@
 	const beatParagraphs = $derived(
 		Array.isArray(beat.text) ? beat.text : [beat.text]
 	);
+
+	// Resolves a prevalenceChart beat's chordProgression/progressionFamily
+	// down to the flat list of chord-pattern strings the chart matches
+	// against — expanding a single progression to its sibling variants, or a
+	// family to every progression in it, so beats never need to list them.
+	const prevalenceChartProgressions = $derived.by((): string[] => {
+		const media = beat.media;
+		if (media?.type !== "prevalenceChart") return [];
+		if (media.chordProgression) {
+			return siblingVariantsForProgression(coreProgressions, media.chordProgression);
+		}
+		if (media.progressionFamily) {
+			const group = allProgressionGroups.find(
+				(candidate) => candidate.name === media.progressionFamily
+			);
+			return group
+				? group.progressions.flatMap((progression) =>
+						chordProgressionVariants(progression.chordProgression)
+					)
+				: [];
+		}
+		return [];
+	});
 </script>
 
 <svelte:head>
@@ -166,10 +208,11 @@
 				clusters={allClusters}
 				{emphasizedClusterHashes}
 				{emphasizedSongKeys}
-				focusSongKey={beat.focusSongKey}
+				focusSongKey={resolvedFocusSongKey}
 				focusClusterName={beat.focusCluster}
 				showFamilyColors={beat.showFamilyColors ?? false}
 				showClusterOutlines={beat.showClusterOutlines ?? false}
+				familyEmphasisSongKeys={familySongKeys}
 				onSelect={() => {}}
 			/>
 		{:else}
@@ -190,7 +233,10 @@
 				{#if beat.media.type === "youtube"}
 					<div class="story-media-video">
 						<iframe
-							src="https://www.youtube.com/embed/{beat.media.videoId}"
+							src="https://www.youtube.com/embed/{beat.media.videoId}{beat
+								.media.startSeconds
+								? `?start=${beat.media.startSeconds}`
+								: ''}"
 							title={beat.media.title ?? "embedded video"}
 							allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
 							allowfullscreen
@@ -201,7 +247,7 @@
 						<CorpusMatchRateOverTimeChart
 							corpusSongs={songCoverages}
 							{songByKey}
-							matchProgressions={beat.media.chordProgressions}
+							matchProgressions={prevalenceChartProgressions}
 							filtered
 							{yearDomain}
 						/>
