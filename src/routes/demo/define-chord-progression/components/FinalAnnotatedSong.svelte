@@ -29,6 +29,7 @@
 		activeProgression: string | null;
 		onselect: (chordProgression: string) => void;
 		compact?: boolean;
+		showMetadata?: boolean;
 	};
 
 	let {
@@ -38,7 +39,8 @@
 		explainedPercent,
 		activeProgression,
 		onselect,
-		compact = false
+		compact = false,
+		showMetadata = true
 	}: Props = $props();
 
 	const sortedMatches = $derived(
@@ -55,17 +57,19 @@
 </script>
 
 <div class="final-annotated-song" class:compact>
-	<SongMetadataHeader {song} />
-	<ChordProgressionIssuesNote songKey={song.songKey} size={compact ? "sm" : "md"} />
-	{#if chordMatchingChallenges}
-		<ChordProgressionIssuesNote
-			songKey={song.songKey}
-			overrideText={chordMatchingChallenges}
-			overrideLabel={CHORD_MATCHING_CHALLENGES_LABEL}
-			overrideColor="rgba(251, 191, 36, 0.95)"
-			overrideColorHover="rgba(253, 224, 71, 0.95)"
-			size={compact ? "sm" : "md"}
-		/>
+	{#if showMetadata}
+		<SongMetadataHeader {song} />
+		<ChordProgressionIssuesNote songKey={song.songKey} size={compact ? "sm" : "md"} />
+		{#if chordMatchingChallenges}
+			<ChordProgressionIssuesNote
+				songKey={song.songKey}
+				overrideText={chordMatchingChallenges}
+				overrideLabel={CHORD_MATCHING_CHALLENGES_LABEL}
+				overrideColor="rgba(251, 191, 36, 0.95)"
+				overrideColorHover="rgba(253, 224, 71, 0.95)"
+				size={compact ? "sm" : "md"}
+			/>
+		{/if}
 	{/if}
 	<div
 		class="final-layout"

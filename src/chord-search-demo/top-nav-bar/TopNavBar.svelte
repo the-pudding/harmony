@@ -73,6 +73,11 @@
 				class="page-link"
 				class:active={page.url.pathname === "/demo/story"}>story</a
 			>
+			<a
+				href="/demo/match-algo-v2"
+				class="page-link"
+				class:active={page.url.pathname === "/demo/match-algo-v2"}>match algo v2</a
+			>
 		</div>
 	</div>
 	{#if showSearch}
