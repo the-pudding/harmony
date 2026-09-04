@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import type { SongSection, GroupedSong } from "../../../../data/songBrowser.js";
+import { groupSongs } from "../../../../data/songBrowser.js";
+import songs from "../../../../../static/data/songs.json";
+import coreProgressions from "$data/core-progressions.js";
+import { buildColoredHighlightSegments } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
 import {
   computeFeatureValues,
   contiguousRepeatFeature,
@@ -250,6 +254,19 @@ describe("matchSongV2", () => {
     expect(result.unifiedProgressions[0].spans).toHaveLength(2);
   });
 
+  it("does not count a leftover prefix chord toward explainedPercent", () => {
+		const tokens = ["I", "ii", "V", "I", "ii", "V", "I"];
+		const leftoverIndex = tokens.length - 1;
+		const fullCoveragePercent = 100;
+		const section = makeSection([C, D_min, G, C, D_min, G, C], tokens);
+		const result = matchSongV2(makeSong([section]), [], DEFAULT_WEIGHTS);
+
+		expect(result.explainedPercent).toBeLessThan(fullCoveragePercent);
+		expect(
+			result.annotations[0]?.highlightPositionsBySection?.[0]
+		).not.toContain(leftoverIndex);
+	});
+
   it("produces annotations compatible with SongChordsDisplay", () => {
     const section = makeSection(
       twoRepeats,
@@ -263,4 +280,104 @@ describe("matchSongV2", () => {
     expect(result.matches).toHaveLength(1);
     expect(result.matches[0].coveragePercent).toBe(100);
   });
+});
+
+const CHANDELIER_SONG_KEY = "sia__chandelier";
+const BRIDGE_LABEL = "Bridge";
+const VI_VII_III = "VI-VII-III";
+const VI_VII_III_UNIT_LENGTH = 3;
+const SHORT_BRIDGE_CHORD_COUNT = 7;
+const LONG_BRIDGE_CHORD_COUNT = 13;
+const SHORT_BRIDGE_INSTANCE_COUNT = 2;
+const LONG_BRIDGE_INSTANCE_COUNT = 4;
+
+const chandelierSong = groupSongs(
+	(songs as { songKey: string }[]).filter(
+		(s) => s.songKey === CHANDELIER_SONG_KEY
+	) as Parameters<typeof groupSongs>[0]
+)[0];
+
+const paintedPositionsForSection = (
+	section: SongSection,
+	sectionIndex: number,
+	annotations: ReturnType<typeof matchSongV2>["annotations"]
+): number[] =>
+	buildColoredHighlightSegments(section, sectionIndex, annotations)
+		.filter((segment) => segment.palette !== null)
+		.flatMap((segment) => segment.indices)
+		.sort((a, b) => a - b);
+
+const claimedPositionsForSection = (
+	annotations: ReturnType<typeof matchSongV2>["annotations"],
+	sectionIndex: number
+): number[] =>
+	[
+		...new Set(
+			annotations.flatMap(
+				(annotation) =>
+					annotation.highlightPositionsBySection?.[sectionIndex] ?? []
+			)
+		)
+	].sort((a, b) => a - b);
+
+const viViiIiiSegments = (
+	section: SongSection,
+	sectionIndex: number,
+	annotations: ReturnType<typeof matchSongV2>["annotations"]
+) =>
+	buildColoredHighlightSegments(section, sectionIndex, annotations).filter(
+		(segment) =>
+			segment.palette !== null && segment.chordProgression === VI_VII_III
+	);
+
+describe("chandelier highlight visualization", () => {
+	it("paints every claimed chord, including both VI-VII-III bridges", () => {
+		const result = matchSongV2(
+			chandelierSong,
+			coreProgressions,
+			DEFAULT_WEIGHTS
+		);
+
+		for (const [sectionIndex, section] of chandelierSong.sections.entries()) {
+			expect(
+				paintedPositionsForSection(section, sectionIndex, result.annotations)
+			).toEqual(claimedPositionsForSection(result.annotations, sectionIndex));
+		}
+
+		const bridges = chandelierSong.sections.flatMap((section, sectionIndex) =>
+			section.label === BRIDGE_LABEL ? [{ section, sectionIndex }] : []
+		);
+		expect(bridges).toHaveLength(2);
+
+		const shortBridge = bridges.find(
+			({ section }) =>
+				section.parsedProgression.length === SHORT_BRIDGE_CHORD_COUNT
+		);
+		const longBridge = bridges.find(
+			({ section }) =>
+				section.parsedProgression.length === LONG_BRIDGE_CHORD_COUNT
+		);
+		expect(shortBridge).toBeDefined();
+		expect(longBridge).toBeDefined();
+
+		const shortSegments = viViiIiiSegments(
+			shortBridge!.section,
+			shortBridge!.sectionIndex,
+			result.annotations
+		);
+		const longSegments = viViiIiiSegments(
+			longBridge!.section,
+			longBridge!.sectionIndex,
+			result.annotations
+		);
+
+		expect(shortSegments).toHaveLength(SHORT_BRIDGE_INSTANCE_COUNT);
+		expect(longSegments).toHaveLength(LONG_BRIDGE_INSTANCE_COUNT);
+		expect(shortSegments.flatMap((segment) => segment.indices)).toHaveLength(
+			SHORT_BRIDGE_INSTANCE_COUNT * VI_VII_III_UNIT_LENGTH
+		);
+		expect(longSegments.flatMap((segment) => segment.indices)).toHaveLength(
+			LONG_BRIDGE_INSTANCE_COUNT * VI_VII_III_UNIT_LENGTH
+		);
+	});
 });

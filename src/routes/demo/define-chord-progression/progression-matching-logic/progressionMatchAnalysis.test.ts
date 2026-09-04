@@ -5,6 +5,7 @@ import type { ParsedProgressionChord } from "../../../../chord-processing/types.
 import type { ScaleName } from "../../../../chord-processing/scales.js";
 import {
 	aggregateVariantMatchStats,
+	buildColoredHighlightSegments,
 	collapseDisplayMatchesByName,
 	computeProgressionMatches,
 	computeStatsForParsedProgression,
@@ -572,5 +573,55 @@ describe("computeGapOnlyStats — intact instances in gaps", () => {
 				expect(coreOccupiedCoverage[sectionIndex]).not.toContain(position);
 			}
 		}
+	});
+});
+
+const highlightedIndices = (
+	section: SongSection,
+	sectionIndex: number,
+	annotations: Parameters<typeof buildColoredHighlightSegments>[2]
+): number[] =>
+	buildColoredHighlightSegments(section, sectionIndex, annotations)
+		.filter((segment) => segment.palette !== null)
+		.flatMap((segment) => segment.indices);
+
+describe("buildColoredHighlightSegments — claimed positions are source of truth", () => {
+	const C_SHARP = 1;
+	const E_FLAT = 3;
+	const A_FLAT = 8;
+	const E = 4;
+	const PLAIN_VI_VII_III = [
+		chord(C_SHARP, "major"),
+		chord(E_FLAT, "major"),
+		chord(A_FLAT, "major")
+	];
+	const SLASH_VI_VII_III = [
+		chord(C_SHARP, "major"),
+		chord(E_FLAT, "major"),
+		chord(A_FLAT, "major", E)
+	];
+	const CLAIMED_POSITIONS = [0, 1, 2, 3, 4, 5];
+	const palette = { fill: "#000", border: "#000" };
+
+	it("does not rematch a slash-bass unit onto plain triads", () => {
+		const section = makeSection([...PLAIN_VI_VII_III, ...PLAIN_VI_VII_III]);
+		expect(
+			highlightedIndices(section, 0, [
+				{ parsedProgression: SLASH_VI_VII_III, palette }
+			])
+		).toEqual([]);
+	});
+
+	it("paints claimed positions even when rematch would miss them", () => {
+		const section = makeSection([...PLAIN_VI_VII_III, ...PLAIN_VI_VII_III]);
+		expect(
+			highlightedIndices(section, 0, [
+				{
+					parsedProgression: SLASH_VI_VII_III,
+					palette,
+					highlightPositionsBySection: [CLAIMED_POSITIONS]
+				}
+			])
+		).toEqual(CLAIMED_POSITIONS);
 	});
 });

@@ -39,12 +39,9 @@ export const tileSection = (
   );
 
   const highlightPositions = Array.from(
-    {
-      length:
-        best.tile.coveredLength + best.tile.prefixLeftoverLength,
-    },
-    (_, i) => best.tile.startIndex + i
-  );
+		{ length: best.tile.coveredLength },
+		(_, i) => best.tile.startIndex + i
+	);
 
   const span: TileSpan = {
     sectionIndex,

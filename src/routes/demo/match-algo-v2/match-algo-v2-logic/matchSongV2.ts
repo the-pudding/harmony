@@ -71,10 +71,7 @@ const claimedChordCount = (unified: UnifiedProgression): number =>
   );
 
 const instanceCount = (unified: UnifiedProgression): number =>
-  unified.spans.reduce((sum, span) => {
-    const prefixInstance = span.tile.tile.prefixLeftoverLength > 0 ? 1 : 0;
-    return sum + span.tile.tile.repeatCount + prefixInstance;
-  }, 0);
+	unified.spans.reduce((sum, span) => sum + span.tile.tile.repeatCount, 0);
 
 const toMatchStats = (
   unified: UnifiedProgression,
@@ -210,12 +207,10 @@ export const matchSongV2 = (
 
   // Compute explained percent
   const totalChords = songChordCount(song);
-  const coveredChords = sectionResults.reduce(
-    (sum, result) =>
-      sum +
-      result.spans.flatMap((span) => span.highlightPositions).length,
-    0
-  );
+  const coveredChords = sectionResults.reduce((sum, result, sectionIndex) => {
+		const sectionLength = song.sections[sectionIndex].parsedProgression.length;
+		return sum + (sectionLength - result.uncoveredPositions.length);
+	}, 0);
   const explainedPercent =
     totalChords > 0
       ? Math.round((coveredChords / totalChords) * PERCENT_MULTIPLIER)

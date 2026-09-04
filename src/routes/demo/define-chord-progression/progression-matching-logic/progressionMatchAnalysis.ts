@@ -749,6 +749,61 @@ const isContinuingGroup = (prev: PositionGroup, curr: PositionGroup): boolean =>
 		prev.annotationIndex === curr.annotationIndex &&
 		prev.matchIndex === curr.matchIndex);
 
+const contiguousRunsFromPositions = (
+	positions: number[]
+): SubProgressionMatch[] =>
+	[...new Set(positions)]
+		.sort((a, b) => a - b)
+		.reduce<SubProgressionMatch[]>((runs, position) => {
+			const last = runs[runs.length - 1];
+			if (last && position === last.start + last.length) {
+				return [
+					...runs.slice(0, -1),
+					{ start: last.start, length: last.length + 1 }
+				];
+			}
+			return [...runs, { start: position, length: 1 }];
+		}, []);
+
+const matchesFromClaimedPositions = (
+	positions: number[],
+	unitLength: number
+): SubProgressionMatch[] => {
+	const runs = contiguousRunsFromPositions(positions);
+	if (unitLength <= 0) return runs;
+	return runs.flatMap((run) => {
+		const chunkCount = Math.ceil(run.length / unitLength);
+		return Array.from({ length: chunkCount }, (_, chunkIndex) => {
+			const start = run.start + chunkIndex * unitLength;
+			const remaining = run.start + run.length - start;
+			return {
+				start,
+				length: Math.min(unitLength, remaining)
+			};
+		});
+	});
+};
+
+const matchesForAnnotation = (
+	section: SongSection,
+	sectionIndex: number,
+	annotation: ChordAnnotation
+): SubProgressionMatch[] => {
+	const allowedPositions =
+		annotation.highlightPositionsBySection?.[sectionIndex];
+	if (allowedPositions !== undefined) {
+		return matchesFromClaimedPositions(
+			allowedPositions,
+			annotation.parsedProgression.length
+		);
+	}
+	return getSectionMatches(
+		section,
+		annotation.parsedProgression,
+		annotation.matchRomanNumeralsExactly ?? false
+	);
+};
+
 export const buildColoredHighlightSegments = (
 	section: SongSection,
 	sectionIndex: number,
@@ -756,26 +811,8 @@ export const buildColoredHighlightSegments = (
 ): ColoredHighlightSegment[] => {
 	const sectionLength = section.parsedProgression.length;
 
-	const matchesByAnnotation = annotations.map(
-		({
-			parsedProgression,
-			highlightPositionsBySection,
-			matchRomanNumeralsExactly
-		}) => {
-			const allMatches = getSectionMatches(
-				section,
-				parsedProgression,
-				matchRomanNumeralsExactly ?? false
-			);
-			const allowedPositions = highlightPositionsBySection?.[sectionIndex];
-			if (allowedPositions === undefined) return allMatches;
-			const allowed = new Set(allowedPositions);
-			return allMatches.filter((match) =>
-				matchPositions(match, sectionLength).every((position) =>
-					allowed.has(position)
-				)
-			);
-		}
+	const matchesByAnnotation = annotations.map((annotation) =>
+		matchesForAnnotation(section, sectionIndex, annotation)
 	);
 
 	const positionGroups: PositionGroup[] = Array.from(
