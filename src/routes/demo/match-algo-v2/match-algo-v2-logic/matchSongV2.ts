@@ -180,17 +180,33 @@ export const matchSongV2 = (
     unifiedProgressions.push(unified);
   }
 
-  // Build ChordAnnotation[] for SongChordsDisplay
-  const annotations: ChordAnnotation[] = unifiedProgressions.map((unified) => ({
-    parsedProgression: unified.spans[0].tile.tile.unit,
-    palette: unified.highlightPalette,
-    chordProgression: unified.romanString,
-    highlightPositionsBySection: buildHighlightPositionsBySection(
-      unified.spans,
-      song.sections.length
-    ),
-    matchRomanNumeralsExactly: false,
-  }));
+  const mergedUnifiedProgressions = unifiedProgressions.reduce<
+		UnifiedProgression[]
+	>((merged, unified) => {
+		const displayKey = scopedToScale(unified.romanString, unified.scale);
+		const existingIndex = merged.findIndex(
+			(entry) => scopedToScale(entry.romanString, entry.scale) === displayKey
+		);
+		if (existingIndex === -1) return [...merged, unified];
+		return merged.map((entry, index) =>
+			index === existingIndex
+				? { ...entry, spans: [...entry.spans, ...unified.spans] }
+				: entry
+		);
+	}, []);
+
+	const annotations: ChordAnnotation[] = mergedUnifiedProgressions.map(
+		(unified) => ({
+			parsedProgression: unified.spans[0].tile.tile.unit,
+			palette: unified.highlightPalette,
+			chordProgression: unified.romanString,
+			highlightPositionsBySection: buildHighlightPositionsBySection(
+				unified.spans,
+				song.sections.length
+			),
+			matchRomanNumeralsExactly: false
+		})
+	);
 
   // Compute explained percent
   const totalChords = songChordCount(song);
@@ -206,14 +222,14 @@ export const matchSongV2 = (
       : 0;
 
   return {
-    song,
-    weights,
-    sectionResults,
-    unifiedProgressions,
-    matches: unifiedProgressions.map((unified) =>
-      toMatchStats(unified, totalChords)
-    ),
-    explainedPercent,
-    annotations,
-  };
+		song,
+		weights,
+		sectionResults,
+		unifiedProgressions: mergedUnifiedProgressions,
+		matches: mergedUnifiedProgressions.map((unified) =>
+			toMatchStats(unified, totalChords)
+		),
+		explainedPercent,
+		annotations
+	};
 };
