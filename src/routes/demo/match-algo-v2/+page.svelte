@@ -1,10 +1,14 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onDestroy, onMount, untrack } from "svelte";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import WeightSliders from "./components/WeightSliders.svelte";
 	import ScoreBreakdown from "./components/ScoreBreakdown.svelte";
 	import SongComparisonSlide from "./components/SongComparisonSlide.svelte";
-	import { matchSongV2 } from "./match-algo-v2-logic/matchSongV2.js";
+	import ViewTabs from "./components/ViewTabs.svelte";
+	import OverviewPanel from "./components/OverviewPanel.svelte";
+	import MatchAlgoV2UrlSync from "./MatchAlgoV2UrlSync.svelte";
+	import { getCachedV2MatchResult } from "./match-algo-v2-logic/matchResultCache.js";
+	import { createAlgoComparisonState } from "./match-algo-v2-logic/createAlgoComparisonState.svelte.js";
 	import {
 		DEFAULT_WEIGHTS,
 		type MatchWeights
@@ -17,6 +21,13 @@
 	import type { GroupedSong } from "../../../data/songBrowser.js";
 	import coreProgressionsData from "$data/core-progressions.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
+	import { currentSearchParams } from "../shared/currentSearchParams.js";
+	import {
+		MATCH_ALGO_V2_TAB_OVERVIEW,
+		MATCH_ALGO_V2_TAB_TRICKY,
+		readMatchAlgoV2UrlState,
+		type MatchAlgoV2Tab
+	} from "./matchAlgoV2UrlParams.js";
 
 	const CONTENT_MAX_WIDTH_REM = 80;
 	const PAGE_HORIZONTAL_PADDING_REM = 1.5;
@@ -25,11 +36,15 @@
 	const SONG_INDEX_STEP = 1;
 	const INTERACTIVE_KEY_TARGETS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 
+	const initialUrl = readMatchAlgoV2UrlState(currentSearchParams());
+	const comparisonState = createAlgoComparisonState();
+
 	let allSongs = $state<GroupedSong[]>([]);
 	let loading = $state(true);
 	let loadError = $state<string | null>(null);
 	let weights = $state<MatchWeights>({ ...DEFAULT_WEIGHTS });
-	let selectedKey = $state("");
+	let selectedKey = $state(initialUrl.song);
+	let tab = $state<MatchAlgoV2Tab>(initialUrl.tab);
 
 	const reviewSongs = $derived(
 		trickySongsToMatchCorrectly.flatMap((entry) => {
@@ -38,23 +53,49 @@
 		})
 	);
 
+	const extraSelectedSong = $derived(
+		reviewSongs.some((song) => song.songKey === selectedKey)
+			? null
+			: findGroupedSongByKey(allSongs, selectedKey)
+	);
+
+	const carouselSongs = $derived(
+		extraSelectedSong ? [...reviewSongs, extraSelectedSong] : reviewSongs
+	);
+
 	const selectedIndex = $derived(
 		Math.max(
 			0,
-			reviewSongs.findIndex((song) => song.songKey === selectedKey)
+			carouselSongs.findIndex((song) => song.songKey === selectedKey)
 		)
 	);
 
-	const selectedSong = $derived(reviewSongs[selectedIndex] ?? null);
+	const selectedSong = $derived(carouselSongs[selectedIndex] ?? null);
 
 	const canGoPrevious = $derived(selectedIndex > 0);
-	const canGoNext = $derived(selectedIndex < reviewSongs.length - 1);
+	const canGoNext = $derived(selectedIndex < carouselSongs.length - 1);
+
+	const showTricky = $derived(tab === MATCH_ALGO_V2_TAB_TRICKY);
+	const showOverview = $derived(tab === MATCH_ALGO_V2_TAB_OVERVIEW);
 
 	const v2Result = $derived(
 		selectedSong
-			? matchSongV2(selectedSong, coreProgressionsData, weights)
+			? getCachedV2MatchResult(selectedSong, coreProgressionsData, weights)
 			: null
 	);
+
+	$effect(() => {
+		if (!showOverview || allSongs.length === 0) return;
+		const songs = allSongs;
+		const currentWeights = weights;
+		untrack(() => {
+			void comparisonState.compute(
+				songs,
+				coreProgressionsData,
+				currentWeights
+			);
+		});
+	});
 
 	onMount(async () => {
 		try {
@@ -64,14 +105,10 @@
 		} finally {
 			loading = false;
 		}
+	});
 
-		const loadedSongs = trickySongsToMatchCorrectly.flatMap((entry) => {
-			const song = findGroupedSongByKey(allSongs, entry.id);
-			return song ? [song] : [];
-		});
-		const songParam = new URL(window.location.href).searchParams.get("song");
-		const fromUrl = loadedSongs.find((song) => song.songKey === songParam);
-		selectedKey = fromUrl?.songKey ?? loadedSongs[0]?.songKey ?? "";
+	onDestroy(() => {
+		comparisonState.cancel();
 	});
 
 	const handleWeightsChange = (newWeights: MatchWeights) => {
@@ -79,19 +116,23 @@
 	};
 
 	const selectSongAt = (index: number) => {
-		const song = reviewSongs[index];
+		const song = carouselSongs[index];
 		if (!song) return;
 		selectedKey = song.songKey;
-		const url = new URL(window.location.href);
-		url.searchParams.set("song", song.songKey);
-		history.replaceState(null, "", url.toString());
 	};
 
 	const goBy = (delta: number) => {
 		selectSongAt(selectedIndex + delta);
 	};
 
+	const openTrickySong = (songKey: string) => {
+		if (!findGroupedSongByKey(allSongs, songKey)) return;
+		selectedKey = songKey;
+		tab = MATCH_ALGO_V2_TAB_TRICKY;
+	};
+
 	const handleKeydown = (event: KeyboardEvent) => {
+		if (!showTricky) return;
 		const target = event.target;
 		if (
 			target instanceof HTMLElement &&
@@ -157,13 +198,15 @@
 			</div>
 		</section>
 
+		<ViewTabs {tab} onselect={(next) => (tab = next)} />
+
 		{#if loading}
 			<p class="status">loading songs…</p>
 		{:else if loadError}
 			<p class="status error">{loadError}</p>
-		{:else if reviewSongs.length === 0}
-			<p class="status">no tricky songs found in the dataset</p>
-		{:else}
+		{:else if carouselSongs.length === 0}
+			<p class="status">no songs found in the dataset</p>
+		{:else if showTricky}
 			<p class="v1-note">
 				v1 greedily maximizes coverage with hard gates — at least two
 				occurrences, length 3–6, back-to-back repeats for short cores, and a 5%
@@ -184,7 +227,7 @@
 					←
 				</button>
 				<p class="song-index">
-					{selectedIndex + 1} / {reviewSongs.length}
+					{selectedIndex + 1} / {carouselSongs.length}
 				</p>
 				<button
 					type="button"
@@ -199,11 +242,16 @@
 		{/if}
 	</div>
 
-	{#if !loading && !loadError && reviewSongs.length > 0}
-		<div class="carousel-bleed">
+	{#if !loading && !loadError && carouselSongs.length > 0 && showTricky}
+		<div
+			class="carousel-bleed"
+			id="match-algo-panel-tricky"
+			role="tabpanel"
+			aria-labelledby="match-algo-tab-tricky"
+		>
 			<div class="carousel-viewport">
 				<div class="carousel-track">
-					{#each reviewSongs as song, index (song.songKey)}
+					{#each carouselSongs as song, index (song.songKey)}
 						<div class="carousel-slide">
 							<SongComparisonSlide
 								{song}
@@ -226,7 +274,28 @@
 		</div>
 	{/if}
 
-	{#if selectedSong && v2Result}
+	{#if !loading && !loadError && showOverview}
+		<div
+			class="content"
+			id="match-algo-panel-overview"
+			role="tabpanel"
+			aria-labelledby="match-algo-tab-overview"
+		>
+			<OverviewPanel
+				comparison={comparisonState.comparison}
+				pairs={comparisonState.pairs}
+				isComputing={comparisonState.isComputing}
+				progressPercent={comparisonState.progressPercent}
+				computedCount={comparisonState.computedCount}
+				totalCount={comparisonState.totalCount}
+				songs={allSongs}
+				{weights}
+				onSelectSong={openTrickySong}
+			/>
+		</div>
+	{/if}
+
+	{#if showTricky && selectedSong && v2Result}
 		<div class="content">
 			<section class="step-section">
 				<h3 class="step-label">score breakdown</h3>
@@ -244,6 +313,13 @@
 		</div>
 	{/if}
 </div>
+
+<MatchAlgoV2UrlSync
+	ready={!loading && allSongs.length > 0}
+	knownSongKeys={allSongs.map((song) => song.songKey)}
+	bind:tab
+	bind:selectedKey
+/>
 
 <style>
 	:global(body > header) {
