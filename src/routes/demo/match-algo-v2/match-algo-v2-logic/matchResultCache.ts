@@ -1,13 +1,5 @@
 import type { CoreProgression } from "$data/core-progressions.js";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
-import {
-	buildFinalChordAnnotations,
-	selectFinalProgressions
-} from "../../define-chord-progression/progression-matching-logic/finalProgressionSelection.js";
-import {
-	applySubsetFlag,
-	findStrictSubsetKeys
-} from "../../define-chord-progression/progression-matching-logic/strictSubsetProgressions.js";
 import type {
 	ChordAnnotation,
 	ProgressionWithMatchStats
@@ -22,7 +14,6 @@ export type AlgoMatchResult = {
 	sectionResults: SectionMatchResult[];
 };
 
-const v1Cache = new Map<string, AlgoMatchResult>();
 const v2Cache = new Map<string, AlgoMatchResult>();
 
 const WEIGHT_KEY_SEPARATOR = ",";
@@ -41,28 +32,6 @@ export const v2ResultCacheKey = (
 	weights: MatchWeights
 ): string => `${songKey}|${weightsCacheKey(weights)}`;
 
-export const computeV1MatchResult = (
-	song: GroupedSong,
-	coreProgressions: CoreProgression[]
-): AlgoMatchResult => {
-	const selection = selectFinalProgressions(song, coreProgressions);
-	const subsetKeys = findStrictSubsetKeys([
-		...selection.coreMatches,
-		...selection.gapCandidates
-	]);
-	const coreSelected = applySubsetFlag(selection.coreSelected, subsetKeys);
-	const gapSelected = applySubsetFlag(selection.gapSelected, subsetKeys);
-	return {
-		explainedPercent: selection.explainedPercent,
-		matches: [...coreSelected, ...gapSelected],
-		annotations: buildFinalChordAnnotations(song, {
-			coreSelected,
-			gapSelected
-		}),
-		sectionResults: []
-	};
-};
-
 export const computeV2MatchResult = (
 	song: GroupedSong,
 	coreProgressions: CoreProgression[],
@@ -77,17 +46,6 @@ export const computeV2MatchResult = (
 	};
 };
 
-export const getCachedV1MatchResult = (
-	song: GroupedSong,
-	coreProgressions: CoreProgression[]
-): AlgoMatchResult => {
-	const cached = v1Cache.get(song.songKey);
-	if (cached) return cached;
-	const computed = computeV1MatchResult(song, coreProgressions);
-	v1Cache.set(song.songKey, computed);
-	return computed;
-};
-
 export const getCachedV2MatchResult = (
 	song: GroupedSong,
 	coreProgressions: CoreProgression[],
@@ -100,9 +58,6 @@ export const getCachedV2MatchResult = (
 	v2Cache.set(key, computed);
 	return computed;
 };
-
-export const hasCachedV1MatchResult = (songKey: string): boolean =>
-	v1Cache.has(songKey);
 
 export const hasCachedV2MatchResult = (
 	songKey: string,

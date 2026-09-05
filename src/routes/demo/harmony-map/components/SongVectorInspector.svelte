@@ -3,10 +3,8 @@
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { SongCoverageEntry } from "../../define-chord-progression/compute-coverage-of-all-songs/index.js";
 	import FinalAnnotatedSong from "../../define-chord-progression/components/FinalAnnotatedSong.svelte";
-	import {
-		buildFinalChordAnnotations,
-		selectFinalProgressions
-	} from "../../define-chord-progression/progression-matching-logic/finalProgressionSelection.js";
+	import { matchSongV2 } from "../../match-algo-v2/match-algo-v2-logic/matchSongV2.js";
+	import { DEFAULT_WEIGHTS } from "../../match-algo-v2/match-algo-v2-logic/weights.js";
 	import SongIdentityLabel from "../../shared/SongIdentityLabel.svelte";
 	import type {
 		ComponentLoading,
@@ -160,21 +158,13 @@
 
 	let activeProgression = $state<string | null>(null);
 
-	const finalSelection = $derived(
+	const finalResult = $derived(
 		selectedSong
-			? selectFinalProgressions(selectedSong, coreProgressionsData)
+			? matchSongV2(selectedSong, coreProgressionsData, DEFAULT_WEIGHTS)
 			: null
 	);
-	const finalAnnotations = $derived(
-		selectedSong && finalSelection
-			? buildFinalChordAnnotations(selectedSong, finalSelection)
-			: []
-	);
-	const finalMatches = $derived(
-		finalSelection
-			? [...finalSelection.coreSelected, ...finalSelection.gapSelected]
-			: []
-	);
+	const finalAnnotations = $derived(finalResult?.annotations ?? []);
+	const finalMatches = $derived(finalResult?.matches ?? []);
 </script>
 
 <div class="inspector">
@@ -257,13 +247,13 @@
 			</div>
 		</dl>
 
-		{#if selectedSong && finalSelection}
+		{#if selectedSong && finalResult}
 			<FinalAnnotatedSong
 				compact
 				song={selectedSong}
 				matches={finalMatches}
 				annotations={finalAnnotations}
-				explainedPercent={finalSelection.explainedPercent}
+				explainedPercent={finalResult.explainedPercent}
 				{activeProgression}
 				onselect={(chordProgression) => {
 					activeProgression =

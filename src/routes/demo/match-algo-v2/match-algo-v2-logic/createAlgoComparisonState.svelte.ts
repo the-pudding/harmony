@@ -1,15 +1,16 @@
 import type { CoreProgression } from "$data/core-progressions.js";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 import { trickySongsToMatchCorrectly } from "../../../../data/hand-reviewed-songs.js";
-import { computeSongAlgoMetrics, type SongAlgoMetrics } from "./algoMetrics.js";
+import {
+	computeSongAlgoMetrics,
+	PERCENT_MULTIPLIER,
+	type SongAlgoMetrics
+} from "./algoMetrics.js";
 import {
 	aggregateCorpusComparison,
 	type CorpusComparison
 } from "./compareCorpus.js";
-import {
-	getCachedV1MatchResult,
-	getCachedV2MatchResult
-} from "./matchResultCache.js";
+import { getCachedV2MatchResult } from "./matchResultCache.js";
 import type { MatchWeights } from "./weights.js";
 
 export const SONGS_PER_COMPARE_CHUNK = 12;
@@ -17,7 +18,6 @@ const YIELD_MS = 0;
 
 export type SongPairMetrics = {
 	songKey: string;
-	v1: SongAlgoMetrics;
 	v2: SongAlgoMetrics;
 };
 
@@ -48,11 +48,13 @@ export const createAlgoComparisonState = () => {
 	let requestId = 0;
 
 	const comparison = $derived(
-		pairs.length === 0 ? emptyComparison() : aggregateCorpusComparison(pairs)
+		pairs.length === 0
+			? emptyComparison()
+			: aggregateCorpusComparison(pairs.map((pair) => pair.v2))
 	);
 
 	const progressPercent = $derived(
-		totalCount === 0 ? 0 : (computedCount / totalCount) * 100
+		totalCount === 0 ? 0 : (computedCount / totalCount) * PERCENT_MULTIPLIER
 	);
 
 	const compute = async (
@@ -80,17 +82,13 @@ export const createAlgoComparisonState = () => {
 				return;
 			}
 			const chunk = ordered.slice(offset, offset + SONGS_PER_COMPARE_CHUNK);
-			const chunkPairs = chunk.map((song) => {
-				const v1 = computeSongAlgoMetrics(
-					song,
-					getCachedV1MatchResult(song, coreProgressions)
-				);
-				const v2 = computeSongAlgoMetrics(
+			const chunkPairs = chunk.map((song) => ({
+				songKey: song.songKey,
+				v2: computeSongAlgoMetrics(
 					song,
 					getCachedV2MatchResult(song, coreProgressions, weights)
-				);
-				return { songKey: song.songKey, v1, v2 };
-			});
+				)
+			}));
 			const nextPairs = [...accumulated, ...chunkPairs];
 			pairs = nextPairs;
 			computedCount = nextPairs.length;

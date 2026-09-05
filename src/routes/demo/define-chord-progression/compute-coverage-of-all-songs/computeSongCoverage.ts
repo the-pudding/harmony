@@ -1,14 +1,17 @@
 import coreProgressionsData from "$data/core-progressions.js";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
-import { selectFinalProgressions } from "../progression-matching-logic/finalProgressionSelection.js";
-import type { SectionStartBiasOverride } from "../progression-matching-logic/greedyProgressionSelection.js";
+import { matchSongV2 } from "../../match-algo-v2/match-algo-v2-logic/matchSongV2.js";
+import { DEFAULT_WEIGHTS } from "../../match-algo-v2/match-algo-v2-logic/weights.js";
 import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
 import type { ScaleName } from "../../../../chord-processing/scales.js";
 
-export type SongBiasOverride = SectionStartBiasOverride & {
+export type SongBiasOverride = {
 	songKey: string;
 	title: string;
 	artists: string[];
+	winnerProgression: string;
+	leaderProgression: string;
+	sacrificedPercent: number;
 };
 
 export type SongProgressionCount = {
@@ -42,22 +45,19 @@ const toProgressionCount =
 	});
 
 export const computeSongCoverage = (song: GroupedSong): SongCoverageEntry => {
-	const selection = selectFinalProgressions(song, coreProgressionsData);
+	const result = matchSongV2(song, coreProgressionsData, DEFAULT_WEIGHTS);
+	const coreMatches = result.matches.filter((match) => match.isCoreProgression);
+	const gapMatches = result.matches.filter((match) => !match.isCoreProgression);
 	return {
 		songKey: song.songKey,
 		title: song.title,
 		artists: song.artists,
-		coveragePercent: selection.explainedPercent,
-		matchingProgressions: selection.coreSelected.map((m) => m.chordProgression),
+		coveragePercent: result.explainedPercent,
+		matchingProgressions: coreMatches.map((match) => match.chordProgression),
 		progressionCounts: [
-			...selection.coreSelected.map(toProgressionCount(true)),
-			...selection.gapSelected.map(toProgressionCount(false))
+			...coreMatches.map(toProgressionCount(true)),
+			...gapMatches.map(toProgressionCount(false))
 		],
-		biasOverrides: selection.biasOverrides.map((override) => ({
-			...override,
-			songKey: song.songKey,
-			title: song.title,
-			artists: song.artists
-		}))
+		biasOverrides: []
 	};
 };

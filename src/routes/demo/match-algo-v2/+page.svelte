@@ -208,12 +208,9 @@
 			<p class="status">no songs found in the dataset</p>
 		{:else if showTricky}
 			<p class="v1-note">
-				v1 greedily maximizes coverage with hard gates — at least two
-				occurrences, length 3–6, back-to-back repeats for short cores, and a 5%
-				section-start tie-break. That cherry-picks windows a musician would never
-				group: a 6-chord fragment from mid-section, or a 3-chord core that covers
-				more chords than the 4-chord loop the section actually is. v2 tiles from
-				the start of each section and scores those loops instead.
+				v2 tiles from the start of each section and scores candidate loops with
+				weighted heuristics — core, length, section start/end, and contiguous
+				repeats — instead of greedily maximizing coverage.
 			</p>
 
 			<div class="carousel-chrome">

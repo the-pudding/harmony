@@ -2,7 +2,7 @@ import type { CoreProgression } from "$data/core-progressions.js";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 import { hashString } from "../../../../utils/hashString.js";
 
-export const COVERAGE_CACHE_SCHEMA_VERSION = 6;
+export const COVERAGE_CACHE_SCHEMA_VERSION = 7;
 
 const progressionFingerprint = (progressions: CoreProgression[]): string =>
 	progressions

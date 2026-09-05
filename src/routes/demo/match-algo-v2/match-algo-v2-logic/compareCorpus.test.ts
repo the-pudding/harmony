@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { SongAlgoMetrics } from "./algoMetrics.js";
 import {
 	aggregateCorpusComparison,
-	coverageBucketStart,
-	compareSongMetrics
+	coverageBucketStart
 } from "./compareCorpus.js";
 import {
 	formatSignedInteger,
@@ -42,65 +41,29 @@ describe("aggregateCorpusComparison", () => {
 		expect(coverageBucketStart(100)).toBe(90);
 	});
 
-	it("reports v2 as better on coverage and interior holes when means improve", () => {
+	it("summarizes v2 corpus coverage and ranks songs", () => {
 		const comparison = aggregateCorpusComparison([
-			{
-				v1: metrics({
-					songKey: "a",
-					coveragePercent: 70,
-					interiorSingletonCount: 2,
-					sectionStartRate: 50
-				}),
-				v2: metrics({
-					songKey: "a",
-					coveragePercent: 90,
-					interiorSingletonCount: 0,
-					sectionStartRate: 100
-				})
-			},
-			{
-				v1: metrics({
-					songKey: "b",
-					coveragePercent: 80,
-					interiorSingletonCount: 1,
-					sectionStartRate: 100
-				}),
-				v2: metrics({
-					songKey: "b",
-					coveragePercent: 80,
-					interiorSingletonCount: 1,
-					sectionStartRate: 100
-				})
-			}
+			metrics({
+				songKey: "a",
+				coveragePercent: 90,
+				interiorSingletonCount: 0
+			}),
+			metrics({
+				songKey: "b",
+				coveragePercent: 70,
+				interiorSingletonCount: 2
+			})
 		]);
 
-		expect(comparison.verdicts.coverage).toBe("better");
-		expect(comparison.verdicts.interiorHoles).toBe("better");
-		expect(comparison.verdicts.sectionStarts).toBe("better");
-		expect(comparison.winLoss.v2HigherCoverage).toBe(1);
-		expect(comparison.winLoss.coverageTie).toBe(1);
-		expect(comparison.improvedByCoverage[0]?.songKey).toBe("a");
-		expect(comparison.worseByCoverage).toHaveLength(0);
+		expect(comparison.stats.meanCoverage).toBe(80);
+		expect(comparison.highestCoverage[0]?.songKey).toBe("a");
+		expect(comparison.lowestCoverage[0]?.songKey).toBe("b");
+		expect(comparison.mostInteriorHoles[0]?.songKey).toBe("b");
 	});
 
 	it("formats signed change stats", () => {
 		expect(formatSignedInteger(3)).toBe("+3");
 		expect(formatSignedInteger(-2)).toBe("-2");
 		expect(formatSignedSharePercentPoints(0.12)).toBe("+12.0 pp");
-	});
-
-	it("lists songs where v2 coverage drops", () => {
-		const comparison = aggregateCorpusComparison([
-			{
-				v1: metrics({ songKey: "drop", coveragePercent: 95 }),
-				v2: metrics({ songKey: "drop", coveragePercent: 70 })
-			}
-		]);
-		expect(comparison.verdicts.coverage).toBe("worse");
-		expect(comparison.worseByCoverage[0]?.songKey).toBe("drop");
-		expect(compareSongMetrics(
-			metrics({ songKey: "drop", coveragePercent: 95 }),
-			metrics({ songKey: "drop", coveragePercent: 70 })
-		).coverageDelta).toBe(-25);
 	});
 });

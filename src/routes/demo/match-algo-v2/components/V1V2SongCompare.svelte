@@ -1,9 +1,6 @@
 <script lang="ts">
 	import FinalAnnotatedSong from "../../define-chord-progression/components/FinalAnnotatedSong.svelte";
-	import {
-		getCachedV1MatchResult,
-		getCachedV2MatchResult
-	} from "../match-algo-v2-logic/matchResultCache.js";
+	import { getCachedV2MatchResult } from "../match-algo-v2-logic/matchResultCache.js";
 	import type { MatchWeights } from "../match-algo-v2-logic/weights.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import coreProgressionsData from "$data/core-progressions.js";
@@ -16,10 +13,8 @@
 
 	const { song, weights, interactive = false }: Props = $props();
 
-	let pinnedV1Progression = $state<string | null>(null);
-	let pinnedV2Progression = $state<string | null>(null);
+	let pinnedProgression = $state<string | null>(null);
 
-	const v1Result = $derived(getCachedV1MatchResult(song, coreProgressionsData));
 	const v2Result = $derived(
 		getCachedV2MatchResult(song, coreProgressionsData, weights)
 	);
@@ -32,65 +27,32 @@
 	const ignoreSelect = (_chordProgression: string) => {};
 </script>
 
-<div class="comparison-columns">
-	<section class="comparison-column">
-		<div class="step-header">
-			<h3 class="step-label">v1</h3>
-			<span class="coverage-badge">{v1Result.explainedPercent}% explained</span>
-		</div>
-		<FinalAnnotatedSong
-			compact
-			showMetadata={false}
-			lockMatchListHeight
-			{song}
-			matches={v1Result.matches}
-			annotations={v1Result.annotations}
-			explainedPercent={v1Result.explainedPercent}
-			activeProgression={interactive ? pinnedV1Progression : null}
-			onselect={interactive
-				? (chordProgression) => {
-						pinnedV1Progression = togglePinned(
-							pinnedV1Progression,
-							chordProgression
-						);
-					}
-				: ignoreSelect}
-		/>
-	</section>
-	<section class="comparison-column">
-		<div class="step-header">
-			<h3 class="step-label">v2</h3>
-			<span class="coverage-badge">{v2Result.explainedPercent}% explained</span>
-		</div>
-		<FinalAnnotatedSong
-			compact
-			showMetadata={false}
-			lockMatchListHeight
-			{song}
-			matches={v2Result.matches}
-			annotations={v2Result.annotations}
-			explainedPercent={v2Result.explainedPercent}
-			activeProgression={interactive ? pinnedV2Progression : null}
-			onselect={interactive
-				? (chordProgression) => {
-						pinnedV2Progression = togglePinned(
-							pinnedV2Progression,
-							chordProgression
-						);
-					}
-				: ignoreSelect}
-		/>
-	</section>
-</div>
+<section class="comparison-column">
+	<div class="step-header">
+		<h3 class="step-label">v2</h3>
+		<span class="coverage-badge">{v2Result.explainedPercent}% explained</span>
+	</div>
+	<FinalAnnotatedSong
+		compact
+		showMetadata={false}
+		lockMatchListHeight
+		{song}
+		matches={v2Result.matches}
+		annotations={v2Result.annotations}
+		explainedPercent={v2Result.explainedPercent}
+		activeProgression={interactive ? pinnedProgression : null}
+		onselect={interactive
+			? (chordProgression) => {
+					pinnedProgression = togglePinned(
+						pinnedProgression,
+						chordProgression
+					);
+				}
+			: ignoreSelect}
+	/>
+</section>
 
 <style>
-	.comparison-columns {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 1.25rem;
-		align-items: start;
-	}
-
 	.comparison-column {
 		display: flex;
 		flex-direction: column;
@@ -125,11 +87,5 @@
 		background: rgba(99, 102, 241, 0.15);
 		border: 1px solid rgba(99, 102, 241, 0.3);
 		color: rgba(165, 180, 252, 0.9);
-	}
-
-	@media (max-width: 56rem) {
-		.comparison-columns {
-			grid-template-columns: 1fr;
-		}
 	}
 </style>

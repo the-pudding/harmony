@@ -1,35 +1,18 @@
 <script lang="ts">
-	import coreProgressionsData, {
-		BACK_TO_BACK_REPEAT
-	} from "$data/core-progressions.js";
+	import coreProgressionsData from "$data/core-progressions.js";
 	import type { CoreProgression } from "$data/core-progressions.js";
 	import { siblingVariantsForProgression } from "$data/core-progressions.util.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import SongSelectDropdown from "./components/SongSelectDropdown.svelte";
-	import ProgressionMatchTable from "./components/ProgressionMatchTable.svelte";
 	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
-	import ProgressionDefinitionCriteriaTable from "./components/ProgressionDefinitionCriteriaTable.svelte";
-	import type { SongBiasOverride } from "./compute-coverage-of-all-songs/index.js";
 	import CodeReference from "./components/CodeReference.svelte";
 	import CollapsiblePanel from "./components/CollapsiblePanel.svelte";
 	import CoreProgressionRow from "./components/CoreProgressionRow.svelte";
 	import SongCoverageBeeswarm from "./components/SongCoverageBeeswarm.svelte";
 	import { createAllSongsCoverageState } from "./compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
-	import { MIN_PROGRESSION_OCCURRENCES } from "./progression-matching-logic/progressionMatchAnalysis.js";
-	import { PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT } from "./progression-matching-logic/greedyProgressionSelection.js";
-	import {
-		MIN_PROGRESSION_LENGTH,
-		MAX_PROGRESSION_LENGTH
-	} from "./progression-matching-logic/progressionConstraints.js";
 	import type { ChordAnnotation } from "./progression-matching-logic/progressionMatchAnalysis.js";
-	import {
-		selectFinalProgressions,
-		buildFinalChordAnnotations
-	} from "./progression-matching-logic/finalProgressionSelection.js";
-	import {
-		findStrictSubsetKeys,
-		applySubsetFlag
-	} from "./progression-matching-logic/strictSubsetProgressions.js";
+	import { matchSongV2 } from "../match-algo-v2/match-algo-v2-logic/matchSongV2.js";
+	import { DEFAULT_WEIGHTS } from "../match-algo-v2/match-algo-v2-logic/weights.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import { findGroupedSongByKey } from "../../../data/songBrowserData.js";
 	import DefineChordProgressionUrlSync from "./DefineChordProgressionUrlSync.svelte";
@@ -39,7 +22,9 @@
 
 	let titleFilter = $state("");
 	let selectedKey = $state("");
-	let pinnedProgression = $state<string | null>(null);
+	let pinnedForSong = $state<{ songKey: string; progression: string } | null>(
+		null
+	);
 	let showSongsContext = $state(false);
 	const coreProgressions: CoreProgression[] = coreProgressionsData;
 
@@ -63,55 +48,23 @@
 		findGroupedSongByKey(coverage.songs, selectedKey)
 	);
 
-	const GREEDY_SORT_LABEL = `most still-unclaimed chords covered first — but within ${PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}% coverage, prefer progressions that start more sections (length as final tiebreaker)`;
-
 	const allSongsCoverageResult = $derived(coverage.allSongsCoverageResult);
-	const corpusBiasOverrides = $derived<SongBiasOverride[]>(
-		allSongsCoverageResult?.biasOverrides ?? []
-	);
 
-	const finalSelection = $derived(
+	const v2Result = $derived(
 		selectedSong
-			? selectFinalProgressions(selectedSong, coreProgressions)
-			: {
-					coreMatches: [],
-					gapCandidates: [],
-					coreSelected: [],
-					gapSelected: [],
-					coverage: [],
-					explainedPercent: 0
-				}
+			? matchSongV2(selectedSong, coreProgressions, DEFAULT_WEIGHTS)
+			: null
 	);
 
-	const strictSubsetKeys = $derived(
-		findStrictSubsetKeys([
-			...finalSelection.coreMatches,
-			...finalSelection.gapCandidates
-		])
+	const explainedPercent = $derived(v2Result?.explainedPercent ?? 0);
+
+	const finalMatches = $derived(v2Result?.matches ?? []);
+
+	const pinnedProgression = $derived(
+		pinnedForSong !== null && pinnedForSong.songKey === selectedKey
+			? pinnedForSong.progression
+			: null
 	);
-
-	const flaggedCoreMatches = $derived(
-		applySubsetFlag(finalSelection.coreMatches, strictSubsetKeys)
-	);
-
-	const flaggedCoreSelected = $derived(
-		applySubsetFlag(finalSelection.coreSelected, strictSubsetKeys)
-	);
-
-	const flaggedGapCandidates = $derived(
-		applySubsetFlag(finalSelection.gapCandidates, strictSubsetKeys)
-	);
-
-	const flaggedGapSelected = $derived(
-		applySubsetFlag(finalSelection.gapSelected, strictSubsetKeys)
-	);
-
-	const explainedPercent = $derived(finalSelection.explainedPercent);
-
-	const finalMatches = $derived([
-		...flaggedCoreSelected,
-		...flaggedGapSelected
-	]);
 
 	const pinnedProgressionVariants = $derived(
 		pinnedProgression
@@ -120,13 +73,8 @@
 	);
 
 	const songAnnotations = $derived<ChordAnnotation[]>(
-		selectedSong ? buildFinalChordAnnotations(selectedSong, finalSelection) : []
+		v2Result?.annotations ?? []
 	);
-
-	$effect(() => {
-		selectedKey;
-		pinnedProgression = null;
-	});
 
 	function handleSongSelect(songKey: string) {
 		selectedKey = songKey;
@@ -137,10 +85,10 @@
 			coreProgressions,
 			chordProgression
 		);
-		pinnedProgression =
+		pinnedForSong =
 			pinnedProgression !== null && siblings.includes(pinnedProgression)
 				? null
-				: chordProgression;
+				: { songKey: selectedKey, progression: chordProgression };
 	}
 </script>
 
@@ -164,11 +112,9 @@
 
 	<div class="content">
 		<h1 class="page-title">
-			A. What defines a chord progression? B. Given there are many possible ways
-			to slice a song, what algorithm do we apply to maximize coverage but also
-			prioritize our predefined <CodeReference
-				filename="core-progressions.ts"
-			/>?
+			Section-first tiling with weighted heuristics, preferring named
+			<CodeReference filename="core-progressions.ts" />
+			when they fit how a musician would read the chart.
 		</h1>
 
 		{#if coverage.loading}
@@ -257,106 +203,6 @@
 					/>
 				</section>
 
-				<h3 class="walkthrough-heading">DEFINE PROGRESSION</h3>
-
-				<CollapsiblePanel
-					expandLabel="Expand progression definition criteria"
-					collapseLabel="Collapse progression definition criteria"
-				>
-					<ProgressionDefinitionCriteriaTable
-						biasOverrides={corpusBiasOverrides}
-					/>
-				</CollapsiblePanel>
-
-				<h3 class="walkthrough-heading">WALKTHROUGH OF ALGORITHM</h3>
-
-				<section class="step-section">
-					<h2 class="section-heading">
-						1. Greedily select core-progressions that appear at least <span
-							class="const-value">{MIN_PROGRESSION_OCCURRENCES}</span
-						>
-						times (or just once if it fills an entire section), by {GREEDY_SORT_LABEL}
-					</h2>
-					<p class="section-description">
-						Being "greedy" with core-progressions incentivizes us to really
-						expand the coverage of
-						<CodeReference filename="core-progressions.ts" />. Selection happens
-						one instance at a time rather than all-or-nothing: after each pick
-						we re-score every remaining candidate against the chords that are
-						still free, so a progression that owns a whole chorus still claims
-						it even when one stray instance elsewhere collides with an earlier
-						winner. It just forfeits the colliding instance. The occurrence bar
-						is then re-checked against whatever survived, so a progression left
-						with a single leftover fragment is dropped rather than credited for
-						it. The single-occurrence exception only applies to core
-						progressions — not gap-fill candidates — to avoid spuriously
-						claiming any section with no other matches. Short core progressions
-						carry an extra bar: a
-						<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>-chord
-						shape turns up twice somewhere in almost any song by coincidence, so
-						those entries also need at least
-						<span class="const-value">{BACK_TO_BACK_REPEAT}</span> occurrences
-						sitting immediately back-to-back — proof of a real loop rather than
-						two unrelated sightings. Within the
-						<span class="const-value"
-							>{PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}%</span
-						> tolerance, we bias toward progressions that begin at the start of a
-						section, since the vast majority of real progressions do — this avoids
-						stranding the first chord of a section when a slightly longer match happens
-						to skip it.
-					</p>
-
-					{#if flaggedCoreMatches.length > 0}
-						<ProgressionMatchTable
-							matches={flaggedCoreSelected}
-							allMatches={flaggedCoreMatches}
-							song={selectedSong}
-							activeProgression={pinnedProgression}
-							onselect={handleProgressionSelect}
-							showUnselectedRows={true}
-						/>
-					{:else}
-						<p class="list-meta">No core progressions matched this song.</p>
-					{/if}
-				</section>
-
-				<section class="step-section">
-					<h2 class="section-heading">
-						2. Look for any other recurring progressions in the gaps not
-						occupied by core-progressions, selecting them greedily by {GREEDY_SORT_LABEL}
-					</h2>
-					<p class="section-description">
-						Among chords not yet covered by core progressions, we look for
-						progressions of
-						<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>–<span
-							class="const-value">{MAX_PROGRESSION_LENGTH}</span
-						>
-						chords that recur at least twice as complete instances lying entirely
-						inside the gaps. This stage uses the same instance-at-a-time greedy pass
-						as step 1, so gap progressions are pairwise non-overlapping — no chord
-						position is ever claimed by more than one progression — while still keeping
-						the instances that do fit. A valid progression cannot consist of consecutive
-						<span class="const-value">{MIN_PROGRESSION_LENGTH}</span>+
-						progressions repeating more than once. Within the
-						<span class="const-value"
-							>{PREFER_SECTION_START_MAX_COVERAGE_SACRIFICE_PERCENT}%</span
-						> tolerance, gap progressions that start at an uncovered section boundary
-						are also preferred.
-					</p>
-
-					{#if flaggedGapCandidates.length > 0}
-						<ProgressionMatchTable
-							matches={flaggedGapSelected}
-							allMatches={flaggedGapCandidates}
-							song={selectedSong}
-							activeProgression={pinnedProgression}
-							onselect={handleProgressionSelect}
-							showUnselectedRows={true}
-						/>
-					{:else}
-						<p class="list-meta">No additional non-core progressions to add.</p>
-					{/if}
-				</section>
 			{/if}
 		{/if}
 	</div>
@@ -450,13 +296,6 @@
 		letter-spacing: 0.12em;
 		color: #71717a;
 		margin: 2.5rem 0 0.25rem;
-	}
-
-	.const-value {
-		font-weight: 700;
-		text-decoration: underline;
-		text-underline-offset: 3px;
-		color: #f4f4f5;
 	}
 
 	.coverage-highlight {

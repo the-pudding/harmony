@@ -1,4 +1,4 @@
-import type { GroupedSong } from "../../../../data/songBrowser.js";
+import { isChorusSectionLabel, type GroupedSong } from "../../../../data/songBrowser.js";
 import type { CoreProgression } from "$data/core-progressions.js";
 import { buildCoreNameByAbstractKey } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
 import type {
@@ -73,8 +73,19 @@ const claimedChordCount = (unified: UnifiedProgression): number =>
 const instanceCount = (unified: UnifiedProgression): number =>
 	unified.spans.reduce((sum, span) => sum + span.tile.tile.repeatCount, 0);
 
+const chorusInstanceCount = (
+	unified: UnifiedProgression,
+	song: GroupedSong
+): number =>
+	unified.spans.reduce((sum, span) => {
+		const section = song.sections[span.sectionIndex];
+		if (!section || !isChorusSectionLabel(section.label)) return sum;
+		return sum + span.tile.tile.repeatCount;
+	}, 0);
+
 const toMatchStats = (
   unified: UnifiedProgression,
+  song: GroupedSong,
   totalChords: number
 ): ProgressionWithMatchStats => ({
   name: unified.coreName ?? unified.romanString,
@@ -83,6 +94,7 @@ const toMatchStats = (
   scale: unified.scale,
   description: "",
   matchCount: instanceCount(unified),
+  chorusMatchCount: chorusInstanceCount(unified, song),
   coveragePercent:
     totalChords > 0
       ? (claimedChordCount(unified) / totalChords) * PERCENT_MULTIPLIER
@@ -222,7 +234,7 @@ export const matchSongV2 = (
 		sectionResults,
 		unifiedProgressions: mergedUnifiedProgressions,
 		matches: mergedUnifiedProgressions.map((unified) =>
-			toMatchStats(unified, totalChords)
+			toMatchStats(unified, song, totalChords)
 		),
 		explainedPercent,
 		annotations

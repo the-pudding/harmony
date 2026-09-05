@@ -1,5 +1,4 @@
 import { PERCENT_MULTIPLIER } from "./algoMetrics.js";
-import type { AxisVerdict } from "./compareCorpus.js";
 
 const SIGNED_DECIMAL_PLACES = 1;
 const UNIT_LENGTH_DECIMAL_PLACES = 2;
@@ -35,10 +34,4 @@ export const formatCount = (value: number): string =>
 export const formatSignedInteger = (value: number): string => {
 	const sign = value > 0 ? "+" : "";
 	return `${sign}${value}`;
-};
-
-export const verdictLabel = (verdict: AxisVerdict): string => {
-	if (verdict === "better") return "v2 better";
-	if (verdict === "worse") return "v2 worse";
-	return "similar";
 };
