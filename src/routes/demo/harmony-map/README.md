@@ -86,7 +86,7 @@ export type SongProgressionCount = {
 	scale: ScaleName; // "major" | "minor" | …
 	matchCount: number; // occurrences within this song
 	chorusMatchCount: number; // subset of matchCount that landed in a chorus section
-	isCore: boolean; // from coreSelected vs gapSelected
+	isCore: boolean; // from matchSongV2 core vs non-core matches
 };
 
 export type SongCoverageEntry = {
@@ -96,7 +96,7 @@ export type SongCoverageEntry = {
 };
 ```
 
-`progressionCounts` is `[...selection.coreSelected, ...selection.gapSelected]`. The older `matchingProgressions` was deliberately left alone so the beeswarm and every other consumer keep working exactly as before. **If you need more per-progression signal in the embedding, add a field here** — it's already computed inside `selectFinalProgressions`, it just isn't forwarded.
+`progressionCounts` is v2's core matches plus non-core tiles. The older `matchingProgressions` was deliberately left alone so the beeswarm and every other consumer keep working exactly as before. **If you need more per-progression signal in the embedding, add a field here** — it's already computed inside `matchSongV2`, it just isn't forwarded.
 
 Coverage is built once in `+page.svelte` via `createAllSongsCoverageState()` and passed down. That state also owns the shared "recent songs only" corpus filter.
 
@@ -166,7 +166,7 @@ Core dimensions also show their progression name and, when the name has multiple
 
 ### `SongTooltip.svelte`
 
-The song hover card wraps `FinalAnnotatedSong` and recomputes `selectFinalProgressions` for the hovered song. Placement math lives in `hoverCardPosition.ts`.
+The song hover card wraps `FinalAnnotatedSong` and recomputes `matchSongV2` for the hovered song. Placement math lives in `hoverCardPosition.ts`.
 
 ## 6. URL state
 
