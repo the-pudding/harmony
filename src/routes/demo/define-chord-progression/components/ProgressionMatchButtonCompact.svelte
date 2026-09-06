@@ -31,6 +31,7 @@
 	const coverageFillWidth = $derived(
 		`${Math.min(Math.max(match.coveragePercent, 0), COVERAGE_PERCENT_MAX)}%`
 	);
+	const showChordProgression = $derived(match.name !== match.chordProgression);
 </script>
 
 <button
@@ -49,10 +50,14 @@
 >
 	<div class="coverage-fill" aria-hidden="true" style:width={coverageFillWidth}></div>
 	<span class="prog-btn-content">
-		{#if match.name}
-			<span class="prog-name">{match.name}</span>
-		{/if}
-		<span class="prog-chords">{match.chordProgression}</span>
+		<span class="prog-main">
+			{#if match.name}
+				<span class="prog-name">{match.name}</span>
+			{/if}
+			{#if showChordProgression}
+				<span class="prog-chords">{match.chordProgression}</span>
+			{/if}
+		</span>
 		<span class="prog-percent">{match.matchCount}× <b>{coveragePercentRounded}%</b></span>
 	</span>
 </button>
@@ -99,9 +104,18 @@
 		z-index: 1;
 		display: flex;
 		flex-direction: row;
-		align-items: baseline;
+		align-items: flex-start;
 		gap: 0.375rem;
 		width: 100%;
+		min-width: 0;
+	}
+
+	.prog-main {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.375rem;
+		flex: 1;
 		min-width: 0;
 	}
 
@@ -148,8 +162,8 @@
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.6rem;
 		color: rgba(161, 161, 170, 0.7);
-		flex: 1;
-		min-width: 0;
+		white-space: nowrap;
+		flex: 0 0 auto;
 	}
 
 	.prog-btn.active .prog-chords {
