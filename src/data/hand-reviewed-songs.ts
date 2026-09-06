@@ -119,6 +119,11 @@ export const trickySongsToMatchCorrectly: TrickySongToMatchCorrectly[] = [
 		id: "plain-white-t-s__hey-there-delilah",
 		chordMatchingChallenges:
 			"Several issues, all stemming from it over eagerly trying to fill every gap, and matching on passing chords and missing the actual progression. Verse: gets I-iii-I-iii the first time it appears (opens section, easy to match), but misses it the second time it appears cuz it's tripped up trying to neatly pack away section in between. Chorus: gets I-vi-I-vi the first time, tips up on the lone passing V chord, misses the second I-vi-I-vi."
+	},
+	{
+		id: "alicia-keys__if-i-ain-t-got-you",
+		chordMatchingChallenges:
+			"Algo struggles to with the passing chords 'ii-iii' and fails to identify the repeating second 'VI-iii-biii-ii-I' even if I explicitly add it as a core progression. Honestly, this might be a song to hand-label the chords of."
 	}
 ];
 
