@@ -320,6 +320,13 @@ const minoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
+			name: "scars to your beautiful (vamp)",
+			chordProgression: "VI-i-VI-i",
+			scale: "minor",
+			matchRomanNumeralsExactly: true,
+			description: ""
+		},
+		{
 			name: "dangerous",
 			chordProgression: "i-III-VI",
 			scale: "minor",

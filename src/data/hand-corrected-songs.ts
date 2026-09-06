@@ -498,6 +498,19 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 		}
 	},
 	{
+		id: "alessia-cara__scars-to-your-beautiful",
+		correctedSongContents: {
+			sections: [
+				...["Intro", "Chorus"].map((name) => ({
+					name,
+					key: "F#",
+					scale: "minor",
+					romanTokens: repeatNTimes(["VI", "i", "VI", "i"], 4)
+				}))
+			]
+		}
+	},
+	{
 		id: "justin-timberlake__sexyback",
 		correctedSongContents: {
 			sections: [
