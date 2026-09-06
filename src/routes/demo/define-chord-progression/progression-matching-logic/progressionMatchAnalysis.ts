@@ -86,10 +86,6 @@ export const abstractProgressionKey = (
 		)
 	);
 
-// The abstract key is pitch-based, so a progression and its relative-key
-// rotation collapse onto one entry — VI-VII-i-III in minor is the very same run
-// of chords as IV-V-vi-I in major. Everything else here matches scale-sensitively,
-// so the scale belongs in the key too.
 export const scopedToScale = (key: string, scale: ScaleName): string =>
 	`${scale}|${key}`;
 
@@ -134,28 +130,67 @@ export const dedupeMatchesByChordProgression = <
 	return [...byChordProgression.values()];
 };
 
-export const buildCoreNameByAbstractKey = (
+export type CoreLookupEntry = {
+	name: string;
+	matchRomanNumeralsExactly: boolean;
+	firstChordRootPitchClass: number;
+	parsed: ParsedProgressionChord[];
+};
+
+export const buildCoreLookupEntries = (
 	coreProgressions: CoreProgression[]
-): Map<string, string> =>
-	new Map(
-		coreProgressions.flatMap((progression) =>
-			chordProgressionVariants(progression.chordProgression).flatMap(
-				(variant) => {
-					const parsed = romanTokensToParsedProgression(
-						variant.split("-"),
-						progression.scale
-					);
-					if (!parsed) return [];
-					return [
-						[
-							scopedToScale(abstractProgressionKey(parsed), progression.scale),
-							progression.name
-						]
-					] as const;
-				}
-			)
+): CoreLookupEntry[] =>
+	coreProgressions.flatMap((progression) =>
+		chordProgressionVariants(progression.chordProgression).flatMap(
+			(variant): CoreLookupEntry[] => {
+				const parsed = romanTokensToParsedProgression(
+					variant.split("-"),
+					progression.scale
+				);
+				if (!parsed || parsed.length === 0) return [];
+				return [
+					{
+						name: progression.name,
+						matchRomanNumeralsExactly:
+							progression.matchRomanNumeralsExactly ?? false,
+						firstChordRootPitchClass: parsed[0].rootPitchClass,
+						parsed
+					}
+				];
+			}
 		)
 	);
+
+const unitMatchesCore = (
+	unit: ParsedProgressionChord[],
+	parsedCore: ParsedProgressionChord[]
+): boolean =>
+	matchProgressionSelectiveExactness(unit, parsedCore).some(
+		(match) => match.start === 0 && match.start + match.length === unit.length
+	);
+
+export const lookupCoreEntry = (
+	entries: CoreLookupEntry[],
+	unit: ParsedProgressionChord[],
+	section: SongSection,
+	startIndex: number
+): CoreLookupEntry | undefined => {
+	const eligible = entries.filter((entry) => {
+		if (!unitMatchesCore(unit, entry.parsed)) return false;
+		return (
+			!entry.matchRomanNumeralsExactly ||
+			matchStartsOnExpectedTonic(
+				section,
+				startIndex,
+				entry.firstChordRootPitchClass
+			)
+		);
+	});
+	const exact = [...eligible]
+		.reverse()
+		.find((entry) => entry.matchRomanNumeralsExactly);
+	return exact ?? eligible[eligible.length - 1];
+};
 
 const toNonOverlappingMatches = (
 	matches: SubProgressionMatch[],
@@ -570,7 +605,7 @@ export const buildCoreProgressionDisplayMatches = (
 		)
 		.filter((match): match is ProgressionWithMatchStats => match !== null);
 
-const matchStartsOnExpectedTonic = (
+export const matchStartsOnExpectedTonic = (
 	section: SongSection,
 	matchStart: number,
 	expectedTonicOffset: number

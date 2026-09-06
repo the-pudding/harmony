@@ -8,19 +8,21 @@ import { isSelfRepeatingProgression } from "../../define-chord-progression/progr
 import { chordProgressionVariants } from "$data/core-progressions.util.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import {
-  abstractProgressionKey,
-  scopedToScale,
+	lookupCoreEntry,
+	matchStartsOnExpectedTonic,
+	type CoreLookupEntry
 } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
 
 export type CandidateTile = {
-  unit: ParsedProgressionChord[];
-  unitRomanString: string;
-  startIndex: number;
-  repeatCount: number;
-  coveredLength: number;
-  prefixLeftoverLength: number;
-  isCore: boolean;
-  coreName?: string;
+	unit: ParsedProgressionChord[];
+	unitRomanString: string;
+	startIndex: number;
+	repeatCount: number;
+	coveredLength: number;
+	prefixLeftoverLength: number;
+	isCore: boolean;
+	coreName?: string;
+	matchRomanNumeralsExactly: boolean;
 };
 
 export const MIN_CANDIDATE_LENGTH = 3;
@@ -63,54 +65,54 @@ const detectPrefixLeftover = (
 };
 
 // Path A: generate non-self-repeating literal section slices, annotating
-// cores via the prebuilt coreNameByKey lookup map.
+// cores via interval match (relative by default; tonic-locked when flagged).
 const generateLiteralSliceCandidates = (
-  section: SongSection,
-  startIndex: number,
-  coreNameByKey: Map<string, string>
+	section: SongSection,
+	startIndex: number,
+	coreEntries: CoreLookupEntry[]
 ): CandidateTile[] => {
-  const sectionChords = section.parsedProgression;
-  const sectionLength = sectionChords.length;
-  const results: CandidateTile[] = [];
+	const sectionChords = section.parsedProgression;
+	const sectionLength = sectionChords.length;
+	const results: CandidateTile[] = [];
 
-  for (let L = MIN_CANDIDATE_LENGTH; L <= MAX_CANDIDATE_LENGTH; L++) {
-    if (startIndex + L > sectionLength) break;
+	for (let L = MIN_CANDIDATE_LENGTH; L <= MAX_CANDIDATE_LENGTH; L++) {
+		if (startIndex + L > sectionLength) break;
 
-    const romanString = section.romanTokens
-      .slice(startIndex, startIndex + L)
-      .join("-");
-    if (isSelfRepeatingProgression(romanString)) continue;
+		const romanString = section.romanTokens
+			.slice(startIndex, startIndex + L)
+			.join("-");
+		if (isSelfRepeatingProgression(romanString)) continue;
 
-    const unit = sectionChords.slice(startIndex, startIndex + L);
-    const { repeatCount, coveredLength } = countContiguousRepeats(
-      sectionChords,
-      startIndex,
-      unit
-    );
-    if (repeatCount === 0) continue;
+		const unit = sectionChords.slice(startIndex, startIndex + L);
+		const { repeatCount, coveredLength } = countContiguousRepeats(
+			sectionChords,
+			startIndex,
+			unit
+		);
+		if (repeatCount === 0) continue;
 
-    const prefixLeftoverLength = detectPrefixLeftover(
-      sectionChords,
-      startIndex + coveredLength,
-      unit
-    );
+		const prefixLeftoverLength = detectPrefixLeftover(
+			sectionChords,
+			startIndex + coveredLength,
+			unit
+		);
 
-    const absKey = scopedToScale(abstractProgressionKey(unit), section.scale);
-    const coreName = coreNameByKey.get(absKey);
+		const coreEntry = lookupCoreEntry(coreEntries, unit, section, startIndex);
 
-    results.push({
-      unit,
-      unitRomanString: romanString,
-      startIndex,
-      repeatCount,
-      coveredLength,
-      prefixLeftoverLength,
-      isCore: coreName !== undefined,
-      coreName,
-    });
-  }
+		results.push({
+			unit,
+			unitRomanString: romanString,
+			startIndex,
+			repeatCount,
+			coveredLength,
+			prefixLeftoverLength,
+			isCore: coreEntry !== undefined,
+			coreName: coreEntry?.name,
+			matchRomanNumeralsExactly: coreEntry?.matchRomanNumeralsExactly ?? false
+		});
+	}
 
-  return results;
+	return results;
 };
 
 // Path B: self-repeating cores (e.g. I-V-I-V, I-vi-I-vi) skipped by path A.
@@ -141,6 +143,17 @@ const generateSelfRepeatingCoreCandidates = (
       const tailMatches = matchProgressionSelectiveExactness(tail, parsedCore);
       if (!tailMatches.some((m) => m.start === 0)) continue;
 
+      if (
+				(core.matchRomanNumeralsExactly ?? false) &&
+				!matchStartsOnExpectedTonic(
+					section,
+					startIndex,
+					parsedCore[0].rootPitchClass
+				)
+			) {
+				continue;
+			}
+
       const { repeatCount, coveredLength } = countContiguousRepeats(
         sectionChords,
         startIndex,
@@ -155,15 +168,16 @@ const generateSelfRepeatingCoreCandidates = (
       );
 
       results.push({
-        unit: parsedCore,
-        unitRomanString: variant,
-        startIndex,
-        repeatCount,
-        coveredLength,
-        prefixLeftoverLength,
-        isCore: true,
-        coreName: core.name,
-      });
+				unit: parsedCore,
+				unitRomanString: variant,
+				startIndex,
+				repeatCount,
+				coveredLength,
+				prefixLeftoverLength,
+				isCore: true,
+				coreName: core.name,
+				matchRomanNumeralsExactly: core.matchRomanNumeralsExactly ?? false
+			});
     }
   }
 
@@ -171,23 +185,29 @@ const generateSelfRepeatingCoreCandidates = (
 };
 
 export const generateCandidates = (
-  section: SongSection,
-  startIndex: number,
-  coreProgressions: CoreProgression[],
-  coreNameByKey: Map<string, string>
+	section: SongSection,
+	startIndex: number,
+	coreProgressions: CoreProgression[],
+	coreEntries: CoreLookupEntry[]
 ): CandidateTile[] => {
-  const pathA = generateLiteralSliceCandidates(section, startIndex, coreNameByKey);
-  const pathB = generateSelfRepeatingCoreCandidates(
-    section,
-    startIndex,
-    coreProgressions
-  );
+	const pathA = generateLiteralSliceCandidates(
+		section,
+		startIndex,
+		coreEntries
+	);
+	const pathB = generateSelfRepeatingCoreCandidates(
+		section,
+		startIndex,
+		coreProgressions
+	);
 
-  const seenKeys = new Set(
-    pathA.map((c) => `${c.unitRomanString}|${section.scale}`)
-  );
-  return [
-    ...pathA,
-    ...pathB.filter((c) => !seenKeys.has(`${c.unitRomanString}|${section.scale}`)),
-  ];
+	const seenKeys = new Set(
+		pathA.map((c) => `${c.unitRomanString}|${section.scale}`)
+	);
+	return [
+		...pathA,
+		...pathB.filter(
+			(c) => !seenKeys.has(`${c.unitRomanString}|${section.scale}`)
+		)
+	];
 };

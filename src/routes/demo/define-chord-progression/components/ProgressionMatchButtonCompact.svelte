@@ -53,7 +53,7 @@
 			<span class="prog-name">{match.name}</span>
 		{/if}
 		<span class="prog-chords">{match.chordProgression}</span>
-		<span class="prog-percent">{coveragePercentRounded}%</span>
+		<span class="prog-percent">{match.matchCount}× <b>{coveragePercentRounded}%</b></span>
 	</span>
 </button>
 

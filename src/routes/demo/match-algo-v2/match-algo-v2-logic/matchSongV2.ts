@@ -1,6 +1,6 @@
 import { isChorusSectionLabel, type GroupedSong } from "../../../../data/songBrowser.js";
 import type { CoreProgression } from "$data/core-progressions.js";
-import { buildCoreNameByAbstractKey } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
+import { buildCoreLookupEntries } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
 import type {
   ChordAnnotation,
   ProgressionWithMatchStats,
@@ -32,12 +32,13 @@ const GAP_FILL_COLORS = [
 ];
 
 export type UnifiedProgression = {
-  harmonicKey: string;
-  romanString: string;
-  scale: ScaleName;
-  coreName?: string;
-  highlightPalette: ChordHighlightPalette;
-  spans: TileSpan[];
+	harmonicKey: string;
+	romanString: string;
+	scale: ScaleName;
+	coreName?: string;
+	matchRomanNumeralsExactly: boolean;
+	highlightPalette: ChordHighlightPalette;
+	spans: TileSpan[];
 };
 
 export type SectionMatchResult = {
@@ -84,23 +85,24 @@ const chorusInstanceCount = (
 	}, 0);
 
 const toMatchStats = (
-  unified: UnifiedProgression,
-  song: GroupedSong,
-  totalChords: number
+	unified: UnifiedProgression,
+	song: GroupedSong,
+	totalChords: number
 ): ProgressionWithMatchStats => ({
-  name: unified.coreName ?? unified.romanString,
-  chordProgression: unified.romanString,
-  parsedProgression: unified.spans[0].tile.tile.unit,
-  scale: unified.scale,
-  description: "",
-  matchCount: instanceCount(unified),
-  chorusMatchCount: chorusInstanceCount(unified, song),
-  coveragePercent:
-    totalChords > 0
-      ? (claimedChordCount(unified) / totalChords) * PERCENT_MULTIPLIER
-      : 0,
-  isCoreProgression: unified.coreName !== undefined,
-  highlightPalette: unified.highlightPalette,
+	name: unified.coreName ?? unified.romanString,
+	chordProgression: unified.romanString,
+	parsedProgression: unified.spans[0].tile.tile.unit,
+	scale: unified.scale,
+	description: "",
+	matchCount: instanceCount(unified),
+	chorusMatchCount: chorusInstanceCount(unified, song),
+	coveragePercent:
+		totalChords > 0
+			? (claimedChordCount(unified) / totalChords) * PERCENT_MULTIPLIER
+			: 0,
+	isCoreProgression: unified.coreName !== undefined,
+	matchRomanNumeralsExactly: unified.matchRomanNumeralsExactly,
+	highlightPalette: unified.highlightPalette
 });
 
 const buildHighlightPositionsBySection = (
@@ -133,12 +135,12 @@ export const matchSongV2 = (
   coreProgressions: CoreProgression[],
   weights: MatchWeights = DEFAULT_WEIGHTS
 ): MatchAlgoV2Result => {
-  const coreNameByKey = buildCoreNameByAbstractKey(coreProgressions);
+  const coreEntries = buildCoreLookupEntries(coreProgressions);
 
   // Tile each section independently
   const allSpans: TileSpan[] = song.sections.flatMap((section, sectionIndex) =>
-    tileSection(section, sectionIndex, coreProgressions, coreNameByKey, weights)
-  );
+		tileSection(section, sectionIndex, coreProgressions, coreEntries, weights)
+	);
 
   // Build per-section coverage info
   const sectionResults: SectionMatchResult[] = song.sections.map(
@@ -175,13 +177,14 @@ export const matchSongV2 = (
     const firstSpan = spans[0];
     const section = song.sections[firstSpan.sectionIndex];
     const unified: UnifiedProgression = {
-      harmonicKey,
-      romanString: firstSpan.tile.tile.unitRomanString,
-      scale: section.scale,
-      coreName: firstSpan.tile.tile.coreName,
-      highlightPalette: UNGROUPED_PROGRESSION_PALETTE, // placeholder
-      spans,
-    };
+			harmonicKey,
+			romanString: firstSpan.tile.tile.unitRomanString,
+			scale: section.scale,
+			coreName: firstSpan.tile.tile.coreName,
+			matchRomanNumeralsExactly: firstSpan.tile.tile.matchRomanNumeralsExactly,
+			highlightPalette: UNGROUPED_PROGRESSION_PALETTE, // placeholder
+			spans
+		};
     unified.highlightPalette = paletteForUnified(
       unified,
       unified.coreName ? 0 : gapFillColorIndex++
@@ -213,7 +216,7 @@ export const matchSongV2 = (
 				unified.spans,
 				song.sections.length
 			),
-			matchRomanNumeralsExactly: false
+			matchRomanNumeralsExactly: unified.matchRomanNumeralsExactly
 		})
 	);
 

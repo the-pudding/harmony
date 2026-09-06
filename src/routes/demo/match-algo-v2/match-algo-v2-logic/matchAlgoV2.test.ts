@@ -19,6 +19,7 @@ import { tileSection } from "./tileSection.js";
 import { matchSongV2 } from "./matchSongV2.js";
 import { DEFAULT_WEIGHTS } from "./weights.js";
 import type { MatchWeights } from "./weights.js";
+import type { CoreProgression } from "$data/core-progressions.js";
 
 // Helpers
 const chord = (
@@ -105,7 +106,7 @@ describe("generateCandidates", () => {
   it("finds a 4-chord candidate at start of a section with 2 repeats", () => {
     const tokens = ["I", "vi", "IV", "V", "I", "vi", "IV", "V"];
     const section = makeSection(twoRepeats, tokens);
-    const candidates = generateCandidates(section, 0, [], new Map());
+    const candidates = generateCandidates(section, 0, [], []);
 
     const fourChord = candidates.find(
       (c) => c.unit.length === 4 && c.startIndex === 0
@@ -121,7 +122,7 @@ describe("generateCandidates", () => {
       [C, G, C, G, C, G, C, G],
       ["I", "V", "I", "V", "I", "V", "I", "V"]
     );
-    const candidates = generateCandidates(section, 0, [], new Map());
+    const candidates = generateCandidates(section, 0, [], []);
     // The 4-chord I-V-I-V should be absent from path A
     const selfRepeat = candidates.find(
       (c) => c.unitRomanString === "I-V-I-V" && !c.isCore
@@ -133,7 +134,7 @@ describe("generateCandidates", () => {
     // 2 full repeats (8 chords) + 2 chord prefix: I-vi | total 10 chords
     const tokens = ["I", "vi", "IV", "V", "I", "vi", "IV", "V", "I", "vi"];
     const section = makeSection([...twoRepeats, C, A_min], tokens);
-    const candidates = generateCandidates(section, 0, [], new Map());
+    const candidates = generateCandidates(section, 0, [], []);
 
     const fourChord = candidates.find(
       (c) => c.unit.length === 4 && c.startIndex === 0
@@ -154,11 +155,11 @@ describe("computeScoredTile", () => {
       tokens3
     );
 
-    const candidates4 = generateCandidates(section4, 0, [], new Map());
+    const candidates4 = generateCandidates(section4, 0, [], []);
     const tile4 = candidates4.find((c) => c.unit.length === 4)!;
     const scored4 = computeScoredTile(tile4, 8, DEFAULT_WEIGHTS);
 
-    const candidates3 = generateCandidates(section3, 0, [], new Map());
+    const candidates3 = generateCandidates(section3, 0, [], []);
     const tile3 = candidates3.find((c) => c.unit.length === 3)!;
     const scored3 = computeScoredTile(tile3, 6, DEFAULT_WEIGHTS);
 
@@ -170,7 +171,7 @@ describe("computeScoredTile", () => {
 
   it("increasing contiguousRepeat weight increases contiguousRepeat contribution", () => {
     const section = makeSection(twoRepeats, ["I", "vi", "IV", "V", "I", "vi", "IV", "V"]);
-    const candidates = generateCandidates(section, 0, [], new Map());
+    const candidates = generateCandidates(section, 0, [], []);
     const tile = candidates.find((c) => c.unit.length === 4)!;
 
     const lowRepeatWeights: MatchWeights = { ...DEFAULT_WEIGHTS, contiguousRepeat: 0.1 };
@@ -189,7 +190,7 @@ describe("tileSection", () => {
   it("tiles a section with 2 identical repeats as one span", () => {
     const tokens = ["I", "vi", "IV", "V", "I", "vi", "IV", "V"];
     const section = makeSection(twoRepeats, tokens);
-    const spans = tileSection(section, 0, [], new Map(), DEFAULT_WEIGHTS);
+    const spans = tileSection(section, 0, [], [], DEFAULT_WEIGHTS);
 
     expect(spans).toHaveLength(1);
     expect(spans[0].tile.tile.unit.length).toBe(4);
@@ -205,7 +206,7 @@ describe("tileSection", () => {
       "I", "ii", "V", "I", "I", "ii", "V", "I",
     ];
     const section = makeSection([...part1, ...part2], tokens);
-    const spans = tileSection(section, 0, [], new Map(), DEFAULT_WEIGHTS);
+    const spans = tileSection(section, 0, [], [], DEFAULT_WEIGHTS);
 
     expect(spans.length).toBeGreaterThanOrEqual(2);
     // First span should start at 0
@@ -220,7 +221,7 @@ describe("tileSection", () => {
       [C, A_min, D_min, G, C, A_min, D_min, G],
       tokens
     );
-    const spans = tileSection(section, 0, [], new Map(), DEFAULT_WEIGHTS);
+    const spans = tileSection(section, 0, [], [], DEFAULT_WEIGHTS);
 
     // The winning tile should start at index 0
     expect(spans[0].tile.tile.startIndex).toBe(0);
@@ -379,5 +380,94 @@ describe("chandelier highlight visualization", () => {
 		expect(longSegments.flatMap((segment) => segment.indices)).toHaveLength(
 			LONG_BRIDGE_INSTANCE_COUNT * VI_VII_III_UNIT_LENGTH
 		);
+	});
+});
+
+const VIVA_LA_VIDA_NAME = "viva la vida";
+const VIVA_LA_VIDA_SONG_KEY = "coldplay__viva-la-vida";
+const STAY_WITH_ME_NAME = "stay with me";
+
+const vivaLaVidaCore: CoreProgression = {
+	name: VIVA_LA_VIDA_NAME,
+	chordProgression: "IV-V-I-vi",
+	scale: "major",
+	description: ""
+};
+
+const stayWithMeCore: CoreProgression = {
+	name: STAY_WITH_ME_NAME,
+	chordProgression: "i-VI-III",
+	scale: "minor",
+	matchRomanNumeralsExactly: true,
+	description: ""
+};
+
+const vivaSong = groupSongs(
+	(songs as { songKey: string }[]).filter(
+		(s) => s.songKey === VIVA_LA_VIDA_SONG_KEY
+	) as Parameters<typeof groupSongs>[0]
+)[0];
+
+describe("v2 relative vs exact roman matching", () => {
+	it("matches IV-V-I-vi in major as a relative of VI-VII-III-i in minor", () => {
+		const vi = chord(8, "major");
+		const vii = chord(10, "maj7");
+		const iii = chord(3, "major");
+		const i = chord(0, "minor");
+		const section: SongSection = {
+			...makeSection(
+				[vi, vii, iii, i, vi, vii, iii, i],
+				["VI", "VII", "III", "i", "VI", "VII", "III", "i"]
+			),
+			scale: "minor"
+		};
+		const result = matchSongV2(makeSong([section]), [vivaLaVidaCore]);
+		const viva = result.matches.find(
+			(match) => match.name === VIVA_LA_VIDA_NAME
+		);
+		expect(viva?.isCoreProgression).toBe(true);
+		expect(viva?.matchRomanNumeralsExactly).toBe(false);
+	});
+
+	it("does not treat vi-IV-I in major as stay with me when exact roman matching is required", () => {
+		const section = makeSection(
+			[A_min, F, C, A_min, F, C],
+			["vi", "IV", "I", "vi", "IV", "I"]
+		);
+		const result = matchSongV2(makeSong([section]), [stayWithMeCore]);
+		expect(
+			result.matches.some((match) => match.name === STAY_WITH_ME_NAME)
+		).toBe(false);
+	});
+
+	it("does treat i-VI-III in minor as stay with me when exact roman matching is required", () => {
+		const i = chord(0, "minor");
+		const VI = chord(8, "major");
+		const III = chord(3, "major");
+		const section: SongSection = {
+			...makeSection(
+				[i, VI, III, i, VI, III],
+				["i", "VI", "III", "i", "VI", "III"]
+			),
+			scale: "minor"
+		};
+		const result = matchSongV2(makeSong([section]), [stayWithMeCore]);
+		expect(
+			result.matches.some(
+				(match) =>
+					match.name === STAY_WITH_ME_NAME &&
+					match.isCoreProgression &&
+					match.matchRomanNumeralsExactly === true
+			)
+		).toBe(true);
+	});
+
+	it("labels Coldplay Viva La Vida as the viva la vida core", () => {
+		const result = matchSongV2(vivaSong, coreProgressions);
+		expect(
+			result.matches.some(
+				(match) => match.name === VIVA_LA_VIDA_NAME && match.isCoreProgression
+			)
+		).toBe(true);
 	});
 });

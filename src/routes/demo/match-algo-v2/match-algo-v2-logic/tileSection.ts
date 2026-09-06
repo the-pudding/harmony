@@ -1,5 +1,6 @@
 import type { SongSection } from "../../../../data/songBrowser.js";
 import type { CoreProgression } from "$data/core-progressions.js";
+import type { CoreLookupEntry } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
 import type { MatchWeights } from "./weights.js";
 import type { ScoredTile } from "./score.js";
 import { computeScoredTile } from "./score.js";
@@ -13,57 +14,57 @@ export type TileSpan = {
 };
 
 export const tileSection = (
-  section: SongSection,
-  sectionIndex: number,
-  coreProgressions: CoreProgression[],
-  coreNameByKey: Map<string, string>,
-  weights: MatchWeights,
-  startIndex = 0
+	section: SongSection,
+	sectionIndex: number,
+	coreProgressions: CoreProgression[],
+	coreEntries: CoreLookupEntry[],
+	weights: MatchWeights,
+	startIndex = 0
 ): TileSpan[] => {
-  if (startIndex >= section.parsedProgression.length) return [];
+	if (startIndex >= section.parsedProgression.length) return [];
 
-  const candidates = generateCandidates(
-    section,
-    startIndex,
-    coreProgressions,
-    coreNameByKey
-  );
-  if (candidates.length === 0) return [];
+	const candidates = generateCandidates(
+		section,
+		startIndex,
+		coreProgressions,
+		coreEntries
+	);
+	if (candidates.length === 0) return [];
 
-  const scored = candidates.map((c) =>
-    computeScoredTile(c, section.parsedProgression.length, weights)
-  );
+	const scored = candidates.map((c) =>
+		computeScoredTile(c, section.parsedProgression.length, weights)
+	);
 
-  const best = scored.reduce((prev, curr) =>
-    curr.totalScore > prev.totalScore ? curr : prev
-  );
+	const best = scored.reduce((prev, curr) =>
+		curr.totalScore > prev.totalScore ? curr : prev
+	);
 
-  const highlightPositions = Array.from(
+	const highlightPositions = Array.from(
 		{ length: best.tile.coveredLength },
 		(_, i) => best.tile.startIndex + i
 	);
 
-  const span: TileSpan = {
-    sectionIndex,
-    tile: best,
-    highlightPositions,
-    rejectedAtSameStart: scored.filter((s) => s !== best),
-  };
+	const span: TileSpan = {
+		sectionIndex,
+		tile: best,
+		highlightPositions,
+		rejectedAtSameStart: scored.filter((s) => s !== best)
+	};
 
-  const nextStart =
-    best.tile.startIndex +
-    best.tile.coveredLength +
-    best.tile.prefixLeftoverLength;
+	const nextStart =
+		best.tile.startIndex +
+		best.tile.coveredLength +
+		best.tile.prefixLeftoverLength;
 
-  return [
-    span,
-    ...tileSection(
-      section,
-      sectionIndex,
-      coreProgressions,
-      coreNameByKey,
-      weights,
-      nextStart
-    ),
-  ];
+	return [
+		span,
+		...tileSection(
+			section,
+			sectionIndex,
+			coreProgressions,
+			coreEntries,
+			weights,
+			nextStart
+		)
+	];
 };
