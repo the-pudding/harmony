@@ -62,7 +62,7 @@ describe("build-songs chromatic regression", () => {
 		});
 	});
 
-	it("derives bIII from HookTheory borrowed flag when accidental is absent", () => {
+	it("does not invent a flat from the borrowed flag alone", () => {
 		const borrowedMajorThree = {
 			degree: 3,
 			quality: "maj",
@@ -72,11 +72,10 @@ describe("build-songs chromatic regression", () => {
 			suspensions: []
 		};
 
-		expect(resolveAccidental(borrowedMajorThree, "G", "major")).toBe(-1);
+		expect(resolveAccidental(borrowedMajorThree, "G", "major")).toBe(0);
 		expect(chordsToRomanTokens([borrowedMajorThree], "G", "major")).toEqual([
-			"bIII"
+			"III"
 		]);
-		expect(degreeToPitchClass(3, "G", "major", -1)).toBe(10);
 	});
 
 	it("keeps major III when roman/name are E, even if borrowed (buttercup)", () => {

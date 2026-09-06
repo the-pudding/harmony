@@ -193,11 +193,6 @@ const SEMITONE = 1;
 const FLAT_SEMITONE_DIFF = NOTES_PER_OCTAVE - SEMITONE;
 const CHORD_NAME_ROOT_PATTERN = /^([A-G][#b]?)/i;
 
-const PARALLEL_HOME_SCALE = {
-	major: "minor",
-	minor: "major"
-};
-
 const degreeQualityToRoman = (degree, quality, accidental = 0) => {
 	if (degree < 1 || degree > ROMAN_BASE.length) return null;
 
@@ -252,27 +247,6 @@ const resolveAccidental = (chord, key, scale) => {
 	const nameAccidental = accidentalFromChordName(chord, key, scale);
 	if (nameAccidental !== null) return nameAccidental;
 
-	if (!chord.borrowed) return 0;
-
-	const parallelScale = PARALLEL_HOME_SCALE[scale];
-	if (!parallelScale) return 0;
-
-	const homeIntervals = SCALE_INTERVALS[scale];
-	const parallelIntervals = SCALE_INTERVALS[parallelScale];
-	if (!homeIntervals || !parallelIntervals) return 0;
-
-	const homeOffset = homeIntervals[chord.degree - 1];
-	const parallelOffset = parallelIntervals[chord.degree - 1];
-	if (homeOffset === undefined || parallelOffset === undefined) return 0;
-
-	const tonic = tonicToPitchClass(key);
-	const homePc = (tonic + homeOffset) % NOTES_PER_OCTAVE;
-	const parallelPc = (tonic + parallelOffset) % NOTES_PER_OCTAVE;
-	if (homePc === parallelPc) return 0;
-
-	const diff = (parallelPc - homePc + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE;
-	if (diff === FLAT_SEMITONE_DIFF) return -SEMITONE;
-	if (diff === SEMITONE) return SEMITONE;
 	return 0;
 };
 
