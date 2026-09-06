@@ -53,6 +53,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
+			// @michelle: this feels darker, more minor-y to me
 			name: "hey there delilah (chorus)",
 			chordProgression: "I-vi-I-vi",
 			scale: "major",
@@ -142,19 +143,10 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: "",
 			technicalNotes: "a hungry energy that never settles back to the I"
 		},
-		// TODO: matches Teenage Dream perfectly, should match Call Me Maybe perfectly once we hand correct it.
-		// However, I feel with our simplistic greeny match algorithm, it overall decreases general match percentage coverage.
-		// Maybe needs some rework (or a more stringent match criteria)
-		// {
-		// 	name: "IV-(vi)-V vamp",
-		// 	chordProgression: "IV-vi-V",
-		// 	scale: "major",
-		// 	description: "",
-		// 	technicalNotes:
-		// 		"just IV-V with a lil passing chord to keep it interesting"
-		// }
+
 		{
-			name: "axis of angsty",
+			// @michelle: this feels darker, more minor-y to me
+			name: "axis of angsty (we cant stop)",
 			chordProgression: "I-iii-vi-IV",
 			scale: "major",
 			description: "swaps out the V for an angsty iii"
@@ -208,6 +200,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 				"wonderfully complex, you can sort of think of I-ii and vi-IV as two inverted flavors of the same movement"
 		},
 		{
+			// @michelle: more minor-y to me. Sort of epitamizes "Oh this is major key but... oh, wow, there's a lot of darkness and complexity there" which I feel is big in the modern era.
 			name: "save your tears",
 			chordProgression: "I-vi-iii-V",
 			scale: "major",
@@ -221,14 +214,6 @@ const happyMajoryProgressions: ProgressionGroup = {
 			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
 			description:
 				"TODO: try to match just IV-iv? (often I only arrives in a subsequent section)"
-		},
-		{
-			name: "creep",
-			chordProgression: "I-III-IV",
-			scale: "major",
-			matchRomanNumeralsExactly: true,
-			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
-			description: ""
 		},
 		{
 			name: "if i aint got you",
