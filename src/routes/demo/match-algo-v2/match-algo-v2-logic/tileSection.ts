@@ -1,10 +1,36 @@
 import type { SongSection } from "../../../../data/songBrowser.js";
 import type { CoreProgression } from "$data/core-progressions.js";
 import type { CoreLookupEntry } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
+import {
+	collapseAdjacentRepeatedChords,
+	originalPositionsFromCollapsedRange,
+	type OriginalRange
+} from "../../define-chord-progression/progression-matching-logic/collapsedProgression.js";
 import type { MatchWeights } from "./weights.js";
 import type { ScoredTile } from "./score.js";
 import { computeScoredTile } from "./score.js";
 import { generateCandidates } from "./candidates.js";
+
+const collapseSectionRepeatedChords = (
+	section: SongSection
+): {
+	section: SongSection;
+	originalRanges: OriginalRange[];
+} => {
+	const { chords, originalRanges } = collapseAdjacentRepeatedChords(
+		section.parsedProgression
+	);
+	return {
+		section: {
+			...section,
+			parsedProgression: chords,
+			romanTokens: originalRanges.map(
+				(range) => section.romanTokens[range.start] ?? ""
+			)
+		},
+		originalRanges
+	};
+};
 
 export type TileSpan = {
   sectionIndex: number;
@@ -21,10 +47,11 @@ export const tileSection = (
 	weights: MatchWeights,
 	startIndex = 0
 ): TileSpan[] => {
-	if (startIndex >= section.parsedProgression.length) return [];
+	const collapsed = collapseSectionRepeatedChords(section);
+	if (startIndex >= collapsed.section.parsedProgression.length) return [];
 
 	const candidates = generateCandidates(
-		section,
+		collapsed.section,
 		startIndex,
 		coreProgressions,
 		coreEntries
@@ -32,16 +59,17 @@ export const tileSection = (
 	if (candidates.length === 0) return [];
 
 	const scored = candidates.map((c) =>
-		computeScoredTile(c, section.parsedProgression.length, weights)
+		computeScoredTile(c, collapsed.section.parsedProgression.length, weights)
 	);
 
 	const best = scored.reduce((prev, curr) =>
 		curr.totalScore > prev.totalScore ? curr : prev
 	);
 
-	const highlightPositions = Array.from(
-		{ length: best.tile.coveredLength },
-		(_, i) => best.tile.startIndex + i
+	const highlightPositions = originalPositionsFromCollapsedRange(
+		collapsed.originalRanges,
+		best.tile.startIndex,
+		best.tile.coveredLength
 	);
 
 	const span: TileSpan = {

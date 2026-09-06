@@ -109,38 +109,56 @@ export const collapseMatchingTemplates = (
 	);
 };
 
-const canonicalChordsEqual = (
+const sameRootAndSuffix = (
 	a: ParsedProgressionChord,
 	b: ParsedProgressionChord
 ): boolean => a.rootPitchClass === b.rootPitchClass && a.suffix === b.suffix;
 
-// Canonicalizes chords and merges runs of adjacent chords that are identical once
-// extensions and slash bass are ignored (e.g. I·Isus2·V·Vsus4 → I·V), while
-// remembering which original positions each merged chord spans.
-export const collapseAdjacentCanonical = (
-	chords: ParsedProgressionChord[]
+const collapseAdjacentByEquality = (
+	chords: ParsedProgressionChord[],
+	areSameChord: (
+		left: ParsedProgressionChord,
+		right: ParsedProgressionChord
+	) => boolean
 ): CollapsedProgression => {
-	const canonicalChords = chords.map(toCanonicalMatchingChord);
-	const groupStartIndices = canonicalChords
+	const groupStartIndices = chords
 		.map((_, index) => index)
 		.filter(
-			(index) =>
-				index === 0 ||
-				!canonicalChordsEqual(
-					canonicalChords[index],
-					canonicalChords[index - 1]
-				)
+			(index) => index === 0 || !areSameChord(chords[index], chords[index - 1])
 		);
 
 	return {
-		chords: groupStartIndices.map((index) => canonicalChords[index]),
+		chords: groupStartIndices.map((index) => chords[index]),
 		originalRanges: groupStartIndices.map((start, groupIndex) => {
-			const nextStart =
-				groupStartIndices[groupIndex + 1] ?? canonicalChords.length;
+			const nextStart = groupStartIndices[groupIndex + 1] ?? chords.length;
 			return { start, length: nextStart - start };
 		})
 	};
 };
+
+export const collapseAdjacentCanonical = (
+	chords: ParsedProgressionChord[]
+): CollapsedProgression =>
+	collapseAdjacentByEquality(
+		chords.map(toCanonicalMatchingChord),
+		sameRootAndSuffix
+	);
+
+export const collapseAdjacentRepeatedChords = (
+	chords: ParsedProgressionChord[]
+): CollapsedProgression =>
+	collapseAdjacentByEquality(chords, sameRootAndSuffix);
+
+export const originalPositionsFromCollapsedRange = (
+	originalRanges: OriginalRange[],
+	collapsedStart: number,
+	collapsedLength: number
+): number[] =>
+	originalRanges
+		.slice(collapsedStart, collapsedStart + collapsedLength)
+		.flatMap((range) =>
+			Array.from({ length: range.length }, (_, offset) => range.start + offset)
+		);
 
 // Translates a match expressed in collapsed-index space back to the original
 // chord positions it covers. Contiguous collapsed groups map to a contiguous

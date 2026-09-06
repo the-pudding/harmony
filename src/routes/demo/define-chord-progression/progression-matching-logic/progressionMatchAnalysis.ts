@@ -21,6 +21,7 @@ import type {
 import { matchHighlightForCoreProgression } from "../components/progressionColors.js";
 import { isSelfRepeatingProgression } from "./progressionConstraints.js";
 import {
+	collapseAdjacentRepeatedChords,
 	collapseMatchingTemplates,
 	matchProgressionSelectiveExactness
 } from "./collapsedProgression.js";
@@ -819,23 +820,54 @@ const matchesFromClaimedPositions = (
 	});
 };
 
+const collapsedIndexByOriginalPosition = (
+	originalRanges: { start: number; length: number }[]
+): number[] =>
+	originalRanges.flatMap((range, collapsedIndex) =>
+		Array.from({ length: range.length }, () => collapsedIndex)
+	);
+
+const originalPositionsFromMatches = (
+	matches: SubProgressionMatch[],
+	sectionLength: number
+): number[] => matches.flatMap((match) => matchPositions(match, sectionLength));
+
+const collapsedPositionsFromOriginal = (
+	originalPositions: number[],
+	collapsedIndexByOriginal: number[]
+): number[] =>
+	[
+		...new Set(
+			originalPositions
+				.filter(
+					(position) =>
+						position >= 0 && position < collapsedIndexByOriginal.length
+				)
+				.map((position) => collapsedIndexByOriginal[position])
+		)
+	].sort((a, b) => a - b);
+
 const matchesForAnnotation = (
 	section: SongSection,
 	sectionIndex: number,
-	annotation: ChordAnnotation
+	annotation: ChordAnnotation,
+	collapsedIndexByOriginal: number[]
 ): SubProgressionMatch[] => {
 	const allowedPositions =
 		annotation.highlightPositionsBySection?.[sectionIndex];
-	if (allowedPositions !== undefined) {
-		return matchesFromClaimedPositions(
-			allowedPositions,
-			annotation.parsedProgression.length
+	const originalPositions =
+		allowedPositions ??
+		originalPositionsFromMatches(
+			getSectionMatches(
+				section,
+				annotation.parsedProgression,
+				annotation.matchRomanNumeralsExactly ?? false
+			),
+			section.parsedProgression.length
 		);
-	}
-	return getSectionMatches(
-		section,
-		annotation.parsedProgression,
-		annotation.matchRomanNumeralsExactly ?? false
+	return matchesFromClaimedPositions(
+		collapsedPositionsFromOriginal(originalPositions, collapsedIndexByOriginal),
+		annotation.parsedProgression.length
 	);
 };
 
@@ -844,22 +876,32 @@ export const buildColoredHighlightSegments = (
 	sectionIndex: number,
 	annotations: ChordAnnotation[]
 ): ColoredHighlightSegment[] => {
-	const sectionLength = section.parsedProgression.length;
+	const { originalRanges } = collapseAdjacentRepeatedChords(
+		section.parsedProgression
+	);
+	const collapsedLength = originalRanges.length;
+	const collapsedIndexByOriginal =
+		collapsedIndexByOriginalPosition(originalRanges);
 
 	const matchesByAnnotation = annotations.map((annotation) =>
-		matchesForAnnotation(section, sectionIndex, annotation)
+		matchesForAnnotation(
+			section,
+			sectionIndex,
+			annotation,
+			collapsedIndexByOriginal
+		)
 	);
 
 	const positionGroups: PositionGroup[] = Array.from(
-		{ length: sectionLength },
-		(_, position) => {
+		{ length: collapsedLength },
+		(_, collapsedIndex) => {
 			for (
 				let annotationIndex = 0;
 				annotationIndex < annotations.length;
 				annotationIndex++
 			) {
 				const matchIndex = matchesByAnnotation[annotationIndex].findIndex(
-					(match) => isPositionInMatch(position, match, sectionLength)
+					(match) => isPositionInMatch(collapsedIndex, match, collapsedLength)
 				);
 				if (matchIndex !== -1) return { annotationIndex, matchIndex };
 			}
@@ -868,12 +910,18 @@ export const buildColoredHighlightSegments = (
 	);
 
 	const segments: ColoredHighlightSegment[] = [];
-	for (let position = 0; position < sectionLength; position++) {
-		const group = positionGroups[position];
-		const prevGroup = position > 0 ? positionGroups[position - 1] : undefined;
+	for (
+		let collapsedIndex = 0;
+		collapsedIndex < collapsedLength;
+		collapsedIndex++
+	) {
+		const group = positionGroups[collapsedIndex];
+		const prevGroup =
+			collapsedIndex > 0 ? positionGroups[collapsedIndex - 1] : undefined;
+		const displayIndex = originalRanges[collapsedIndex].start;
 
 		if (prevGroup !== undefined && isContinuingGroup(prevGroup, group)) {
-			segments[segments.length - 1].indices.push(position);
+			segments[segments.length - 1].indices.push(displayIndex);
 		} else {
 			const annotation =
 				group !== null ? annotations[group.annotationIndex] : null;
@@ -881,7 +929,7 @@ export const buildColoredHighlightSegments = (
 				palette: annotation?.palette ?? null,
 				isStrictSubset: annotation?.isStrictSubset ?? false,
 				chordProgression: annotation?.chordProgression ?? null,
-				indices: [position]
+				indices: [displayIndex]
 			});
 		}
 	}

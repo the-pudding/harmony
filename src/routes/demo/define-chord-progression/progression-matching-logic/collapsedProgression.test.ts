@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 import {
 	collapseAdjacentCanonical,
+	collapseAdjacentRepeatedChords,
 	collapseMatchingTemplates,
 	collapsedMatchToOriginalMatch,
 	isLiberalMatchingChord,
 	matchProgressionSelectiveExactness,
+	originalPositionsFromCollapsedRange,
 	toBaseTriadSuffix,
 	toCanonicalMatchingChord
 } from "./collapsedProgression.js";
@@ -224,6 +226,56 @@ describe("collapseAdjacentCanonical", () => {
 			chords: [],
 			originalRanges: []
 		});
+	});
+});
+
+describe("collapseAdjacentRepeatedChords", () => {
+	it("merges adjacent same-root same-quality chords including slash-bass repeats", () => {
+		const i = chord(0, "minor");
+		const iOverFifth = chord(0, "minor", 7);
+		const VI = chord(8, "major");
+		const { chords, originalRanges } = collapseAdjacentRepeatedChords([
+			i,
+			iOverFifth,
+			VI,
+			i,
+			iOverFifth,
+			VI
+		]);
+		expect(chords.map((c) => [c.rootPitchClass, c.suffix])).toEqual([
+			[0, "minor"],
+			[8, "major"],
+			[0, "minor"],
+			[8, "major"]
+		]);
+		expect(originalRanges).toEqual([
+			{ start: 0, length: 2 },
+			{ start: 2, length: 1 },
+			{ start: 3, length: 2 },
+			{ start: 5, length: 1 }
+		]);
+	});
+
+	it("does not merge I then Imaj7", () => {
+		const { chords } = collapseAdjacentRepeatedChords([I, I_MAJ7, VI, V, IV]);
+		expect(chords).toHaveLength(5);
+	});
+});
+
+describe("originalPositionsFromCollapsedRange", () => {
+	it("expands a collapsed vamp tile across the repeated song chords", () => {
+		expect(
+			originalPositionsFromCollapsedRange(
+				[
+					{ start: 0, length: 2 },
+					{ start: 2, length: 1 },
+					{ start: 3, length: 2 },
+					{ start: 5, length: 1 }
+				],
+				0,
+				4
+			)
+		).toEqual([0, 1, 2, 3, 4, 5]);
 	});
 });
 

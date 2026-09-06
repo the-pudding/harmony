@@ -471,3 +471,71 @@ describe("v2 relative vs exact roman matching", () => {
 		).toBe(true);
 	});
 });
+
+const I_VI_VAMP_NAME = "i VI vamp";
+const HOLLABACK_GIRL_SONG_KEY = "gwen-stefani__hollaback-girl";
+const EMO_WALK_DOWN_NAME = "emo walk down";
+
+const iViVampCore: CoreProgression = {
+	name: I_VI_VAMP_NAME,
+	chordProgression: "i-VI-i-VI",
+	scale: "minor",
+	matchRomanNumeralsExactly: true,
+	description: ""
+};
+
+const emoWalkDownCore: CoreProgression = {
+	name: EMO_WALK_DOWN_NAME,
+	chordProgression: "I-Imaj7-vi-V-IV",
+	scale: "major",
+	description: ""
+};
+
+const hollabackSong = groupSongs(
+	(songs as { songKey: string }[]).filter(
+		(s) => s.songKey === HOLLABACK_GIRL_SONG_KEY
+	) as Parameters<typeof groupSongs>[0]
+)[0];
+
+describe("v2 adjacent repeated-chord collapsing", () => {
+	it("treats i i VI as i-VI so the i-VI vamp core matches", () => {
+		const i = chord(0, "minor");
+		const VI = chord(8, "maj7");
+		const section: SongSection = {
+			...makeSection(
+				[i, i, VI, i, i, VI, i, i, VI, i, i, VI],
+				["i", "i", "VI", "i", "i", "VI", "i", "i", "VI", "i", "i", "VI"]
+			),
+			scale: "minor"
+		};
+		const result = matchSongV2(makeSong([section]), [iViVampCore]);
+		expect(
+			result.matches.some(
+				(match) => match.name === I_VI_VAMP_NAME && match.isCoreProgression
+			)
+		).toBe(true);
+	});
+
+	it("still keeps I and Imaj7 distinct for emo walk down", () => {
+		const Imaj7 = chord(0, "maj7");
+		const section = makeSection(
+			[C, Imaj7, A_min, G, F, C, Imaj7, A_min, G, F],
+			["I", "Imaj7", "vi", "V", "IV", "I", "Imaj7", "vi", "V", "IV"]
+		);
+		const result = matchSongV2(makeSong([section]), [emoWalkDownCore]);
+		expect(
+			result.matches.some(
+				(match) => match.name === EMO_WALK_DOWN_NAME && match.isCoreProgression
+			)
+		).toBe(true);
+	});
+
+	it("labels Hollaback Girl as the i VI vamp core", () => {
+		const result = matchSongV2(hollabackSong, coreProgressions);
+		expect(
+			result.matches.some(
+				(match) => match.name === I_VI_VAMP_NAME && match.isCoreProgression
+			)
+		).toBe(true);
+	});
+});

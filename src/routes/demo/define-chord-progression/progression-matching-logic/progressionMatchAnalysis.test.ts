@@ -625,3 +625,63 @@ describe("buildColoredHighlightSegments — claimed positions are source of trut
 		).toEqual(CLAIMED_POSITIONS);
 	});
 });
+
+describe("buildColoredHighlightSegments — collapse repeated chords for display", () => {
+	const F_MAJOR = chord(5, "major");
+	const I_VI_IV = [C_MAJOR, A_MINOR, F_MAJOR];
+	const I_I_VI_IV_LOOP = [
+		C_MAJOR,
+		C_MAJOR,
+		A_MINOR,
+		F_MAJOR,
+		C_MAJOR,
+		C_MAJOR,
+		A_MINOR,
+		F_MAJOR
+	];
+	const TATTOO_VERSE_TOKENS = ["I", "I", "vi", "IV", "I", "I", "vi", "IV"];
+	const palette = { fill: "#000", border: "#000" };
+
+	const makeTokenSection = (
+		parsedProgression: ParsedProgressionChord[],
+		romanTokens: string[]
+	): SongSection => ({
+		...makeSection(parsedProgression),
+		romanTokens
+	});
+
+	it("groups I I vi IV as I-vi-IV highlight units, not I I vi then IV I I", () => {
+		const section = makeTokenSection(I_I_VI_IV_LOOP, TATTOO_VERSE_TOKENS);
+		const claimedPositions = TATTOO_VERSE_TOKENS.map((_, index) => index);
+		const segments = buildColoredHighlightSegments(section, 0, [
+			{
+				parsedProgression: I_VI_IV,
+				palette,
+				chordProgression: "I-vi-IV",
+				highlightPositionsBySection: [claimedPositions]
+			}
+		]).filter((segment) => segment.palette !== null);
+
+		expect(segments.map((segment) => segment.indices)).toEqual([
+			[0, 2, 3],
+			[4, 6, 7]
+		]);
+		expect(
+			segments.map((segment) =>
+				segment.indices.map((position) => section.romanTokens[position])
+			)
+		).toEqual([
+			["I", "vi", "IV"],
+			["I", "vi", "IV"]
+		]);
+	});
+
+	it("shows a single token for an unmatched repeated chord", () => {
+		const section = makeTokenSection(
+			[C_MAJOR, C_MAJOR, G_MAJOR],
+			["I", "I", "V"]
+		);
+		const segments = buildColoredHighlightSegments(section, 0, []);
+		expect(segments.map((segment) => segment.indices)).toEqual([[0, 2]]);
+	});
+});
