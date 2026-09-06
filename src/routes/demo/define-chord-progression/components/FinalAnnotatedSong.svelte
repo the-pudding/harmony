@@ -20,8 +20,13 @@
 		CHORDS_COLUMN_WIDTH_PERCENT,
 		COLUMN_GAP_REM
 	} from "./progressionTableLayout.js";
+	import {
+		buildCompactMatchList,
+		COMPACT_MATCH_LIST_COLUMN_COUNT,
+		COMPACT_MATCH_LIST_PRIMARY_ROW_COUNT
+	} from "./compactMatchList.js";
 
-	const MATCH_LIST_COLUMN_COUNT = 2;
+	const LOCKED_MATCH_LIST_COLUMN_COUNT = 2;
 	const LOCKED_MATCH_LIST_ROW_COUNT = 4;
 	const LOCKED_MATCH_BUTTON_HEIGHT_REM = 1.35;
 	const LOCKED_MATCH_LIST_GAP_REM = 0.25;
@@ -29,7 +34,10 @@
 		LOCKED_MATCH_LIST_ROW_COUNT * LOCKED_MATCH_BUTTON_HEIGHT_REM +
 		(LOCKED_MATCH_LIST_ROW_COUNT - 1) * LOCKED_MATCH_LIST_GAP_REM;
 	const LOCKED_MATCH_LIST_CAPACITY =
-		MATCH_LIST_COLUMN_COUNT * LOCKED_MATCH_LIST_ROW_COUNT;
+		LOCKED_MATCH_LIST_COLUMN_COUNT * LOCKED_MATCH_LIST_ROW_COUNT;
+	const COMPACT_MATCH_LIST_HEIGHT_REM =
+		COMPACT_MATCH_LIST_PRIMARY_ROW_COUNT * LOCKED_MATCH_BUTTON_HEIGHT_REM +
+		(COMPACT_MATCH_LIST_PRIMARY_ROW_COUNT - 1) * LOCKED_MATCH_LIST_GAP_REM;
 
 	type Props = {
 		song: GroupedSong;
@@ -70,14 +78,34 @@
 		}, [])
 	);
 
+	const compactMatchList = $derived(
+		buildCompactMatchList(uniqueSortedMatches, song, annotations)
+	);
+
 	const visibleMatches = $derived(
-		lockMatchListHeight
-			? uniqueSortedMatches.slice(0, LOCKED_MATCH_LIST_CAPACITY)
-			: uniqueSortedMatches
+		compact
+			? compactMatchList.visibleMatches
+			: lockMatchListHeight
+				? uniqueSortedMatches.slice(0, LOCKED_MATCH_LIST_CAPACITY)
+				: uniqueSortedMatches
+	);
+
+	const compactOverflow = $derived(
+		compact ? compactMatchList.overflow : null
 	);
 
 	const hiddenMatchCount = $derived(
-		Math.max(0, uniqueSortedMatches.length - visibleMatches.length)
+		compact
+			? 0
+			: Math.max(0, uniqueSortedMatches.length - visibleMatches.length)
+	);
+
+	const compactMatchListStyle = $derived(
+		`--compact-match-list-columns: ${COMPACT_MATCH_LIST_COLUMN_COUNT}; --compact-match-list-rows: ${COMPACT_MATCH_LIST_PRIMARY_ROW_COUNT}; --compact-match-list-gap: ${LOCKED_MATCH_LIST_GAP_REM}rem; --compact-match-list-height: ${COMPACT_MATCH_LIST_HEIGHT_REM}rem;`
+	);
+
+	const lockedMatchListStyle = $derived(
+		`--locked-match-list-height: ${LOCKED_MATCH_LIST_HEIGHT_REM}rem; --locked-match-list-columns: ${LOCKED_MATCH_LIST_COLUMN_COUNT}; --locked-match-list-rows: ${LOCKED_MATCH_LIST_ROW_COUNT}; --locked-match-list-gap: ${LOCKED_MATCH_LIST_GAP_REM}rem;`
 	);
 
 	const hasMatches = $derived(uniqueSortedMatches.length > 0);
@@ -114,10 +142,14 @@
 		{#if showMatchList}
 			<div
 				class="buttons-column"
-				class:buttons-column-locked={lockMatchListHeight}
-				style={lockMatchListHeight
-					? `--locked-match-list-height: ${LOCKED_MATCH_LIST_HEIGHT_REM}rem; --locked-match-list-columns: ${MATCH_LIST_COLUMN_COUNT}; --locked-match-list-rows: ${LOCKED_MATCH_LIST_ROW_COUNT}; --locked-match-list-gap: ${LOCKED_MATCH_LIST_GAP_REM}rem;`
-					: undefined}
+				class:buttons-column-locked={lockMatchListHeight && !compact}
+				class:buttons-column-compact={compact}
+				class:buttons-column-compact-locked={compact && lockMatchListHeight}
+				style={compact
+					? compactMatchListStyle
+					: lockMatchListHeight
+						? lockedMatchListStyle
+						: undefined}
 			>
 				<div class="buttons-grid">
 					{#each visibleMatches as match (progressionMatchListKey(match))}
@@ -145,6 +177,12 @@
 							}}
 						/>
 					{/each}
+					{#if compactOverflow}
+						<div class="compact-overflow-slot">
+							+ {compactOverflow.hiddenCount} more progressions covering {compactOverflow.coveragePercent}%
+							of the song
+						</div>
+					{/if}
 				</div>
 				<div class="total-row">
 					<span class="total-label"
@@ -226,6 +264,39 @@
 	.buttons-column-locked :global(.prog-btn) {
 		min-height: 0;
 		height: 100%;
+	}
+
+	.buttons-column-compact .buttons-grid {
+		display: grid;
+		grid-template-columns: repeat(var(--compact-match-list-columns), minmax(0, 1fr));
+		grid-template-rows: repeat(var(--compact-match-list-rows), auto);
+		grid-auto-flow: column;
+		gap: var(--compact-match-list-gap);
+	}
+
+	.buttons-column-compact-locked .buttons-grid {
+		grid-template-rows: repeat(var(--compact-match-list-rows), minmax(0, 1fr));
+		height: var(--compact-match-list-height);
+		overflow: hidden;
+	}
+
+	.buttons-column-compact-locked :global(.prog-btn) {
+		min-height: 0;
+		height: 100%;
+	}
+
+	.compact-overflow-slot {
+		display: flex;
+		align-items: center;
+		box-sizing: border-box;
+		min-width: 0;
+		padding: 0.25rem 0.375rem;
+		border: 1px dashed rgba(161, 161, 170, 0.35);
+		border-radius: 0.3rem;
+		color: #71717a;
+		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+		font-size: 0.6rem;
+		line-height: 1.35;
 	}
 
 	.total-row {

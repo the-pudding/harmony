@@ -7,23 +7,55 @@
 
 	type Props = {
 		song: GroupedSong;
+		matchingProgressions?: readonly string[] | null;
+		explainedPercent?: number;
 	};
 
-	const { song }: Props = $props();
+	const {
+		song,
+		matchingProgressions = null,
+		explainedPercent
+	}: Props = $props();
 
 	let activeProgression = $state<string | null>(null);
 
 	const result = $derived(
 		matchSongV2(song, coreProgressionsData, DEFAULT_WEIGHTS)
 	);
+
+	const progressionFilter = $derived(
+		matchingProgressions === null ? null : new Set(matchingProgressions)
+	);
+
+	const matches = $derived(
+		progressionFilter === null
+			? result.matches
+			: result.matches.filter((match) =>
+					progressionFilter.has(match.chordProgression)
+				)
+	);
+
+	const annotations = $derived(
+		progressionFilter === null
+			? result.annotations
+			: result.annotations.filter(
+					(annotation) =>
+						annotation.chordProgression !== undefined &&
+						progressionFilter.has(annotation.chordProgression)
+				)
+	);
+
+	const displayExplainedPercent = $derived(
+		explainedPercent ?? result.explainedPercent
+	);
 </script>
 
 <FinalAnnotatedSong
 	compact
 	{song}
-	matches={result.matches}
-	annotations={result.annotations}
-	explainedPercent={result.explainedPercent}
+	{matches}
+	{annotations}
+	explainedPercent={displayExplainedPercent}
 	{activeProgression}
 	onselect={(chordProgression) => {
 		activeProgression =

@@ -49,6 +49,7 @@
 		highlightedProgression?: string | null;
 		yearDomain?: YearDomain | null;
 		colorByProgressionGroup?: boolean;
+		tooltipMatchingProgressions?: readonly string[] | null;
 		onSelectSong?: (key: string) => void;
 	};
 
@@ -60,6 +61,7 @@
 		highlightedProgression = null,
 		yearDomain = null,
 		colorByProgressionGroup = false,
+		tooltipMatchingProgressions = null,
 		onSelectSong
 	}: Props = $props();
 
@@ -291,7 +293,13 @@
 
 		{#if hoveredNode && hoveredSong}
 			<div class="tooltip" style={tooltipStyle}>
-				<SongTooltip song={hoveredSong} />
+				<SongTooltip
+					song={hoveredSong}
+					matchingProgressions={tooltipMatchingProgressions}
+					explainedPercent={tooltipMatchingProgressions
+						? hoveredNode.coveragePercent
+						: undefined}
+				/>
 			</div>
 		{/if}
 	{/if}

@@ -9,15 +9,10 @@ import type {
 	SongBiasOverride,
 	SongProgressionCount
 } from "./worker.js";
+import type { AllSongsCoverageResult } from "./filterCoverageResultForProgressions.js";
 
 export type { SongCoverageEntry, SongBiasOverride, SongProgressionCount };
-
-export type AllSongsCoverageResult = {
-	songCoverages: SongCoverageEntry[];
-	progressionMatchRates: Record<string, number>;
-	progressionMatchCounts: Record<string, number>;
-	biasOverrides: SongBiasOverride[];
-};
+export type { AllSongsCoverageResult } from "./filterCoverageResultForProgressions.js";
 
 const WORKER_POOL_MAX = 8;
 const MIN_SONGS_PER_WORKER = 10;
@@ -152,44 +147,8 @@ export const terminateCoverageWorkerPool = (): void => {
 export const isCoverageWorkerPoolReady = (): boolean =>
 	workerHandles.length > 0;
 
-const MAX_COVERAGE_PERCENT = 100;
-
-const coveragePercentForProgressions = (
-	song: SongCoverageEntry,
-	progressionSet: ReadonlySet<string>
-): number => {
-	const matchedProgressions = new Set(
-		song.matchingProgressions.filter((p) => progressionSet.has(p))
-	);
-	const summed = song.progressionCounts
-		.filter(
-			(count) => count.isCore && matchedProgressions.has(count.chordProgression)
-		)
-		.reduce((total, count) => total + count.coveragePercent, 0);
-	return Math.min(MAX_COVERAGE_PERCENT, Math.round(summed));
-};
-
-export const filterCoverageResultForProgressions = (
-	result: AllSongsCoverageResult,
-	chordProgressions: string[]
-): AllSongsCoverageResult => {
-	const progressionSet = new Set(chordProgressions);
-	const songCoverages = result.songCoverages
-		.filter((s) => s.matchingProgressions.some((p) => progressionSet.has(p)))
-		.map((s) => ({
-			...s,
-			coveragePercent: coveragePercentForProgressions(s, progressionSet),
-			matchingProgressions: s.matchingProgressions.filter((p) =>
-				progressionSet.has(p)
-			)
-		}));
-	const filteredSongKeys = new Set(songCoverages.map((s) => s.songKey));
-	return {
-		songCoverages,
-		progressionMatchRates: result.progressionMatchRates,
-		progressionMatchCounts: result.progressionMatchCounts,
-		biasOverrides: result.biasOverrides.filter((o) =>
-			filteredSongKeys.has(o.songKey)
-		)
-	};
-};
+export {
+	coveragePercentForProgressions,
+	filterCoverageResultForProgressions,
+	MAX_COVERAGE_PERCENT
+} from "./filterCoverageResultForProgressions.js";

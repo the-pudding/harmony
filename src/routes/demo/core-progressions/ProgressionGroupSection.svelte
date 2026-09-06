@@ -142,6 +142,7 @@
 		{songByKey}
 		{selectedSongKey}
 		{highlightedProgressions}
+		tooltipMatchingProgressions={groupProgressionKeys}
 		{onSelectSong}
 	/>
 
@@ -151,6 +152,7 @@
 		{selectedSongKey}
 		{highlightedProgressions}
 		{yearDomain}
+		tooltipMatchingProgressions={groupProgressionKeys}
 		{onSelectSong}
 	/>
 
