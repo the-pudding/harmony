@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "node:url";
 import { csvParse } from "d3";
 import { SCALE_INTERVALS } from "../src/chord-processing/scale-intervals.js";
+import { parseRomanToken } from "../src/chord-processing/romanNumerals.js";
 
 const HARMONY_ROOT = process.cwd();
 const DATA_ROOT = path.join(HARMONY_ROOT, "../harmony-data");
@@ -189,6 +189,9 @@ const compareSongsByPopularity = (a, b) => {
 };
 
 const ROMAN_BASE = ["I", "II", "III", "IV", "V", "VI", "VII"];
+const SEMITONE = 1;
+const FLAT_SEMITONE_DIFF = NOTES_PER_OCTAVE - SEMITONE;
+const CHORD_NAME_ROOT_PATTERN = /^([A-G][#b]?)/i;
 
 const PARALLEL_HOME_SCALE = {
 	major: "minor",
@@ -213,10 +216,41 @@ const degreeQualityToRoman = (degree, quality, accidental = 0) => {
 	return roman;
 };
 
+const accidentalFromRoman = (roman) => {
+	if (typeof roman !== "string") return null;
+	const parsed = parseRomanToken(roman);
+	if (!parsed) return null;
+	if (parsed.flat) return -SEMITONE;
+	if (parsed.sharp) return SEMITONE;
+	return 0;
+};
+
+const accidentalFromChordName = (chord, key, scale) => {
+	if (typeof chord.name !== "string") return null;
+	const rootMatch = chord.name.trim().match(CHORD_NAME_ROOT_PATTERN);
+	if (!rootMatch) return null;
+	const namePitchClass = parseNoteToPitchClass(rootMatch[1]);
+	if (namePitchClass === null) return null;
+	const diatonicPitchClass = degreeToPitchClass(chord.degree, key, scale, 0);
+	if (diatonicPitchClass === null) return null;
+	const diff =
+		(namePitchClass - diatonicPitchClass + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE;
+	if (diff === 0) return 0;
+	if (diff === FLAT_SEMITONE_DIFF) return -SEMITONE;
+	if (diff === SEMITONE) return SEMITONE;
+	return null;
+};
+
 const resolveAccidental = (chord, key, scale) => {
 	if (chord.accidental !== undefined && chord.accidental !== 0) {
 		return chord.accidental;
 	}
+
+	const romanAccidental = accidentalFromRoman(chord.roman);
+	if (romanAccidental !== null) return romanAccidental;
+
+	const nameAccidental = accidentalFromChordName(chord, key, scale);
+	if (nameAccidental !== null) return nameAccidental;
 
 	if (!chord.borrowed) return 0;
 
@@ -237,8 +271,8 @@ const resolveAccidental = (chord, key, scale) => {
 	if (homePc === parallelPc) return 0;
 
 	const diff = (parallelPc - homePc + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE;
-	if (diff === 11) return -1;
-	if (diff === 1) return 1;
+	if (diff === FLAT_SEMITONE_DIFF) return -SEMITONE;
+	if (diff === SEMITONE) return SEMITONE;
 	return 0;
 };
 
@@ -250,11 +284,13 @@ const progressionChordInputsAreEqual = (a, b) =>
 const chordsToRomanTokens = (chords, key, scale) =>
 	(chords ?? [])
 		.map((chord) =>
-			degreeQualityToRoman(
-				chord.degree,
-				chord.quality,
-				resolveAccidental(chord, key, scale)
-			)
+			typeof chord.roman === "string" && chord.roman.length > 0
+				? chord.roman
+				: degreeQualityToRoman(
+						chord.degree,
+						chord.quality,
+						resolveAccidental(chord, key, scale)
+					)
 		)
 		.filter(Boolean);
 
@@ -748,7 +784,11 @@ const main = () => {
 	const trackerIndex = loadTrackerIndex();
 	const billboardIndex = loadBillboardIndex();
 
-	const { songs, stats } = buildSongs(SONG_SOURCE_DIRS, trackerIndex, billboardIndex);
+	const { songs, stats } = buildSongs(
+		SONG_SOURCE_DIRS,
+		trackerIndex,
+		billboardIndex
+	);
 	ensureOutputDir();
 	fs.writeFileSync(OUTPUT_PATH, JSON.stringify(songs));
 	logSummary(stats);
@@ -766,8 +806,7 @@ const main = () => {
 	console.log(`Output: ${POPULAR_UG_OUTPUT_PATH}`);
 };
 
-const isMain = process.argv[1] === fileURLToPath(import.meta.url);
-if (isMain) {
+if (!process.env.VITEST) {
 	main();
 }
 

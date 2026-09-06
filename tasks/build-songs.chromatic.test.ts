@@ -28,7 +28,7 @@ describe("build-songs chromatic regression", () => {
 		expect(input).toEqual({ noteName: "Bb", suffix: "major" });
 	});
 
-	it("does not map bIII to diatonic A (the old snap bug)", () => {
+	it("prefers the written chord name over a snapped diatonic degree", () => {
 		const snappedBugChord = {
 			name: "Bb",
 			degree: 2,
@@ -39,9 +39,9 @@ describe("build-songs chromatic regression", () => {
 			suspensions: []
 		};
 
-		const wrongInput = chordToProgressionInput(snappedBugChord, "G", "major");
-		expect(wrongInput?.noteName).toBe("A");
-		expect(wrongInput?.noteName).not.toBe("Bb");
+		const input = chordToProgressionInput(snappedBugChord, "G", "major");
+		expect(input?.noteName).toBe("Bb");
+		expect(input?.noteName).not.toBe("A");
 	});
 
 	it("parses C/Bb slash bass from the chord name", () => {
@@ -77,6 +77,69 @@ describe("build-songs chromatic regression", () => {
 			"bIII"
 		]);
 		expect(degreeToPitchClass(3, "G", "major", -1)).toBe(10);
+	});
+
+	it("keeps major III when roman/name are E, even if borrowed (buttercup)", () => {
+		const buttercupThree = {
+			name: "E7",
+			degree: 3,
+			quality: "maj",
+			borrowed: true,
+			roman: "III",
+			bass_degree: 3,
+			extension: null,
+			suspensions: []
+		};
+
+		expect(resolveAccidental(buttercupThree, "C", "major")).toBe(0);
+		expect(chordsToRomanTokens([buttercupThree], "C", "major")).toEqual([
+			"III"
+		]);
+		expect(chordToProgressionInput(buttercupThree, "C", "major")).toEqual({
+			noteName: "E",
+			suffix: "major"
+		});
+	});
+
+	it("keeps major III from the chord name when roman is absent", () => {
+		const namedMajorThree = {
+			name: "E7",
+			degree: 3,
+			quality: "maj",
+			borrowed: true,
+			bass_degree: 3,
+			extension: null,
+			suspensions: []
+		};
+
+		expect(resolveAccidental(namedMajorThree, "C", "major")).toBe(0);
+		expect(chordsToRomanTokens([namedMajorThree], "C", "major")).toEqual([
+			"III"
+		]);
+		expect(chordToProgressionInput(namedMajorThree, "C", "major")).toEqual({
+			noteName: "E",
+			suffix: "major"
+		});
+	});
+
+	it("keeps major VI secondary dominant when roman/name are A, even if borrowed", () => {
+		const aSeven = {
+			name: "A7",
+			degree: 6,
+			quality: "maj",
+			borrowed: true,
+			roman: "VI",
+			bass_degree: 6,
+			extension: null,
+			suspensions: []
+		};
+
+		expect(resolveAccidental(aSeven, "C", "major")).toBe(0);
+		expect(chordsToRomanTokens([aSeven], "C", "major")).toEqual(["VI"]);
+		expect(chordToProgressionInput(aSeven, "C", "major")).toEqual({
+			noteName: "A",
+			suffix: "major"
+		});
 	});
 
 	it("maps major-key flat sevenths to bVII not VI", () => {

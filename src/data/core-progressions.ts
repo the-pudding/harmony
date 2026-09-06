@@ -220,6 +220,15 @@ const happyMajoryProgressions: ProgressionGroup = {
 			chordProgression: "IV-iii-ii-I",
 			scale: "major",
 			description: ""
+		},
+		// ROCK-ISH (introduced Sep 5, 2026)
+		// @michelle: not sure if this deserves a category of its own?
+		{
+			name: "tell me what you want",
+			chordProgression: ["I-bIII-IV-bVII", "I-bIII-IV"],
+			scale: "major",
+			description:
+				"this I-vIII sound is classic rock vibes, it has that dual feel (Are we in E mixolydian (A major) or D major?). Iconically used in the song 'Wannabe' by the Spice Girls."
 		}
 	]
 };
