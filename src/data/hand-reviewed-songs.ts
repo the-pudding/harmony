@@ -59,6 +59,11 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "connie-francis__many-tears-ago",
 		chordProgressionIssues:
 			"Chords are correct, but since the original UG webpage didn't list a key, it somehow ended up with 'D major' when it should say 'G major'."
+	},
+	{
+		id: "the-hollies__long-cool-woman-in-a-black-dress",
+		chordProgressionIssues:
+			"Chords are correct, but since the original UG webpage didn't list a key, it somehow ended up with 'D major' when it should say something like 'E mixolydian' or (in as Adam Neely talked about) it's both in E mixolydian (A major) *and* D major."
 	}
 ];
 
