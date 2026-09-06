@@ -7,29 +7,17 @@ import type {
 } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
 import { abstractProgressionKey, scopedToScale } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
 import {
-  highlightPaletteFromColor,
-  UNGROUPED_PROGRESSION_PALETTE,
+	colorForNonCoreProgression,
+	highlightPaletteFromColor,
+	UNGROUPED_PROGRESSION_PALETTE
 } from "../../define-chord-progression/components/progressionColors.js";
-import {
-  colorForProgressionGroupName,
-  UNGROUPED_PROGRESSION_GROUP_COLOR,
-} from "$data/core-progressions.js";
+import { colorForProgressionGroupName } from "$data/core-progressions.js";
 import { progressionGroupNameFor } from "$data/core-progressions.util.js";
 import type { MatchWeights } from "./weights.js";
 import { DEFAULT_WEIGHTS } from "./weights.js";
 import { tileSection, type TileSpan } from "./tileSection.js";
 import type { ChordHighlightPalette } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
 import type { ScaleName } from "../../../../chord-processing/scales.js";
-
-// Non-core progressions found by v2 get colors cycling through this palette.
-const GAP_FILL_COLORS = [
-  "#e15759",
-  "#b07aa1",
-  "#ff9da7",
-  "#9c755f",
-  "#bab0ac",
-  "#f1ce63",
-];
 
 export type UnifiedProgression = {
 	harmonicKey: string;
@@ -124,10 +112,7 @@ const paletteForUnified = (
     const color = colorForProgressionGroupName(groupName);
     return highlightPaletteFromColor(color);
   }
-  const color =
-    GAP_FILL_COLORS[gapFillIndex % GAP_FILL_COLORS.length] ??
-    UNGROUPED_PROGRESSION_GROUP_COLOR;
-  return highlightPaletteFromColor(color);
+  return highlightPaletteFromColor(colorForNonCoreProgression(gapFillIndex));
 };
 
 export const matchSongV2 = (

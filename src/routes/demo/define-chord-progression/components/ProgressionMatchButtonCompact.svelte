@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { humanizeScale } from "../../../../data/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import { PALETTE_FILL_HOVER_COLOR_PERCENT } from "./progressionColors.js";
 
 	const COVERAGE_PERCENT_MAX = 100;
 	const COVERAGE_FILL_INACTIVE_OPACITY = 0.12;
@@ -15,10 +16,19 @@
 		onunhover?: () => void;
 		borderColor?: string;
 		dashed?: boolean;
+		fillColor?: string;
 	};
 
-	let { match, active, onselect, onhover, onunhover, borderColor, dashed = false }: Props =
-		$props();
+	let {
+		match,
+		active,
+		onselect,
+		onhover,
+		onunhover,
+		borderColor,
+		dashed = false,
+		fillColor
+	}: Props = $props();
 
 	const scaleName = $derived(humanizeScale(match.scale));
 	const buttonTitle = $derived(
@@ -38,8 +48,11 @@
 	class="prog-btn"
 	class:active
 	class:custom-border={borderColor !== undefined}
+	class:palette-fill={fillColor !== undefined}
 	class:dashed
 	style:--prog-btn-border-color={borderColor}
+	style:--prog-btn-fill-color={fillColor}
+	style:--palette-fill-hover-percent={PALETTE_FILL_HOVER_COLOR_PERCENT}
 	style:--coverage-fill-inactive-opacity={COVERAGE_FILL_INACTIVE_OPACITY}
 	style:--coverage-fill-active-opacity={COVERAGE_FILL_ACTIVE_OPACITY}
 	style:--coverage-fill-hover-opacity={COVERAGE_FILL_HOVER_OPACITY}
@@ -135,6 +148,18 @@
 
 	.prog-btn.custom-border:hover:not(.active) {
 		border-color: color-mix(in srgb, var(--prog-btn-border-color) 70%, white);
+	}
+
+	.prog-btn.palette-fill:not(.active) {
+		background: var(--prog-btn-fill-color);
+	}
+
+	.prog-btn.palette-fill:hover:not(.active) {
+		background: color-mix(
+			in srgb,
+			var(--prog-btn-fill-color) calc(var(--palette-fill-hover-percent) * 1%),
+			white
+		);
 	}
 
 	.prog-btn.dashed:not(.active) {

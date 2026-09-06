@@ -3,6 +3,7 @@
 	import { humanizeScale } from "../../../../data/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import ProgressionMatchButtonCompact from "./ProgressionMatchButtonCompact.svelte";
+	import { PALETTE_FILL_HOVER_COLOR_PERCENT } from "./progressionColors.js";
 
 	export type VariantTooltipRow = {
 		chordProgression: string;
@@ -54,6 +55,8 @@
 			: match.chordProgression
 	);
 
+	const usesPaletteFill = $derived(!match.isCoreProgression);
+
 	const otherVariantCount = $derived(
 		Math.max(0, variantTooltipRows.length - 1)
 	);
@@ -97,6 +100,7 @@
 		{onunhover}
 		{borderColor}
 		{dashed}
+		fillColor={usesPaletteFill ? match.highlightPalette.fill : undefined}
 	/>
 {:else}
 
@@ -110,8 +114,11 @@
 	class="prog-btn"
 	class:active
 	class:custom-border={borderColor !== undefined}
+	class:palette-fill={usesPaletteFill}
 	class:dashed
 	style:--prog-btn-border-color={borderColor}
+	style:--prog-btn-fill-color={match.highlightPalette.fill}
+	style:--palette-fill-hover-percent={PALETTE_FILL_HOVER_COLOR_PERCENT}
 	onclick={() => onselect(match.chordProgression)}
 	onmouseenter={() => onhover?.(match.chordProgression)}
 	onmouseleave={() => onunhover?.()}
@@ -217,6 +224,18 @@
 
 	.prog-btn.custom-border:hover:not(.active) {
 		border-color: color-mix(in srgb, var(--prog-btn-border-color) 70%, white);
+	}
+
+	.prog-btn.palette-fill:not(.active) {
+		background: var(--prog-btn-fill-color);
+	}
+
+	.prog-btn.palette-fill:hover:not(.active) {
+		background: color-mix(
+			in srgb,
+			var(--prog-btn-fill-color) calc(var(--palette-fill-hover-percent) * 1%),
+			white
+		);
 	}
 
 	.prog-btn.dashed:not(.active) {
