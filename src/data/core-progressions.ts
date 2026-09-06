@@ -207,6 +207,13 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
+			name: "build me up buttercup",
+			chordProgression: "I-III-IV-V",
+			scale: "major",
+			description:
+				"gotta love that I-III-IV crunchiness, same one used by Radiohead's 'Creep' (but they finish off iv instead of V)"
+		},
+		{
 			name: "IV-iv-I turnaround",
 			chordProgression: "IV-iv-I",
 			scale: "major",
