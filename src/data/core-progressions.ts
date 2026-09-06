@@ -53,7 +53,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
-			name: "I-vi vamp",
+			name: "hey there delilah (chorus)",
 			chordProgression: "I-vi-I-vi",
 			scale: "major",
 			matchRomanNumeralsExactly: true,
@@ -348,6 +348,12 @@ const minoryProgressions: ProgressionGroup = {
 			scale: "minor",
 			description:
 				"[in a major key reference point] starts on a darker minor six, and the V doesn't take us home but to the melancholy iii"
+		},
+		{
+			name: "hey there delilah (verse)",
+			chordProgression: "I-iii-I-iii",
+			scale: "major",
+			description: ""
 		},
 		{
 			name: "tainted love",

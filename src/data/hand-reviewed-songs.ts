@@ -68,6 +68,7 @@ export type TrickySongToMatchCorrectly = {
 };
 
 export const trickySongsToMatchCorrectly: TrickySongToMatchCorrectly[] = [
+	// PRE V2 ALGO (all issues were flagged based on v1, I've yet to fully review and update it now that we use v2, TODO: do so)
 	{
 		id: "justin-bieber__love-yourself",
 		chordMatchingChallenges:
@@ -112,6 +113,12 @@ export const trickySongsToMatchCorrectly: TrickySongToMatchCorrectly[] = [
 		id: "stevie-wonder__superstition",
 		chordMatchingChallenges:
 			"The chords are basically right, the whole song is really just a vamp on Ebm7, or just Eb funk, and after a long time it hits the V7 as a turnaround. So, you could say there's not real 'progression', just a funk vamp."
+	},
+	// POST V2 ALGO:
+	{
+		id: "plain-white-t-s__hey-there-delilah",
+		chordMatchingChallenges:
+			"Several issues, all stemming from it over eagerly trying to fill every gap, and matching on passing chords and missing the actual progression. Verse: gets I-iii-I-iii the first time it appears (opens section, easy to match), but misses it the second time it appears cuz it's tripped up trying to neatly pack away section in between. Chorus: gets I-vi-I-vi the first time, tips up on the lone passing V chord, misses the second I-vi-I-vi."
 	}
 ];
 
