@@ -129,6 +129,11 @@ export const trickySongsToMatchCorrectly: TrickySongToMatchCorrectly[] = [
 		id: "alicia-keys__if-i-ain-t-got-you",
 		chordMatchingChallenges:
 			"Algo struggles to with the passing chords 'ii-iii' and fails to identify the repeating second 'VI-iii-biii-ii-I' even if I explicitly add it as a core progression. Honestly, this might be a song to hand-label the chords of."
+	},
+	{
+		id: "cher__believe",
+		chordMatchingChallenges:
+			"Overall great matches. Just in verse we match 2 3-chord core progressions (mostly correct), but the second one matches I-iii-IV and just leaves out the final V. I guess this it a 3-chord core progression being preferred over a 4-chord non-core? Is this the right tradeoff?"
 	}
 ];
 
