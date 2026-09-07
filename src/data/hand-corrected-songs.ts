@@ -522,5 +522,18 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 				}))
 			]
 		}
+	},
+	{
+		id: "drake__in-my-feelings",
+		correctedSongContents: {
+			sections: [
+				...["Intro", "Verse", "Chorus", "Verse"].map((name) => ({
+					name,
+					key: "Ab",
+					scale: "major",
+					romanTokens: repeatNTimes(["IV", "iii"], 4)
+				}))
+			]
+		}
 	}
 ];
