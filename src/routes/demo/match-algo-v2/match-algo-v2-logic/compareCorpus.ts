@@ -3,8 +3,8 @@ import { PERCENT_MULTIPLIER } from "./algoMetrics.js";
 
 export const COVERAGE_BUCKET_WIDTH = 10;
 export const COVERAGE_BUCKET_MAX_START = 90;
-export const WORSE_SONGS_LIMIT = 8;
-export const IMPROVED_SONGS_LIMIT = 8;
+export const LOWEST_COVERAGE_SONGS_LIMIT = 8;
+export const TOP_COVERAGE_SONGS_LIMIT = 8;
 
 export type CoverageBucket = {
 	start: number;
@@ -12,7 +12,7 @@ export type CoverageBucket = {
 	count: number;
 };
 
-export type CorpusSideStats = {
+export type CorpusStats = {
 	songCount: number;
 	meanCoverage: number;
 	medianCoverage: number;
@@ -37,7 +37,7 @@ export type ComparedSongRow = {
 
 export type CorpusComparison = {
 	songCount: number;
-	stats: CorpusSideStats;
+	stats: CorpusStats;
 	coverageHistogram: CoverageBucket[];
 	lowestCoverage: ComparedSongRow[];
 	highestCoverage: ComparedSongRow[];
@@ -84,7 +84,7 @@ const medianOf = (values: number[]): number => {
 		: (sorted[middle] ?? 0);
 };
 
-const sideStats = (rows: SongAlgoMetrics[]): CorpusSideStats => {
+const computeCorpusStats = (rows: SongAlgoMetrics[]): CorpusStats => {
 	const coverages = rows.map((row) => row.coveragePercent);
 	const coveredChords = rows.reduce((sum, row) => sum + row.coveredChords, 0);
 	const length3 = rows.reduce((sum, row) => sum + row.coveredByLength3, 0);
@@ -136,21 +136,21 @@ export const aggregateCorpusComparison = (
 
 	const lowestCoverage = [...compared]
 		.sort((a, b) => a.metrics.coveragePercent - b.metrics.coveragePercent)
-		.slice(0, WORSE_SONGS_LIMIT);
+		.slice(0, LOWEST_COVERAGE_SONGS_LIMIT);
 	const highestCoverage = [...compared]
 		.sort((a, b) => b.metrics.coveragePercent - a.metrics.coveragePercent)
-		.slice(0, IMPROVED_SONGS_LIMIT);
+		.slice(0, TOP_COVERAGE_SONGS_LIMIT);
 	const mostInteriorHoles = [...compared]
 		.filter((row) => row.metrics.interiorSingletonCount > 0)
 		.sort(
 			(a, b) =>
 				b.metrics.interiorSingletonCount - a.metrics.interiorSingletonCount
 		)
-		.slice(0, WORSE_SONGS_LIMIT);
+		.slice(0, LOWEST_COVERAGE_SONGS_LIMIT);
 
 	return {
 		songCount: rows.length,
-		stats: sideStats(rows),
+		stats: computeCorpusStats(rows),
 		coverageHistogram: histogramWithCounts,
 		lowestCoverage,
 		highestCoverage,

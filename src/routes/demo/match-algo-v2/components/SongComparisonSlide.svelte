@@ -1,5 +1,5 @@
 <script lang="ts">
-	import V1V2SongCompare from "./V1V2SongCompare.svelte";
+	import SongMatchPreview from "./SongMatchPreview.svelte";
 	import type { MatchWeights } from "../match-algo-v2-logic/weights.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import { getChordMatchingChallenges } from "../../../../data/hand-reviewed-songs.js";
@@ -24,7 +24,7 @@
 		<p class="challenge">{challenge}</p>
 	{/if}
 
-	<V1V2SongCompare {song} {weights} {interactive} />
+	<SongMatchPreview {song} {weights} {interactive} />
 </article>
 
 <style>

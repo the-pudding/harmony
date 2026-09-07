@@ -16,9 +16,9 @@ import type { MatchWeights } from "./weights.js";
 export const SONGS_PER_COMPARE_CHUNK = 12;
 const YIELD_MS = 0;
 
-export type SongPairMetrics = {
+export type SongMetricsRow = {
 	songKey: string;
-	v2: SongAlgoMetrics;
+	metrics: SongAlgoMetrics;
 };
 
 const yieldToMain = (): Promise<void> =>
@@ -40,17 +40,17 @@ export const prioritizeSongsForComparison = (
 const emptyComparison = (): CorpusComparison =>
 	aggregateCorpusComparison([]);
 
-export const createAlgoComparisonState = () => {
-	let pairs = $state<SongPairMetrics[]>([]);
+export const createCorpusScoringState = () => {
+	let rows = $state<SongMetricsRow[]>([]);
 	let computedCount = $state(0);
 	let totalCount = $state(0);
 	let isComputing = $state(false);
 	let requestId = 0;
 
 	const comparison = $derived(
-		pairs.length === 0
+		rows.length === 0
 			? emptyComparison()
-			: aggregateCorpusComparison(pairs.map((pair) => pair.v2))
+			: aggregateCorpusComparison(rows.map((row) => row.metrics))
 	);
 
 	const progressPercent = $derived(
@@ -67,14 +67,14 @@ export const createAlgoComparisonState = () => {
 			songs,
 			trickySongsToMatchCorrectly.map((entry) => entry.id)
 		);
-		pairs = [];
+		rows = [];
 		computedCount = 0;
 		totalCount = ordered.length;
 		isComputing = ordered.length > 0;
 
 		const runChunk = async (
 			offset: number,
-			accumulated: SongPairMetrics[]
+			accumulated: SongMetricsRow[]
 		): Promise<void> => {
 			if (currentRequest !== requestId) return;
 			if (offset >= ordered.length) {
@@ -82,18 +82,18 @@ export const createAlgoComparisonState = () => {
 				return;
 			}
 			const chunk = ordered.slice(offset, offset + SONGS_PER_COMPARE_CHUNK);
-			const chunkPairs = chunk.map((song) => ({
+			const chunkRows = chunk.map((song) => ({
 				songKey: song.songKey,
-				v2: computeSongAlgoMetrics(
+				metrics: computeSongAlgoMetrics(
 					song,
 					getCachedV2MatchResult(song, coreProgressions, weights)
 				)
 			}));
-			const nextPairs = [...accumulated, ...chunkPairs];
-			pairs = nextPairs;
-			computedCount = nextPairs.length;
+			const nextRows = [...accumulated, ...chunkRows];
+			rows = nextRows;
+			computedCount = nextRows.length;
 			await yieldToMain();
-			await runChunk(offset + SONGS_PER_COMPARE_CHUNK, nextPairs);
+			await runChunk(offset + SONGS_PER_COMPARE_CHUNK, nextRows);
 		};
 
 		await runChunk(0, []);
@@ -105,8 +105,8 @@ export const createAlgoComparisonState = () => {
 	};
 
 	return {
-		get pairs() {
-			return pairs;
+		get rows() {
+			return rows;
 		},
 		get comparison() {
 			return comparison;

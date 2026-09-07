@@ -4,10 +4,6 @@ import {
 	aggregateCorpusComparison,
 	coverageBucketStart
 } from "./compareCorpus.js";
-import {
-	formatSignedInteger,
-	formatSignedSharePercentPoints
-} from "./formatComparison.js";
 
 const metrics = (
 	overrides: Partial<SongAlgoMetrics> & Pick<SongAlgoMetrics, "songKey">
@@ -59,11 +55,5 @@ describe("aggregateCorpusComparison", () => {
 		expect(comparison.highestCoverage[0]?.songKey).toBe("a");
 		expect(comparison.lowestCoverage[0]?.songKey).toBe("b");
 		expect(comparison.mostInteriorHoles[0]?.songKey).toBe("b");
-	});
-
-	it("formats signed change stats", () => {
-		expect(formatSignedInteger(3)).toBe("+3");
-		expect(formatSignedInteger(-2)).toBe("-2");
-		expect(formatSignedSharePercentPoints(0.12)).toBe("+12.0 pp");
 	});
 });

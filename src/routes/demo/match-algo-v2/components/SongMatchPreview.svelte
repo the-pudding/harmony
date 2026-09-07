@@ -27,9 +27,8 @@
 	const ignoreSelect = (_chordProgression: string) => {};
 </script>
 
-<section class="comparison-column">
-	<div class="step-header">
-		<h3 class="step-label">v2</h3>
+<section class="song-match-preview">
+	<div class="preview-header">
 		<span class="coverage-badge">{v2Result.explainedPercent}% explained</span>
 	</div>
 	<FinalAnnotatedSong
@@ -53,7 +52,7 @@
 </section>
 
 <style>
-	.comparison-column {
+	.song-match-preview {
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
@@ -64,19 +63,10 @@
 		background: #0c0c0e;
 	}
 
-	.step-header {
+	.preview-header {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-	}
-
-	.step-label {
-		margin: 0;
-		font-size: 0.65rem;
-		font-weight: 700;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: #a1a1aa;
 	}
 
 	.coverage-badge {

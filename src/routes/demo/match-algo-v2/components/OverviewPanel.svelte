@@ -4,7 +4,7 @@
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { MatchWeights } from "../match-algo-v2-logic/weights.js";
 	import type { CorpusComparison } from "../match-algo-v2-logic/compareCorpus.js";
-	import type { SongPairMetrics } from "../match-algo-v2-logic/createAlgoComparisonState.svelte.js";
+	import type { SongMetricsRow } from "../match-algo-v2-logic/createCorpusScoringState.svelte.js";
 	import {
 		formatCount,
 		formatPercent,
@@ -16,7 +16,7 @@
 
 	type Props = {
 		comparison: CorpusComparison;
-		pairs: SongPairMetrics[];
+		pairs: SongMetricsRow[];
 		isComputing: boolean;
 		progressPercent: number;
 		computedCount: number;
@@ -46,7 +46,7 @@
 		trickySongsToMatchCorrectly.flatMap((entry) => {
 			const pair = pairs.find((row) => row.songKey === entry.id);
 			return pair
-				? [{ ...pair.v2, challenge: entry.chordMatchingChallenges }]
+				? [{ ...pair.metrics, challenge: entry.chordMatchingChallenges }]
 				: [];
 		})
 	);
@@ -101,7 +101,7 @@
 			<article class="card">
 				<h3>Coverage</h3>
 				<p class="stat">{formatPercent(comparison.stats.meanCoverage)}</p>
-				<p class="winloss">
+				<p class="stat-note">
 					median {formatPercent(comparison.stats.medianCoverage)} · uncovered
 					{formatPercent(comparison.stats.meanUncovered)}
 				</p>
@@ -109,14 +109,14 @@
 			<article class="card">
 				<h3>Section starts</h3>
 				<p class="stat">{formatPercent(comparison.stats.meanSectionStartRate)}</p>
-				<p class="winloss">
+				<p class="stat-note">
 					opening aligned {formatPercent(comparison.stats.meanOpeningPrefixAlignRate)}
 				</p>
 			</article>
 			<article class="card">
 				<h3>Interior holes</h3>
 				<p class="stat">{formatCount(comparison.stats.meanInteriorSingletons)}</p>
-				<p class="winloss">
+				<p class="stat-note">
 					{formatCount(comparison.stats.meanInteriorUncoveredRuns)} interior
 					uncovered runs / song
 				</p>
@@ -126,7 +126,7 @@
 				<p class="stat">
 					{formatSharePercent(comparison.stats.length3ShareOfCovered)}
 				</p>
-				<p class="winloss">
+				<p class="stat-note">
 					mean unit {formatUnitLength(comparison.stats.meanUnitLength)} · length ≥
 					4 {formatSharePercent(comparison.stats.length4PlusShareOfCovered)}
 				</p>
@@ -143,7 +143,7 @@
 					<div class="hist-col">
 						<div class="hist-bars">
 							<div
-								class="hist-bar v2"
+								class="hist-bar"
 								style:height="{barHeightPercent(bucket.count)}%"
 								title="{bucket.label}: {bucket.count}"
 							></div>
@@ -161,7 +161,7 @@
 			</p>
 			<div class="stacks">
 				<div class="stack-row">
-					<span class="stack-name">v2</span>
+					<span class="stack-name">corpus</span>
 					<div class="stack">
 						<span
 							class="seg core"
@@ -379,7 +379,7 @@
 		color: #f4f4f5;
 	}
 
-	.winloss {
+	.stat-note {
 		margin: 0;
 		font-size: 0.68rem;
 		color: #a1a1aa;
@@ -429,7 +429,7 @@
 		min-height: 0;
 	}
 
-	.hist-bar.v2 {
+	.hist-bar {
 		background: #818cf8;
 	}
 

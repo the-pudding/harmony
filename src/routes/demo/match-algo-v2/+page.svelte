@@ -8,7 +8,7 @@
 	import OverviewPanel from "./components/OverviewPanel.svelte";
 	import MatchAlgoV2UrlSync from "./MatchAlgoV2UrlSync.svelte";
 	import { getCachedV2MatchResult } from "./match-algo-v2-logic/matchResultCache.js";
-	import { createAlgoComparisonState } from "./match-algo-v2-logic/createAlgoComparisonState.svelte.js";
+	import { createCorpusScoringState } from "./match-algo-v2-logic/createCorpusScoringState.svelte.js";
 	import {
 		DEFAULT_WEIGHTS,
 		type MatchWeights
@@ -37,7 +37,7 @@
 	const INTERACTIVE_KEY_TARGETS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 
 	const initialUrl = readMatchAlgoV2UrlState(currentSearchParams());
-	const comparisonState = createAlgoComparisonState();
+	const corpusScoringState = createCorpusScoringState();
 
 	let allSongs = $state<GroupedSong[]>([]);
 	let loading = $state(true);
@@ -89,7 +89,7 @@
 		const songs = allSongs;
 		const currentWeights = weights;
 		untrack(() => {
-			void comparisonState.compute(
+			void corpusScoringState.compute(
 				songs,
 				coreProgressionsData,
 				currentWeights
@@ -108,7 +108,7 @@
 	});
 
 	onDestroy(() => {
-		comparisonState.cancel();
+		corpusScoringState.cancel();
 	});
 
 	const handleWeightsChange = (newWeights: MatchWeights) => {
@@ -207,7 +207,7 @@
 		{:else if carouselSongs.length === 0}
 			<p class="status">no songs found in the dataset</p>
 		{:else if showTricky}
-			<p class="v1-note">
+			<p class="algo-note">
 				v2 tiles from the start of each section and scores candidate loops with
 				weighted heuristics — core, length, section start/end, and contiguous
 				repeats — instead of greedily maximizing coverage.
@@ -279,12 +279,12 @@
 			aria-labelledby="match-algo-tab-overview"
 		>
 			<OverviewPanel
-				comparison={comparisonState.comparison}
-				pairs={comparisonState.pairs}
-				isComputing={comparisonState.isComputing}
-				progressPercent={comparisonState.progressPercent}
-				computedCount={comparisonState.computedCount}
-				totalCount={comparisonState.totalCount}
+				comparison={corpusScoringState.comparison}
+				pairs={corpusScoringState.rows}
+				isComputing={corpusScoringState.isComputing}
+				progressPercent={corpusScoringState.progressPercent}
+				computedCount={corpusScoringState.computedCount}
+				totalCount={corpusScoringState.totalCount}
 				songs={allSongs}
 				{weights}
 				onSelectSong={openTrickySong}
@@ -412,7 +412,7 @@
 		color: #f87171;
 	}
 
-	.v1-note {
+	.algo-note {
 		font-size: 0.72rem;
 		color: #71717a;
 		line-height: 1.5;

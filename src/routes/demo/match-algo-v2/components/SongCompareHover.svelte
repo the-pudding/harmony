@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-	import V1V2SongCompare from "./V1V2SongCompare.svelte";
+	import SongMatchPreview from "./SongMatchPreview.svelte";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { MatchWeights } from "../match-algo-v2-logic/weights.js";
 
@@ -34,7 +34,7 @@
 					<span class="artist">{song.artists.join(", ")}</span>
 				{/if}
 			</p>
-			<V1V2SongCompare {song} {weights} />
+			<SongMatchPreview {song} {weights} />
 		</div>
 	{/if}
 </div>

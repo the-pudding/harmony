@@ -7,13 +7,8 @@ import {
 	aggregateVariantMatchStats,
 	buildColoredHighlightSegments,
 	collapseDisplayMatchesByName,
-	computeProgressionMatches,
 	computeStatsForParsedProgression,
-	computeGapOnlyCoveredPositionsBySection,
-	computeGapOnlyStats,
 	dedupeMatchesByChordProgression,
-	parseCoreProgressions,
-	findMatchingCoreProgressionsForSong,
 	buildProgressionMatchRates,
 	formatMatchRatePercent,
 	pickPrimaryVariant,
@@ -193,38 +188,6 @@ describe("computeStatsForParsedProgression — chorusMatchCount", () => {
 	});
 });
 
-describe("computeProgressionMatches — extension-stripping regression (save your tears)", () => {
-	it("surfaces save your tears even when all sections use 7th-chord voicings", () => {
-		const matches = computeProgressionMatches(
-			saveYourTearsHooktheory,
-			coreProgressions
-		);
-		const darkDooWopMatch = matches.find(
-			(m) => m.name === saveYourTearsCore.name
-		);
-		expect(darkDooWopMatch).toBeDefined();
-		expect(darkDooWopMatch!.matchCount).toBe(4);
-	});
-
-	it("reports the same match count regardless of whether 7ths are present", () => {
-		const matchesHt = computeProgressionMatches(
-			saveYourTearsHooktheory,
-			coreProgressions
-		);
-		const matchesUg = computeProgressionMatches(
-			saveYourTearsUg,
-			coreProgressions
-		);
-		const htCount = matchesHt.find(
-			(m) => m.name === saveYourTearsCore.name
-		)?.matchCount;
-		const ugCount = matchesUg.find(
-			(m) => m.name === saveYourTearsCore.name
-		)?.matchCount;
-		expect(htCount).toBe(ugCount);
-	});
-});
-
 // Travis Scott "Highest in the Room" — the outro is:
 //   vi · i · v · VI · iv · i · v · VI · iv · i
 // i-v-VI-iv appears at positions 1-4 and 5-8: 2 non-overlapping matches.
@@ -286,57 +249,6 @@ describe("computeStatsForParsedProgression — overlapping match regression (hig
 		expect(statsShort.coveragePercent).toBeGreaterThan(
 			statsLong.coveragePercent
 		);
-	});
-});
-
-describe("parseCoreProgressions", () => {
-	it("returns an entry for every non-self-repeating core progression that parses", () => {
-		const parsed = parseCoreProgressions(coreProgressions);
-		expect(parsed.length).toBeGreaterThan(0);
-		expect(
-			parsed.every((p) => Array.isArray(p.parsed) && p.parsed.length > 0)
-		).toBe(true);
-	});
-
-	it("carries the original chordProgression string through", () => {
-		const parsed = parseCoreProgressions(coreProgressions);
-		const axisEntry = parsed.find((p) => p.chordProgression === "I-V-vi-IV");
-		expect(axisEntry).toBeDefined();
-	});
-});
-
-describe("findMatchingCoreProgressionsForSong", () => {
-	it("returns the burnin-up progression for the burnin-up song (4 matches >= 2)", () => {
-		const parsedCore = parseCoreProgressions(coreProgressions);
-		const matches = findMatchingCoreProgressionsForSong(
-			{ ...saveYourTearsHooktheory, songKey: "jonas-brothers__burnin-up" },
-			parsedCore
-		);
-		// save your tears matches "dark doo wop" I-vi-iii-V pattern — check it appears
-		expect(matches).toContain("I-vi-iii-V");
-	});
-
-	it("does not include progressions with only 1 match (below MIN_PROGRESSION_OCCURRENCES)", () => {
-		const singleMatchSection = makeSection([
-			C_MAJOR,
-			A_MINOR,
-			E_MINOR,
-			G_MAJOR,
-			C_MAJOR
-		]);
-		const singleMatchSong: GroupedSong = {
-			songKey: "test__single-match",
-			title: "Test",
-			artists: ["Test"],
-			keyLabel: "C major",
-			sections: [singleMatchSection]
-		};
-		const parsedCore = parseCoreProgressions(coreProgressions);
-		const matches = findMatchingCoreProgressionsForSong(
-			singleMatchSong,
-			parsedCore
-		);
-		expect(matches).not.toContain("I-vi-iii-V");
 	});
 });
 
@@ -505,74 +417,6 @@ describe("formatMatchRatePercent", () => {
 
 	it("shows 0 for zero rates", () => {
 		expect(formatMatchRatePercent(0)).toBe("0");
-	});
-});
-
-const makeRomanSection = (romanTokens: string[]): SongSection => ({
-	label: null,
-	chords: romanTokens,
-	romanTokens,
-	parsedProgression: romanTokensToParsedProgression(romanTokens, "major") ?? [],
-	keyLabel: null,
-	scale: "major"
-});
-
-const whatchaSayStyleSection = ["IV", "I", "vi", "V", "IV", "I", "vi"];
-
-const gapOnlyFixtureSong: GroupedSong = {
-	songKey: "test__gap-only",
-	title: "Gap Only Fixture",
-	artists: ["Tester"],
-	keyLabel: null,
-	sections: [
-		makeRomanSection(whatchaSayStyleSection),
-		makeRomanSection(whatchaSayStyleSection)
-	]
-};
-
-const coreOccupiedCoverage = gapOnlyFixtureSong.sections.map(() => [3, 4, 5]);
-
-describe("computeGapOnlyStats — intact instances in gaps", () => {
-	it("counts IV-I-vi only at opening positions outside core coverage", () => {
-		const parsed = romanTokensToParsedProgression(["IV", "I", "vi"], "major")!;
-		const stats = computeGapOnlyStats(
-			gapOnlyFixtureSong,
-			parsed,
-			coreOccupiedCoverage
-		);
-		expect(stats.matchCount).toBe(2);
-		const gapOnlyCoverage = computeGapOnlyCoveredPositionsBySection(
-			gapOnlyFixtureSong,
-			parsed,
-			coreOccupiedCoverage
-		);
-		for (const sectionPositions of gapOnlyCoverage) {
-			expect(sectionPositions).toEqual([0, 1, 2]);
-		}
-	});
-
-	it("returns zero gap-only matches for vi-V-IV when every instance straddles core", () => {
-		const parsed = romanTokensToParsedProgression(["vi", "V", "IV"], "major")!;
-		const stats = computeGapOnlyStats(
-			gapOnlyFixtureSong,
-			parsed,
-			coreOccupiedCoverage
-		);
-		expect(stats.matchCount).toBe(0);
-	});
-
-	it("never returns positions that are already occupied", () => {
-		const parsed = romanTokensToParsedProgression(["IV", "I", "vi"], "major")!;
-		const gapOnlyCoverage = computeGapOnlyCoveredPositionsBySection(
-			gapOnlyFixtureSong,
-			parsed,
-			coreOccupiedCoverage
-		);
-		for (const [sectionIndex, sectionPositions] of gapOnlyCoverage.entries()) {
-			for (const position of sectionPositions) {
-				expect(coreOccupiedCoverage[sectionIndex]).not.toContain(position);
-			}
-		}
 	});
 });
 

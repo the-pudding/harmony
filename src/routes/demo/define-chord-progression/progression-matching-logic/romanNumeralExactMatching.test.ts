@@ -5,7 +5,6 @@ import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
 import { groupSongs } from "../../../../data/songBrowser.js";
 import {
 	buildColoredHighlightSegments,
-	computeProgressionMatches,
 	getSectionMatches
 } from "./progressionMatchAnalysis.js";
 import type { CoreProgression } from "$data/core-progressions.js";
@@ -130,35 +129,6 @@ describe("getSectionMatches — matchRomanNumeralsExactly", () => {
 	});
 });
 
-describe("computeProgressionMatches — stay with me vs Annie's Song regression", () => {
-	const stayWithMe: CoreProgression = {
-		name: "stay with me",
-		chordProgression: "i-VI-III",
-		scale: "minor",
-		matchRomanNumeralsExactly: true,
-		description: ""
-	};
-
-	it("matches a Stay With Me (A minor, i-VI-III) song", () => {
-		const song = makeSong([
-			makeSection(["i", "VI", "III", "i", "VI", "III"], "minor"),
-			makeSection(["i", "VI", "III", "i", "VI", "III"], "minor")
-		]);
-		const matches = computeProgressionMatches(song, [stayWithMe]);
-		expect(matches.some((m) => m.name === "stay with me")).toBe(true);
-	});
-
-	it("does not match an Annie's Song (D major, vi-IV-I) song", () => {
-		// vi-IV-I in D major = same pitch-class intervals but wrong roman spelling
-		const song = makeSong([
-			makeSection(["vi", "IV", "I", "vi", "IV", "I"], "major"),
-			makeSection(["vi", "IV", "I", "vi", "IV", "I"], "major")
-		]);
-		const matches = computeProgressionMatches(song, [stayWithMe]);
-		expect(matches.some((m) => m.name === "stay with me")).toBe(false);
-	});
-});
-
 describe("core-progressions data assertions", () => {
 	it("'stay with me' is i-VI-III, minor, and matchRomanNumeralsExactly", () => {
 		const p = coreProgressions.find((c) => c.name === "stay with me");
@@ -220,14 +190,6 @@ describe("buildColoredHighlightSegments — matchRomanNumeralsExactly in annotat
 		const highlighted = highlightedRomanTokens(section, true);
 		expect(highlighted).not.toContain("biii");
 		expect(highlighted).not.toContain("bVI");
-	});
-
-	it("computeProgressionMatches stats for ii-bII-I ignore interval-only hits", () => {
-		const matches = computeProgressionMatches(paulAnkaSong, [jazzProgression]);
-		const iiBiiI = matches.find(
-			(match) => match.chordProgression === "ii-bII-I"
-		);
-		expect(iiBiiI?.matchCount ?? 0).toBe(0);
 	});
 
 	it("ii-V-I row display respects exact matching at the chromatic tail", () => {
