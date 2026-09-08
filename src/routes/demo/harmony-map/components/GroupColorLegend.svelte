@@ -8,6 +8,8 @@
 		selectedProgressionName: string | null;
 		onSelectGroup: (label: string | null) => void;
 		onSelectProgression: (name: string | null) => void;
+		showFamilyColors: boolean;
+		onToggleFamilyColors: () => void;
 	};
 
 	const {
@@ -15,7 +17,9 @@
 		selectedGroupLabel,
 		selectedProgressionName,
 		onSelectGroup,
-		onSelectProgression
+		onSelectProgression,
+		showFamilyColors,
+		onToggleFamilyColors
 	}: Props = $props();
 
 	const GROUP_COLOR_LEGEND_TITLE = "color = core group blend";
@@ -86,6 +90,16 @@
 			<span class="legend-info-tooltip" aria-hidden="true"
 				>{GROUP_COLOR_LEGEND_EXPLANATION}</span
 			>
+		</button>
+		<button
+			class="legend-color-toggle"
+			class:legend-color-toggle-active={showFamilyColors}
+			type="button"
+			role="switch"
+			aria-checked={showFamilyColors}
+			onclick={onToggleFamilyColors}
+		>
+			{showFamilyColors ? "colors on" : "colors off"}
 		</button>
 	</div>
 	{#each sortedLegendItems as item (item.label)}
@@ -222,6 +236,34 @@
 	.legend-info:focus-visible .legend-info-tooltip {
 		opacity: 1;
 		visibility: visible;
+	}
+
+	.legend-color-toggle {
+		pointer-events: auto;
+		flex-shrink: 0;
+		margin-left: auto;
+		font-family: inherit;
+		font-size: 0.55rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: #71717a;
+		padding: 0.125rem 0.375rem;
+		border-radius: 9999px;
+		border: 1px solid rgba(63, 63, 70, 0.8);
+		background: transparent;
+		cursor: pointer;
+	}
+
+	.legend-color-toggle:hover,
+	.legend-color-toggle:focus-visible {
+		color: #d4d4d8;
+		border-color: rgba(113, 113, 122, 0.9);
+	}
+
+	.legend-color-toggle-active {
+		color: #e4e4e7;
+		border-color: rgba(99, 102, 241, 0.6);
+		background: rgba(99, 102, 241, 0.18);
 	}
 
 	.legend-group {

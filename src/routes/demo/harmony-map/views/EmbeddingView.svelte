@@ -85,6 +85,9 @@
 	let selectedArtistName = $state<string | null>(null);
 	let selectedGroupLabel = $state<string | null>(null);
 	let selectedProgressionName = $state<string | null>(null);
+	// Off by default: dots start plain (grey/white) rather than colored by
+	// core group blend, toggled on from the legend.
+	let showFamilyColors = $state(false);
 
 	const setViewMode = (nextMode: MapViewMode) => {
 		if (nextMode === viewMode) return;
@@ -399,6 +402,7 @@
 					{emphasizedClusterHashes}
 					showTimeAxisGizmo={viewMode === "3dTime"}
 					enableSceneLighting={viewMode === "3d"}
+					{showFamilyColors}
 					onSelect={selectSong}
 				/>
 			{:else}
@@ -413,6 +417,7 @@
 					clusters={mapClusters}
 					{emphasizedClusterHashes}
 					axisLabels={AXIS_LABELS_BY_METHOD[embedding.method]}
+					{showFamilyColors}
 					onSelect={selectSong}
 				/>
 			{/if}
@@ -441,6 +446,8 @@
 				{selectedProgressionName}
 				{onSelectGroup}
 				{onSelectProgression}
+				{showFamilyColors}
+				onToggleFamilyColors={() => (showFamilyColors = !showFamilyColors)}
 			/>
 		</div>
 

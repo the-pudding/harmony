@@ -52,6 +52,9 @@
 		emphasizedClusterHashes: Set<string> | null;
 		showTimeAxisGizmo?: boolean;
 		enableSceneLighting?: boolean;
+		// Color dots by their progression-family blend. Defaults to true
+		// (existing behavior); false renders every dot the same plain color.
+		showFamilyColors?: boolean;
 		onSelect: (songKey: string | null) => void;
 	};
 
@@ -66,6 +69,7 @@
 		emphasizedClusterHashes,
 		showTimeAxisGizmo = false,
 		enableSceneLighting = false,
+		showFamilyColors = true,
 		onSelect
 	}: Props = $props();
 
@@ -83,6 +87,9 @@
 	const HOVER_PICK_RADIUS_PX = 12;
 	const JITTER_AMPLITUDE = 0.02;
 	const BACKGROUND_COLOR = 0x09090b;
+	// Used instead of the group-share color blend when showFamilyColors is
+	// false — matches EmbeddingScatter's (2D) STAR_FILL_COLOR.
+	const STAR_FILL_COLOR = "#e4e4e7";
 	const POINT_SIZE_SCREEN_SCALE = 300;
 	const HIGHLIGHT_RING_GAP_PX = 1.5;
 	const EMPHASIS_RING_EXTRA_PX = 2;
@@ -266,7 +273,9 @@
 			positions[offset + 2] = position.z;
 
 			const color = hexToThreeColor(
-				dominantColorForGroupShares(point.groupShares)
+				showFamilyColors
+					? dominantColorForGroupShares(point.groupShares)
+					: STAR_FILL_COLOR
 			);
 			colors[offset] = color.r;
 			colors[offset + 1] = color.g;
@@ -705,6 +714,7 @@
 		void coClusterSongKeys;
 		void highlightedSongKeys;
 		void showTimeAxisGizmo;
+		void showFamilyColors;
 		updateMeshGeometry(pointsMesh, drawablePoints);
 	});
 
