@@ -55,6 +55,15 @@
 		// Color dots by their progression-family blend. Defaults to true
 		// (existing behavior); false renders every dot the same plain color.
 		showFamilyColors?: boolean;
+		// Optional blanket emphasis set (e.g. an artist's songs) — when set,
+		// everything NOT in it dims, independent of selectedSongKey /
+		// coClusterSongKeys. Omit (or null) for no effect.
+		emphasizedSongKeys?: Set<string> | null;
+		// Fill color for a song in emphasizedSongKeys, overriding the group
+		// color / STAR_FILL_COLOR. Opt-in per caller — omit (or null) to
+		// leave emphasized dots colored normally, distinguished only by
+		// alpha.
+		emphasisFillColor?: string | null;
 		onSelect: (songKey: string | null) => void;
 	};
 
@@ -70,6 +79,8 @@
 		showTimeAxisGizmo = false,
 		enableSceneLighting = false,
 		showFamilyColors = true,
+		emphasizedSongKeys = null,
+		emphasisFillColor = null,
 		onSelect
 	}: Props = $props();
 
@@ -225,6 +236,9 @@
 
 	const alphaFor = (songKey: string): number => {
 		if (hoveredSongKey === songKey || highlightedSongKeys.has(songKey)) return 1;
+		if (emphasizedSongKeys) {
+			return emphasizedSongKeys.has(songKey) ? 1 : SCATTER_DIMMED_ALPHA;
+		}
 		if (selectedSongKey === null) return SCATTER_NORMAL_ALPHA;
 		if (songKey === selectedSongKey || coClusterSongKeys.has(songKey)) return 1;
 		return SCATTER_DIMMED_ALPHA;
@@ -273,9 +287,11 @@
 			positions[offset + 2] = position.z;
 
 			const color = hexToThreeColor(
-				showFamilyColors
-					? dominantColorForGroupShares(point.groupShares)
-					: STAR_FILL_COLOR
+				emphasisFillColor && emphasizedSongKeys?.has(point.songKey)
+					? emphasisFillColor
+					: showFamilyColors
+						? dominantColorForGroupShares(point.groupShares)
+						: STAR_FILL_COLOR
 			);
 			colors[offset] = color.r;
 			colors[offset + 1] = color.g;
@@ -715,6 +731,8 @@
 		void highlightedSongKeys;
 		void showTimeAxisGizmo;
 		void showFamilyColors;
+		void emphasizedSongKeys;
+		void emphasisFillColor;
 		updateMeshGeometry(pointsMesh, drawablePoints);
 	});
 

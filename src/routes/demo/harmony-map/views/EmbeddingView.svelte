@@ -21,6 +21,7 @@
 		namedClusterAnchorSongKeys,
 		resolveClusterNames
 	} from "../components/namedClusters.js";
+	import { HIGHLIGHT_RING_COLOR } from "../components/highlightSongMarker.js";
 	import type { EmbeddingMethod } from "../embedding/reducers/types.js";
 	import { UMAP_DRIVEN_METHODS } from "../embedding/reducers/types.js";
 	import { buildClusterInputPoints } from "../embedding/clustering/clusterInputPoints.js";
@@ -137,18 +138,27 @@
 			: new Set(selectedArtistSummary.songs.map((song) => song.songKey))
 	);
 
+	// When an artist is selected, only their songs should read as
+	// "highlighted" on the map — named-cluster-anchor rings/labels would
+	// otherwise compete visually with the artist highlight. Scoped to the
+	// map view only; SongVectorInspector's "cluster anchor" badge still uses
+	// the unfiltered highlightedSongKeys below.
+	const mapHighlightedSongKeys = $derived(
+		artistSongKeys === null ? highlightedSongKeys : new Set<string>()
+	);
+
 	const groupFilterSongKeys = $derived(
 		selectedGroupLabel === null
 			? null
 			: songKeysMatchingGroupFilter(songCoverages, selectedGroupLabel, selectedProgressionName)
 	);
 
-	const visibleSongKeys = $derived.by((): Set<string> | null => {
-		if (artistSongKeys === null && groupFilterSongKeys === null) return null;
-		if (artistSongKeys === null) return groupFilterSongKeys;
-		if (groupFilterSongKeys === null) return artistSongKeys;
-		return new Set([...artistSongKeys].filter((key) => groupFilterSongKeys.has(key)));
-	});
+	// Artist selection no longer hides other songs — it highlights (see
+	// artistSongKeys passed as emphasizedSongKeys below) so the map stays
+	// unchanged and you can still see where the artist's songs sit relative
+	// to everything else. Only the group/progression legend filter actually
+	// hides non-matching points.
+	const visibleSongKeys = $derived(groupFilterSongKeys);
 
 	const onSelectGroup = (label: string | null) => {
 		selectedGroupLabel = label;
@@ -396,13 +406,15 @@
 					{songByKey}
 					{selectedSongKey}
 					{coClusterSongKeys}
-					{highlightedSongKeys}
+					highlightedSongKeys={mapHighlightedSongKeys}
 					{visibleSongKeys}
 					clusters={mapClusters}
 					{emphasizedClusterHashes}
 					showTimeAxisGizmo={viewMode === "3dTime"}
 					enableSceneLighting={viewMode === "3d"}
 					{showFamilyColors}
+					emphasizedSongKeys={artistSongKeys}
+					emphasisFillColor={artistSongKeys && HIGHLIGHT_RING_COLOR}
 					onSelect={selectSong}
 				/>
 			{:else}
@@ -411,12 +423,15 @@
 					{songByKey}
 					{selectedSongKey}
 					{coClusterSongKeys}
-					{highlightedSongKeys}
+					highlightedSongKeys={mapHighlightedSongKeys}
 					{visibleSongKeys}
 					method={embedding.method}
 					clusters={mapClusters}
 					{emphasizedClusterHashes}
 					axisLabels={AXIS_LABELS_BY_METHOD[embedding.method]}
+					emphasizedSongKeys={artistSongKeys}
+					familyEmphasisSongKeys={artistSongKeys}
+					emphasisFillColor={artistSongKeys && HIGHLIGHT_RING_COLOR}
 					{showFamilyColors}
 					onSelect={selectSong}
 				/>

@@ -99,6 +99,12 @@
 		// with outlines on doesn't also mute every other cluster's outline.
 		// Omit (or null) for normal treatment of every cluster.
 		familyEmphasisSongKeys?: Set<string> | null;
+		// Fill color for a song in emphasizedSongKeys, overriding the group
+		// color / STAR_FILL_COLOR so those dots stand out regardless of
+		// showFamilyColors. Opt-in per caller (e.g. harmony-map's artist
+		// mode) — omit (or null) to leave emphasized dots colored normally,
+		// distinguished only by alpha (e.g. /story's family highlights).
+		emphasisFillColor?: string | null;
 	};
 
 	const {
@@ -119,7 +125,8 @@
 		emphasizedSongKeys = null,
 		showFamilyColors = true,
 		showClusterOutlines = true,
-		familyEmphasisSongKeys = null
+		familyEmphasisSongKeys = null,
+		emphasisFillColor = null
 	}: Props = $props();
 
 	// Density clustering is only meaningful over layouts UMAP actually produced
@@ -442,9 +449,12 @@
 			if (!position) continue;
 			const screen = toScreen(position);
 			context.globalAlpha = alphaFor(point.songKey);
-			context.fillStyle = showFamilyColors
-				? fillStyleForGroupShares(context, screen.x, screen.y, point.groupShares)
-				: STAR_FILL_COLOR;
+			context.fillStyle =
+				emphasisFillColor && emphasizedSongKeys?.has(point.songKey)
+					? emphasisFillColor
+					: showFamilyColors
+						? fillStyleForGroupShares(context, screen.x, screen.y, point.groupShares)
+						: STAR_FILL_COLOR;
 			context.beginPath();
 			context.arc(screen.x, screen.y, radiusFor(point.songKey), 0, Math.PI * 2);
 			context.fill();
@@ -712,6 +722,7 @@
 		void showFamilyColors;
 		void showClusterOutlines;
 		void familyEmphasisSongKeys;
+		void emphasisFillColor;
 		draw();
 	});
 

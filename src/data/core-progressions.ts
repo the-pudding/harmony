@@ -232,10 +232,18 @@ const happyMajoryProgressions: ProgressionGroup = {
 		// @michelle: not sure if this deserves a category of its own?
 		{
 			name: "tell me what you want",
-			chordProgression: ["I-bIII-IV-bVII", "I-bIII-IV"],
+			chordProgression: "I-bIII-IV-bVII",
 			scale: "major",
 			description:
 				"this I-vIII sound is classic rock vibes, it has that dual feel (Are we in E mixolydian (A major) or D major?). Iconically used in the song 'Wannabe' by the Spice Girls."
+		},
+		{
+			name: "blues rock",
+			chordProgression: "I-bIII-IV",
+			scale: "major",
+			minimumContiguousMatches: BACK_TO_BACK_REPEAT,
+			description:
+				"the bIII lift out of the I before landing on the IV — a blues-rock staple"
 		}
 	]
 };
