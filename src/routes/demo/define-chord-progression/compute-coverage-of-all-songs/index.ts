@@ -124,9 +124,22 @@ export const computeCoverageOfAllSongs = async (
 	);
 
 	const songCoverages = chunkResults.flat();
+	// progressionMatchCounts/Rates power the per-authored-variant tie-break
+	// and tooltip (pickPrimaryVariant, ProgressionMatchButton's variant
+	// list) — those are specifically about literal authored spellings
+	// (e.g. "I-bIII-IV-bVII" vs "I-bIII-IV"), not corpus-wide progression
+	// identity, so they stay keyed by literal chordProgression rather than
+	// the canonical name now used by matchingProgressions.
+	const literalCoreProgressionsFor = (entry: SongCoverageEntry): string[] => [
+		...new Set(
+			entry.progressionCounts
+				.filter((count) => count.isCore)
+				.map((count) => count.chordProgression)
+		)
+	];
 	const { progressionMatchRates, progressionMatchCounts } =
 		buildProgressionMatchRates(
-			songCoverages.map((s) => s.matchingProgressions),
+			songCoverages.map(literalCoreProgressionsFor),
 			songCoverages.length
 		);
 	const biasOverrides = songCoverages.flatMap((s) => s.biasOverrides);

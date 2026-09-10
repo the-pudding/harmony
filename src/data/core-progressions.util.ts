@@ -32,6 +32,25 @@ export const progressionGroupNameByChordProgression = new Map(
 	)
 );
 
+// The authored spelling to DISPLAY for a named core progression, regardless
+// of which literal spelling a particular song actually matched. Matching is
+// tonic-rotation-invariant, so the same named progression can read as
+// different roman-numeral strings depending on which chord a song's own key
+// calls "I" (e.g. one "doo wop" song matches as I-vi-IV-V, another as
+// III-i-VI-VII) — those are the same shape, just rotated, so showing the
+// registered spelling everywhere keeps the label consistent across songs.
+// This is purely a display concern: highlighting/interaction still key off
+// the literal per-song chordProgression, since that's what's actually
+// covered in that song's own chart.
+export const canonicalChordProgressionByName = new Map(
+	allProgressionGroups.flatMap((group) =>
+		group.progressions.map((progression): [string, string] => [
+			progression.name,
+			chordProgressionVariants(progression.chordProgression)[0]
+		])
+	)
+);
+
 export const coreProgressionNameByChordProgression = new Map(
 	allProgressionGroups.flatMap((group) =>
 		group.progressions.flatMap((progression) =>
@@ -62,14 +81,21 @@ export const progressionGroupNameFor = (
 
 export type WeightedProgression = {
 	chordProgression: string;
+	// Canonical core-progression name, when known — see
+	// SongProgressionCount.name. Matching is tonic-rotation-invariant, so a
+	// song's literal chordProgression spelling doesn't always match one of
+	// a progression's authored variant strings even when it's really that
+	// progression. `name` is rotation-proof and should be preferred.
+	name?: string;
 	matchCount: number;
 };
 
 const groupMatchTotals = (
 	progressions: readonly WeightedProgression[]
 ): Map<string, number> =>
-	progressions.reduce((totals, { chordProgression, matchCount }) => {
+	progressions.reduce((totals, { chordProgression, name, matchCount }) => {
 		const groupName =
+			(name ? progressionGroupNameByProgressionName.get(name) : undefined) ??
 			progressionGroupNameByChordProgression.get(chordProgression);
 		if (!groupName) return totals;
 		return totals.set(groupName, (totals.get(groupName) ?? 0) + matchCount);

@@ -6,8 +6,12 @@
 	type Props = {
 		progressions: ArtistProgressionStat[];
 		limit: number;
+		// Canonical progression names (see SongProgressionCount.name), not
+		// literal spellings — matching is tonic-rotation-invariant, so this
+		// must match by identity, not by whichever literal string an artist's
+		// songs happened to spell it as.
 		highlightedProgressions?: string[] | null;
-		onSelectProgression?: (chordProgression: string) => void;
+		onSelectProgression?: (name: string) => void;
 	};
 
 	const {
@@ -26,22 +30,22 @@
 	const fillPercent = (songCount: number): number =>
 		maxSongCount === 0 ? 0 : (songCount / maxSongCount) * 100;
 
-	const isHighlighted = (chordProgression: string): boolean =>
-		highlightedProgressions?.includes(chordProgression) ?? false;
+	const isHighlighted = (name: string): boolean =>
+		highlightedProgressions?.includes(name) ?? false;
 </script>
 
 {#if shown.length === 0}
 	<p class="empty">No core progressions matched.</p>
 {:else}
 	<ul class="progressions">
-		{#each shown as stat (stat.chordProgression)}
+		{#each shown as stat (stat.name)}
 			<li>
 				<button
 					class="progression"
-					class:progression-highlighted={isHighlighted(stat.chordProgression)}
+					class:progression-highlighted={isHighlighted(stat.name)}
 					class:progression-static={onSelectProgression === undefined}
 					disabled={onSelectProgression === undefined}
-					onclick={() => onSelectProgression?.(stat.chordProgression)}
+					onclick={() => onSelectProgression?.(stat.name)}
 				>
 					<span class="head">
 						<span class="chords">{stat.chordProgression}</span>

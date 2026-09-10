@@ -1,7 +1,10 @@
 <script lang="ts">
 	import coreProgressionsData from "$data/core-progressions.js";
 	import type { CoreProgression } from "$data/core-progressions.js";
-	import { siblingVariantsForProgression } from "$data/core-progressions.util.js";
+	import {
+		coreProgressionNameByChordProgression,
+		siblingVariantsForProgression
+	} from "$data/core-progressions.util.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import SongSelectDropdown from "./components/SongSelectDropdown.svelte";
 	import FinalAnnotatedSong from "./components/FinalAnnotatedSong.svelte";
@@ -66,10 +69,21 @@
 			: null
 	);
 
-	const pinnedProgressionVariants = $derived(
+	// SongCoverageBeeswarm highlights corpus-wide by canonical name (matching
+	// is tonic-rotation-invariant, so a song can match this progression under
+	// a spelling that was never authored as a variant — see
+	// ProgressionGroupSection.svelte for the fuller explanation). pinned
+	// progression itself stays a literal spelling for FinalAnnotatedSong,
+	// which highlights this one song's own chord spans and needs the exact
+	// literal string that appears in its own annotations.
+	const pinnedProgressionName = $derived(
 		pinnedProgression
-			? siblingVariantsForProgression(coreProgressions, pinnedProgression)
+			? (coreProgressionNameByChordProgression.get(pinnedProgression) ?? null)
 			: null
+	);
+
+	const pinnedProgressionVariants = $derived(
+		pinnedProgressionName ? [pinnedProgressionName] : null
 	);
 
 	const songAnnotations = $derived<ChordAnnotation[]>(

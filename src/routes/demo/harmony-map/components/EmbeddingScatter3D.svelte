@@ -235,11 +235,17 @@
 	const hexToThreeColor = (hex: string): THREE.Color => new THREE.Color(hex);
 
 	const alphaFor = (songKey: string): number => {
-		if (hoveredSongKey === songKey || highlightedSongKeys.has(songKey)) return 1;
+		if (hoveredSongKey === songKey) return 1;
 		if (emphasizedSongKeys) {
 			return emphasizedSongKeys.has(songKey) ? 1 : SCATTER_DIMMED_ALPHA;
 		}
-		if (selectedSongKey === null) return SCATTER_NORMAL_ALPHA;
+		// Idle state (nothing selected/emphasized): highlighted songs (named-
+		// cluster anchors) get a full-opacity pop. But once a song is
+		// selected and the rest of the map fades, highlighted songs fade
+		// too — only the selected song (and its cluster) should stay lit.
+		if (selectedSongKey === null) {
+			return highlightedSongKeys.has(songKey) ? 1 : SCATTER_NORMAL_ALPHA;
+		}
 		if (songKey === selectedSongKey || coClusterSongKeys.has(songKey)) return 1;
 		return SCATTER_DIMMED_ALPHA;
 	};
@@ -426,6 +432,12 @@
 			}
 
 			applyHighlightMarkerDepthStyles(label.element, depthStyle, ringDiameterPx);
+			// Depth styling only fades by camera distance — also fold in
+			// selection/emphasis fading so highlighted markers dim along
+			// with everything else once a song is selected.
+			label.element.style.opacity = String(
+				depthStyle.opacity * alphaFor(songKey)
+			);
 			label.position.copy(toScenePosition(point));
 			label.renderOrder = labelRenderOrderFromViewDistance(viewDistance);
 		}

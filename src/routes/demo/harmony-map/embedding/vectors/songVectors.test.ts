@@ -12,13 +12,15 @@ const makeSong = (
 	progressions: [
 		chordProgression: string,
 		matchCount: number,
-		chorusMatchCount?: number
+		chorusMatchCount?: number,
+		name?: string
 	][]
 ): SongProgressionCounts => ({
 	songKey,
 	progressionCounts: progressions.map(
-		([chordProgression, matchCount, chorusMatchCount = 0]) => ({
+		([chordProgression, matchCount, chorusMatchCount = 0, name]) => ({
 			chordProgression,
+			name: name ?? chordProgression,
 			scale: "major",
 			matchCount,
 			chorusMatchCount,
@@ -60,8 +62,8 @@ describe("buildSongVectors", () => {
 	it("sums sibling variants of one named progression into one dimension", () => {
 		const bothVariants = [
 			makeSong("a", [
-				["ii-bii-I", 3],
-				["ii-V-I", 2]
+				["ii-bii-I", 3, 0, "jazz ii-V-I"],
+				["ii-V-I", 2, 0, "jazz ii-V-I"]
 			])
 		];
 		const variantVocabulary = buildProgressionVocabulary(bothVariants, 1);
@@ -80,8 +82,8 @@ describe("buildSongVectors", () => {
 	it("counts sibling variants as one occurrence when weighting is binary", () => {
 		const bothVariants = [
 			makeSong("a", [
-				["ii-bii-I", 3],
-				["ii-V-I", 2]
+				["ii-bii-I", 3, 0, "jazz ii-V-I"],
+				["ii-V-I", 2, 0, "jazz ii-V-I"]
 			])
 		];
 		const variantVocabulary = buildProgressionVocabulary(bothVariants, 1);
@@ -166,8 +168,8 @@ describe("buildSongVectors", () => {
 	it("sums chorus matches from sibling variants into one dimension", () => {
 		const bothVariants = [
 			makeSong("a", [
-				["ii-bii-I", 3, 1],
-				["ii-V-I", 2, 2]
+				["ii-bii-I", 3, 1, "jazz ii-V-I"],
+				["ii-V-I", 2, 2, "jazz ii-V-I"]
 			])
 		];
 		const variantVocabulary = buildProgressionVocabulary(bothVariants, 1);

@@ -45,7 +45,7 @@ export const namedClusters: NamedClusterEntry[] = [
 	{ anchorSongKey: "jonas-brothers__burnin-up", name: "burnin up" },
 	{ anchorSongKey: "the-turtles__happy-together", name: "hit the road jack" },
 	{
-		anchorSongKey: "fun-featuring-janelle-monae__we-are-young",
+		anchorSongKey: "ben-e-king__stand-by-me",
 		name: "doo wop"
 	},
 	{

@@ -11,11 +11,8 @@
 	import { songKeysMatchingGroupFilter } from "../shared/progressionGroupShare.js";
 	import CorpusMatchRateOverTimeChart from "../core-progressions/CorpusMatchRateOverTimeChart.svelte";
 	import type { YearDomain } from "../shared/artists/artistStats.js";
-	import coreProgressions, { allProgressionGroups } from "$data/core-progressions.js";
-	import {
-		chordProgressionVariants,
-		siblingVariantsForProgression
-	} from "$data/core-progressions.util.js";
+	import { allProgressionGroups } from "$data/core-progressions.js";
+	import { coreProgressionNameByChordProgression } from "$data/core-progressions.util.js";
 	import { storyBeats as STORY_BEATS } from "./storyBeats.js";
 
 	const coverage = createAllSongsCoverageState();
@@ -161,25 +158,27 @@
 		Array.isArray(beat.text) ? beat.text : [beat.text]
 	);
 
-	// Resolves a prevalenceChart beat's chordProgression/progressionFamily
-	// down to the flat list of chord-pattern strings the chart matches
-	// against — expanding a single progression to its sibling variants, or a
-	// family to every progression in it, so beats never need to list them.
+	// Resolves a prevalenceChart beat's chordProgression/progressionFamily down
+	// to the list of canonical progression names the chart matches against
+	// (see SongCoverageEntry.matchingProgressions — matching is tonic-
+	// rotation-invariant, so names, not literal spellings, are the identity
+	// to filter by). Expands a single progression to its own name, or a
+	// family to every progression's name in it, so beats never need to list
+	// them.
 	const prevalenceChartProgressions = $derived.by((): string[] => {
 		const media = beat.media;
 		if (media?.type !== "prevalenceChart") return [];
 		if (media.chordProgression) {
-			return siblingVariantsForProgression(coreProgressions, media.chordProgression);
+			const name = coreProgressionNameByChordProgression.get(
+				media.chordProgression
+			);
+			return name ? [name] : [];
 		}
 		if (media.progressionFamily) {
 			const group = allProgressionGroups.find(
 				(candidate) => candidate.name === media.progressionFamily
 			);
-			return group
-				? group.progressions.flatMap((progression) =>
-						chordProgressionVariants(progression.chordProgression)
-					)
-				: [];
+			return group ? group.progressions.map((progression) => progression.name) : [];
 		}
 		return [];
 	});

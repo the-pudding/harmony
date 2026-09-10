@@ -15,9 +15,11 @@ const GAP_FILL = "IV-V-iii-vi";
 const makeCount = (
 	chordProgression: string,
 	coveragePercent: number,
-	isCore: boolean
+	isCore: boolean,
+	name: string = chordProgression
 ): SongProgressionCount => ({
 	chordProgression,
+	name,
 	scale: "major" as ScaleName,
 	matchCount: 1,
 	chorusMatchCount: 0,
@@ -136,5 +138,28 @@ describe("filterCoverageResultForProgressions", () => {
 		expect(
 			filterCoverageResultForProgressions(result, [AXIS]).songCoverages
 		).toHaveLength(0);
+	});
+
+	it("matches by canonical name across different literal spellings of the same progression", () => {
+		// A song whose own key makes the matcher spell "sweet home mixolydian"
+		// (I-bVII-IV) as a rotated "V-IV-I" — same progression, different
+		// literal string, exactly like Sweet Home Alabama in the real corpus.
+		const SWEET_HOME_MIXOLYDIAN = "sweet home mixolydian";
+		const result = makeResult([
+			makeSong({
+				songKey: "rotated-spelling",
+				coveragePercent: 70,
+				matchingProgressions: [SWEET_HOME_MIXOLYDIAN],
+				progressionCounts: [
+					makeCount("V-IV-I", 70, true, SWEET_HOME_MIXOLYDIAN)
+				]
+			})
+		]);
+
+		const filtered = filterCoverageResultForProgressions(result, [
+			SWEET_HOME_MIXOLYDIAN
+		]);
+		expect(filtered.songCoverages).toHaveLength(1);
+		expect(filtered.songCoverages[0].coveragePercent).toBe(70);
 	});
 });

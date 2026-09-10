@@ -25,6 +25,13 @@ const identityByVariant = new Map(
 	)
 );
 
+const identityByName = new Map(
+	identities.map((identity): [string, CoreProgressionIdentity] => [
+		identity.name,
+		identity
+	])
+);
+
 export const canonicalProgressionKey = (chordProgression: string): string =>
 	identityByVariant.get(chordProgression)?.canonicalKey ?? chordProgression;
 
@@ -32,3 +39,11 @@ export const coreProgressionIdentityFor = (
 	chordProgression: string
 ): CoreProgressionIdentity | null =>
 	identityByVariant.get(chordProgression) ?? null;
+
+// Rotation-proof lookup by canonical name (see SongProgressionCount.name) —
+// prefer this over coreProgressionIdentityFor(chordProgression) when a
+// match's canonical name is already known, since the literal spelling a
+// song matched may be an un-authored rotation that isn't in `variants`.
+export const coreProgressionIdentityForName = (
+	name: string
+): CoreProgressionIdentity | null => identityByName.get(name) ?? null;

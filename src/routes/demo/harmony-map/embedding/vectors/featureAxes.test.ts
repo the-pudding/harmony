@@ -9,6 +9,7 @@ const makeSong = (
 	progressionCounts: progressions.map(
 		([chordProgression, scale, matchCount]) => ({
 			chordProgression,
+			name: chordProgression,
 			scale:
 				scale as SongProgressionCounts["progressionCounts"][number]["scale"],
 			matchCount,

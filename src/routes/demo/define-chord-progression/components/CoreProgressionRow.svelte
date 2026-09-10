@@ -45,6 +45,14 @@
 		) as Record<string, string[]>
 	);
 
+	// Aggregate stats (corpus-wide "how many songs match this progression")
+	// key on the progression's canonical name, not its literal spelling:
+	// matching is tonic-rotation-invariant, so a song can match a named
+	// progression under a spelling that was never authored as a variant
+	// (e.g. Sweet Home Alabama reads as "V-IV-I", the same shape as "sweet
+	// home mixolydian"'s authored "I-bVII-IV"). `songCoverages` reports
+	// canonical names, so a single-element [name] set is both simpler and
+	// more complete than enumerating authored variant strings.
 	const displayMatches = $derived.by(() => {
 		const matches = collapseDisplayMatchesByName(
 			buildCoreProgressionDisplayMatches(coreProgressions, selectedSong),
@@ -53,12 +61,12 @@
 		if (!songCoverages) return matches;
 		return [...matches].sort((a, b) => {
 			const aStats = aggregateVariantMatchStats(
-				variantsByName[a.name] ?? [a.chordProgression],
+				[a.name],
 				songCoverages,
 				totalSongCount
 			);
 			const bStats = aggregateVariantMatchStats(
-				variantsByName[b.name] ?? [b.chordProgression],
+				[b.name],
 				songCoverages,
 				totalSongCount
 			);
@@ -94,7 +102,7 @@
 	{#each displayMatches as match (match.name)}
 		{@const outline = matchOutline(match)}
 		{@const variantStats = aggregateVariantMatchStats(
-			variantsByName[match.name] ?? [match.chordProgression],
+			[match.name],
 			songCoverages,
 			totalSongCount
 		)}

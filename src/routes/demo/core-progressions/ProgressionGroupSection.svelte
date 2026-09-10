@@ -5,7 +5,7 @@
 	} from "$data/core-progressions.js";
 	import {
 		chordProgressionVariants,
-		siblingVariantsForProgression
+		coreProgressionNameByChordProgression
 	} from "$data/core-progressions.util.js";
 	import type { GroupedSong } from "../../../data/songBrowser.js";
 	import type { AllSongsCoverageResult } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
@@ -38,17 +38,29 @@
 		onSelectSong
 	}: Props = $props();
 
+	// Literal authored spellings — still needed for the per-song tooltip
+	// emphasis below (tooltipMatchingProgressions), which is legitimately
+	// about literal spellings a song itself used.
 	const groupProgressionKeys = $derived(
 		group.progressions.flatMap((p) =>
 			chordProgressionVariants(p.chordProgression)
 		)
 	);
 
+	// Canonical names — the rotation-proof identity to filter/chart/highlight
+	// by. Matching is tonic-rotation-invariant, so a song can match one of
+	// this group's progressions under a spelling that was never authored as
+	// a variant (e.g. Sweet Home Alabama reads as "V-IV-I", the same shape
+	// as "sweet home mixolydian"'s authored "I-bVII-IV"); coverageResult
+	// reports canonical names, so filtering by name (instead of enumerating
+	// authored variant strings) is what catches those songs too.
+	const groupProgressionNames = $derived(group.progressions.map((p) => p.name));
+
 	const filteredCoverage = $derived(
 		coverageResult
 			? filterCoverageResultForProgressions(
 					coverageResult,
-					groupProgressionKeys
+					groupProgressionNames
 				)
 			: null
 	);
@@ -63,22 +75,34 @@
 			: 0
 	);
 
+	// pinnedProgression is always a literal authored spelling (it comes from
+	// clicking one of this group's own CoreProgressionRow buttons, which only
+	// ever render authored variants), so it always resolves to a name here.
+	const pinnedProgressionName = $derived(
+		pinnedProgression !== null
+			? (coreProgressionNameByChordProgression.get(pinnedProgression) ?? null)
+			: null
+	);
+
 	const highlightedProgressions = $derived.by(() => {
 		if (
-			pinnedProgression === null ||
-			!groupProgressionKeys.includes(pinnedProgression)
+			pinnedProgressionName === null ||
+			!groupProgressionNames.includes(pinnedProgressionName)
 		) {
 			return null;
 		}
-		return siblingVariantsForProgression(group.progressions, pinnedProgression);
+		return [pinnedProgressionName];
 	});
 
+	// The button's own "active" visual state stays keyed on the literal
+	// spelling that was clicked, since CoreProgressionRow's buttons and
+	// their variant tooltips are inherently about literal authored spellings.
 	const activeProgressionInGroup = $derived(
 		highlightedProgressions !== null ? pinnedProgression : null
 	);
 
 	const corpusMatchProgressions = $derived(
-		highlightedProgressions ?? groupProgressionKeys
+		highlightedProgressions ?? groupProgressionNames
 	);
 
 	const isSubGroup = $derived(group.parentGroupName !== undefined);

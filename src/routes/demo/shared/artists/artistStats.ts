@@ -1,8 +1,8 @@
 import { colorForProgressionGroupName } from "$data/core-progressions.js";
 import {
-	coreProgressionNameByChordProgression,
+	canonicalChordProgressionByName,
 	dominantProgressionGroupName,
-	progressionGroupNameByChordProgression
+	progressionGroupNameByProgressionName
 } from "$data/core-progressions.util.js";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 import type { SongCoverageEntry } from "../../define-chord-progression/compute-coverage-of-all-songs/index.js";
@@ -76,8 +76,8 @@ export const toSongStat = (
 	year: songByKey.get(entry.songKey)?.year ?? null,
 	coveragePercent: entry.coveragePercent,
 	matchingProgressions: entry.matchingProgressions,
-	coreProgressions: entry.matchingProgressions.filter((chordProgression) =>
-		progressionGroupNameByChordProgression.has(chordProgression)
+	coreProgressions: entry.matchingProgressions.filter((name) =>
+		progressionGroupNameByProgressionName.has(name)
 	),
 	groupName: dominantProgressionGroupName(entry.progressionCounts)
 });
@@ -87,14 +87,11 @@ const progressionStatsFor = (
 ): ArtistProgressionStat[] => {
 	const counts = countByKey(songs.flatMap((song) => song.coreProgressions));
 	return [...counts.entries()]
-		.map(([chordProgression, songCount]): ArtistProgressionStat => {
-			const groupName =
-				progressionGroupNameByChordProgression.get(chordProgression) ?? null;
+		.map(([name, songCount]): ArtistProgressionStat => {
+			const groupName = progressionGroupNameByProgressionName.get(name) ?? null;
 			return {
-				chordProgression,
-				name:
-					coreProgressionNameByChordProgression.get(chordProgression) ??
-					chordProgression,
+				chordProgression: canonicalChordProgressionByName.get(name) ?? name,
+				name,
 				groupName,
 				color: colorForProgressionGroupName(groupName),
 				songCount,
@@ -103,8 +100,7 @@ const progressionStatsFor = (
 		})
 		.sort(
 			(first, second) =>
-				second.songCount - first.songCount ||
-				first.chordProgression.localeCompare(second.chordProgression)
+				second.songCount - first.songCount || first.name.localeCompare(second.name)
 		);
 };
 

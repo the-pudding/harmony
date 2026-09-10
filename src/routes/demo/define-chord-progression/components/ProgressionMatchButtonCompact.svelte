@@ -2,6 +2,7 @@
 	import { humanizeScale } from "../../../../data/songBrowser.js";
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import { PALETTE_FILL_HOVER_COLOR_PERCENT } from "./progressionColors.js";
+	import { canonicalChordProgressionByName } from "$data/core-progressions.util.js";
 
 	const COVERAGE_PERCENT_MAX = 100;
 	const COVERAGE_FILL_INACTIVE_OPACITY = 0.12;
@@ -31,17 +32,30 @@
 	}: Props = $props();
 
 	const scaleName = $derived(humanizeScale(match.scale));
+
+	// Display the progression's registered spelling, not the literal one this
+	// particular song happened to match — matching is tonic-rotation-
+	// invariant, so the same named progression can read as different roman-
+	// numeral strings across songs (see canonicalChordProgressionByName).
+	const displayChordProgression = $derived(
+		match.isCoreProgression
+			? (canonicalChordProgressionByName.get(match.name) ?? match.chordProgression)
+			: match.chordProgression
+	);
+
 	const buttonTitle = $derived(
 		match.isCoreProgression
-			? `${match.chordProgression} (scale: ${scaleName})`
-			: match.chordProgression
+			? `${displayChordProgression} (scale: ${scaleName})`
+			: displayChordProgression
 	);
 
 	const coveragePercentRounded = $derived(Math.round(match.coveragePercent));
 	const coverageFillWidth = $derived(
 		`${Math.min(Math.max(match.coveragePercent, 0), COVERAGE_PERCENT_MAX)}%`
 	);
-	const showChordProgression = $derived(match.name !== match.chordProgression);
+	const showChordProgression = $derived(
+		match.name !== displayChordProgression
+	);
 </script>
 
 <button
@@ -68,7 +82,7 @@
 				<span class="prog-name">{match.name}</span>
 			{/if}
 			{#if showChordProgression}
-				<span class="prog-chords">{match.chordProgression}</span>
+				<span class="prog-chords">{displayChordProgression}</span>
 			{/if}
 		</span>
 		<span class="prog-percent">{match.matchCount}× <b>{coveragePercentRounded}%</b></span>

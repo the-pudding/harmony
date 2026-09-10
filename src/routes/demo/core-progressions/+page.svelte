@@ -3,10 +3,7 @@
 		allProgressionGroups,
 		type ProgressionGroup
 	} from "$data/core-progressions.js";
-	import {
-		chordProgressionVariants,
-		siblingVariantsForProgression
-	} from "$data/core-progressions.util.js";
+	import { siblingVariantsForProgression } from "$data/core-progressions.util.js";
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import { createAllSongsCoverageState } from "../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
@@ -40,10 +37,11 @@
 	const groupMatchCount = (group: ProgressionGroup): number => {
 		const result = coverage.allSongsCoverageResult;
 		if (!result) return 0;
-		const keys = group.progressions.flatMap((p) =>
-			chordProgressionVariants(p.chordProgression)
-		);
-		return filterCoverageResultForProgressions(result, keys).songCoverages
+		// Names, not literal spellings: matching is tonic-rotation-invariant,
+		// so a song can match a progression under a spelling that was never
+		// authored as a variant (see ProgressionGroupSection.svelte).
+		const names = group.progressions.map((p) => p.name);
+		return filterCoverageResultForProgressions(result, names).songCoverages
 			.length;
 	};
 

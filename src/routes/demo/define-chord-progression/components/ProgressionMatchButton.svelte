@@ -4,6 +4,7 @@
 	import type { ProgressionWithMatchStats } from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import ProgressionMatchButtonCompact from "./ProgressionMatchButtonCompact.svelte";
 	import { PALETTE_FILL_HOVER_COLOR_PERCENT } from "./progressionColors.js";
+	import { canonicalChordProgressionByName } from "$data/core-progressions.util.js";
 
 	export type VariantTooltipRow = {
 		chordProgression: string;
@@ -49,10 +50,20 @@
 	const scaleName = $derived(humanizeScale(match.scale));
 	const scaleLabel = $derived(`scale: ${scaleName}`);
 
+	// Display the progression's registered spelling, not the literal one
+	// this particular song happened to match — matching is tonic-rotation-
+	// invariant, so the same named progression can read as different
+	// roman-numeral strings across songs (see canonicalChordProgressionByName).
+	const displayChordProgression = $derived(
+		match.isCoreProgression
+			? (canonicalChordProgressionByName.get(match.name) ?? match.chordProgression)
+			: match.chordProgression
+	);
+
 	const buttonTitle = $derived(
 		match.isCoreProgression
-			? `${match.chordProgression} (${scaleLabel})`
-			: match.chordProgression
+			? `${displayChordProgression} (${scaleLabel})`
+			: displayChordProgression
 	);
 
 	const usesPaletteFill = $derived(!match.isCoreProgression);
@@ -142,7 +153,7 @@
 		>
 	{/if}
 	<span class="prog-chords-row">
-		<span class="prog-chords">{match.chordProgression}</span>
+		<span class="prog-chords">{displayChordProgression}</span>
 		{#if otherVariantCount > 0}
 			<span
 				bind:this={badgeElement}
