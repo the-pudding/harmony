@@ -12,6 +12,7 @@
 		songByKey: Map<string, GroupedSong>;
 		rankByClusterHash: Map<string, number>;
 		clusterNamesByHash?: Map<string, string>;
+		visibleSharePercentByClusterHash?: Map<string, number> | null;
 		showGlobalToggle?: boolean;
 		onSelectAllClusters?: () => void;
 		onDeselectAllClusters?: () => void;
@@ -27,6 +28,7 @@
 		songByKey,
 		rankByClusterHash,
 		clusterNamesByHash = new Map(),
+		visibleSharePercentByClusterHash = null,
 		showGlobalToggle = false,
 		onSelectAllClusters,
 		onDeselectAllClusters,
@@ -63,6 +65,9 @@
 			visible={isClusterVisible(summary.cluster.hash)}
 			rank={rankByClusterHash.get(summary.cluster.hash)}
 			name={clusterNamesByHash.get(summary.cluster.hash) ?? null}
+			visibleSharePercent={visibleSharePercentByClusterHash?.get(
+				summary.cluster.hash
+			) ?? null}
 			{yearDomain}
 			{selectedSongKey}
 			{songByKey}

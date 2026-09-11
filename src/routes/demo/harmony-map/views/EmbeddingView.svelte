@@ -27,6 +27,9 @@
 	import { buildClusterInputPoints } from "../embedding/clustering/clusterInputPoints.js";
 	import { buildClusterSummaries } from "../embedding/clustering/clusterSummaries.js";
 	import { findDensityClusters } from "../embedding/clustering/densityClusters.js";
+	import { computeClusterVisibleShares } from "../embedding/clustering/clusterVisibility.js";
+	import { toCalendarYear } from "../../../../data/songYear.js";
+	import YearScrubber from "../components/YearScrubber.svelte";
 	import type { EmbeddingState } from "../embedding/state/createEmbeddingState.svelte.js";
 	import { EMBEDDING_COMPUTING_STEPS } from "../embedding/state/createEmbeddingState.svelte.js";
 	import {
@@ -89,6 +92,8 @@
 	// Off by default: dots start plain (grey/white) rather than colored by
 	// core group blend, toggled on from the legend.
 	let showFamilyColors = $state(false);
+	// null = scrubber untouched, show everything (equivalent to the max year).
+	let scrubYear = $state<number | null>(null);
 
 	const setViewMode = (nextMode: MapViewMode) => {
 		if (nextMode === viewMode) return;
@@ -118,6 +123,39 @@
 		return years.length === 0
 			? null
 			: { min: Math.min(...years), max: Math.max(...years) };
+	});
+
+	// Integer calendar-year bounds for the scrubber — "through 1975" reads as
+	// "every song charted in or before 1975".
+	const yearScrubBounds = $derived(
+		yearDomain === null
+			? null
+			: {
+					min: toCalendarYear(yearDomain.min),
+					max: toCalendarYear(yearDomain.max)
+				}
+	);
+
+	// The 3D-w/-time view already encodes year as the z-axis, so scrubbing on
+	// top of that would double up on the same dimension — the scrubber is
+	// disabled there (see the markup below) and has no effect either way.
+	const scrubEnabled = $derived(viewMode !== "3dTime" && yearScrubBounds !== null);
+
+	const effectiveScrubYear = $derived(scrubYear ?? yearScrubBounds?.max ?? null);
+
+	// null = nothing hidden by time (scrubber at/after the last release, not
+	// in use, or 3D w/ time). A song with no year is always treated as
+	// already released, since we can't say it "hasn't come out yet".
+	const releasedSongKeys = $derived.by((): Set<string> | null => {
+		if (!scrubEnabled || effectiveScrubYear === null) return null;
+		if (effectiveScrubYear >= yearScrubBounds!.max) return null;
+		const keys = new Set<string>();
+		for (const song of songs) {
+			if (song.year === undefined || toCalendarYear(song.year) <= effectiveScrubYear) {
+				keys.add(song.songKey);
+			}
+		}
+		return keys;
 	});
 
 	const artistSummaries = $derived(
@@ -156,9 +194,19 @@
 	// Artist selection no longer hides other songs — it highlights (see
 	// artistSongKeys passed as emphasizedSongKeys below) so the map stays
 	// unchanged and you can still see where the artist's songs sit relative
-	// to everything else. Only the group/progression legend filter actually
-	// hides non-matching points.
-	const visibleSongKeys = $derived(groupFilterSongKeys);
+	// to everything else. The group/progression legend filter and the year
+	// scrubber both actually hide non-matching points, so the dots the
+	// scatter draws are whichever pass both (a song can be filtered out by
+	// group AND not released yet at the same time).
+	const visibleSongKeys = $derived.by((): Set<string> | null => {
+		if (groupFilterSongKeys === null) return releasedSongKeys;
+		if (releasedSongKeys === null) return groupFilterSongKeys;
+		const intersection = new Set<string>();
+		for (const songKey of groupFilterSongKeys) {
+			if (releasedSongKeys.has(songKey)) intersection.add(songKey);
+		}
+		return intersection;
+	});
 
 	const onSelectGroup = (label: string | null) => {
 		selectedGroupLabel = label;
@@ -242,11 +290,15 @@
 		CLUSTERABLE_METHODS.has(embedding.method) && viewMode !== "3dTime"
 	);
 
+	// Deliberately keyed on groupFilterSongKeys alone, not the full
+	// visibleSongKeys — clustering must stay blind to the year scrubber so
+	// cluster identity, membership, and geometry never change as you scrub.
+	// The scrubber only ever hides dots; it doesn't re-run DBSCAN.
 	const clusterInputPoints = $derived(
 		buildClusterInputPoints(
-			visibleSongKeys === null
+			groupFilterSongKeys === null
 				? points
-				: points.filter((point) => visibleSongKeys.has(point.songKey))
+				: points.filter((point) => groupFilterSongKeys.has(point.songKey))
 		)
 	);
 
@@ -278,6 +330,24 @@
 				};
 			}
 		)
+	);
+
+	// Same universe clustering itself uses (respecting the group/progression
+	// filter, if any) — just further narrowed to what's released so far —
+	// so cluster percentages stay consistent with what findDensityClusters
+	// actually saw.
+	const totalReleasedCount = $derived.by(() => {
+		const universe =
+			groupFilterSongKeys === null
+				? points
+				: points.filter((point) => groupFilterSongKeys.has(point.songKey));
+		return releasedSongKeys === null
+			? universe.length
+			: universe.filter((point) => releasedSongKeys.has(point.songKey)).length;
+	});
+
+	const clusterVisibleSharePercentByHash = $derived(
+		computeClusterVisibleShares(allClusters, releasedSongKeys, totalReleasedCount)
 	);
 
 	const toggleClusterVisibility = (clusterHash: string) => {
@@ -379,6 +449,16 @@
 					</button>
 				{/each}
 			</div>
+
+			{#if yearScrubBounds && yearScrubBounds.min !== yearScrubBounds.max}
+				<YearScrubber
+					min={yearScrubBounds.min}
+					max={yearScrubBounds.max}
+					value={effectiveScrubYear ?? yearScrubBounds.max}
+					disabled={viewMode === "3dTime"}
+					onChange={(year) => (scrubYear = year)}
+				/>
+			{/if}
 
 			{#if selectedArtistSummary}
 				<button
@@ -491,6 +571,7 @@
 					{yearDomain}
 					{clusterRankByHash}
 					{clusterNamesByHash}
+					visibleSharePercentByClusterHash={clusterVisibleSharePercentByHash}
 					onToggleClusterVisibility={toggleClusterVisibility}
 					onSelect={selectSong}
 				/>
@@ -504,6 +585,7 @@
 					{songByKey}
 					rankByClusterHash={clusterRankByHash}
 					{clusterNamesByHash}
+					visibleSharePercentByClusterHash={clusterVisibleSharePercentByHash}
 					onSelectAllClusters={selectAllClusters}
 					onDeselectAllClusters={deselectAllClusters}
 					onToggleClusterVisibility={toggleClusterVisibility}
