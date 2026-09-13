@@ -138,7 +138,7 @@ export const trickySongsToMatchCorrectly: TrickySongToMatchCorrectly[] = [
 	{
 		id: "bobby-vee__rubber-ball",
 		chordMatchingChallenges:
-			"Algo does the best it can, but misses for a reason common to a lot of songs from this era: it seems like for some reason they're notated as one giant single section, which the algo isn't sophisticated enough to handle (or perhaps that's just way too ambiguous for any chord-only algo to handle?). Solution is to just split it into a few sections."
+			"[NOTE: I hand corrected this one] Algo does the best it can, but misses for a reason common to a lot of songs from this era: it seems like for some reason they're notated as one giant single section, which the algo isn't sophisticated enough to handle (or perhaps that's just way too ambiguous for any chord-only algo to handle?). Solution is to just split it into a few sections."
 	}
 ];
 
