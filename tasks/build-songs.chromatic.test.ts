@@ -159,4 +159,47 @@ describe("build-songs chromatic regression", () => {
 			suffix: "major"
 		});
 	});
+
+	it("normalizes HookTheory paren romans at parse time without needing stored accidentals", () => {
+		const qualityOnlyV = {
+			degree: 5,
+			quality: "maj",
+			borrowed: true,
+			roman: "(V)",
+			bass_degree: 5,
+			extension: null,
+			suspensions: []
+		};
+		const mixtureFlatThree = {
+			degree: 3,
+			quality: "maj",
+			borrowed: true,
+			roman: "(III)",
+			bass_degree: 3,
+			extension: null,
+			suspensions: []
+		};
+		const leadingToneDim = {
+			degree: 7,
+			quality: "dim",
+			borrowed: true,
+			roman: "(vii°)",
+			bass_degree: 7,
+			extension: null,
+			suspensions: []
+		};
+
+		expect(resolveAccidental(qualityOnlyV, "F#", "minor")).toBe(0);
+		expect(chordsToRomanTokens([qualityOnlyV], "F#", "minor")).toEqual(["V"]);
+
+		expect(resolveAccidental(mixtureFlatThree, "F#", "major")).toBe(-1);
+		expect(chordsToRomanTokens([mixtureFlatThree], "F#", "major")).toEqual([
+			"bIII"
+		]);
+
+		expect(resolveAccidental(leadingToneDim, "Bb", "minor")).toBe(1);
+		expect(chordsToRomanTokens([leadingToneDim], "Bb", "minor")).toEqual([
+			"#vii°"
+		]);
+	});
 });

@@ -220,6 +220,81 @@ const accidentalFromRoman = (roman) => {
 	return 0;
 };
 
+const stripBorrowedRomanWrap = (roman) => roman.replace(/^\(([^)]+)\)/, "$1");
+
+const hasBorrowedRomanWrap = (roman) =>
+	typeof roman === "string" && /^\(/.test(roman);
+
+const MAJOR_DEGREE_QUALITIES = [
+	"maj",
+	"min",
+	"min",
+	"maj",
+	"maj",
+	"min",
+	"dim"
+];
+const MINOR_DEGREE_QUALITIES = [
+	"min",
+	"dim",
+	"maj",
+	"min",
+	"min",
+	"maj",
+	"maj"
+];
+
+const inferBorrowedScaleFromQuality = (degree, quality) => {
+	if (MAJOR_DEGREE_QUALITIES[degree - 1] === quality) return "major";
+	if (MINOR_DEGREE_QUALITIES[degree - 1] === quality) return "minor";
+	return null;
+};
+
+const signedSemitoneDiff = (fromPc, toPc) => {
+	const up = (toPc - fromPc + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE;
+	if (up === 0) return 0;
+	const down = NOTES_PER_OCTAVE - up;
+	return up <= down ? up : -down;
+};
+
+// HookTheory marks borrowed chords with parentheses, e.g. "(V)" / "(III)".
+// Quality-only borrows keep the home root pitch; root-shifting mixture moves
+// it by the parallel major/minor interval for that degree.
+const accidentalFromBorrowedParenRoman = (chord, scale) => {
+	if (!hasBorrowedRomanWrap(chord.roman)) return null;
+
+	const borrowedScale = inferBorrowedScaleFromQuality(
+		chord.degree,
+		chord.quality
+	);
+	if (!borrowedScale) return 0;
+
+	const homeIntervals = SCALE_INTERVALS[scale];
+	const borrowedIntervals = SCALE_INTERVALS[borrowedScale];
+	if (!homeIntervals || !borrowedIntervals) return 0;
+
+	const homePc = homeIntervals[chord.degree - 1];
+	const borrowedPc = borrowedIntervals[chord.degree - 1];
+	if (homePc === undefined || borrowedPc === undefined) return 0;
+
+	return signedSemitoneDiff(homePc, borrowedPc);
+};
+
+const applyAccidentalPrefixToRoman = (roman, accidental) => {
+	const stripped = stripBorrowedRomanWrap(roman);
+	if (accidental === -SEMITONE) {
+		if (stripped.startsWith("b")) return stripped;
+		if (stripped.startsWith("#")) return `b${stripped.slice(1)}`;
+		return `b${stripped}`;
+	}
+	if (accidental === SEMITONE) {
+		if (stripped.startsWith("#")) return stripped;
+		if (stripped.startsWith("b")) return `#${stripped.slice(1)}`;
+		return `#${stripped}`;
+	}
+	return stripped;
+};
+
 const accidentalFromChordName = (chord, key, scale) => {
 	if (typeof chord.name !== "string") return null;
 	const rootMatch = chord.name.trim().match(CHORD_NAME_ROOT_PATTERN);
@@ -241,11 +316,25 @@ const resolveAccidental = (chord, key, scale) => {
 		return chord.accidental;
 	}
 
-	const romanAccidental = accidentalFromRoman(chord.roman);
-	if (romanAccidental !== null) return romanAccidental;
+	if (typeof chord.roman === "string") {
+		const stripped = stripBorrowedRomanWrap(chord.roman);
+		if (stripped.startsWith("b") || stripped.startsWith("#")) {
+			const explicit = accidentalFromRoman(stripped);
+			if (explicit !== null) return explicit;
+		}
+	}
+
+	const borrowedParenAccidental = accidentalFromBorrowedParenRoman(
+		chord,
+		scale
+	);
+	if (borrowedParenAccidental !== null) return borrowedParenAccidental;
 
 	const nameAccidental = accidentalFromChordName(chord, key, scale);
 	if (nameAccidental !== null) return nameAccidental;
+
+	const romanAccidental = accidentalFromRoman(chord.roman);
+	if (romanAccidental !== null) return romanAccidental;
 
 	return 0;
 };
@@ -257,15 +346,13 @@ const progressionChordInputsAreEqual = (a, b) =>
 
 const chordsToRomanTokens = (chords, key, scale) =>
 	(chords ?? [])
-		.map((chord) =>
-			typeof chord.roman === "string" && chord.roman.length > 0
-				? chord.roman
-				: degreeQualityToRoman(
-						chord.degree,
-						chord.quality,
-						resolveAccidental(chord, key, scale)
-					)
-		)
+		.map((chord) => {
+			const accidental = resolveAccidental(chord, key, scale);
+			if (typeof chord.roman === "string" && chord.roman.length > 0) {
+				return applyAccidentalPrefixToRoman(chord.roman, accidental);
+			}
+			return degreeQualityToRoman(chord.degree, chord.quality, accidental);
+		})
 		.filter(Boolean);
 
 const qualityExtensionToSuffix = ({ quality, extension, suspensions }) => {

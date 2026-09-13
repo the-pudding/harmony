@@ -170,7 +170,7 @@ describe("parseRomanToken — extensions", () => {
 		});
 	});
 
-	it("strips outer parentheses (borrowed chords)", () => {
+	it("strips outer parentheses for legacy borrowed notation", () => {
 		expect(parseRomanToken("(IV)")).toMatchObject({
 			degree: 4,
 			suffix: "major"
