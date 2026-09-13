@@ -4,7 +4,7 @@ import type { SongSection } from "../../../../data/songBrowser.js";
 import {
   matchProgressionSelectiveExactness,
 } from "../../define-chord-progression/progression-matching-logic/collapsedProgression.js";
-import { isSelfRepeatingProgression } from "../../define-chord-progression/progression-matching-logic/progressionConstraints.js";
+import { hasConsecutivelyRepeatedBlock } from "../../define-chord-progression/progression-matching-logic/progressionConstraints.js";
 import { chordProgressionVariants } from "$data/core-progressions.util.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import {
@@ -81,7 +81,7 @@ const generateLiteralSliceCandidates = (
 		const romanString = section.romanTokens
 			.slice(startIndex, startIndex + L)
 			.join("-");
-		if (isSelfRepeatingProgression(romanString)) continue;
+		if (hasConsecutivelyRepeatedBlock(romanString.split("-"), 2)) continue;
 
 		const unit = sectionChords.slice(startIndex, startIndex + L);
 		const { repeatCount, coveredLength } = countContiguousRepeats(
@@ -128,7 +128,7 @@ const generateSelfRepeatingCoreCandidates = (
   for (const core of coreProgressions) {
     const variants = chordProgressionVariants(core.chordProgression);
     for (const variant of variants) {
-      if (!isSelfRepeatingProgression(variant)) continue;
+      if (!hasConsecutivelyRepeatedBlock(variant.split("-"), 2)) continue;
       const tokens = variant.split("-");
       if (
         tokens.length < MIN_CANDIDATE_LENGTH ||
