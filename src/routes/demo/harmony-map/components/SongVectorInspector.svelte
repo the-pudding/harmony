@@ -41,6 +41,7 @@
 		yearDomain: YearDomain | null;
 		clusterRankByHash: Map<string, number>;
 		clusterNamesByHash?: Map<string, string>;
+		visibleSharePercentByClusterHash?: Map<string, number> | null;
 		onToggleClusterVisibility: (clusterHash: string) => void;
 		onSelect: (songKey: string | null) => void;
 	};
@@ -62,6 +63,7 @@
 		yearDomain,
 		clusterRankByHash,
 		clusterNamesByHash = new Map(),
+		visibleSharePercentByClusterHash = null,
 		onToggleClusterVisibility,
 		onSelect
 	}: Props = $props();
@@ -279,6 +281,7 @@
 					{songByKey}
 					rankByClusterHash={clusterRankByHash}
 					{clusterNamesByHash}
+					{visibleSharePercentByClusterHash}
 					{onToggleClusterVisibility}
 					onSelectSong={(songKey) => onSelect(songKey)}
 				/>

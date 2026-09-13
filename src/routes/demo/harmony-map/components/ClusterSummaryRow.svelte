@@ -10,6 +10,9 @@
 		visible: boolean;
 		rank: number | undefined;
 		name?: string | null;
+		// % of currently-released songs (year scrubber) that are in this
+		// cluster — omitted/null when the scrubber isn't in use.
+		visibleSharePercent?: number | null;
 		yearDomain: YearDomain | null;
 		selectedSongKey: string | null;
 		songByKey: Map<string, GroupedSong>;
@@ -22,6 +25,7 @@
 		visible,
 		rank,
 		name = null,
+		visibleSharePercent = null,
 		yearDomain,
 		selectedSongKey,
 		songByKey,
@@ -48,6 +52,13 @@
 		<div class="cluster-header">
 			<span class="cluster-rank">#{rank ?? "?"}</span>
 			<span class="cluster-title">{title}</span>
+			{#if visibleSharePercent !== null}
+				<span
+					class="cluster-visible-share"
+					title="% of songs released so far that are in this cluster"
+					>{visibleSharePercent.toFixed(1)}% so far</span
+				>
+			{/if}
 		</div>
 
 		{#if summary.groupShares.length > 0}
@@ -130,6 +141,14 @@
 		font-size: 0.65rem;
 		font-weight: 600;
 		color: #71717a;
+	}
+
+	.cluster-visible-share {
+		font-size: 0.6rem;
+		font-weight: 600;
+		color: rgba(165, 180, 252, 0.95);
+		flex-shrink: 0;
+		margin-left: auto;
 	}
 
 	.cluster-title {
