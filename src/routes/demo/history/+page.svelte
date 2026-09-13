@@ -812,7 +812,6 @@
 		font-size: 0.875rem;
 		font-weight: 600;
 		color: #f4f4f5;
-		text-transform: lowercase;
 	}
 
 	.signature-chords {

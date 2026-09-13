@@ -85,6 +85,45 @@ export const degreeQualityToRoman = (
 	return null;
 };
 
+export type ParsedRomanToken = {
+	degree: number;
+	quality: string;
+	flat: boolean;
+	sharp: boolean;
+	suffix: string;
+	bassDegree?: number;
+	bassFlat?: boolean;
+	bassSharp?: boolean;
+};
+
+export const formatParsedRomanToken = (parsed: ParsedRomanToken): string => {
+	const base = degreeQualityToRoman(parsed.degree, parsed.quality);
+	if (!base) {
+		throw new Error(
+			`Cannot format roman token for degree ${parsed.degree}, quality ${parsed.quality}`
+		);
+	}
+
+	const withAccidental = parsed.flat
+		? `b${base}`
+		: parsed.sharp
+			? `#${base}`
+			: base;
+	const extension = suffixToRomanExtension(parsed.suffix, parsed.quality);
+	const bass =
+		parsed.bassDegree !== undefined
+			? `/${formatParsedRomanToken({
+					degree: parsed.bassDegree,
+					quality: "maj",
+					flat: parsed.bassFlat ?? false,
+					sharp: parsed.bassSharp ?? false,
+					suffix: "major"
+				})}`
+			: "";
+
+	return `${withAccidental}${extension}${bass}`;
+};
+
 export const BASE_CHORD_SUFFIXES = new Set([
 	"major",
 	"minor",
@@ -172,16 +211,7 @@ const romanBaseToDegree = (base: string): number | null => {
 	);
 };
 
-type ParsedToken = {
-	degree: number;
-	quality: string;
-	flat: boolean;
-	sharp: boolean;
-	suffix: string;
-	bassDegree?: number;
-	bassFlat?: boolean;
-	bassSharp?: boolean;
-};
+type ParsedToken = ParsedRomanToken;
 
 export const parseRomanToken = (token: string): ParsedToken | null => {
 	// Strip outer parentheses: "(IV)" → "IV", "(IVmaj7)" → "IVmaj7"

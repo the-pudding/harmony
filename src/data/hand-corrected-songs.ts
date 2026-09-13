@@ -9,9 +9,16 @@ export type CorrectedSongContents = {
 	sections: CorrectedSongSection[];
 };
 
+export type SongKeyAdjustment = {
+	chordsRelativeToKey: string;
+	transposeToKey?: string;
+	scale?: string;
+};
+
 export type HandCorrectedSong = {
 	id: string;
-	correctedSongContents: CorrectedSongContents;
+	correctedSongContents?: CorrectedSongContents;
+	keyAdjustment?: SongKeyAdjustment;
 	technicalNotes?: string;
 };
 
@@ -606,6 +613,15 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 					romanTokens: [...repeatNTimes(["I", "vi", "IV", "V"], 2), "I"]
 				}
 			]
+		}
+	},
+	{
+		id: "connie-francis__many-tears-ago",
+		technicalNotes:
+			"UG chords are letter-correct for G major, but key detection labeled them as D major. Actual recording is Ab major (up a half step from the written G shapes).",
+		keyAdjustment: {
+			chordsRelativeToKey: "G",
+			transposeToKey: "Ab"
 		}
 	}
 ];

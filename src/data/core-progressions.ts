@@ -298,6 +298,13 @@ const minoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
+			name: "V i vamp",
+			chordProgression: "V-i-V-i",
+			scale: "minor",
+			// this can also be in a major key: 'III-vi-III-vi'
+			description: ""
+		},
+		{
 			name: "scars to your beautiful (vamp)",
 			chordProgression: "VI-i-VI-i",
 			scale: "minor",

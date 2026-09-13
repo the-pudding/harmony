@@ -5,16 +5,29 @@ import {
 import type { SongInput } from "../chord-processing/types.js";
 import { romanTokensToProgressionInKey } from "../chord-processing/scales.js";
 import { handCorrectedSongs } from "./hand-corrected-songs.js";
-import type { CorrectedSongContents } from "./hand-corrected-songs.js";
+import type {
+	CorrectedSongContents,
+	SongKeyAdjustment
+} from "./hand-corrected-songs.js";
+import { applySongKeyAdjustment } from "./applySongKeyAdjustment.js";
 
 export const applyHandReviewedCorrections = (
 	songs: SongInput[]
 ): SongInput[] => {
-	const corrections = new Map(
-		handCorrectedSongs.map((song) => [song.id, song.correctedSongContents])
+	const fullCorrections = new Map(
+		handCorrectedSongs.flatMap((song) =>
+			song.correctedSongContents
+				? [[song.id, song.correctedSongContents] as const]
+				: []
+		)
+	);
+	const keyAdjustments = new Map(
+		handCorrectedSongs.flatMap((song) =>
+			song.keyAdjustment ? [[song.id, song.keyAdjustment] as const] : []
+		)
 	);
 
-	if (corrections.size === 0) return songs;
+	if (fullCorrections.size === 0 && keyAdjustments.size === 0) return songs;
 
 	const metadataByKey = new Map<
 		string,
@@ -32,22 +45,31 @@ export const applyHandReviewedCorrections = (
 		}
 	}
 
-	const correctedKeys = new Set(corrections.keys());
-	const filtered = songs.filter((s) => !correctedKeys.has(resolveSongKey(s)));
+	const fullCorrectionKeys = new Set(fullCorrections.keys());
+	const withoutFullCorrections = songs.filter(
+		(s) => !fullCorrectionKeys.has(resolveSongKey(s))
+	);
 
-	const replacements = [...corrections.entries()].flatMap(([id, contents]) => {
-		const meta = metadataByKey.get(id);
-		if (!meta) return [];
-		return correctedSongContentsToSongInputs(
-			id,
-			meta.baseTitle,
-			meta.artists,
-			meta.year,
-			contents
-		);
+	const withKeyAdjustments = withoutFullCorrections.map((song) => {
+		const adjustment = keyAdjustments.get(resolveSongKey(song));
+		return adjustment ? applySongKeyAdjustment(song, adjustment) : song;
 	});
 
-	return [...filtered, ...replacements];
+	const replacements = [...fullCorrections.entries()].flatMap(
+		([id, contents]) => {
+			const meta = metadataByKey.get(id);
+			if (!meta) return [];
+			return correctedSongContentsToSongInputs(
+				id,
+				meta.baseTitle,
+				meta.artists,
+				meta.year,
+				contents
+			);
+		}
+	);
+
+	return [...withKeyAdjustments, ...replacements];
 };
 
 export const correctedSongContentsToSongInputs = (
@@ -72,3 +94,5 @@ export const correctedSongContentsToSongInputs = (
 		),
 		romanTokens: section.romanTokens
 	}));
+
+export type { SongKeyAdjustment };

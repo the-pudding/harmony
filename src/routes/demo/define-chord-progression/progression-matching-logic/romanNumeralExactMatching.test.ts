@@ -154,6 +154,11 @@ describe("buildColoredHighlightSegments — matchRomanNumeralsExactly in annotat
 		) as Parameters<typeof groupSongs>[0]
 	)[0];
 
+	const chromaticTailSection =
+		paulAnkaSong.sections.find((section) =>
+			section.romanTokens.includes("biii")
+		) ?? paulAnkaSong.sections[0];
+
 	const jazzProgression: CoreProgression = {
 		name: "jazz ii-V-I",
 		chordProgression: ["ii-bii-I", "ii-bII-I", "ii-V-I"],
@@ -186,7 +191,7 @@ describe("buildColoredHighlightSegments — matchRomanNumeralsExactly in annotat
 	};
 
 	it("does not highlight biii-bVI-bII when exact roman matching is enabled", () => {
-		const section = paulAnkaSong.sections[0];
+		const section = chromaticTailSection;
 		const highlighted = highlightedRomanTokens(section, true);
 		expect(highlighted).not.toContain("biii");
 		expect(highlighted).not.toContain("bVI");
@@ -197,7 +202,7 @@ describe("buildColoredHighlightSegments — matchRomanNumeralsExactly in annotat
 			["ii", "V", "I"],
 			"major"
 		)!;
-		const section = paulAnkaSong.sections[0];
+		const section = chromaticTailSection;
 		const chromaticTailStart = section.romanTokens.findIndex(
 			(token) => token === "biii"
 		);

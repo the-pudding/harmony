@@ -56,11 +56,6 @@ export const problematicSongs: ProblematicSong[] = [
 			"First, it's all one giant (wrong) section. Next, the main chord progression should be I-vi-I-vi-iii-V"
 	},
 	{
-		id: "connie-francis__many-tears-ago",
-		chordProgressionIssues:
-			"Chords are correct, but since the original UG webpage didn't list a key, it somehow ended up with 'D major' when it should say 'G major'."
-	},
-	{
 		id: "the-hollies__long-cool-woman-in-a-black-dress",
 		chordProgressionIssues:
 			"Chords are correct, but since the original UG webpage didn't list a key, it somehow ended up with 'D major' when it should say something like 'E mixolydian' or (in as Adam Neely talked about) it's both in E mixolydian (A major) *and* D major."
@@ -134,11 +129,6 @@ export const trickySongsToMatchCorrectly: TrickySongToMatchCorrectly[] = [
 		id: "cher__believe",
 		chordMatchingChallenges:
 			"Overall great matches. Just in verse we match 2 3-chord core progressions (mostly correct), but the second one matches I-iii-IV and just leaves out the final V. I guess this it a 3-chord core progression being preferred over a 4-chord non-core? Is this the right tradeoff?"
-	},
-	{
-		id: "bobby-vee__rubber-ball",
-		chordMatchingChallenges:
-			"[NOTE: I hand corrected this one] Algo does the best it can, but misses for a reason common to a lot of songs from this era: it seems like for some reason they're notated as one giant single section, which the algo isn't sophisticated enough to handle (or perhaps that's just way too ambiguous for any chord-only algo to handle?). Solution is to just split it into a few sections."
 	}
 ];
 
