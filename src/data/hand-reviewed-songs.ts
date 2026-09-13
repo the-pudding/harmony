@@ -134,6 +134,11 @@ export const trickySongsToMatchCorrectly: TrickySongToMatchCorrectly[] = [
 		id: "cher__believe",
 		chordMatchingChallenges:
 			"Overall great matches. Just in verse we match 2 3-chord core progressions (mostly correct), but the second one matches I-iii-IV and just leaves out the final V. I guess this it a 3-chord core progression being preferred over a 4-chord non-core? Is this the right tradeoff?"
+	},
+	{
+		id: "bobby-vee__rubber-ball",
+		chordMatchingChallenges:
+			"Algo does the best it can, but misses for a reason common to a lot of songs from this era: it seems like for some reason they're notated as one giant single section, which the algo isn't sophisticated enough to handle (or perhaps that's just way too ambiguous for any chord-only algo to handle?). Solution is to just split it into a few sections."
 	}
 ];
 

@@ -535,5 +535,26 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 				}))
 			]
 		}
+	},
+	{
+		id: "dee-dee-sharp__mashed-potato-time",
+		technicalNotes:
+			"Chords were correct from UG (song is literally one progression repeating), but there were two snags: 1. it was all one section (so the two intro chords threw our algo off), and 2. the UG added an alternate key at the end to play without capo, which got picked up as if it were part of the song (sloppy/odd formatting)",
+		correctedSongContents: {
+			sections: [
+				{
+					name: "Intro",
+					key: "C#",
+					scale: "major",
+					romanTokens: ["I", "vi"]
+				},
+				...["Verse", "Chorus", "Verse"].map((name) => ({
+					name,
+					key: "C#",
+					scale: "major",
+					romanTokens: repeatNTimes(["I", "vi", "IV", "V"], 2)
+				}))
+			]
+		}
 	}
 ];
