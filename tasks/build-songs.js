@@ -585,8 +585,9 @@ const loadTrackerIndex = () => {
 
 	return csvParse(fs.readFileSync(TRACKER_PATH, "utf-8")).reduce(
 		(index, row) => {
-			const key = trackerKey(row.artist, row.song);
-			return index.set(key, row);
+			const humanKey = trackerKey(row.artist, row.song);
+			if (row.slug) index.set(row.slug, row);
+			return index.set(humanKey, row);
 		},
 		new Map()
 	);
@@ -612,7 +613,7 @@ const parseBillboardChartYear = (date) => {
 	);
 };
 
-const loadBillboardIndex = () => {
+const loadBillboardIndex = (trackerIndex = new Map()) => {
 	if (!fs.existsSync(BILLBOARD_PATH)) {
 		console.warn(
 			`Billboard not found at ${BILLBOARD_PATH}; skipping popularity scores`
@@ -620,7 +621,7 @@ const loadBillboardIndex = () => {
 		return new Map();
 	}
 
-	return csvParse(fs.readFileSync(BILLBOARD_PATH, "utf-8")).reduce(
+	const byHumanKey = csvParse(fs.readFileSync(BILLBOARD_PATH, "utf-8")).reduce(
 		(index, row) => {
 			const key = trackerKey(row.artist, row.song);
 			const rank = Number(row.rank);
@@ -644,6 +645,14 @@ const loadBillboardIndex = () => {
 		},
 		new Map()
 	);
+
+	const index = new Map(byHumanKey);
+	for (const row of trackerIndex.values()) {
+		if (!row.slug) continue;
+		const entry = byHumanKey.get(trackerKey(row.artist, row.song));
+		if (entry) index.set(row.slug, entry);
+	}
+	return index;
 };
 
 const buildSongs = (sourceDirs, trackerIndex, billboardIndex) => {
@@ -662,16 +671,21 @@ const buildSongs = (sourceDirs, trackerIndex, billboardIndex) => {
 		readSongFiles(dirPath).flatMap((filePath) => {
 			stats.filesRead += 1;
 			const songData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-			const lookupKey = trackerKey(songData.artist, songData.song);
+			const fileSlug = path.basename(filePath, ".json");
+			const contentKey = trackerKey(songData.artist, songData.song);
+			const lookupKey = fileSlug;
 
-			if (seenSongKeys.has(lookupKey)) {
+			if (seenSongKeys.has(lookupKey) || seenSongKeys.has(contentKey)) {
 				stats.songsDeduped += 1;
 				return [];
 			}
 			seenSongKeys.add(lookupKey);
+			seenSongKeys.add(contentKey);
 
-			const trackerEntry = trackerIndex.get(lookupKey);
-			const billboardEntry = billboardIndex.get(lookupKey);
+			const trackerEntry =
+				trackerIndex.get(fileSlug) ?? trackerIndex.get(contentKey);
+			const billboardEntry =
+				billboardIndex.get(fileSlug) ?? billboardIndex.get(contentKey);
 			const resolvedSource = songData.source === "ug" ? "UG" : "HT";
 
 			return (songData.sections ?? []).flatMap((section) => {
@@ -749,9 +763,12 @@ const buildArtistSongs = (artistSlug, trackerIndex, billboardIndex) => {
 		stats.filesRead += 1;
 		const [, songSlug, albumSlug] = match;
 		const songData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-		const lookupKey = trackerKey(songData.artist, songData.song);
-		const trackerEntry = trackerIndex.get(lookupKey);
-		const billboardEntry = billboardIndex.get(lookupKey);
+		const artistSongSlug = `${artistSlug}__${songSlug}`;
+		const contentKey = trackerKey(songData.artist, songData.song);
+		const trackerEntry =
+			trackerIndex.get(artistSongSlug) ?? trackerIndex.get(contentKey);
+		const billboardEntry =
+			billboardIndex.get(artistSongSlug) ?? billboardIndex.get(contentKey);
 		const resolvedSource = songData.source === "ug" ? "UG" : "HT";
 
 		return (songData.sections ?? []).flatMap((section) => {
@@ -843,7 +860,7 @@ const main = () => {
 	}
 
 	const trackerIndex = loadTrackerIndex();
-	const billboardIndex = loadBillboardIndex();
+	const billboardIndex = loadBillboardIndex(trackerIndex);
 
 	const { songs, stats } = buildSongs(
 		SONG_SOURCE_DIRS,
@@ -876,5 +893,9 @@ export {
 	chordsToRomanTokens,
 	degreeQualityToRoman,
 	degreeToPitchClass,
-	resolveAccidental
+	loadBillboardIndex,
+	loadTrackerIndex,
+	parseBillboardChartYear,
+	resolveAccidental,
+	trackerKey
 };
