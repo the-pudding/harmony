@@ -556,5 +556,56 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 				}))
 			]
 		}
+	},
+	{
+		id: "bobby-vee__rubber-ball",
+		correctedSongContents: {
+			sections: [
+				{
+					name: "Chorus",
+					key: "A",
+					scale: "major",
+					romanTokens: [
+						...repeatNTimes(["I", "vi", "IV", "V"], 2),
+						"I",
+						"IV",
+						"I"
+					]
+				},
+				...["Verse 1", "Bridge"].map((name) => ({
+					name,
+					key: "A",
+					scale: "major",
+					romanTokens: [
+						...repeatNTimes(["I", "vi"], 2),
+						...repeatNTimes(["I", "vi", "IV", "V"], 3),
+						"I"
+					]
+				})),
+				{
+					name: "Chorus",
+					key: "A",
+					scale: "major",
+					romanTokens: [
+						...repeatNTimes(["I", "vi", "IV", "V"], 2),
+						"I",
+						"IV",
+						"I"
+					]
+				},
+				{
+					name: "Verse 2",
+					key: "A",
+					scale: "major",
+					romanTokens: [...repeatNTimes(["I", "vi"], 3), "IV", "V"]
+				},
+				{
+					name: "Chorus",
+					key: "A",
+					scale: "major",
+					romanTokens: [...repeatNTimes(["I", "vi", "IV", "V"], 2), "I"]
+				}
+			]
+		}
 	}
 ];
