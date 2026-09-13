@@ -14,7 +14,6 @@
 	const TOOLTIP_GAP_PX = 6;
 
 	const EXACT_BADGE_COLOR = "#fac850";
-	const CONTIGUITY_BADGE_COLOR = "#5fd4c0";
 
 	type Props = {
 		match: ProgressionWithMatchStats;
@@ -145,10 +144,6 @@
 					"exact",
 					"Matches only when the first chord is the tonic of this scale — not just any rotation",
 					EXACT_BADGE_COLOR
-				)}{/if}{#if match.minimumContiguousMatches}{@render criterionBadge(
-					`${match.minimumContiguousMatches}× in a row`,
-					`Only counts when at least ${match.minimumContiguousMatches} occurrences repeat immediately back-to-back within one section — a shape this short turns up twice somewhere in almost any song by coincidence`,
-					CONTIGUITY_BADGE_COLOR
 				)}{/if}</span
 		>
 	{/if}

@@ -26,7 +26,6 @@ import {
 	matchProgressionSelectiveExactness
 } from "./collapsedProgression.js";
 
-export const MIN_PROGRESSION_OCCURRENCES = 2;
 export const MIN_FULL_SECTION_OCCURRENCES = 1;
 
 export const MATCH_RATE_INTEGER_DISPLAY_THRESHOLD_PERCENT = 1;
@@ -61,7 +60,6 @@ export type ProgressionWithMatchStats = {
 	coveragePercent: number;
 	isCoreProgression: boolean;
 	matchRomanNumeralsExactly?: boolean;
-	minimumContiguousMatches?: number;
 	isStrictSubset?: boolean;
 	isFullSectionSingleMatch?: boolean;
 	isSectionStartBiasWinner?: boolean;
