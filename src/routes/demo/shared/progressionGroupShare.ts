@@ -3,10 +3,7 @@ import {
 	progressionGroupLegendItems,
 	UNGROUPED_PROGRESSION_GROUP_LABEL
 } from "$data/core-progressions.js";
-import {
-	chordProgressionVariants,
-	dominantProgressionGroupName
-} from "$data/core-progressions.util.js";
+import { dominantProgressionGroupName } from "$data/core-progressions.util.js";
 import type { SongCoverageEntry } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 
 const PERCENT_SCALE = 100;
@@ -28,9 +25,12 @@ export type ProgressionGroupShare = {
 
 // Family share is exclusive (one dominant group per song, via
 // dominantProgressionGroupName), so shares sum to ~100%. Progression share
-// within a family is "did this progression appear as a final match anywhere
-// in the song" (not just the dominant one), so a family's children can sum
-// to more than the family's own share.
+// within a family is "did the algo select this named core progression as a
+// final match anywhere in the song" (not just the dominant one), so a
+// family's children can sum to more than the family's own share. Identity is
+// the canonical name — never the literal roman spelling — because matching
+// is tonic-rotation-invariant and a song can match under an un-authored
+// rotation (e.g. axis of awesome as vi-IV-I-V).
 export const buildProgressionGroupShares = (
 	songCoverages: readonly SongCoverageEntry[]
 ): ProgressionGroupShare[] => {
@@ -44,16 +44,15 @@ export const buildProgressionGroupShares = (
 		groupCounts.set(label, (groupCounts.get(label) ?? 0) + 1);
 	}
 
-	const matchedVariantKeysBySong = songCoverages.map(
-		(entry) => new Set(entry.progressionCounts.map((count) => count.chordProgression))
+	const matchedNamesBySong = songCoverages.map(
+		(entry) => new Set(entry.matchingProgressions)
 	);
 
 	const progressionCountByName = new Map<string, number>();
 	for (const group of allProgressionGroups) {
 		for (const progression of group.progressions) {
-			const variants = new Set(chordProgressionVariants(progression.chordProgression));
-			const matchingSongCount = matchedVariantKeysBySong.filter((matchedVariants) =>
-				[...variants].some((variant) => matchedVariants.has(variant))
+			const matchingSongCount = matchedNamesBySong.filter((matchedNames) =>
+				matchedNames.has(progression.name)
 			).length;
 			progressionCountByName.set(progression.name, matchingSongCount);
 		}
@@ -95,37 +94,20 @@ export const buildProgressionGroupShares = (
 };
 
 // Returns song keys whose dominant group matches groupLabel, optionally further
-// narrowed to songs that include any variant of progressionName.
+// narrowed to songs where the algo selected the named core progression.
 export const songKeysMatchingGroupFilter = (
 	songCoverages: readonly SongCoverageEntry[],
 	groupLabel: string,
 	progressionName: string | null
-): Set<string> => {
-	const progressionVariants =
-		progressionName === null
-			? null
-			: (() => {
-					for (const group of allProgressionGroups) {
-						const match = group.progressions.find(
-							(progression) => progression.name === progressionName
-						);
-						if (match)
-							return new Set(chordProgressionVariants(match.chordProgression));
-					}
-					return null;
-				})();
-
-	return new Set(
+): Set<string> =>
+	new Set(
 		songCoverages
 			.filter((entry) => {
 				const dominant = dominantProgressionGroupName(entry.progressionCounts);
 				const dominantLabel = dominant ?? UNGROUPED_PROGRESSION_GROUP_LABEL;
 				if (dominantLabel !== groupLabel) return false;
-				if (progressionVariants === null) return true;
-				return entry.progressionCounts.some((count) =>
-					progressionVariants.has(count.chordProgression)
-				);
+				if (progressionName === null) return true;
+				return entry.matchingProgressions.includes(progressionName);
 			})
 			.map((entry) => entry.songKey)
 	);
-};

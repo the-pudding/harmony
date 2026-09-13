@@ -483,6 +483,14 @@ const minoryProgressions: ProgressionGroup = {
 			scale: "minor",
 			matchRomanNumeralsExactly: true,
 			description: "stay with me, but sinking into a iv rather than resolving"
+		},
+		// These probably appear like once, but it helps with matching iconic songs:
+		{
+			name: "hit me baby one more time",
+			chordProgression: "i-V-III-iv-V",
+			scale: "minor",
+			description:
+				"really just used in Britney Spears' 'Hit Me Baby One More Time', but a cool example of really playing with V dominance as well as the release of III in a minor key"
 		}
 	]
 };
