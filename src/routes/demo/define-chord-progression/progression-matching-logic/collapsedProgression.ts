@@ -10,7 +10,6 @@ import {
 	DIM,
 	AUG
 } from "../../../../chord-processing/chord-classifier/fuzzySuffixMap.js";
-import { bassIntervalFromRoot } from "../../../../chord-processing/chord-classifier/index.js";
 import { NOTES_PER_OCTAVE } from "../../../../chord-processing/chord-classifier/notes.js";
 
 // The span of original chord positions that a single collapsed chord represents.
@@ -62,31 +61,25 @@ export const toCanonicalMatchingChord = (
 	} as ParsedProgressionChord;
 };
 
-// Bare triad with no slash bass → match liberally (ignore song extensions/bass).
-// Any specified extension or slash bass → require that detail exactly.
-export const isLiberalMatchingChord = (
-	chord: ParsedProgressionChord
-): boolean =>
-	BASE_TRIAD_SUFFIXES.has(chord.suffix) && chord.bassPitchClass === undefined;
+// Bare triad → match liberally (ignore song extensions/bass).
+// Any specified extension → require that suffix exactly. Slash bass is always
+// ignored for matching (but preserved in the UI display).
+export const isLiberalMatchingChord = (chord: ParsedProgressionChord): boolean =>
+	BASE_TRIAD_SUFFIXES.has(chord.suffix);
 
 export type MatchingTemplate = {
 	chord: ParsedProgressionChord;
 	mode: "liberal" | "exact";
 };
 
-export const toMatchingTemplate = (
-	chord: ParsedProgressionChord
-): MatchingTemplate =>
+export const toMatchingTemplate = (chord: ParsedProgressionChord): MatchingTemplate =>
 	isLiberalMatchingChord(chord)
 		? { chord: toCanonicalMatchingChord(chord), mode: "liberal" }
 		: {
 				chord: {
 					rootPitchClass: chord.rootPitchClass,
 					suffix: chord.suffix,
-					display: chord.display,
-					...(chord.bassPitchClass !== undefined
-						? { bassPitchClass: chord.bassPitchClass }
-						: {})
+					display: chord.display
 				},
 				mode: "exact"
 			};
@@ -94,8 +87,7 @@ export const toMatchingTemplate = (
 const templatesEqual = (a: MatchingTemplate, b: MatchingTemplate): boolean =>
 	a.mode === b.mode &&
 	a.chord.rootPitchClass === b.chord.rootPitchClass &&
-	a.chord.suffix === b.chord.suffix &&
-	a.chord.bassPitchClass === b.chord.bassPitchClass;
+	a.chord.suffix === b.chord.suffix;
 
 // Collapse adjacent identical search templates (two bare I's merge; I then Imaj7
 // stay distinct because Imaj7 is exact).
@@ -199,11 +191,7 @@ const matchesLiberalTemplate = (
 const matchesExactTemplate = (
 	sectionChord: ParsedProgressionChord,
 	template: ParsedProgressionChord
-): boolean => {
-	if (sectionChord.suffix !== template.suffix) return false;
-	if (template.bassPitchClass === undefined) return true;
-	return bassIntervalFromRoot(sectionChord) === bassIntervalFromRoot(template);
-};
+): boolean => sectionChord.suffix === template.suffix;
 
 const liberalRunLength = (
 	section: ParsedProgressionChord[],

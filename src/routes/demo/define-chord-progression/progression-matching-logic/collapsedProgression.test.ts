@@ -86,15 +86,15 @@ describe("toCanonicalMatchingChord", () => {
 });
 
 describe("isLiberalMatchingChord", () => {
-	it("treats bare triads without bass as liberal", () => {
+	it("treats bare triads as liberal regardless of bass", () => {
 		expect(isLiberalMatchingChord(I)).toBe(true);
 		expect(isLiberalMatchingChord(VI)).toBe(true);
+		expect(isLiberalMatchingChord(chord(0, "major", 7))).toBe(true);
 	});
 
-	it("treats extensions and slash bass as exact", () => {
+	it("treats extensions as exact", () => {
 		expect(isLiberalMatchingChord(I_MAJ7)).toBe(false);
 		expect(isLiberalMatchingChord(VI7)).toBe(false);
-		expect(isLiberalMatchingChord(chord(0, "major", 7))).toBe(false);
 	});
 });
 
@@ -148,13 +148,13 @@ describe("matchProgressionSelectiveExactness", () => {
 		).toContainEqual({ start: 0, length: 5 });
 	});
 
-	it("requires slash bass when the search specifies it", () => {
+	it("ignores slash bass in the search chord (bare triad with bass matches root-position)", () => {
 		const I_OVER_V = chord(0, "major", 7);
 		expect(
 			matchProgressionSelectiveExactness([I_OVER_V, VI], [I_OVER_V, VI])
 		).toEqual([{ start: 0, length: 2 }]);
 		expect(matchProgressionSelectiveExactness([I, VI], [I_OVER_V, VI])).toEqual(
-			[]
+			[{ start: 0, length: 2 }]
 		);
 	});
 

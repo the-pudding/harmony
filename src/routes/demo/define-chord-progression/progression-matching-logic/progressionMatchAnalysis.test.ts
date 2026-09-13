@@ -429,7 +429,7 @@ const highlightedIndices = (
 		.filter((segment) => segment.palette !== null)
 		.flatMap((segment) => segment.indices);
 
-describe("buildColoredHighlightSegments — claimed positions are source of truth", () => {
+describe("buildColoredHighlightSegments — slash bass ignored in matching", () => {
 	const C_SHARP = 1;
 	const E_FLAT = 3;
 	const A_FLAT = 8;
@@ -447,16 +447,16 @@ describe("buildColoredHighlightSegments — claimed positions are source of trut
 	const CLAIMED_POSITIONS = [0, 1, 2, 3, 4, 5];
 	const palette = { fill: "#000", border: "#000" };
 
-	it("does not rematch a slash-bass unit onto plain triads", () => {
+	it("rematches a slash-bass unit onto plain triads (slash bass ignored)", () => {
 		const section = makeSection([...PLAIN_VI_VII_III, ...PLAIN_VI_VII_III]);
 		expect(
 			highlightedIndices(section, 0, [
 				{ parsedProgression: SLASH_VI_VII_III, palette }
 			])
-		).toEqual([]);
+		).toEqual(CLAIMED_POSITIONS);
 	});
 
-	it("paints claimed positions even when rematch would miss them", () => {
+	it("respects claimed positions when highlightPositionsBySection is provided", () => {
 		const section = makeSection([...PLAIN_VI_VII_III, ...PLAIN_VI_VII_III]);
 		expect(
 			highlightedIndices(section, 0, [

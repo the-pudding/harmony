@@ -539,3 +539,49 @@ describe("v2 adjacent repeated-chord collapsing", () => {
 		).toBe(true);
 	});
 });
+
+const AXIS_NAME = "axis of awesome";
+
+const axisCore: CoreProgression = {
+	name: AXIS_NAME,
+	chordProgression: "I-V-vi-IV",
+	scale: "major",
+	description: ""
+};
+
+describe("v2 slash bass ignored in matching", () => {
+	// I/3 = C major with E in the bass — slash bass variant of I
+	const I_slash = { ...C, bassPitchClass: 4 };
+	// Bare triad cycle (I-V-vi-IV) vs slash-bass cycle (I/3-V-vi-IV)
+	const axisRootPos = [C, G, A_min, F];
+	const axisSlash = [I_slash, G, A_min, F];
+
+	it("unifies slash-bass and root-position cycles of the same core into one match", () => {
+		const sectionWithMix = makeSection(
+			[...axisSlash, ...axisRootPos, ...axisRootPos],
+			["I/3", "V", "vi", "IV", "I", "V", "vi", "IV", "I", "V", "vi", "IV"]
+		);
+		const result = matchSongV2(makeSong([sectionWithMix]), [axisCore]);
+		const axisMatches = result.matches.filter((m) => m.name === AXIS_NAME);
+		expect(axisMatches).toHaveLength(1);
+		expect(axisMatches[0].matchCount).toBe(3);
+	});
+
+	it("annotations for the unified axis match cover both the slash and root-position cycles", () => {
+		const sectionWithMix = makeSection(
+			[...axisSlash, ...axisRootPos],
+			["I/3", "V", "vi", "IV", "I", "V", "vi", "IV"]
+		);
+		const result = matchSongV2(makeSong([sectionWithMix]), [axisCore]);
+		const axisAnnotation = result.annotations.find((a) =>
+			result.matches.find(
+				(m) => m.name === AXIS_NAME && m.chordProgression === a.chordProgression
+			)
+		);
+		expect(axisAnnotation).toBeDefined();
+		const coveredPositions =
+			axisAnnotation?.highlightPositionsBySection?.[0] ?? [];
+		expect(coveredPositions).toContain(0);
+		expect(coveredPositions).toContain(4);
+	});
+});
