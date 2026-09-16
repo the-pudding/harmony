@@ -101,6 +101,29 @@ describe("computeDecadeHistory", () => {
 		);
 	});
 
+	it("requires a robust match count (50+), not just a token double-digit sample", () => {
+		// A small decade (few total matches) can otherwise throw up huge
+		// distinctiveness ratios on a handful of matches — 40 total matches
+		// concentrated in one decade used to clear the old threshold (15) but
+		// shouldn't clear the stricter one meant to filter out that noise.
+		const pairs = [
+			...Array.from({ length: 20 }, (_, i) =>
+				makeSong(`s-${i}`, 1975, [makeCount(AXIS, 5)])
+			),
+			...Array.from({ length: 8 }, (_, i) =>
+				makeSong(`s-doowop-${i}`, 1975, [makeCount(DOO_WOP, 5)]) // 40 total
+			)
+		];
+		const songByKey = new Map(pairs.map(({ song }) => [song.songKey, song]));
+		const entries = pairs.map(({ entry }) => entry);
+
+		const history = computeDecadeHistory(entries, songByKey);
+		const seventies = history.find((d) => d.decade === 1970);
+		expect(seventies!.signatures.map((s) => s.chordProgression)).not.toContain(
+			DOO_WOP
+		);
+	});
+
 	it("ignores non-core progression counts entirely", () => {
 		const pairs = Array.from({ length: 20 }, (_, i) =>
 			makeSong(`s-${i}`, 1975, [makeCount(AXIS, 5, false)])

@@ -10,8 +10,15 @@ export const decadeOf = (year: number): number =>
 
 // A three-chord shape can turn up almost anywhere by chance, so require a
 // real sample size before calling a progression "signature" of a decade.
+// MIN_PROGRESSION_DECADE_COUNT is deliberately much stricter than the bare
+// minimum needed to be statistically present: at 15, small decades (the
+// 2020s has under 800 total core matches, vs. thousands for most others)
+// threw up distinctiveness ratios above 10x on as few as 17-30 matches —
+// more small-sample noise than real signature. 50 was the floor that
+// separated that noise from genuine, well-supported signatures (e.g.
+// "jazz doo wop" in the 1950s at 64 matches, still a real 6-7x signature).
 const MIN_DECADE_TOTAL_MATCHES = 20;
-const MIN_PROGRESSION_DECADE_COUNT = 15;
+const MIN_PROGRESSION_DECADE_COUNT = 50;
 export const TOP_SIGNATURES_PER_DECADE = 3;
 const EMBLEMATIC_SONGS_PER_PROGRESSION = 2;
 

@@ -518,8 +518,10 @@
 					The three core progressions each decade leans on more than any
 					other — ranked by how over-represented they are in that decade
 					compared to their share across the whole corpus. Requires at least
-					20 core-progression matches in a decade and 15 for an individual
-					progression to qualify, so noisy, rare shapes don't win by chance.
+					20 core-progression matches in a decade and 50 for an individual
+					progression to qualify — small decades like the 2020s were
+					otherwise throwing up 10x+ "signatures" on as few as 17 matches,
+					noise rather than a real pattern.
 				</p>
 			</div>
 
@@ -558,10 +560,15 @@
 										<span class="signature-chords"
 											>{signature.chordProgression}</span
 										>
-										<span class="signature-distinctiveness"
-											>{signature.distinctiveness.toFixed(1)}x more common
-											here</span
-										>
+										<span class="signature-stats-row">
+											<span class="signature-distinctiveness"
+												>{signature.distinctiveness.toFixed(1)}x more common
+												here</span
+											>
+											<span class="signature-count"
+												>{signature.count.toLocaleString()} matches</span
+											>
+										</span>
 									</div>
 
 									{#if signature.description}
@@ -819,10 +826,23 @@
 		color: #a1a1aa;
 	}
 
-	.signature-distinctiveness {
+	.signature-stats-row {
+		display: flex;
+		align-items: baseline;
+		flex-wrap: wrap;
+		gap: 0.5rem;
 		margin-top: 0.25rem;
+	}
+
+	.signature-distinctiveness {
 		font-size: 0.65rem;
 		color: #6366f1;
+		width: fit-content;
+	}
+
+	.signature-count {
+		font-size: 0.65rem;
+		color: #71717a;
 		width: fit-content;
 	}
 
