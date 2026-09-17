@@ -20,6 +20,7 @@
 	} from "./eraAnalysis.js";
 	import { allProgressionGroups } from "$data/core-progressions.js";
 	import DecadeLineChart, { type DecadeSeries } from "./DecadeLineChart.svelte";
+	import DecadeQuadrantChart from "./DecadeQuadrantChart.svelte";
 
 	const PERFECT_COLOR = "#60a5fa";
 	const PLAGAL_COLOR = "#fb923c";
@@ -371,6 +372,113 @@
 
 		<section class="section">
 			<div class="section-header">
+				<h2 class="section-title">Signature progressions by decade</h2>
+				<p class="section-description">
+					The three core progressions each decade leans on more than any
+					other — ranked by how over-represented they are in that decade
+					compared to their share across the whole corpus. Requires at least
+					20 core-progression matches in a decade and 50 for an individual
+					progression to qualify — small decades like the 2020s were
+					otherwise throwing up 10x+ "signatures" on as few as 17 matches,
+					noise rather than a real pattern.
+				</p>
+			</div>
+
+			{#if decadeHistory.length === 0 && coverage.allSongsCoverageResult}
+				<p class="empty">Not enough dated songs to compute decade signatures.</p>
+			{/if}
+
+			<div class="decades">
+				{#each decadeHistory as decadeEntry (decadeEntry.decade)}
+					{@const isExpanded = expandedDecades.has(decadeEntry.decade)}
+					<div class="decade">
+						<button
+							type="button"
+							class="decade-header"
+							aria-expanded={isExpanded}
+							onclick={() => toggleDecade(decadeEntry.decade)}
+						>
+							<span class="decade-toggle" class:decade-toggle-open={isExpanded}
+								>▸</span
+							>
+							<h3 class="decade-title">{decadeEntry.decadeLabel}</h3>
+							<span class="decade-meta"
+								>{decadeEntry.songCount.toLocaleString()} songs · {decadeEntry.totalCoreMatches.toLocaleString()}
+								core matches</span
+							>
+						</button>
+
+						{#if isExpanded}
+						<div class="signatures">
+							{#each decadeEntry.signatures as signature (signature.chordProgression)}
+								<div class="signature-card">
+									<div class="signature-head">
+										<span class="signature-name"
+											>{signature.name}</span
+										>
+										<span class="signature-chords"
+											>{signature.chordProgression}</span
+										>
+										<span class="signature-stats-row">
+											<span class="signature-distinctiveness"
+												>{signature.distinctiveness.toFixed(1)}x more common
+												here</span
+											>
+											<span class="signature-count"
+												>{signature.count.toLocaleString()} matches</span
+											>
+										</span>
+									</div>
+
+									{#if signature.description}
+										<p class="signature-description">{signature.description}</p>
+									{/if}
+
+									{#if signature.emblematicSongs.length > 0}
+										<ul class="emblematic-songs">
+											{#each signature.emblematicSongs as song (song.songKey)}
+												<li>
+													<button
+														type="button"
+														class="emblematic-song-button"
+														onclick={() =>
+															openDefineChordProgressionSong(song.songKey)}
+													>
+														<span class="song-title">{song.title}</span>
+														<span class="song-artist"
+															>— {song.artists.join(", ")}</span
+														>
+													</button>
+												</li>
+											{/each}
+										</ul>
+									{/if}
+
+									<div class="signature-chart">
+										<CorpusMatchRateOverTimeChart
+											corpusSongs={coverage.allSongsCoverageResult?.songCoverages ??
+												null}
+											{songByKey}
+											matchProgressions={[signature.name]}
+											filtered={true}
+											{yearDomain}
+										/>
+									</div>
+								</div>
+							{/each}
+						</div>
+
+						<div class="quadrant-wrap">
+							<DecadeQuadrantChart signatures={decadeEntry.topSignatures} />
+						</div>
+						{/if}
+					</div>
+				{/each}
+			</div>
+		</section>
+
+		<section class="section">
+			<div class="section-header">
 				<h2 class="section-title">Perfect vs. plagal cadences</h2>
 				<p class="section-description">
 					How each section ends: a perfect (authentic) cadence resolves V→I,
@@ -508,109 +616,6 @@
 					series={axisEraSeries}
 					formatValue={(v) => `${v.toFixed(1)}%`}
 				/>
-			</div>
-		</section>
-
-		<section class="section">
-			<div class="section-header">
-				<h2 class="section-title">Signature progressions by decade</h2>
-				<p class="section-description">
-					The three core progressions each decade leans on more than any
-					other — ranked by how over-represented they are in that decade
-					compared to their share across the whole corpus. Requires at least
-					20 core-progression matches in a decade and 50 for an individual
-					progression to qualify — small decades like the 2020s were
-					otherwise throwing up 10x+ "signatures" on as few as 17 matches,
-					noise rather than a real pattern.
-				</p>
-			</div>
-
-			{#if decadeHistory.length === 0 && coverage.allSongsCoverageResult}
-				<p class="empty">Not enough dated songs to compute decade signatures.</p>
-			{/if}
-
-			<div class="decades">
-				{#each decadeHistory as decadeEntry (decadeEntry.decade)}
-					{@const isExpanded = expandedDecades.has(decadeEntry.decade)}
-					<div class="decade">
-						<button
-							type="button"
-							class="decade-header"
-							aria-expanded={isExpanded}
-							onclick={() => toggleDecade(decadeEntry.decade)}
-						>
-							<span class="decade-toggle" class:decade-toggle-open={isExpanded}
-								>▸</span
-							>
-							<h3 class="decade-title">{decadeEntry.decade}s</h3>
-							<span class="decade-meta"
-								>{decadeEntry.songCount.toLocaleString()} songs · {decadeEntry.totalCoreMatches.toLocaleString()}
-								core matches</span
-							>
-						</button>
-
-						{#if isExpanded}
-						<div class="signatures">
-							{#each decadeEntry.signatures as signature (signature.chordProgression)}
-								<div class="signature-card">
-									<div class="signature-head">
-										<span class="signature-name"
-											>{signature.name}</span
-										>
-										<span class="signature-chords"
-											>{signature.chordProgression}</span
-										>
-										<span class="signature-stats-row">
-											<span class="signature-distinctiveness"
-												>{signature.distinctiveness.toFixed(1)}x more common
-												here</span
-											>
-											<span class="signature-count"
-												>{signature.count.toLocaleString()} matches</span
-											>
-										</span>
-									</div>
-
-									{#if signature.description}
-										<p class="signature-description">{signature.description}</p>
-									{/if}
-
-									{#if signature.emblematicSongs.length > 0}
-										<ul class="emblematic-songs">
-											{#each signature.emblematicSongs as song (song.songKey)}
-												<li>
-													<button
-														type="button"
-														class="emblematic-song-button"
-														onclick={() =>
-															openDefineChordProgressionSong(song.songKey)}
-													>
-														<span class="song-title">{song.title}</span>
-														<span class="song-artist"
-															>— {song.artists.join(", ")}</span
-														>
-													</button>
-												</li>
-											{/each}
-										</ul>
-									{/if}
-
-									<div class="signature-chart">
-										<CorpusMatchRateOverTimeChart
-											corpusSongs={coverage.allSongsCoverageResult?.songCoverages ??
-												null}
-											{songByKey}
-											matchProgressions={[signature.name]}
-											filtered={true}
-											{yearDomain}
-										/>
-									</div>
-								</div>
-							{/each}
-						</div>
-						{/if}
-					</div>
-				{/each}
 			</div>
 		</section>
 	</div>
@@ -892,5 +897,13 @@
 
 	.signature-chart {
 		margin-top: 0.25rem;
+	}
+
+	.quadrant-wrap {
+		margin-top: 0.5rem;
+		padding: 1rem;
+		border: 1px solid rgba(63, 63, 70, 0.9);
+		border-radius: 0.5rem;
+		background: rgba(24, 24, 27, 0.4);
 	}
 </style>
