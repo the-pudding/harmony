@@ -49,6 +49,7 @@
 		MAP_VIEW_MODES,
 		type MapViewMode
 	} from "../viewMode.js";
+	import type { WeightingToggleKey } from "../weightingDescriptions.js";
 
 	type Props = {
 		songCoverages: SongCoverageEntry[];
@@ -60,6 +61,7 @@
 		onYearRangeChange: (yearRange: YearScrubRange | null) => void;
 		trailingControls?: Snippet;
 		methods?: readonly EmbeddingMethod[];
+		weightingKeys?: readonly WeightingToggleKey[];
 	};
 
 	const {
@@ -71,7 +73,8 @@
 		yearRange,
 		onYearRangeChange,
 		trailingControls,
-		methods
+		methods,
+		weightingKeys
 	}: Props = $props();
 
 	const AXIS_LABELS_BY_METHOD: Record<
@@ -460,6 +463,7 @@
 			<WeightingControls
 				options={embedding.options}
 				onChange={embedding.setOptions}
+				keys={weightingKeys}
 			/>
 
 			{#if embedding.method === "blend"}

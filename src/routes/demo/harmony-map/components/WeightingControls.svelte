@@ -2,15 +2,24 @@
 	import type { SongVectorOptions } from "../embedding/vectors/index.js";
 	import {
 		WEIGHTING_DESCRIPTION_SECTIONS,
-		weightingDescriptions
+		weightingDescriptions,
+		type WeightingToggleKey
 	} from "../weightingDescriptions.js";
+
+	const ALL_TOGGLE_KEYS: readonly WeightingToggleKey[] = [
+		"useTfIdf",
+		"l2Normalize",
+		"binary",
+		"weightChorus"
+	];
 
 	type Props = {
 		options: SongVectorOptions;
 		onChange: (options: SongVectorOptions) => void;
+		keys?: readonly WeightingToggleKey[];
 	};
 
-	const { options, onChange }: Props = $props();
+	const { options, onChange, keys = ALL_TOGGLE_KEYS }: Props = $props();
 
 	const TOGGLE_ON_LABEL = "on";
 	const TOGGLE_OFF_LABEL = "off";
@@ -43,10 +52,17 @@
 				onChange({ ...options, weightChorus: !options.weightChorus })
 		}
 	]);
+
+	const visibleToggles = $derived(
+		keys.flatMap((key) => {
+			const match = toggles.find((toggle) => toggle.key === key);
+			return match ? [match] : [];
+		})
+	);
 </script>
 
 <div class="weighting-controls" role="group" aria-label="Vector weighting">
-	{#each toggles as toggle (toggle.key)}
+	{#each visibleToggles as toggle (toggle.key)}
 		{@const description = weightingDescriptions[toggle.key]}
 		<button
 			class="weighting-toggle"

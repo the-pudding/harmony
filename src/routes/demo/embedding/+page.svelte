@@ -12,6 +12,8 @@
 		type YearScrubRange
 	} from "../harmony-map/harmonyMapUrlState.js";
 	import type { EmbeddingMethod } from "../harmony-map/embedding/reducers/types.js";
+	import { DEFAULT_SONG_VECTOR_OPTIONS } from "../harmony-map/embedding/vectors/constants.js";
+	import type { WeightingToggleKey } from "../harmony-map/weightingDescriptions.js";
 	import { embeddingDimensionForViewMode } from "../harmony-map/viewMode.js";
 	import { currentSearchParams } from "../shared/currentSearchParams.js";
 	import EmbeddingView from "../harmony-map/views/EmbeddingView.svelte";
@@ -21,6 +23,17 @@
 		"ngram",
 		"blend"
 	];
+
+	const EMBEDDING_PAGE_WEIGHTING_KEYS: readonly WeightingToggleKey[] = [
+		"useTfIdf",
+		"l2Normalize"
+	];
+
+	const EMBEDDING_PAGE_VECTOR_OPTIONS = {
+		...DEFAULT_SONG_VECTOR_OPTIONS,
+		weighting: "raw" as const,
+		weightChorus: false
+	};
 
 	const EMBEDDING_PAGE_METHOD_SET = new Set<EmbeddingMethod>(
 		EMBEDDING_PAGE_METHODS
@@ -45,6 +58,7 @@
 			replaceHarmonyMapStateInUrl({ blendWeights })
 	});
 
+	embedding.setOptions(EMBEDDING_PAGE_VECTOR_OPTIONS);
 	embedding.setDimension(embeddingDimensionForViewMode(initialUrlState.view));
 
 	let viewMode = $state(initialUrlState.view);
@@ -103,6 +117,7 @@
 				songs={coverage.baseList}
 				{embedding}
 				methods={EMBEDDING_PAGE_METHODS}
+				weightingKeys={EMBEDDING_PAGE_WEIGHTING_KEYS}
 				{viewMode}
 				{yearRange}
 				onViewModeChange={(nextViewMode) => {
