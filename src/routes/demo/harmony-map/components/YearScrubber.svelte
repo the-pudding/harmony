@@ -1,5 +1,10 @@
 <script lang="ts">
-	type YearRange = { min: number; max: number };
+	import { on } from "svelte/events";
+	import {
+		shiftYearRangeWithinBounds,
+		yearDeltaFromPointerMove,
+		type YearScrubRange
+	} from "./yearScrubberRange.js";
 
 	type Props = {
 		min: number;
@@ -7,11 +12,14 @@
 		rangeMin: number;
 		rangeMax: number;
 		disabled?: boolean;
-		onChange: (range: YearRange) => void;
+		onChange: (range: YearScrubRange) => void;
 	};
 
 	const { min, max, rangeMin, rangeMax, disabled = false, onChange }: Props =
 		$props();
+
+	const bounds = $derived({ min, max });
+	const selectedRange = $derived({ min: rangeMin, max: rangeMax });
 
 	const isShowingAll = $derived(rangeMin <= min && rangeMax >= max);
 
@@ -33,6 +41,47 @@
 	const maxThumbPercent = $derived(
 		max === min ? 100 : ((rangeMax - min) / (max - min)) * 100
 	);
+	const selectedWidthPercent = $derived(
+		Math.max(0, maxThumbPercent - minThumbPercent)
+	);
+
+	let isSlidingWindow = $state(false);
+
+	const onWindowPointerDown = (event: PointerEvent) => {
+		if (disabled) return;
+		const handle = event.currentTarget;
+		if (!(handle instanceof HTMLElement)) return;
+
+		const track = handle.parentElement;
+		if (!(track instanceof HTMLElement)) return;
+
+		event.preventDefault();
+		handle.setPointerCapture(event.pointerId);
+		isSlidingWindow = true;
+
+		const dragStartX = event.clientX;
+		const dragStartRange = selectedRange;
+		const trackWidthPx = track.getBoundingClientRect().width;
+
+		const endDrag = () => {
+			isSlidingWindow = false;
+			removePointerMove();
+			removePointerUp();
+		};
+
+		const removePointerMove = on(window, "pointermove", (moveEvent) => {
+			const deltaYears = yearDeltaFromPointerMove(
+				moveEvent.clientX - dragStartX,
+				trackWidthPx,
+				bounds
+			);
+			onChange(
+				shiftYearRangeWithinBounds(dragStartRange, deltaYears, bounds)
+			);
+		});
+
+		const removePointerUp = on(window, "pointerup", endDrag);
+	};
 </script>
 
 <div class="year-scrubber" class:year-scrubber-disabled={disabled}>
@@ -41,7 +90,18 @@
 		class="year-scrubber-track"
 		style:--range-start="{minThumbPercent}%"
 		style:--range-end="{maxThumbPercent}%"
+		style:--range-width="{selectedWidthPercent}%"
 	>
+		<button
+			type="button"
+			class="year-scrubber-window"
+			class:year-scrubber-window-active={isSlidingWindow}
+			style:left="var(--range-start)"
+			style:width="var(--range-width)"
+			aria-label="Slide selected year range"
+			disabled={disabled}
+			onpointerdown={onWindowPointerDown}
+		></button>
 		<input
 			type="range"
 			{min}
@@ -106,15 +166,27 @@
 		pointer-events: none;
 	}
 
-	.year-scrubber-track::after {
-		content: "";
+	.year-scrubber-window {
 		position: absolute;
-		left: var(--range-start);
-		right: calc(100% - var(--range-end));
-		height: 0.25rem;
+		top: 50%;
+		translate: 0 -50%;
+		height: 0.7rem;
+		margin: 0;
+		padding: 0;
+		border: none;
 		border-radius: 999px;
 		background: rgba(99, 102, 241, 0.8);
-		pointer-events: none;
+		cursor: grab;
+		z-index: 1;
+		touch-action: none;
+	}
+
+	.year-scrubber-window:disabled {
+		cursor: not-allowed;
+	}
+
+	.year-scrubber-window-active {
+		cursor: grabbing;
 	}
 
 	.year-scrubber-input {
@@ -126,6 +198,7 @@
 		background: transparent;
 		pointer-events: none;
 		cursor: pointer;
+		z-index: 2;
 	}
 
 	.year-scrubber-input:disabled {
@@ -173,7 +246,7 @@
 	}
 
 	.year-scrubber-input-max {
-		z-index: 2;
+		z-index: 3;
 	}
 
 	.year-scrubber-value {
