@@ -10,8 +10,8 @@
 		visible: boolean;
 		rank: number | undefined;
 		name?: string | null;
-		// % of currently-released songs (year scrubber) that are in this
-		// cluster — omitted/null when the scrubber isn't in use.
+		// % of songs in the year-scrubber window that are in this
+		// cluster — omitted/null when the scrubber isn't narrowing.
 		visibleSharePercent?: number | null;
 		yearDomain: YearDomain | null;
 		selectedSongKey: string | null;
@@ -55,8 +55,8 @@
 			{#if visibleSharePercent !== null}
 				<span
 					class="cluster-visible-share"
-					title="% of songs released so far that are in this cluster"
-					>{visibleSharePercent.toFixed(1)}% so far</span
+					title="% of songs in the year window that are in this cluster"
+					>{visibleSharePercent.toFixed(1)}% in window</span
 				>
 			{/if}
 		</div>

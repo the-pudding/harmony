@@ -18,13 +18,21 @@ import {
 export const HARMONY_MAP_URL_PARAM_METHOD = "method";
 export const HARMONY_MAP_URL_PARAM_VIEW = "view";
 export const HARMONY_MAP_URL_PARAM_BLEND = "bw";
+export const HARMONY_MAP_URL_PARAM_YEAR_MIN = "ymin";
+export const HARMONY_MAP_URL_PARAM_YEAR_MAX = "ymax";
 
 export const DEFAULT_EMBEDDING_METHOD: EmbeddingMethod = "umap";
+
+export type YearScrubRange = {
+	min: number;
+	max: number;
+};
 
 export type HarmonyMapUrlState = {
 	method: EmbeddingMethod;
 	view: MapViewMode;
 	blendWeights: BlendWeights;
+	yearRange: YearScrubRange | null;
 };
 
 const clamp = (value: number, min: number, max: number): number =>
@@ -66,6 +74,43 @@ const encodeBlendWeights = (weights: BlendWeights): string =>
 const blendWeightsAreDefault = (weights: BlendWeights): boolean =>
 	JSON.stringify(weights) === JSON.stringify(DEFAULT_BLEND_WEIGHTS);
 
+const parseCalendarYear = (raw: string | null): number | null => {
+	if (raw === null || raw === "") return null;
+	const year = Number(raw);
+	if (!Number.isInteger(year)) return null;
+	return year;
+};
+
+const parseYearRange = (searchParams: URLSearchParams): YearScrubRange | null => {
+	const min = parseCalendarYear(searchParams.get(HARMONY_MAP_URL_PARAM_YEAR_MIN));
+	const max = parseCalendarYear(searchParams.get(HARMONY_MAP_URL_PARAM_YEAR_MAX));
+	if (min === null || max === null) return null;
+	if (min > max) return { min: max, max: min };
+	return { min, max };
+};
+
+const yearRangesEqual = (
+	first: YearScrubRange | null,
+	second: YearScrubRange | null
+): boolean => {
+	if (first === null || second === null) return first === second;
+	return first.min === second.min && first.max === second.max;
+};
+
+export const clampYearScrubRange = (
+	range: YearScrubRange,
+	bounds: YearScrubRange
+): YearScrubRange => {
+	const min = clamp(range.min, bounds.min, bounds.max);
+	const max = clamp(range.max, bounds.min, bounds.max);
+	return min <= max ? { min, max } : { min: max, max: min };
+};
+
+export const isFullYearScrubRange = (
+	range: YearScrubRange,
+	bounds: YearScrubRange
+): boolean => range.min <= bounds.min && range.max >= bounds.max;
+
 export const readHarmonyMapUrlState = (
 	searchParams: URLSearchParams
 ): HarmonyMapUrlState => {
@@ -75,7 +120,8 @@ export const readHarmonyMapUrlState = (
 	return {
 		method: isEmbeddingMethod(method) ? method : DEFAULT_EMBEDDING_METHOD,
 		view: mapViewModeFromUrl(view) ?? DEFAULT_MAP_VIEW_MODE,
-		blendWeights: bw ? parseBlendWeights(bw) : DEFAULT_BLEND_WEIGHTS
+		blendWeights: bw ? parseBlendWeights(bw) : DEFAULT_BLEND_WEIGHTS,
+		yearRange: parseYearRange(searchParams)
 	};
 };
 
@@ -100,6 +146,14 @@ export const writeHarmonyMapUrlState = (
 	} else {
 		params.delete(HARMONY_MAP_URL_PARAM_BLEND);
 	}
+
+	if (state.yearRange === null) {
+		params.delete(HARMONY_MAP_URL_PARAM_YEAR_MIN);
+		params.delete(HARMONY_MAP_URL_PARAM_YEAR_MAX);
+	} else {
+		params.set(HARMONY_MAP_URL_PARAM_YEAR_MIN, String(state.yearRange.min));
+		params.set(HARMONY_MAP_URL_PARAM_YEAR_MAX, String(state.yearRange.max));
+	}
 };
 
 export const areHarmonyMapUrlStatesEqual = (
@@ -108,7 +162,8 @@ export const areHarmonyMapUrlStatesEqual = (
 ): boolean =>
 	first.method === second.method &&
 	first.view === second.view &&
-	JSON.stringify(first.blendWeights) === JSON.stringify(second.blendWeights);
+	JSON.stringify(first.blendWeights) === JSON.stringify(second.blendWeights) &&
+	yearRangesEqual(first.yearRange, second.yearRange);
 
 export const replaceHarmonyMapStateInUrl = (
 	partial: Partial<HarmonyMapUrlState>

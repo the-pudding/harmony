@@ -24,7 +24,7 @@
 		hoverCardStyle
 	} from "../../shared/hoverCardPosition.js";
 	import type { ScatterPoint } from "./scatterPoint.js";
-	import { SCATTER_DIMMED_ALPHA, SCATTER_NORMAL_ALPHA } from "./scatterPoint.js";
+	import { scatterPointAlpha } from "./scatterPoint.js";
 	import type { DensityCluster } from "../embedding/clustering/densityClusters.js";
 	import { buildClusterSceneGeometries } from "./clusterSceneGeometry.js";
 	import { clusterMeshOpacity } from "./clusterAnnotationStyle.js";
@@ -48,6 +48,7 @@
 		coClusterSongKeys: Set<string>;
 		highlightedSongKeys: Set<string>;
 		visibleSongKeys?: Set<string> | null;
+		inYearSongKeys?: Set<string> | null;
 		clusters: DensityCluster[];
 		emphasizedClusterHashes: Set<string> | null;
 		showTimeAxisGizmo?: boolean;
@@ -74,6 +75,7 @@
 		coClusterSongKeys,
 		highlightedSongKeys,
 		visibleSongKeys = null,
+		inYearSongKeys = null,
 		clusters,
 		emphasizedClusterHashes,
 		showTimeAxisGizmo = false,
@@ -234,21 +236,16 @@
 
 	const hexToThreeColor = (hex: string): THREE.Color => new THREE.Color(hex);
 
-	const alphaFor = (songKey: string): number => {
-		if (hoveredSongKey === songKey) return 1;
-		if (emphasizedSongKeys) {
-			return emphasizedSongKeys.has(songKey) ? 1 : SCATTER_DIMMED_ALPHA;
-		}
-		// Idle state (nothing selected/emphasized): highlighted songs (named-
-		// cluster anchors) get a full-opacity pop. But once a song is
-		// selected and the rest of the map fades, highlighted songs fade
-		// too — only the selected song (and its cluster) should stay lit.
-		if (selectedSongKey === null) {
-			return highlightedSongKeys.has(songKey) ? 1 : SCATTER_NORMAL_ALPHA;
-		}
-		if (songKey === selectedSongKey || coClusterSongKeys.has(songKey)) return 1;
-		return SCATTER_DIMMED_ALPHA;
-	};
+	const alphaFor = (songKey: string): number =>
+		scatterPointAlpha({
+			songKey,
+			hoveredSongKey,
+			selectedSongKey,
+			coClusterSongKeys,
+			highlightedSongKeys,
+			emphasizedSongKeys,
+			inYearSongKeys
+		});
 
 	const sizeFor = (songKey: string): number => {
 		if (songKey === selectedSongKey) return SELECTED_POINT_SIZE;
@@ -744,6 +741,7 @@
 		void showTimeAxisGizmo;
 		void showFamilyColors;
 		void emphasizedSongKeys;
+		void inYearSongKeys;
 		void emphasisFillColor;
 		updateMeshGeometry(pointsMesh, drawablePoints);
 	});

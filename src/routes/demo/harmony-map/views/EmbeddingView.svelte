@@ -39,6 +39,11 @@
 	} from "../embedding/vectors/index.js";
 	import { buildYearAxisBySongKey } from "../embedding/vectors/songYearAxis.js";
 	import {
+		clampYearScrubRange,
+		isFullYearScrubRange,
+		type YearScrubRange
+	} from "../harmonyMapUrlState.js";
+	import {
 		MAP_VIEW_MODE_LABELS,
 		MAP_VIEW_MODES,
 		type MapViewMode
@@ -50,6 +55,8 @@
 		embedding: EmbeddingState;
 		viewMode: MapViewMode;
 		onViewModeChange: (viewMode: MapViewMode) => void;
+		yearRange: YearScrubRange | null;
+		onYearRangeChange: (yearRange: YearScrubRange | null) => void;
 		trailingControls?: Snippet;
 	};
 
@@ -59,6 +66,8 @@
 		embedding,
 		viewMode,
 		onViewModeChange,
+		yearRange,
+		onYearRangeChange,
 		trailingControls
 	}: Props = $props();
 
@@ -92,8 +101,7 @@
 	// Off by default: dots start plain (grey/white) rather than colored by
 	// core group blend, toggled on from the legend.
 	let showFamilyColors = $state(false);
-	// null = scrubber untouched, show everything (equivalent to the max year).
-	let scrubYear = $state<number | null>(null);
+	// null = scrubber at the full domain (or unset), show every year at full alpha.
 
 	const setViewMode = (nextMode: MapViewMode) => {
 		if (nextMode === viewMode) return;
@@ -125,8 +133,7 @@
 			: { min: Math.min(...years), max: Math.max(...years) };
 	});
 
-	// Integer calendar-year bounds for the scrubber — "through 1975" reads as
-	// "every song charted in or before 1975".
+	// Integer calendar-year bounds for the dual-head scrubber.
 	const yearScrubBounds = $derived(
 		yearDomain === null
 			? null
@@ -141,22 +148,48 @@
 	// disabled there (see the markup below) and has no effect either way.
 	const scrubEnabled = $derived(viewMode !== "3dTime" && yearScrubBounds !== null);
 
-	const effectiveScrubYear = $derived(scrubYear ?? yearScrubBounds?.max ?? null);
+	const effectiveYearRange = $derived.by((): YearScrubRange | null => {
+		if (yearScrubBounds === null) return null;
+		if (yearRange === null) return yearScrubBounds;
+		return clampYearScrubRange(yearRange, yearScrubBounds);
+	});
 
-	// null = nothing hidden by time (scrubber at/after the last release, not
-	// in use, or 3D w/ time). A song with no year is always treated as
-	// already released, since we can't say it "hasn't come out yet".
-	const releasedSongKeys = $derived.by((): Set<string> | null => {
-		if (!scrubEnabled || effectiveScrubYear === null) return null;
-		if (effectiveScrubYear >= yearScrubBounds!.max) return null;
+	const yearFilterIsActive = $derived(
+		scrubEnabled &&
+			effectiveYearRange !== null &&
+			yearScrubBounds !== null &&
+			!isFullYearScrubRange(effectiveYearRange, yearScrubBounds)
+	);
+
+	// null = every song is "in year" (scrubber at full domain, not in use, or
+	// 3D w/ time). A song with no year is always treated as in-range, since we
+	// can't place it on the calendar axis.
+	const inYearSongKeys = $derived.by((): Set<string> | null => {
+		if (!yearFilterIsActive || effectiveYearRange === null) return null;
 		const keys = new Set<string>();
 		for (const song of songs) {
-			if (song.year === undefined || toCalendarYear(song.year) <= effectiveScrubYear) {
+			if (song.year === undefined) {
+				keys.add(song.songKey);
+				continue;
+			}
+			const calendarYear = toCalendarYear(song.year);
+			if (
+				calendarYear >= effectiveYearRange.min &&
+				calendarYear <= effectiveYearRange.max
+			) {
 				keys.add(song.songKey);
 			}
 		}
 		return keys;
 	});
+
+	const setYearRange = (next: YearScrubRange) => {
+		if (yearScrubBounds === null) return;
+		const clamped = clampYearScrubRange(next, yearScrubBounds);
+		onYearRangeChange(
+			isFullYearScrubRange(clamped, yearScrubBounds) ? null : clamped
+		);
+	};
 
 	const artistSummaries = $derived(
 		buildArtistSummaries(songCoverages, songByKey)
@@ -194,19 +227,10 @@
 	// Artist selection no longer hides other songs — it highlights (see
 	// artistSongKeys passed as emphasizedSongKeys below) so the map stays
 	// unchanged and you can still see where the artist's songs sit relative
-	// to everything else. The group/progression legend filter and the year
-	// scrubber both actually hide non-matching points, so the dots the
-	// scatter draws are whichever pass both (a song can be filtered out by
-	// group AND not released yet at the same time).
-	const visibleSongKeys = $derived.by((): Set<string> | null => {
-		if (groupFilterSongKeys === null) return releasedSongKeys;
-		if (releasedSongKeys === null) return groupFilterSongKeys;
-		const intersection = new Set<string>();
-		for (const songKey of groupFilterSongKeys) {
-			if (releasedSongKeys.has(songKey)) intersection.add(songKey);
-		}
-		return intersection;
-	});
+	// to everything else. The group/progression legend filter still removes
+	// non-matching points; the year scrubber only dims them (see
+	// inYearSongKeys → scatter alpha).
+	const visibleSongKeys = $derived(groupFilterSongKeys);
 
 	const onSelectGroup = (label: string | null) => {
 		selectedGroupLabel = label;
@@ -290,10 +314,10 @@
 		CLUSTERABLE_METHODS.has(embedding.method) && viewMode !== "3dTime"
 	);
 
-	// Deliberately keyed on groupFilterSongKeys alone, not the full
-	// visibleSongKeys — clustering must stay blind to the year scrubber so
+	// Deliberately keyed on groupFilterSongKeys alone, not inYearSongKeys —
+	// clustering must stay blind to the year scrubber so
 	// cluster identity, membership, and geometry never change as you scrub.
-	// The scrubber only ever hides dots; it doesn't re-run DBSCAN.
+	// The scrubber only dims out-of-window dots; it doesn't re-run DBSCAN.
 	const clusterInputPoints = $derived(
 		buildClusterInputPoints(
 			groupFilterSongKeys === null
@@ -333,7 +357,7 @@
 	);
 
 	// Same universe clustering itself uses (respecting the group/progression
-	// filter, if any) — just further narrowed to what's released so far —
+	// filter, if any) — just further narrowed to songs in the year window —
 	// so cluster percentages stay consistent with what findDensityClusters
 	// actually saw.
 	const totalReleasedCount = $derived.by(() => {
@@ -341,13 +365,13 @@
 			groupFilterSongKeys === null
 				? points
 				: points.filter((point) => groupFilterSongKeys.has(point.songKey));
-		return releasedSongKeys === null
+		return inYearSongKeys === null
 			? universe.length
-			: universe.filter((point) => releasedSongKeys.has(point.songKey)).length;
+			: universe.filter((point) => inYearSongKeys.has(point.songKey)).length;
 	});
 
 	const clusterVisibleSharePercentByHash = $derived(
-		computeClusterVisibleShares(allClusters, releasedSongKeys, totalReleasedCount)
+		computeClusterVisibleShares(allClusters, inYearSongKeys, totalReleasedCount)
 	);
 
 	const toggleClusterVisibility = (clusterHash: string) => {
@@ -454,9 +478,10 @@
 				<YearScrubber
 					min={yearScrubBounds.min}
 					max={yearScrubBounds.max}
-					value={effectiveScrubYear ?? yearScrubBounds.max}
+					rangeMin={effectiveYearRange?.min ?? yearScrubBounds.min}
+					rangeMax={effectiveYearRange?.max ?? yearScrubBounds.max}
 					disabled={viewMode === "3dTime"}
-					onChange={(year) => (scrubYear = year)}
+					onChange={setYearRange}
 				/>
 			{/if}
 
@@ -488,6 +513,7 @@
 					{coClusterSongKeys}
 					highlightedSongKeys={mapHighlightedSongKeys}
 					{visibleSongKeys}
+					inYearSongKeys={inYearSongKeys}
 					clusters={mapClusters}
 					{emphasizedClusterHashes}
 					showTimeAxisGizmo={viewMode === "3dTime"}
@@ -505,6 +531,7 @@
 					{coClusterSongKeys}
 					highlightedSongKeys={mapHighlightedSongKeys}
 					{visibleSongKeys}
+					inYearSongKeys={inYearSongKeys}
 					method={embedding.method}
 					clusters={mapClusters}
 					{emphasizedClusterHashes}

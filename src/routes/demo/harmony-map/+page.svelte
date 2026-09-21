@@ -7,7 +7,8 @@
 	import { createEmbeddingState } from "./embedding/state/createEmbeddingState.svelte.js";
 	import {
 		readHarmonyMapUrlState,
-		replaceHarmonyMapStateInUrl
+		replaceHarmonyMapStateInUrl,
+		type YearScrubRange
 	} from "./harmonyMapUrlState.js";
 	import { embeddingDimensionForViewMode } from "./viewMode.js";
 	import { currentSearchParams } from "../shared/currentSearchParams.js";
@@ -31,6 +32,7 @@
 	embedding.setDimension(embeddingDimensionForViewMode(initialUrlState.view));
 
 	let viewMode = $state(initialUrlState.view);
+	let yearRange = $state<YearScrubRange | null>(initialUrlState.yearRange);
 
 	$effect(() => {
 		page.url.search;
@@ -39,6 +41,7 @@
 			embedding.setMethod(urlState.method);
 			embedding.setBlendWeights(urlState.blendWeights);
 			viewMode = urlState.view;
+			yearRange = urlState.yearRange;
 			embedding.setDimension(embeddingDimensionForViewMode(urlState.view));
 			replaceHarmonyMapStateInUrl(urlState);
 		});
@@ -83,10 +86,15 @@
 				songs={coverage.baseList}
 				{embedding}
 				{viewMode}
+				{yearRange}
 				onViewModeChange={(nextViewMode) => {
 					viewMode = nextViewMode;
 					embedding.setDimension(embeddingDimensionForViewMode(nextViewMode));
 					replaceHarmonyMapStateInUrl({ view: nextViewMode });
+				}}
+				onYearRangeChange={(nextYearRange) => {
+					yearRange = nextYearRange;
+					replaceHarmonyMapStateInUrl({ yearRange: nextYearRange });
 				}}
 				trailingControls={corpusControls}
 			/>

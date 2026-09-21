@@ -32,7 +32,7 @@
 		type HoverCardAnchor
 	} from "../../shared/hoverCardPosition.js";
 	import type { ScatterAxisLabels, ScatterPoint } from "./scatterPoint.js";
-	import { SCATTER_DIMMED_ALPHA, SCATTER_NORMAL_ALPHA } from "./scatterPoint.js";
+	import { scatterPointAlpha } from "./scatterPoint.js";
 	import {
 		HIGHLIGHT_LABEL_COLOR,
 		HIGHLIGHT_LABEL_FONT,
@@ -60,6 +60,7 @@
 		coClusterSongKeys: Set<string>;
 		highlightedSongKeys: Set<string>;
 		visibleSongKeys?: Set<string> | null;
+		inYearSongKeys?: Set<string> | null;
 		axisLabels?: ScatterAxisLabels | null;
 		method: EmbeddingMethod;
 		clusters: DensityCluster[];
@@ -114,6 +115,7 @@
 		coClusterSongKeys,
 		highlightedSongKeys,
 		visibleSongKeys = null,
+		inYearSongKeys = null,
 		axisLabels = null,
 		method,
 		clusters,
@@ -269,21 +271,16 @@
 		return POINT_RADIUS;
 	};
 
-	const alphaFor = (songKey: string): number => {
-		if (hoveredSongKey === songKey) return 1;
-		if (emphasizedSongKeys) {
-			return emphasizedSongKeys.has(songKey) ? 1 : SCATTER_DIMMED_ALPHA;
-		}
-		// Idle state (nothing selected/emphasized): highlighted songs (named-
-		// cluster anchors) get a full-opacity pop. But once a song is
-		// selected and the rest of the map fades, highlighted songs fade
-		// too — only the selected song (and its cluster) should stay lit.
-		if (selectedSongKey === null) {
-			return highlightedSongKeys.has(songKey) ? 1 : SCATTER_NORMAL_ALPHA;
-		}
-		if (songKey === selectedSongKey || coClusterSongKeys.has(songKey)) return 1;
-		return SCATTER_DIMMED_ALPHA;
-	};
+	const alphaFor = (songKey: string): number =>
+		scatterPointAlpha({
+			songKey,
+			hoveredSongKey,
+			selectedSongKey,
+			coClusterSongKeys,
+			highlightedSongKeys,
+			emphasizedSongKeys,
+			inYearSongKeys
+		});
 
 	const drawAxisLabels = (context: CanvasRenderingContext2D) => {
 		if (!axisLabels) return;
@@ -725,6 +722,7 @@
 		void highlightedSongKeys;
 		void hoveredClusterHit;
 		void emphasizedSongKeys;
+		void inYearSongKeys;
 		void showFamilyColors;
 		void showClusterOutlines;
 		void familyEmphasisSongKeys;
