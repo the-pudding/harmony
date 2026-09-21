@@ -69,11 +69,6 @@
 				class:active={page.url.pathname === "/demo/artists"}>artists</a
 			>
 			<a
-				href="/demo/story"
-				class="page-link"
-				class:active={page.url.pathname === "/demo/story"}>story</a
-			>
-			<a
 				href="/demo/match-algo-v2"
 				class="page-link"
 				class:active={page.url.pathname === "/demo/match-algo-v2"}>match algo v2</a
@@ -82,6 +77,9 @@
 				href="/demo/history"
 				class="page-link"
 				class:active={page.url.pathname === "/demo/history"}>history</a
+			>
+			<a href="/demo/viz" class="page-link" class:active={page.url.pathname === "/demo/viz"}
+				>viz</a
 			>
 		</div>
 	</div>

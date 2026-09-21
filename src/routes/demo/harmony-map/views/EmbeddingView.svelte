@@ -28,6 +28,7 @@
 	import { buildClusterSummaries } from "../embedding/clustering/clusterSummaries.js";
 	import { findDensityClusters } from "../embedding/clustering/densityClusters.js";
 	import { computeClusterVisibleShares } from "../embedding/clustering/clusterVisibility.js";
+	import { computeVisibleAnchorSongKeys } from "../embedding/clustering/anchorVisibility.js";
 	import { toCalendarYear } from "../../../../data/songYear.js";
 	import YearScrubber from "../components/YearScrubber.svelte";
 	import type { EmbeddingState } from "../embedding/state/createEmbeddingState.svelte.js";
@@ -209,14 +210,23 @@
 			: new Set(selectedArtistSummary.songs.map((song) => song.songKey))
 	);
 
+	// Which density-cluster hash(es) each song belongs to — lets the anchor
+	// highlight below know whether ITS cluster is currently hidden. (Defined
+	// here for readability; it forward-references allClusters, which is
+	// fine — $derived callbacks don't run until read, well after the whole
+	// script has finished its one top-to-bottom pass.)
 	// When an artist is selected, only their songs should read as
 	// "highlighted" on the map — named-cluster-anchor rings/labels would
 	// otherwise compete visually with the artist highlight. Scoped to the
 	// map view only; SongVectorInspector's "cluster anchor" badge still uses
-	// the unfiltered highlightedSongKeys below.
-	const mapHighlightedSongKeys = $derived(
-		artistSongKeys === null ? highlightedSongKeys : new Set<string>()
-	);
+	// the unfiltered highlightedSongKeys below. See computeVisibleAnchorSongKeys
+	// for how an anchor's own cluster visibility (or, for a stray anchor
+	// with no cluster membership, whether every cluster is hidden) gates it.
+	const mapHighlightedSongKeys = $derived.by((): Set<string> => {
+		const base = artistSongKeys === null ? highlightedSongKeys : new Set<string>();
+		if (base.size === 0) return base;
+		return computeVisibleAnchorSongKeys(base, allClusters, hiddenClusterHashes);
+	});
 
 	const groupFilterSongKeys = $derived(
 		selectedGroupLabel === null
