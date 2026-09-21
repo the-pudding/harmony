@@ -59,6 +59,7 @@
 		yearRange: YearScrubRange | null;
 		onYearRangeChange: (yearRange: YearScrubRange | null) => void;
 		trailingControls?: Snippet;
+		methods?: readonly EmbeddingMethod[];
 	};
 
 	const {
@@ -69,7 +70,8 @@
 		onViewModeChange,
 		yearRange,
 		onYearRangeChange,
-		trailingControls
+		trailingControls,
+		methods
 	}: Props = $props();
 
 	const AXIS_LABELS_BY_METHOD: Record<
@@ -452,6 +454,7 @@
 			<EmbeddingMethodSelector
 				method={embedding.method}
 				onChange={embedding.setMethod}
+				{methods}
 			/>
 
 			<WeightingControls

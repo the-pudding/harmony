@@ -12,13 +12,14 @@
 	type Props = {
 		method: EmbeddingMethod;
 		onChange: (method: EmbeddingMethod) => void;
+		methods?: readonly EmbeddingMethod[];
 	};
 
-	const { method, onChange }: Props = $props();
+	const { method, onChange, methods = EMBEDDING_METHODS }: Props = $props();
 </script>
 
 <div class="method-selector" role="radiogroup" aria-label="Embedding method">
-	{#each EMBEDDING_METHODS as option (option)}
+	{#each methods as option (option)}
 		{@const description = embeddingMethodDescriptions[option]}
 		<button
 			class="method-button"

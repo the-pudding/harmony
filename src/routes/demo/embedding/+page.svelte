@@ -1,0 +1,190 @@
+<script lang="ts">
+	import { untrack } from "svelte";
+	import { page } from "$app/state";
+	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
+	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
+	import { createAllSongsCoverageState } from "../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
+	import { createEmbeddingState } from "../harmony-map/embedding/state/createEmbeddingState.svelte.js";
+	import {
+		DEFAULT_EMBEDDING_METHOD,
+		readHarmonyMapUrlState,
+		replaceHarmonyMapStateInUrl,
+		type YearScrubRange
+	} from "../harmony-map/harmonyMapUrlState.js";
+	import type { EmbeddingMethod } from "../harmony-map/embedding/reducers/types.js";
+	import { embeddingDimensionForViewMode } from "../harmony-map/viewMode.js";
+	import { currentSearchParams } from "../shared/currentSearchParams.js";
+	import EmbeddingView from "../harmony-map/views/EmbeddingView.svelte";
+
+	const EMBEDDING_PAGE_METHODS: readonly EmbeddingMethod[] = [
+		"umap",
+		"ngram",
+		"blend"
+	];
+
+	const EMBEDDING_PAGE_METHOD_SET = new Set<EmbeddingMethod>(
+		EMBEDDING_PAGE_METHODS
+	);
+
+	const resolvePageMethod = (method: EmbeddingMethod): EmbeddingMethod =>
+		EMBEDDING_PAGE_METHOD_SET.has(method) ? method : DEFAULT_EMBEDDING_METHOD;
+
+	const initialUrlState = readHarmonyMapUrlState(currentSearchParams());
+	const initialMethod = resolvePageMethod(initialUrlState.method);
+
+	const coverage = createAllSongsCoverageState();
+
+	const embedding = createEmbeddingState({
+		getEntries: () => coverage.allSongsCoverageResult?.songCoverages ?? null,
+		getSongs: () => coverage.baseList,
+		getCoverageCacheKey: () => coverage.coverageCacheKey,
+		initialMethod,
+		initialBlendWeights: initialUrlState.blendWeights,
+		onMethodChange: (method) => replaceHarmonyMapStateInUrl({ method }),
+		onBlendWeightsChange: (blendWeights) =>
+			replaceHarmonyMapStateInUrl({ blendWeights })
+	});
+
+	embedding.setDimension(embeddingDimensionForViewMode(initialUrlState.view));
+
+	let viewMode = $state(initialUrlState.view);
+	let yearRange = $state<YearScrubRange | null>(initialUrlState.yearRange);
+
+	$effect(() => {
+		page.url.search;
+		untrack(() => {
+			const urlState = readHarmonyMapUrlState(page.url.searchParams);
+			const method = resolvePageMethod(urlState.method);
+			embedding.setMethod(method);
+			embedding.setBlendWeights(urlState.blendWeights);
+			viewMode = urlState.view;
+			yearRange = urlState.yearRange;
+			embedding.setDimension(embeddingDimensionForViewMode(urlState.view));
+			replaceHarmonyMapStateInUrl({ ...urlState, method });
+		});
+	});
+
+	const songCoverages = $derived(
+		coverage.allSongsCoverageResult?.songCoverages ?? []
+	);
+
+	const statusText = $derived.by(() => {
+		if (coverage.loading) return "Loading song dataset…";
+		if (coverage.loadError) return coverage.loadError;
+		return `${coverage.baseList.length.toLocaleString()} songs`;
+	});
+
+	const isError = $derived(Boolean(coverage.loadError));
+
+	const loadingText = $derived(
+		coverage.loading ? "Loading songs…" : "Computing coverage…"
+	);
+</script>
+
+<svelte:head>
+	<title>harmony — embedding</title>
+	<link
+		rel="stylesheet"
+		href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+	/>
+</svelte:head>
+
+{#snippet corpusControls()}
+	<span class="status-text" class:error={isError}>{statusText}</span>
+{/snippet}
+
+<div class="page" style="--top-nav-height: {TOP_NAV_HEIGHT};">
+	<TopNavBar showSearch={false} />
+
+	<div class="page-body">
+		{#if coverage.allSongsCoverageResult}
+			<EmbeddingView
+				{songCoverages}
+				songs={coverage.baseList}
+				{embedding}
+				methods={EMBEDDING_PAGE_METHODS}
+				{viewMode}
+				{yearRange}
+				onViewModeChange={(nextViewMode) => {
+					viewMode = nextViewMode;
+					embedding.setDimension(embeddingDimensionForViewMode(nextViewMode));
+					replaceHarmonyMapStateInUrl({ view: nextViewMode });
+				}}
+				onYearRangeChange={(nextYearRange) => {
+					yearRange = nextYearRange;
+					replaceHarmonyMapStateInUrl({ yearRange: nextYearRange });
+				}}
+				trailingControls={corpusControls}
+			/>
+		{:else}
+			<div class="loading-toolbar">
+				{@render corpusControls()}
+			</div>
+			<div class="loading-overlay">
+				<span class="loading-text">{loadingText}</span>
+			</div>
+		{/if}
+	</div>
+</div>
+
+<style>
+	:global(body > header) {
+		display: none;
+	}
+
+	:global(body) {
+		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+	}
+
+	.page {
+		background: #09090b;
+		color: #f4f4f5;
+		height: 100vh;
+		display: flex;
+		flex-direction: column;
+		padding-top: var(--top-nav-height);
+		overflow: hidden;
+	}
+
+	.page-body {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		padding: 1rem 0 0;
+		gap: 0.75rem;
+		box-sizing: border-box;
+		position: relative;
+	}
+
+	.loading-toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 1rem;
+		flex-shrink: 0;
+		padding: 0 1.25rem;
+	}
+
+	.status-text {
+		font-size: 0.75rem;
+		color: #71717a;
+	}
+
+	.status-text.error {
+		color: #fca5a5;
+	}
+
+	.loading-overlay {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 0;
+	}
+
+	.loading-text {
+		font-size: 0.75rem;
+		color: #52525b;
+	}
+</style>
