@@ -19,6 +19,12 @@ export {
 	UMAP_RANDOM_SEED
 } from "./umap.js";
 export { orientCoords } from "./orientCoords.js";
+export {
+	ALIGNMENT_ANGLE_STEP_DEGREES,
+	PROGRESSION_REFERENCE_METHOD,
+	alignCoordsToReferenceByAngleSearch
+} from "./alignCoordsToReference.js";
+export type { AlignmentResult } from "./alignCoordsToReference.js";
 export { PRE_REDUCE_COMPONENT_COUNT } from "./preReduce.js";
 
 let reduceWorker: Worker | null = null;

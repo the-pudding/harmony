@@ -24,7 +24,9 @@ import {
 	type SongVectorSet
 } from "../vectors/index.js";
 import {
+	alignCoordsToReferenceByAngleSearch,
 	orientCoords,
+	PROGRESSION_REFERENCE_METHOD,
 	reduceOffMainThread,
 	terminateReduceWorker,
 	PCA_COMPONENT_COUNT_3D,
@@ -49,13 +51,25 @@ export type EmbeddingResult = {
 	coordsByKey: Map<string, Coords>;
 	componentLoadings: ComponentLoading[][] | null;
 	explainedVariance: number[] | null;
+	alignmentRotationDegrees: number | null;
 };
 
 const EMPTY_RESULT: EmbeddingResult = {
 	coordsByKey: new Map(),
 	componentLoadings: null,
-	explainedVariance: null
+	explainedVariance: null,
+	alignmentRotationDegrees: null
 };
+
+const METHODS_ALIGNED_TO_PROGRESSION = new Set<EmbeddingMethod>([
+	"ngram",
+	"blend"
+]);
+
+const progressionCacheKeyFor = (
+	datasetToken: string,
+	currentDimension: EmbeddingDimension
+): string => `${datasetToken}|${PROGRESSION_REFERENCE_METHOD}|${currentDimension}|`;
 
 type EmbeddingStateConfig = {
 	getEntries: () => SongCoverageEntry[] | null;
@@ -77,13 +91,15 @@ const toNgramInput = (song: GroupedSong): NgramSongInput => ({
 
 const toEmbeddingResult = (
 	result: ReductionResult,
-	songKeys: readonly string[]
+	songKeys: readonly string[],
+	alignmentRotationDegrees: number | null = null
 ): EmbeddingResult => ({
 	coordsByKey: new Map(
 		result.coords.map((coords, index) => [songKeys[index], coords])
 	),
 	componentLoadings: result.componentLoadings,
-	explainedVariance: result.explainedVariance
+	explainedVariance: result.explainedVariance,
+	alignmentRotationDegrees
 });
 
 const withOnlyCurrentDataset = (
@@ -179,7 +195,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		const currentMethod = method;
 		const currentDimension = dimension;
 		const currentSongs = songs;
-		const { vectorSet } = dataset;
+		const { token: datasetToken, vectorSet } = dataset;
 		const coverageCacheKey = config.getCoverageCacheKey();
 		const currentBlendWeights = blendWeights;
 		const currentOptions = options;
@@ -195,6 +211,92 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 			currentMethod === "blend" ? currentBlendWeights : undefined;
 
 		void (async () => {
+			const ensureProgressionCoords = async (): Promise<Map<
+				string,
+				Coords
+			> | null> => {
+				const progressionKey = progressionCacheKeyFor(
+					datasetToken,
+					currentDimension
+				);
+				const fromMemory = resultCache.get(progressionKey);
+				if (fromMemory) return fromMemory.coordsByKey;
+
+				if (coverageCacheKey !== null) {
+					const idbKey = await buildEmbeddingCacheKey(
+						coverageCacheKey,
+						PROGRESSION_REFERENCE_METHOD,
+						currentOptions,
+						currentDimension,
+						undefined
+					);
+					if (!active) return null;
+					const cached = await getCachedEmbedding(idbKey);
+					if (!active) return null;
+					if (cached) {
+						cacheResult(progressionKey, {
+							...cached,
+							alignmentRotationDegrees: cached.alignmentRotationDegrees ?? 0
+						});
+						return cached.coordsByKey;
+					}
+				}
+
+				const matrix = toMatrix(vectorSet.vectors);
+				const songKeys = vectorSet.vectors.map((vector) => vector.songKey);
+				try {
+					const reduction = await reduceOffMainThread(
+						"umap",
+						matrix,
+						reducerComponentCount(currentDimension)
+					);
+					if (!active) return null;
+					const progressionResult = toEmbeddingResult(reduction, songKeys, 0);
+					await persistEmbedding(
+						coverageCacheKey,
+						PROGRESSION_REFERENCE_METHOD,
+						currentDimension,
+						currentOptions,
+						undefined,
+						progressionKey,
+						progressionResult,
+						cacheResult
+					);
+					return progressionResult.coordsByKey;
+				} catch {
+					return null;
+				}
+			};
+
+			const alignToProgressionIfNeeded = async (
+				coordsByKey: Map<string, Coords>
+			): Promise<Pick<EmbeddingResult, "coordsByKey" | "alignmentRotationDegrees">> => {
+				if (
+					currentDimension !== 2 ||
+					!METHODS_ALIGNED_TO_PROGRESSION.has(currentMethod)
+				) {
+					return {
+						coordsByKey,
+						alignmentRotationDegrees:
+							currentMethod === PROGRESSION_REFERENCE_METHOD ? 0 : null
+					};
+				}
+
+				const referenceCoords = await ensureProgressionCoords();
+				if (!active || referenceCoords === null) {
+					return { coordsByKey, alignmentRotationDegrees: null };
+				}
+
+				const aligned = alignCoordsToReferenceByAngleSearch(
+					coordsByKey,
+					referenceCoords
+				);
+				return {
+					coordsByKey: aligned.coordsByKey,
+					alignmentRotationDegrees: aligned.rotationDegrees
+				};
+			};
+
 			if (coverageCacheKey !== null) {
 				const idbKey = await buildEmbeddingCacheKey(
 					coverageCacheKey,
@@ -423,12 +525,17 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 							reduction.coords[i] ?? { x: 0, y: 0 }
 						])
 					);
-					const featureAxesCoords = buildFeatureAxesCoords(currentSongs);
-					const coordsByKey =
-						currentDimension === 2
-							? orientCoords(rawCoords, featureAxesCoords)
+					const featureOrientedCoords =
+						currentMethod === "groupBlend" && currentDimension === 2
+							? orientCoords(rawCoords, buildFeatureAxesCoords(currentSongs))
 							: rawCoords;
-					const result: EmbeddingResult = { ...EMPTY_RESULT, coordsByKey };
+					const aligned = await alignToProgressionIfNeeded(featureOrientedCoords);
+					if (!active) return;
+					const result: EmbeddingResult = {
+						...EMPTY_RESULT,
+						coordsByKey: aligned.coordsByKey,
+						alignmentRotationDegrees: aligned.alignmentRotationDegrees
+					};
 					await persistEmbedding(
 						coverageCacheKey,
 						currentMethod,
@@ -479,7 +586,17 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 			)
 				.then(async (reduction) => {
 					if (!active) return;
-					const result = toEmbeddingResult(reduction, songKeys);
+					const rawResult = toEmbeddingResult(reduction, songKeys);
+					const aligned = await alignToProgressionIfNeeded(rawResult.coordsByKey);
+					if (!active) return;
+					const result: EmbeddingResult = {
+						...rawResult,
+						coordsByKey: aligned.coordsByKey,
+						alignmentRotationDegrees:
+							currentMethod === PROGRESSION_REFERENCE_METHOD
+								? 0
+								: aligned.alignmentRotationDegrees
+					};
 					await persistEmbedding(
 						coverageCacheKey,
 						currentMethod,

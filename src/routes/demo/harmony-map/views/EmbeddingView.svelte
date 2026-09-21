@@ -88,7 +88,7 @@
 		ngram: null,
 		scaleSplit: { x: "minor ← scale → major", y: "chord-gram UMAP" },
 		content: { x: "dark ← harmony → bright", y: "simple ← harmony → complex" },
-		blend: { x: "dark ← harmony → bright", y: "simple ← harmony → complex" }
+		blend: null
 	};
 
 	type InspectorTab = "song" | "artists" | "clusters";
@@ -307,6 +307,14 @@
 
 	const isComputing = $derived(embedding.status === "computing");
 
+	const alignmentRotationLabel = $derived.by((): string | null => {
+		const degrees = embedding.result.alignmentRotationDegrees;
+		if (degrees === null) return null;
+		const signed =
+			degrees === 0 ? "0" : degrees > 0 ? `+${degrees}` : `${degrees}`;
+		return `align ${signed}°`;
+	});
+
 	let elapsedSeconds = $state(0);
 
 	$effect(() => {
@@ -459,6 +467,10 @@
 				onChange={embedding.setMethod}
 				{methods}
 			/>
+
+			{#if alignmentRotationLabel !== null}
+				<span class="alignment-rotation">{alignmentRotationLabel}</span>
+			{/if}
 
 			<WeightingControls
 				options={embedding.options}
@@ -691,6 +703,13 @@
 	.dimension-count {
 		font-size: 0.7rem;
 		color: #71717a;
+	}
+
+	.alignment-rotation {
+		font-size: 0.7rem;
+		color: #71717a;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
 	}
 
 	.view-dimension-toggle {

@@ -15,18 +15,21 @@ type SerializedEmbeddingResult = {
 	coordsByKey: [string, Coords][];
 	componentLoadings: ComponentLoading[][] | null;
 	explainedVariance: number[] | null;
+	alignmentRotationDegrees: number | null;
 };
 
 const serialize = (result: EmbeddingResult): SerializedEmbeddingResult => ({
 	coordsByKey: [...result.coordsByKey.entries()],
 	componentLoadings: result.componentLoadings,
-	explainedVariance: result.explainedVariance
+	explainedVariance: result.explainedVariance,
+	alignmentRotationDegrees: result.alignmentRotationDegrees
 });
 
 const deserialize = (raw: SerializedEmbeddingResult): EmbeddingResult => ({
 	coordsByKey: new Map(raw.coordsByKey),
 	componentLoadings: raw.componentLoadings,
-	explainedVariance: raw.explainedVariance
+	explainedVariance: raw.explainedVariance,
+	alignmentRotationDegrees: raw.alignmentRotationDegrees ?? null
 });
 
 let storePromise: Promise<IdbStore> | null = null;
