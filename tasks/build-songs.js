@@ -9,6 +9,7 @@ const DATA_ROOT = path.join(HARMONY_ROOT, "../harmony-data");
 const OUTPUT_PATH = path.join(HARMONY_ROOT, "static/data/songs.json");
 const TRACKER_PATH = path.join(DATA_ROOT, "data/tracker.csv");
 const BILLBOARD_PATH = path.join(DATA_ROOT, "data/hot100-clean.csv");
+const SLUG_YEAR_ALIASES_PATH = path.join(DATA_ROOT, "data/slug-year-aliases.csv");
 const BILLBOARD_TOP_RANK = 100;
 const MISSING_POPULARITY_SCORE = 0;
 const SONG_SOURCE_DIRS = [{ dirPath: path.join(DATA_ROOT, "songs/corrected") }];
@@ -614,6 +615,36 @@ const parseBillboardChartYear = (date) => {
 	);
 };
 
+const accumulateBillboardEntry = (map, key, rank, points, chartYear) => {
+	const prev = map.get(key) ?? {
+		popularityScore: 0,
+		bestRank: Infinity,
+		year: undefined
+	};
+	const isBestRank = rank < prev.bestRank;
+	map.set(key, {
+		popularityScore: prev.popularityScore + points,
+		bestRank: isBestRank ? rank : prev.bestRank,
+		year: isBestRank && chartYear !== undefined ? chartYear : prev.year
+	});
+};
+
+// slug -> the slug of a sibling entry whose resolved year it should borrow,
+// for songs hot100-clean.csv only ever credits under a different variant
+// (e.g. a feature-less remix hookTheory/UG separately scraped, when the
+// chart only ever credited the "Featuring ..." version). See the file's
+// header comment in harmony-data for the full rationale.
+const loadSlugYearAliases = () => {
+	if (!fs.existsSync(SLUG_YEAR_ALIASES_PATH)) return new Map();
+	return csvParse(fs.readFileSync(SLUG_YEAR_ALIASES_PATH, "utf-8")).reduce(
+		(index, row) =>
+			row.slug && row.borrowYearFromSlug
+				? index.set(row.slug, row.borrowYearFromSlug)
+				: index,
+		new Map()
+	);
+};
+
 const loadBillboardIndex = (trackerIndex = new Map()) => {
 	if (!fs.existsSync(BILLBOARD_PATH)) {
 		console.warn(
@@ -622,37 +653,55 @@ const loadBillboardIndex = (trackerIndex = new Map()) => {
 		return new Map();
 	}
 
-	const byHumanKey = csvParse(fs.readFileSync(BILLBOARD_PATH, "utf-8")).reduce(
-		(index, row) => {
-			const key = trackerKey(row.artist, row.song);
-			const rank = Number(row.rank);
-			const chartYear = parseBillboardChartYear(row.date);
-			if (!Number.isFinite(rank) || rank < 1 || rank > BILLBOARD_TOP_RANK)
-				return index;
+	const byHumanKey = new Map();
+	const bySlug = new Map();
 
-			const points = billboardPopularityPoints(rank);
-			const prev = index.get(key) ?? {
-				popularityScore: 0,
-				bestRank: Infinity,
-				year: undefined
-			};
-			const isBestRank = rank < prev.bestRank;
+	for (const row of csvParse(fs.readFileSync(BILLBOARD_PATH, "utf-8"))) {
+		const rank = Number(row.rank);
+		if (!Number.isFinite(rank) || rank < 1 || rank > BILLBOARD_TOP_RANK)
+			continue;
 
-			return index.set(key, {
-				popularityScore: prev.popularityScore + points,
-				bestRank: isBestRank ? rank : prev.bestRank,
-				year: isBestRank && chartYear !== undefined ? chartYear : prev.year
-			});
-		},
-		new Map()
-	);
+		const points = billboardPopularityPoints(rank);
+		const chartYear = parseBillboardChartYear(row.date);
 
-	const index = new Map(byHumanKey);
+		accumulateBillboardEntry(
+			byHumanKey,
+			trackerKey(row.artist, row.song),
+			rank,
+			points,
+			chartYear
+		);
+		if (row.slug) {
+			accumulateBillboardEntry(bySlug, row.slug, rank, points, chartYear);
+		}
+	}
+
+	// hot100-clean.csv's own slug column is the preferred join key — it's
+	// reconciled to match tracker.csv's slugs directly, so it sidesteps
+	// artist-credit-string mismatches (e.g. "X Featuring Y" vs "X") that
+	// trip up the kebabCase(artist)+kebabCase(song) fallback below.
+	const index = new Map([...byHumanKey, ...bySlug]);
 	for (const row of trackerIndex.values()) {
-		if (!row.slug) continue;
+		if (!row.slug || index.has(row.slug)) continue;
 		const entry = byHumanKey.get(trackerKey(row.artist, row.song));
 		if (entry) index.set(row.slug, entry);
 	}
+
+	// Last resort: a handful of songs still won't have resolved a year above
+	// (hot100-clean.csv only ever credited a different variant of the same
+	// song) — borrow the year from the listed sibling slug that did resolve.
+	for (const [slug, borrowFromSlug] of loadSlugYearAliases()) {
+		const existing = index.get(slug);
+		if (existing?.year !== undefined) continue;
+		const borrowed = index.get(borrowFromSlug);
+		if (borrowed?.year === undefined) continue;
+		index.set(slug, {
+			popularityScore: existing?.popularityScore ?? MISSING_POPULARITY_SCORE,
+			bestRank: existing?.bestRank ?? Infinity,
+			year: borrowed.year
+		});
+	}
+
 	return index;
 };
 

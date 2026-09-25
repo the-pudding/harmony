@@ -51,4 +51,26 @@ describe("build-songs Billboard join", () => {
 		},
 		BILLBOARD_JOIN_TEST_TIMEOUT_MS
 	);
+
+	it(
+		"borrows a year via slug-year-aliases.csv when hot100-clean.csv only credits a sibling variant",
+		() => {
+			// "34+35" by Ariana Grande solo never charted — only the "Feat. Doja
+			// Cat & Megan Thee Stallion" version did, so hot100-clean.csv has no
+			// slug match for the solo credit. slug-year-aliases.csv lists it as
+			// borrowing the featuring version's year instead of leaving it blank.
+			const trackerIndex = loadTrackerIndex();
+			const billboardIndex = loadBillboardIndex(trackerIndex);
+
+			const soloYear = billboardIndex.get("ariana-grande__34-35")?.year;
+			const featuringYear = billboardIndex.get(
+				"ariana-grande-feat-doja-cat-megan-thee-stallion__34-35"
+			)?.year;
+
+			expect(soloYear).toBeTypeOf("number");
+			expect(featuringYear).toBeTypeOf("number");
+			expect(soloYear).toBe(featuringYear);
+		},
+		BILLBOARD_JOIN_TEST_TIMEOUT_MS
+	);
 });
