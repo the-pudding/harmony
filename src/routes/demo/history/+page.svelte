@@ -6,6 +6,7 @@
 	import CorpusMatchRateOverTimeChart from "../core-progressions/CorpusMatchRateOverTimeChart.svelte";
 	import type { YearDomain } from "../shared/artists/artistStats.js";
 	import { computeDecadeHistory } from "./decadeSignatures.js";
+	import { computeTopProgressions } from "./topProgressions.js";
 	import {
 		computeCadenceHistory,
 		computeProgressionCadenceHistory
@@ -61,6 +62,15 @@
 			? computeDecadeHistory(
 					coverage.allSongsCoverageResult.songCoverages,
 					songByKey
+				)
+			: []
+	);
+
+	const topProgressions = $derived.by(() =>
+		coverage.allSongsCoverageResult
+			? computeTopProgressions(
+					coverage.allSongsCoverageResult.songCoverages,
+					Number.POSITIVE_INFINITY
 				)
 			: []
 	);
@@ -369,6 +379,56 @@
 				>
 			{/if}
 		</div>
+
+		<section class="section">
+			<div class="section-header">
+				<h2 class="section-title">Most common progressions</h2>
+				<p class="section-description">
+					Ranked by average share of a song's chords across the whole
+					corpus — every song counts, 0% when a progression doesn't appear
+					at all — so a progression that dominates the songs it's in
+					outranks one that only ever makes a brief appearance. Not raw
+					occurrence count (which lets one heavily-repeated song skew the
+					number) and not plain song presence (which treats a passing
+					instance the same as a song built almost entirely on it).
+				</p>
+			</div>
+
+			{#if topProgressions.length === 0 && coverage.allSongsCoverageResult}
+				<p class="empty">Not enough matched songs to rank progressions.</p>
+			{/if}
+
+			{#if topProgressions.length > 0}
+				<div class="top-progressions-table-wrap">
+					<table class="top-progressions-table">
+						<thead>
+							<tr>
+								<th>#</th>
+								<th>Progression</th>
+								<th>Shape</th>
+								<th>Avg. % of a song</th>
+								<th>Present in</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each topProgressions as row, i (row.name)}
+								<tr>
+									<td class="rank-cell">{i + 1}</td>
+									<td class="name-cell">{row.name}</td>
+									<td class="chords-cell">{row.chordProgression}</td>
+									<td class="numeric-cell">{row.avgCoveragePercent.toFixed(2)}%</td>
+									<td class="numeric-cell"
+										>{row.songCount.toLocaleString()} songs ({row.songSharePercent.toFixed(
+											1
+										)}%)</td
+									>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{/if}
+		</section>
 
 		<section class="section">
 			<div class="section-header">
@@ -715,6 +775,66 @@
 	.empty {
 		font-size: 0.75rem;
 		color: #71717a;
+	}
+
+	.top-progressions-table-wrap {
+		overflow-x: auto;
+		overflow-y: auto;
+		max-height: 32rem;
+		border: 1px solid rgba(63, 63, 70, 0.7);
+		border-radius: 0.5rem;
+	}
+
+	.top-progressions-table {
+		border-collapse: collapse;
+		width: 100%;
+		min-width: 34rem;
+		font-size: 0.75rem;
+	}
+
+	.top-progressions-table th {
+		position: sticky;
+		top: 0;
+		text-align: left;
+		font-weight: 600;
+		color: #a1a1aa;
+		font-size: 0.65rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		padding: 0.5rem 0.75rem;
+		border-bottom: 1px solid rgba(63, 63, 70, 0.9);
+		white-space: nowrap;
+		background: #09090b;
+	}
+
+	.top-progressions-table td {
+		padding: 0.4rem 0.75rem;
+		border-bottom: 1px solid rgba(39, 39, 42, 0.8);
+		color: #d4d4d8;
+		white-space: nowrap;
+	}
+
+	.top-progressions-table tbody tr:hover {
+		background: rgba(24, 24, 27, 0.6);
+	}
+
+	.rank-cell {
+		color: #71717a;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.name-cell {
+		font-weight: 600;
+		color: #f4f4f5;
+	}
+
+	.chords-cell {
+		color: #a1a1aa;
+	}
+
+	.numeric-cell {
+		font-variant-numeric: tabular-nums;
+		color: #d4d4d8;
 	}
 
 	.cadence-charts {
