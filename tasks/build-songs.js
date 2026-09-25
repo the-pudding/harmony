@@ -8,7 +8,7 @@ const HARMONY_ROOT = process.cwd();
 const DATA_ROOT = path.join(HARMONY_ROOT, "../harmony-data");
 const OUTPUT_PATH = path.join(HARMONY_ROOT, "static/data/songs.json");
 const TRACKER_PATH = path.join(DATA_ROOT, "data/tracker.csv");
-const BILLBOARD_PATH = path.join(DATA_ROOT, "data/billboard.csv");
+const BILLBOARD_PATH = path.join(DATA_ROOT, "data/hot100-clean.csv");
 const BILLBOARD_TOP_RANK = 100;
 const MISSING_POPULARITY_SCORE = 0;
 const SONG_SOURCE_DIRS = [{ dirPath: path.join(DATA_ROOT, "songs/corrected") }];
@@ -514,6 +514,7 @@ const sectionToSongInputCore = (
 		...(trackerEntry
 			? {
 					inTop10: trackerEntry.inTop10 === "true",
+					inTop20: trackerEntry.inTop20 === "true",
 					inTop40: trackerEntry.inTop40 === "true",
 					inTop100: trackerEntry.inTop100 === "true"
 				}

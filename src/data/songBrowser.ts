@@ -35,6 +35,7 @@ export type GroupedSong = {
 	year?: number;
 	source?: SongDataSource;
 	inTop10?: boolean;
+	inTop20?: boolean;
 	keyLabel: string | null;
 	sections: SongSection[];
 };
@@ -143,6 +144,7 @@ export const groupSongs = (songs: SongInput[]): GroupedSong[] => {
 				year: song.year,
 				source: song.source,
 				inTop10: song.inTop10,
+				inTop20: song.inTop20,
 				keyLabel: null,
 				sections: []
 			});

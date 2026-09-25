@@ -86,6 +86,7 @@ export type SongInput = {
 	year?: number;
 	popularityScore?: number;
 	inTop10?: boolean;
+	inTop20?: boolean;
 	inTop40?: boolean;
 	inTop100?: boolean;
 	progression: ProgressionChordInput[];
@@ -127,6 +128,7 @@ export type GroupedSongSearchResult = {
 	source?: SongDataSource;
 	popularityScore?: number;
 	inTop10?: boolean;
+	inTop20?: boolean;
 	inTop40?: boolean;
 	inTop100?: boolean;
 	sections: SongSectionSearchResult[];
