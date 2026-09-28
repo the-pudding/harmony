@@ -9,20 +9,40 @@ import type {
 	CorrectedSongContents,
 	SongKeyAdjustment
 } from "./hand-corrected-songs.js";
+import reviewedCorrections from "./reviewed-corrections.json";
 import { applySongKeyAdjustment } from "./applySongKeyAdjustment.js";
+
+// Corrections captured through the /demo/review tool (see
+// src/routes/demo/review/) — same shape as handCorrectedSongs, but keyed by
+// songKey (the id) instead of an array, and written by the tool rather than
+// hand-typed. Kept as a separate file/source rather than merged into
+// hand-corrected-songs.ts at write time, so the review tool never
+// programmatically edits hand-authored source.
+type ReviewedCorrectionEntry = {
+	correctedSongContents?: CorrectedSongContents;
+	keyAdjustment?: SongKeyAdjustment;
+	technicalNotes?: string;
+};
+const reviewedCorrectionEntries = Object.entries(
+	reviewedCorrections as Record<string, ReviewedCorrectionEntry>
+).map(([id, entry]) => ({ id, ...entry }));
 
 export const applyHandReviewedCorrections = (
 	songs: SongInput[]
 ): SongInput[] => {
+	// Review-tool entries are concatenated last, so a `new Map(...)` below
+	// keeps them as the winner over a hand-corrected-songs.ts entry for the
+	// same songKey — the more recently made decision wins.
+	const allCorrections = [...handCorrectedSongs, ...reviewedCorrectionEntries];
 	const fullCorrections = new Map(
-		handCorrectedSongs.flatMap((song) =>
+		allCorrections.flatMap((song) =>
 			song.correctedSongContents
 				? [[song.id, song.correctedSongContents] as const]
 				: []
 		)
 	);
 	const keyAdjustments = new Map(
-		handCorrectedSongs.flatMap((song) =>
+		allCorrections.flatMap((song) =>
 			song.keyAdjustment ? [[song.id, song.keyAdjustment] as const] : []
 		)
 	);
