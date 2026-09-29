@@ -172,7 +172,7 @@
 				title="Single-loop songs: which loop?"
 				description="Among songs in the {MOST_HOMOGENEOUS_BAND.label} band, the progression that makes up (nearly) the whole song. Even the most common loop accounts for only a small slice of single-loop songs — they're harmonically homogeneous internally, but spread across many different progressions, so on the harmony map they form many tight islands rather than one big blob."
 			>
-				<RecipeProgressionTable rows={recipeRows} />
+				<RecipeProgressionTable rows={recipeRows} bandLabel={MOST_HOMOGENEOUS_BAND.label} />
 			</PageSection>
 
 			<PageSection

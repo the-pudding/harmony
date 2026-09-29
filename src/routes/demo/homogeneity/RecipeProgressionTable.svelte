@@ -5,16 +5,17 @@
 
 	type Props = {
 		rows: RecipeProgressionRow[];
+		bandLabel: string;
 	};
 
-	const { rows }: Props = $props();
+	const { rows, bandLabel }: Props = $props();
 
-	const HEADERS = ["#", "Progression", "Songs", "Share of band", "Examples"];
+	const headers = $derived(["#", "Progression", "Songs", `% of ${bandLabel} songs`, "Examples"]);
 	const MIN_TABLE_WIDTH = "40rem";
 	const SHARE_DECIMAL_PLACES = 1;
 </script>
 
-<DataTable headers={HEADERS} minWidth={MIN_TABLE_WIDTH}>
+<DataTable {headers} minWidth={MIN_TABLE_WIDTH}>
 	{#each rows as row, index (row.name)}
 		<tr>
 			<td class="numeric muted">{index + 1}</td>
