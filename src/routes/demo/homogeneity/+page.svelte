@@ -5,13 +5,13 @@
 	import DecadeLineChart from "../history/DecadeLineChart.svelte";
 	import {
 		buildHomogeneityBandShares,
-		HOMOGENEITY_MEASURE_EXPLANATION,
 		MOST_DIVERSE_BAND,
 		MOST_HOMOGENEOUS_BAND,
 		type HomogeneityBandId
 	} from "../shared/progressionHomogeneity.js";
 	import DecadeHomogeneityTable from "./DecadeHomogeneityTable.svelte";
 	import DecadeStackedBarChart from "./DecadeStackedBarChart.svelte";
+	import EffectiveCountExplainer from "./EffectiveCountExplainer.svelte";
 	import HorizontalBarChart from "./HorizontalBarChart.svelte";
 	import PageSection from "./PageSection.svelte";
 	import RecipeProgressionTable from "./RecipeProgressionTable.svelte";
@@ -105,7 +105,8 @@
 		</div>
 
 		{#if rows.length > 0}
-			<PageSection title="Measuring homogeneity" description={HOMOGENEITY_MEASURE_EXPLANATION}>
+			<PageSection title="Measuring homogeneity">
+				<EffectiveCountExplainer />
 				<div class="stat-grid">
 					<StatCard
 						label="Median song"
@@ -141,7 +142,7 @@
 				<div class="wide-chart-grid">
 					<HorizontalBarChart
 						title="Songs by effective progression count"
-						description="Each song's effective progression count, bucketed. Colors match the harmony map's homogeneity color mode."
+						description="Each song's effective progression count, bucketed. Colors match the harmony map's “effective progressions” color mode."
 						bars={bandBars}
 					/>
 					<HorizontalBarChart

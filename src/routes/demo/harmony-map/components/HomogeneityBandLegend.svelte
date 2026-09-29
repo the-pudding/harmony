@@ -1,7 +1,8 @@
 <script lang="ts">
-	import type {
-		HomogeneityBandId,
-		HomogeneityBandShare
+	import {
+		HOMOGENEITY_MEASURE_NAME,
+		type HomogeneityBandId,
+		type HomogeneityBandShare
 	} from "../../shared/progressionHomogeneity.js";
 
 	type Props = {
@@ -18,6 +19,7 @@
 </script>
 
 <div class="band-legend">
+	<span class="band-heading">{HOMOGENEITY_MEASURE_NAME} per song · share of songs</span>
 	{#each bandShares as { band, sharePercent } (band.id)}
 		<button
 			class="band-item"
@@ -42,6 +44,14 @@
 		padding-bottom: 0.25rem;
 		margin-bottom: 0.125rem;
 		border-bottom: 1px solid rgba(63, 63, 70, 0.6);
+	}
+
+	.band-heading {
+		font-size: 0.55rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: #71717a;
+		margin-bottom: 0.125rem;
 	}
 
 	.band-item {

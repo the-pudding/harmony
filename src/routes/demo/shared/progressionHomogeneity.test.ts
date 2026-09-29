@@ -3,6 +3,7 @@ import type { SongProgressionCount } from "../define-chord-progression/compute-c
 import {
 	buildHomogeneityBandShares,
 	computeSongHomogeneity,
+	effectiveCountForShares,
 	effectiveProgressionCountFor,
 	homogeneityBandFor
 } from "./progressionHomogeneity.js";
@@ -48,6 +49,13 @@ describe("computeSongHomogeneity", () => {
 	it("returns null when nothing is matched", () => {
 		expect(computeSongHomogeneity([])).toBeNull();
 		expect(computeSongHomogeneity([makeCount("a", 0)])).toBeNull();
+	});
+});
+
+describe("effectiveCountForShares", () => {
+	it("is whole only for equal splits", () => {
+		expect(effectiveCountForShares([0.25, 0.25, 0.25, 0.25])).toBeCloseTo(4);
+		expect(effectiveCountForShares([0.4, 0.4, 0.2])).toBeCloseTo(1 / 0.36);
 	});
 });
 

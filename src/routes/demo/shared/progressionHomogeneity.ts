@@ -70,6 +70,12 @@ const coverageByProgressionName = (
 		new Map<string, number>()
 	);
 
+const simpsonConcentration = (shares: readonly number[]): number =>
+	sumOf(shares.map((share) => share * share));
+
+export const effectiveCountForShares = (shares: readonly number[]): number =>
+	1 / simpsonConcentration(shares);
+
 export const computeSongHomogeneity = (
 	progressionCounts: readonly SongProgressionCount[]
 ): SongHomogeneity | null => {
@@ -82,7 +88,9 @@ export const computeSongHomogeneity = (
 	const progressionShares = coverageByName
 		.map(([name, coverage]) => ({ name, share: coverage / totalCoverage }))
 		.sort((a, b) => b.share - a.share || a.name.localeCompare(b.name));
-	const homogeneity = sumOf(progressionShares.map(({ share }) => share * share));
+	const homogeneity = simpsonConcentration(
+		progressionShares.map(({ share }) => share)
+	);
 
 	return {
 		progressionShares,
