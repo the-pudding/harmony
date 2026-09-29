@@ -1,8 +1,8 @@
-const EFFECTIVE_COUNT_DECIMAL_PLACES = 1;
+import { formatEffectiveProgressionCount } from "../shared/progressionHomogeneity.js";
+
 const PERCENT_SCALE = 100;
 
-export const formatEffectiveCount = (value: number): string =>
-	value.toFixed(EFFECTIVE_COUNT_DECIMAL_PLACES);
+export const formatEffectiveCount = formatEffectiveProgressionCount;
 
 export const shareToPercent = (share: number): number => share * PERCENT_SCALE;
 

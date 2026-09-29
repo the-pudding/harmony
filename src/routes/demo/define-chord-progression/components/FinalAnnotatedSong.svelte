@@ -9,6 +9,10 @@
 		type ProgressionWithMatchStats,
 		type ChordAnnotation
 	} from "../progression-matching-logic/progressionMatchAnalysis.js";
+	import {
+		effectiveProgressionCountFor,
+		formatEffectiveProgressionCount
+	} from "../../shared/progressionHomogeneity.js";
 	import ChordProgressionIssuesNote from "./ChordProgressionIssuesNote.svelte";
 	import { matchOutline } from "./progressionColors.js";
 	import ProgressionMatchButton from "./ProgressionMatchButton.svelte";
@@ -108,6 +112,8 @@
 		`--locked-match-list-height: ${LOCKED_MATCH_LIST_HEIGHT_REM}rem; --locked-match-list-columns: ${LOCKED_MATCH_LIST_COLUMN_COUNT}; --locked-match-list-rows: ${LOCKED_MATCH_LIST_ROW_COUNT}; --locked-match-list-gap: ${LOCKED_MATCH_LIST_GAP_REM}rem;`
 	);
 
+	const effectiveProgressionCount = $derived(effectiveProgressionCountFor(matches));
+
 	const hasMatches = $derived(uniqueSortedMatches.length > 0);
 	const showMatchList = $derived(hasMatches || lockMatchListHeight);
 
@@ -185,10 +191,18 @@
 					{/if}
 				</div>
 				<div class="total-row">
-					<span class="total-label"
-						>= <strong class="total-percent">{explainedPercent}%</strong> of the
-						song</span
-					>
+					<span class="total-label">
+						<span class="total-phrase"
+							><strong class="total-stat">{explainedPercent}%</strong> of song matched</span
+						>
+						{#if effectiveProgressionCount !== null}
+							<span class="total-phrase"
+								>via <strong class="total-stat"
+									>{formatEffectiveProgressionCount(effectiveProgressionCount)}</strong
+								> effective progressions</span
+							>
+						{/if}
+					</span>
 					{#if hiddenMatchCount > 0}
 						<span class="hidden-count"
 							>{hiddenMatchCount} more not shown</span
@@ -303,7 +317,9 @@
 		display: flex;
 		align-items: baseline;
 		justify-content: space-between;
-		gap: 0.75rem;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.75rem;
+		min-width: 0;
 		margin-top: 0.25rem;
 		padding-top: 0.375rem;
 		border-top: 1px solid #27272a;
@@ -316,12 +332,18 @@
 	}
 
 	.total-label {
+		min-width: 0;
 		font-size: 0.75rem;
-		color: #f4f4f5;
+		color: #71717a;
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 	}
 
-	.total-percent {
+	.total-phrase {
+		display: inline-block;
+		white-space: nowrap;
+	}
+
+	.total-stat {
 		font-weight: 700;
 		color: #fff;
 	}

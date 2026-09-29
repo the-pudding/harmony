@@ -61,8 +61,15 @@ export const HOMOGENEITY_MEASURE_EXPLANATION =
 const sumOf = (values: readonly number[]): number =>
 	values.reduce((total, value) => total + value, 0);
 
+export type ProgressionCoverage = Pick<SongProgressionCount, "name" | "coveragePercent">;
+
+const EFFECTIVE_COUNT_DECIMAL_PLACES = 1;
+
+export const formatEffectiveProgressionCount = (value: number): string =>
+	value.toFixed(EFFECTIVE_COUNT_DECIMAL_PLACES);
+
 const coverageByProgressionName = (
-	progressionCounts: readonly SongProgressionCount[]
+	progressionCounts: readonly ProgressionCoverage[]
 ): Map<string, number> =>
 	progressionCounts.reduce(
 		(totals, count) =>
@@ -77,7 +84,7 @@ export const effectiveCountForShares = (shares: readonly number[]): number =>
 	1 / simpsonConcentration(shares);
 
 export const computeSongHomogeneity = (
-	progressionCounts: readonly SongProgressionCount[]
+	progressionCounts: readonly ProgressionCoverage[]
 ): SongHomogeneity | null => {
 	const coverageByName = [...coverageByProgressionName(progressionCounts)].filter(
 		([, coverage]) => coverage > 0
@@ -103,7 +110,7 @@ export const computeSongHomogeneity = (
 };
 
 export const effectiveProgressionCountFor = (
-	progressionCounts: readonly SongProgressionCount[]
+	progressionCounts: readonly ProgressionCoverage[]
 ): number | null => computeSongHomogeneity(progressionCounts)?.effectiveProgressionCount ?? null;
 
 export const homogeneityBandFor = (effectiveProgressionCount: number): HomogeneityBand =>
