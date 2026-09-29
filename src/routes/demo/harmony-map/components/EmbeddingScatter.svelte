@@ -22,6 +22,7 @@
 		type EmbeddingMethod
 	} from "../embedding/reducers/types.js";
 	import { fillStyleForGroupShares } from "./groupColorBlend.js";
+	import type { MapColorMode } from "../colorMode.js";
 	import { clusterAnnotationAlpha } from "./clusterAnnotationStyle.js";
 	import SongTooltip from "../../shared/SongTooltip.svelte";
 	import { createDelayedHoverTooltip } from "../../shared/delayedHoverTooltip.svelte.js";
@@ -83,11 +84,10 @@
 		// coClusterSongKeys, so it works with no specific song selected at
 		// all. Omit (or null) for no effect.
 		emphasizedSongKeys?: Set<string> | null;
-		// Color dots by their progression-family blend. Defaults to true
-		// (existing behavior) so normal interactive use is unaffected; /story
-		// passes false by default so a highlighted song/family stands out
-		// starkly against a plain starfield instead of competing with color.
-		showFamilyColors?: boolean;
+		// "groups" colors dots by their progression-family blend (the
+		// default), "homogeneity" by each point's homogeneityColor, and "off"
+		// leaves a plain starfield so a highlighted song/family stands out.
+		colorMode?: MapColorMode;
 		// Draw the dashed cluster outlines + names. Defaults to true (existing
 		// behavior); /story defaults this off per beat.
 		showClusterOutlines?: boolean;
@@ -102,7 +102,7 @@
 		familyEmphasisSongKeys?: Set<string> | null;
 		// Fill color for a song in emphasizedSongKeys, overriding the group
 		// color / STAR_FILL_COLOR so those dots stand out regardless of
-		// showFamilyColors. Opt-in per caller (e.g. harmony-map's artist
+		// colorMode. Opt-in per caller (e.g. harmony-map's artist
 		// mode) — omit (or null) to leave emphasized dots colored normally,
 		// distinguished only by alpha (e.g. /story's family highlights).
 		emphasisFillColor?: string | null;
@@ -125,7 +125,7 @@
 		focusScale = DEFAULT_FOCUS_SCALE,
 		focusClusterName = undefined,
 		emphasizedSongKeys = null,
-		showFamilyColors = true,
+		colorMode = "groups",
 		showClusterOutlines = true,
 		familyEmphasisSongKeys = null,
 		emphasisFillColor = null
@@ -165,10 +165,22 @@
 		'600 11px "JetBrains Mono", ui-monospace, monospace';
 	const CLUSTER_NAME_COLOR = "#f4f4f5";
 	const CLUSTER_LABEL_GAP = 6;
-	// Used instead of the group-share color blend when showFamilyColors is
-	// false — a plain, star-like white so a highlighted song/family reads
-	// clearly against an otherwise uncolored field.
+	// Used when colorMode is "off" — a plain, star-like white so a
+	// highlighted song/family reads clearly against an otherwise uncolored
+	// field.
 	const STAR_FILL_COLOR = "#e4e4e7";
+
+	const baseFillFor = (
+		context: CanvasRenderingContext2D,
+		screen: { x: number; y: number },
+		point: ScatterPoint
+	): string | CanvasGradient => {
+		if (colorMode === "groups") {
+			return fillStyleForGroupShares(context, screen.x, screen.y, point.groupShares);
+		}
+		if (colorMode === "homogeneity") return point.homogeneityColor;
+		return STAR_FILL_COLOR;
+	};
 
 	type NormalizedPoint = ScatterPoint & { nx: number; ny: number };
 	type Position = { nx: number; ny: number };
@@ -455,9 +467,7 @@
 			context.fillStyle =
 				emphasisFillColor && emphasizedSongKeys?.has(point.songKey)
 					? emphasisFillColor
-					: showFamilyColors
-						? fillStyleForGroupShares(context, screen.x, screen.y, point.groupShares)
-						: STAR_FILL_COLOR;
+					: baseFillFor(context, screen, point);
 			context.beginPath();
 			context.arc(screen.x, screen.y, radiusFor(point.songKey), 0, Math.PI * 2);
 			context.fill();
@@ -723,7 +733,7 @@
 		void hoveredClusterHit;
 		void emphasizedSongKeys;
 		void inYearSongKeys;
-		void showFamilyColors;
+		void colorMode;
 		void showClusterOutlines;
 		void familyEmphasisSongKeys;
 		void emphasisFillColor;

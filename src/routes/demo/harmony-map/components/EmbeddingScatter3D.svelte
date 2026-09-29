@@ -5,6 +5,7 @@
 	import { CSS2DRenderer, CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import { dominantColorForGroupShares } from "./groupColorBlend.js";
+	import type { MapColorMode } from "../colorMode.js";
 	import {
 		applyHighlightMarkerDepthStyles,
 		createHighlightMarkerElement,
@@ -53,9 +54,10 @@
 		emphasizedClusterHashes: Set<string> | null;
 		showTimeAxisGizmo?: boolean;
 		enableSceneLighting?: boolean;
-		// Color dots by their progression-family blend. Defaults to true
-		// (existing behavior); false renders every dot the same plain color.
-		showFamilyColors?: boolean;
+		// "groups" colors dots by their dominant progression family (the
+		// default), "homogeneity" by each point's homogeneityColor, and "off"
+		// renders every dot the same plain color.
+		colorMode?: MapColorMode;
 		// Optional blanket emphasis set (e.g. an artist's songs) — when set,
 		// everything NOT in it dims, independent of selectedSongKey /
 		// coClusterSongKeys. Omit (or null) for no effect.
@@ -80,7 +82,7 @@
 		emphasizedClusterHashes,
 		showTimeAxisGizmo = false,
 		enableSceneLighting = false,
-		showFamilyColors = true,
+		colorMode = "groups",
 		emphasizedSongKeys = null,
 		emphasisFillColor = null,
 		onSelect
@@ -100,9 +102,15 @@
 	const HOVER_PICK_RADIUS_PX = 12;
 	const JITTER_AMPLITUDE = 0.02;
 	const BACKGROUND_COLOR = 0x09090b;
-	// Used instead of the group-share color blend when showFamilyColors is
-	// false — matches EmbeddingScatter's (2D) STAR_FILL_COLOR.
+	// Used when colorMode is "off" — matches EmbeddingScatter's (2D)
+	// STAR_FILL_COLOR.
 	const STAR_FILL_COLOR = "#e4e4e7";
+
+	const baseColorFor = (point: ScatterPoint): string => {
+		if (colorMode === "groups") return dominantColorForGroupShares(point.groupShares);
+		if (colorMode === "homogeneity") return point.homogeneityColor;
+		return STAR_FILL_COLOR;
+	};
 	const POINT_SIZE_SCREEN_SCALE = 300;
 	const HIGHLIGHT_RING_GAP_PX = 1.5;
 	const EMPHASIS_RING_EXTRA_PX = 2;
@@ -292,9 +300,7 @@
 			const color = hexToThreeColor(
 				emphasisFillColor && emphasizedSongKeys?.has(point.songKey)
 					? emphasisFillColor
-					: showFamilyColors
-						? dominantColorForGroupShares(point.groupShares)
-						: STAR_FILL_COLOR
+					: baseColorFor(point)
 			);
 			colors[offset] = color.r;
 			colors[offset + 1] = color.g;
@@ -739,7 +745,7 @@
 		void coClusterSongKeys;
 		void highlightedSongKeys;
 		void showTimeAxisGizmo;
-		void showFamilyColors;
+		void colorMode;
 		void emphasizedSongKeys;
 		void inYearSongKeys;
 		void emphasisFillColor;

@@ -50,6 +50,14 @@
 		type MapViewMode
 	} from "../viewMode.js";
 	import type { WeightingToggleKey } from "../weightingDescriptions.js";
+	import { DEFAULT_MAP_COLOR_MODE, type MapColorMode } from "../colorMode.js";
+	import { homogeneityColorFor } from "../homogeneityColors.js";
+	import {
+		buildHomogeneityBandShares,
+		effectiveProgressionCountFor,
+		homogeneityBandFor,
+		type HomogeneityBandId
+	} from "../../shared/progressionHomogeneity.js";
 
 	type Props = {
 		songCoverages: SongCoverageEntry[];
@@ -104,9 +112,8 @@
 	let selectedArtistName = $state<string | null>(null);
 	let selectedGroupLabel = $state<string | null>(null);
 	let selectedProgressionName = $state<string | null>(null);
-	// Off by default: dots start plain (grey/white) rather than colored by
-	// core group blend, toggled on from the legend.
-	let showFamilyColors = $state(false);
+	let colorMode = $state<MapColorMode>(DEFAULT_MAP_COLOR_MODE);
+	let selectedBandId = $state<HomogeneityBandId | null>(null);
 	// null = scrubber at the full domain (or unset), show every year at full alpha.
 
 	const setViewMode = (nextMode: MapViewMode) => {
@@ -239,13 +246,59 @@
 			: songKeysMatchingGroupFilter(songCoverages, selectedGroupLabel, selectedProgressionName)
 	);
 
+	const effectiveProgressionCountBySongKey = $derived(
+		new Map(
+			songCoverages.map((entry) => [
+				entry.songKey,
+				effectiveProgressionCountFor(entry.progressionCounts)
+			])
+		)
+	);
+
+	const homogeneityBandShares = $derived(
+		buildHomogeneityBandShares(
+			[...effectiveProgressionCountBySongKey.values()].filter(
+				(count): count is number => count !== null
+			)
+		)
+	);
+
+	const bandFilterSongKeys = $derived.by((): Set<string> | null => {
+		if (selectedBandId === null) return null;
+		return new Set(
+			[...effectiveProgressionCountBySongKey]
+				.filter(
+					([, count]) => count !== null && homogeneityBandFor(count).id === selectedBandId
+				)
+				.map(([songKey]) => songKey)
+		);
+	});
+
+	const intersectSongKeys = (
+		a: Set<string> | null,
+		b: Set<string> | null
+	): Set<string> | null => {
+		if (a === null) return b;
+		if (b === null) return a;
+		return new Set([...a].filter((songKey) => b.has(songKey)));
+	};
+
+	const legendFilterSongKeys = $derived(
+		intersectSongKeys(groupFilterSongKeys, bandFilterSongKeys)
+	);
+
+	const setColorMode = (nextMode: MapColorMode) => {
+		colorMode = nextMode;
+		if (nextMode !== "homogeneity") selectedBandId = null;
+	};
+
 	// Artist selection no longer hides other songs — it highlights (see
 	// artistSongKeys passed as emphasizedSongKeys below) so the map stays
 	// unchanged and you can still see where the artist's songs sit relative
 	// to everything else. The group/progression legend filter still removes
 	// non-matching points; the year scrubber only dims them (see
 	// inYearSongKeys → scatter alpha).
-	const visibleSongKeys = $derived(groupFilterSongKeys);
+	const visibleSongKeys = $derived(legendFilterSongKeys);
 
 	const onSelectGroup = (label: string | null) => {
 		selectedGroupLabel = label;
@@ -283,7 +336,10 @@
 					x: coords.x,
 					y: coords.y,
 					z,
-					groupShares: groupSharesBySongKey.get(entry.songKey) ?? []
+					groupShares: groupSharesBySongKey.get(entry.songKey) ?? [],
+					homogeneityColor: homogeneityColorFor(
+						effectiveProgressionCountBySongKey.get(entry.songKey) ?? null
+					)
 				}
 			];
 		})
@@ -337,15 +393,15 @@
 		CLUSTERABLE_METHODS.has(embedding.method) && viewMode !== "3dTime"
 	);
 
-	// Deliberately keyed on groupFilterSongKeys alone, not inYearSongKeys —
+	// Deliberately keyed on legendFilterSongKeys alone, not inYearSongKeys —
 	// clustering must stay blind to the year scrubber so
 	// cluster identity, membership, and geometry never change as you scrub.
 	// The scrubber only dims out-of-window dots; it doesn't re-run DBSCAN.
 	const clusterInputPoints = $derived(
 		buildClusterInputPoints(
-			groupFilterSongKeys === null
+			legendFilterSongKeys === null
 				? points
-				: points.filter((point) => groupFilterSongKeys.has(point.songKey))
+				: points.filter((point) => legendFilterSongKeys.has(point.songKey))
 		)
 	);
 
@@ -380,14 +436,14 @@
 	);
 
 	// Same universe clustering itself uses (respecting the group/progression
-	// filter, if any) — just further narrowed to songs in the year window —
-	// so cluster percentages stay consistent with what findDensityClusters
-	// actually saw.
+	// and homogeneity-band filters, if any) — just further narrowed to songs
+	// in the year window — so cluster percentages stay consistent with what
+	// findDensityClusters actually saw.
 	const totalReleasedCount = $derived.by(() => {
 		const universe =
-			groupFilterSongKeys === null
+			legendFilterSongKeys === null
 				? points
-				: points.filter((point) => groupFilterSongKeys.has(point.songKey));
+				: points.filter((point) => legendFilterSongKeys.has(point.songKey));
 		return inYearSongKeys === null
 			? universe.length
 			: universe.filter((point) => inYearSongKeys.has(point.songKey)).length;
@@ -547,7 +603,7 @@
 					{emphasizedClusterHashes}
 					showTimeAxisGizmo={viewMode === "3dTime"}
 					enableSceneLighting={viewMode === "3d"}
-					{showFamilyColors}
+					{colorMode}
 					emphasizedSongKeys={artistSongKeys}
 					emphasisFillColor={artistSongKeys && HIGHLIGHT_RING_COLOR}
 					onSelect={selectSong}
@@ -568,7 +624,7 @@
 					emphasizedSongKeys={artistSongKeys}
 					familyEmphasisSongKeys={artistSongKeys}
 					emphasisFillColor={artistSongKeys && HIGHLIGHT_RING_COLOR}
-					{showFamilyColors}
+					{colorMode}
 					onSelect={selectSong}
 				/>
 			{/if}
@@ -597,8 +653,11 @@
 				{selectedProgressionName}
 				{onSelectGroup}
 				{onSelectProgression}
-				{showFamilyColors}
-				onToggleFamilyColors={() => (showFamilyColors = !showFamilyColors)}
+				{colorMode}
+				onColorModeChange={setColorMode}
+				{homogeneityBandShares}
+				{selectedBandId}
+				onSelectBand={(bandId) => (selectedBandId = bandId)}
 			/>
 		</div>
 

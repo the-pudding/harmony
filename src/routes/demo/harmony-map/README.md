@@ -40,6 +40,8 @@ harmony-map/
   harmonyMapUrlState.ts          ?method read + replaceState sync
   methodDescriptions.ts          rationale / approach / tradeoffs copy (single source)
   progressionGroupColors.ts      group → color (d3 schemeTableau10) + legend items and copy
+  colorMode.ts                   dot color modes: off / groups / homogeneity
+  homogeneityColors.ts           effective progression count → homogeneity band color
 
   views/
     EmbeddingView.svelte         method selector + weighting toggles + scatter + inspector
@@ -157,6 +159,7 @@ Other things to know:
 - Hover picking is a linear scan over points within `HOVER_PICK_RADIUS`. Fine at this corpus size; reach for a quadtree only if it actually gets slow.
 - Selecting a song dims everything except it and its cosine neighbors.
 - Dot color is the song's **dominant core group** (`dominantGroupName`): each matched core progression adds its occurrence count to its group, highest total wins, grey when a song matches no core progression. The legend states this, with the full rule in a hover tooltip — both strings live in `progressionGroupColors.ts`.
+- The legend's color mode switch can instead color dots by **homogeneity** — effective progressions, `1 / Σ share²` over each matched progression's share of the song's matched chords (`shared/progressionHomogeneity.ts`, also used by `/demo/homogeneity`). Clicking a band filters the map to it, the same way the group filter does.
 
 ### `SongVectorInspector.svelte`
 

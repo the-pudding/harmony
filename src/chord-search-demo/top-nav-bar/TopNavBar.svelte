@@ -84,6 +84,11 @@
 				class:active={page.url.pathname === "/demo/history"}>history</a
 			>
 			<a
+				href="/demo/homogeneity"
+				class="page-link"
+				class:active={page.url.pathname === "/demo/homogeneity"}>homogeneity</a
+			>
+			<a
 				href="/demo/review"
 				class="page-link"
 				class:active={page.url.pathname === "/demo/review"}>review</a

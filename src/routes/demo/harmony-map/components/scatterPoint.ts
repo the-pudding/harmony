@@ -4,6 +4,7 @@ export type ScatterPoint = {
 	y: number;
 	z?: number;
 	groupShares: { groupName: string; share: number }[];
+	homogeneityColor: string;
 };
 
 export type ScatterAxisLabels = { x: string; y: string };

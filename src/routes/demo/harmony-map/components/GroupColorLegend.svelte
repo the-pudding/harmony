@@ -1,6 +1,14 @@
 <script lang="ts">
 	import { buildProgressionGroupShares } from "../../shared/progressionGroupShare.js";
 	import type { SongCoverageEntry } from "../../define-chord-progression/compute-coverage-of-all-songs/index.js";
+	import {
+		HOMOGENEITY_MEASURE_EXPLANATION,
+		HOMOGENEITY_MEASURE_NAME,
+		type HomogeneityBandId,
+		type HomogeneityBandShare
+	} from "../../shared/progressionHomogeneity.js";
+	import { MAP_COLOR_MODE_LABELS, MAP_COLOR_MODES, type MapColorMode } from "../colorMode.js";
+	import HomogeneityBandLegend from "./HomogeneityBandLegend.svelte";
 
 	type Props = {
 		songCoverages: SongCoverageEntry[];
@@ -8,8 +16,11 @@
 		selectedProgressionName: string | null;
 		onSelectGroup: (label: string | null) => void;
 		onSelectProgression: (name: string | null) => void;
-		showFamilyColors: boolean;
-		onToggleFamilyColors: () => void;
+		colorMode: MapColorMode;
+		onColorModeChange: (colorMode: MapColorMode) => void;
+		homogeneityBandShares: HomogeneityBandShare[];
+		selectedBandId: HomogeneityBandId | null;
+		onSelectBand: (bandId: HomogeneityBandId | null) => void;
 	};
 
 	const {
@@ -18,14 +29,28 @@
 		selectedProgressionName,
 		onSelectGroup,
 		onSelectProgression,
-		showFamilyColors,
-		onToggleFamilyColors
+		colorMode,
+		onColorModeChange,
+		homogeneityBandShares,
+		selectedBandId,
+		onSelectBand
 	}: Props = $props();
-
-	const GROUP_COLOR_LEGEND_TITLE = "color = core group blend";
 
 	const GROUP_COLOR_LEGEND_EXPLANATION =
 		"Each matched core progression adds its occurrence count to the group it belongs to; a song's dot blends the legend colors in proportion to those group totals, so a 50/50 song fades evenly between two colors. Gap-fill progressions belong to no group and never count, so a song whose only matches are gap fills stays grey.";
+
+	const HOMOGENEITY_LEGEND_EXPLANATION = `${HOMOGENEITY_MEASURE_EXPLANATION} Click a band to show only its songs; songs with no matched progression stay grey.`;
+
+	const LEGEND_COPY_BY_MODE: Record<MapColorMode, { title: string; explanation: string }> = {
+		off: { title: "core groups", explanation: GROUP_COLOR_LEGEND_EXPLANATION },
+		groups: { title: "color = core group blend", explanation: GROUP_COLOR_LEGEND_EXPLANATION },
+		homogeneity: {
+			title: `color = ${HOMOGENEITY_MEASURE_NAME}`,
+			explanation: HOMOGENEITY_LEGEND_EXPLANATION
+		}
+	};
+
+	const legendCopy = $derived(LEGEND_COPY_BY_MODE[colorMode]);
 
 	const LEGEND_MAX_HEIGHT = "40vh";
 	const PERCENT_WHOLE_THRESHOLD = 1;
@@ -80,28 +105,31 @@
 
 <div class="legend" style:--legend-max-height={LEGEND_MAX_HEIGHT}>
 	<div class="legend-header">
-		<span class="legend-title">{GROUP_COLOR_LEGEND_TITLE}</span>
-		<button
-			class="legend-info"
-			type="button"
-			aria-label={GROUP_COLOR_LEGEND_EXPLANATION}
-		>
-			<span aria-hidden="true">i</span>
-			<span class="legend-info-tooltip" aria-hidden="true"
-				>{GROUP_COLOR_LEGEND_EXPLANATION}</span
-			>
-		</button>
-		<button
-			class="legend-color-toggle"
-			class:legend-color-toggle-active={showFamilyColors}
-			type="button"
-			role="switch"
-			aria-checked={showFamilyColors}
-			onclick={onToggleFamilyColors}
-		>
-			{showFamilyColors ? "colors on" : "colors off"}
-		</button>
+		<div class="legend-title-row">
+			<span class="legend-title">{legendCopy.title}</span>
+			<button class="legend-info" type="button" aria-label={legendCopy.explanation}>
+				<span aria-hidden="true">i</span>
+				<span class="legend-info-tooltip" aria-hidden="true">{legendCopy.explanation}</span>
+			</button>
+		</div>
+		<div class="legend-color-modes" role="radiogroup" aria-label="Dot color">
+			{#each MAP_COLOR_MODES as mode (mode)}
+				<button
+					class="legend-color-toggle"
+					class:legend-color-toggle-active={colorMode === mode}
+					type="button"
+					role="radio"
+					aria-checked={colorMode === mode}
+					onclick={() => onColorModeChange(mode)}
+				>
+					{MAP_COLOR_MODE_LABELS[mode]}
+				</button>
+			{/each}
+		</div>
 	</div>
+	{#if colorMode === "homogeneity"}
+		<HomogeneityBandLegend bandShares={homogeneityBandShares} {selectedBandId} {onSelectBand} />
+	{/if}
 	{#each sortedLegendItems as item (item.label)}
 		{@const isExpandable = item.progressions.length > 0}
 		{@const isSelected = selectedGroupLabel === item.label}
@@ -169,11 +197,22 @@
 
 	.legend-header {
 		display: flex;
-		align-items: center;
-		gap: 0.375rem;
+		flex-direction: column;
+		gap: 0.25rem;
 		padding-bottom: 0.25rem;
 		margin-bottom: 0.125rem;
 		border-bottom: 1px solid rgba(63, 63, 70, 0.6);
+	}
+
+	.legend-title-row {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+	}
+
+	.legend-color-modes {
+		display: flex;
+		gap: 0.25rem;
 	}
 
 	.legend-title {
@@ -241,7 +280,6 @@
 	.legend-color-toggle {
 		pointer-events: auto;
 		flex-shrink: 0;
-		margin-left: auto;
 		font-family: inherit;
 		font-size: 0.55rem;
 		text-transform: uppercase;
