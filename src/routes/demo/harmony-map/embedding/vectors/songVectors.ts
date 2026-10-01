@@ -57,14 +57,19 @@ const occurrencesByIndex = (
 	options: SongVectorOptions
 ): Map<number, number> =>
 	song.progressionCounts.reduce(
-		(counts, { chordProgression, matchCount, chorusMatchCount }) => {
+		(
+			counts,
+			{ chordProgression, matchCount, chorusMatchCount, coveragePercent }
+		) => {
 			const index = vocabulary.indexByChordProgression.get(chordProgression);
 			if (index === undefined) return counts;
 			const effective =
-				matchCount +
-				(options.weightChorus
-					? (chorusMatchCount ?? 0) * (CHORUS_MATCH_WEIGHT - 1)
-					: 0);
+				options.weighting === "chords"
+					? coveragePercent
+					: matchCount +
+						(options.weightChorus
+							? (chorusMatchCount ?? 0) * (CHORUS_MATCH_WEIGHT - 1)
+							: 0);
 			return counts.set(index, (counts.get(index) ?? 0) + effective);
 		},
 		new Map<number, number>()

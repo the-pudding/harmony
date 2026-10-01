@@ -2,7 +2,14 @@ export const MIN_GAP_DOCUMENT_FREQUENCY = 4;
 
 export const CHORUS_MATCH_WEIGHT = 3;
 
-export type ProgressionWeighting = "raw" | "binary";
+// How much each matched progression contributes to a song's vector:
+// - "raw": how many times the loop occurs (repetitions). Short loops repeat
+//   more often over the same stretch, so they weigh more than long ones.
+// - "chords": the share of the song's written chords the progression covers,
+//   i.e. time spent with it when charts write every chord out. Chorus
+//   weighting is not applied, since chorus matches are counted in repetitions.
+// - "binary": present or absent.
+export type ProgressionWeighting = "raw" | "chords" | "binary";
 
 export type SongVectorOptions = {
 	weighting: ProgressionWeighting;

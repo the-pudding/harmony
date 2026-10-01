@@ -16,7 +16,8 @@ export {
 	UMAP_COMPONENT_COUNT_3D,
 	UMAP_MIN_DISTANCE,
 	UMAP_NEIGHBOR_COUNT,
-	UMAP_RANDOM_SEED
+	UMAP_RANDOM_SEED,
+	UMAP_SPREAD
 } from "./umap.js";
 export { orientCoords } from "./orientCoords.js";
 export {

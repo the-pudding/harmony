@@ -13,18 +13,25 @@ const makeSong = (
 		chordProgression: string,
 		matchCount: number,
 		chorusMatchCount?: number,
-		name?: string
+		name?: string,
+		coveragePercent?: number
 	][]
 ): SongProgressionCounts => ({
 	songKey,
 	progressionCounts: progressions.map(
-		([chordProgression, matchCount, chorusMatchCount = 0, name]) => ({
+		([
+			chordProgression,
+			matchCount,
+			chorusMatchCount = 0,
+			name,
+			coveragePercent = 0
+		]) => ({
 			chordProgression,
 			name: name ?? chordProgression,
 			scale: "major",
 			matchCount,
 			chorusMatchCount,
-			coveragePercent: 0,
+			coveragePercent,
 			isCore: true
 		})
 	)
@@ -57,6 +64,27 @@ describe("buildSongVectors", () => {
 		const index = vocabulary.indexByChordProgression.get("I-V-vi-IV")!;
 		expect(vectorBySongKey.get("a")!.counts[index]).toBe(4);
 		expect(vectorBySongKey.get("b")!.counts[index]).toBe(2);
+	});
+
+	it("uses the share of written chords, not repetitions, for chords weighting", () => {
+		// A 2-chord vamp played 8 times and a 4-chord loop played 4 times cover
+		// the same 16 chords, so they should weigh the same.
+		const mixedLoops = [
+			makeSong("a", [
+				["I-V", 8, 8, "I-V vamp", 50],
+				["I-V-vi-IV", 4, 4, "axis", 50]
+			])
+		];
+		const mixedVocabulary = buildProgressionVocabulary(mixedLoops, 1);
+		const { vectorBySongKey } = buildSongVectors(mixedLoops, mixedVocabulary, {
+			...RAW_UNNORMALIZED,
+			weighting: "chords",
+			weightChorus: true
+		});
+		const vampIndex = mixedVocabulary.indexByChordProgression.get("I-V")!;
+		const axisIndex = mixedVocabulary.indexByChordProgression.get("I-V-vi-IV")!;
+		expect(vectorBySongKey.get("a")!.counts[vampIndex]).toBe(50);
+		expect(vectorBySongKey.get("a")!.counts[axisIndex]).toBe(50);
 	});
 
 	it("sums sibling variants of one named progression into one dimension", () => {

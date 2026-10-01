@@ -106,6 +106,12 @@
 		// mode) — omit (or null) to leave emphasized dots colored normally,
 		// distinguished only by alpha (e.g. /story's family highlights).
 		emphasisFillColor?: string | null;
+		// Fill color for songs in accentSongKeys. Unlike emphasizedSongKeys it
+		// dims nothing, so the rest of the map keeps its structure. Accented
+		// dots are drawn last so they sit on top of the dots around them.
+		// emphasisFillColor wins when a song is in both sets.
+		accentSongKeys?: Set<string> | null;
+		accentFillColor?: string | null;
 	};
 
 	const {
@@ -128,7 +134,9 @@
 		colorMode = "groups",
 		showClusterOutlines = true,
 		familyEmphasisSongKeys = null,
-		emphasisFillColor = null
+		emphasisFillColor = null,
+		accentSongKeys = null,
+		accentFillColor = null
 	}: Props = $props();
 
 	// Density clustering is only meaningful over layouts UMAP actually produced
@@ -264,6 +272,18 @@
 
 	const pointBySongKey = $derived(
 		new Map(drawablePoints.map((point) => [point.songKey, point]))
+	);
+
+	const isAccented = (songKey: string): boolean =>
+		accentFillColor !== null && (accentSongKeys?.has(songKey) ?? false);
+
+	const pointsInDrawOrder = $derived(
+		accentSongKeys === null || accentFillColor === null
+			? drawablePoints
+			: [
+					...drawablePoints.filter((point) => !isAccented(point.songKey)),
+					...drawablePoints.filter((point) => isAccented(point.songKey))
+				]
 	);
 
 	const clustersAvailable = $derived(CLUSTERABLE_METHODS.has(method));
@@ -459,7 +479,7 @@
 		drawAxisLabels(context);
 		drawClusters(context);
 
-		for (const point of drawablePoints) {
+		for (const point of pointsInDrawOrder) {
 			const position = displayedPositions.get(point.songKey);
 			if (!position) continue;
 			const screen = toScreen(position);
@@ -467,7 +487,9 @@
 			context.fillStyle =
 				emphasisFillColor && emphasizedSongKeys?.has(point.songKey)
 					? emphasisFillColor
-					: baseFillFor(context, screen, point);
+					: accentFillColor && isAccented(point.songKey)
+						? accentFillColor
+						: baseFillFor(context, screen, point);
 			context.beginPath();
 			context.arc(screen.x, screen.y, radiusFor(point.songKey), 0, Math.PI * 2);
 			context.fill();
@@ -737,6 +759,8 @@
 		void showClusterOutlines;
 		void familyEmphasisSongKeys;
 		void emphasisFillColor;
+		void pointsInDrawOrder;
+		void accentFillColor;
 		draw();
 	});
 

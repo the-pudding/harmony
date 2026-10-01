@@ -80,11 +80,16 @@ const buildContentVector = (
 		chordProgression,
 		scale,
 		matchCount,
-		chorusMatchCount
+		chorusMatchCount,
+		coveragePercent
 	} of song.progressionCounts) {
 		const effective =
-			matchCount +
-			(options.weightChorus ? chorusMatchCount * (CHORUS_MATCH_WEIGHT - 1) : 0);
+			options.weighting === "chords"
+				? coveragePercent
+				: matchCount +
+					(options.weightChorus
+						? chorusMatchCount * (CHORUS_MATCH_WEIGHT - 1)
+						: 0);
 		for (const key of progressionContentKeys(chordProgression, scale)) {
 			const idx = vocabulary.indexByKey.get(key);
 			if (idx === undefined) continue;

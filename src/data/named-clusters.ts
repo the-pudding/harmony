@@ -16,7 +16,6 @@ export type NamedClusterEntry = {
 // existing cluster should replace its entry, not add a new one.
 export const namedClusters: NamedClusterEntry[] = [
 	{ anchorSongKey: "lorde__royals", name: "sweet home mixolydian" },
-	{ anchorSongKey: "journey__dont-stop-believin", name: "axis mini" },
 	{ anchorSongKey: "jason-derulo__whatcha-say", name: "whatcha say" },
 	{
 		anchorSongKey: "taylor-swift__we-are-never-ever-getting-back-together",

@@ -32,6 +32,7 @@ import {
 	PCA_COMPONENT_COUNT_3D,
 	UMAP_COMPONENT_COUNT_2D,
 	UMAP_COMPONENT_COUNT_3D,
+	UMAP_MIN_DISTANCE,
 	type ComponentLoading,
 	type Coords,
 	type EmbeddingDimension,
@@ -66,10 +67,14 @@ const METHODS_ALIGNED_TO_PROGRESSION = new Set<EmbeddingMethod>([
 	"blend"
 ]);
 
+// Must keep the same shape as cacheKey inside createEmbeddingState, so the
+// progression reference layout and the "umap" method share one cache entry.
 const progressionCacheKeyFor = (
 	datasetToken: string,
-	currentDimension: EmbeddingDimension
-): string => `${datasetToken}|${PROGRESSION_REFERENCE_METHOD}|${currentDimension}|`;
+	currentDimension: EmbeddingDimension,
+	umapMinDist: number
+): string =>
+	`${datasetToken}|${PROGRESSION_REFERENCE_METHOD}|${currentDimension}||${umapMinDist}`;
 
 type EmbeddingStateConfig = {
 	getEntries: () => SongCoverageEntry[] | null;
@@ -77,6 +82,8 @@ type EmbeddingStateConfig = {
 	getCoverageCacheKey: () => string | null;
 	initialMethod: EmbeddingMethod;
 	initialBlendWeights?: BlendWeights;
+	// UMAP minDist applied to every UMAP run. Defaults to UMAP_MIN_DISTANCE.
+	initialUmapMinDist?: number;
 	onMethodChange?: (method: EmbeddingMethod) => void;
 	onBlendWeightsChange?: (weights: BlendWeights) => void;
 };
@@ -121,7 +128,8 @@ const persistEmbedding = async (
 	currentBlendWeights: BlendWeights | undefined,
 	key: string,
 	result: EmbeddingResult,
-	cacheResult: (key: string, result: EmbeddingResult) => void
+	cacheResult: (key: string, result: EmbeddingResult) => void,
+	umapMinDist: number
 ) => {
 	cacheResult(key, result);
 	if (coverageCacheKey !== null) {
@@ -130,7 +138,8 @@ const persistEmbedding = async (
 			currentMethod,
 			currentOptions,
 			currentDimension,
-			currentBlendWeights
+			currentBlendWeights,
+			umapMinDist
 		);
 		void setCachedEmbedding(idbKey, result);
 	}
@@ -153,6 +162,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 	let blendWeights = $state<BlendWeights>(
 		config.initialBlendWeights ?? DEFAULT_BLEND_WEIGHTS
 	);
+	let umapMinDist = $state(config.initialUmapMinDist ?? UMAP_MIN_DISTANCE);
 	let resultCache = $state(new Map<string, EmbeddingResult>());
 	let status = $state<EmbeddingStatus>("idle");
 	let computingStep = $state<string | null>(null);
@@ -175,7 +185,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		method === "blend" ? JSON.stringify(blendWeights) : ""
 	);
 	const cacheKey = $derived(
-		`${dataset.token}|${method}|${dimension}|${blendCacheComponent}`
+		`${dataset.token}|${method}|${dimension}|${blendCacheComponent}|${umapMinDist}`
 	);
 
 	const cacheResult = (key: string, result: EmbeddingResult) => {
@@ -199,6 +209,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		const coverageCacheKey = config.getCoverageCacheKey();
 		const currentBlendWeights = blendWeights;
 		const currentOptions = options;
+		const currentUmapMinDist = umapMinDist;
 
 		if (currentSongs.length === 0) {
 			status = "idle";
@@ -217,7 +228,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 			> | null> => {
 				const progressionKey = progressionCacheKeyFor(
 					datasetToken,
-					currentDimension
+					currentDimension,
+					currentUmapMinDist
 				);
 				const fromMemory = resultCache.get(progressionKey);
 				if (fromMemory) return fromMemory.coordsByKey;
@@ -228,7 +240,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 						PROGRESSION_REFERENCE_METHOD,
 						currentOptions,
 						currentDimension,
-						undefined
+						undefined,
+						currentUmapMinDist
 					);
 					if (!active) return null;
 					const cached = await getCachedEmbedding(idbKey);
@@ -248,7 +261,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 					const reduction = await reduceOffMainThread(
 						"umap",
 						matrix,
-						reducerComponentCount(currentDimension)
+						reducerComponentCount(currentDimension),
+						{ minDist: currentUmapMinDist }
 					);
 					if (!active) return null;
 					const progressionResult = toEmbeddingResult(reduction, songKeys, 0);
@@ -260,7 +274,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 						undefined,
 						progressionKey,
 						progressionResult,
-						cacheResult
+						cacheResult,
+						currentUmapMinDist
 					);
 					return progressionResult.coordsByKey;
 				} catch {
@@ -303,7 +318,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 					currentMethod,
 					currentOptions,
 					currentDimension,
-					blendWeightsForCache
+					blendWeightsForCache,
+					currentUmapMinDist
 				);
 				if (!active) return;
 
@@ -330,7 +346,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 						undefined,
 						key,
 						result,
-						cacheResult
+						cacheResult,
+						currentUmapMinDist
 					);
 					return;
 				}
@@ -363,7 +380,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 							undefined,
 							key,
 							result,
-							cacheResult
+							cacheResult,
+							currentUmapMinDist
 						);
 					})
 					.catch(() => {
@@ -391,7 +409,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 				void reduceOffMainThread(
 					"umap",
 					ngramVectors.map((vector) => vector.weighted),
-					umapComponentCount
+					umapComponentCount,
+					{ minDist: currentUmapMinDist }
 				)
 					.then(async (reduction) => {
 						if (!active) return;
@@ -422,7 +441,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 							undefined,
 							key,
 							result,
-							cacheResult
+							cacheResult,
+							currentUmapMinDist
 						);
 					})
 					.catch(() => {
@@ -444,7 +464,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 				contentVectors.vectors.map((v) => v.weighted),
 				reducerComponentCount(currentDimension),
 				{
-					nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT
+					nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT,
+					minDist: currentUmapMinDist
 				}
 			)
 				.then(async (reduction) => {
@@ -471,7 +492,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 						undefined,
 						key,
 						result,
-						cacheResult
+						cacheResult,
+						currentUmapMinDist
 					);
 				})
 				.catch(() => {
@@ -512,6 +534,7 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 				reducerComponentCount(currentDimension),
 				{
 					nNeighbors: GLOBAL_STRUCTURE_NEIGHBOR_COUNT,
+					minDist: currentUmapMinDist,
 					supervisedLabels,
 					supervisedWeight: activeBlendWeights.groupPull
 				}
@@ -544,7 +567,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 						currentMethod === "blend" ? currentBlendWeights : undefined,
 						key,
 						result,
-						cacheResult
+						cacheResult,
+						currentUmapMinDist
 					);
 				})
 				.catch(() => {
@@ -582,7 +606,9 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 			void reduceOffMainThread(
 				reducerMethod,
 				matrix,
-				reducerComponentCount(currentDimension)
+				reducerComponentCount(currentDimension),
+				// Ignored by PCA.
+				{ minDist: currentUmapMinDist }
 			)
 				.then(async (reduction) => {
 					if (!active) return;
@@ -605,7 +631,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 						undefined,
 						key,
 						result,
-						cacheResult
+						cacheResult,
+						currentUmapMinDist
 					);
 				})
 				.catch(() => {
@@ -636,6 +663,11 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		dimension = nextDimension;
 	};
 
+	const setUmapMinDist = (nextMinDist: number) => {
+		if (nextMinDist === umapMinDist) return;
+		umapMinDist = nextMinDist;
+	};
+
 	const setBlendWeights = (nextWeights: BlendWeights) => {
 		blendWeights = nextWeights;
 		config.onBlendWeightsChange?.(nextWeights);
@@ -653,6 +685,9 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		},
 		get blendWeights() {
 			return blendWeights;
+		},
+		get umapMinDist() {
+			return umapMinDist;
 		},
 		get status() {
 			return status;
@@ -672,7 +707,8 @@ export const createEmbeddingState = (config: EmbeddingStateConfig) => {
 		setMethod,
 		setDimension,
 		setOptions,
-		setBlendWeights
+		setBlendWeights,
+		setUmapMinDist
 	};
 };;
 

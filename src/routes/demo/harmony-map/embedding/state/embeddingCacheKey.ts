@@ -1,5 +1,9 @@
 import { hashString } from "../../../../../utils/hashString.js";
-import type { EmbeddingDimension, EmbeddingMethod } from "../reducers/index.js";
+import {
+	UMAP_MIN_DISTANCE,
+	type EmbeddingDimension,
+	type EmbeddingMethod
+} from "../reducers/index.js";
 import type { BlendWeights, SongVectorOptions } from "../vectors/index.js";
 
 export const EMBEDDING_SCHEMA_VERSION = 7;
@@ -9,7 +13,8 @@ export const buildEmbeddingCacheKey = async (
 	method: EmbeddingMethod,
 	options: SongVectorOptions,
 	dimension: EmbeddingDimension,
-	blendWeights?: BlendWeights
+	blendWeights?: BlendWeights,
+	umapMinDist: number = UMAP_MIN_DISTANCE
 ): Promise<string> => {
 	const input = [
 		coverageCacheKey,
@@ -17,7 +22,10 @@ export const buildEmbeddingCacheKey = async (
 		String(dimension),
 		JSON.stringify(options),
 		blendWeights !== undefined ? JSON.stringify(blendWeights) : "",
-		String(EMBEDDING_SCHEMA_VERSION)
+		String(EMBEDDING_SCHEMA_VERSION),
+		// Omitted at the default so layouts cached before minDist was
+		// configurable still resolve to the same key.
+		...(umapMinDist === UMAP_MIN_DISTANCE ? [] : [`minDist=${umapMinDist}`])
 	].join("||");
 	return hashString(input);
 };

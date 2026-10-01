@@ -54,10 +54,12 @@
 	import { homogeneityColorFor } from "../homogeneityColors.js";
 	import {
 		buildHomogeneityBandShares,
+		computeSongHomogeneity,
 		effectiveProgressionCountFor,
 		homogeneityBandFor,
 		type HomogeneityBandId
 	} from "../../shared/progressionHomogeneity.js";
+	import { applyPurityRadialLayout } from "../embedding/layout/purityRadialLayout.js";
 
 	type Props = {
 		songCoverages: SongCoverageEntry[];
@@ -70,6 +72,22 @@
 		trailingControls?: Snippet;
 		methods?: readonly EmbeddingMethod[];
 		weightingKeys?: readonly WeightingToggleKey[];
+		// false hides every control that changes the map: method, weighting,
+		// blend sliders, 2D/3D/time toggle and year scrubber. Pages that lock
+		// these settings render their own read-only summary instead.
+		showSettingsControls?: boolean;
+		// false hides the color legend, which also keeps the map uncolored.
+		showColorLegend?: boolean;
+		// Songs to fill with accentFillColor on the 2D map without dimming
+		// anything else. Not drawn in 3D.
+		accentSongKeys?: Set<string> | null;
+		accentFillColor?: string | null;
+		// When set, the 2D map redraws each circled cluster so purer songs sit
+		// nearer its center (see applyPurityRadialLayout). Clusters are still
+		// found on the original layout. Purity is the main progression's share
+		// of a song's matched chords; songs at or above pureThreshold are
+		// fanned out evenly around the center.
+		purityLayout?: { pureThreshold: number } | null;
 	};
 
 	const {
@@ -82,7 +100,12 @@
 		onYearRangeChange,
 		trailingControls,
 		methods,
-		weightingKeys
+		weightingKeys,
+		showSettingsControls = true,
+		showColorLegend = true,
+		accentSongKeys = null,
+		accentFillColor = null,
+		purityLayout = null
 	}: Props = $props();
 
 	const AXIS_LABELS_BY_METHOD: Record<
@@ -409,6 +432,25 @@
 		clustersAvailable ? findDensityClusters(clusterInputPoints) : []
 	);
 
+	const purityBySongKey = $derived(
+		new Map(
+			songCoverages.map((entry) => [
+				entry.songKey,
+				computeSongHomogeneity(entry.progressionCounts)?.dominantShare ?? 0
+			])
+		)
+	);
+
+	// Positions the 2D map draws. Only differs from points when purityLayout
+	// is set; clustering and every count above use the original points.
+	const displayPoints = $derived(
+		purityLayout === null
+			? points
+			: applyPurityRadialLayout(points, allClusters, purityBySongKey, {
+					pureThreshold: purityLayout.pureThreshold
+				})
+	);
+
 	const mapClusters = $derived(
 		allClusters.filter((cluster) => !hiddenClusterHashes.has(cluster.hash))
 	);
@@ -518,56 +560,58 @@
 <div class="embedding-view">
 	<div class="controls">
 		<div class="controls-left">
-			<EmbeddingMethodSelector
-				method={embedding.method}
-				onChange={embedding.setMethod}
-				{methods}
-			/>
-
-			{#if alignmentRotationLabel !== null}
-				<span class="alignment-rotation">{alignmentRotationLabel}</span>
-			{/if}
-
-			<WeightingControls
-				options={embedding.options}
-				onChange={embedding.setOptions}
-				keys={weightingKeys}
-			/>
-
-			{#if embedding.method === "blend"}
-				<BlendControls
-					weights={embedding.blendWeights}
-					onChange={embedding.setBlendWeights}
+			{#if showSettingsControls}
+				<EmbeddingMethodSelector
+					method={embedding.method}
+					onChange={embedding.setMethod}
+					{methods}
 				/>
-			{/if}
 
-			<span class="dimension-count">
-				{embedding.vocabulary.entries.length} dimensions
-			</span>
+				{#if alignmentRotationLabel !== null}
+					<span class="alignment-rotation">{alignmentRotationLabel}</span>
+				{/if}
 
-			<div class="view-dimension-toggle" role="radiogroup" aria-label="View dimension">
-				{#each MAP_VIEW_MODES as mode (mode)}
-					<button
-						type="button"
-						class="view-dimension-button"
-						class:view-dimension-button-active={viewMode === mode}
-						aria-pressed={viewMode === mode}
-						onclick={() => setViewMode(mode)}
-					>
-						{MAP_VIEW_MODE_LABELS[mode]}
-					</button>
-				{/each}
-			</div>
-
-			{#if yearScrubBounds && yearScrubBounds.min !== yearScrubBounds.max}
-				<YearScrubber
-					min={yearScrubBounds.min}
-					max={yearScrubBounds.max}
-					rangeMin={effectiveYearRange?.min ?? yearScrubBounds.min}
-					rangeMax={effectiveYearRange?.max ?? yearScrubBounds.max}
-					disabled={viewMode === "3dTime"}
-					onChange={setYearRange}
+				<WeightingControls
+					options={embedding.options}
+					onChange={embedding.setOptions}
+					keys={weightingKeys}
 				/>
+
+				{#if embedding.method === "blend"}
+					<BlendControls
+						weights={embedding.blendWeights}
+						onChange={embedding.setBlendWeights}
+					/>
+				{/if}
+
+				<span class="dimension-count">
+					{embedding.vocabulary.entries.length} dimensions
+				</span>
+
+				<div class="view-dimension-toggle" role="radiogroup" aria-label="View dimension">
+					{#each MAP_VIEW_MODES as mode (mode)}
+						<button
+							type="button"
+							class="view-dimension-button"
+							class:view-dimension-button-active={viewMode === mode}
+							aria-pressed={viewMode === mode}
+							onclick={() => setViewMode(mode)}
+						>
+							{MAP_VIEW_MODE_LABELS[mode]}
+						</button>
+					{/each}
+				</div>
+
+				{#if yearScrubBounds && yearScrubBounds.min !== yearScrubBounds.max}
+					<YearScrubber
+						min={yearScrubBounds.min}
+						max={yearScrubBounds.max}
+						rangeMin={effectiveYearRange?.min ?? yearScrubBounds.min}
+						rangeMax={effectiveYearRange?.max ?? yearScrubBounds.max}
+						disabled={viewMode === "3dTime"}
+						onChange={setYearRange}
+					/>
+				{/if}
 			{/if}
 
 			{#if selectedArtistSummary}
@@ -610,7 +654,7 @@
 				/>
 			{:else}
 				<EmbeddingScatter
-					{points}
+					points={displayPoints}
 					{songByKey}
 					{selectedSongKey}
 					{coClusterSongKeys}
@@ -624,6 +668,8 @@
 					emphasizedSongKeys={artistSongKeys}
 					familyEmphasisSongKeys={artistSongKeys}
 					emphasisFillColor={artistSongKeys && HIGHLIGHT_RING_COLOR}
+					{accentSongKeys}
+					{accentFillColor}
 					{colorMode}
 					onSelect={selectSong}
 				/>
@@ -647,18 +693,20 @@
 					</div>
 				</div>
 			{/if}
-			<GroupColorLegend
-				{songCoverages}
-				{selectedGroupLabel}
-				{selectedProgressionName}
-				{onSelectGroup}
-				{onSelectProgression}
-				{colorMode}
-				onColorModeChange={setColorMode}
-				{homogeneityBandShares}
-				{selectedBandId}
-				onSelectBand={(bandId) => (selectedBandId = bandId)}
-			/>
+			{#if showColorLegend}
+				<GroupColorLegend
+					{songCoverages}
+					{selectedGroupLabel}
+					{selectedProgressionName}
+					{onSelectGroup}
+					{onSelectProgression}
+					{colorMode}
+					onColorModeChange={setColorMode}
+					{homogeneityBandShares}
+					{selectedBandId}
+					onSelectBand={(bandId) => (selectedBandId = bandId)}
+				/>
+			{/if}
 		</div>
 
 		<aside class="inspector-column">
