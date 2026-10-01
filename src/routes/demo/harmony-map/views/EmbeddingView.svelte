@@ -26,7 +26,11 @@
 	import { UMAP_DRIVEN_METHODS } from "../embedding/reducers/types.js";
 	import { buildClusterInputPoints } from "../embedding/clustering/clusterInputPoints.js";
 	import { buildClusterSummaries } from "../embedding/clustering/clusterSummaries.js";
-	import { findDensityClusters } from "../embedding/clustering/densityClusters.js";
+	import {
+		findDensityClusters,
+		MAX_CLUSTER_POINTS,
+		MIN_CLUSTER_POINTS
+	} from "../embedding/clustering/densityClusters.js";
 	import { computeClusterVisibleShares } from "../embedding/clustering/clusterVisibility.js";
 	import { computeVisibleAnchorSongKeys } from "../embedding/clustering/anchorVisibility.js";
 	import { toCalendarYear } from "../../../../data/songYear.js";
@@ -60,6 +64,7 @@
 		type HomogeneityBandId
 	} from "../../shared/progressionHomogeneity.js";
 	import { applyPurityRadialLayout } from "../embedding/layout/purityRadialLayout.js";
+	import type { ClusterRegion } from "../embedding/layout/hexBins.js";
 
 	type Props = {
 		songCoverages: SongCoverageEntry[];
@@ -88,6 +93,21 @@
 		// of a song's matched chords; songs at or above pureThreshold are
 		// fanned out evenly around the center.
 		purityLayout?: { pureThreshold: number } | null;
+		// "hex" draws the 2D map as zoom-dependent hexagons colored by each
+		// area's main progression, turning back into dots near max zoom.
+		mapMode?: "scatter" | "hex";
+		// Cluster detection settings. A higher minimum merges nearby
+		// fragments of one group into a single cluster; clusters larger than
+		// the maximum aren't circled. Default to the shared constants.
+		clusterMinPoints?: number;
+		clusterMaxPoints?: number;
+		// When set, only clusters where at least this share of songs have the
+		// same main progression are kept, and each cluster is named by that
+		// progression. The named-clusters file and its anchor highlights
+		// aren't used. One list then drives outlines, the purity layout, the
+		// clusters tab and hex colors. null keeps every cluster and the file's
+		// names (the harmony map's behavior).
+		clusterMinProgressionShare?: number | null;
 	};
 
 	const {
@@ -105,7 +125,11 @@
 		showColorLegend = true,
 		accentSongKeys = null,
 		accentFillColor = null,
-		purityLayout = null
+		purityLayout = null,
+		mapMode = "scatter",
+		clusterMinPoints = MIN_CLUSTER_POINTS,
+		clusterMaxPoints = MAX_CLUSTER_POINTS,
+		clusterMinProgressionShare = null
 	}: Props = $props();
 
 	const AXIS_LABELS_BY_METHOD: Record<
@@ -146,8 +170,13 @@
 
 	// Every anchor song across named clusters (src/data/named-clusters.ts) is
 	// what shows highlighted on the map — editing happens in that file, not
-	// in the app, so there's no user-toggled highlight state anymore.
-	const highlightedSongKeys = namedClusterAnchorSongKeys;
+	// in the app, so there's no user-toggled highlight state anymore. Pages
+	// that name clusters by progression don't use the file, so show none.
+	const highlightedSongKeys = $derived(
+		clusterMinProgressionShare === null
+			? namedClusterAnchorSongKeys
+			: new Set<string>()
+	);
 	let hiddenClusterHashes = $state<Set<string>>(new Set());
 
 	const CLUSTERABLE_METHODS = new Set<EmbeddingMethod>(UMAP_DRIVEN_METHODS);
@@ -428,15 +457,78 @@
 		)
 	);
 
-	const allClusters = $derived(
-		clustersAvailable ? findDensityClusters(clusterInputPoints) : []
+	// The progression most of a cluster's songs are built on, and the share
+	// of its songs that have it as their own main progression.
+	const mainProgressionOf = (
+		songKeys: readonly string[]
+	): { name: string; share: number } | null => {
+		const counts = new Map<string, number>();
+		for (const songKey of songKeys) {
+			const name = homogeneityBySongKey.get(songKey)?.dominantProgressionName;
+			if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+		}
+		const [name, count] =
+			[...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0] ??
+			[];
+		return name === undefined || count === undefined || songKeys.length === 0
+			? null
+			: { name, share: count / songKeys.length };
+	};
+
+	const allClusters = $derived.by(() => {
+		if (!clustersAvailable) return [];
+		const found = findDensityClusters(
+			clusterInputPoints,
+			clusterMinPoints,
+			clusterMaxPoints
+		);
+		if (clusterMinProgressionShare === null) return found;
+		return found.filter(
+			(cluster) =>
+				(mainProgressionOf(cluster.songKeys)?.share ?? 0) >=
+				clusterMinProgressionShare
+		);
+	});
+
+	const homogeneityBySongKey = $derived(
+		new Map(
+			songCoverages.map((entry) => [
+				entry.songKey,
+				computeSongHomogeneity(entry.progressionCounts)
+			])
+		)
 	);
 
 	const purityBySongKey = $derived(
 		new Map(
-			songCoverages.map((entry) => [
-				entry.songKey,
-				computeSongHomogeneity(entry.progressionCounts)?.dominantShare ?? 0
+			[...homogeneityBySongKey].map(([songKey, homogeneity]) => [
+				songKey,
+				homogeneity?.dominantShare ?? 0
+			])
+		)
+	);
+
+	// Hex mode colors by cluster: the same clusters the map outlines (minus
+	// any hidden in the clusters tab), each colored by its main progression.
+	const clusterRegionBySongKey = $derived.by(
+		(): Map<string, ClusterRegion> | null => {
+			if (mapMode !== "hex") return null;
+			const regions = new Map<string, ClusterRegion>();
+			for (const cluster of mapClusters) {
+				const main = mainProgressionOf(cluster.songKeys);
+				if (!main) continue;
+				const region = { id: cluster.hash, name: main.name };
+				for (const songKey of cluster.songKeys) regions.set(songKey, region);
+			}
+			return regions;
+		}
+	);
+
+	const progressionSharesBySongKey = $derived(
+		new Map(
+			[...homogeneityBySongKey].map(([songKey, homogeneity]) => [
+				songKey,
+				homogeneity?.progressionShares ?? []
 			])
 		)
 	);
@@ -536,7 +628,14 @@
 	});
 
 	const clusterNamesByHash = $derived(
-		resolveClusterNames(allClusters, getNamedClusters())
+		clusterMinProgressionShare === null
+			? resolveClusterNames(allClusters, getNamedClusters())
+			: new Map(
+					allClusters.flatMap((cluster) => {
+						const main = mainProgressionOf(cluster.songKeys);
+						return main ? [[cluster.hash, main.name] as const] : [];
+					})
+				)
 	);
 
 	const clusterRankByHash = $derived(
@@ -670,6 +769,12 @@
 					emphasisFillColor={artistSongKeys && HIGHLIGHT_RING_COLOR}
 					{accentSongKeys}
 					{accentFillColor}
+					renderMode={mapMode === "hex" ? "hex" : "dots"}
+					progressionSharesBySongKey={mapMode === "hex"
+						? progressionSharesBySongKey
+						: null}
+					{clusterRegionBySongKey}
+					clusterNames={clusterNamesByHash}
 					{colorMode}
 					onSelect={selectSong}
 				/>

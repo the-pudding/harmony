@@ -25,8 +25,6 @@
 		weightChorus: false
 	};
 
-	const MIN_DIST_SLIDER = { min: 0, max: 1, step: 0.05 } as const;
-
 	// A song is "pure" when one progression covers at least this share of its
 	// matched chords. Unmatched chords are ignored, same as effective progressions.
 	const PURE_DOMINANT_SHARE = 0.9;
@@ -36,8 +34,26 @@
 	// the most mixed on the rim. Display only: clusters are found first.
 	let purityLayoutOn = $state(true);
 
-	// Lower than the harmony map's default so clusters start tight and well separated.
-	const INITIAL_MIN_DIST = 0.05;
+	// Cluster detection for this page's larger corpus. 20 songs is the
+	// smallest group that gets outlined; larger minimums fuse the mixed
+	// middle of the map into one giant cluster. Clusters over 300 songs
+	// aren't outlined.
+	const CLUSTER_MIN_POINTS = 20;
+	const CLUSTER_MAX_POINTS = 300;
+	// A cluster is kept (outlined, colored in hex view and named) only when
+	// at least this share of its songs have the same main progression. It's
+	// named after that progression.
+	const CLUSTER_MIN_PROGRESSION_SHARE = 0.25;
+
+	const MAP_MODES = [
+		{ id: "scatter", label: "full map" },
+		{ id: "hex", label: "hex" }
+	] as const;
+	let mapMode = $state<"scatter" | "hex">("scatter");
+
+	// UMAP minimum distance. Lower than the harmony map's default so clusters
+	// are tight and well separated. Change it here to try other values.
+	const UMAP_MIN_DIST = 0.05;
 
 	const coverage = createAllSongsCoverageState();
 
@@ -46,25 +62,11 @@
 		getSongs: () => coverage.baseList,
 		getCoverageCacheKey: () => coverage.coverageCacheKey,
 		initialMethod: "umap",
-		initialUmapMinDist: INITIAL_MIN_DIST
+		initialUmapMinDist: UMAP_MIN_DIST
 	});
 
 	embedding.setOptions(VECTOR_OPTIONS);
 	embedding.setDimension(2);
-
-	// Tracks the thumb while dragging; the embedding only reruns on release,
-	// since each value is a full UMAP run over the whole corpus.
-	let draftMinDist = $state(INITIAL_MIN_DIST);
-
-	// Rounded so float noise from the step (0.15000000000000002) doesn't
-	// create distinct cache entries for the same visible value.
-	const roundMinDist = (value: number): number => Math.round(value * 100) / 100;
-
-	const commitMinDist = (value: number) => {
-		const rounded = roundMinDist(value);
-		draftMinDist = rounded;
-		embedding.setUmapMinDist(rounded);
-	};
 
 	const onOff = (value: boolean): string => (value ? "on" : "off");
 
@@ -76,8 +78,13 @@
 		{ label: "TF-IDF", value: onOff(VECTOR_OPTIONS.useTfIdf) },
 		{ label: "L2 norm", value: onOff(VECTOR_OPTIONS.l2Normalize) },
 		{ label: "UMAP neighbors", value: `${UMAP_NEIGHBOR_COUNT}` },
+		{ label: "min distance", value: `${UMAP_MIN_DIST}` },
 		{ label: "spread", value: `${UMAP_SPREAD}` },
 		{ label: "seed", value: `${UMAP_RANDOM_SEED}` },
+		{
+			label: "clusters",
+			value: `${CLUSTER_MIN_POINTS}–${CLUSTER_MAX_POINTS} songs, ≥${Math.round(CLUSTER_MIN_PROGRESSION_SHARE * 100)}% one progression`
+		},
 		{ label: "view", value: "2D, uncolored" }
 	]);
 
@@ -127,6 +134,21 @@
 
 	<div class="page-body">
 		<div class="settings-bar">
+			<div class="map-mode-toggle" role="radiogroup" aria-label="Map view">
+				{#each MAP_MODES as mode (mode.id)}
+					<button
+						type="button"
+						role="radio"
+						aria-checked={mapMode === mode.id}
+						class="map-mode-button"
+						class:map-mode-button-active={mapMode === mode.id}
+						onclick={() => (mapMode = mode.id)}
+					>
+						{mode.label}
+					</button>
+				{/each}
+			</div>
+
 			<dl class="settings-summary" aria-label="Embedding settings (fixed)">
 				{#each settingsSummary as setting (setting.label)}
 					<div class="setting">
@@ -135,24 +157,6 @@
 					</div>
 				{/each}
 			</dl>
-
-			<label class="min-dist-slider">
-				<span class="min-dist-label">UMAP min distance</span>
-				<input
-					type="range"
-					min={MIN_DIST_SLIDER.min}
-					max={MIN_DIST_SLIDER.max}
-					step={MIN_DIST_SLIDER.step}
-					value={draftMinDist}
-					oninput={(event) =>
-						(draftMinDist = roundMinDist(
-							parseFloat(event.currentTarget.value)
-						))}
-					onchange={(event) =>
-						commitMinDist(parseFloat(event.currentTarget.value))}
-				/>
-				<span class="min-dist-value">{draftMinDist.toFixed(2)}</span>
-			</label>
 
 			<button
 				type="button"
@@ -165,15 +169,23 @@
 				purity → center: {purityLayoutOn ? "on" : "off"}
 			</button>
 
-			<span class="pure-key">
-				<span
-					class="pure-swatch"
-					style="background: {PURE_SONG_COLOR};"
-					aria-hidden="true"
-				></span>
-				pure: one progression is ≥{Math.round(PURE_DOMINANT_SHARE * 100)}% of
-				matched chords · {pureSongKeys.size.toLocaleString()} songs
-			</span>
+			{#if mapMode === "hex"}
+				<span class="pure-key">
+					hex color = main progression · faded = mixed with others · gray = no
+					clear main progression or outside clusters · zoom in for smaller
+					hexes, then dots
+				</span>
+			{:else}
+				<span class="pure-key">
+					<span
+						class="pure-swatch"
+						style="background: {PURE_SONG_COLOR};"
+						aria-hidden="true"
+					></span>
+					pure: one progression is ≥{Math.round(PURE_DOMINANT_SHARE * 100)}% of
+					matched chords · {pureSongKeys.size.toLocaleString()} songs
+				</span>
+			{/if}
 		</div>
 
 		{#if coverage.allSongsCoverageResult}
@@ -189,6 +201,10 @@
 				showColorLegend={false}
 				accentSongKeys={pureSongKeys}
 				accentFillColor={PURE_SONG_COLOR}
+				{mapMode}
+				clusterMinPoints={CLUSTER_MIN_POINTS}
+				clusterMaxPoints={CLUSTER_MAX_POINTS}
+				clusterMinProgressionShare={CLUSTER_MIN_PROGRESSION_SHARE}
 				purityLayout={purityLayoutOn
 					? { pureThreshold: PURE_DOMINANT_SHARE }
 					: null}
@@ -266,27 +282,28 @@
 		color: #e4e4e7;
 	}
 
-	.min-dist-slider {
+	.map-mode-toggle {
 		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.7rem;
-		color: #a1a1aa;
-		border: 1px solid rgba(99, 102, 241, 0.5);
+		gap: 0.25rem;
+		border: 1px solid rgba(63, 63, 70, 0.8);
 		border-radius: 0.375rem;
+		padding: 0.125rem;
+	}
+
+	.map-mode-button {
+		border: none;
+		border-radius: 0.25rem;
+		background: transparent;
+		color: #a1a1aa;
+		font-family: inherit;
+		font-size: 0.7rem;
 		padding: 0.25rem 0.625rem;
 		cursor: pointer;
 	}
 
-	.min-dist-slider input {
-		width: 8rem;
-		accent-color: #818cf8;
-	}
-
-	.min-dist-value {
-		min-width: 2.25rem;
+	.map-mode-button-active {
+		background: rgba(99, 102, 241, 0.3);
 		color: #f4f4f5;
-		font-variant-numeric: tabular-nums;
 	}
 
 	.purity-layout-toggle {
