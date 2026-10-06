@@ -3,22 +3,15 @@
 
 	type Props = {
 		song: DesignSong;
+		paused: boolean;
+		onTogglePlayback: () => void;
 	};
 
-	let { song }: Props = $props();
-
-	let audioEl = $state<HTMLAudioElement>();
-	let paused = $state(true);
+	let { song, paused, onTogglePlayback }: Props = $props();
 
 	const playLabel = $derived(
 		paused ? `Play ${song.title} by ${song.artist}` : `Pause ${song.title}`
 	);
-
-	function togglePlayback() {
-		if (!audioEl) return;
-		if (paused) audioEl.play();
-		else audioEl.pause();
-	}
 </script>
 
 <article class="card">
@@ -26,7 +19,7 @@
 		type="button"
 		class="play-button"
 		aria-label={playLabel}
-		onclick={togglePlayback}
+		onclick={onTogglePlayback}
 	>
 		{#if paused}
 			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
@@ -40,7 +33,6 @@
 		<span class="title">{song.title}</span>
 		<span class="artist">{song.artist} · {song.year}</span>
 	</div>
-	<audio bind:this={audioEl} bind:paused src={song.audioSrc} preload="none"></audio>
 </article>
 
 <style>

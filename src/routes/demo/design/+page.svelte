@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
-	import SongPlayerCard from "./SongPlayerCard.svelte";
+	import SyncedSongPlayer from "./SyncedSongPlayer.svelte";
 	import { rubberBall } from "./designSongs.js";
 </script>
 
@@ -21,7 +21,7 @@
 			<h1 class="page-title">Design</h1>
 		</div>
 
-		<SongPlayerCard song={rubberBall} />
+		<SyncedSongPlayer song={rubberBall} />
 	</div>
 </div>
 

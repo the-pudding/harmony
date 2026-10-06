@@ -1,4 +1,6 @@
 import { base } from "$app/paths";
+import type { SongSectionChords } from "./chordTimeline.js";
+import rubberBallChords from "./data/bobby-vee__rubber-ball.json";
 
 export type DesignSong = {
 	songKey: string;
@@ -6,6 +8,7 @@ export type DesignSong = {
 	artist: string;
 	year: number;
 	audioSrc: string;
+	sections: SongSectionChords[];
 };
 
 const audioSrcForSongKey = (songKey: string): string =>
@@ -18,5 +21,6 @@ export const rubberBall: DesignSong = {
 	title: "Rubber Ball",
 	artist: "Bobby Vee",
 	year: 1960,
-	audioSrc: audioSrcForSongKey(RUBBER_BALL_SONG_KEY)
+	audioSrc: audioSrcForSongKey(RUBBER_BALL_SONG_KEY),
+	sections: rubberBallChords.sections
 };
