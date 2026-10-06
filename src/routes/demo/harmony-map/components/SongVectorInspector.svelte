@@ -74,6 +74,13 @@
 	const SIMILARITY_PERCENT_MULTIPLIER = 100;
 
 	let query = $state("");
+	let searchEl = $state<HTMLDivElement | null>(null);
+	let searchInputEl = $state<HTMLInputElement | null>(null);
+
+	const FOCUS_STEP_BY_KEY: Record<string, number> = {
+		ArrowDown: 1,
+		ArrowUp: -1
+	};
 
 	const entryBySongKey = $derived(
 		new Map(songs.map((song) => [song.songKey, song]))
@@ -96,6 +103,47 @@
 			)
 			.slice(0, MAX_SEARCH_RESULTS);
 	});
+
+	const selectSearchResult = (songKey: string) => {
+		onSelect(songKey);
+		query = "";
+		searchInputEl?.focus();
+	};
+
+	const searchFocusTargets = (): HTMLElement[] =>
+		searchEl
+			? [
+					...(searchInputEl ? [searchInputEl] : []),
+					...searchEl.querySelectorAll<HTMLElement>(".search-result")
+				]
+			: [];
+
+	const moveSearchFocus = (step: number) => {
+		const targets = searchFocusTargets();
+		const currentIndex = targets.findIndex(
+			(target) => target === document.activeElement
+		);
+		const nextIndex = Math.min(
+			Math.max(currentIndex + step, 0),
+			targets.length - 1
+		);
+		targets[nextIndex]?.focus();
+	};
+
+	const handleSearchKeydown = (event: KeyboardEvent) => {
+		const step = FOCUS_STEP_BY_KEY[event.key];
+		if (step === undefined) return;
+		event.preventDefault();
+		moveSearchFocus(step);
+	};
+
+	const handleSearchInputKeydown = (event: KeyboardEvent) => {
+		handleSearchKeydown(event);
+		const firstResult = searchResults[0];
+		if (event.key !== "Enter" || !firstResult) return;
+		event.preventDefault();
+		selectSearchResult(firstResult.songKey);
+	};
 
 	type VectorDimension = {
 		chordProgression: string;
@@ -170,12 +218,14 @@
 </script>
 
 <div class="inspector">
-	<div class="search">
+	<div class="search" bind:this={searchEl}>
 		<input
 			class="search-input"
 			type="search"
 			placeholder="Search songs…"
+			bind:this={searchInputEl}
 			bind:value={query}
+			onkeydown={handleSearchInputKeydown}
 		/>
 		{#if searchResults.length > 0}
 			<ul class="search-results">
@@ -183,10 +233,8 @@
 					<li>
 						<button
 							class="search-result"
-							onclick={() => {
-								onSelect(song.songKey);
-								query = "";
-							}}
+							onclick={() => selectSearchResult(song.songKey)}
+							onkeydown={handleSearchKeydown}
 						>
 							<span class="result-title">{song.title}</span>
 							<span class="result-artists">{song.artists.join(", ")}</span>
@@ -444,6 +492,7 @@
 	}
 
 	.search-result:hover,
+	.search-result:focus-visible,
 	.neighbor:hover {
 		background: rgba(99, 102, 241, 0.25);
 		color: #f4f4f5;
