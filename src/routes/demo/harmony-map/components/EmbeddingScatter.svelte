@@ -70,6 +70,8 @@
 	// around the edge rather than the outermost points touching it.
 	const CLUSTER_FOCUS_PADDING = 0.65;
 	const MAX_CLUSTER_FOCUS_SCALE = 24;
+	const FLY_TO_ZOOM_OUT_FACTOR = 0.75;
+	const FLY_TO_TRANSITION_MS = 1300;
 
 	type Props = {
 		points: ScatterPoint[];
@@ -476,10 +478,26 @@
 	const plotWidth = $derived(Math.max(0, width - PLOT_MARGIN * 2));
 	const plotHeight = $derived(Math.max(0, height - PLOT_MARGIN * 2));
 
-	const toScreen = (position: Position): { x: number; y: number } => ({
-		x: transform.applyX(PLOT_MARGIN + position.nx * plotWidth),
-		y: transform.applyY(PLOT_MARGIN + (1 - position.ny) * plotHeight)
+	const toBasePixel = (position: Position): { x: number; y: number } => ({
+		x: PLOT_MARGIN + position.nx * plotWidth,
+		y: PLOT_MARGIN + (1 - position.ny) * plotHeight
 	});
+
+	const toScreen = (position: Position): { x: number; y: number } => {
+		const base = toBasePixel(position);
+		return { x: transform.applyX(base.x), y: transform.applyY(base.y) };
+	};
+
+	const isOnScreen = (screen: { x: number; y: number }): boolean =>
+		screen.x >= 0 && screen.x <= width && screen.y >= 0 && screen.y <= height;
+
+	const transformCenteredOn = (
+		base: { x: number; y: number },
+		scale: number
+	): ZoomTransform =>
+		zoomIdentity
+			.scale(scale)
+			.translate(width / (2 * scale) - base.x, height / (2 * scale) - base.y);
 
 	const radiusFor = (songKey: string): number => {
 		if (songKey === selectedSongKey) return SELECTED_POINT_RADIUS;
@@ -742,13 +760,7 @@
 		const basePoints = drawablePoints.flatMap((point) => {
 			const position = displayedPositions.get(point.songKey);
 			if (!position) return [];
-			return [
-				{
-					songKey: point.songKey,
-					x: PLOT_MARGIN + position.nx * plotWidth,
-					y: PLOT_MARGIN + (1 - position.ny) * plotHeight
-				}
-			];
+			return [{ songKey: point.songKey, ...toBasePixel(position) }];
 		});
 		const bins = binIntoHexes(basePoints, radius);
 		const summaries = new Map(
@@ -1093,8 +1105,7 @@
 		for (const songKey of clusterSongKeys) {
 			const point = pointBySongKey.get(songKey);
 			if (!point) continue;
-			const rawX = PLOT_MARGIN + point.nx * plotWidth;
-			const rawY = PLOT_MARGIN + (1 - point.ny) * plotHeight;
+			const { x: rawX, y: rawY } = toBasePixel(point);
 			minX = Math.min(minX, rawX);
 			maxX = Math.max(maxX, rawX);
 			minY = Math.min(minY, rawY);
@@ -1104,19 +1115,15 @@
 
 		const boxWidth = Math.max(maxX - minX, 1);
 		const boxHeight = Math.max(maxY - minY, 1);
-		const centerX = (minX + maxX) / 2;
-		const centerY = (minY + maxY) / 2;
 		const fitScale = Math.min(
 			(width * CLUSTER_FOCUS_PADDING) / boxWidth,
 			(height * CLUSTER_FOCUS_PADDING) / boxHeight
 		);
 		const scale = Math.min(Math.max(fitScale, MIN_ZOOM), MAX_CLUSTER_FOCUS_SCALE);
-		return zoomIdentity
-			.scale(scale)
-			.translate(
-				width / (2 * scale) - centerX,
-				height / (2 * scale) - centerY
-			);
+		return transformCenteredOn(
+			{ x: (minX + maxX) / 2, y: (minY + maxY) / 2 },
+			scale
+		);
 	};
 
 	// Scripted zoom (e.g. /story's beats): fully inert when both focusSongKey
@@ -1143,17 +1150,7 @@
 			if (focusSongKey === undefined) return null;
 			const point = normalizedPoints.find((p) => p.songKey === focusSongKey);
 			if (!point) return null;
-			const rawX = PLOT_MARGIN + point.nx * plotWidth;
-			const rawY = PLOT_MARGIN + (1 - point.ny) * plotHeight;
-			// scale-then-translate composes so the translate offset ends up
-			// divided by focusScale — dividing it back out here centers
-			// (rawX, rawY) in the viewport at that scale.
-			return zoomIdentity
-				.scale(focusScale)
-				.translate(
-					width / (2 * focusScale) - rawX,
-					height / (2 * focusScale) - rawY
-				);
+			return transformCenteredOn(toBasePixel(point), focusScale);
 		})();
 		if (!targetTransform) return;
 
@@ -1161,6 +1158,28 @@
 			.transition()
 			.duration(FOCUS_TRANSITION_MS)
 			.call(zoomBehavior.transform, targetTransform);
+	});
+
+	const flyToSongIfOffScreen = (songKey: string) => {
+		const canvas = canvasEl;
+		const point = pointBySongKey.get(songKey);
+		if (!canvas || !zoomBehavior || !point || width === 0 || height === 0) {
+			return;
+		}
+		if (isOnScreen(toScreen(point))) return;
+		const scale = Math.max(MIN_ZOOM, transform.k * FLY_TO_ZOOM_OUT_FACTOR);
+		select(canvas)
+			.transition()
+			.duration(FLY_TO_TRANSITION_MS)
+			.call(zoomBehavior.transform, transformCenteredOn(toBasePixel(point), scale));
+	};
+
+	$effect(() => {
+		const songKey = selectedSongKey;
+		const isScripted =
+			focusClusterName !== undefined || focusSongKey !== undefined;
+		if (songKey === null || isScripted) return;
+		untrack(() => flyToSongIfOffScreen(songKey));
 	});
 
 	$effect(() => {
