@@ -93,6 +93,11 @@
 				class="page-link"
 				class:active={page.url.pathname === "/demo/review"}>review</a
 			>
+			<a
+				href="/demo/design"
+				class="page-link"
+				class:active={page.url.pathname === "/demo/design"}>design</a
+			>
 		</div>
 	</div>
 	{#if showSearch}
