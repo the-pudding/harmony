@@ -130,7 +130,7 @@
 		targets[nextIndex]?.focus();
 	};
 
-	const handleSearchKeydown = (event: KeyboardEvent) => {
+	const handleArrowNavigation = (event: KeyboardEvent) => {
 		const step = FOCUS_STEP_BY_KEY[event.key];
 		if (step === undefined) return;
 		event.preventDefault();
@@ -138,7 +138,7 @@
 	};
 
 	const handleSearchInputKeydown = (event: KeyboardEvent) => {
-		handleSearchKeydown(event);
+		handleArrowNavigation(event);
 		const firstResult = searchResults[0];
 		if (event.key !== "Enter" || !firstResult) return;
 		event.preventDefault();
@@ -234,7 +234,7 @@
 						<button
 							class="search-result"
 							onclick={() => selectSearchResult(song.songKey)}
-							onkeydown={handleSearchKeydown}
+							onkeydown={handleArrowNavigation}
 						>
 							<span class="result-title">{song.title}</span>
 							<span class="result-artists">{song.artists.join(", ")}</span>

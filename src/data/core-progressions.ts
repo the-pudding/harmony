@@ -257,7 +257,7 @@ const minoryProgressions: ProgressionGroup = {
 	description: "Progressions that are minor-y",
 	progressions: [
 		{
-			name: "minor-y", // TODO: better name
+			name: "attention",
 			chordProgression: "i-VII-v-VI",
 			scale: "minor",
 			description: ""
