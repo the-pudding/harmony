@@ -1,6 +1,9 @@
 import { base } from "$app/paths";
+import coreProgressions from "$data/core-progressions.js";
+import type { SongInput } from "../../../chord-processing/types.js";
 import type { SongSectionChords } from "./chordTimeline.js";
-import rubberBallChords from "./data/bobby-vee__rubber-ball.json";
+import { buildMatchedSongSections } from "./matchedSongSections.js";
+import rubberBallSongInputs from "./data/bobby-vee__rubber-ball.song-inputs.json";
 
 export type DesignSong = {
 	songKey: string;
@@ -22,5 +25,8 @@ export const rubberBall: DesignSong = {
 	artist: "Bobby Vee",
 	year: 1960,
 	audioSrc: audioSrcForSongKey(RUBBER_BALL_SONG_KEY),
-	sections: rubberBallChords.sections
+	sections: buildMatchedSongSections(
+		rubberBallSongInputs as SongInput[],
+		coreProgressions
+	)
 };

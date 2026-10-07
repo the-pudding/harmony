@@ -1,0 +1,930 @@
+[
+	{
+		"id": "bobby-vee__rubber-ball__ug-verse-0",
+		"songKey": "bobby-vee__rubber-ball",
+		"source": "UG",
+		"title": "Rubber Ball (Verse)",
+		"artists": [
+			"Bobby Vee"
+		],
+		"popularityScore": 1087,
+		"year": 1961.008219,
+		"inTop10": true,
+		"inTop20": true,
+		"inTop40": true,
+		"inTop100": true,
+		"progression": [
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			}
+		],
+		"romanTokens": [
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I",
+			"IV",
+			"I"
+		],
+		"key": "C",
+		"scale": "major",
+		"suffixes": [
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major",
+			"major",
+			"major"
+		],
+		"deltas": [
+			9,
+			8,
+			2,
+			5,
+			9,
+			8,
+			2,
+			5,
+			5,
+			7
+		],
+		"bassIntervals": [
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		"wrapDelta": 0
+	},
+	{
+		"id": "bobby-vee__rubber-ball__ug-chorus-1",
+		"songKey": "bobby-vee__rubber-ball",
+		"source": "UG",
+		"title": "Rubber Ball (Chorus)",
+		"artists": [
+			"Bobby Vee"
+		],
+		"popularityScore": 1087,
+		"year": 1961.008219,
+		"inTop10": true,
+		"inTop20": true,
+		"inTop40": true,
+		"inTop100": true,
+		"progression": [
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			}
+		],
+		"romanTokens": [
+			"I",
+			"vi",
+			"I",
+			"vi",
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I"
+		],
+		"key": "C",
+		"scale": "major",
+		"suffixes": [
+			"major",
+			"minor",
+			"major",
+			"minor",
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major"
+		],
+		"deltas": [
+			9,
+			3,
+			9,
+			3,
+			9,
+			8,
+			2,
+			5,
+			9,
+			8,
+			2,
+			5,
+			9,
+			8,
+			2,
+			5
+		],
+		"bassIntervals": [
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		"wrapDelta": 0
+	},
+	{
+		"id": "bobby-vee__rubber-ball__ug-chorus-2-2",
+		"songKey": "bobby-vee__rubber-ball",
+		"source": "UG",
+		"title": "Rubber Ball (Chorus 2)",
+		"artists": [
+			"Bobby Vee"
+		],
+		"popularityScore": 1087,
+		"year": 1961.008219,
+		"inTop10": true,
+		"inTop20": true,
+		"inTop40": true,
+		"inTop100": true,
+		"progression": [
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			}
+		],
+		"romanTokens": [
+			"I",
+			"vi",
+			"I",
+			"vi",
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I"
+		],
+		"key": "C",
+		"scale": "major",
+		"suffixes": [
+			"major",
+			"minor",
+			"major",
+			"minor",
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major"
+		],
+		"deltas": [
+			9,
+			3,
+			9,
+			3,
+			9,
+			8,
+			2,
+			5,
+			9,
+			8,
+			2,
+			5,
+			9,
+			8,
+			2,
+			5
+		],
+		"bassIntervals": [
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		"wrapDelta": 0
+	},
+	{
+		"id": "bobby-vee__rubber-ball__ug-verse-2-3",
+		"songKey": "bobby-vee__rubber-ball",
+		"source": "UG",
+		"title": "Rubber Ball (Verse 2)",
+		"artists": [
+			"Bobby Vee"
+		],
+		"popularityScore": 1087,
+		"year": 1961.008219,
+		"inTop10": true,
+		"inTop20": true,
+		"inTop40": true,
+		"inTop100": true,
+		"progression": [
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			}
+		],
+		"romanTokens": [
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I",
+			"IV",
+			"I"
+		],
+		"key": "C",
+		"scale": "major",
+		"suffixes": [
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major",
+			"major",
+			"major"
+		],
+		"deltas": [
+			9,
+			8,
+			2,
+			5,
+			9,
+			8,
+			2,
+			5,
+			9,
+			8,
+			2,
+			5,
+			5,
+			7
+		],
+		"bassIntervals": [
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		"wrapDelta": 0
+	},
+	{
+		"id": "bobby-vee__rubber-ball__ug-verse-3-4",
+		"songKey": "bobby-vee__rubber-ball",
+		"source": "UG",
+		"title": "Rubber Ball (Verse 3)",
+		"artists": [
+			"Bobby Vee"
+		],
+		"popularityScore": 1087,
+		"year": 1961.008219,
+		"inTop10": true,
+		"inTop20": true,
+		"inTop40": true,
+		"inTop100": true,
+		"progression": [
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			}
+		],
+		"romanTokens": [
+			"I",
+			"vi",
+			"I",
+			"vi",
+			"I",
+			"vi",
+			"IV",
+			"V"
+		],
+		"key": "C",
+		"scale": "major",
+		"suffixes": [
+			"major",
+			"minor",
+			"major",
+			"minor",
+			"major",
+			"minor",
+			"major",
+			"major"
+		],
+		"deltas": [
+			9,
+			3,
+			9,
+			3,
+			9,
+			8,
+			2
+		],
+		"bassIntervals": [
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		"wrapDelta": 5
+	},
+	{
+		"id": "bobby-vee__rubber-ball__ug-verse-4-5",
+		"songKey": "bobby-vee__rubber-ball",
+		"source": "UG",
+		"title": "Rubber Ball (Verse 4)",
+		"artists": [
+			"Bobby Vee"
+		],
+		"popularityScore": 1087,
+		"year": 1961.008219,
+		"inTop10": true,
+		"inTop20": true,
+		"inTop40": true,
+		"inTop100": true,
+		"progression": [
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			}
+		],
+		"romanTokens": [
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I",
+			"vi",
+			"IV",
+			"V",
+			"I"
+		],
+		"key": "C",
+		"scale": "major",
+		"suffixes": [
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major",
+			"minor",
+			"major",
+			"major",
+			"major"
+		],
+		"deltas": [
+			9,
+			8,
+			2,
+			5,
+			9,
+			8,
+			2,
+			5
+		],
+		"bassIntervals": [
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		"wrapDelta": 0
+	},
+	{
+		"id": "bobby-vee__rubber-ball__ug-verse-5-6",
+		"songKey": "bobby-vee__rubber-ball",
+		"source": "UG",
+		"title": "Rubber Ball (Verse 5)",
+		"artists": [
+			"Bobby Vee"
+		],
+		"popularityScore": 1087,
+		"year": 1961.008219,
+		"inTop10": true,
+		"inTop20": true,
+		"inTop40": true,
+		"inTop100": true,
+		"progression": [
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "C",
+				"suffix": "major"
+			}
+		],
+		"romanTokens": [
+			"vi",
+			"IV",
+			"V",
+			"I"
+		],
+		"key": "C",
+		"scale": "major",
+		"suffixes": [
+			"minor",
+			"major",
+			"major",
+			"major"
+		],
+		"deltas": [
+			8,
+			2,
+			5
+		],
+		"bassIntervals": [
+			null,
+			null,
+			null,
+			null
+		],
+		"wrapDelta": 9
+	},
+	{
+		"id": "bobby-vee__rubber-ball__ug-verse-6-7",
+		"songKey": "bobby-vee__rubber-ball",
+		"source": "UG",
+		"title": "Rubber Ball (Verse 6)",
+		"artists": [
+			"Bobby Vee"
+		],
+		"popularityScore": 1087,
+		"year": 1961.008219,
+		"inTop10": true,
+		"inTop20": true,
+		"inTop40": true,
+		"inTop100": true,
+		"progression": [
+			{
+				"noteName": "C",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "major"
+			},
+			{
+				"noteName": "A",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F#",
+				"suffix": "minor"
+			},
+			{
+				"noteName": "F",
+				"suffix": "major"
+			},
+			{
+				"noteName": "D",
+				"suffix": "major"
+			},
+			{
+				"noteName": "G",
+				"suffix": "major"
+			},
+			{
+				"noteName": "E",
+				"suffix": "major"
+			}
+		],
+		"romanTokens": [
+			"I",
+			"VI",
+			"vi",
+			"bv",
+			"IV",
+			"II",
+			"V",
+			"III"
+		],
+		"key": "C",
+		"scale": "major",
+		"suffixes": [
+			"major",
+			"major",
+			"minor",
+			"minor",
+			"major",
+			"major",
+			"major",
+			"major"
+		],
+		"deltas": [
+			9,
+			0,
+			9,
+			11,
+			9,
+			5,
+			9
+		],
+		"bassIntervals": [
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		"wrapDelta": 8
+	}
+]

@@ -7,10 +7,24 @@ import {
 } from "./chordTimeline.js";
 
 const chord = (name: string) => ({ name, roman: name });
+const palette = { fill: "fill", border: "border" };
 
 const sections: SongSectionChords[] = [
-	{ id: "verse", name: "Verse", chords: [chord("C"), chord("Am"), chord("F")] },
-	{ id: "chorus", name: "Chorus", chords: [chord("G")] }
+	{
+		id: "verse",
+		name: "Verse",
+		chords: [chord("C"), chord("Am"), chord("F")],
+		groups: [
+			{
+				startIndex: 1,
+				length: 2,
+				palette,
+				chordProgression: "vi IV",
+				isStrictSubset: false
+			}
+		]
+	},
+	{ id: "chorus", name: "Chorus", chords: [chord("G")], groups: [] }
 ];
 
 describe("buildEvenlySpacedChordTimeline", () => {
@@ -34,9 +48,27 @@ describe("buildEvenlySpacedChordTimeline", () => {
 		]);
 	});
 
+	it("spans each matched group across its chords", () => {
+		const { groups } = buildEvenlySpacedChordTimeline(sections);
+		expect(groups.map((g) => [g.startFraction, g.endFraction])).toEqual([
+			[0.25, 0.75]
+		]);
+	});
+
+	it("colors only the chords inside a matched group", () => {
+		const { chords } = buildEvenlySpacedChordTimeline(sections);
+		expect(chords.map((c) => c.palette)).toEqual([
+			null,
+			palette,
+			palette,
+			null
+		]);
+	});
+
 	it("returns an empty timeline when there are no chords", () => {
 		expect(buildEvenlySpacedChordTimeline([])).toEqual({
 			chords: [],
+			groups: [],
 			sections: []
 		});
 	});

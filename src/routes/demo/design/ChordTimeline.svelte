@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { isActiveAt, type ChordTimeline } from "./chordTimeline.js";
 
-	const MIN_CHORD_SLOT_REM = 1;
+	const MIN_CHORD_SLOT_REM = 1.75;
 	const PERCENT = 100;
 
 	type Props = {
@@ -40,11 +40,20 @@
 		</div>
 
 		<div class="row chords">
+			{#each timeline.groups as group (group.key)}
+				<span
+					class="group"
+					class:dashed={group.isStrictSubset}
+					style="{spanStyle(group)} --group-border: {group.palette.border};"
+					title={group.chordProgression}
+				></span>
+			{/each}
 			{#each timeline.chords as chord (chord.key)}
 				<span
 					class="chord"
+					class:grouped={chord.palette !== null}
 					class:active={isActiveAt(chord, progressFraction)}
-					style={spanStyle(chord)}
+					style="{spanStyle(chord)} --chord-fill: {chord.palette?.fill}; --chord-active-fill: {chord.palette?.border};"
 					title={chord.roman}>{chord.name}</span
 				>
 			{/each}
@@ -85,38 +94,73 @@
 		height: 1rem;
 	}
 
+	.row.chords {
+		height: 1.375rem;
+	}
+
 	.section,
-	.chord {
+	.chord,
+	.group {
 		position: absolute;
 		top: 0;
-		text-align: center;
-		white-space: nowrap;
-		color: #71717a;
-		transition: color 0.1s ease;
+		box-sizing: border-box;
 	}
 
 	.section {
-		text-align: left;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		white-space: nowrap;
 		font-size: 0.625rem;
 		text-transform: lowercase;
+		color: #71717a;
 		border-left: 1px solid rgba(63, 63, 70, 0.9);
 		padding-left: 0.25rem;
-		box-sizing: border-box;
+		transition: color 0.1s ease;
 	}
 
 	.section.active {
 		color: #d4d4d8;
 	}
 
+	.group {
+		bottom: 0;
+		border: 1px solid var(--group-border);
+		border-radius: 0.375rem;
+	}
+
+	.group.dashed {
+		border-style: dashed;
+	}
+
 	.chord {
-		font-size: 0.6875rem;
+		bottom: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 2px solid transparent;
+		border-radius: 0.3125rem;
+		background-clip: padding-box;
+		font-size: 0.625rem;
+		white-space: nowrap;
+		color: #71717a;
+		transition:
+			color 0.1s ease,
+			background-color 0.1s ease;
+	}
+
+	.chord.grouped {
+		background-color: var(--chord-fill);
+		color: #d4d4d8;
 	}
 
 	.chord.active {
 		color: #818cf8;
 		font-weight: 700;
+	}
+
+	.chord.grouped.active {
+		background-color: var(--chord-active-fill);
+		color: #fff;
 	}
 
 	.track {

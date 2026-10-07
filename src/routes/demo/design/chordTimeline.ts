@@ -1,28 +1,51 @@
+import type { ChordHighlightPalette } from "../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
+
+export type SectionChordGroup = {
+	startIndex: number;
+	length: number;
+	palette: ChordHighlightPalette;
+	chordProgression: string | null;
+	isStrictSubset: boolean;
+};
+
 export type SongSectionChords = {
 	id: string;
 	name: string;
 	chords: { name: string; roman: string }[];
+	groups: SectionChordGroup[];
 };
 
-export type TimelineChord = {
+type FractionSpan = {
+	startFraction: number;
+	endFraction: number;
+};
+
+export type TimelineChord = FractionSpan & {
 	key: string;
 	name: string;
 	roman: string;
-	startFraction: number;
-	endFraction: number;
+	palette: ChordHighlightPalette | null;
 };
 
-export type TimelineSection = {
+export type TimelineGroup = FractionSpan & {
+	key: string;
+	palette: ChordHighlightPalette;
+	chordProgression: string | null;
+	isStrictSubset: boolean;
+};
+
+export type TimelineSection = FractionSpan & {
 	key: string;
 	name: string;
-	startFraction: number;
-	endFraction: number;
 };
 
 export type ChordTimeline = {
 	chords: TimelineChord[];
+	groups: TimelineGroup[];
 	sections: TimelineSection[];
 };
+
+const EMPTY_TIMELINE: ChordTimeline = { chords: [], groups: [], sections: [] };
 
 const sectionChordOffsets = (sections: SongSectionChords[]): number[] =>
 	sections.reduce<number[]>(
@@ -33,6 +56,16 @@ const sectionChordOffsets = (sections: SongSectionChords[]): number[] =>
 		[]
 	);
 
+const groupContaining = (
+	groups: SectionChordGroup[],
+	chordIndex: number
+): SectionChordGroup | undefined =>
+	groups.find(
+		(group) =>
+			chordIndex >= group.startIndex &&
+			chordIndex < group.startIndex + group.length
+	);
+
 export const buildEvenlySpacedChordTimeline = (
 	sections: SongSectionChords[]
 ): ChordTimeline => {
@@ -40,38 +73,42 @@ export const buildEvenlySpacedChordTimeline = (
 		(total, section) => total + section.chords.length,
 		0
 	);
-	if (totalChordCount === 0) return { chords: [], sections: [] };
+	if (totalChordCount === 0) return EMPTY_TIMELINE;
 
-	const fractionAt = (chordIndex: number): number =>
-		chordIndex / totalChordCount;
 	const offsets = sectionChordOffsets(sections);
+	const spanOf = (startIndex: number, length: number): FractionSpan => ({
+		startFraction: startIndex / totalChordCount,
+		endFraction: (startIndex + length) / totalChordCount
+	});
 
 	return {
 		chords: sections.flatMap((section, sectionIndex) =>
-			section.chords.map((chord, chordIndex) => {
-				const songChordIndex = offsets[sectionIndex] + chordIndex;
-				return {
-					key: `${section.id}-${chordIndex}`,
-					name: chord.name,
-					roman: chord.roman,
-					startFraction: fractionAt(songChordIndex),
-					endFraction: fractionAt(songChordIndex + 1)
-				};
-			})
+			section.chords.map((chord, chordIndex) => ({
+				key: `${section.id}-${chordIndex}`,
+				name: chord.name,
+				roman: chord.roman,
+				palette: groupContaining(section.groups, chordIndex)?.palette ?? null,
+				...spanOf(offsets[sectionIndex] + chordIndex, 1)
+			}))
+		),
+		groups: sections.flatMap((section, sectionIndex) =>
+			section.groups.map((group) => ({
+				key: `${section.id}-group-${group.startIndex}`,
+				palette: group.palette,
+				chordProgression: group.chordProgression,
+				isStrictSubset: group.isStrictSubset,
+				...spanOf(offsets[sectionIndex] + group.startIndex, group.length)
+			}))
 		),
 		sections: sections.map((section, sectionIndex) => ({
 			key: section.id,
 			name: section.name,
-			startFraction: fractionAt(offsets[sectionIndex]),
-			endFraction: fractionAt(offsets[sectionIndex] + section.chords.length)
+			...spanOf(offsets[sectionIndex], section.chords.length)
 		}))
 	};
 };
 
-export const isActiveAt = (
-	span: { startFraction: number; endFraction: number },
-	progressFraction: number
-): boolean =>
+export const isActiveAt = (span: FractionSpan, progressFraction: number): boolean =>
 	progressFraction >= span.startFraction && progressFraction < span.endFraction;
 
 export const progressFractionOf = (
