@@ -14,6 +14,12 @@
 	} from "../harmony-map/embedding/vectors/constants.js";
 	import EmbeddingView from "../harmony-map/views/EmbeddingView.svelte";
 	import { computeSongHomogeneity } from "../shared/progressionHomogeneity.js";
+	import { currentSearchParams } from "../shared/currentSearchParams.js";
+	import {
+		MAP_MODES,
+		readMapModeFromUrl,
+		replaceMapModeInUrl
+	} from "./embeddingMapModeUrlState.js";
 
 	// This page is locked to one configuration so the only variable is UMAP's
 	// minimum distance. Every other setting is shown read-only at the top.
@@ -45,11 +51,7 @@
 	// named after that progression.
 	const CLUSTER_MIN_PROGRESSION_SHARE = 0.25;
 
-	const MAP_MODES = [
-		{ id: "scatter", label: "full map" },
-		{ id: "hex", label: "hex" }
-	] as const;
-	let mapMode = $state<"scatter" | "hex">("scatter");
+	const mapMode = $derived(readMapModeFromUrl(currentSearchParams()));
 
 	// UMAP minimum distance. Lower than the harmony map's default so clusters
 	// are tight and well separated. Change it here to try other values.
@@ -142,7 +144,7 @@
 						aria-checked={mapMode === mode.id}
 						class="map-mode-button"
 						class:map-mode-button-active={mapMode === mode.id}
-						onclick={() => (mapMode = mode.id)}
+						onclick={() => replaceMapModeInUrl(mode.id)}
 					>
 						{mode.label}
 					</button>
