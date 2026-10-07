@@ -1,9 +1,10 @@
 declare module "$data/copy.json" {
 	const copy: {
 		meta: { title: string; description: string };
-		body: {
-			section: string;
-			content: { type: string; value: unknown }[];
+		hed: string;
+		byline: string;
+		slides: {
+			text: { type: string; value: string }[];
 		}[];
 	};
 	export default copy;

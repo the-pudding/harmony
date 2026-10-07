@@ -1,35 +1,50 @@
 {
-	"meta": {
-		"title": "Title TK",
-		"description": "Description tk."
-	},
-	"body": [
-		{
-			"section": "intro",
-			"content": [
-				{
-					"type": "h4",
-					"value": "An h4 element with no attributes"
-				},
-				{
-					"type": "text",
-					"value": "Some random text here, followed by an img tag."
-				},
-				{
-					"type": "img",
-					"value": {
-						"src": "../assets/demo/test.jpg",
-						"alt": "A cat"
-					}
-				},
-				{
-					"type": "Test",
-					"value": {
-						"label": "I’m a custom component!",
-						"value": "50"
-					}
-				}
-			]
-		}
-	]
+  "meta": {
+    "title": "Tk",
+    "description": "Tk"
+  },
+  "hed": "Mapping every pop hit’s chords",
+  "byline": "By <a href=https://pudding.cool/author/michelle-pera-mcghee/ target=_blank>Michelle Pera-McGhee</a> and <a href=https://pudding.cool/author/david-mora/ target=_blank>David Mora</a>",
+  "slides": [
+    {
+      "text": [
+        {
+          "type": "text",
+          "value": "In 2009, the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of pop songs – from Journey’s “Don’t Stop Believing” to Beyoncé’s “If I Were A Boy” – are built off of the same 4 chords."
+        }
+      ]
+    },
+    {
+      "text": [
+        {
+          "type": "text",
+          "value": "People cite the video as proof that pop is formulaic and all sounds the same. The sheer volume of songs makes a compelling case."
+        }
+      ]
+    },
+    {
+      "text": [
+        {
+          "type": "text",
+          "value": "But is it true?"
+        },
+        {
+          "type": "text",
+          "value": "Is pop music really:"
+        },
+        {
+          "type": "text",
+          "value": "built on a single 4-chord progression"
+        },
+        {
+          "type": "text",
+          "value": "looped the entire song"
+        },
+        {
+          "type": "text",
+          "value": "and recycled decade after decade?"
+        }
+      ]
+    }
+  ]
 }

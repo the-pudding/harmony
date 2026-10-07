@@ -21,7 +21,7 @@
 	--z-modal: 1000;
 
 	/* presets (used in reset.css) */
-	--font-body: var(--font-serif);
+	--font-body: var(--font-sans);
 	--font-form: var(--font-sans);
 
 	--radius-xs: 0.125rem;
@@ -29,7 +29,9 @@
 	--radius-md: 0.5rem;
 	--radius-lg: 1rem;
 
-	--color-bg: var(--color-white);
+	--header-height: 10rem;
+
+	--color-bg: #FFFEFC;
 	--color-fg: var(--color-gray-900);
 	--color-fg-light: var(--color-gray-500);
 	--color-primary: var(--color-black);

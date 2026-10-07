@@ -1,48 +1,68 @@
 <script lang="ts">
-	import ChevronLeft from "lucide-svelte/icons/chevron-left";
-	import ChevronRight from "lucide-svelte/icons/chevron-right";
-	import { createEventDispatcher } from "svelte";
+	import ChevronLeft from "@lucide/svelte/icons/chevron-left";
+	import ChevronRight from "@lucide/svelte/icons/chevron-right";
 
-	export let debug = false;
-	export let enableKeyboard = false;
-	export let full = false;
-	export let showArrows = false; // boolean or array of directions
-	export let disable = [];
-	export let directions = ["left", "right"];
-	export let size = "64px";
-	export let arrowSize = "48px";
-	export let arrowStroke = "#000";
-	export let arrowStrokeWidth = "2";
-	export let arrowPosition = "center"; // start, center, end
+	type Direction = "left" | "right" | "up" | "down";
 
-	const dispatch = createEventDispatcher();
-	let innerHeight;
+	interface Props {
+		debug?: boolean;
+		enableKeyboard?: boolean;
+		full?: boolean;
+		showArrows?: boolean | Direction[];
+		disable?: Direction[];
+		directions?: Direction[];
+		size?: string | string[];
+		arrowSize?: string;
+		arrowStroke?: string;
+		arrowStrokeWidth?: string;
+		arrowPosition?: "start" | "center" | "end";
+		ontap?: (dir: Direction) => void;
+	}
 
-	$: getW = (dir) =>
+	let {
+		debug = false,
+		enableKeyboard = false,
+		full = false,
+		showArrows = false, // boolean or array of directions
+		disable = [],
+		directions = ["left", "right"],
+		size = "64px",
+		arrowSize = "48px",
+		arrowStroke = "#000",
+		arrowStrokeWidth = "2",
+		arrowPosition = "center", // start, center, end
+		ontap
+	}: Props = $props();
+
+	let innerHeight = $state<number>();
+
+	const getW = (dir: Direction) =>
 		Array.isArray(size) ? size[directions.indexOf(dir)] : full ? "100%" : size;
-	$: getH = (dir) =>
+	const getH = (dir: Direction) =>
 		["up", "down"].includes(dir) ? size : full ? "100%" : size;
 
-	$: onKeyDown = (e) => {
-		const dir = e.key.replace("Arrow", "").toLowerCase();
+	const onKeyDown = (e: KeyboardEvent) => {
+		const dir = e.key.replace("Arrow", "").toLowerCase() as Direction;
 		const hasDir = directions.includes(dir);
 		if (enableKeyboard && hasDir) {
 			e.preventDefault();
-			dispatch("tap", dir);
+			ontap?.(dir);
 		}
 	};
 
-	$: visibleArrows = directions.filter((d) =>
-		typeof showArrows === "boolean" ? showArrows : showArrows.includes(d)
+	let visibleArrows = $derived(
+		directions.filter((d) =>
+			typeof showArrows === "boolean" ? showArrows : showArrows.includes(d)
+		)
 	);
 </script>
 
-<svelte:window on:keydown={onKeyDown} bind:innerHeight />
+<svelte:window onkeydown={onKeyDown} bind:innerHeight />
 
 <section class:debug style="height: {innerHeight}px;">
 	{#each directions as dir}
 		<button
-			on:click={dispatch("tap", dir)}
+			onclick={() => ontap?.(dir)}
 			style="width: {getW(dir)}; height: {getH(dir)};"
 			aria-label={dir}
 			class="{dir} {arrowPosition}"
@@ -77,7 +97,7 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
-		z-index: var(--z-overlay);
+		z-index: var(--z-base);
 		pointer-events: none;
 	}
 
@@ -98,9 +118,9 @@
 		cursor: not-allowed;
 	}
 
-	button:hover {
+	/* button:hover {
 		background-color: rgba(255, 255, 255, 0.2);
-	}
+	} */
 
 	.left {
 		left: 0;
