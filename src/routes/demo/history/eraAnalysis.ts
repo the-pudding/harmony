@@ -2,7 +2,9 @@ import type { GroupedSong } from "../../../data/songBrowser.js";
 import { parseRomanToken } from "../../../chord-processing/romanNumerals.js";
 import type { SongCoverageEntry } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 import { decadeOf } from "./decadeSignatures.js";
+import { toCalendarYear } from "../../../data/songYear.js";
 
+// Also applied per calendar year by computeProgressionYearHistories.
 const MIN_DECADE_SONG_COUNT = 15;
 
 export type EraDecadeRow = {
@@ -90,4 +92,52 @@ export const computeNamedProgressionEraHistory = (
 				}
 			];
 		});
+};
+
+export type EraYearRow = {
+	year: number;
+	songCount: number;
+	matchedPercent: number;
+};
+
+// % of each calendar year's songs matching each of many individual
+// progressions, in one pass over the corpus — one series per name, each over
+// the same set of qualifying years (0% where it never appears).
+export const computeProgressionYearHistories = (
+	songCoverages: readonly SongCoverageEntry[],
+	songByKey: ReadonlyMap<string, GroupedSong>,
+	progressionNames: readonly string[]
+): Map<string, EraYearRow[]> => {
+	const wanted = new Set(progressionNames);
+	const songCountByYear = new Map<number, number>();
+	const matchedCountByName = new Map<string, Map<number, number>>(
+		progressionNames.map((name) => [name, new Map()])
+	);
+
+	for (const entry of songCoverages) {
+		const song = songByKey.get(entry.songKey);
+		if (!song || song.year === undefined) continue;
+		const year = toCalendarYear(song.year);
+		songCountByYear.set(year, (songCountByYear.get(year) ?? 0) + 1);
+		for (const name of new Set(entry.matchingProgressions)) {
+			if (!wanted.has(name)) continue;
+			const byYear = matchedCountByName.get(name)!;
+			byYear.set(year, (byYear.get(year) ?? 0) + 1);
+		}
+	}
+
+	const years = [...songCountByYear.entries()]
+		.filter(([, songCount]) => songCount >= MIN_DECADE_SONG_COUNT)
+		.sort(([a], [b]) => a - b);
+
+	return new Map(
+		[...matchedCountByName.entries()].map(([name, byYear]) => [
+			name,
+			years.map(([year, songCount]) => ({
+				year,
+				songCount,
+				matchedPercent: ((byYear.get(year) ?? 0) / songCount) * 100
+			}))
+		])
+	);
 };

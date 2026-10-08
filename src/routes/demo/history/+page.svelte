@@ -17,9 +17,17 @@
 	} from "./complexityAnalysis.js";
 	import {
 		computeBluesEraHistory,
-		computeNamedProgressionEraHistory
+		computeNamedProgressionEraHistory,
+		computeProgressionYearHistories
 	} from "./eraAnalysis.js";
-	import { allProgressionGroups } from "$data/core-progressions.js";
+	import {
+		allProgressionGroups,
+		colorForProgressionGroupName
+	} from "$data/core-progressions.js";
+	import { progressionGroupNameByProgressionName } from "$data/core-progressions.util.js";
+	import ProgressionSmallMultiples, {
+		type ProgressionMultiple
+	} from "./ProgressionSmallMultiples.svelte";
 	import DecadeLineChart, { type DecadeSeries } from "./DecadeLineChart.svelte";
 	import DecadeQuadrantChart from "./DecadeQuadrantChart.svelte";
 
@@ -74,6 +82,26 @@
 				)
 			: []
 	);
+
+	// One "% of songs per year" panel per ranked progression, in table
+	// order, colored by its progression group.
+	const topProgressionMultiples = $derived.by((): ProgressionMultiple[] => {
+		if (!coverage.allSongsCoverageResult || topProgressions.length === 0) return [];
+		const histories = computeProgressionYearHistories(
+			coverage.allSongsCoverageResult.songCoverages,
+			songByKey,
+			topProgressions.map((row) => row.name)
+		);
+		return topProgressions.map((row, i) => ({
+			rank: i + 1,
+			name: row.name,
+			chordProgression: row.chordProgression,
+			color: colorForProgressionGroupName(
+				progressionGroupNameByProgressionName.get(row.name) ?? null
+			),
+			rows: histories.get(row.name) ?? []
+		}));
+	});
 
 	// Doesn't need core-progression matching at all — just each section's own
 	// roman-numeral tokens — so it's available as soon as songs load, without
@@ -427,6 +455,18 @@
 						</tbody>
 					</table>
 				</div>
+			{/if}
+
+			{#if topProgressionMultiples.length > 0}
+				<h3 class="subsection-title">Prevalence over time</h3>
+				<p class="subsection-description">
+					% of each year's songs that contain the progression at all (plain
+					song presence, not the table's density ranking), in table order.
+					Every panel shares the same y-axis max so heights compare
+					directly. Years have roughly 50–175 songs each, so expect some
+					year-to-year jitter; 1958 is the thinnest.
+				</p>
+				<ProgressionSmallMultiples multiples={topProgressionMultiples} />
 			{/if}
 		</section>
 

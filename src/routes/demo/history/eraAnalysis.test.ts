@@ -6,7 +6,8 @@ import type {
 } from "../define-chord-progression/compute-coverage-of-all-songs/index.js";
 import {
 	computeBluesEraHistory,
-	computeNamedProgressionEraHistory
+	computeNamedProgressionEraHistory,
+	computeProgressionYearHistories
 } from "./eraAnalysis.js";
 
 const makeSection = (romanTokens: string[]): SongSection => ({
@@ -179,5 +180,58 @@ describe("computeNamedProgressionEraHistory", () => {
 		expect(
 			computeNamedProgressionEraHistory(entries, songByKey, new Set(["doo wop"]))
 		).toHaveLength(0);
+	});
+});
+
+describe("computeProgressionYearHistories", () => {
+	it("gives each name its own series over the same qualifying years", () => {
+		const songByKey = new Map<string, GroupedSong>();
+		const entries: SongCoverageEntry[] = [];
+		for (let i = 0; i < 20; i++) {
+			const songKey = `y1959-${i}`;
+			songByKey.set(songKey, makeSong(songKey, 1959.4, []));
+			entries.push(makeCoverageEntry(songKey, i < 10 ? ["doo wop"] : []));
+		}
+		for (let i = 0; i < 20; i++) {
+			const songKey = `y2007-${i}`;
+			songByKey.set(songKey, makeSong(songKey, 2007, []));
+			entries.push(makeCoverageEntry(songKey, i < 5 ? ["axis of awesome"] : []));
+		}
+
+		const histories = computeProgressionYearHistories(entries, songByKey, [
+			"doo wop",
+			"axis of awesome"
+		]);
+		expect(histories.get("doo wop")!.map((row) => row.year)).toEqual([1959, 2007]);
+		expect(histories.get("doo wop")!.map((row) => row.matchedPercent)).toEqual([
+			50, 0
+		]);
+		expect(
+			histories.get("axis of awesome")!.map((row) => row.matchedPercent)
+		).toEqual([0, 25]);
+	});
+
+	it("counts a song once even if a name repeats in its matches", () => {
+		const songByKey = new Map<string, GroupedSong>();
+		const entries: SongCoverageEntry[] = [];
+		for (let i = 0; i < 20; i++) {
+			const songKey = `s-${i}`;
+			songByKey.set(songKey, makeSong(songKey, 1985, []));
+			entries.push(makeCoverageEntry(songKey, i === 0 ? ["doo wop", "doo wop"] : []));
+		}
+		const histories = computeProgressionYearHistories(entries, songByKey, ["doo wop"]);
+		expect(histories.get("doo wop")![0].matchedPercent).toBeCloseTo(5);
+	});
+
+	it("drops years below the minimum song-count threshold", () => {
+		const songByKey = new Map<string, GroupedSong>([
+			["only-one", makeSong("only-one", 1975, [])]
+		]);
+		const histories = computeProgressionYearHistories(
+			[makeCoverageEntry("only-one", ["doo wop"])],
+			songByKey,
+			["doo wop"]
+		);
+		expect(histories.get("doo wop")).toEqual([]);
 	});
 });
