@@ -1,4 +1,4 @@
-<script lang="ts">
+<script>
 	import { setContext } from "svelte";
 	import { browser } from "$app/environment";
 	import Meta from "$components/Meta.svelte";

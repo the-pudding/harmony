@@ -51,6 +51,7 @@
 	},
 	"browserslist": "> 0.5%, last 4 versions, not ie <= 11, not ie_mob <= 11",
 	"dependencies": {
+		"lodash": "^4.18.1",
 		"ml-pca": "^4.1.1",
 		"three": "^0.185.1",
 		"umap-js": "^1.4.0"

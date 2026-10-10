@@ -16,7 +16,7 @@
 	header {
 		position: relative;
 		z-index: var(--z-top);
-		height: var(--header-height);
+		height: 10rem;
 	}
 
 	.wordmark {

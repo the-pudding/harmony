@@ -29,14 +29,14 @@
 	--radius-md: 0.5rem;
 	--radius-lg: 1rem;
 
-	--header-height: 10rem;
+	--col-width: 550px;
 
 	--color-bg: #FFFEFC;
 	--color-fg: var(--color-gray-900);
 	--color-fg-light: var(--color-gray-500);
 	--color-primary: var(--color-black);
 	--color-link: var(--color-black);
-	--color-link-hover: var(--color-black);
+	--color-link-hover: var(--color-gray-500);
 	--color-focus: var(--color-gray-500);
 	--color-mark: var(--color-yellow);
 	--color-selection: var(--color-gray-300);
@@ -94,4 +94,9 @@ svg {
 	display: block;
 	width: 100%;
 	height: auto;
+}
+
+a:hover {
+	color: var(--color-link-hover);
+	text-decoration-color: var(--color-link-hover);
 }

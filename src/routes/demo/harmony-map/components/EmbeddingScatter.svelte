@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onDestroy, untrack } from "svelte";
+	import { fade } from "svelte/transition";
 	import {
 		easeCubicInOut,
 		interpolateLab,
@@ -148,6 +149,22 @@
 		// Outline labels by cluster hash. When omitted, names come from the
 		// named-clusters file.
 		clusterNames?: ReadonlyMap<string, string> | null;
+		// User interaction. zoomable = wheel, pinch and double-click zoom;
+		// pannable = drag to move; interactive = hover tooltips, click to select
+		// and click-to-zoom on hexes. All default on. Scripted focus
+		// (focusSongKey / focusClusterName) still works with them off.
+		zoomable?: boolean;
+		pannable?: boolean;
+		interactive?: boolean;
+		// Hex-mode region labels drawn all at once on the map.
+		showLabels?: boolean;
+		// Hex-mode region labels that fade in one at a time at random spots,
+		// a few seconds apart. Use with showLabels off.
+		showRotatingLabels?: boolean;
+		// Hex-mode colors for the surface the map sits on. "light" uses
+		// lighter grays and dark label text; the canvas itself is always
+		// transparent, so the page provides the background.
+		theme?: "dark" | "light";
 	};
 
 	const {
@@ -176,7 +193,13 @@
 		renderMode = "dots",
 		progressionSharesBySongKey = null,
 		clusterRegionBySongKey = null,
-		clusterNames = null
+		clusterNames = null,
+		zoomable = true,
+		pannable = true,
+		interactive = true,
+		showLabels = true,
+		showRotatingLabels = false,
+		theme = "dark"
 	}: Props = $props();
 
 	// Hex mode: hex radius on screen at zoom 1, the zoom where hexes give way
@@ -217,17 +240,32 @@
 			["#d55181", "#e66767"]
 		].map(([a, b]) => (a < b ? `${a}|${b}` : `${b}|${a}`))
 	);
-	// What a hex fades toward when it's only partly its main progression,
-	// and the fill for songs or hexes with no matched progression.
-	const FADED_REGION_COLOR = "#2a2a2e";
-	const UNMATCHED_REGION_COLOR = "#27272a";
+	// Per theme: what a hex fades toward when it's only partly its main
+	// progression (faded), the fill for songs or hexes with no matched
+	// progression (unmatched), hexes and songs outside a clearly defined
+	// cluster (ambiguous), and region label text with its halo.
+	const HEX_THEME_COLORS = {
+		dark: {
+			faded: "#2a2a2e",
+			unmatched: "#27272a",
+			ambiguous: "#3f3f46",
+			labelText: "#f4f4f5",
+			labelHalo: "#09090b"
+		},
+		light: {
+			faded: "#ececee",
+			unmatched: "#f4f4f5",
+			ambiguous: "#e4e4e7",
+			labelText: "#18181b",
+			labelHalo: "#ffffff"
+		}
+	} as const;
+	const hexColors = $derived(HEX_THEME_COLORS[theme]);
 	// Faintest a hex can get, so even a mixed hex keeps a hint of its hue.
 	const MIN_REGION_TINT = 0.2;
 	// Hexes are drawn slightly oversized so neighbors overlap and touch with
 	// no seams or gaps between them.
 	const HEX_OVERLAP_PX = 0.5;
-	// Hexes and songs that don't belong to a clearly defined cluster.
-	const AMBIGUOUS_REGION_COLOR = "#3f3f46";
 	// A hex takes a cluster's color only when that cluster holds at least
 	// this share of its songs; otherwise it's unclustered or split, and gray.
 	const MIN_CLUSTER_SHARE_OF_HEX = 0.5;
@@ -242,6 +280,16 @@
 	const HEX_LABEL_REPEAT_DISTANCE_PX = 150;
 	const HEX_CLICK_ZOOM_FACTOR = 2.5;
 	const HEX_CLICK_ZOOM_MS = 450;
+	// Rotating labels: ROTATING_LABEL_COUNT slots, each showing a label for
+	// about ROTATING_LABEL_HOLD_MS (± jitter), fading it out and, after a
+	// short gap, fading in a different one. Slots start together but swap at
+	// staggered times, so 4–5 labels are always up and they change one by one.
+	const ROTATING_LABEL_COUNT = 5;
+	const ROTATING_LABEL_HOLD_MS = 6000;
+	const ROTATING_LABEL_HOLD_JITTER_MS = 1500;
+	const ROTATING_LABEL_GAP_MS = 400;
+	const ROTATING_LABEL_START_STAGGER_MS = 250;
+	const ROTATING_LABEL_FADE_MS = 800;
 
 	// Density clustering is only meaningful over layouts UMAP actually produced
 	// (see UMAP_DRIVEN_METHODS) — PCA/feature-axis positions are linear
@@ -328,6 +376,12 @@
 	let hoveredHexRegion = $state<ClusterRegion | null>(null);
 	let hoveredHexSummary = $state<HexSummary | null>(null);
 	let hoveredHexIsAmbiguous = $state(false);
+
+	// Labels that fit on the current hex frame without overlapping, in base
+	// (unzoomed) pixels. Rotating labels are picked from these.
+	type LabelSpot = { text: string; baseX: number; baseY: number };
+	let labelSpots = $state<LabelSpot[]>([]);
+	let rotatingLabels = $state<(LabelSpot & { id: number })[]>([]);
 
 	const resolvedClusterNames = $derived(
 		clusterNames ?? resolveClusterNames(clusters, getNamedClusters())
@@ -429,7 +483,7 @@
 	});
 
 	// share 1 → the progression's full color; lower shares fade toward
-	// FADED_REGION_COLOR. gradientStrength scales how much fading is applied,
+	// the theme's faded color. gradientStrength scales how much fading is applied,
 	// so zoomed-out hexes read as solid regions.
 	const regionFill = (
 		name: string | null,
@@ -437,11 +491,11 @@
 		gradientStrength: number
 	): string => {
 		const color = name === null ? null : regionColorByName.get(name);
-		if (!color) return UNMATCHED_REGION_COLOR;
+		if (!color) return hexColors.unmatched;
 		const strength = 1 - gradientStrength * (1 - Math.min(1, Math.max(0, share)));
 		// Lab, not HCL: blending toward a near-gray in HCL rotates the hue
 		// (red drifts to magenta), which makes one cluster look multicolored.
-		return interpolateLab(FADED_REGION_COLOR, color)(
+		return interpolateLab(hexColors.faded, color)(
 			MIN_REGION_TINT + (1 - MIN_REGION_TINT) * strength
 		);
 	};
@@ -450,7 +504,7 @@
 	// the song is that cluster's progression; gray outside clear clusters.
 	const songRegionFill = (songKey: string, gradientStrength: number): string => {
 		const region = clusterRegionBySongKey?.get(songKey);
-		if (!region) return AMBIGUOUS_REGION_COLOR;
+		if (!region) return hexColors.ambiguous;
 		return regionFill(
 			region.name,
 			averageProgressionShare(
@@ -686,6 +740,7 @@
 			return;
 		}
 		hexFrame = null;
+		if (untrack(() => labelSpots.length) > 0) labelSpots = [];
 		const dotGradient = hexMode
 			? gradientStrengthForZoom(transform.k, HEX_ZOOM)
 			: 0;
@@ -811,7 +866,7 @@
 			traceHex(context, centerX, centerY, drawRadius);
 			context.fillStyle =
 				region === null
-					? AMBIGUOUS_REGION_COLOR
+					? hexColors.ambiguous
 					: regionFill(
 							region.name,
 							averageProgressionShare(
@@ -834,6 +889,11 @@
 
 		// One label per connected region, biggest first, skipping any that
 		// would collide with a label already placed or fall off screen.
+		if (!showLabels && !showRotatingLabels) {
+			if (untrack(() => labelSpots.length) > 0) labelSpots = [];
+			return;
+		}
+		const spots: LabelSpot[] = [];
 		context.font = HEX_LABEL_FONT;
 		context.textAlign = "center";
 		context.textBaseline = "middle";
@@ -869,9 +929,9 @@
 			HEX_LABEL_MIN_HEXES
 		)) {
 			if (labeledRegionIds.has(region.name)) continue;
+			const labelText = nameByRegionId.get(region.name) ?? region.name;
 			const x = transform.applyX(region.x);
 			const y = transform.applyY(region.y);
-			const labelText = nameByRegionId.get(region.name) ?? region.name;
 			if (
 				placed.some(
 					(other) =>
@@ -907,12 +967,15 @@
 			}
 			placed.push(box);
 			labeledRegionIds.add(region.name);
-			context.strokeStyle = "#09090b";
+			spots.push({ text: labelText, baseX: region.x, baseY: region.y });
+			if (!showLabels) continue;
+			context.strokeStyle = hexColors.labelHalo;
 			context.lineWidth = 3;
 			context.strokeText(labelText, x, y);
-			context.fillStyle = "#f4f4f5";
+			context.fillStyle = hexColors.labelText;
 			context.fillText(labelText, x, y);
 		}
+		labelSpots = spots;
 	};
 
 	const hexKeyAtAnchor = (anchor: HoverCardAnchor): string | null => {
@@ -1073,8 +1136,21 @@
 	$effect(() => {
 		const canvas = canvasEl;
 		if (!canvas) return;
+		const canZoom = zoomable;
+		const canPan = pannable;
 		zoomBehavior = zoom<HTMLCanvasElement, unknown>()
 			.scaleExtent([MIN_ZOOM, MAX_ZOOM])
+			// d3's default filter (no ctrl-drag, primary button only), then
+			// wheel / double-click / pinch need zoomable and drags need pannable.
+			.filter((event) => {
+				if (event.ctrlKey && event.type !== "wheel") return false;
+				if (event.button) return false;
+				if (event.type === "wheel" || event.type === "dblclick") return canZoom;
+				if (event.type === "touchstart" && event.touches.length > 1) {
+					return canZoom;
+				}
+				return canPan;
+			})
 			.on("start", () => {
 				delayedTooltip.startDrag();
 			})
@@ -1208,7 +1284,67 @@
 		void regionColorByName;
 		void hoveredHex;
 		void clusterRegionBySongKey;
+		void hexColors;
+		void showLabels;
+		void showRotatingLabels;
 		draw();
+	});
+
+	// Runs ROTATING_LABEL_COUNT independent slots (see the constants above).
+	// Spots are read when each timer fires, so this only restarts when the
+	// prop changes.
+	$effect(() => {
+		if (!showRotatingLabels) {
+			rotatingLabels = [];
+			return;
+		}
+		let nextId = 0;
+		const timers = new Set<ReturnType<typeof setTimeout>>();
+		const after = (ms: number, run: () => void) => {
+			const timer = setTimeout(() => {
+				timers.delete(timer);
+				run();
+			}, ms);
+			timers.add(timer);
+		};
+		const jitteredHold = () =>
+			ROTATING_LABEL_HOLD_MS +
+			(Math.random() * 2 - 1) * ROTATING_LABEL_HOLD_JITTER_MS;
+
+		// Shows a random label that isn't already up, holds it, removes it
+		// (its fade-out plays), then refills the slot. Retries shortly when
+		// nothing is available yet, e.g. while the map is still loading.
+		const runSlot = (holdMs: number) => {
+			const showing = new Set(rotatingLabels.map((label) => label.text));
+			const options = labelSpots.filter((spot) => !showing.has(spot.text));
+			if (options.length === 0) {
+				after(ROTATING_LABEL_FADE_MS, () => runSlot(holdMs));
+				return;
+			}
+			const label = {
+				...options[Math.floor(Math.random() * options.length)],
+				id: nextId++
+			};
+			rotatingLabels = [...rotatingLabels, label];
+			after(ROTATING_LABEL_FADE_MS + holdMs, () => {
+				rotatingLabels = rotatingLabels.filter(({ id }) => id !== label.id);
+				after(ROTATING_LABEL_FADE_MS + ROTATING_LABEL_GAP_MS, () =>
+					runSlot(jitteredHold())
+				);
+			});
+		};
+
+		// First holds are spread evenly across one hold period so the slots
+		// swap at different times from the start.
+		for (let slot = 0; slot < ROTATING_LABEL_COUNT; slot++) {
+			after(slot * ROTATING_LABEL_START_STAGGER_MS, () =>
+				runSlot((ROTATING_LABEL_HOLD_MS * (slot + 1)) / ROTATING_LABEL_COUNT)
+			);
+		}
+
+		return () => {
+			for (const timer of timers) clearTimeout(timer);
+		};
 	});
 
 	const tooltipSong = $derived(
@@ -1232,25 +1368,33 @@
 	bind:this={containerEl}
 	bind:clientWidth={width}
 	bind:clientHeight={height}
-	role="button"
-	tabindex="0"
+	{...interactive ? { role: "button", tabindex: 0 } : { role: "img" }}
 	aria-label="Song embedding scatter plot"
-	onmousemove={handlePointerMove}
-	onpointerdown={(event) => clickGuard.onPointerDown(event)}
-	onpointerup={() => clickGuard.onPointerUp()}
-	onpointercancel={() => clickGuard.onPointerUp()}
-	onmouseleave={handlePointerLeave}
-	onclick={handleClick}
-	onkeydown={(event) => {
-		if (event.key === "Enter" || event.key === " ") {
-			if (hoveredSongKey !== null) {
-				onSelect(hoveredSongKey === selectedSongKey ? null : hoveredSongKey);
+	onmousemove={interactive ? handlePointerMove : undefined}
+	onpointerdown={interactive
+		? (event) => clickGuard.onPointerDown(event)
+		: undefined}
+	onpointerup={interactive ? () => clickGuard.onPointerUp() : undefined}
+	onpointercancel={interactive ? () => clickGuard.onPointerUp() : undefined}
+	onmouseleave={interactive ? handlePointerLeave : undefined}
+	onclick={interactive ? handleClick : undefined}
+	onkeydown={interactive
+		? (event) => {
+				if (event.key === "Enter" || event.key === " ") {
+					if (hoveredSongKey !== null) {
+						onSelect(hoveredSongKey === selectedSongKey ? null : hoveredSongKey);
+					}
+				}
+				if (event.key === "Escape") onSelect(null);
 			}
-		}
-		if (event.key === "Escape") onSelect(null);
-	}}
+		: undefined}
 >
-	<canvas bind:this={canvasEl} style:width="{width}px" style:height="{height}px"
+	<canvas
+		bind:this={canvasEl}
+		class:inert={!interactive && !zoomable && !pannable}
+		class:grabbable={!interactive && pannable}
+		style:width="{width}px"
+		style:height="{height}px"
 	></canvas>
 
 	{#if hoveredHex && hoveredHexSummary}
@@ -1276,7 +1420,7 @@
 					<span
 						class="hex-tooltip-swatch"
 						style="background: {regionColorByName.get(entry.name) ??
-							UNMATCHED_REGION_COLOR};"
+							hexColors.unmatched};"
 					></span>
 					<span class="hex-tooltip-name">{entry.name}</span>
 					<span class="hex-tooltip-share">{Math.round(entry.share * 100)}%</span>
@@ -1284,6 +1428,19 @@
 			{/each}
 		</div>
 	{/if}
+
+	{#each rotatingLabels as label (label.id)}
+		<span
+			class="rotating-label"
+			style:left="{transform.applyX(label.baseX)}px"
+			style:top="{transform.applyY(label.baseY)}px"
+			style:--label-text={hexColors.labelText}
+			style:--label-halo={hexColors.labelHalo}
+			transition:fade={{ duration: ROTATING_LABEL_FADE_MS }}
+		>
+			{label.text}
+		</span>
+	{/each}
 
 	{#if tooltipSong && tooltipVisible && delayedTooltip.tooltipAnchor}
 		<div class="tooltip" style={tooltipStyle}>
@@ -1309,6 +1466,15 @@
 		cursor: crosshair;
 	}
 
+	canvas.grabbable {
+		cursor: grab;
+	}
+
+	canvas.inert {
+		cursor: default;
+		pointer-events: none;
+	}
+
 	.tooltip {
 		position: absolute;
 		pointer-events: none;
@@ -1322,6 +1488,25 @@
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.75rem;
 		color: #f4f4f5;
+	}
+
+	/* Matches HEX_LABEL_FONT and the canvas labels' halo. */
+	.rotating-label {
+		position: absolute;
+		transform: translate(-50%, -50%);
+		pointer-events: none;
+		white-space: nowrap;
+		font: 500 10px "JetBrains Mono", ui-monospace, monospace;
+		color: var(--label-text);
+		text-shadow:
+			-1.5px 0 var(--label-halo),
+			1.5px 0 var(--label-halo),
+			0 -1.5px var(--label-halo),
+			0 1.5px var(--label-halo),
+			-1px -1px var(--label-halo),
+			1px 1px var(--label-halo),
+			-1px 1px var(--label-halo),
+			1px -1px var(--label-halo);
 	}
 
 	.hex-tooltip-title {

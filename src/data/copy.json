@@ -1,10 +1,8 @@
 {
   "meta": {
-    "title": "Tk",
+    "title": "Mapping every pop hit’s chords",
     "description": "Tk"
   },
-  "hed": "Mapping every pop hit’s chords",
-  "byline": "By <a href=https://pudding.cool/author/michelle-pera-mcghee/ target=_blank>Michelle Pera-McGhee</a> and <a href=https://pudding.cool/author/david-mora/ target=_blank>David Mora</a>",
   "slides": [
     {
       "text": [
@@ -12,15 +10,24 @@
           "type": "text",
           "value": "In 2009, the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of pop songs – from Journey’s “Don’t Stop Believing” to Beyoncé’s “If I Were A Boy” – are built off of the same 4 chords."
         }
-      ]
+      ],
+      "stage": {
+        "component": "video",
+        "videoId": "dead-simple",
+        "caption": "All the greatest hits from the last 40 years just use 4 chords. Same 4 chords for every song, it’s dead simple to write a pop hit."
+      }
     },
     {
       "text": [
         {
           "type": "text",
-          "value": "People cite the video as proof that pop is formulaic and all sounds the same. The sheer volume of songs makes a compelling case."
+          "value": "Chords provide the harmonic foundation for a song, so people cite this video as proof that all pop music is formulaic and sounds the same. The sheer volume of songs makes a compelling case."
         }
-      ]
+      ],
+      "stage": {
+        "component": "video",
+        "videoId": "dead-simple"
+      }
     },
     {
       "text": [
@@ -33,16 +40,14 @@
           "value": "Is pop music really:"
         },
         {
-          "type": "text",
-          "value": "built on a single 4-chord progression"
-        },
-        {
-          "type": "text",
-          "value": "looped the entire song"
-        },
-        {
-          "type": "text",
-          "value": "and recycled decade after decade?"
+          "type": "ol",
+          "value": {
+            "li": [
+              "built on a single four-chord progression 🧱",
+              "looped for the entire song 🔁",
+              "and recycled decade after decade? 🗓️"
+            ]
+          }
         }
       ]
     }

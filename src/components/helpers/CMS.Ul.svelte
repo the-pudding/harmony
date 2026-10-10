@@ -1,6 +1,5 @@
 <script lang="ts">
 	let { li } = $props();
-	$inspect(li);
 </script>
 
 <ul>
