@@ -60,6 +60,7 @@
 	function runPlayerAction(action: PlayerAction) {
 		if (action.type === "togglePlayback") togglePlayback();
 		else if (action.type === "restart") restart();
+		else if (action.type === "undo") chordTimings.undo();
 		else seekToSeconds(currentTime + action.seconds);
 	}
 
@@ -99,6 +100,7 @@
 		{zoom}
 		onZoomChange={(nextZoom) => (zoom = nextZoom)}
 		onSeek={seekTo}
+		onChordEditStart={chordTimings.beginEdit}
 		onChordMove={chordTimings.moveChord}
 	/>
 	<audio

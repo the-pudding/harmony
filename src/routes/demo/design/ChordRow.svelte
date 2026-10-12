@@ -20,6 +20,7 @@
 		progressFraction: number;
 		duration: number;
 		editable: boolean;
+		onChordEditStart: () => void;
 		onChordMove: (index: number, startFraction: number) => void;
 	};
 
@@ -29,6 +30,7 @@
 		progressFraction,
 		duration,
 		editable,
+		onChordEditStart,
 		onChordMove
 	}: Props = $props();
 
@@ -55,6 +57,7 @@
 	) {
 		if (!editable || !row) return;
 		event.currentTarget.setPointerCapture(event.pointerId);
+		onChordEditStart();
 		drag = {
 			index: chord.index,
 			pointerStartX: event.clientX,
@@ -82,6 +85,7 @@
 		const nudgeSeconds = event.shiftKey
 			? COARSE_NUDGE_SECONDS
 			: FINE_NUDGE_SECONDS;
+		onChordEditStart();
 		onChordMove(
 			chord.index,
 			chord.startFraction + (direction * nudgeSeconds) / duration

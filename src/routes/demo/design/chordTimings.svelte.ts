@@ -12,11 +12,17 @@ import {
 	progressFractionOf
 } from "./chordTimeline.js";
 import type { DesignSong } from "./designSongs.js";
+import { popUndoEntry, pushUndoEntry } from "./undoHistory.js";
 
 const JSON_INDENT = "\t";
 
 const storageKeyFor = (songKey: string): string =>
 	`design-chord-start-times:${songKey}`;
+
+const isSameStartTimes = (
+	a: ChordStartTimes | null,
+	b: ChordStartTimes | null
+): boolean => JSON.stringify(a) === JSON.stringify(b);
 
 const loadLocalStartTimes = (songKey: string): ChordStartTimes | null =>
 	storage.get<ChordStartTimes>(storageKeyFor(songKey)) ?? null;
@@ -29,9 +35,10 @@ export const createChordTimings = (
 	const storageKey = $derived(storageKeyFor(song.songKey));
 	const chordKeys = $derived(chordKeysOf(song.sections));
 
-	let localStartTimes = $state<ChordStartTimes | null>(
+	let localStartTimes = $state.raw<ChordStartTimes | null>(
 		loadLocalStartTimes(getSong().songKey)
 	);
+	let undoStack = $state.raw<(ChordStartTimes | null)[]>([]);
 
 	const duration = $derived(getDuration());
 	const editable = $derived(Number.isFinite(duration) && duration > 0);
@@ -83,7 +90,20 @@ export const createChordTimings = (
 		);
 	};
 
-	const discardLocalEdits = () => saveLocalStartTimes(null);
+	const beginEdit = () => {
+		undoStack = pushUndoEntry(undoStack, localStartTimes);
+	};
+
+	const discardLocalEdits = () => {
+		beginEdit();
+		saveLocalStartTimes(null);
+	};
+
+	const undo = () => {
+		const popped = popUndoEntry(undoStack, localStartTimes, isSameStartTimes);
+		undoStack = popped?.remaining ?? [];
+		if (popped) saveLocalStartTimes(popped.entry);
+	};
 
 	return {
 		get timeline() {
@@ -98,7 +118,9 @@ export const createChordTimings = (
 		get hasLocalEdits() {
 			return localStartTimes !== null;
 		},
+		beginEdit,
 		moveChord,
-		discardLocalEdits
+		discardLocalEdits,
+		undo
 	};
 };

@@ -21,6 +21,7 @@
 		zoom: number;
 		onZoomChange: (zoom: number) => void;
 		onSeek: (fraction: number) => void;
+		onChordEditStart: () => void;
 		onChordMove: (index: number, startFraction: number) => void;
 	};
 
@@ -33,6 +34,7 @@
 		zoom,
 		onZoomChange,
 		onSeek,
+		onChordEditStart,
 		onChordMove
 	}: Props = $props();
 
@@ -103,6 +105,7 @@
 				{progressFraction}
 				{duration}
 				{editable}
+				{onChordEditStart}
 				{onChordMove}
 			/>
 

@@ -5,7 +5,7 @@
 <aside class="shortcuts-box" aria-label="Keyboard shortcuts">
 	<span class="heading">Shortcuts</span>
 	<ul class="shortcuts">
-		{#each PLAYER_SHORTCUTS as shortcut (shortcut.key)}
+		{#each PLAYER_SHORTCUTS as shortcut (shortcut.label)}
 			<li><kbd>{shortcut.label}</kbd> {shortcut.description}</li>
 		{/each}
 	</ul>
