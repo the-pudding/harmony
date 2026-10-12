@@ -1,8 +1,7 @@
 <script lang="ts">
+	import type { ChordPalette } from "./chordPalettes.js";
 	import type { KeyTonality } from "./diatonicChords.js";
-	import {
-		type ProgressionToken
-	} from "./topProgressions.js";
+	import { type ProgressionToken } from "./topProgressions.js";
 	import { CHORD_OVERLAP_GAP, type WatercolorSettings } from "./watercolor.js";
 	import WatercolorChord from "./WatercolorChord.svelte";
 
@@ -10,9 +9,10 @@
 		tokens: ProgressionToken[];
 		tonality: KeyTonality;
 		settings: WatercolorSettings;
+		palette: ChordPalette;
 	};
 
-	let { tokens, tonality, settings }: Props = $props();
+	let { tokens, tonality, settings, palette }: Props = $props();
 
 	const chords = $derived(
 		tokens.map((token, index) => ({
@@ -27,7 +27,7 @@
 
 <div class="chords" style:--chord-gap="{CHORD_OVERLAP_GAP}px">
 	{#each chords as chord (chord.degree)}
-		<WatercolorChord {chord} {settings} />
+		<WatercolorChord {chord} {settings} {palette} />
 	{/each}
 </div>
 

@@ -13,20 +13,24 @@
 		type WatercolorSettings
 	} from "./watercolor.js";
 	import { appearanceFor } from "./chordAppearanceLookup.js";
+	import type { ChordPalette } from "./chordPalettes.js";
 
 	type Props = {
 		chord: VizChord;
 		settings: WatercolorSettings;
+		palette: ChordPalette;
 	};
 
-	let { chord, settings }: Props = $props();
+	let { chord, settings, palette }: Props = $props();
 
 	const uid = $props.id();
 	const splotchId = `splotch-${uid}`;
 	const thresholdId = `threshold-${uid}`;
 	const pencilId = `pencil-${uid}`;
 
-	const appearance = $derived(appearanceFor(chord.tonality, chord.roman));
+	const appearance = $derived(
+		appearanceFor(chord.tonality, chord.roman, palette)
+	);
 	const thresholdBlur = $derived(
 		thresholdBlurFor(settings.deviation, BLOB_AREA)
 	);
@@ -84,7 +88,11 @@
 		</filter>
 	</defs>
 	<g filter="url(#{splotchId})">
-		<path d={appearance.path} fill={appearance.colors.fill} filter="url(#{thresholdId})" />
+		<path
+			d={appearance.path}
+			fill={appearance.colors.fill}
+			filter="url(#{thresholdId})"
+		/>
 	</g>
 	<path class="pencil" d={appearance.path} filter="url(#{pencilId})" />
 	<text class="label" fill={appearance.colors.text}>{chord.roman}</text>

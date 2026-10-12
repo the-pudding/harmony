@@ -1,32 +1,36 @@
 import type { ChordShape } from "./chordShapes.js";
-import type { MajorColorQuality, MinorColorQuality } from "./chordPalettes.js";
+import {
+	majorColor,
+	minorColor,
+	type PaletteColorRef
+} from "./chordPalettes.js";
+import type { KeyTonality } from "./diatonicChords.js";
 
-type MajorChordEntry = { shape: ChordShape; color: MajorColorQuality };
-type MinorChordEntry = { shape: ChordShape; color: MinorColorQuality };
+type ChordEntry = { shape: ChordShape; color: PaletteColorRef };
 
-export type ChordAppearanceSpec = {
-	major: Record<string, MajorChordEntry>;
-	minor: Record<string, MinorChordEntry>;
-};
+export type ChordAppearanceSpec = Record<
+	KeyTonality,
+	Record<string, ChordEntry>
+>;
 
 export const CHORD_APPEARANCE: ChordAppearanceSpec = {
 	major: {
-		I: { shape: "stableTriangle", color: "home" },
-		ii: { shape: "semiStableTriangle", color: "shadowed" },
-		iii: { shape: "circleish", color: "shadowed" },
-		IV: { shape: "semiStableTriangle", color: "nearHome" },
-		V: { shape: "unstableTriangle", color: "brightFar" },
-		vi: { shape: "circleish", color: "shadowed" },
-		"vii°": { shape: "spikey", color: "tense" }
+		I: { shape: "stableTriangle", color: majorColor("home") },
+		ii: { shape: "semiStableTriangle", color: minorColor("nearHome") },
+		iii: { shape: "circleish", color: minorColor("dark") },
+		IV: { shape: "semiStableTriangle", color: majorColor("nearHome") },
+		V: { shape: "unstableTriangle", color: majorColor("brightFar") },
+		vi: { shape: "circleish", color: minorColor("home") },
+		"vii°": { shape: "spikey", color: minorColor("tense") }
 	},
 	minor: {
-		i: { shape: "stableTriangle", color: "home" },
-		"ii°": { shape: "spikey", color: "tense" },
-		III: { shape: "circleish", color: "majorButDark" },
-		iv: { shape: "semiStableTriangle", color: "nearHome" },
-		v: { shape: "unstableTriangle", color: "dark" },
-		V: { shape: "unstableTriangle", color: "dark" },
-		VI: { shape: "circleish", color: "majorButDark" },
-		VII: { shape: "semiStableTriangle", color: "majorButDark" }
+		i: { shape: "stableTriangle", color: minorColor("home") },
+		"ii°": { shape: "spikey", color: minorColor("tense") },
+		III: { shape: "circleish", color: minorColor("majorButDark") },
+		iv: { shape: "semiStableTriangle", color: minorColor("nearHome") },
+		v: { shape: "unstableTriangle", color: minorColor("dark") },
+		V: { shape: "unstableTriangle", color: minorColor("dark") },
+		VI: { shape: "circleish", color: minorColor("majorButDark") },
+		VII: { shape: "semiStableTriangle", color: minorColor("majorButDark") }
 	}
 };

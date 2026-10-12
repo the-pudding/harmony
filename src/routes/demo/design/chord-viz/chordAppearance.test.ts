@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { CHORD_APPEARANCE } from "./chordAppearance.js";
 import { appearanceFor } from "./chordAppearanceLookup.js";
-import { DEFAULT_PALETTE } from "./chordPalettes.js";
+import {
+	CHORD_PALETTES,
+	DEFAULT_PALETTE,
+	DEFAULT_PALETTE_ID,
+	colorOf,
+	paletteById
+} from "./chordPalettes.js";
 import { CHORD_SHAPE_PATHS } from "./chordShapes.js";
 import { CHORD_VIZ_ROWS } from "./diatonicChords.js";
 
@@ -22,18 +28,31 @@ describe("CHORD_APPEARANCE", () => {
 		}
 	});
 
-	it("every color quality used in major resolves in DEFAULT_PALETTE", () => {
-		for (const entry of Object.values(CHORD_APPEARANCE.major)) {
-			const color = entry.color as keyof typeof DEFAULT_PALETTE.major;
-			expect(DEFAULT_PALETTE.major[color]).toBeDefined();
+	it("every color reference resolves in every palette", () => {
+		for (const { palette } of CHORD_PALETTES) {
+			for (const entries of Object.values(CHORD_APPEARANCE)) {
+				for (const entry of Object.values(entries)) {
+					expect(colorOf(palette, entry.color)).toBeDefined();
+				}
+			}
 		}
 	});
 
-	it("every color quality used in minor resolves in DEFAULT_PALETTE", () => {
-		for (const entry of Object.values(CHORD_APPEARANCE.minor)) {
-			const color = entry.color as keyof typeof DEFAULT_PALETTE.minor;
-			expect(DEFAULT_PALETTE.minor[color]).toBeDefined();
+	it("minor chords in a major key use the minor (purple) palette family", () => {
+		const majorRow = CHORD_VIZ_ROWS.find((row) => row.tonality === "major");
+		const minorChords =
+			majorRow?.chords.filter((chord) => chord.tone === "minor") ?? [];
+		expect(minorChords.length).toBeGreaterThan(0);
+		for (const chord of minorChords) {
+			expect(CHORD_APPEARANCE.major[chord.roman].color.family).toBe("minor");
 		}
+	});
+});
+
+describe("paletteById", () => {
+	it("returns the matching palette, falling back to the first", () => {
+		expect(paletteById(DEFAULT_PALETTE_ID)).toBe(DEFAULT_PALETTE);
+		expect(paletteById("missing")).toBe(CHORD_PALETTES[0].palette);
 	});
 });
 
