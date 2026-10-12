@@ -1,10 +1,21 @@
 <script lang="ts">
 	import ChordTimeline from "./ChordTimeline.svelte";
 	import ChordTimingActions from "./ChordTimingActions.svelte";
+	import PlayerShortcutsHint from "./PlayerShortcutsHint.svelte";
 	import SongPlayerCard from "./SongPlayerCard.svelte";
+	import { SONG_START_SECONDS } from "./chordStartTimes.js";
 	import { progressFractionOf } from "./chordTimeline.js";
 	import { createChordTimings } from "./chordTimings.svelte.js";
+	import { currentSearchParams } from "../shared/currentSearchParams.js";
 	import { chordStartTimesFilePath, type DesignSong } from "./designSongs.js";
+	import { readDesignUrlState } from "./designUrlState.js";
+	import { syncDesignUrlState } from "./designUrlSync.svelte.js";
+	import {
+		isTypingTarget,
+		playerActionFor,
+		type PlayerAction
+	} from "./playerShortcuts.js";
+	import { createWaveform } from "./waveform.svelte.js";
 
 	type Props = {
 		song: DesignSong;
@@ -12,29 +23,65 @@
 
 	let { song }: Props = $props();
 
+	const initialUrlState = readDesignUrlState(currentSearchParams());
+
 	let paused = $state(true);
-	let currentTime = $state(0);
+	let currentTime = $state(initialUrlState.playheadSeconds);
 	let duration = $state(NaN);
+	let zoom = $state(initialUrlState.zoom);
+
+	syncDesignUrlState(() => ({ zoom, playheadSeconds: currentTime }));
 
 	const chordTimings = createChordTimings(
 		() => song,
 		() => duration
 	);
+	const waveform = createWaveform(() => song.audioSrc);
 	const progressFraction = $derived(progressFractionOf(currentTime, duration));
 
 	function togglePlayback() {
 		paused = !paused;
 	}
 
-	function seekTo(fraction: number) {
+	function restart() {
+		currentTime = SONG_START_SECONDS;
+		paused = false;
+	}
+
+	function seekToSeconds(seconds: number) {
 		if (!Number.isFinite(duration)) return;
-		currentTime = fraction * duration;
+		currentTime = Math.min(Math.max(seconds, SONG_START_SECONDS), duration);
+	}
+
+	function seekTo(fraction: number) {
+		seekToSeconds(fraction * duration);
+	}
+
+	function runPlayerAction(action: PlayerAction) {
+		if (action.type === "togglePlayback") togglePlayback();
+		else if (action.type === "restart") restart();
+		else seekToSeconds(currentTime + action.seconds);
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (isTypingTarget(event.target)) return;
+		const action = playerActionFor(event);
+		if (!action) return;
+		event.preventDefault();
+		runPlayerAction(action);
 	}
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 <section class="synced-player">
 	<div class="header">
-		<SongPlayerCard {song} {paused} onTogglePlayback={togglePlayback} />
+		<SongPlayerCard
+			{song}
+			{paused}
+			onTogglePlayback={togglePlayback}
+			onRestart={restart}
+		/>
 		<ChordTimingActions
 			json={chordTimings.json}
 			targetFilePath={chordStartTimesFilePath(song.songKey)}
@@ -42,12 +89,15 @@
 			onDiscardLocalEdits={chordTimings.discardLocalEdits}
 		/>
 	</div>
+	<PlayerShortcutsHint />
 	<ChordTimeline
 		timeline={chordTimings.timeline}
+		waveformPeaks={waveform.peaks}
 		{progressFraction}
 		{duration}
 		editable={chordTimings.editable}
-		followPlayhead={!paused}
+		{zoom}
+		onZoomChange={(nextZoom) => (zoom = nextZoom)}
 		onSeek={seekTo}
 		onChordMove={chordTimings.moveChord}
 	/>

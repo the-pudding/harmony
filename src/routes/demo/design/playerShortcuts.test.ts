@@ -1,0 +1,35 @@
+import { describe, expect, it } from "vitest";
+import { playerActionFor, SEEK_STEP_SECONDS } from "./playerShortcuts.js";
+
+const keyEvent = (key: string, overrides: Partial<KeyboardEvent> = {}) => ({
+	key,
+	metaKey: false,
+	ctrlKey: false,
+	altKey: false,
+	defaultPrevented: false,
+	...overrides
+});
+
+describe("playerActionFor", () => {
+	it("maps space, z, and arrows to player actions", () => {
+		expect(playerActionFor(keyEvent(" "))).toEqual({ type: "togglePlayback" });
+		expect(playerActionFor(keyEvent("z"))).toEqual({ type: "restart" });
+		expect(playerActionFor(keyEvent("Z"))).toEqual({ type: "restart" });
+		expect(playerActionFor(keyEvent("ArrowLeft"))).toEqual({
+			type: "seekBy",
+			seconds: -SEEK_STEP_SECONDS
+		});
+		expect(playerActionFor(keyEvent("ArrowRight"))).toEqual({
+			type: "seekBy",
+			seconds: SEEK_STEP_SECONDS
+		});
+	});
+
+	it("ignores unmapped keys, modifier combos, and already-handled events", () => {
+		expect(playerActionFor(keyEvent("x"))).toBeUndefined();
+		expect(playerActionFor(keyEvent("z", { metaKey: true }))).toBeUndefined();
+		expect(
+			playerActionFor(keyEvent("ArrowLeft", { defaultPrevented: true }))
+		).toBeUndefined();
+	});
+});

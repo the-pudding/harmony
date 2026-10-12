@@ -5,9 +5,10 @@
 		song: DesignSong;
 		paused: boolean;
 		onTogglePlayback: () => void;
+		onRestart: () => void;
 	};
 
-	let { song, paused, onTogglePlayback }: Props = $props();
+	let { song, paused, onTogglePlayback, onRestart }: Props = $props();
 
 	const playLabel = $derived(
 		paused ? `Play ${song.title} by ${song.artist}` : `Pause ${song.title}`
@@ -30,6 +31,17 @@
 				><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg
 			>
 		{/if}
+	</button>
+	<button
+		type="button"
+		class="restart-button"
+		aria-label="Play {song.title} from the start"
+		title="Play from start"
+		onclick={onRestart}
+	>
+		<svg viewBox="0 0 24 24" aria-hidden="true"
+			><path d="M6 5h2v14H6zM9.5 12 18 5v14z" /></svg
+		>
 	</button>
 	<div class="meta">
 		<span class="title">{song.title}</span>
@@ -72,9 +84,38 @@
 		transform: scale(1.06);
 	}
 
+	.restart-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2rem;
+		height: 2rem;
+		flex-shrink: 0;
+		margin-left: -0.375rem;
+		border: 1px solid rgba(63, 63, 70, 0.9);
+		border-radius: 9999px;
+		background: transparent;
+		color: #a1a1aa;
+		cursor: pointer;
+		transition:
+			color 0.15s ease,
+			border-color 0.15s ease;
+	}
+
+	.restart-button:hover {
+		color: #f4f4f5;
+		border-color: #818cf8;
+	}
+
 	.play-button svg {
 		width: 1.125rem;
 		height: 1.125rem;
+		fill: currentColor;
+	}
+
+	.restart-button svg {
+		width: 0.875rem;
+		height: 0.875rem;
 		fill: currentColor;
 	}
 
