@@ -141,23 +141,23 @@ describe("filterCoverageResultForProgressions", () => {
 	});
 
 	it("matches by canonical name across different literal spellings of the same progression", () => {
-		// A song whose own key makes the matcher spell "sweet home mixolydian"
-		// (I-bVII-IV) as a rotated "V-IV-I" — same progression, different
-		// literal string, exactly like Sweet Home Alabama in the real corpus.
-		const SWEET_HOME_MIXOLYDIAN = "sweet home mixolydian";
+		// A song whose own key makes the matcher spell "sweet home alabama"
+		// (V-IV-I) as a rotated mixolydian "I-bVII-IV" — same progression,
+		// different literal string.
+		const SWEET_HOME_ALABAMA = "sweet home alabama";
 		const result = makeResult([
 			makeSong({
 				songKey: "rotated-spelling",
 				coveragePercent: 70,
-				matchingProgressions: [SWEET_HOME_MIXOLYDIAN],
+				matchingProgressions: [SWEET_HOME_ALABAMA],
 				progressionCounts: [
-					makeCount("V-IV-I", 70, true, SWEET_HOME_MIXOLYDIAN)
+					makeCount("I-bVII-IV", 70, true, SWEET_HOME_ALABAMA)
 				]
 			})
 		]);
 
 		const filtered = filterCoverageResultForProgressions(result, [
-			SWEET_HOME_MIXOLYDIAN
+			SWEET_HOME_ALABAMA
 		]);
 		expect(filtered.songCoverages).toHaveLength(1);
 		expect(filtered.songCoverages[0].coveragePercent).toBe(70);

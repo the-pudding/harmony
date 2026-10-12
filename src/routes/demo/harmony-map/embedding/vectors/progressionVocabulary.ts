@@ -26,7 +26,7 @@ type ProgressionStats = {
 	isCore: boolean;
 	documentFrequency: number;
 	// Every literal spelling actually observed for this name, including
-	// un-authored rotations (e.g. "V-IV-I" for "sweet home mixolydian") —
+	// un-authored rotations (e.g. "I-bVII-IV" for "sweet home alabama") —
 	// matching is tonic-rotation-invariant, so a song's own literal
 	// chordProgression string doesn't always match one of the progression's
 	// authored `variants`, but it must still resolve to this dimension.

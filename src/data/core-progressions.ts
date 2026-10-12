@@ -92,11 +92,12 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
-			name: "sweet home mixolydian",
-			chordProgression: "I-bVII-IV",
+			name: "sweet home alabama",
+			chordProgression: "V-IV-I",
 			scale: "major",
-			description: "Sweet Home Alabama... can also be thought of as a V-IV-I"
-		}, // also could be thought of as a V-IV-I
+			description:
+				"Sweet Home Alabama... can also be thought of as a mixolydian I-bVII-IV"
+		},
 		{
 			name: "addicted to love",
 			chordProgression: "I-bVII-IV-V",

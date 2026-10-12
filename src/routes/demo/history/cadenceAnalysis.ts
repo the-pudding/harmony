@@ -131,9 +131,9 @@ export const computeCadenceHistory = (
 // a progression's canonical/registered spelling — matching is tonic-
 // rotation-invariant, so the same named progression can read as ending on
 // the tonic in one song's key and not in another's (e.g. "sweet home
-// mixolydian" is registered as I-bVII-IV, which never resolves, but a
-// rotated rendition reading as V-IV-I in a different song's own key ends
-// in a genuine plagal cadence there).
+// alabama" is registered as V-IV-I, a genuine plagal cadence, but a
+// rotated rendition reading as I-bVII-IV in a different song's own key
+// never resolves there).
 export type ProgressionCadenceDecadeRow = CadencePercentages & {
 	decade: number;
 	progressionInstanceCount: number;

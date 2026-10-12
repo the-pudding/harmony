@@ -49,8 +49,8 @@
 	// key on the progression's canonical name, not its literal spelling:
 	// matching is tonic-rotation-invariant, so a song can match a named
 	// progression under a spelling that was never authored as a variant
-	// (e.g. Sweet Home Alabama reads as "V-IV-I", the same shape as "sweet
-	// home mixolydian"'s authored "I-bVII-IV"). `songCoverages` reports
+	// (e.g. a mixolydian song reads as "I-bVII-IV", the same shape as "sweet
+	// home alabama"'s authored "V-IV-I"). `songCoverages` reports
 	// canonical names, so a single-element [name] set is both simpler and
 	// more complete than enumerating authored variant strings.
 	const displayMatches = $derived.by(() => {

@@ -117,30 +117,29 @@ describe("buildProgressionVocabulary", () => {
 	it("merges an un-authored rotated spelling into the same dimension as its named progression", () => {
 		// Matching is tonic-rotation-invariant, so a song can match a named
 		// core progression under a literal spelling that was never authored
-		// as a variant (e.g. Sweet Home Alabama reads as "V-IV-I" in its own
-		// key, the same shape as "sweet home mixolydian"'s authored
-		// "I-bVII-IV"). Both must land on the same vocabulary dimension.
+		// as a variant (e.g. a mixolydian song reads as "I-bVII-IV" in its own
+		// key, the same shape as "sweet home alabama"'s authored "V-IV-I").
+		// Both must land on the same vocabulary dimension.
 		const vocabulary = buildProgressionVocabulary(
 			[
 				makeSong("authored-spelling", [
-					["I-bVII-IV", 5, true, "sweet home mixolydian"]
+					["V-IV-I", 5, true, "sweet home alabama"]
 				]),
 				makeSong("rotated-spelling", [
-					["V-IV-I", 3, true, "sweet home mixolydian"]
+					["I-bVII-IV", 3, true, "sweet home alabama"]
 				])
 			],
 			1
 		);
-		const canonicalIndex =
-			vocabulary.indexByChordProgression.get("I-bVII-IV");
-		expect(vocabulary.indexByChordProgression.get("V-IV-I")).toBe(
+		const canonicalIndex = vocabulary.indexByChordProgression.get("V-IV-I");
+		expect(vocabulary.indexByChordProgression.get("I-bVII-IV")).toBe(
 			canonicalIndex
 		);
 		expect(
-			vocabulary.entries.filter((entry) => entry.name === "sweet home mixolydian")
+			vocabulary.entries.filter((entry) => entry.name === "sweet home alabama")
 		).toHaveLength(1);
 		expect(
-			vocabulary.entries.find((entry) => entry.name === "sweet home mixolydian")
+			vocabulary.entries.find((entry) => entry.name === "sweet home alabama")
 				?.documentFrequency
 		).toBe(2);
 	});

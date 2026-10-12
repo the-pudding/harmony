@@ -205,12 +205,12 @@ describe("computeProgressionCadenceHistory", () => {
 		const entries: SongCoverageEntry[] = [
 			...Array.from({ length: 15 }, (_, i) =>
 				makeCoverageEntry(`rotated-${i}`, [
-					makeProgressionCount("V-IV-I", 1, true) // ends in plagal cadence
+					makeProgressionCount("V-IV-I", 1, true) // registered spelling, ends in plagal cadence
 				])
 			),
 			...Array.from({ length: 10 }, (_, i) =>
 				makeCoverageEntry(`unresolved-${i}`, [
-					makeProgressionCount("I-bVII-IV", 1, true) // registered spelling, doesn't resolve
+					makeProgressionCount("I-bVII-IV", 1, true) // rotated spelling, doesn't resolve
 				])
 			)
 		];

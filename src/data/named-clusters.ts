@@ -15,7 +15,7 @@ export type NamedClusterEntry = {
 // then commit. Keep one entry per name and per anchor song — re-anchoring an
 // existing cluster should replace its entry, not add a new one.
 export const namedClusters: NamedClusterEntry[] = [
-	{ anchorSongKey: "lorde__royals", name: "sweet home mixolydian" },
+	{ anchorSongKey: "lorde__royals", name: "sweet home alabama" },
 	{ anchorSongKey: "jason-derulo__whatcha-say", name: "whatcha say" },
 	{
 		anchorSongKey: "taylor-swift__we-are-never-ever-getting-back-together",

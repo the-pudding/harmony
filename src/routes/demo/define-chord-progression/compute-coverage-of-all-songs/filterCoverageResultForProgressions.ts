@@ -16,8 +16,8 @@ export const MAX_COVERAGE_PERCENT = 100;
 // Identity is the progression's canonical name (see SongProgressionCount.name)
 // rather than its literal chordProgression spelling: matching is
 // tonic-rotation-invariant, so the same named progression can appear under
-// different literal spellings across songs (e.g. Sweet Home Alabama's
-// V-IV-I is the same shape as "sweet home mixolydian"'s I-bVII-IV). For
+// different literal spellings across songs (e.g. a mixolydian song's
+// I-bVII-IV is the same shape as "sweet home alabama"'s V-IV-I). For
 // non-core counts, name already equals the literal string, so this is a
 // strict improvement with no behavior change for gap-fill matches.
 const progressionNamesFromCounts = (

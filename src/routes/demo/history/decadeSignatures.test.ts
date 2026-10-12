@@ -138,18 +138,18 @@ describe("computeDecadeHistory", () => {
 	it("merges an un-authored rotated spelling into the same decade total as its named progression", () => {
 		// Matching is tonic-rotation-invariant, so a song can match a named
 		// core progression under a literal spelling that was never authored
-		// (e.g. Sweet Home Alabama reads as "V-IV-I" in its own key, the
-		// same shape as "sweet home mixolydian"'s authored "I-bVII-IV").
+		// (e.g. a mixolydian song reads as "I-bVII-IV" in its own key, the
+		// same shape as "sweet home alabama"'s authored "V-IV-I").
 		// Both spellings must count toward the same decade signature.
-		const NAME = "sweet home mixolydian";
+		const NAME = "sweet home alabama";
 		const pairs = [
 			...Array.from({ length: 15 }, (_, i) =>
-				makeSong(`s70-authored-${i}`, 1975, [
-					makeCount("I-bVII-IV", 5, true, NAME)
-				])
+				makeSong(`s70-authored-${i}`, 1975, [makeCount("V-IV-I", 5, true, NAME)])
 			),
 			...Array.from({ length: 15 }, (_, i) =>
-				makeSong(`s70-rotated-${i}`, 1975, [makeCount("V-IV-I", 5, true, NAME)])
+				makeSong(`s70-rotated-${i}`, 1975, [
+					makeCount("I-bVII-IV", 5, true, NAME)
+				])
 			)
 		];
 		const songByKey = new Map(pairs.map(({ song }) => [song.songKey, song]));

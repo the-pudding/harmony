@@ -76,8 +76,8 @@ const COMBINED_EARLY_DECADES_LABEL = "1950s-60s";
 // (see SongProgressionCount.name). Matching is tonic-rotation-invariant, so
 // the same named progression can appear under different literal roman-
 // numeral spellings depending on which chord a song's own key calls "I"
-// (e.g. Sweet Home Alabama reads as V-IV-I in its own key, the same shape
-// as "sweet home mixolydian"'s authored I-bVII-IV). Aggregating by name
+// (e.g. a mixolydian song can read as I-bVII-IV in its own key, the same
+// shape as "sweet home alabama"'s authored V-IV-I). Aggregating by name
 // instead of literal spelling is what makes these decade totals correct.
 const progressionByName = new Map(coreProgressions.map((p) => [p.name, p]));
 
