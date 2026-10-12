@@ -38,7 +38,8 @@
 <style>
 	.controls {
 		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		gap: 0.75rem 2rem;
 	}
 </style>

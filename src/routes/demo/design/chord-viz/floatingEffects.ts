@@ -18,6 +18,22 @@ export type FloatingSettings = {
 
 export type Option<T extends string> = { value: T; label: string };
 
+export type GooeyChord = {
+	id: string;
+	roman: string;
+	tone: ChordTone;
+	x: number;
+	y: number;
+	radius: number;
+};
+
+export type FloatingIds = { gooey: string; gradientPrefix: string };
+
+export const floatingIdsFor = (uid: string): FloatingIds => ({
+	gooey: `gooey-${uid}`,
+	gradientPrefix: `gradient-${uid}`
+});
+
 export type GradientStop = { offset: string; color: string };
 
 export const DEFAULT_FLOATING_SETTINGS: FloatingSettings = {

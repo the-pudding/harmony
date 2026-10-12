@@ -1,5 +1,8 @@
 import { diatonicQualityForDegree } from "../../../../chord-processing/diatonicQuality.js";
-import { degreeQualityToRoman } from "../../../../chord-processing/romanNumerals.js";
+import {
+	degreeQualityToRoman,
+	parseRomanToken
+} from "../../../../chord-processing/romanNumerals.js";
 import {
 	SCALE_INTERVALS,
 	type ScaleName
@@ -25,6 +28,11 @@ const MAJOR_TONE_QUALITIES = new Set(["maj", "aug"]);
 
 const toneOfQuality = (quality: string): ChordTone =>
 	MAJOR_TONE_QUALITIES.has(quality) ? "major" : "minor";
+
+const FALLBACK_QUALITY = "maj";
+
+export const toneOfRomanToken = (token: string): ChordTone =>
+	toneOfQuality(parseRomanToken(token)?.quality ?? FALLBACK_QUALITY);
 
 export const diatonicChordsOf = (scale: ScaleName): DiatonicChord[] =>
 	SCALE_INTERVALS[scale].map((_, index) => {
