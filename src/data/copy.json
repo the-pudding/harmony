@@ -3,51 +3,130 @@
     "title": "Mapping every pop hit’s chords",
     "description": "Tk"
   },
-  "slides": [
+  "sections": [
     {
-      "text": [
+      "title": "Landing",
+      "slides": [
         {
-          "type": "text",
-          "value": "In 2009, the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of pop songs – from Journey’s “Don’t Stop Believing” to Beyoncé’s “If I Were A Boy” – are built off of the same 4 chords."
-        }
-      ],
-      "stage": {
-        "component": "video",
-        "videoId": "dead-simple",
-        "caption": "All the greatest hits from the last 40 years just use 4 chords. Same 4 chords for every song, it’s dead simple to write a pop hit."
-      }
-    },
-    {
-      "text": [
-        {
-          "type": "text",
-          "value": "Chords provide the harmonic foundation for a song, so people cite this video as proof that all pop music is formulaic and sounds the same. The sheer volume of songs makes a compelling case."
-        }
-      ],
-      "stage": {
-        "component": "video",
-        "videoId": "dead-simple"
-      }
-    },
-    {
-      "text": [
-        {
-          "type": "text",
-          "value": "But is it true?"
-        },
-        {
-          "type": "text",
-          "value": "Is pop music really:"
-        },
-        {
-          "type": "ol",
-          "value": {
-            "li": [
-              "built on a single four-chord progression 🧱",
-              "looped for the entire song 🔁",
-              "and recycled decade after decade? 🗓️"
-            ]
+          "text": [],
+          "stage": {
+            "component": "landing",
+            "hed": "Mapping every pop hit’s chords",
+            "byline": "By <a href=https://pudding.cool/author/michelle-pera-mcghee/ target=_blank>Michelle Pera-McGhee</a> and <a href=https://pudding.cool/author/david-mora/ target=_blank>David Mora</a>"
           }
+        }
+      ]
+    },
+    {
+      "title": "Intro",
+      "slides": [
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "In 2009, the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of pop songs – from Journey’s “Don’t Stop Believing” to Beyoncé’s “If I Were A Boy” – are built off of the same 4 chords."
+            }
+          ],
+          "stage": {
+            "component": "video",
+            "videoId": "dead-simple",
+            "caption": "All the greatest hits from the last 40 years just use 4 chords. Same 4 chords for every song, it’s dead simple to write a pop hit."
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Chords provide the harmonic foundation for a song, so people cite this video as proof that all pop music is formulaic and sounds the same. The sheer volume of songs makes a compelling case."
+            }
+          ],
+          "stage": {
+            "component": "video",
+            "videoId": "dead-simple"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "But is it true?"
+            },
+            {
+              "type": "text",
+              "value": "Is pop music really:"
+            },
+            {
+              "type": "ol",
+              "value": {
+                "li": [
+                  "built on a single four-chord progression 🧱",
+                  "looped for the entire song 🔁",
+                  "and recycled decade after decade? 🗓️"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "To find out, we gathered every Billboard top-20 hit since 1958, [7,300] songs, and scraped their chord progressions from popular online chord sites."
+            },
+            {
+              "type": "text",
+              "value": "But to compare thousands of songs, we first need a way to tell when two of them are doing the same thing."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "What is a chord progression?",
+      "slides": [
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "A chord is a combination of two or more notes. A chord progression is a series of chords that often loops multiple times in a song."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "But the literal chord names you might be familiar with – like <span class=chord>C, D, Ab</span> – miss something important."
+            },
+            {
+              "type": "text",
+              "value": "“All Too Well” goes <button>C-G-Am-F.</button> “With Or Without You” goes <button>D-A-Bm-G.</button> “Demons” goes <button>Eb-Bb-Cm-Ab.</button> On paper, these are different progressions. But to your ear, they move in the same way."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Every song has a key, a home base chord that it keeps returning to. If we name each chord instead by its distance from home, we can see that these songs actually share a chord progression."
+            },
+            {
+              "type": "text",
+              "value": "Musicians notate this with roman numerals. The <span class=chord>I</span> is the home base chord, <span class=chord>ii</span> is a step away, <span class=chord>iii</span> is another step away, <span class=chord>IV, V, vi, vii.</span>"
+            },
+            {
+              "type": "text",
+              "value": "So, these songs all go <span class=chord>I-V-vi-IV</span>, which is the Axis of Awesome “four chords” progression."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Songs also differ in how much they lean on a progression. Some are 100% one progression on repeat. Others use it as one ingredient in a more varied harmonic recipe."
+            }
+          ]
         }
       ]
     }
