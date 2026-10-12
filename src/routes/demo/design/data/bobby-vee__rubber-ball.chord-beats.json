@@ -1,7 +1,7 @@
 {
 	"startSeconds": 0.894,
-	"beatsPerMinute": 147,
-	"endSongAtBeat": 93,
+	"beatsPerMinute": 148,
+	"endSongAtBeat": 57,
 	"sections": [
 		{ "name": "Chorus", "chordBeats": [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] },
 		{
