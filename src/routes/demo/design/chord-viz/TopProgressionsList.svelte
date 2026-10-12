@@ -1,23 +1,25 @@
 <script lang="ts">
+	import type { Snippet } from "svelte";
 	import { createAllSongsCoverageState } from "../../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
 	import ToggleSwitch from "../../../../chord-search-demo/ToggleSwitch.svelte";
-	import ProgressionChords from "./ProgressionChords.svelte";
-	import type { FloatingIds, FloatingSettings } from "./floatingEffects.js";
+	import { tonalityOfScale, type KeyTonality } from "./diatonicChords.js";
 	import {
 		DEFAULT_PROGRESSION_FILTERS,
 		ROW_HEIGHT,
 		TOP_PROGRESSIONS_LIMIT,
 		rankProgressions,
 		selectTopProgressions,
-		type ProgressionFilters
+		type ProgressionFilters,
+		type ProgressionToken
 	} from "./topProgressions.js";
 
+	type ChordRendererArgs = { tokens: ProgressionToken[]; tonality: KeyTonality };
+
 	type Props = {
-		settings: FloatingSettings;
-		ids: FloatingIds;
+		chordRenderer: Snippet<[ChordRendererArgs]>;
 	};
 
-	let { settings, ids }: Props = $props();
+	let { chordRenderer }: Props = $props();
 
 	const coverage = createAllSongsCoverageState();
 
@@ -66,16 +68,17 @@
 						>
 					</div>
 					<ul class="variants">
-						{#each progression.variants as variant (variant.spelling)}
-							<li class="variant">
-								<span class="variant-count"
-									>{progression.variants.length > 1
-										? variant.songCount.toLocaleString()
-										: ""}</span
-								>
-								<ProgressionChords tokens={variant.tokens} {settings} {ids} />
-							</li>
-						{/each}
+					{#each progression.variants as variant (variant.spelling)}
+						{@const tonality = tonalityOfScale(progression.scale)}
+						<li class="variant">
+							<span class="variant-count"
+								>{progression.variants.length > 1
+									? variant.songCount.toLocaleString()
+									: ""}</span
+							>
+							{@render chordRenderer({ tokens: variant.tokens, tonality })}
+						</li>
+					{/each}
 					</ul>
 				</li>
 			{/each}

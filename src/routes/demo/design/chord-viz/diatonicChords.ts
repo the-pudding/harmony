@@ -50,7 +50,7 @@ export const diatonicChordsOf = (scale: ScaleName): DiatonicChord[] =>
 const TONIC_DEGREE = 1;
 const MINOR_TONIC_QUALITIES = new Set(["min", "dim"]);
 
-const tonalityOfScale = (scale: ScaleName): KeyTonality =>
+export const tonalityOfScale = (scale: ScaleName): KeyTonality =>
 	MINOR_TONIC_QUALITIES.has(diatonicQualityForDegree(scale, TONIC_DEGREE))
 		? "minor"
 		: "major";

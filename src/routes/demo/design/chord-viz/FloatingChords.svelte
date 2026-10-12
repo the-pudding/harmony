@@ -3,6 +3,7 @@
 	import FloatingControls from "./FloatingControls.svelte";
 	import FloatingDefs from "./FloatingDefs.svelte";
 	import FloatingHexagon from "./FloatingHexagon.svelte";
+	import ProgressionChords from "./ProgressionChords.svelte";
 	import TopProgressionsList from "./TopProgressionsList.svelte";
 	import {
 		DEFAULT_FLOATING_SETTINGS,
@@ -25,9 +26,12 @@
 >
 	<FloatingDefs {ids} />
 	<FloatingControls {settings} onChange={(next) => (settings = next)} />
+	{#snippet floatingChordRenderer({ tokens })}
+		<ProgressionChords {tokens} {settings} {ids} />
+	{/snippet}
 	<div class="columns">
 		<FloatingHexagon {settings} {ids} />
-		<TopProgressionsList {settings} {ids} />
+		<TopProgressionsList chordRenderer={floatingChordRenderer} />
 	</div>
 </ChordVizPanel>
 
