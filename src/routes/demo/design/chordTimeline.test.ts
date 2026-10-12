@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+	buildChordTimeline,
 	buildEvenlySpacedChordTimeline,
+	chordKeysOf,
 	isActiveAt,
 	progressFractionOf,
 	type SongSectionChords
@@ -65,12 +67,55 @@ describe("buildEvenlySpacedChordTimeline", () => {
 		]);
 	});
 
+	it("numbers chords in song order", () => {
+		const { chords } = buildEvenlySpacedChordTimeline(sections);
+		expect(chords.map((c) => c.index)).toEqual([0, 1, 2, 3]);
+	});
+
 	it("returns an empty timeline when there are no chords", () => {
 		expect(buildEvenlySpacedChordTimeline([])).toEqual({
 			chords: [],
 			groups: [],
 			sections: []
 		});
+	});
+});
+
+describe("buildChordTimeline", () => {
+	const startFractions = [0, 0.1, 0.5, 0.9];
+
+	it("ends each chord where the next one starts", () => {
+		const { chords } = buildChordTimeline(sections, startFractions);
+		expect(chords.map((c) => [c.startFraction, c.endFraction])).toEqual([
+			[0, 0.1],
+			[0.1, 0.5],
+			[0.5, 0.9],
+			[0.9, 1]
+		]);
+	});
+
+	it("spans sections and groups across their chord start times", () => {
+		const timeline = buildChordTimeline(sections, startFractions);
+		expect(
+			timeline.sections.map((s) => [s.startFraction, s.endFraction])
+		).toEqual([
+			[0, 0.9],
+			[0.9, 1]
+		]);
+		expect(
+			timeline.groups.map((g) => [g.startFraction, g.endFraction])
+		).toEqual([[0.1, 0.9]]);
+	});
+});
+
+describe("chordKeysOf", () => {
+	it("keys every chord by section and position", () => {
+		expect(chordKeysOf(sections)).toEqual([
+			"verse-0",
+			"verse-1",
+			"verse-2",
+			"chorus-0"
+		]);
 	});
 });
 

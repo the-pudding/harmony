@@ -1,25 +1,66 @@
 <script lang="ts">
+	import { tick } from "svelte";
+	import ChordRow from "./ChordRow.svelte";
+	import ZoomControls from "./ZoomControls.svelte";
 	import { isActiveAt, type ChordTimeline } from "./chordTimeline.js";
+	import { spanStyle, toPercent } from "./timelineStyles.js";
 
 	const MIN_CHORD_SLOT_REM = 1.75;
-	const PERCENT = 100;
+	const ZOOM_LEVELS = [1, 2, 4, 8, 16, 32];
+	const PLAYHEAD_VIEWPORT_ANCHOR = 0.25;
 
 	type Props = {
 		timeline: ChordTimeline;
 		progressFraction: number;
+		duration: number;
+		editable: boolean;
+		followPlayhead: boolean;
 		onSeek: (fraction: number) => void;
+		onChordMove: (index: number, startFraction: number) => void;
 	};
 
-	let { timeline, progressFraction, onSeek }: Props = $props();
+	let {
+		timeline,
+		progressFraction,
+		duration,
+		editable,
+		followPlayhead,
+		onSeek,
+		onChordMove
+	}: Props = $props();
 
-	const toPercent = (fraction: number): string => `${fraction * PERCENT}%`;
+	let zoomLevelIndex = $state(0);
+	let scroller = $state<HTMLDivElement>();
 
-	const spanStyle = (span: { startFraction: number; endFraction: number }) =>
-		`left: ${toPercent(span.startFraction)}; width: ${toPercent(span.endFraction - span.startFraction)};`;
-
+	const zoom = $derived(ZOOM_LEVELS[zoomLevelIndex]);
 	const trackMinWidth = $derived(
 		`${timeline.chords.length * MIN_CHORD_SLOT_REM}rem`
 	);
+
+	const isPlayheadVisible = (element: HTMLDivElement): boolean => {
+		const playheadX = progressFraction * element.scrollWidth;
+		return (
+			playheadX >= element.scrollLeft &&
+			playheadX <= element.scrollLeft + element.clientWidth
+		);
+	};
+
+	const scrollToPlayhead = (element: HTMLDivElement) => {
+		element.scrollLeft =
+			progressFraction * element.scrollWidth -
+			element.clientWidth * PLAYHEAD_VIEWPORT_ANCHOR;
+	};
+
+	$effect(() => {
+		if (!followPlayhead || !scroller || isPlayheadVisible(scroller)) return;
+		scrollToPlayhead(scroller);
+	});
+
+	async function changeZoom(step: number) {
+		zoomLevelIndex = zoomLevelIndex + step;
+		await tick();
+		if (scroller) scrollToPlayhead(scroller);
+	}
 
 	function seekFromPointer(event: MouseEvent & { currentTarget: HTMLElement }) {
 		const bounds = event.currentTarget.getBoundingClientRect();
@@ -27,56 +68,68 @@
 	}
 </script>
 
-<div class="scroller">
-	<div class="timeline" style="min-width: {trackMinWidth};">
-		<div class="row sections">
-			{#each timeline.sections as section (section.key)}
-				<span
-					class="section"
-					class:active={isActiveAt(section, progressFraction)}
-					style={spanStyle(section)}>{section.name}</span
-				>
-			{/each}
-		</div>
+<div class="chord-timeline">
+	<ZoomControls
+		{zoom}
+		canZoomOut={zoomLevelIndex > 0}
+		canZoomIn={zoomLevelIndex < ZOOM_LEVELS.length - 1}
+		onZoomOut={() => changeZoom(-1)}
+		onZoomIn={() => changeZoom(1)}
+	/>
 
-		<div class="row chords">
-			{#each timeline.groups as group (group.key)}
-				<span
-					class="group"
-					class:dashed={group.isStrictSubset}
-					style="{spanStyle(group)} --group-border: {group.palette.border};"
-					title={group.chordProgression}
-				></span>
-			{/each}
-			{#each timeline.chords as chord (chord.key)}
-				<span
-					class="chord"
-					class:grouped={chord.palette !== null}
-					class:active={isActiveAt(chord, progressFraction)}
-					style="{spanStyle(chord)} --chord-fill: {chord.palette?.fill}; --chord-active-fill: {chord.palette?.border};"
-					title={chord.roman}>{chord.name}</span
-				>
-			{/each}
-		</div>
-
-		<button
-			type="button"
-			class="track"
-			aria-label="Seek"
-			onclick={seekFromPointer}
+	<div class="scroller" bind:this={scroller}>
+		<div
+			class="timeline"
+			style="width: {toPercent(zoom)}; min-width: {trackMinWidth};"
 		>
-			{#each timeline.sections as section (section.key)}
-				<span class="section-divider" style="left: {toPercent(section.startFraction)};"
-				></span>
-			{/each}
-			<span class="progress" style="width: {toPercent(progressFraction)};"></span>
-		</button>
+			<div class="sections">
+				{#each timeline.sections as section (section.key)}
+					<span
+						class="section"
+						class:active={isActiveAt(section, progressFraction)}
+						style={spanStyle(section)}>{section.name}</span
+					>
+				{/each}
+			</div>
 
-		<span class="playhead" style="left: {toPercent(progressFraction)};"></span>
+			<ChordRow
+				chords={timeline.chords}
+				groups={timeline.groups}
+				{progressFraction}
+				{duration}
+				{editable}
+				{onChordMove}
+			/>
+
+			<button
+				type="button"
+				class="track"
+				aria-label="Seek"
+				onclick={seekFromPointer}
+			>
+				{#each timeline.sections as section (section.key)}
+					<span
+						class="section-divider"
+						style="left: {toPercent(section.startFraction)};"
+					></span>
+				{/each}
+				<span class="progress" style="width: {toPercent(progressFraction)};"
+				></span>
+			</button>
+
+			<span class="playhead" style="left: {toPercent(progressFraction)};"
+			></span>
+		</div>
 	</div>
 </div>
 
 <style>
+	.chord-timeline {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
 	.scroller {
 		overflow-x: auto;
 		padding-bottom: 0.25rem;
@@ -89,24 +142,15 @@
 		gap: 0.375rem;
 	}
 
-	.row {
+	.sections {
 		position: relative;
 		height: 1rem;
 	}
 
-	.row.chords {
-		height: 1.375rem;
-	}
-
-	.section,
-	.chord,
-	.group {
+	.section {
 		position: absolute;
 		top: 0;
 		box-sizing: border-box;
-	}
-
-	.section {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -120,47 +164,6 @@
 
 	.section.active {
 		color: #d4d4d8;
-	}
-
-	.group {
-		bottom: 0;
-		border: 1px solid var(--group-border);
-		border-radius: 0.375rem;
-	}
-
-	.group.dashed {
-		border-style: dashed;
-	}
-
-	.chord {
-		bottom: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border: 2px solid transparent;
-		border-radius: 0.3125rem;
-		background-clip: padding-box;
-		font-size: 0.625rem;
-		white-space: nowrap;
-		color: #71717a;
-		transition:
-			color 0.1s ease,
-			background-color 0.1s ease;
-	}
-
-	.chord.grouped {
-		background-color: var(--chord-fill);
-		color: #d4d4d8;
-	}
-
-	.chord.active {
-		color: #818cf8;
-		font-weight: 700;
-	}
-
-	.chord.grouped.active {
-		background-color: var(--chord-active-fill);
-		color: #fff;
 	}
 
 	.track {

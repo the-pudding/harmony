@@ -1,11 +1,10 @@
 <script lang="ts">
 	import ChordTimeline from "./ChordTimeline.svelte";
+	import ChordTimingActions from "./ChordTimingActions.svelte";
 	import SongPlayerCard from "./SongPlayerCard.svelte";
-	import {
-		buildEvenlySpacedChordTimeline,
-		progressFractionOf
-	} from "./chordTimeline.js";
-	import type { DesignSong } from "./designSongs.js";
+	import { progressFractionOf } from "./chordTimeline.js";
+	import { createChordTimings } from "./chordTimings.svelte.js";
+	import { chordStartTimesFilePath, type DesignSong } from "./designSongs.js";
 
 	type Props = {
 		song: DesignSong;
@@ -17,7 +16,10 @@
 	let currentTime = $state(0);
 	let duration = $state(NaN);
 
-	const timeline = $derived(buildEvenlySpacedChordTimeline(song.sections));
+	const chordTimings = createChordTimings(
+		() => song,
+		() => duration
+	);
 	const progressFraction = $derived(progressFractionOf(currentTime, duration));
 
 	function togglePlayback() {
@@ -31,8 +33,24 @@
 </script>
 
 <section class="synced-player">
-	<SongPlayerCard {song} {paused} onTogglePlayback={togglePlayback} />
-	<ChordTimeline {timeline} {progressFraction} onSeek={seekTo} />
+	<div class="header">
+		<SongPlayerCard {song} {paused} onTogglePlayback={togglePlayback} />
+		<ChordTimingActions
+			json={chordTimings.json}
+			targetFilePath={chordStartTimesFilePath(song.songKey)}
+			hasLocalEdits={chordTimings.hasLocalEdits}
+			onDiscardLocalEdits={chordTimings.discardLocalEdits}
+		/>
+	</div>
+	<ChordTimeline
+		timeline={chordTimings.timeline}
+		{progressFraction}
+		{duration}
+		editable={chordTimings.editable}
+		followPlayhead={!paused}
+		onSeek={seekTo}
+		onChordMove={chordTimings.moveChord}
+	/>
 	<audio
 		bind:paused
 		bind:currentTime
@@ -46,6 +64,14 @@
 	.synced-player {
 		display: flex;
 		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.header {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
 		gap: 1rem;
 	}
 </style>

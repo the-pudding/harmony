@@ -1,9 +1,6 @@
 import type { CoreProgression } from "$data/core-progressions.js";
 import { applyHandReviewedCorrections } from "$data/applyHandReviewedCorrections.js";
-import {
-	groupSongs,
-	type SongSection
-} from "$data/songBrowser.js";
+import { groupSongs, type SongSection } from "$data/songBrowser.js";
 import { formatRomanTokenFromParsed } from "../../../chord-processing/romanNumerals.js";
 import { parseSongTitleAndSectionLabel } from "../../../chord-processing/songIdentity.js";
 import type { SongInput } from "../../../chord-processing/types.js";
@@ -24,28 +21,30 @@ const sectionChordGroups = (
 	annotations: ChordAnnotation[]
 ): SectionChordGroup[] => {
 	const runLengthByStart = new Map(
-		collapseAdjacentRepeatedChords(section.parsedProgression).originalRanges.map(
-			(range) => [range.start, range.length]
-		)
+		collapseAdjacentRepeatedChords(
+			section.parsedProgression
+		).originalRanges.map((range) => [range.start, range.length])
 	);
-	return buildColoredHighlightSegments(section, sectionIndex, annotations).flatMap(
-		(segment) => {
-			if (segment.palette === null) return [];
-			const startIndex = segment.indices[0];
-			const lastRunStart = segment.indices[segment.indices.length - 1];
-			const lastRunLength =
-				runLengthByStart.get(lastRunStart) ?? SINGLE_CHORD_RUN_LENGTH;
-			return [
-				{
-					startIndex,
-					length: lastRunStart + lastRunLength - startIndex,
-					palette: segment.palette,
-					chordProgression: segment.chordProgression,
-					isStrictSubset: segment.isStrictSubset
-				}
-			];
-		}
-	);
+	return buildColoredHighlightSegments(
+		section,
+		sectionIndex,
+		annotations
+	).flatMap((segment) => {
+		if (segment.palette === null) return [];
+		const startIndex = segment.indices[0];
+		const lastRunStart = segment.indices[segment.indices.length - 1];
+		const lastRunLength =
+			runLengthByStart.get(lastRunStart) ?? SINGLE_CHORD_RUN_LENGTH;
+		return [
+			{
+				startIndex,
+				length: lastRunStart + lastRunLength - startIndex,
+				palette: segment.palette,
+				chordProgression: segment.chordProgression,
+				isStrictSubset: segment.isStrictSubset
+			}
+		];
+	});
 };
 
 const sectionChords = (section: SongSection): SongSectionChords["chords"] =>
@@ -60,7 +59,8 @@ const sectionChords = (section: SongSection): SongSectionChords["chords"] =>
 const labelOccurrenceIndex = (
 	labels: (string | null)[],
 	index: number
-): number => labels.slice(0, index).filter((label) => label === labels[index]).length;
+): number =>
+	labels.slice(0, index).filter((label) => label === labels[index]).length;
 
 const groupedSectionIndexForOccurrence = (
 	sections: SongSection[],

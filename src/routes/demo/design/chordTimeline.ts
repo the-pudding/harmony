@@ -22,6 +22,7 @@ type FractionSpan = {
 
 export type TimelineChord = FractionSpan & {
 	key: string;
+	index: number;
 	name: string;
 	roman: string;
 	palette: ChordHighlightPalette | null;
@@ -66,25 +67,38 @@ const groupContaining = (
 			chordIndex < group.startIndex + group.length
 	);
 
-export const buildEvenlySpacedChordTimeline = (
-	sections: SongSectionChords[]
-): ChordTimeline => {
-	const totalChordCount = sections.reduce(
-		(total, section) => total + section.chords.length,
-		0
+const SONG_END_FRACTION = 1;
+
+const chordKeyOf = (section: SongSectionChords, chordIndex: number): string =>
+	`${section.id}-${chordIndex}`;
+
+export const chordKeysOf = (sections: SongSectionChords[]): string[] =>
+	sections.flatMap((section) =>
+		section.chords.map((_, chordIndex) => chordKeyOf(section, chordIndex))
 	);
-	if (totalChordCount === 0) return EMPTY_TIMELINE;
+
+export const evenlySpacedFraction = (index: number, count: number): number =>
+	index / count;
+
+export const buildChordTimeline = (
+	sections: SongSectionChords[],
+	chordStartFractions: number[]
+): ChordTimeline => {
+	if (chordStartFractions.length === 0) return EMPTY_TIMELINE;
 
 	const offsets = sectionChordOffsets(sections);
+	const startFractionOf = (flatIndex: number): number =>
+		chordStartFractions[flatIndex] ?? SONG_END_FRACTION;
 	const spanOf = (startIndex: number, length: number): FractionSpan => ({
-		startFraction: startIndex / totalChordCount,
-		endFraction: (startIndex + length) / totalChordCount
+		startFraction: startFractionOf(startIndex),
+		endFraction: startFractionOf(startIndex + length)
 	});
 
 	return {
 		chords: sections.flatMap((section, sectionIndex) =>
 			section.chords.map((chord, chordIndex) => ({
-				key: `${section.id}-${chordIndex}`,
+				key: chordKeyOf(section, chordIndex),
+				index: offsets[sectionIndex] + chordIndex,
 				name: chord.name,
 				roman: chord.roman,
 				palette: groupContaining(section.groups, chordIndex)?.palette ?? null,
@@ -108,7 +122,22 @@ export const buildEvenlySpacedChordTimeline = (
 	};
 };
 
-export const isActiveAt = (span: FractionSpan, progressFraction: number): boolean =>
+export const buildEvenlySpacedChordTimeline = (
+	sections: SongSectionChords[]
+): ChordTimeline => {
+	const chordCount = chordKeysOf(sections).length;
+	return buildChordTimeline(
+		sections,
+		Array.from({ length: chordCount }, (_, index) =>
+			evenlySpacedFraction(index, chordCount)
+		)
+	);
+};
+
+export const isActiveAt = (
+	span: FractionSpan,
+	progressFraction: number
+): boolean =>
 	progressFraction >= span.startFraction && progressFraction < span.endFraction;
 
 export const progressFractionOf = (
