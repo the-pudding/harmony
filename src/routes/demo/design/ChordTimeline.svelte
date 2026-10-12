@@ -206,7 +206,10 @@
 	}
 
 	.chord-start {
-		background: rgba(129, 140, 248, 0.35);
+		width: 2px;
+		margin-left: -1px;
+		background: #a5b4fc;
+		box-shadow: 0 0 4px rgba(129, 140, 248, 0.8);
 	}
 
 	.section-divider {
