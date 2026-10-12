@@ -51,7 +51,7 @@
 	// named after that progression.
 	const CLUSTER_MIN_PROGRESSION_SHARE = 0.25;
 
-	const mapMode = $derived(readMapModeFromUrl(currentSearchParams()));
+	let mapMode = $state(readMapModeFromUrl(currentSearchParams()));
 
 	// UMAP minimum distance. Lower than the harmony map's default so clusters
 	// are tight and well separated. Change it here to try other values.
@@ -144,7 +144,10 @@
 						aria-checked={mapMode === mode.id}
 						class="map-mode-button"
 						class:map-mode-button-active={mapMode === mode.id}
-						onclick={() => replaceMapModeInUrl(mode.id)}
+						onclick={() => {
+							mapMode = mode.id;
+							replaceMapModeInUrl(mode.id);
+						}}
 					>
 						{mode.label}
 					</button>
@@ -173,9 +176,9 @@
 
 			{#if mapMode !== "scatter"}
 				<span class="pure-key">
-					{mapMode} color = main progression · faded = mixed with others · gray
-					= no clear main progression or outside clusters · zoom in for finer
-					detail, then dots
+					{MAP_MODES.find((m) => m.id === mapMode)?.label ?? mapMode} color = main
+					progression · faded = mixed with others · gray = no clear main progression
+					or outside clusters · zoom in for finer detail, then dots
 				</span>
 			{:else}
 				<span class="pure-key">

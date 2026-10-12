@@ -10,9 +10,7 @@
 		type ZoomTransform
 	} from "d3";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
-	import {
-		type DensityCluster
-	} from "../embedding/clustering/densityClusters.js";
+	import { type DensityCluster } from "../embedding/clustering/densityClusters.js";
 	import {
 		clusterEllipseBoundingRadius,
 		fitClusterEllipse2D,
@@ -68,6 +66,7 @@
 		WATERCOLOR_REACH,
 		type WatercolorCell
 	} from "../embedding/layout/watercolorWash.js";
+	import { paintHexWatercolor } from "../embedding/layout/hexWatercolorWash.js";
 
 	const DEFAULT_FOCUS_SCALE = 8;
 	const FOCUS_TRANSITION_MS = 900;
@@ -143,7 +142,7 @@
 		// hex is only partly that progression. Needs progressionSharesBySongKey.
 		// "watercolor" bins and colors the same way, but paints each bin as a
 		// soft blob so neighboring regions bleed into each other.
-		renderMode?: "dots" | "hex" | "watercolor";
+		renderMode?: "dots" | "hex" | "watercolor" | "hex-watercolor";
 		// Each song's progressions with their share of its matched chords.
 		progressionSharesBySongKey?: ReadonlyMap<
 			string,
@@ -343,7 +342,12 @@
 		point: ScatterPoint
 	): string | CanvasGradient => {
 		if (colorMode === "groups") {
-			return fillStyleForGroupShares(context, screen.x, screen.y, point.groupShares);
+			return fillStyleForGroupShares(
+				context,
+				screen.x,
+				screen.y,
+				point.groupShares
+			);
 		}
 		if (colorMode === "homogeneity") return point.homogeneityColor;
 		return STAR_FILL_COLOR;
@@ -462,6 +466,9 @@
 		renderMode !== "dots" && progressionSharesBySongKey !== null
 	);
 	const watercolorMode = $derived(hexMode && renderMode === "watercolor");
+	const hexWatercolorMode = $derived(
+		hexMode && renderMode === "hex-watercolor"
+	);
 
 	// One color per cluster progression, from where its clusters sit on the
 	// map, so nearby regions never share a color or use a confusable pair.
@@ -500,17 +507,22 @@
 	): string => {
 		const color = name === null ? null : regionColorByName.get(name);
 		if (!color) return hexColors.unmatched;
-		const strength = 1 - gradientStrength * (1 - Math.min(1, Math.max(0, share)));
+		const strength =
+			1 - gradientStrength * (1 - Math.min(1, Math.max(0, share)));
 		// Lab, not HCL: blending toward a near-gray in HCL rotates the hue
 		// (red drifts to magenta), which makes one cluster look multicolored.
-		return interpolateLab(hexColors.faded, color)(
-			MIN_REGION_TINT + (1 - MIN_REGION_TINT) * strength
-		);
+		return interpolateLab(
+			hexColors.faded,
+			color
+		)(MIN_REGION_TINT + (1 - MIN_REGION_TINT) * strength);
 	};
 
 	// A song's color at dot zoom: its cluster's color, faded by how much of
 	// the song is that cluster's progression; gray outside clear clusters.
-	const songRegionFill = (songKey: string, gradientStrength: number): string => {
+	const songRegionFill = (
+		songKey: string,
+		gradientStrength: number
+	): string => {
 		const region = clusterRegionBySongKey?.get(songKey);
 		if (!region) return hexColors.ambiguous;
 		return regionFill(
@@ -617,8 +629,9 @@
 
 			const heavilyInvolvesFamily =
 				!familyEmphasisSongKeys ||
-				cluster.songKeys.filter((songKey) => familyEmphasisSongKeys.has(songKey))
-					.length /
+				cluster.songKeys.filter((songKey) =>
+					familyEmphasisSongKeys.has(songKey)
+				).length /
 					cluster.songKeys.length >=
 					FAMILY_INVOLVEMENT_THRESHOLD;
 
@@ -718,10 +731,7 @@
 			context.fillText(
 				label,
 				screen.x,
-				screen.y -
-					radius -
-					HIGHLIGHT_RING_OFFSET_PX -
-					HIGHLIGHT_LABEL_GAP_PX
+				screen.y - radius - HIGHLIGHT_RING_OFFSET_PX - HIGHLIGHT_LABEL_GAP_PX
 			);
 		}
 	};
@@ -842,12 +852,12 @@
 		cell: BinCell,
 		screenRadius: number
 	) => {
-		if (!watercolorMode) {
-			traceHex(context, cell.x, cell.y, screenRadius + HEX_OVERLAP_PX);
+		if (watercolorMode) {
+			context.beginPath();
+			context.arc(cell.x, cell.y, screenRadius, 0, Math.PI * 2);
 			return;
 		}
-		context.beginPath();
-		context.arc(cell.x, cell.y, screenRadius, 0, Math.PI * 2);
+		traceHex(context, cell.x, cell.y, screenRadius + HEX_OVERLAP_PX);
 	};
 
 	const drawBinOutlines = (
@@ -894,7 +904,9 @@
 			])
 		);
 		const ambiguousKeys = new Set(
-			[...regionByKey].filter(([, region]) => region === null).map(([key]) => key)
+			[...regionByKey]
+				.filter(([, region]) => region === null)
+				.map(([key]) => key)
 		);
 		hexFrame = { radius, bins, summaries, ambiguousKeys, regionByKey };
 
@@ -941,8 +953,19 @@
 				};
 			});
 
-		if (watercolorMode) paintWatercolor(context, watercolorLayer(), cells, screenRadius);
-		else paintHexCells(context, cells, screenRadius);
+		if (watercolorMode) {
+			paintWatercolor(context, watercolorLayer(), cells, screenRadius);
+		} else if (hexWatercolorMode) {
+			paintHexWatercolor(
+				context,
+				watercolorLayer(),
+				cells,
+				screenRadius,
+				(ctx, x, y) => traceHex(ctx, x, y, screenRadius + HEX_OVERLAP_PX)
+			);
+		} else {
+			paintHexCells(context, cells, screenRadius);
+		}
 		drawBinOutlines(context, cells, screenRadius);
 
 		// One label per connected region, biggest first, skipping any that
@@ -1009,7 +1032,12 @@
 				x,
 				y
 			};
-			if (box.left < 0 || box.right > width || box.top < 0 || box.bottom > height) {
+			if (
+				box.left < 0 ||
+				box.right > width ||
+				box.top < 0 ||
+				box.bottom > height
+			) {
 				continue;
 			}
 			if (
@@ -1089,7 +1117,8 @@
 	const findClusterAt = (anchor: HoverCardAnchor): ClusterHit | null =>
 		clusterGeometryCache.reduce<ClusterHit | null>((best, hit) => {
 			if (!pointInsideClusterEllipse2D(anchor, hit.geometry)) return best;
-			return !best || clusterHitArea(hit.geometry) < clusterHitArea(best.geometry)
+			return !best ||
+				clusterHitArea(hit.geometry) < clusterHitArea(best.geometry)
 				? hit
 				: best;
 		}, null);
@@ -1127,8 +1156,7 @@
 			hoveredHex = key === null ? null : { key, anchor };
 			hoveredHexSummary =
 				key === null ? null : (hexFrame.summaries.get(key) ?? null);
-			hoveredHexIsAmbiguous =
-				key !== null && hexFrame.ambiguousKeys.has(key);
+			hoveredHexIsAmbiguous = key !== null && hexFrame.ambiguousKeys.has(key);
 			hoveredHexRegion =
 				key === null ? null : (hexFrame.regionByKey.get(key) ?? null);
 			hoveredSongKey = null;
@@ -1253,7 +1281,10 @@
 			(width * CLUSTER_FOCUS_PADDING) / boxWidth,
 			(height * CLUSTER_FOCUS_PADDING) / boxHeight
 		);
-		const scale = Math.min(Math.max(fitScale, MIN_ZOOM), MAX_CLUSTER_FOCUS_SCALE);
+		const scale = Math.min(
+			Math.max(fitScale, MIN_ZOOM),
+			MAX_CLUSTER_FOCUS_SCALE
+		);
 		return transformCenteredOn(
 			{ x: (minX + maxX) / 2, y: (minY + maxY) / 2 },
 			scale
@@ -1305,7 +1336,10 @@
 		select(canvas)
 			.transition()
 			.duration(FLY_TO_TRANSITION_MS)
-			.call(zoomBehavior.transform, transformCenteredOn(toBasePixel(point), scale));
+			.call(
+				zoomBehavior.transform,
+				transformCenteredOn(toBasePixel(point), scale)
+			);
 	};
 
 	$effect(() => {
@@ -1340,6 +1374,7 @@
 		void accentFillColor;
 		void hexMode;
 		void watercolorMode;
+		void hexWatercolorMode;
 		void regionColorByName;
 		void hoveredHex;
 		void clusterRegionBySongKey;
@@ -1441,7 +1476,9 @@
 		? (event) => {
 				if (event.key === "Enter" || event.key === " ") {
 					if (hoveredSongKey !== null) {
-						onSelect(hoveredSongKey === selectedSongKey ? null : hoveredSongKey);
+						onSelect(
+							hoveredSongKey === selectedSongKey ? null : hoveredSongKey
+						);
 					}
 				}
 				if (event.key === "Escape") onSelect(null);
@@ -1482,7 +1519,8 @@
 							hexColors.unmatched};"
 					></span>
 					<span class="hex-tooltip-name">{entry.name}</span>
-					<span class="hex-tooltip-share">{Math.round(entry.share * 100)}%</span>
+					<span class="hex-tooltip-share">{Math.round(entry.share * 100)}%</span
+					>
 				</div>
 			{/each}
 		</div>
@@ -1555,7 +1593,10 @@
 		transform: translate(-50%, -50%);
 		pointer-events: none;
 		white-space: nowrap;
-		font: 500 10px "JetBrains Mono", ui-monospace, monospace;
+		font:
+			500 10px "JetBrains Mono",
+			ui-monospace,
+			monospace;
 		color: var(--label-text);
 		text-shadow:
 			-1.5px 0 var(--label-halo),
@@ -1602,5 +1643,4 @@
 		color: #a1a1aa;
 		font-variant-numeric: tabular-nums;
 	}
-
 </style>

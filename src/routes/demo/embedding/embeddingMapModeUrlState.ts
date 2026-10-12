@@ -4,7 +4,8 @@ import { page } from "$app/state";
 export const MAP_MODES = [
 	{ id: "hex", label: "hex" },
 	{ id: "scatter", label: "full map" },
-	{ id: "watercolor", label: "watercolor" }
+	{ id: "watercolor", label: "watercolor" },
+	{ id: "hex-watercolor", label: "hex watercolor" }
 ] as const;
 
 export type MapMode = (typeof MAP_MODES)[number]["id"];
@@ -21,15 +22,18 @@ export const readMapModeFromUrl = (searchParams: URLSearchParams): MapMode => {
 };
 
 export const replaceMapModeInUrl = (mapMode: MapMode): void => {
-	if (mapMode === readMapModeFromUrl(page.url.searchParams)) return;
+	const currentParams = new URLSearchParams(window.location.search);
+	if (mapMode === readMapModeFromUrl(currentParams)) return;
 
-	const params = new URLSearchParams(page.url.searchParams);
+	const params = new URLSearchParams(currentParams);
 	if (mapMode === DEFAULT_MAP_MODE) params.delete(MAP_MODE_URL_PARAM);
 	else params.set(MAP_MODE_URL_PARAM, mapMode);
 
 	const queryString = params.toString();
 	replaceState(
-		queryString ? `${page.url.pathname}?${queryString}` : page.url.pathname,
+		queryString
+			? `${window.location.pathname}?${queryString}`
+			: window.location.pathname,
 		page.state
 	);
 };

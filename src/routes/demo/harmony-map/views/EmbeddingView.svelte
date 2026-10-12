@@ -96,7 +96,7 @@
 		// "hex" draws the 2D map as zoom-dependent hexagons colored by each
 		// area's main progression, turning back into dots near max zoom.
 		// "watercolor" is the same, painted as blobs that bleed together.
-		mapMode?: "scatter" | "hex" | "watercolor";
+		mapMode?: "scatter" | "hex" | "watercolor" | "hex-watercolor";
 		// Cluster detection settings. A higher minimum merges nearby
 		// fragments of one group into a single cluster; clusters larger than
 		// the maximum aren't circled. Default to the shared constants.
