@@ -1,10 +1,18 @@
-import { rollups } from "d3";
+import { rollup, rollups } from "d3";
+import { diatonicQualityForDegree } from "../../../../chord-processing/diatonicQuality.js";
+import {
+	dedupeAdjacentTokens,
+	degreeQualityToRoman,
+	parseRomanToken
+} from "../../../../chord-processing/romanNumerals.js";
+import type { ScaleName } from "../../../../chord-processing/scale-intervals.js";
 import coreProgressions from "../../../../data/core-progressions.js";
 import { toneOfRomanToken, type ChordTone } from "./diatonicChords.js";
 
 type ProgressionMatch = {
 	name: string;
 	chordProgression: string;
+	scale: ScaleName;
 	isCore: boolean;
 };
 
@@ -14,14 +22,31 @@ type SongMatches = {
 
 export type ProgressionToken = { roman: string; tone: ChordTone };
 
-export type TopProgression = {
-	name: string;
-	label: string;
+export type ProgressionVariant = {
+	spelling: string;
 	tokens: ProgressionToken[];
 	songCount: number;
 };
 
-export const TOP_PROGRESSIONS_LIMIT = 30;
+export type TopProgression = {
+	name: string;
+	label: string;
+	variants: ProgressionVariant[];
+	scale: ScaleName;
+	songCount: number;
+};
+
+export type ProgressionFilters = {
+	requiresMinorChord: boolean;
+	requiresMinorKey: boolean;
+};
+
+export const DEFAULT_PROGRESSION_FILTERS: ProgressionFilters = {
+	requiresMinorChord: false,
+	requiresMinorKey: false
+};
+
+export const TOP_PROGRESSIONS_LIMIT = 15;
 const PROGRESSION_SEPARATOR = "-";
 
 export const ROW_CHORD_RADIUS = 18;
@@ -37,11 +62,11 @@ export const rowChordCenterX = (index: number): number =>
 export const rowWidthFor = (chordCount: number): number =>
 	rowChordCenterX(chordCount - 1) + ROW_CHORD_RADIUS + ROW_PADDING;
 
-const coreSpellingByName = new Map(
-	coreProgressions.map((progression) => [
-		progression.name,
-		[progression.chordProgression].flat()[0]
-	])
+const TONIC_DEGREE = 1;
+const MINOR_TONIC_QUALITIES = new Set(["min", "dim"]);
+
+const coreByName = new Map(
+	coreProgressions.map((progression) => [progression.name, progression])
 );
 
 export const progressionTokensOf = (
@@ -52,34 +77,102 @@ export const progressionTokensOf = (
 		tone: toneOfRomanToken(roman)
 	}));
 
-const uniqueMatchesOf = (song: SongMatches): ProgressionMatch[] => [
-	...new Map(
-		song.progressionCounts.map((match) => [match.name, match])
-	).values()
+const simplifyRomanToken = (token: string): string => {
+	const parsed = parseRomanToken(token);
+	const roman = parsed && degreeQualityToRoman(parsed.degree, parsed.quality);
+	if (!parsed || !roman) return token;
+	return `${parsed.flat ? "b" : ""}${parsed.sharp ? "#" : ""}${roman}`;
+};
+
+export const simplifySpelling = (chordProgression: string): string =>
+	dedupeAdjacentTokens(
+		chordProgression.split(PROGRESSION_SEPARATOR).map(simplifyRomanToken)
+	).join(PROGRESSION_SEPARATOR);
+
+const uniqueBy = (
+	matches: readonly ProgressionMatch[],
+	keyOf: (match: ProgressionMatch) => string
+): ProgressionMatch[] => [
+	...new Map(matches.map((match) => [keyOf(match), match])).values()
 ];
 
-const spellingOf = (match: ProgressionMatch): string =>
-	match.isCore
-		? (coreSpellingByName.get(match.name) ?? match.chordProgression)
-		: match.chordProgression;
+const nameOf = (match: ProgressionMatch): string => match.name;
 
-export const buildTopProgressions = (
-	songs: readonly SongMatches[],
-	limit: number = TOP_PROGRESSIONS_LIMIT
-): TopProgression[] =>
-	rollups(
-		songs.flatMap(uniqueMatchesOf),
+const variantKeyOf = (match: ProgressionMatch): string =>
+	`${match.name}|${simplifySpelling(match.chordProgression)}`;
+
+const coreDefinitionOf = (match: ProgressionMatch) =>
+	match.isCore ? coreByName.get(match.name) : undefined;
+
+const authoredSpellingsOf = (match: ProgressionMatch): string[] => {
+	const core = coreDefinitionOf(match);
+	return core ? [core.chordProgression].flat() : [match.chordProgression];
+};
+
+const scaleOf = (match: ProgressionMatch): ScaleName =>
+	coreDefinitionOf(match)?.scale ?? match.scale;
+
+export const isMinorKey = (scale: ScaleName): boolean =>
+	MINOR_TONIC_QUALITIES.has(diatonicQualityForDegree(scale, TONIC_DEGREE));
+
+const hasMinorChord = (progression: TopProgression): boolean =>
+	progression.variants.some((variant) =>
+		variant.tokens.some((token) => token.tone === "minor")
+	);
+
+const variantsOf = (
+	match: ProgressionMatch,
+	totalSongCount: number,
+	songCountBySpelling: ReadonlyMap<string, number> | undefined
+): ProgressionVariant[] => {
+	const spellings = authoredSpellingsOf(match);
+	const countFor = (spelling: string): number =>
+		spellings.length === 1
+			? totalSongCount
+			: (songCountBySpelling?.get(simplifySpelling(spelling)) ?? 0);
+	const variants = spellings
+		.map((spelling) => ({
+			spelling,
+			tokens: progressionTokensOf(spelling),
+			songCount: countFor(spelling)
+		}))
+		.sort((a, b) => b.songCount - a.songCount);
+	const matchedVariants = variants.filter(({ songCount }) => songCount > 0);
+	return matchedVariants.length > 0 ? matchedVariants : variants.slice(0, 1);
+};
+
+export const rankProgressions = (songs: readonly SongMatches[]): TopProgression[] => {
+	const variantCounts = rollup(
+		songs.flatMap((song) => uniqueBy(song.progressionCounts, variantKeyOf)),
+		(matches) => matches.length,
+		nameOf,
+		(match) => simplifySpelling(match.chordProgression)
+	);
+	return rollups(
+		songs.flatMap((song) => uniqueBy(song.progressionCounts, nameOf)),
 		(matches) => ({ match: matches[0], songCount: matches.length }),
-		(match) => match.name
+		nameOf
 	)
-		.map(([name, { match, songCount }]) => {
-			const spelling = spellingOf(match);
-			return {
-				name,
-				label: match.isCore ? name : spelling,
-				tokens: progressionTokensOf(spelling),
-				songCount
-			};
-		})
-		.sort((a, b) => b.songCount - a.songCount || a.label.localeCompare(b.label))
-		.slice(0, limit);
+		.map(([name, { match, songCount }]) => ({
+			name,
+			label: match.isCore ? name : match.chordProgression,
+			variants: variantsOf(match, songCount, variantCounts.get(name)),
+			scale: scaleOf(match),
+			songCount
+		}))
+		.sort(
+			(a, b) => b.songCount - a.songCount || a.label.localeCompare(b.label)
+		);
+};
+
+const matchesFilters =
+	(filters: ProgressionFilters) =>
+	(progression: TopProgression): boolean =>
+		(!filters.requiresMinorChord || hasMinorChord(progression)) &&
+		(!filters.requiresMinorKey || isMinorKey(progression.scale));
+
+export const selectTopProgressions = (
+	ranked: readonly TopProgression[],
+	filters: ProgressionFilters,
+	limit: number = TOP_PROGRESSIONS_LIMIT
+): TopProgression[] => ranked.filter(matchesFilters(filters)).slice(0, limit);
