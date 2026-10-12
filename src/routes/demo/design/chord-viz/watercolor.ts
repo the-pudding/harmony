@@ -16,9 +16,9 @@ export type WatercolorSlider = {
 };
 
 export const DEFAULT_WATERCOLOR_SETTINGS: WatercolorSettings = {
-	deviation: 0,
+	deviation: 1,
 	blur: 0.8,
-	noise: 0.03
+	noise: 0.015
 };
 
 export const WATERCOLOR_SLIDERS: WatercolorSlider[] = [
@@ -49,6 +49,15 @@ export const CHORD_VIEWBOX = [
 	CHORD_SIZE,
 	CHORD_SIZE
 ].join(" ");
+
+const CHORD_OVERLAP_FRACTION = 0.2;
+const BLOB_DIAMETER = 2 * BLOB_RADIUS;
+
+export const CHORD_OVERLAP_GAP = -(
+	CHORD_SIZE -
+	BLOB_DIAMETER +
+	BLOB_DIAMETER * CHORD_OVERLAP_FRACTION
+);
 
 const BLUR_SCALE_MAX_AREA = 2000;
 const BLUR_SCALE_MAX_FACTOR = 3.5;

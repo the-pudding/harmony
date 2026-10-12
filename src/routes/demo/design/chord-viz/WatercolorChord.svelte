@@ -86,11 +86,7 @@
 		</filter>
 	</defs>
 	<g filter="url(#{splotchId})">
-		<path
-			d={shapePath}
-			fill={colors.fill}
-			filter="url(#{thresholdId})"
-		/>
+		<path d={shapePath} fill={colors.fill} filter="url(#{thresholdId})" />
 	</g>
 	<path class="pencil" d={shapePath} filter="url(#{pencilId})" />
 	<text class="label" fill={colors.text}>{chord.roman}</text>
@@ -102,19 +98,20 @@
 		height: var(--chord-size);
 		flex: none;
 		overflow: visible;
+		mix-blend-mode: multiply;
 	}
 
 	.pencil {
 		fill: none;
-		stroke: #a1a1aa;
-		stroke-width: 2px;
+		stroke: #18181b;
+		stroke-width: 1.25px;
 		stroke-linejoin: round;
 		opacity: 0;
 		transition: opacity 150ms ease;
 	}
 
 	.chord:hover .pencil {
-		opacity: 0.8;
+		opacity: 1;
 	}
 
 	.label {

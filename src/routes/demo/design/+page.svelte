@@ -2,6 +2,7 @@
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
 	import ChordViz from "./chord-viz/ChordViz.svelte";
+	import FloatingChords from "./chord-viz/FloatingChords.svelte";
 	import DesignSection from "./DesignSection.svelte";
 	import SyncedSongPlayer from "./SyncedSongPlayer.svelte";
 	import { rubberBall } from "./designSongs.js";
@@ -29,6 +30,7 @@
 
 		<DesignSection title="Chord viz">
 			<ChordViz />
+			<FloatingChords />
 		</DesignSection>
 	</div>
 </div>

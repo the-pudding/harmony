@@ -3,6 +3,8 @@ import { CHORD_VIZ_ROWS, diatonicChordsOf } from "./diatonicChords.js";
 import {
 	BLOB_RADIUS,
 	BLOB_WOBBLE,
+	CHORD_OVERLAP_GAP,
+	CHORD_SIZE,
 	blobPath,
 	blobPoints,
 	thresholdBlurFor
@@ -56,6 +58,12 @@ describe("blobPoints", () => {
 
 	it("builds an svg path", () => {
 		expect(blobPath(0)).toMatch(/^M/);
+	});
+});
+
+describe("CHORD_OVERLAP_GAP", () => {
+	it("overlaps neighboring chord shapes", () => {
+		expect(CHORD_SIZE + CHORD_OVERLAP_GAP).toBeLessThan(2 * BLOB_RADIUS);
 	});
 });
 
