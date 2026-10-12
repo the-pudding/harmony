@@ -4,16 +4,15 @@
 		ALPHA_THRESHOLD_MATRIX,
 		BLOB_AREA,
 		CHORD_SIZE,
-		CHORD_TONE_COLORS,
 		CHORD_VIEWBOX,
 		FILTER_REGION,
 		NOISE_ALPHA_MATRIX,
 		NOISE_OCTAVES,
 		PENCIL_FILTER,
-		blobPath,
 		thresholdBlurFor,
 		type WatercolorSettings
 	} from "./watercolor.js";
+	import { appearanceFor } from "./chordAppearanceLookup.js";
 
 	type Props = {
 		chord: VizChord;
@@ -27,8 +26,7 @@
 	const thresholdId = `threshold-${uid}`;
 	const pencilId = `pencil-${uid}`;
 
-	const shapePath = $derived(blobPath(chord.seed));
-	const colors = $derived(CHORD_TONE_COLORS[chord.tone]);
+	const appearance = $derived(appearanceFor(chord.tonality, chord.roman));
 	const thresholdBlur = $derived(
 		thresholdBlurFor(settings.deviation, BLOB_AREA)
 	);
@@ -86,10 +84,10 @@
 		</filter>
 	</defs>
 	<g filter="url(#{splotchId})">
-		<path d={shapePath} fill={colors.fill} filter="url(#{thresholdId})" />
+		<path d={appearance.path} fill={appearance.colors.fill} filter="url(#{thresholdId})" />
 	</g>
-	<path class="pencil" d={shapePath} filter="url(#{pencilId})" />
-	<text class="label" fill={colors.text}>{chord.roman}</text>
+	<path class="pencil" d={appearance.path} filter="url(#{pencilId})" />
+	<text class="label" fill={appearance.colors.text}>{chord.roman}</text>
 </svg>
 
 <style>

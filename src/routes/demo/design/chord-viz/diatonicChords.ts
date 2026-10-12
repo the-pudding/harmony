@@ -9,6 +9,7 @@ import {
 } from "../../../../chord-processing/scale-intervals.js";
 
 export type ChordTone = "major" | "minor";
+export type KeyTonality = "major" | "minor";
 
 export type DiatonicChord = {
 	degree: number;
@@ -16,11 +17,12 @@ export type DiatonicChord = {
 	tone: ChordTone;
 };
 
-export type VizChord = DiatonicChord & { seed: number };
+export type VizChord = DiatonicChord & { seed: number; tonality: KeyTonality };
 
 export type ChordVizRow = {
 	scale: ScaleName;
 	label: string;
+	tonality: KeyTonality;
 	chords: VizChord[];
 };
 
@@ -45,6 +47,14 @@ export const diatonicChordsOf = (scale: ScaleName): DiatonicChord[] =>
 		};
 	});
 
+const TONIC_DEGREE = 1;
+const MINOR_TONIC_QUALITIES = new Set(["min", "dim"]);
+
+const tonalityOfScale = (scale: ScaleName): KeyTonality =>
+	MINOR_TONIC_QUALITIES.has(diatonicQualityForDegree(scale, TONIC_DEGREE))
+		? "minor"
+		: "major";
+
 const CHORD_VIZ_SCALES: { scale: ScaleName; label: string }[] = [
 	{ scale: "major", label: "Major" },
 	{ scale: "minor", label: "Minor" }
@@ -53,11 +63,14 @@ const CHORD_VIZ_SCALES: { scale: ScaleName; label: string }[] = [
 export const CHORD_VIZ_ROWS: ChordVizRow[] = CHORD_VIZ_SCALES.map(
 	({ scale, label }, rowIndex) => {
 		const chords = diatonicChordsOf(scale);
+		const tonality = tonalityOfScale(scale);
 		return {
 			scale,
 			label,
+			tonality,
 			chords: chords.map((chord, chordIndex) => ({
 				...chord,
+				tonality,
 				seed: rowIndex * chords.length + chordIndex
 			}))
 		};
