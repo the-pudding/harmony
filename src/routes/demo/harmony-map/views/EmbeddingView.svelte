@@ -95,7 +95,8 @@
 		purityLayout?: { pureThreshold: number } | null;
 		// "hex" draws the 2D map as zoom-dependent hexagons colored by each
 		// area's main progression, turning back into dots near max zoom.
-		mapMode?: "scatter" | "hex";
+		// "watercolor" is the same, painted as blobs that bleed together.
+		mapMode?: "scatter" | "hex" | "watercolor";
 		// Cluster detection settings. A higher minimum merges nearby
 		// fragments of one group into a single cluster; clusters larger than
 		// the maximum aren't circled. Default to the shared constants.
@@ -508,11 +509,13 @@
 		)
 	);
 
+	const isRegionMapMode = $derived(mapMode !== "scatter");
+
 	// Hex mode colors by cluster: the same clusters the map outlines (minus
 	// any hidden in the clusters tab), each colored by its main progression.
 	const clusterRegionBySongKey = $derived.by(
 		(): Map<string, ClusterRegion> | null => {
-			if (mapMode !== "hex") return null;
+			if (!isRegionMapMode) return null;
 			const regions = new Map<string, ClusterRegion>();
 			for (const cluster of mapClusters) {
 				const main = mainProgressionOf(cluster.songKeys);
@@ -769,8 +772,8 @@
 					emphasisFillColor={artistSongKeys && HIGHLIGHT_RING_COLOR}
 					{accentSongKeys}
 					{accentFillColor}
-					renderMode={mapMode === "hex" ? "hex" : "dots"}
-					progressionSharesBySongKey={mapMode === "hex"
+					renderMode={mapMode === "scatter" ? "dots" : mapMode}
+					progressionSharesBySongKey={isRegionMapMode
 						? progressionSharesBySongKey
 						: null}
 					{clusterRegionBySongKey}

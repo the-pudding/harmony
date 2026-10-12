@@ -3,7 +3,8 @@ import { page } from "$app/state";
 
 export const MAP_MODES = [
 	{ id: "hex", label: "hex" },
-	{ id: "scatter", label: "full map" }
+	{ id: "scatter", label: "full map" },
+	{ id: "watercolor", label: "watercolor" }
 ] as const;
 
 export type MapMode = (typeof MAP_MODES)[number]["id"];

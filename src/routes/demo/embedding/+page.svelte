@@ -171,11 +171,11 @@
 				purity → center: {purityLayoutOn ? "on" : "off"}
 			</button>
 
-			{#if mapMode === "hex"}
+			{#if mapMode !== "scatter"}
 				<span class="pure-key">
-					hex color = main progression · faded = mixed with others · gray = no
-					clear main progression or outside clusters · zoom in for smaller
-					hexes, then dots
+					{mapMode} color = main progression · faded = mixed with others · gray
+					= no clear main progression or outside clusters · zoom in for finer
+					detail, then dots
 				</span>
 			{:else}
 				<span class="pure-key">

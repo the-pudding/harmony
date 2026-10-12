@@ -63,6 +63,11 @@
 		type HexSummary,
 		type ProgressionShare
 	} from "../embedding/layout/hexBins.js";
+	import {
+		paintWatercolor,
+		WATERCOLOR_REACH,
+		type WatercolorCell
+	} from "../embedding/layout/watercolorWash.js";
 
 	const DEFAULT_FOCUS_SCALE = 8;
 	const FOCUS_TRANSITION_MS = 900;
@@ -136,7 +141,9 @@
 		// when zoomed out, smaller as you zoom in, plain dots near max zoom.
 		// Each hex takes the color of its main progression, faded when the
 		// hex is only partly that progression. Needs progressionSharesBySongKey.
-		renderMode?: "dots" | "hex";
+		// "watercolor" bins and colors the same way, but paints each bin as a
+		// soft blob so neighboring regions bleed into each other.
+		renderMode?: "dots" | "hex" | "watercolor";
 		// Each song's progressions with their share of its matched chords.
 		progressionSharesBySongKey?: ReadonlyMap<
 			string,
@@ -452,8 +459,9 @@
 		accentFillColor !== null && (accentSongKeys?.has(songKey) ?? false);
 
 	const hexMode = $derived(
-		renderMode === "hex" && progressionSharesBySongKey !== null
+		renderMode !== "dots" && progressionSharesBySongKey !== null
 	);
+	const watercolorMode = $derived(hexMode && renderMode === "watercolor");
 
 	// One color per cluster progression, from where its clusters sit on the
 	// map, so nearby regions never share a color or use a confusable pair.
@@ -809,6 +817,55 @@
 		context.closePath();
 	};
 
+	type BinCell = WatercolorCell & { songKeys: readonly string[] };
+
+	let watercolorCanvas: HTMLCanvasElement | null = null;
+	const watercolorLayer = (): HTMLCanvasElement => {
+		watercolorCanvas ??= document.createElement("canvas");
+		return watercolorCanvas;
+	};
+
+	const paintHexCells = (
+		context: CanvasRenderingContext2D,
+		cells: readonly BinCell[],
+		screenRadius: number
+	) => {
+		for (const cell of cells) {
+			traceHex(context, cell.x, cell.y, screenRadius + HEX_OVERLAP_PX);
+			context.fillStyle = cell.fill;
+			context.fill();
+		}
+	};
+
+	const traceBinOutline = (
+		context: CanvasRenderingContext2D,
+		cell: BinCell,
+		screenRadius: number
+	) => {
+		if (!watercolorMode) {
+			traceHex(context, cell.x, cell.y, screenRadius + HEX_OVERLAP_PX);
+			return;
+		}
+		context.beginPath();
+		context.arc(cell.x, cell.y, screenRadius, 0, Math.PI * 2);
+	};
+
+	const drawBinOutlines = (
+		context: CanvasRenderingContext2D,
+		cells: readonly BinCell[],
+		screenRadius: number
+	) => {
+		for (const cell of cells) {
+			const isSelected =
+				selectedSongKey !== null && cell.songKeys.includes(selectedSongKey);
+			if (!isSelected && hoveredHex?.key !== cell.key) continue;
+			traceBinOutline(context, cell, screenRadius);
+			context.strokeStyle = isSelected ? "#f4f4f5" : "#a1a1aa";
+			context.lineWidth = isSelected ? 2 : 1.5;
+			context.stroke();
+		}
+	};
+
 	// Bins this frame's positions in base (unzoomed) pixels, so the hex grid
 	// stays fixed to the map while panning, then draws it through the zoom.
 	const drawHexes = (context: CanvasRenderingContext2D, radius: number) => {
@@ -843,49 +900,50 @@
 
 		const screenRadius = radius * transform.k;
 		const gradient = gradientStrengthForZoom(transform.k, HEX_ZOOM);
-		const drawRadius = screenRadius + HEX_OVERLAP_PX;
+		const cullMargin = screenRadius * (watercolorMode ? WATERCOLOR_REACH : 1);
 		context.globalAlpha = 1;
 
 		// Gray first, so colored hexes sit cleanly on top of the merged gray.
-		const drawOrder = [...bins].sort(
-			([first], [second]) =>
-				Number(ambiguousKeys.has(second)) - Number(ambiguousKeys.has(first))
-		);
-		for (const [key, bin] of drawOrder) {
-			const centerX = transform.applyX(bin.x);
-			const centerY = transform.applyY(bin.y);
-			if (
-				centerX < -screenRadius ||
-				centerY < -screenRadius ||
-				centerX > width + screenRadius ||
-				centerY > height + screenRadius
-			) {
-				continue;
-			}
-			const region = regionByKey.get(key) ?? null;
-			traceHex(context, centerX, centerY, drawRadius);
-			context.fillStyle =
-				region === null
-					? hexColors.ambiguous
-					: regionFill(
-							region.name,
-							averageProgressionShare(
-								bin.songKeys,
-								region.name,
-								progressionSharesBySongKey ?? new Map()
-							),
-							gradient
-						);
-			context.fill();
+		const cells = [...bins]
+			.sort(
+				([first], [second]) =>
+					Number(ambiguousKeys.has(second)) - Number(ambiguousKeys.has(first))
+			)
+			.map(([key, bin]) => ({
+				key,
+				songKeys: bin.songKeys,
+				x: transform.applyX(bin.x),
+				y: transform.applyY(bin.y)
+			}))
+			.filter(
+				(cell) =>
+					cell.x >= -cullMargin &&
+					cell.y >= -cullMargin &&
+					cell.x <= width + cullMargin &&
+					cell.y <= height + cullMargin
+			)
+			.map((cell) => {
+				const region = regionByKey.get(cell.key) ?? null;
+				return {
+					...cell,
+					fill:
+						region === null
+							? hexColors.ambiguous
+							: regionFill(
+									region.name,
+									averageProgressionShare(
+										cell.songKeys,
+										region.name,
+										progressionSharesBySongKey ?? new Map()
+									),
+									gradient
+								)
+				};
+			});
 
-			const isSelected =
-				selectedSongKey !== null && bin.songKeys.includes(selectedSongKey);
-			if (isSelected || hoveredHex?.key === key) {
-				context.strokeStyle = isSelected ? "#f4f4f5" : "#a1a1aa";
-				context.lineWidth = isSelected ? 2 : 1.5;
-				context.stroke();
-			}
-		}
+		if (watercolorMode) paintWatercolor(context, watercolorLayer(), cells, screenRadius);
+		else paintHexCells(context, cells, screenRadius);
+		drawBinOutlines(context, cells, screenRadius);
 
 		// One label per connected region, biggest first, skipping any that
 		// would collide with a label already placed or fall off screen.
@@ -1281,6 +1339,7 @@
 		void pointsInDrawOrder;
 		void accentFillColor;
 		void hexMode;
+		void watercolorMode;
 		void regionColorByName;
 		void hoveredHex;
 		void clusterRegionBySongKey;
