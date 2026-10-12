@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { formatTimestamp } from "./chordStartTimes.js";
+	import { BEATS_PER_CHORD } from "./beatGrid.js";
+	import { BEAT_SNAP } from "./chordBeats.js";
 	import {
 		isActiveAt,
 		type TimelineChord,
 		type TimelineGroup
 	} from "./chordTimeline.js";
+	import { formatTimestamp } from "./songTime.js";
 	import { spanStyle, toPercent } from "./timelineStyles.js";
 
-	const FINE_NUDGE_SECONDS = 0.05;
-	const COARSE_NUDGE_SECONDS = 0.5;
 	const NUDGE_DIRECTION_BY_KEY: Record<string, number> = {
 		ArrowLeft: -1,
 		ArrowRight: 1
@@ -17,21 +17,25 @@
 	type Props = {
 		chords: TimelineChord[];
 		groups: TimelineGroup[];
+		chordBeats: number[];
 		progressFraction: number;
 		duration: number;
 		editable: boolean;
 		onChordEditStart: () => void;
 		onChordMove: (index: number, startFraction: number) => void;
+		onChordNudge: (index: number, beatDelta: number) => void;
 	};
 
 	let {
 		chords,
 		groups,
+		chordBeats,
 		progressFraction,
 		duration,
 		editable,
 		onChordEditStart,
-		onChordMove
+		onChordMove,
+		onChordNudge
 	}: Props = $props();
 
 	type ChordDrag = {
@@ -46,10 +50,11 @@
 
 	const draggedChord = $derived(drag === null ? undefined : chords[drag.index]);
 
+	const chordPosition = (chord: TimelineChord): string =>
+		`beat ${chordBeats[chord.index]} · ${formatTimestamp(chord.startFraction * duration)}`;
+
 	const chordTitle = (chord: TimelineChord): string =>
-		editable
-			? `${chord.roman} · ${formatTimestamp(chord.startFraction * duration)}`
-			: chord.roman;
+		editable ? `${chord.roman} · ${chordPosition(chord)}` : chord.roman;
 
 	function startDrag(
 		event: PointerEvent & { currentTarget: HTMLElement },
@@ -82,14 +87,8 @@
 		const direction = NUDGE_DIRECTION_BY_KEY[event.key];
 		if (!editable || direction === undefined) return;
 		event.preventDefault();
-		const nudgeSeconds = event.shiftKey
-			? COARSE_NUDGE_SECONDS
-			: FINE_NUDGE_SECONDS;
-		onChordEditStart();
-		onChordMove(
-			chord.index,
-			chord.startFraction + (direction * nudgeSeconds) / duration
-		);
+		const nudgeBeats = event.shiftKey ? BEATS_PER_CHORD : BEAT_SNAP;
+		onChordNudge(chord.index, direction * nudgeBeats);
 	}
 </script>
 
@@ -125,7 +124,7 @@
 		<span
 			class="drag-time"
 			style="left: {toPercent(draggedChord.startFraction)};"
-			>{formatTimestamp(draggedChord.startFraction * duration)}</span
+			>{chordPosition(draggedChord)}</span
 		>
 	{/if}
 </div>

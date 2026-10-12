@@ -5,6 +5,7 @@ import {
 	chordKeysOf,
 	isActiveAt,
 	progressFractionOf,
+	sectionChordIndices,
 	type SongSectionChords
 } from "./chordTimeline.js";
 
@@ -116,6 +117,14 @@ describe("chordKeysOf", () => {
 			"verse-2",
 			"chorus-0"
 		]);
+	});
+});
+
+describe("sectionChordIndices", () => {
+	it("returns the song-wide positions of a section's chords", () => {
+		expect(sectionChordIndices(sections, "verse")).toEqual([0, 1, 2]);
+		expect(sectionChordIndices(sections, "chorus")).toEqual([3]);
+		expect(sectionChordIndices(sections, "missing")).toEqual([]);
 	});
 });
 

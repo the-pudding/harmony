@@ -1,25 +1,27 @@
 <script lang="ts">
 	import useClipboard from "$runes/useClipboard.svelte.js";
+	import type { ChordBeatsFile } from "./chordBeatsFile.js";
+	import { formatJsonLikeRepo } from "./formatJsonLikeRepo.js";
 
 	type Props = {
-		json: string | null;
+		file: ChordBeatsFile;
 		targetFilePath: string;
 		hasLocalEdits: boolean;
 		onDiscardLocalEdits: () => void;
 	};
 
-	let { json, targetFilePath, hasLocalEdits, onDiscardLocalEdits }: Props =
+	let { file, targetFilePath, hasLocalEdits, onDiscardLocalEdits }: Props =
 		$props();
 
 	const clipboard = useClipboard("");
 
-	function copyJson() {
-		if (json !== null) clipboard.copy(json);
+	async function copyJson() {
+		await clipboard.copy(await formatJsonLikeRepo(file));
 	}
 </script>
 
 <div class="actions">
-	<button type="button" disabled={json === null} onclick={copyJson}
+	<button type="button" onclick={copyJson}
 		>{clipboard.copied ? "Copied" : "Copy timings JSON"}</button
 	>
 	<button type="button" disabled={!hasLocalEdits} onclick={onDiscardLocalEdits}

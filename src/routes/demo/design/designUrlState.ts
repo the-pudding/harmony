@@ -1,6 +1,6 @@
 import { replaceState } from "$app/navigation";
 import { page } from "$app/state";
-import { SONG_START_SECONDS } from "./chordStartTimes.js";
+import { SONG_START_SECONDS } from "./songTime.js";
 import { DEFAULT_ZOOM, isZoomLevel } from "./timelineZoom.js";
 
 const ZOOM_URL_PARAM = "zoom";

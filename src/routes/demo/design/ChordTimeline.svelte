@@ -15,6 +15,8 @@
 	type Props = {
 		timeline: ChordTimeline;
 		waveformPeaks: number[] | null;
+		beatFractions: number[];
+		chordBeats: number[];
 		progressFraction: number;
 		duration: number;
 		editable: boolean;
@@ -23,11 +25,14 @@
 		onSeek: (fraction: number) => void;
 		onChordEditStart: () => void;
 		onChordMove: (index: number, startFraction: number) => void;
+		onChordNudge: (index: number, beatDelta: number) => void;
 	};
 
 	let {
 		timeline,
 		waveformPeaks,
+		beatFractions,
+		chordBeats,
 		progressFraction,
 		duration,
 		editable,
@@ -35,7 +40,8 @@
 		onZoomChange,
 		onSeek,
 		onChordEditStart,
-		onChordMove
+		onChordMove,
+		onChordNudge
 	}: Props = $props();
 
 	let scroller = $state<HTMLDivElement>();
@@ -105,8 +111,10 @@
 				{progressFraction}
 				{duration}
 				{editable}
+				{chordBeats}
 				{onChordEditStart}
 				{onChordMove}
+				{onChordNudge}
 			/>
 
 			<button
@@ -118,6 +126,10 @@
 				{#if waveformPeaks}
 					<Waveform peaks={waveformPeaks} />
 				{/if}
+				{#each beatFractions as beatFraction (beatFraction)}
+					<span class="beat-line" style="left: {toPercent(beatFraction)};"
+					></span>
+				{/each}
 				{#each timeline.chords as chord (chord.key)}
 					<span
 						class="chord-start"
@@ -196,6 +208,7 @@
 		overflow: hidden;
 	}
 
+	.beat-line,
 	.chord-start,
 	.section-divider {
 		position: absolute;
@@ -203,6 +216,10 @@
 		bottom: 0;
 		width: 1px;
 		pointer-events: none;
+	}
+
+	.beat-line {
+		background: rgba(244, 244, 245, 0.14);
 	}
 
 	.chord-start {

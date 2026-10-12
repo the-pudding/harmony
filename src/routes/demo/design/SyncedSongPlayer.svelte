@@ -1,13 +1,14 @@
 <script lang="ts">
+	import AlignmentControls from "./AlignmentControls.svelte";
 	import ChordTimeline from "./ChordTimeline.svelte";
 	import ChordTimingActions from "./ChordTimingActions.svelte";
 	import PlayerShortcutsHint from "./PlayerShortcutsHint.svelte";
 	import SongPlayerCard from "./SongPlayerCard.svelte";
-	import { SONG_START_SECONDS } from "./chordStartTimes.js";
 	import { progressFractionOf } from "./chordTimeline.js";
 	import { createChordTimings } from "./chordTimings.svelte.js";
 	import { currentSearchParams } from "../shared/currentSearchParams.js";
-	import { chordStartTimesFilePath, type DesignSong } from "./designSongs.js";
+	import { chordBeatsFilePath, type DesignSong } from "./designSongs.js";
+	import { SONG_START_SECONDS } from "./songTime.js";
 	import { readDesignUrlState } from "./designUrlState.js";
 	import { syncDesignUrlState } from "./designUrlSync.svelte.js";
 	import {
@@ -84,16 +85,27 @@
 			onRestart={restart}
 		/>
 		<ChordTimingActions
-			json={chordTimings.json}
-			targetFilePath={chordStartTimesFilePath(song.songKey)}
+			file={chordTimings.file}
+			targetFilePath={chordBeatsFilePath(song.songKey)}
 			hasLocalEdits={chordTimings.hasLocalEdits}
 			onDiscardLocalEdits={chordTimings.discardLocalEdits}
 		/>
 	</div>
-	<PlayerShortcutsHint />
+	<div class="tools">
+		<PlayerShortcutsHint />
+		<AlignmentControls
+			startSeconds={chordTimings.startSeconds}
+			beatsPerMinute={chordTimings.beatsPerMinute}
+			onStartSecondsChange={chordTimings.setStartSeconds}
+			onBeatsPerMinuteChange={chordTimings.setBeatsPerMinute}
+			onStartAtPlayhead={() => chordTimings.setStartSeconds(currentTime)}
+		/>
+	</div>
 	<ChordTimeline
 		timeline={chordTimings.timeline}
 		waveformPeaks={waveform.peaks}
+		beatFractions={chordTimings.beatFractions}
+		chordBeats={chordTimings.chordBeats}
 		{progressFraction}
 		{duration}
 		editable={chordTimings.editable}
@@ -102,6 +114,7 @@
 		onSeek={seekTo}
 		onChordEditStart={chordTimings.beginEdit}
 		onChordMove={chordTimings.moveChord}
+		onChordNudge={chordTimings.nudgeChord}
 	/>
 	<audio
 		bind:paused
@@ -117,6 +130,13 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
+	}
+
+	.tools {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: stretch;
+		gap: 0.75rem;
 	}
 
 	.header {

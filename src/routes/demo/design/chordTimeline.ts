@@ -57,6 +57,20 @@ const sectionChordOffsets = (sections: SongSectionChords[]): number[] =>
 		[]
 	);
 
+export const sectionChordIndices = (
+	sections: SongSectionChords[],
+	sectionId: string
+): number[] => {
+	const sectionIndex = sections.findIndex(
+		(section) => section.id === sectionId
+	);
+	if (sectionIndex === -1) return [];
+	const offset = sectionChordOffsets(sections)[sectionIndex];
+	return sections[sectionIndex].chords.map(
+		(_, chordIndex) => offset + chordIndex
+	);
+};
+
 const groupContaining = (
 	groups: SectionChordGroup[],
 	chordIndex: number
