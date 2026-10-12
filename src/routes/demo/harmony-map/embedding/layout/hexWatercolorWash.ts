@@ -107,13 +107,27 @@ export const paintHexWatercolor = (
 	// Pass 3: granulation mask — apply the noise tile with destination-in so
 	// that low-alpha noise pixels partially erase the hex fills, creating a
 	// mottled, uneven pigment surface that mirrors the SVG NOISE_ALPHA_MATRIX.
-	layerCtx.resetTransform();
+	// The world-space transform stays active so the pattern tiles every
+	// TILE_SIZE world units — keeping the grain locked to the map as the user
+	// pans and zooms rather than floating in screen space.
 	const noisePattern = layerCtx.createPattern(noiseTile(), "repeat");
 	if (noisePattern) {
+		// Compute the world-space bounding box of the visible canvas so fillRect
+		// covers every device pixel that was drawn in Passes 1 and 2.
+		const inv = transform.inverse();
+		const worldLeft = inv.e;
+		const worldTop = inv.f;
+		const worldRight = inv.a * layer.width + inv.e;
+		const worldBottom = inv.d * layer.height + inv.f;
 		layerCtx.globalCompositeOperation = "destination-in";
 		layerCtx.globalAlpha = 1;
 		layerCtx.fillStyle = noisePattern;
-		layerCtx.fillRect(0, 0, layer.width, layer.height);
+		layerCtx.fillRect(
+			worldLeft,
+			worldTop,
+			worldRight - worldLeft,
+			worldBottom - worldTop
+		);
 	}
 
 	// Composite the layer back to the main canvas with a soft outer blur
