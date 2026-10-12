@@ -45,6 +45,11 @@ export const computeWaveformPeaks = (
 		: peaks.map((peak) => peak / loudestPeak);
 };
 
+export const cropPeaksToFraction = (
+	peaks: number[],
+	fraction: number
+): number[] => peaks.slice(0, Math.ceil(peaks.length * fraction));
+
 const pointsToPath = (points: [number, number][]): string =>
 	points.map(([x, y]) => `${x} ${y}`).join("L");
 

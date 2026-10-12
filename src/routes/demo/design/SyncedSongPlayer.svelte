@@ -17,6 +17,7 @@
 		type PlayerAction
 	} from "./playerShortcuts.js";
 	import { createWaveform } from "./waveform.svelte.js";
+	import { cropPeaksToFraction } from "./waveformPeaks.js";
 
 	type Props = {
 		song: DesignSong;
@@ -38,9 +39,26 @@
 		() => duration
 	);
 	const waveform = createWaveform(() => song.audioSrc);
-	const progressFraction = $derived(progressFractionOf(currentTime, duration));
+	const visibleDuration = $derived(chordTimings.visibleDuration);
+	const progressFraction = $derived(
+		progressFractionOf(currentTime, visibleDuration)
+	);
+	const visibleWaveformPeaks = $derived(
+		waveform.peaks &&
+			cropPeaksToFraction(
+				waveform.peaks,
+				progressFractionOf(visibleDuration, duration)
+			)
+	);
+
+	function stopAtVisibleEnd() {
+		if (currentTime >= visibleDuration) paused = true;
+	}
 
 	function togglePlayback() {
+		if (paused && currentTime >= visibleDuration) {
+			currentTime = SONG_START_SECONDS;
+		}
 		paused = !paused;
 	}
 
@@ -50,12 +68,15 @@
 	}
 
 	function seekToSeconds(seconds: number) {
-		if (!Number.isFinite(duration)) return;
-		currentTime = Math.min(Math.max(seconds, SONG_START_SECONDS), duration);
+		if (!Number.isFinite(visibleDuration)) return;
+		currentTime = Math.min(
+			Math.max(seconds, SONG_START_SECONDS),
+			visibleDuration
+		);
 	}
 
 	function seekTo(fraction: number) {
-		seekToSeconds(fraction * duration);
+		seekToSeconds(fraction * visibleDuration);
 	}
 
 	function runPlayerAction(action: PlayerAction) {
@@ -99,15 +120,20 @@
 			onStartSecondsChange={chordTimings.setStartSeconds}
 			onBeatsPerMinuteChange={chordTimings.setBeatsPerMinute}
 			onStartAtPlayhead={() => chordTimings.setStartSeconds(currentTime)}
+			endSongAtBeat={chordTimings.endSongAtBeat}
+			hidesAfterSongEnd={chordTimings.hidesAfterSongEnd}
+			onEndSongAtBeatChange={chordTimings.setEndSongAtBeat}
+			onToggleHidesAfterSongEnd={chordTimings.toggleHidesAfterSongEnd}
 		/>
 	</div>
 	<ChordTimeline
 		timeline={chordTimings.timeline}
-		waveformPeaks={waveform.peaks}
+		waveformPeaks={visibleWaveformPeaks}
 		beatFractions={chordTimings.beatFractions}
+		hiddenBeatCount={chordTimings.hiddenBeatCount}
 		chordBeats={chordTimings.chordBeats}
 		{progressFraction}
-		{duration}
+		duration={visibleDuration}
 		editable={chordTimings.editable}
 		{zoom}
 		onZoomChange={(nextZoom) => (zoom = nextZoom)}
@@ -120,6 +146,7 @@
 		bind:paused
 		bind:currentTime
 		bind:duration
+		ontimeupdate={stopAtVisibleEnd}
 		src={song.audioSrc}
 		preload="metadata"
 	></audio>

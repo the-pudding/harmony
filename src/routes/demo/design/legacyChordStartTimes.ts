@@ -28,6 +28,7 @@ export const migrateLegacyChordStartTimes = (
 	return {
 		startSeconds: roundToMilliseconds(grid.offsetSeconds),
 		beatsPerMinute: Number(beatsPerMinuteOf(grid).toFixed(BPM_DECIMALS)),
+		endSongAtBeat: null,
 		chordBeats: resolveChordBeats(chordKeys.length, [])
 	};
 };

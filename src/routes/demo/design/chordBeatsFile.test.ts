@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_BEATS_PER_MINUTE } from "./chordBeats.js";
 import {
 	fromChordBeatsFile,
+	toStoredChordBeatsFile,
 	isChordBeatsFile,
 	toChordBeatsFile
 } from "./chordBeatsFile.js";
@@ -17,10 +18,30 @@ const sections: SongSectionChords[] = [
 const timings = {
 	startSeconds: 1.5,
 	beatsPerMinute: 90,
+	endSongAtBeat: null,
 	chordBeats: [0, 2, 6]
 };
 
 describe("chord beats file", () => {
+	it("falls back to the given end beat only when the file omits it", () => {
+		const omitted = toChordBeatsFile(timings, sections);
+		expect(fromChordBeatsFile(omitted, sections, 8).endSongAtBeat).toBe(8);
+		const cleared = toStoredChordBeatsFile(timings, sections);
+		expect(cleared.endSongAtBeat).toBeNull();
+		expect(fromChordBeatsFile(cleared, sections, 8).endSongAtBeat).toBeNull();
+	});
+
+	it("writes the song end beat only when set", () => {
+		expect(toChordBeatsFile(timings, sections)).not.toHaveProperty(
+			"endSongAtBeat"
+		);
+		const ended = { ...timings, endSongAtBeat: 4 };
+		expect(toChordBeatsFile(ended, sections).endSongAtBeat).toBe(4);
+		expect(
+			fromChordBeatsFile(toChordBeatsFile(ended, sections), sections)
+		).toEqual(ended);
+	});
+
 	it("groups chord beats by section", () => {
 		expect(toChordBeatsFile(timings, sections)).toEqual({
 			startSeconds: 1.5,
@@ -52,6 +73,7 @@ describe("chord beats file", () => {
 		expect(fromChordBeatsFile({}, sections)).toEqual({
 			startSeconds: 0,
 			beatsPerMinute: DEFAULT_BEATS_PER_MINUTE,
+			endSongAtBeat: null,
 			chordBeats: [0, 2, 4]
 		});
 	});

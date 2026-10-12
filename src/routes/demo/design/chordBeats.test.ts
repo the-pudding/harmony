@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	beatGridSeconds,
 	beatToSeconds,
+	chordCountBeforeBeat,
 	chordStartSeconds,
 	moveChordBeat,
 	resolveChordBeats,
@@ -47,9 +48,20 @@ describe("moveChordBeat", () => {
 
 describe("chordStartSeconds", () => {
 	it("maps every chord beat onto the song", () => {
-		expect(chordStartSeconds({ ...alignment, chordBeats: [0, 2] })).toEqual([
-			1, 3
-		]);
+		expect(
+			chordStartSeconds({
+				...alignment,
+				endSongAtBeat: null,
+				chordBeats: [0, 2]
+			})
+		).toEqual([1, 3]);
+	});
+});
+
+describe("chordCountBeforeBeat", () => {
+	it("counts chords starting before the end beat", () => {
+		expect(chordCountBeforeBeat([0, 2, 4, 6], 4)).toBe(2);
+		expect(chordCountBeforeBeat([0, 2, 4, 6], null)).toBe(4);
 	});
 });
 

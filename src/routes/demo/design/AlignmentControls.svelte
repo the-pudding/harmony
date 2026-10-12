@@ -5,21 +5,30 @@
 	const START_STEP_SECONDS = 0.01;
 	const BPM_STEP = 0.1;
 	const MIN_BPM = 1;
+	const FIRST_BEAT = 0;
 
 	type Props = {
 		startSeconds: number;
 		beatsPerMinute: number;
+		endSongAtBeat: number | null;
+		hidesAfterSongEnd: boolean;
 		onStartSecondsChange: (seconds: number) => void;
 		onBeatsPerMinuteChange: (beatsPerMinute: number) => void;
 		onStartAtPlayhead: () => void;
+		onEndSongAtBeatChange: (beat: number | null) => void;
+		onToggleHidesAfterSongEnd: () => void;
 	};
 
 	let {
 		startSeconds,
 		beatsPerMinute,
+		endSongAtBeat,
+		hidesAfterSongEnd,
 		onStartSecondsChange,
 		onBeatsPerMinuteChange,
-		onStartAtPlayhead
+		onStartAtPlayhead,
+		onEndSongAtBeatChange,
+		onToggleHidesAfterSongEnd
 	}: Props = $props();
 </script>
 
@@ -28,6 +37,7 @@
 	<label>
 		song starts at
 		<input
+			autocomplete="off"
 			type="number"
 			min={SONG_START_SECONDS}
 			step={START_STEP_SECONDS}
@@ -40,6 +50,7 @@
 	<button type="button" onclick={onStartAtPlayhead}>set to playhead</button>
 	<label>
 		<input
+			autocomplete="off"
 			type="number"
 			min={MIN_BPM}
 			step={BPM_STEP}
@@ -48,6 +59,31 @@
 				onBeatsPerMinuteChange(event.currentTarget.valueAsNumber)}
 		/>
 		BPM
+	</label>
+	<label>
+		<input
+			autocomplete="off"
+			type="checkbox"
+			class="toggle"
+			checked={hidesAfterSongEnd}
+			disabled={endSongAtBeat === null}
+			onchange={onToggleHidesAfterSongEnd}
+		/>
+		end song at beat
+		<input
+			autocomplete="off"
+			type="number"
+			min={FIRST_BEAT}
+			step="1"
+			value={endSongAtBeat}
+			placeholder="none"
+			onchange={(event) =>
+				onEndSongAtBeatChange(
+					event.currentTarget.value === ""
+						? null
+						: event.currentTarget.valueAsNumber
+				)}
+		/>
 	</label>
 	<span class="note">new chords default to {BEATS_PER_CHORD} beats</span>
 </div>
@@ -92,6 +128,12 @@
 
 	input {
 		width: 5rem;
+	}
+
+	input.toggle {
+		width: auto;
+		padding: 0;
+		accent-color: #818cf8;
 	}
 
 	button {

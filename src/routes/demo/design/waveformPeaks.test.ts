@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { computeWaveformPeaks, waveformAreaPath } from "./waveformPeaks.js";
+import {
+	computeWaveformPeaks,
+	cropPeaksToFraction,
+	waveformAreaPath
+} from "./waveformPeaks.js";
+
+describe("cropPeaksToFraction", () => {
+	it("keeps the leading fraction of peaks, rounding up", () => {
+		expect(cropPeaksToFraction([1, 2, 3, 4], 0.5)).toEqual([1, 2]);
+		expect(cropPeaksToFraction([1, 2, 3, 4], 0.6)).toEqual([1, 2, 3]);
+		expect(cropPeaksToFraction([1, 2, 3, 4], 1)).toEqual([1, 2, 3, 4]);
+	});
+});
 
 describe("computeWaveformPeaks", () => {
 	it("takes the loudest sample per bucket across channels, normalized", () => {

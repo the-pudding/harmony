@@ -24,6 +24,7 @@ describe("migrateLegacyChordStartTimes", () => {
 		).toEqual({
 			startSeconds: 1,
 			beatsPerMinute: 60,
+			endSongAtBeat: null,
 			chordBeats: [0, 2, 4, 6]
 		});
 	});

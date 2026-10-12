@@ -7,6 +7,7 @@ export type BeatAlignment = {
 };
 
 export type ChordBeatTimings = BeatAlignment & {
+	endSongAtBeat: number | null;
 	chordBeats: number[];
 };
 
@@ -84,6 +85,14 @@ export const beatGridSeconds = (
 		beatToSeconds(alignment, firstBeat + i)
 	);
 };
+
+export const chordCountBeforeBeat = (
+	chordBeats: number[],
+	endBeat: number | null
+): number =>
+	endBeat === null
+		? chordBeats.length
+		: chordBeats.filter((beat) => beat < endBeat).length;
 
 export const isSameChordBeats = (a: number[], b: number[]): boolean =>
 	a.length === b.length && a.every((beat, index) => beat === b[index]);

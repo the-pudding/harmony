@@ -16,6 +16,7 @@
 		timeline: ChordTimeline;
 		waveformPeaks: number[] | null;
 		beatFractions: number[];
+		hiddenBeatCount: number;
 		chordBeats: number[];
 		progressFraction: number;
 		duration: number;
@@ -32,6 +33,7 @@
 		timeline,
 		waveformPeaks,
 		beatFractions,
+		hiddenBeatCount,
 		chordBeats,
 		progressFraction,
 		duration,
@@ -45,6 +47,8 @@
 	}: Props = $props();
 
 	let scroller = $state<HTMLDivElement>();
+
+	const isTruncated = $derived(hiddenBeatCount > 0);
 
 	const trackMinWidth = $derived(
 		`${timeline.chords.length * MIN_CHORD_SLOT_REM}rem`
@@ -120,6 +124,7 @@
 			<button
 				type="button"
 				class="track"
+				class:truncated={isTruncated}
 				aria-label="Seek"
 				onclick={seekFromPointer}
 			>
@@ -148,6 +153,11 @@
 
 			<span class="playhead" style="left: {toPercent(progressFraction)};"
 			></span>
+			{#if isTruncated}
+				<span class="truncated-mark">
+					truncated, hiding {hiddenBeatCount} beats
+				</span>
+			{/if}
 		</div>
 	</div>
 </div>
@@ -240,6 +250,19 @@
 		left: 0;
 		background: rgba(99, 102, 241, 0.25);
 		pointer-events: none;
+	}
+
+	.track.truncated {
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+		border-right: 2px dashed #a1a1aa;
+	}
+
+	.truncated-mark {
+		align-self: flex-end;
+		font-size: 0.625rem;
+		color: #a1a1aa;
+		font-style: italic;
 	}
 
 	.playhead {

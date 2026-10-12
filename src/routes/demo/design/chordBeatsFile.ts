@@ -12,6 +12,7 @@ import {
 import { SONG_START_SECONDS } from "./songTime.js";
 
 export type ChordBeatsFile = BeatAlignment & {
+	endSongAtBeat?: number | null;
 	sections: { name: string; chordBeats: number[] }[];
 };
 
@@ -31,6 +32,9 @@ export const isChordBeatsFile = (value: unknown): value is ChordBeatsFile => {
 		isFiniteNumber(file.startSeconds) &&
 		isFiniteNumber(file.beatsPerMinute) &&
 		file.beatsPerMinute > 0 &&
+		(file.endSongAtBeat === undefined ||
+			file.endSongAtBeat === null ||
+			isFiniteNumber(file.endSongAtBeat)) &&
 		Array.isArray(file.sections) &&
 		file.sections.every(isSectionEntry)
 	);
@@ -42,6 +46,9 @@ export const toChordBeatsFile = (
 ): ChordBeatsFile => ({
 	startSeconds: timings.startSeconds,
 	beatsPerMinute: timings.beatsPerMinute,
+	...(timings.endSongAtBeat === null
+		? {}
+		: { endSongAtBeat: timings.endSongAtBeat }),
 	sections: sections.map((section) => ({
 		name: section.name,
 		chordBeats: sectionChordIndices(sections, section.id).map(
@@ -50,21 +57,35 @@ export const toChordBeatsFile = (
 	}))
 });
 
+export const toStoredChordBeatsFile = (
+	timings: ChordBeatTimings,
+	sections: SongSectionChords[]
+): ChordBeatsFile => ({
+	...toChordBeatsFile(timings, sections),
+	endSongAtBeat: timings.endSongAtBeat
+});
+
 export const fromChordBeatsFile = (
 	value: unknown,
-	sections: SongSectionChords[]
+	sections: SongSectionChords[],
+	fallbackEndSongAtBeat: number | null = null
 ): ChordBeatTimings => {
 	const chordCount = chordKeysOf(sections).length;
 	if (!isChordBeatsFile(value))
 		return {
 			startSeconds: SONG_START_SECONDS,
 			beatsPerMinute: DEFAULT_BEATS_PER_MINUTE,
+			endSongAtBeat: null,
 			chordBeats: resolveChordBeats(chordCount, [])
 		};
 
 	return {
 		startSeconds: value.startSeconds,
 		beatsPerMinute: value.beatsPerMinute,
+		endSongAtBeat:
+			value.endSongAtBeat === undefined
+				? fallbackEndSongAtBeat
+				: value.endSongAtBeat,
 		chordBeats: resolveChordBeats(
 			chordCount,
 			sections.flatMap((section, sectionIndex) =>

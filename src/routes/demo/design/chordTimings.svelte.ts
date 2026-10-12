@@ -1,6 +1,8 @@
 import storage from "$utils/localStorage.js";
 import {
 	beatGridSeconds,
+	beatToSeconds,
+	chordCountBeforeBeat,
 	chordStartSeconds,
 	isSameChordBeats,
 	moveChordBeat,
@@ -10,12 +12,14 @@ import {
 import {
 	fromChordBeatsFile,
 	isChordBeatsFile,
-	toChordBeatsFile
+	toChordBeatsFile,
+	toStoredChordBeatsFile
 } from "./chordBeatsFile.js";
 import {
 	buildChordTimeline,
 	buildEvenlySpacedChordTimeline,
 	progressFractionOf,
+	truncateSectionsToChordCount,
 	type SongSectionChords
 } from "./chordTimeline.js";
 import type { DesignSong } from "./designSongs.js";
@@ -36,14 +40,19 @@ const isSameTimings = (
 
 const loadLocalTimings = (
 	songKey: string,
-	sections: SongSectionChords[]
+	sections: SongSectionChords[],
+	committedEndSongAtBeat: number | null
 ): ChordBeatTimings | null => {
 	const saved = storage.get<unknown>(storageKeyFor(songKey));
-	if (isChordBeatsFile(saved)) return fromChordBeatsFile(saved, sections);
+	if (isChordBeatsFile(saved))
+		return fromChordBeatsFile(saved, sections, committedEndSongAtBeat);
 	const legacy = storage.get<Record<string, number>>(
 		legacyStorageKeyFor(songKey)
 	);
-	return legacy ? migrateLegacyChordStartTimes(legacy, sections) : null;
+	const migrated = legacy
+		? migrateLegacyChordStartTimes(legacy, sections)
+		: null;
+	return migrated && { ...migrated, endSongAtBeat: committedEndSongAtBeat };
 };
 
 export const createChordTimings = (
@@ -57,34 +66,64 @@ export const createChordTimings = (
 	);
 
 	let localTimings = $state.raw<ChordBeatTimings | null>(
-		loadLocalTimings(getSong().songKey, getSong().sections)
+		loadLocalTimings(
+			getSong().songKey,
+			getSong().sections,
+			fromChordBeatsFile(getSong().committedChordBeats, getSong().sections)
+				.endSongAtBeat
+		)
 	);
 	let undoStack = $state.raw<(ChordBeatTimings | null)[]>([]);
+	let hidesAfterSongEnd = $state(true);
 
 	const timings = $derived(localTimings ?? committedTimings);
 	const duration = $derived(getDuration());
 	const editable = $derived(Number.isFinite(duration) && duration > 0);
 
-	const toFraction = (seconds: number): number =>
-		progressFractionOf(seconds, duration);
+	const activeEndBeat = $derived(
+		editable && hidesAfterSongEnd ? timings.endSongAtBeat : null
+	);
+	const visibleDuration = $derived(
+		activeEndBeat === null
+			? duration
+			: Math.min(beatToSeconds(timings, activeEndBeat), duration)
+	);
+	const hiddenBeatCount = $derived(
+		activeEndBeat === null
+			? 0
+			: Math.max(
+					Math.floor(secondsToBeat(timings, duration)) - activeEndBeat,
+					0
+				)
+	);
 
+	const toFraction = (seconds: number): number =>
+		progressFractionOf(seconds, visibleDuration);
+
+	const visibleChordCount = $derived(
+		chordCountBeforeBeat(timings.chordBeats, activeEndBeat)
+	);
 	const timeline = $derived(
 		editable
 			? buildChordTimeline(
-					song.sections,
-					chordStartSeconds(timings).map(toFraction)
+					truncateSectionsToChordCount(song.sections, visibleChordCount),
+					chordStartSeconds(timings).slice(0, visibleChordCount).map(toFraction)
 				)
 			: buildEvenlySpacedChordTimeline(song.sections)
 	);
 	const beatFractions = $derived(
-		editable ? beatGridSeconds(timings, duration).map(toFraction) : []
+		editable ? beatGridSeconds(timings, visibleDuration).map(toFraction) : []
 	);
 	const file = $derived(toChordBeatsFile(timings, song.sections));
 
 	const saveLocalTimings = (nextTimings: ChordBeatTimings | null) => {
 		localTimings = nextTimings;
 		if (nextTimings === null) storage.remove(storageKey);
-		else storage.set(storageKey, toChordBeatsFile(nextTimings, song.sections));
+		else
+			storage.set(
+				storageKey,
+				toStoredChordBeatsFile(nextTimings, song.sections)
+			);
 	};
 
 	const updateTimings = (changes: Partial<ChordBeatTimings>) =>
@@ -99,7 +138,7 @@ export const createChordTimings = (
 		const chordBeats = moveChordBeat(
 			timings.chordBeats,
 			index,
-			secondsToBeat(timings, startFraction * duration)
+			secondsToBeat(timings, startFraction * visibleDuration)
 		);
 		if (isSameChordBeats(chordBeats, timings.chordBeats)) return;
 		updateTimings({ chordBeats });
@@ -130,6 +169,18 @@ export const createChordTimings = (
 		updateTimings({ beatsPerMinute });
 	};
 
+	const setEndSongAtBeat = (beat: number | null) => {
+		beginEdit();
+		updateTimings({
+			endSongAtBeat:
+				beat === null || !Number.isFinite(beat) ? null : Math.round(beat)
+		});
+	};
+
+	const toggleHidesAfterSongEnd = () => {
+		hidesAfterSongEnd = !hidesAfterSongEnd;
+	};
+
 	const discardLocalEdits = () => {
 		beginEdit();
 		saveLocalTimings(null);
@@ -157,6 +208,18 @@ export const createChordTimings = (
 		get beatsPerMinute() {
 			return timings.beatsPerMinute;
 		},
+		get endSongAtBeat() {
+			return timings.endSongAtBeat;
+		},
+		get hidesAfterSongEnd() {
+			return hidesAfterSongEnd;
+		},
+		get visibleDuration() {
+			return visibleDuration;
+		},
+		get hiddenBeatCount() {
+			return hiddenBeatCount;
+		},
 		get editable() {
 			return editable;
 		},
@@ -171,6 +234,8 @@ export const createChordTimings = (
 		nudgeChord,
 		setStartSeconds,
 		setBeatsPerMinute,
+		setEndSongAtBeat,
+		toggleHidesAfterSongEnd,
 		discardLocalEdits,
 		undo
 	};
