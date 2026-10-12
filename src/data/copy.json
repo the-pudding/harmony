@@ -129,6 +129,241 @@
           ]
         }
       ]
+    },
+    {
+      "title": "Lots of journeys",
+      "slides": [
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "With those two ideas, which progressions a song uses and how much, we can put every song on the same map."
+            },
+            {
+              "type": "text",
+              "value": "Here is every Billboard top-20 hit since 1958, arranged by the mix of progressions each one uses."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Here's how the map works. Songs sit near others with a similar mix of progressions. The purists, built mostly from one progression, cluster at the center of each island, and mixed songs spread out between them."
+            },
+            {
+              "type": "text",
+              "value": "Learn more about how we matched chord progressions and made the map in the methods."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Here is the <strong>Axis of Awesome</strong> cluster."
+            },
+            {
+              "type": "text",
+              "value": "They were onto something, lots of songs rely heavily on this progression, but this only makes up about [2%] of songs in the dataset."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "So, what’s on the rest of the map? These are the most common chord progressions in our dataset."
+            },
+            {
+              "type": "text",
+              "value": "Let’s take a closer look at this list, because these don’t all feel the same."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "You’ll notice a lot of them involve combinations of only <span class=chord>I, IV, and V</span>. If you’re gonna learn 3 chords, learn those."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "There’s a reason. These are the 3 core building blocks of Western harmony that create a journey of tension and release. This goes way back, like Bach back."
+            },
+            {
+              "type": "text",
+              "value": "The <span class=chord>I</span> is our home base, the starting chord of the key. It feels stable and resolved."
+            },
+            {
+              "type": "text",
+              "value": "The <span class=chord>IV</span> is a little step away from home."
+            },
+            {
+              "type": "text",
+              "value": "The <span class=chord>V</span> is further, more unstable. It really wants to go back to <span class=chord>I</span>."
+            },
+            {
+              "type": "text",
+              "value": "Like in <strong>You’re Still The One</strong> by Shania Twain, where it ends on the <span class=chord>V</span>. My ear, at least, is begging for it to end back on the <span class=chord>I</span> and come home ."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Some progressions borrow from outside the key. Sweet Home Mixolydian, named for \"Sweet Home Alabama,\" detours to a chord from the Mixolydian mode (not important unless you’re a nerd, but that’s the major scale with a lowered 7th), which gives it a bluesy sound before it resolves through the <span class=chord>IV</span>."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "This progression, named for the chorus of <strong>Poker Face</strong>, centers around a minor version of the <span class=chord>i</strong> chord (lowercase numeral = minor)."
+            },
+            {
+              "type": "text",
+              "value": "Minor progressions tend to feel a bit darker than major ones, it’s like a different color palette to work with."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "So pop doesn't run on one formula. It has many, and they produce different emotional journeys."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Getting loopier",
+      "slides": [
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Ok, but even if pop songs pull from a variety of progressions, perhaps each song just endlessly loops that single progression, without creativity or nuance?"
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "If we want to count the number of progressions in a song, we should weight them by how often they appear."
+            },
+            {
+              "type": "text",
+              "value": "We’ll call that a song’s number of <strong>effective progressions</strong>. That way, a song dominated by 1 progression with a 2nd that appears only once gets a score of 1.1 effective progressions, rather than 2."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "There’s a pretty even split between songs with few progressions and songs with a lot of progressions."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "But that has changed over time."
+            },
+            {
+              "type": "text",
+              "value": "The median song went from 4.4 effective progressions in the 1970s (the most diverse decade) to 1.9 in the 2010s (the most homogenous)."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "So even though it’s not the case that most songs are just 1 loop, songs are getting loopier. The Axis of Awesome boys had their finger on something real."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Era definers",
+      "slides": [
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "What about the final claim, that progressions are deployed ubiquitously across time?"
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Many of the most common progressions are. There are only a few standouts that really define an era."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "The Axis of Awesome sketch and its claims are a product of their time period."
+            },
+            {
+              "type": "text",
+              "value": "“The four chords” surged in the late 2000s, their performance was in 2009. This progression is [3x] more common in the 2000s vs other decades, and was found in a full [11%] of songs."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "It begs the question: Did every decade have its own version of Axis of Awesome chord progression?"
+            },
+            {
+              "type": "text",
+              "value": "Interestingly, not really…"
+            },
+            {
+              "type": "text",
+              "value": "…with one huge exception: the 50s and 60s was dominated by doo wop."
+            },
+            {
+              "type": "text",
+              "value": "[1 in 9] songs during that period included a doo wop progression. It was [2.6x] more common then than overall in the dataset."
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "The <strong>doo wop</strong> progression is <span class=chord>I-vi-IV-V</span>."
+            },
+            {
+              "type": "text",
+              "value": "It’s the same 4 chords as <strong>Axis of Awesome</strong>, in a different order."
+            },
+            {
+              "type": "text",
+              "value": "These two classic progressions dominated and defined their respective eras."
+            }
+          ]
+        }
+      ]
     }
   ]
 }
