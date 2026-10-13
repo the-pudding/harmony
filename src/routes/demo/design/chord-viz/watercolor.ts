@@ -104,6 +104,18 @@ export const PENCIL_FILTER = {
 	blur: 0.5
 };
 
+export type WatercolorFilterIds = {
+	splotch: string;
+	threshold: string;
+	pencil: string;
+};
+
+export const watercolorFilterIdsFor = (uid: string): WatercolorFilterIds => ({
+	splotch: `splotch-${uid}`,
+	threshold: `threshold-${uid}`,
+	pencil: `pencil-${uid}`
+});
+
 export const FILTER_REGION = {
 	x: "-50%",
 	y: "-50%",

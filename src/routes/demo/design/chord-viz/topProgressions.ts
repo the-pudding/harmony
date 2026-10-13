@@ -77,7 +77,7 @@ export const progressionTokensOf = (
 		tone: toneOfRomanToken(roman)
 	}));
 
-const simplifyRomanToken = (token: string): string => {
+export const simplifyRomanToken = (token: string): string => {
 	const parsed = parseRomanToken(token);
 	const roman = parsed && degreeQualityToRoman(parsed.degree, parsed.quality);
 	if (!parsed || !roman) return token;
@@ -141,7 +141,9 @@ const variantsOf = (
 	return matchedVariants.length > 0 ? matchedVariants : variants.slice(0, 1);
 };
 
-export const rankProgressions = (songs: readonly SongMatches[]): TopProgression[] => {
+export const rankProgressions = (
+	songs: readonly SongMatches[]
+): TopProgression[] => {
 	const variantCounts = rollup(
 		songs.flatMap((song) => uniqueBy(song.progressionCounts, variantKeyOf)),
 		(matches) => matches.length,

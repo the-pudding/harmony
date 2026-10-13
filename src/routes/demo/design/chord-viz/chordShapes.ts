@@ -139,10 +139,86 @@ const CIRCLEISH_POINTS: Point[] = [
 	[-BLOB_RADIUS / 2 + 2, -BLOB_RADIUS + 2]
 ];
 
-export const CHORD_SHAPE_PATHS: Record<ChordShape, string> = {
-	stableTriangle: smoothPathOf(roundedApexTrianglePoints()),
-	semiStableTriangle: smoothPathOf(SEMI_STABLE_TRIANGLE_POINTS),
-	unstableTriangle: smoothPathOf(sharpTipTiltedTrianglePoints()),
-	circleish: smoothPathOf(CIRCLEISH_POINTS),
-	spikey: jaggedPathOf(spikeyPoints())
+const CHORD_SHAPE_POINTS: Record<ChordShape, Point[]> = {
+	stableTriangle: roundedApexTrianglePoints(),
+	semiStableTriangle: SEMI_STABLE_TRIANGLE_POINTS,
+	unstableTriangle: sharpTipTiltedTrianglePoints(),
+	circleish: CIRCLEISH_POINTS,
+	spikey: spikeyPoints()
 };
+
+export const CHORD_SHAPE_PATHS: Record<ChordShape, string> = {
+	stableTriangle: smoothPathOf(CHORD_SHAPE_POINTS.stableTriangle),
+	semiStableTriangle: smoothPathOf(CHORD_SHAPE_POINTS.semiStableTriangle),
+	unstableTriangle: smoothPathOf(CHORD_SHAPE_POINTS.unstableTriangle),
+	circleish: smoothPathOf(CHORD_SHAPE_POINTS.circleish),
+	spikey: jaggedPathOf(CHORD_SHAPE_POINTS.spikey)
+};
+
+const MORPH_POINT_COUNT = 48;
+
+const distanceBetween = ([ax, ay]: Point, [bx, by]: Point): number =>
+	Math.hypot(bx - ax, by - ay);
+
+const closedEdgesOf = (points: Point[]): [Point, Point][] =>
+	points.map((point, index) => [point, points[(index + 1) % points.length]]);
+
+const cumulativeSums = (values: number[]): number[] =>
+	values.reduce<number[]>(
+		(sums, value) => [...sums, (sums.at(-1) ?? 0) + value],
+		[]
+	);
+
+const resampleClosedPolygon = (points: Point[], count: number): Point[] => {
+	const edges = closedEdgesOf(points);
+	const edgeLengths = edges.map(([from, to]) => distanceBetween(from, to));
+	const edgeEnds = cumulativeSums(edgeLengths);
+	const perimeter = edgeEnds.at(-1) ?? 0;
+	return Array.from({ length: count }, (_, index) => {
+		const distance = (index / count) * perimeter;
+		const edgeIndex = Math.max(
+			edgeEnds.findIndex((end) => end >= distance),
+			0
+		);
+		const [from, to] = edges[edgeIndex];
+		const edgeLength = edgeLengths[edgeIndex];
+		const distanceIntoEdge = distance - (edgeEnds[edgeIndex] - edgeLength);
+		return lerpPoint(
+			from,
+			to,
+			edgeLength === 0 ? 0 : distanceIntoEdge / edgeLength
+		);
+	});
+};
+
+const angularDistanceFromUp = ([x, y]: Point): number =>
+	Math.abs(Math.atan2(y, x) - UP);
+
+const startingAtTop = (points: Point[]): Point[] => {
+	const topIndex = points.reduce(
+		(bestIndex, point, index) =>
+			angularDistanceFromUp(point) < angularDistanceFromUp(points[bestIndex])
+				? index
+				: bestIndex,
+		0
+	);
+	return [...points.slice(topIndex), ...points.slice(0, topIndex)];
+};
+
+const MORPH_POINTS = Object.fromEntries(
+	Object.entries(CHORD_SHAPE_POINTS).map(([shape, points]) => [
+		shape,
+		startingAtTop(resampleClosedPolygon(points, MORPH_POINT_COUNT))
+	])
+) as Record<ChordShape, Point[]>;
+
+export const morphedShapePath = (
+	from: ChordShape,
+	to: ChordShape,
+	t: number
+): string =>
+	smoothPathOf(
+		MORPH_POINTS[from].map((point, index) =>
+			lerpPoint(point, MORPH_POINTS[to][index], t)
+		)
+	);

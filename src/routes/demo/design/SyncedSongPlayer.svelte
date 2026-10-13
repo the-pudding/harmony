@@ -128,6 +128,7 @@
 	</div>
 	<ChordTimeline
 		timeline={chordTimings.timeline}
+		tonality={song.tonality}
 		waveformPeaks={visibleWaveformPeaks}
 		beatFractions={chordTimings.beatFractions}
 		hiddenBeatCount={chordTimings.hiddenBeatCount}

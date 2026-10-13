@@ -3,6 +3,7 @@ import { applyHandReviewedCorrections } from "$data/applyHandReviewedCorrections
 import { groupSongs, type SongSection } from "$data/songBrowser.js";
 import { formatRomanTokenFromParsed } from "../../../chord-processing/romanNumerals.js";
 import { parseSongTitleAndSectionLabel } from "../../../chord-processing/songIdentity.js";
+import type { ScaleName } from "../../../chord-processing/scale-intervals.js";
 import type { SongInput } from "../../../chord-processing/types.js";
 import { collapseAdjacentRepeatedChords } from "../define-chord-progression/progression-matching-logic/collapsedProgression.js";
 import {
@@ -12,6 +13,10 @@ import {
 import { matchSongV2 } from "../match-algo-v2/match-algo-v2-logic/matchSongV2.js";
 import { DEFAULT_WEIGHTS } from "../match-algo-v2/match-algo-v2-logic/weights.js";
 import type { SectionChordGroup, SongSectionChords } from "./chordTimeline.js";
+import {
+	tonalityOfScale,
+	type KeyTonality
+} from "./chord-viz/diatonicChords.js";
 
 const SINGLE_CHORD_RUN_LENGTH = 1;
 
@@ -70,6 +75,13 @@ const groupedSectionIndexForOccurrence = (
 	sections.flatMap((section, sectionIndex) =>
 		section.label === label ? [sectionIndex] : []
 	)[occurrenceIndex];
+
+const DEFAULT_SONG_SCALE: ScaleName = "major";
+
+export const songTonalityOf = (songInputs: SongInput[]): KeyTonality => {
+	const [groupedSong] = groupSongs(applyHandReviewedCorrections(songInputs));
+	return tonalityOfScale(groupedSong?.sections[0]?.scale ?? DEFAULT_SONG_SCALE);
+};
 
 export const buildMatchedSongSections = (
 	songInputs: SongInput[],

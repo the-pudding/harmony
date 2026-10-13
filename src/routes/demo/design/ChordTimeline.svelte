@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { tick } from "svelte";
+	import ChordGooeyLane from "./ChordGooeyLane.svelte";
 	import ChordRow from "./ChordRow.svelte";
+	import ChordWatercolorLane from "./ChordWatercolorLane.svelte";
 	import Waveform from "./Waveform.svelte";
 	import ZoomControls from "./ZoomControls.svelte";
+	import type { KeyTonality } from "./chord-viz/diatonicChords.js";
+	import { laneChordsOf } from "./chordLanes.js";
 	import { isActiveAt, type ChordTimeline } from "./chordTimeline.js";
-	import { spanStyle, toPercent } from "./timelineStyles.js";
+	import { pointerFractionOf, spanStyle, toPercent } from "./timelineStyles.js";
 	import { canStepZoom, steppedZoom } from "./timelineZoom.js";
 
 	const MIN_CHORD_SLOT_REM = 1.75;
@@ -14,6 +18,7 @@
 
 	type Props = {
 		timeline: ChordTimeline;
+		tonality: KeyTonality;
 		waveformPeaks: number[] | null;
 		beatFractions: number[];
 		hiddenBeatCount: number;
@@ -31,6 +36,7 @@
 
 	let {
 		timeline,
+		tonality,
 		waveformPeaks,
 		beatFractions,
 		hiddenBeatCount,
@@ -49,6 +55,7 @@
 	let scroller = $state<HTMLDivElement>();
 
 	const isTruncated = $derived(hiddenBeatCount > 0);
+	const laneChords = $derived(laneChordsOf(timeline, tonality));
 
 	const trackMinWidth = $derived(
 		`${timeline.chords.length * MIN_CHORD_SLOT_REM}rem`
@@ -77,11 +84,6 @@
 		onZoomChange(steppedZoom(zoom, step));
 		await tick();
 		if (scroller) scrollToPlayhead(scroller);
-	}
-
-	function seekFromPointer(event: MouseEvent & { currentTarget: HTMLElement }) {
-		const bounds = event.currentTarget.getBoundingClientRect();
-		onSeek((event.clientX - bounds.left) / bounds.width);
 	}
 </script>
 
@@ -126,7 +128,7 @@
 				class="track"
 				class:truncated={isTruncated}
 				aria-label="Seek"
-				onclick={seekFromPointer}
+				onclick={(event) => onSeek(pointerFractionOf(event))}
 			>
 				{#if waveformPeaks}
 					<Waveform peaks={waveformPeaks} />
@@ -151,13 +153,17 @@
 				></span>
 			</button>
 
-			<span class="playhead" style="left: {toPercent(progressFraction)};"
-			></span>
 			{#if isTruncated}
 				<span class="truncated-mark">
 					truncated, hiding {hiddenBeatCount} beats
 				</span>
 			{/if}
+
+			<ChordWatercolorLane chords={laneChords} {progressFraction} {onSeek} />
+			<ChordGooeyLane chords={laneChords} {progressFraction} {onSeek} />
+
+			<span class="playhead" style="left: {toPercent(progressFraction)};"
+			></span>
 		</div>
 	</div>
 </div>
@@ -272,6 +278,8 @@
 		width: 2px;
 		margin-left: -1px;
 		background: #f4f4f5;
+		box-shadow: 0 0 0 1px rgba(9, 9, 11, 0.5);
 		pointer-events: none;
+		z-index: 1;
 	}
 </style>
