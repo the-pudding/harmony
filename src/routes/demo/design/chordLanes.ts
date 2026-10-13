@@ -17,7 +17,6 @@ export type LaneChord = FractionSpan & {
 	key: string;
 	roman: string;
 	progressionKey: string;
-	sectionKey: string;
 	appearance: ChordAppearance;
 };
 
@@ -79,11 +78,6 @@ export const laneChordsOf = (
 			midpointOf(chord),
 			chord.key
 		),
-		sectionKey: keyOfSpanContaining(
-			timeline.sections,
-			midpointOf(chord),
-			chord.key
-		),
 		appearance: appearanceFor(
 			tonality,
 			simplifyRomanToken(chord.roman),
@@ -92,7 +86,32 @@ export const laneChordsOf = (
 	}));
 
 export const byProgression = (chord: LaneChord): string => chord.progressionKey;
-export const bySection = (chord: LaneChord): string => chord.sectionKey;
+
+export type ChordCluster = { key: string; indices: number[] };
+
+export const clustersOf = (
+	chords: LaneChord[],
+	clusterKeyOf: (chord: LaneChord) => string
+): ChordCluster[] =>
+	chords.reduce<ChordCluster[]>((clusters, chord, index) => {
+		const previous = chords[index - 1];
+		const continuesCluster =
+			previous !== undefined && clusterKeyOf(previous) === clusterKeyOf(chord);
+		const lastCluster = clusters.at(-1);
+		return continuesCluster && lastCluster
+			? [
+					...clusters.slice(0, -1),
+					{ ...lastCluster, indices: [...lastCluster.indices, index] }
+				]
+			: [...clusters, { key: chord.key, indices: [index] }];
+	}, []);
+
+export const glideTouchesCluster = (
+	glide: ChordGlide,
+	cluster: ChordCluster
+): boolean =>
+	cluster.indices.includes(glide.fromIndex) ||
+	cluster.indices.includes(glide.toIndex);
 
 const sharesCluster = (
 	chords: LaneChord[],

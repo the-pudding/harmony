@@ -6,6 +6,8 @@ import {
 	activeChordIndexAt,
 	byProgression,
 	chordGlideAt,
+	clustersOf,
+	glideTouchesCluster,
 	gliderFor,
 	laneChordsOf,
 	layoutLaneBlobs,
@@ -61,15 +63,28 @@ describe("laneChordsOf", () => {
 		expect(chords[3].progressionKey).toBe(chords[3].key);
 	});
 
-	it("assigns every chord its section key", () => {
-		expect(new Set(chords.map((chord) => chord.sectionKey))).toEqual(
-			new Set(["verse"])
-		);
-	});
-
 	it("looks up a shape for each roman numeral", () => {
 		expect(chords[0].appearance.shape).toBe("stableTriangle");
 		expect(chords[1].appearance.shape).toBe("unstableTriangle");
+	});
+});
+
+describe("clustersOf", () => {
+	const clusters = clustersOf(chords, byProgression);
+
+	it("groups a progression's chords and leaves standalone chords alone", () => {
+		expect(clusters.map((cluster) => cluster.indices)).toEqual([
+			[0, 1],
+			[2],
+			[3]
+		]);
+	});
+
+	it("touches both clusters a glide spans", () => {
+		const glide = { fromIndex: 1, toIndex: 2, t: 0.5 };
+		expect(
+			clusters.map((cluster) => glideTouchesCluster(glide, cluster))
+		).toEqual([true, true, false]);
 	});
 });
 

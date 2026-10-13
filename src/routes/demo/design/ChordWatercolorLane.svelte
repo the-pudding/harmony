@@ -103,7 +103,8 @@
 		transition: opacity 150ms ease;
 	}
 
-	.chord.active {
+	.chord.active,
+	.chord:hover {
 		opacity: 1;
 	}
 
@@ -116,7 +117,8 @@
 		transition: opacity 150ms ease;
 	}
 
-	.chord.active .pencil {
+	.chord.active .pencil,
+	.chord:hover .pencil {
 		opacity: 1;
 	}
 
@@ -128,7 +130,8 @@
 		pointer-events: none;
 	}
 
-	.chord.active .label {
+	.chord.active .label,
+	.chord:hover .label {
 		font-weight: 700;
 	}
 </style>

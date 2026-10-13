@@ -8,8 +8,10 @@
 		watercolorFilterIdsFor
 	} from "./chord-viz/watercolor.js";
 	import {
-		bySection,
+		byProgression,
 		chordGlideAt,
+		clustersOf,
+		glideTouchesCluster,
 		gliderFor,
 		layoutLaneBlobs,
 		type LaneBlob,
@@ -26,9 +28,9 @@
 	const RESTING_FADE_COLOR = "#ffffff";
 	const RESTING_FADE = 0.55;
 	const SPACING: LaneSpacing = {
-		clusterKeyOf: bySection,
-		overlapFraction: 0.12,
-		clusterGapPx: 18
+		clusterKeyOf: byProgression,
+		overlapFraction: 0.2,
+		clusterGapPx: 4
 	};
 
 	type Props = {
@@ -52,6 +54,7 @@
 			SPACING
 		)
 	);
+	const clusters = $derived(clustersOf(chords, byProgression));
 	const glide = $derived(chordGlideAt(chords, progressFraction));
 	const glider = $derived(glide && gliderFor(chords, blobs, glide));
 
@@ -60,6 +63,13 @@
 			chord.appearance.colors.fill,
 			RESTING_FADE_COLOR
 		)(RESTING_FADE);
+
+	let hoveredIndex = $state<number | null>(null);
+
+	const chordFill = (index: number): string =>
+		index === hoveredIndex
+			? chords[index].appearance.colors.fill
+			: restingFill(chords[index]);
 
 	const blobTransform = (blob: LaneBlob): string =>
 		`translate(${blob.centerX} ${LANE_CENTER_Y}) scale(${blob.scaleX} ${blob.scaleY})`;
@@ -88,27 +98,42 @@
 			/>
 		</defs>
 		<g filter="url(#{watercolorIds.splotch})">
-			<g filter="url(#{gooeyId})">
-				{#each chords as chord, index (chord.key)}
-					<path
-						d={chord.appearance.path}
-						fill={restingFill(chord)}
-						transform={blobTransform(blobs[index])}
-					/>
-				{/each}
-				{#if glider}
-					<path
-						d={glider.path}
-						fill={glider.fill}
-						transform={blobTransform(glider)}
-					/>
-				{/if}
-			</g>
+			{#each clusters as cluster (cluster.key)}
+				<g filter="url(#{gooeyId})">
+					{#each cluster.indices as index (chords[index].key)}
+						<path
+							d={chords[index].appearance.path}
+							fill={chordFill(index)}
+							transform={blobTransform(blobs[index])}
+						/>
+					{/each}
+					{#if glide && glider && glideTouchesCluster(glide, cluster)}
+						<path
+							d={glider.path}
+							fill={glider.fill}
+							transform={blobTransform(glider)}
+						/>
+					{/if}
+				</g>
+			{/each}
 		</g>
+		{#each chords as chord, index (chord.key)}
+			<path
+				class="hover-target"
+				role="presentation"
+				class:hovered={index === hoveredIndex}
+				d={chord.appearance.path}
+				transform={blobTransform(blobs[index])}
+				filter="url(#{watercolorIds.pencil})"
+				vector-effect="non-scaling-stroke"
+				onpointerenter={() => (hoveredIndex = index)}
+				onpointerleave={() => (hoveredIndex = null)}
+			/>
+		{/each}
 		{#each chords as chord, index (chord.key)}
 			<text
 				class="label"
-				class:active={index === glider?.labelIndex}
+				class:active={index === glider?.labelIndex || index === hoveredIndex}
 				x={blobs[index].centerX}
 				y={LANE_CENTER_Y}
 				fill={chord.appearance.colors.text}>{chord.roman}</text
@@ -118,6 +143,20 @@
 </ChordLane>
 
 <style>
+	.hover-target {
+		fill: none;
+		stroke: #18181b;
+		stroke-width: 1.25px;
+		stroke-linejoin: round;
+		pointer-events: all;
+		opacity: 0;
+		transition: opacity 150ms ease;
+	}
+
+	.hover-target.hovered {
+		opacity: 1;
+	}
+
 	.label {
 		font-size: 0.625rem;
 		font-weight: 500;
