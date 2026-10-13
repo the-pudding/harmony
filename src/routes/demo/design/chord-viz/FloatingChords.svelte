@@ -10,6 +10,7 @@
 		floatingIdsFor,
 		type FloatingSettings
 	} from "./floatingEffects.js";
+	import type { ProgressionToken } from "./topProgressions.js";
 
 	const HEXAGONS_NOTEBOOK_URL = "https://observablehq.com/d/821fca17be68685d";
 
@@ -26,11 +27,11 @@
 >
 	<FloatingDefs {ids} />
 	<FloatingControls {settings} onChange={(next) => (settings = next)} />
-	{#snippet floatingChordRenderer({ tokens })}
-		<ProgressionChords {tokens} {settings} {ids} />
-	{/snippet}
 	<div class="columns">
 		<FloatingHexagon {settings} {ids} />
+		{#snippet floatingChordRenderer({ tokens }: { tokens: ProgressionToken[] })}
+			<ProgressionChords {tokens} {settings} {ids} />
+		{/snippet}
 		<TopProgressionsList chordRenderer={floatingChordRenderer} />
 	</div>
 </ChordVizPanel>
