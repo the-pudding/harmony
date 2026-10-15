@@ -67,25 +67,25 @@
 		<ol class="list" style:--row-height="{ROW_HEIGHT}px">
 			{#each topProgressions as progression (progression.name)}
 				<li class="item">
+					<ul class="variants">
+						{#each progression.variants as variant (variant.spelling)}
+							{@const tonality = tonalityOfScale(progression.scale)}
+							<li class="variant">
+								{@render chordRenderer({ tokens: variant.tokens, tonality })}
+								<span class="variant-count"
+									>{progression.variants.length > 1
+										? variant.songCount.toLocaleString()
+										: ""}</span
+								>
+							</li>
+						{/each}
+					</ul>
 					<div class="details">
 						<span class="name">{progression.label}</span>
 						<span class="count"
 							>{progression.songCount.toLocaleString()} songs</span
 						>
 					</div>
-					<ul class="variants">
-						{#each progression.variants as variant (variant.spelling)}
-							{@const tonality = tonalityOfScale(progression.scale)}
-							<li class="variant">
-								<span class="variant-count"
-									>{progression.variants.length > 1
-										? variant.songCount.toLocaleString()
-										: ""}</span
-								>
-								{@render chordRenderer({ tokens: variant.tokens, tonality })}
-							</li>
-						{/each}
-					</ul>
 				</li>
 			{/each}
 		</ol>
@@ -96,8 +96,13 @@
 	.top-progressions {
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
+		gap: 0.375rem;
+		width: fit-content;
+		max-width: 100%;
 		min-width: 0;
+		padding: 0.5rem;
+		border-radius: 0.375rem;
+		box-shadow: 0 0 6px rgb(0 0 0 / 0.12);
 	}
 
 	.title {
@@ -110,7 +115,7 @@
 	.filters {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.5rem 1.5rem;
+		gap: 0.25rem 1rem;
 	}
 
 	.status {
@@ -120,40 +125,40 @@
 	}
 
 	.list {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
+		display: grid;
+		grid-template-columns: max-content minmax(0, max-content);
+		justify-content: start;
+		gap: 0.125rem 0.25rem;
 		margin: 0;
-		padding: 0 0 0 1.75rem;
+		padding: 0;
+		list-style: none;
 		font-size: 0.75rem;
 	}
 
 	.item {
 		display: grid;
-		grid-template-columns: 14rem auto;
-		justify-content: start;
+		grid-column: 1 / -1;
+		grid-template-columns: subgrid;
 		align-items: start;
-		gap: 1rem;
 		color: #71717a;
 	}
 
 	.variants {
-		display: flex;
-		flex-direction: column;
+		display: grid;
+		grid-template-columns: max-content auto;
+		align-items: center;
+		column-gap: 0.25rem;
 		margin: 0;
 		padding: 0;
 		list-style: none;
 	}
 
 	.variant {
-		display: grid;
-		grid-template-columns: 2.5rem auto;
-		align-items: center;
-		gap: 0.5rem;
+		display: contents;
 	}
 
 	.variant-count {
-		text-align: right;
+		text-align: left;
 		color: #71717a;
 		font-variant-numeric: tabular-nums;
 	}

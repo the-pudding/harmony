@@ -2,7 +2,11 @@
 	import type { ChordPalette } from "./chordPalettes.js";
 	import type { KeyTonality } from "./diatonicChords.js";
 	import { type ProgressionToken } from "./topProgressions.js";
-	import { CHORD_OVERLAP_GAP, type WatercolorSettings } from "./watercolor.js";
+	import {
+		CHORD_EDGE_TRIM,
+		CHORD_OVERLAP_GAP,
+		type WatercolorSettings
+	} from "./watercolor.js";
 	import WatercolorChord from "./WatercolorChord.svelte";
 
 	type Props = {
@@ -25,7 +29,11 @@
 	);
 </script>
 
-<div class="chords" style:--chord-gap="{CHORD_OVERLAP_GAP}px">
+<div
+	class="chords"
+	style:--chord-gap="{CHORD_OVERLAP_GAP}px"
+	style:--chord-edge-trim="{CHORD_EDGE_TRIM}px"
+>
 	{#each chords as chord (chord.degree)}
 		<WatercolorChord {chord} {settings} {palette} />
 	{/each}
@@ -35,6 +43,7 @@
 	.chords {
 		display: flex;
 		flex-wrap: nowrap;
+		margin: var(--chord-edge-trim);
 	}
 
 	.chords > :global(* + *) {
