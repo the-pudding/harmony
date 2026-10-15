@@ -21,9 +21,10 @@
 
 	type Props = {
 		song: DesignSong;
+		editing?: boolean;
 	};
 
-	let { song }: Props = $props();
+	let { song, editing = false }: Props = $props();
 
 	const initialUrlState = readDesignUrlState(currentSearchParams());
 
@@ -79,6 +80,9 @@
 		seekToSeconds(fraction * visibleDuration);
 	}
 
+	const isActionAvailable = (action: PlayerAction): boolean =>
+		editing || action.type !== "undo";
+
 	function runPlayerAction(action: PlayerAction) {
 		if (action.type === "togglePlayback") togglePlayback();
 		else if (action.type === "restart") restart();
@@ -89,7 +93,7 @@
 	function handleKeydown(event: KeyboardEvent) {
 		if (isTypingTarget(event.target)) return;
 		const action = playerActionFor(event);
-		if (!action) return;
+		if (!action || !isActionAvailable(action)) return;
 		event.preventDefault();
 		runPlayerAction(action);
 	}
@@ -105,27 +109,31 @@
 			onTogglePlayback={togglePlayback}
 			onRestart={restart}
 		/>
-		<ChordTimingActions
-			file={chordTimings.file}
-			targetFilePath={chordBeatsFilePath(song.songKey)}
-			hasLocalEdits={chordTimings.hasLocalEdits}
-			onDiscardLocalEdits={chordTimings.discardLocalEdits}
-		/>
+		{#if editing}
+			<ChordTimingActions
+				file={chordTimings.file}
+				targetFilePath={chordBeatsFilePath(song.songKey)}
+				hasLocalEdits={chordTimings.hasLocalEdits}
+				onDiscardLocalEdits={chordTimings.discardLocalEdits}
+			/>
+		{/if}
 	</div>
-	<div class="tools">
-		<PlayerShortcutsHint />
-		<AlignmentControls
-			startSeconds={chordTimings.startSeconds}
-			beatsPerMinute={chordTimings.beatsPerMinute}
-			onStartSecondsChange={chordTimings.setStartSeconds}
-			onBeatsPerMinuteChange={chordTimings.setBeatsPerMinute}
-			onStartAtPlayhead={() => chordTimings.setStartSeconds(currentTime)}
-			endSongAtBeat={chordTimings.endSongAtBeat}
-			hidesAfterSongEnd={chordTimings.hidesAfterSongEnd}
-			onEndSongAtBeatChange={chordTimings.setEndSongAtBeat}
-			onToggleHidesAfterSongEnd={chordTimings.toggleHidesAfterSongEnd}
-		/>
-	</div>
+	{#if editing}
+		<div class="tools">
+			<PlayerShortcutsHint />
+			<AlignmentControls
+				startSeconds={chordTimings.startSeconds}
+				beatsPerMinute={chordTimings.beatsPerMinute}
+				onStartSecondsChange={chordTimings.setStartSeconds}
+				onBeatsPerMinuteChange={chordTimings.setBeatsPerMinute}
+				onStartAtPlayhead={() => chordTimings.setStartSeconds(currentTime)}
+				endSongAtBeat={chordTimings.endSongAtBeat}
+				hidesAfterSongEnd={chordTimings.hidesAfterSongEnd}
+				onEndSongAtBeatChange={chordTimings.setEndSongAtBeat}
+				onToggleHidesAfterSongEnd={chordTimings.toggleHidesAfterSongEnd}
+			/>
+		</div>
+	{/if}
 	<ChordTimeline
 		timeline={chordTimings.timeline}
 		tonality={song.tonality}
@@ -135,7 +143,7 @@
 		chordBeats={chordTimings.chordBeats}
 		{progressFraction}
 		duration={visibleDuration}
-		editable={chordTimings.editable}
+		editable={editing && chordTimings.editable}
 		{zoom}
 		onZoomChange={(nextZoom) => (zoom = nextZoom)}
 		onSeek={seekTo}

@@ -1,8 +1,14 @@
 import { replaceState } from "$app/navigation";
 import { page } from "$app/state";
+import {
+	DEFAULT_DESIGN_TAB,
+	isDesignTab,
+	type DesignTab
+} from "./designTabs.js";
 import { SONG_START_SECONDS } from "./songTime.js";
 import { DEFAULT_ZOOM, isZoomLevel } from "./timelineZoom.js";
 
+const TAB_URL_PARAM = "tab";
 const ZOOM_URL_PARAM = "zoom";
 const PLAYHEAD_URL_PARAM = "t";
 const PLAYHEAD_URL_DECIMALS = 2;
@@ -14,6 +20,11 @@ export type DesignUrlState = {
 
 const roundPlayheadSeconds = (seconds: number): number =>
 	Number(seconds.toFixed(PLAYHEAD_URL_DECIMALS));
+
+export const readDesignTab = (searchParams: URLSearchParams): DesignTab => {
+	const tab = searchParams.get(TAB_URL_PARAM) ?? "";
+	return isDesignTab(tab) ? tab : DEFAULT_DESIGN_TAB;
+};
 
 export const readDesignUrlState = (
 	searchParams: URLSearchParams
@@ -28,6 +39,9 @@ export const readDesignUrlState = (
 				: SONG_START_SECONDS
 	};
 };
+
+export const tabUrlValue = (tab: DesignTab): string | null =>
+	tab === DEFAULT_DESIGN_TAB ? null : tab;
 
 export const zoomUrlValue = (zoom: number): string | null =>
 	zoom === DEFAULT_ZOOM ? null : String(zoom);
@@ -50,6 +64,9 @@ const replaceUrlParam = (param: string, value: string | null): void => {
 		page.state
 	);
 };
+
+export const replaceTabInUrl = (tab: DesignTab): void =>
+	replaceUrlParam(TAB_URL_PARAM, tabUrlValue(tab));
 
 export const replaceZoomInUrl = (zoom: number): void =>
 	replaceUrlParam(ZOOM_URL_PARAM, zoomUrlValue(zoom));

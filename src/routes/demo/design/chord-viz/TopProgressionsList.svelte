@@ -13,13 +13,17 @@
 		type ProgressionToken
 	} from "./topProgressions.js";
 
-	type ChordRendererArgs = { tokens: ProgressionToken[]; tonality: KeyTonality };
+	type ChordRendererArgs = {
+		tokens: ProgressionToken[];
+		tonality: KeyTonality;
+	};
 
 	type Props = {
 		chordRenderer: Snippet<[ChordRendererArgs]>;
+		filterable?: boolean;
 	};
 
-	let { chordRenderer }: Props = $props();
+	let { chordRenderer, filterable = true }: Props = $props();
 
 	const coverage = createAllSongsCoverageState();
 
@@ -37,20 +41,22 @@
 
 <section class="top-progressions">
 	<h4 class="title">Top {TOP_PROGRESSIONS_LIMIT} matched progressions</h4>
-	<div class="filters">
-		<ToggleSwitch
-			checked={filters.requiresMinorChord}
-			onchange={(requiresMinorChord) =>
-				(filters = { ...filters, requiresMinorChord })}
-			label="Must include at least one minor chord"
-		/>
-		<ToggleSwitch
-			checked={filters.requiresMinorKey}
-			onchange={(requiresMinorKey) =>
-				(filters = { ...filters, requiresMinorKey })}
-			label="Is in a minor key"
-		/>
-	</div>
+	{#if filterable}
+		<div class="filters">
+			<ToggleSwitch
+				checked={filters.requiresMinorChord}
+				onchange={(requiresMinorChord) =>
+					(filters = { ...filters, requiresMinorChord })}
+				label="Must include at least one minor chord"
+			/>
+			<ToggleSwitch
+				checked={filters.requiresMinorKey}
+				onchange={(requiresMinorKey) =>
+					(filters = { ...filters, requiresMinorKey })}
+				label="Is in a minor key"
+			/>
+		</div>
+	{/if}
 	{#if coverage.loadError}
 		<p class="status">{coverage.loadError}</p>
 	{:else if !coverage.allSongsCoverageResult}
@@ -68,17 +74,17 @@
 						>
 					</div>
 					<ul class="variants">
-					{#each progression.variants as variant (variant.spelling)}
-						{@const tonality = tonalityOfScale(progression.scale)}
-						<li class="variant">
-							<span class="variant-count"
-								>{progression.variants.length > 1
-									? variant.songCount.toLocaleString()
-									: ""}</span
-							>
-							{@render chordRenderer({ tokens: variant.tokens, tonality })}
-						</li>
-					{/each}
+						{#each progression.variants as variant (variant.spelling)}
+							{@const tonality = tonalityOfScale(progression.scale)}
+							<li class="variant">
+								<span class="variant-count"
+									>{progression.variants.length > 1
+										? variant.songCount.toLocaleString()
+										: ""}</span
+								>
+								{@render chordRenderer({ tokens: variant.tokens, tonality })}
+							</li>
+						{/each}
 					</ul>
 				</li>
 			{/each}

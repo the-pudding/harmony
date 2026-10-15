@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_DESIGN_TAB, DESIGN_TAB_CHORD_VIZ } from "./designTabs.js";
 import {
 	playheadUrlValue,
+	readDesignTab,
 	readDesignUrlState,
+	tabUrlValue,
 	zoomUrlValue
 } from "./designUrlState.js";
 import { DEFAULT_ZOOM } from "./timelineZoom.js";
@@ -24,7 +27,24 @@ describe("readDesignUrlState", () => {
 	});
 });
 
+describe("readDesignTab", () => {
+	it("reads a known tab and falls back to the default", () => {
+		expect(readDesignTab(new URLSearchParams("tab=chord-viz"))).toBe(
+			DESIGN_TAB_CHORD_VIZ
+		);
+		expect(readDesignTab(new URLSearchParams("tab=nope"))).toBe(
+			DEFAULT_DESIGN_TAB
+		);
+		expect(readDesignTab(new URLSearchParams())).toBe(DEFAULT_DESIGN_TAB);
+	});
+});
+
 describe("URL values", () => {
+	it("omits the default tab", () => {
+		expect(tabUrlValue(DEFAULT_DESIGN_TAB)).toBeNull();
+		expect(tabUrlValue(DESIGN_TAB_CHORD_VIZ)).toBe(DESIGN_TAB_CHORD_VIZ);
+	});
+
 	it("omits the default zoom", () => {
 		expect(zoomUrlValue(DEFAULT_ZOOM)).toBeNull();
 		expect(zoomUrlValue(4)).toBe("4");
