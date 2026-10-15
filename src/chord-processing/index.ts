@@ -1,5 +1,9 @@
 export { createChordDetector } from "./chord-detector.js";
 export { createMidiInput } from "./midi-input/index.js";
+export {
+	midiErrorMessage,
+	midiUnavailableReason
+} from "./midi-input/midiSupport.js";
 export { createChordGater } from "./chord-gater/index.js";
 export {
 	bassIntervalFromRoot,

@@ -2,7 +2,9 @@
 	import { onMount } from "svelte";
 	import {
 		chordsAreEqual,
-		createChordDetector
+		createChordDetector,
+		midiErrorMessage,
+		midiUnavailableReason
 	} from "../chord-processing/index.js";
 	import type { ChordEvent } from "../chord-processing/types.js";
 	import { midiToNote } from "../chord-processing/chord-classifier/notes.js";
@@ -131,15 +133,9 @@
 	const attemptConnect = async () => {
 		connectError = "";
 
-		if (!window.isSecureContext) {
-			midiBanner =
-				"Web MIDI requires a secure context. Open this page via http://localhost (not file:// or a remote http:// URL).";
-			return;
-		}
-
-		if (typeof navigator.requestMIDIAccess !== "function") {
-			midiBanner =
-				"Web MIDI API is not supported in this browser. Try Chrome or Edge.";
+		const unavailableReason = midiUnavailableReason();
+		if (unavailableReason) {
+			midiBanner = unavailableReason;
 			return;
 		}
 
@@ -155,7 +151,7 @@
 			if (active) selectedInputName = active.name;
 			isConnected = true;
 		} catch (err) {
-			connectError = err instanceof Error ? err.message : String(err);
+			connectError = midiErrorMessage(err);
 		}
 	};
 
@@ -188,12 +184,7 @@
 
 		void loadSongs();
 
-		if (
-			window.isSecureContext &&
-			typeof navigator.requestMIDIAccess === "function"
-		) {
-			void attemptConnect();
-		}
+		if (!midiUnavailableReason()) void attemptConnect();
 
 		return () => {
 			chordSearchDemoStore.disposeWorkers();

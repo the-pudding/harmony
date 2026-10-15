@@ -133,16 +133,19 @@ export const createChordTimings = (
 		undoStack = pushUndoEntry(undoStack, localTimings);
 	};
 
-	const moveChord = (index: number, startFraction: number) => {
+	const moveChordToSeconds = (index: number, seconds: number) => {
 		if (!editable) return;
 		const chordBeats = moveChordBeat(
 			timings.chordBeats,
 			index,
-			secondsToBeat(timings, startFraction * visibleDuration)
+			secondsToBeat(timings, seconds)
 		);
 		if (isSameChordBeats(chordBeats, timings.chordBeats)) return;
 		updateTimings({ chordBeats });
 	};
+
+	const moveChord = (index: number, startFraction: number) =>
+		moveChordToSeconds(index, startFraction * visibleDuration);
 
 	const nudgeChord = (index: number, beatDelta: number) => {
 		beginEdit();
@@ -202,6 +205,9 @@ export const createChordTimings = (
 		get chordBeats() {
 			return timings.chordBeats;
 		},
+		get chordStartSeconds() {
+			return chordStartSeconds(timings);
+		},
 		get startSeconds() {
 			return timings.startSeconds;
 		},
@@ -231,6 +237,7 @@ export const createChordTimings = (
 		},
 		beginEdit,
 		moveChord,
+		moveChordToSeconds,
 		nudgeChord,
 		setStartSeconds,
 		setBeatsPerMinute,

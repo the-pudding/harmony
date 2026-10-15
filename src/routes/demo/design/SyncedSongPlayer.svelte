@@ -1,10 +1,11 @@
 <script lang="ts">
 	import AlignmentControls from "./AlignmentControls.svelte";
+	import BassTapRecorder from "./BassTapRecorder.svelte";
 	import ChordTimeline from "./ChordTimeline.svelte";
 	import ChordTimingActions from "./ChordTimingActions.svelte";
 	import PlayerShortcutsHint from "./PlayerShortcutsHint.svelte";
 	import SongPlayerCard from "./SongPlayerCard.svelte";
-	import { progressFractionOf } from "./chordTimeline.js";
+	import { chordNamesOf, progressFractionOf } from "./chordTimeline.js";
 	import { createChordTimings } from "./chordTimings.svelte.js";
 	import { currentSearchParams } from "../shared/currentSearchParams.js";
 	import { chordBeatsFilePath, type DesignSong } from "./designSongs.js";
@@ -32,6 +33,7 @@
 	let currentTime = $state(initialUrlState.playheadSeconds);
 	let duration = $state(NaN);
 	let zoom = $state(initialUrlState.zoom);
+	let audio = $state<HTMLAudioElement>();
 
 	syncDesignUrlState(() => ({ zoom, playheadSeconds: currentTime }));
 
@@ -65,6 +67,13 @@
 
 	function restart() {
 		currentTime = SONG_START_SECONDS;
+		paused = false;
+	}
+
+	const readPlaybackSeconds = (): number => audio?.currentTime ?? currentTime;
+
+	function startBassTapRecording() {
+		chordTimings.beginEdit();
 		paused = false;
 	}
 
@@ -132,6 +141,15 @@
 				onEndSongAtBeatChange={chordTimings.setEndSongAtBeat}
 				onToggleHidesAfterSongEnd={chordTimings.toggleHidesAfterSongEnd}
 			/>
+			<BassTapRecorder
+				chordNames={chordNamesOf(song.sections)}
+				chordStartSeconds={chordTimings.chordStartSeconds}
+				{paused}
+				{readPlaybackSeconds}
+				onRecordingStart={startBassTapRecording}
+				onChordTap={(tap) =>
+					chordTimings.moveChordToSeconds(tap.chordIndex, tap.seconds)}
+			/>
 		</div>
 	{/if}
 	<ChordTimeline
@@ -152,6 +170,7 @@
 		onChordNudge={chordTimings.nudgeChord}
 	/>
 	<audio
+		bind:this={audio}
 		bind:paused
 		bind:currentTime
 		bind:duration

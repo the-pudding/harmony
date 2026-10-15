@@ -127,6 +127,9 @@ export const chordKeysOf = (sections: SongSectionChords[]): string[] =>
 		section.chords.map((_, chordIndex) => chordKeyOf(section, chordIndex))
 	);
 
+export const chordNamesOf = (sections: SongSectionChords[]): string[] =>
+	sections.flatMap((section) => section.chords.map((chord) => chord.name));
+
 export const evenlySpacedFraction = (index: number, count: number): number =>
 	index / count;
 
