@@ -72,7 +72,7 @@
 		height: 2px;
 		border-radius: 1px;
 		margin: 0 1px;
-		background: black;
+		background: var(--color-fg);
 		opacity: 0.3;
 		transition: opacity calc(var(--1s) * 0.4);
 	}

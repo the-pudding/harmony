@@ -31,12 +31,12 @@
 
 	--col-width: 550px;
 
-	--color-bg: #FFFEFC;
-	--color-fg: var(--color-gray-900);
+	--color-bg: black;
+	--color-fg: white;
 	--color-fg-light: var(--color-gray-500);
 	--color-primary: var(--color-black);
-	--color-link: var(--color-black);
-	--color-link-hover: var(--color-gray-500);
+	--color-link: var(--color-fg);
+	--color-link-hover: var(--color-gray-300);
 	--color-focus: var(--color-gray-500);
 	--color-mark: var(--color-yellow);
 	--color-selection: var(--color-gray-300);

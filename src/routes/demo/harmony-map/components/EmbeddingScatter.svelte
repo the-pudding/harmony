@@ -10,6 +10,7 @@
 		type ZoomTransform
 	} from "d3";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
+	import coreProgressions from "../../../../data/core-progressions.js";
 	import { type DensityCluster } from "../embedding/clustering/densityClusters.js";
 	import {
 		clusterEllipseBoundingRadius,
@@ -55,10 +56,9 @@
 		gradientStrengthForZoom,
 		hexKey,
 		hexZoomLevel,
-		summarizeHex,
 		type ClusterRegion,
 		type HexBin,
-		type HexSummary,
+		type HexRegion,
 		type ProgressionShare
 	} from "../embedding/layout/hexBins.js";
 	import {
@@ -81,6 +81,13 @@
 	type Props = {
 		points: ScatterPoint[];
 		songByKey: Map<string, GroupedSong>;
+		// For songs missing from songByKey: loadSong fetches one on hover for
+		// its tooltip, and songSummaryByKey names it while that loads.
+		loadSong?: ((songKey: string) => Promise<GroupedSong | null>) | null;
+		songSummaryByKey?: ReadonlyMap<
+			string,
+			{ title: string; artists: readonly string[] }
+		> | null;
 		selectedSongKey: string | null;
 		coClusterSongKeys: Set<string>;
 		highlightedSongKeys: Set<string>;
@@ -155,18 +162,20 @@
 		// Outline labels by cluster hash. When omitted, names come from the
 		// named-clusters file.
 		clusterNames?: ReadonlyMap<string, string> | null;
-		// User interaction. zoomable = wheel, pinch and double-click zoom;
-		// pannable = drag to move; interactive = hover tooltips, click to select
-		// and click-to-zoom on hexes. All default on. Scripted focus
+		// User interaction, both on by default. movable = drag, wheel, pinch
+		// and double-click zoom, and click-to-zoom on hexes; hoverable = hover
+		// tooltips and outlines, and click to select a song. Scripted focus
 		// (focusSongKey / focusClusterName) still works with them off.
-		zoomable?: boolean;
-		pannable?: boolean;
-		interactive?: boolean;
+		movable?: boolean;
+		hoverable?: boolean;
 		// Hex-mode region labels drawn all at once on the map.
 		showLabels?: boolean;
 		// Hex-mode region labels that fade in one at a time at random spots,
 		// a few seconds apart. Use with showLabels off.
 		showRotatingLabels?: boolean;
+		// Only label regions with these names (case-insensitive), for either
+		// kind of label. Omit (or null) to label any region that fits.
+		labelNames?: readonly string[] | null;
 		// Hex-mode colors for the surface the map sits on. "light" uses
 		// lighter grays and dark label text; the canvas itself is always
 		// transparent, so the page provides the background.
@@ -176,6 +185,8 @@
 	const {
 		points,
 		songByKey,
+		loadSong = null,
+		songSummaryByKey = null,
 		selectedSongKey,
 		coClusterSongKeys,
 		highlightedSongKeys,
@@ -200,13 +211,28 @@
 		progressionSharesBySongKey = null,
 		clusterRegionBySongKey = null,
 		clusterNames = null,
-		zoomable = true,
-		pannable = true,
-		interactive = true,
+		movable = true,
+		hoverable = true,
 		showLabels = true,
 		showRotatingLabels = false,
+		labelNames = null,
 		theme = "dark"
 	}: Props = $props();
+
+	const normalizeName = (name: string): string => name.trim().toLowerCase();
+
+	const labelNameSet = $derived(
+		labelNames === null ? null : new Set(labelNames.map(normalizeName))
+	);
+
+	const interactive = $derived(movable || hoverable);
+
+	const chordsByProgressionName = new Map(
+		coreProgressions.map((progression) => [
+			progression.name,
+			[progression.chordProgression].flat()[0]
+		])
+	);
 
 	// Hex mode: hex radius on screen at zoom 1, the zoom where hexes give way
 	// to dots, and how gently hexes shrink on screen as you zoom in (they go
@@ -281,11 +307,20 @@
 	// Empty space kept around each label so neighboring labels don't touch.
 	const HEX_LABEL_PADDING_X = 6;
 	const HEX_LABEL_PADDING_Y = 6;
+	// Extra space around labels when fully zoomed out, where they'd otherwise
+	// crowd; it eases away by HEX_LABEL_EXTRA_PADDING_UNTIL_ZOOM.
+	const HEX_LABEL_EXTRA_PADDING_ZOOMED_OUT = 4;
+	const HEX_LABEL_EXTRA_PADDING_UNTIL_ZOOM = 2;
 	// Nearby clusters often share a progression; skip a label when the same
 	// name is already shown within this distance.
 	const HEX_LABEL_REPEAT_DISTANCE_PX = 150;
 	const HEX_CLICK_ZOOM_FACTOR = 2.5;
 	const HEX_CLICK_ZOOM_MS = 450;
+	const HOVERED_CLUSTER_STROKE_COLOR = "#ffffff";
+	const HOVERED_CLUSTER_STROKE_WIDTH = 2;
+	// Focusing a cluster in hex mode stops just short of the zoom where hexes
+	// turn into dots, so the map keeps its colored regions and labels.
+	const HEX_MAX_FOCUS_SCALE = 3.9;
 	// Rotating labels: ROTATING_LABEL_COUNT slots, each showing a label for
 	// about ROTATING_LABEL_HOLD_MS (± jitter), fading it out and, after a
 	// short gap, fading in a different one. Slots start together but swap at
@@ -372,25 +407,28 @@
 
 	let hoveredClusterHit = $state<ClusterHit | null>(null);
 
-	// The hex under the pointer in hex mode, plus the bins and summaries from
+	// The colored hex under the pointer in hex mode and the cluster it
+	// belongs to (gray hexes don't count), plus the bins and regions from
 	// the last frame so hover can look them up without re-binning.
-	let hoveredHex = $state<{ key: string; anchor: HoverCardAnchor } | null>(
-		null
-	);
+	let hoveredHex = $state<{
+		key: string;
+		anchor: HoverCardAnchor;
+		region: ClusterRegion;
+	} | null>(null);
 	let hexFrame: {
 		radius: number;
 		bins: Map<string, HexBin>;
-		summaries: Map<string, HexSummary>;
-		ambiguousKeys: Set<string>;
 		regionByKey: Map<string, ClusterRegion | null>;
 	} | null = null;
-	let hoveredHexRegion = $state<ClusterRegion | null>(null);
-	let hoveredHexSummary = $state<HexSummary | null>(null);
-	let hoveredHexIsAmbiguous = $state(false);
 
-	// Labels that fit on the current hex frame without overlapping, in base
-	// (unzoomed) pixels. Rotating labels are picked from these.
-	type LabelSpot = { text: string; baseX: number; baseY: number };
+	const clusterSizeByHash = $derived(
+		new Map(clusters.map((cluster) => [cluster.hash, cluster.songKeys.length]))
+	);
+
+	// Labels that fit on the current hex frame without overlapping, placed
+	// like song positions (0–1 across the plot). Rotating labels are picked
+	// from these.
+	type LabelSpot = { text: string; nx: number; ny: number };
 	let labelSpots = $state<LabelSpot[]>([]);
 	let rotatingLabels = $state<(LabelSpot & { id: number })[]>([]);
 
@@ -500,21 +538,28 @@
 	// share 1 → the progression's full color; lower shares fade toward
 	// the theme's faded color. gradientStrength scales how much fading is applied,
 	// so zoomed-out hexes read as solid regions.
+	// Lab, not HCL: blending toward a near-gray in HCL rotates the hue
+	// (red drifts to magenta), which makes one cluster look multicolored.
+	const regionInterpolatorByName = $derived(
+		new Map(
+			[...regionColorByName].map(([name, color]) => [
+				name,
+				interpolateLab(hexColors.faded, color)
+			])
+		)
+	);
+
 	const regionFill = (
 		name: string | null,
 		share: number,
 		gradientStrength: number
 	): string => {
-		const color = name === null ? null : regionColorByName.get(name);
-		if (!color) return hexColors.unmatched;
+		const interpolate =
+			name === null ? undefined : regionInterpolatorByName.get(name);
+		if (!interpolate) return hexColors.unmatched;
 		const strength =
 			1 - gradientStrength * (1 - Math.min(1, Math.max(0, share)));
-		// Lab, not HCL: blending toward a near-gray in HCL rotates the hue
-		// (red drifts to magenta), which makes one cluster look multicolored.
-		return interpolateLab(
-			hexColors.faded,
-			color
-		)(MIN_REGION_TINT + (1 - MIN_REGION_TINT) * strength);
+		return interpolate(MIN_REGION_TINT + (1 - MIN_REGION_TINT) * strength);
 	};
 
 	// A song's color at dot zoom: its cluster's color, faded by how much of
@@ -769,6 +814,15 @@
 			const position = displayedPositions.get(point.songKey);
 			if (!position) continue;
 			const screen = toScreen(position);
+			const reach = SELECTED_POINT_RADIUS + RING_WIDTH * 3;
+			if (
+				screen.x < -reach ||
+				screen.y < -reach ||
+				screen.x > width + reach ||
+				screen.y > height + reach
+			) {
+				continue;
+			}
 			context.globalAlpha = alphaFor(point.songKey);
 			context.fillStyle =
 				emphasisFillColor && emphasizedSongKeys?.has(point.songKey)
@@ -865,32 +919,108 @@
 		cells: readonly BinCell[],
 		screenRadius: number
 	) => {
+		if (selectedSongKey === null) return;
 		for (const cell of cells) {
-			const isSelected =
-				selectedSongKey !== null && cell.songKeys.includes(selectedSongKey);
-			if (!isSelected && hoveredHex?.key !== cell.key) continue;
+			if (!cell.songKeys.includes(selectedSongKey)) continue;
 			traceBinOutline(context, cell, screenRadius);
-			context.strokeStyle = isSelected ? "#f4f4f5" : "#a1a1aa";
-			context.lineWidth = isSelected ? 2 : 1.5;
+			context.strokeStyle = "#f4f4f5";
+			context.lineWidth = 2;
 			context.stroke();
 		}
 	};
 
-	// Bins this frame's positions in base (unzoomed) pixels, so the hex grid
-	// stays fixed to the map while panning, then draws it through the zoom.
-	const drawHexes = (context: CanvasRenderingContext2D, radius: number) => {
+	// Neighbor across each hex edge, in traceHex's corner order: edge i runs
+	// from corner i to corner i + 1 and faces 60·i degrees (y down).
+	const EDGE_NEIGHBOR_OFFSETS: readonly [number, number][] = [
+		[1, 0],
+		[0, 1],
+		[-1, 1],
+		[-1, 0],
+		[0, -1],
+		[1, -1]
+	];
+
+	// Strokes the outer edge of every hex in the hovered cluster: only the
+	// edges whose neighbor is in a different cluster (or empty), so the
+	// cluster reads as one shape, including each of its separate patches.
+	const drawHoveredClusterOutline = (
+		context: CanvasRenderingContext2D,
+		bins: Map<string, HexBin>,
+		regionByKey: Map<string, ClusterRegion | null>,
+		screenRadius: number
+	) => {
+		const clusterId = hoveredHex?.region.id;
+		if (clusterId === undefined) return;
+		const radius = screenRadius + HEX_OVERLAP_PX;
+		const corner = (x: number, y: number, index: number) => {
+			const angle = (Math.PI / 180) * (60 * index - 30);
+			return [x + radius * Math.cos(angle), y + radius * Math.sin(angle)];
+		};
+		context.beginPath();
+		for (const [key, bin] of bins) {
+			if (regionByKey.get(key)?.id !== clusterId) continue;
+			const x = transform.applyX(bin.x);
+			const y = transform.applyY(bin.y);
+			EDGE_NEIGHBOR_OFFSETS.forEach(([dq, dr], edge) => {
+				const neighborKey = hexKey(bin.q + dq, bin.r + dr);
+				if (regionByKey.get(neighborKey)?.id === clusterId) return;
+				const [startX, startY] = corner(x, y, edge);
+				const [endX, endY] = corner(x, y, edge + 1);
+				context.moveTo(startX, startY);
+				context.lineTo(endX, endY);
+			});
+		}
+		context.globalAlpha = 1;
+		context.strokeStyle = HOVERED_CLUSTER_STROKE_COLOR;
+		context.lineWidth = HOVERED_CLUSTER_STROKE_WIDTH;
+		context.lineCap = "round";
+		context.stroke();
+		context.lineCap = "butt";
+	};
+
+	// The hex grid for one set of positions, plot size and hex radius, in
+	// base (unzoomed) pixels. Panning and zooming within one hex size reuse
+	// it, so a frame only transforms, culls and paints.
+	type HexLayout = {
+		inputs: readonly unknown[];
+		bins: Map<string, HexBin>;
+		regionByKey: Map<string, ClusterRegion | null>;
+		// Gray first, so colored hexes sit cleanly on top of the merged gray;
+		// share is how much of the bin is its region's progression.
+		orderedBins: {
+			key: string;
+			bin: HexBin;
+			region: ClusterRegion | null;
+			share: number;
+		}[];
+		// Connected same-cluster patches, largest first, for labels.
+		labelRegions: HexRegion[];
+		nameByRegionId: Map<string, string>;
+	};
+	let hexLayoutCache: HexLayout | null = null;
+
+	const hexLayoutFor = (radius: number): HexLayout => {
+		const inputs = [
+			radius,
+			displayedPositions,
+			plotWidth,
+			plotHeight,
+			drawablePoints,
+			clusterRegionBySongKey,
+			progressionSharesBySongKey
+		];
+		if (
+			hexLayoutCache &&
+			inputs.every((input, index) => input === hexLayoutCache!.inputs[index])
+		) {
+			return hexLayoutCache;
+		}
 		const basePoints = drawablePoints.flatMap((point) => {
 			const position = displayedPositions.get(point.songKey);
 			if (!position) return [];
 			return [{ songKey: point.songKey, ...toBasePixel(position) }];
 		});
 		const bins = binIntoHexes(basePoints, radius);
-		const summaries = new Map(
-			[...bins].map(([key, bin]) => [
-				key,
-				summarizeHex(bin.songKeys, progressionSharesBySongKey ?? new Map())
-			])
-		);
 		const regionByKey = new Map(
 			[...bins].map(([key, bin]) => [
 				key,
@@ -903,55 +1033,88 @@
 						)
 			])
 		);
-		const ambiguousKeys = new Set(
-			[...regionByKey]
-				.filter(([, region]) => region === null)
-				.map(([key]) => key)
+		const orderedBins = [...bins]
+			.map(([key, bin]) => {
+				const region = regionByKey.get(key) ?? null;
+				return {
+					key,
+					bin,
+					region,
+					share:
+						region === null
+							? 0
+							: averageProgressionShare(
+									bin.songKeys,
+									region.name,
+									progressionSharesBySongKey ?? new Map()
+								)
+				};
+			})
+			.sort(
+				(first, second) =>
+					Number(first.region !== null) - Number(second.region !== null)
+			);
+		// Regions are connected hexes of the same cluster, so two clusters on
+		// the same progression get separate labels. Gray hexes never do.
+		const labelRegions = findHexRegions(
+			bins,
+			new Map(
+				[...regionByKey].map(([key, region]) => [
+					key,
+					{ dominantName: region?.id ?? null }
+				])
+			),
+			HEX_LABEL_MIN_HEXES
 		);
-		hexFrame = { radius, bins, summaries, ambiguousKeys, regionByKey };
+		const nameByRegionId = new Map(
+			[...regionByKey.values()].flatMap((region) =>
+				region === null ? [] : [[region.id, region.name] as const]
+			)
+		);
+		hexLayoutCache = {
+			inputs,
+			bins,
+			regionByKey,
+			orderedBins,
+			labelRegions,
+			nameByRegionId
+		};
+		return hexLayoutCache;
+	};
+
+	const drawHexes = (context: CanvasRenderingContext2D, radius: number) => {
+		const { bins, regionByKey, orderedBins, labelRegions, nameByRegionId } =
+			hexLayoutFor(radius);
+		hexFrame = { radius, bins, regionByKey };
 
 		const screenRadius = radius * transform.k;
 		const gradient = gradientStrengthForZoom(transform.k, HEX_ZOOM);
 		const cullMargin = screenRadius * (watercolorMode ? WATERCOLOR_REACH : 1);
 		context.globalAlpha = 1;
 
-		// Gray first, so colored hexes sit cleanly on top of the merged gray.
-		const cells = [...bins]
-			.sort(
-				([first], [second]) =>
-					Number(ambiguousKeys.has(second)) - Number(ambiguousKeys.has(first))
-			)
-			.map(([key, bin]) => ({
+		const cells: BinCell[] = [];
+		for (const { key, bin, region, share } of orderedBins) {
+			const x = transform.applyX(bin.x);
+			const y = transform.applyY(bin.y);
+			if (
+				x < -cullMargin ||
+				y < -cullMargin ||
+				x > width + cullMargin ||
+				y > height + cullMargin
+			) {
+				continue;
+			}
+			cells.push({
 				key,
 				songKeys: bin.songKeys,
-				x: transform.applyX(bin.x),
-				y: transform.applyY(bin.y)
-			}))
-			.filter(
-				(cell) =>
-					cell.x >= -cullMargin &&
-					cell.y >= -cullMargin &&
-					cell.x <= width + cullMargin &&
-					cell.y <= height + cullMargin
-			)
-			.map((cell) => {
-				const region = regionByKey.get(cell.key) ?? null;
-				return {
-					...cell,
-					fill:
-						region === null
-							? hexColors.ambiguous
-							: regionFill(
-									region.name,
-									averageProgressionShare(
-										cell.songKeys,
-										region.name,
-										progressionSharesBySongKey ?? new Map()
-									),
-									gradient
-								)
-				};
+				x,
+				y,
+				fill:
+					region === null
+						? hexColors.ambiguous
+						: regionFill(region.name, share, gradient)
 			});
+		}
 
 		if (watercolorMode) {
 			paintWatercolor(context, watercolorLayer(), cells, screenRadius);
@@ -967,9 +1130,11 @@
 			paintHexCells(context, cells, screenRadius);
 		}
 		drawBinOutlines(context, cells, screenRadius);
+		drawHoveredClusterOutline(context, bins, regionByKey, screenRadius);
 
 		// One label per connected region, biggest first, skipping any that
-		// would collide with a label already placed or fall off screen.
+		// would collide with a label already placed or fall off screen, or
+		// that labelNames leaves out.
 		if (!showLabels && !showRotatingLabels) {
 			if (untrack(() => labelSpots.length) > 0) labelSpots = [];
 			return;
@@ -991,26 +1156,22 @@
 		// A cluster can break into several patches; label only its biggest
 		// (regions come largest first).
 		const labeledRegionIds = new Set<string>();
-		// Regions are connected hexes of the same cluster, so two clusters on
-		// the same progression get separate labels. Gray hexes never do.
-		const nameByRegionId = new Map(
-			[...regionByKey.values()].flatMap((region) =>
-				region === null ? [] : [[region.id, region.name] as const]
-			)
-		);
-		const labelSummaries = new Map(
-			[...summaries].map(([key, summary]) => [
-				key,
-				{ ...summary, dominantName: regionByKey.get(key)?.id ?? null }
-			])
-		);
-		for (const region of findHexRegions(
-			bins,
-			labelSummaries,
-			HEX_LABEL_MIN_HEXES
-		)) {
+		const extraPadding =
+			HEX_LABEL_EXTRA_PADDING_ZOOMED_OUT *
+			Math.max(
+				0,
+				1 -
+					(transform.k - MIN_ZOOM) /
+						(HEX_LABEL_EXTRA_PADDING_UNTIL_ZOOM - MIN_ZOOM)
+			);
+		const paddingX = HEX_LABEL_PADDING_X + extraPadding;
+		const paddingY = HEX_LABEL_PADDING_Y + extraPadding;
+		for (const region of labelRegions) {
 			if (labeledRegionIds.has(region.name)) continue;
 			const labelText = nameByRegionId.get(region.name) ?? region.name;
+			if (labelNameSet && !labelNameSet.has(normalizeName(labelText))) {
+				continue;
+			}
 			const x = transform.applyX(region.x);
 			const y = transform.applyY(region.y);
 			if (
@@ -1024,10 +1185,10 @@
 			}
 			const textWidth = context.measureText(labelText).width;
 			const box = {
-				left: x - textWidth / 2 - HEX_LABEL_PADDING_X,
-				right: x + textWidth / 2 + HEX_LABEL_PADDING_X,
-				top: y - HEX_LABEL_PADDING_Y,
-				bottom: y + HEX_LABEL_PADDING_Y,
+				left: x - textWidth / 2 - paddingX,
+				right: x + textWidth / 2 + paddingX,
+				top: y - paddingY,
+				bottom: y + paddingY,
 				text: labelText,
 				x,
 				y
@@ -1053,7 +1214,13 @@
 			}
 			placed.push(box);
 			labeledRegionIds.add(region.name);
-			spots.push({ text: labelText, baseX: region.x, baseY: region.y });
+			// Stored like song positions (0–1 across the plot), so a label
+			// already showing stays put on the map when the plot resizes.
+			spots.push({
+				text: labelText,
+				nx: (region.x - PLOT_MARGIN) / Math.max(plotWidth, 1),
+				ny: 1 - (region.y - PLOT_MARGIN) / Math.max(plotHeight, 1)
+			});
 			if (!showLabels) continue;
 			context.strokeStyle = hexColors.labelHalo;
 			context.lineWidth = 3;
@@ -1074,6 +1241,18 @@
 
 	const tweenTo = (targets: NormalizedPoint[]) => {
 		cancelAnimationFrame(tweenFrame);
+
+		// Nothing to animate from on the first layout.
+		if (displayedPositions.size === 0) {
+			displayedPositions = new Map(
+				targets.map((target) => [
+					target.songKey,
+					{ nx: target.nx, ny: target.ny }
+				])
+			);
+			draw();
+			return;
+		}
 
 		const from = new Map(
 			targets.map((target): [string, Position] => [
@@ -1150,22 +1329,20 @@
 	const handlePointerMove = (event: MouseEvent) => {
 		if (!containerEl) return;
 		clickGuard.onPointerMove(event);
+		if (!hoverable) return;
 		const anchor = anchorFromMouseEvent(event, containerEl);
 		if (hexFrame) {
 			const key = hexKeyAtAnchor(anchor);
-			hoveredHex = key === null ? null : { key, anchor };
-			hoveredHexSummary =
-				key === null ? null : (hexFrame.summaries.get(key) ?? null);
-			hoveredHexIsAmbiguous = key !== null && hexFrame.ambiguousKeys.has(key);
-			hoveredHexRegion =
+			const region =
 				key === null ? null : (hexFrame.regionByKey.get(key) ?? null);
+			hoveredHex =
+				key === null || region === null ? null : { key, anchor, region };
 			hoveredSongKey = null;
 			delayedTooltip.clearHover();
 			hoveredClusterHit = null;
 			return;
 		}
 		hoveredHex = null;
-		hoveredHexSummary = null;
 		const songKey = findPointAtAnchor(anchor);
 		hoveredSongKey = songKey;
 		delayedTooltip.setHover(songKey, songKey === null ? null : anchor);
@@ -1174,7 +1351,6 @@
 
 	const handlePointerLeave = () => {
 		hoveredHex = null;
-		hoveredHexSummary = null;
 		hoveredSongKey = null;
 		delayedTooltip.clearHover();
 		hoveredClusterHit = null;
@@ -1186,7 +1362,12 @@
 		if (hexFrame) {
 			// Clicking a hex zooms in on it, toward finer hexes and then dots.
 			const anchor = anchorFromMouseEvent(event, containerEl);
-			if (canvasEl && zoomBehavior && hexKeyAtAnchor(anchor) !== null) {
+			if (
+				movable &&
+				canvasEl &&
+				zoomBehavior &&
+				hexKeyAtAnchor(anchor) !== null
+			) {
 				select(canvasEl)
 					.transition()
 					.duration(HEX_CLICK_ZOOM_MS)
@@ -1197,6 +1378,7 @@
 			}
 			return;
 		}
+		if (!hoverable) return;
 		const songKey = findPointAt(event);
 		onSelect(songKey === selectedSongKey ? null : songKey);
 	};
@@ -1222,20 +1404,15 @@
 	$effect(() => {
 		const canvas = canvasEl;
 		if (!canvas) return;
-		const canZoom = zoomable;
-		const canPan = pannable;
+		const canMove = movable;
 		zoomBehavior = zoom<HTMLCanvasElement, unknown>()
 			.scaleExtent([MIN_ZOOM, MAX_ZOOM])
-			// d3's default filter (no ctrl-drag, primary button only), then
-			// wheel / double-click / pinch need zoomable and drags need pannable.
+			// d3's default filter (no ctrl-drag, primary button only), and
+			// nothing at all unless movable. Scripted zooms bypass the filter.
 			.filter((event) => {
+				if (!canMove) return false;
 				if (event.ctrlKey && event.type !== "wheel") return false;
-				if (event.button) return false;
-				if (event.type === "wheel" || event.type === "dblclick") return canZoom;
-				if (event.type === "touchstart" && event.touches.length > 1) {
-					return canZoom;
-				}
-				return canPan;
+				return !event.button;
 			})
 			.on("start", () => {
 				delayedTooltip.startDrag();
@@ -1245,7 +1422,6 @@
 				transform = event.transform;
 				// Hexes re-bin as the zoom changes, so a hovered hex is stale.
 				hoveredHex = null;
-				hoveredHexSummary = null;
 			});
 		select(canvas).call(zoomBehavior);
 		return () => {
@@ -1283,7 +1459,7 @@
 		);
 		const scale = Math.min(
 			Math.max(fitScale, MIN_ZOOM),
-			MAX_CLUSTER_FOCUS_SCALE
+			hexMode ? HEX_MAX_FOCUS_SCALE : MAX_CLUSTER_FOCUS_SCALE
 		);
 		return transformCenteredOn(
 			{ x: (minX + maxX) / 2, y: (minY + maxY) / 2 },
@@ -1296,7 +1472,10 @@
 	// interactive pages never trigger this. focusClusterName takes priority
 	// when both are set. For either: a string animates the view to center on
 	// it (fitting the whole cluster, for focusClusterName), null animates
-	// back out to the full view.
+	// back out to the full view. Cluster names match case-insensitively, and
+	// when several clusters share a name the biggest wins. The first focus
+	// jumps straight there; later ones animate.
+	let hasFocused = false;
 	$effect(() => {
 		if (focusClusterName === undefined && focusSongKey === undefined) return;
 		const canvas = canvasEl;
@@ -1305,10 +1484,13 @@
 		const targetTransform = ((): ZoomTransform | null => {
 			if (focusClusterName !== undefined) {
 				if (focusClusterName === null) return zoomIdentity;
-				const cluster = clusters.find(
-					(candidate) =>
-						resolvedClusterNames.get(candidate.hash) === focusClusterName
-				);
+				const target = normalizeName(focusClusterName);
+				const cluster = clusters
+					.filter((candidate) => {
+						const name = resolvedClusterNames.get(candidate.hash);
+						return name !== undefined && normalizeName(name) === target;
+					})
+					.sort((a, b) => b.songKeys.length - a.songKeys.length)[0];
 				return cluster ? clusterFocusTransform(cluster.songKeys) : null;
 			}
 			if (focusSongKey === null) return zoomIdentity;
@@ -1319,6 +1501,11 @@
 		})();
 		if (!targetTransform) return;
 
+		if (!hasFocused) {
+			hasFocused = true;
+			select(canvas).call(zoomBehavior.transform, targetTransform);
+			return;
+		}
 		select(canvas)
 			.transition()
 			.duration(FOCUS_TRANSITION_MS)
@@ -1381,6 +1568,7 @@
 		void hexColors;
 		void showLabels;
 		void showRotatingLabels;
+		void labelNameSet;
 		draw();
 	});
 
@@ -1441,10 +1629,35 @@
 		};
 	});
 
-	const tooltipSong = $derived(
+	let loadedSong = $state.raw<GroupedSong | null>(null);
+
+	$effect(() => {
+		const songKey = delayedTooltip.tooltipSongKey;
+		if (songKey === null || !loadSong || songByKey.has(songKey)) return;
+		let active = true;
+		void loadSong(songKey)
+			.then((song) => {
+				if (active) loadedSong = song;
+			})
+			.catch(() => {});
+		return () => {
+			active = false;
+		};
+	});
+
+	const tooltipSong = $derived.by(() => {
+		const songKey = delayedTooltip.tooltipSongKey;
+		if (songKey === null) return null;
+		return (
+			songByKey.get(songKey) ??
+			(loadedSong?.songKey === songKey ? loadedSong : null)
+		);
+	});
+
+	const tooltipSummary = $derived(
 		delayedTooltip.tooltipSongKey === null
 			? null
-			: (songByKey.get(delayedTooltip.tooltipSongKey) ?? null)
+			: (songSummaryByKey?.get(delayedTooltip.tooltipSongKey) ?? null)
 	);
 
 	const tooltipStyle = $derived(
@@ -1487,50 +1700,42 @@
 >
 	<canvas
 		bind:this={canvasEl}
-		class:inert={!interactive && !zoomable && !pannable}
-		class:grabbable={!interactive && pannable}
+		class:inert={!interactive}
+		class:grabbable={movable && !hoverable}
 		style:width="{width}px"
 		style:height="{height}px"
 	></canvas>
 
-	{#if hoveredHex && hoveredHexSummary}
+	{#if hoveredHex}
+		{@const { region } = hoveredHex}
+		{@const songCount = clusterSizeByHash.get(region.id) ?? 0}
+		{@const chords = chordsByProgressionName.get(region.name)}
 		<div class="tooltip" style={hoverCardStyle(hoveredHex.anchor, width)}>
 			<div class="hex-tooltip-title">
-				{hoveredHexRegion
-					? `${hoveredHexRegion.name} cluster`
-					: "no clear cluster"}
+				<span
+					class="hex-tooltip-swatch"
+					style:background={regionColorByName.get(region.name) ??
+						hexColors.unmatched}
+				></span>
+				{region.name}
 			</div>
-			<div class="hex-tooltip-meta">
-				{hoveredHexSummary.songCount}
-				{hoveredHexSummary.songCount === 1 ? "song" : "songs"} · click to zoom in
-			</div>
-			{#if hoveredHexIsAmbiguous}
-				<div class="hex-tooltip-meta">
-					gray: not mostly one cluster, or its cluster has no clear main
-					progression
-				</div>
+			{#if chords}
+				<div class="hex-tooltip-chords">{chords}</div>
 			{/if}
-			<div class="hex-tooltip-meta">progressions in this hex:</div>
-			{#each hoveredHexSummary.top as entry (entry.name)}
-				<div class="hex-tooltip-row">
-					<span
-						class="hex-tooltip-swatch"
-						style="background: {regionColorByName.get(entry.name) ??
-							hexColors.unmatched};"
-					></span>
-					<span class="hex-tooltip-name">{entry.name}</span>
-					<span class="hex-tooltip-share">{Math.round(entry.share * 100)}%</span
-					>
-				</div>
-			{/each}
+			<div class="hex-tooltip-meta">
+				{songCount}
+				{songCount === 1 ? "song" : "songs"}{movable
+					? " · click to zoom in"
+					: ""}
+			</div>
 		</div>
 	{/if}
 
 	{#each rotatingLabels as label (label.id)}
 		<span
 			class="rotating-label"
-			style:left="{transform.applyX(label.baseX)}px"
-			style:top="{transform.applyY(label.baseY)}px"
+			style:left="{toScreen(label).x}px"
+			style:top="{toScreen(label).y}px"
 			style:--label-text={hexColors.labelText}
 			style:--label-halo={hexColors.labelHalo}
 			transition:fade={{ duration: ROTATING_LABEL_FADE_MS }}
@@ -1539,10 +1744,18 @@
 		</span>
 	{/each}
 
-	{#if tooltipSong && tooltipVisible && delayedTooltip.tooltipAnchor}
-		<div class="tooltip" style={tooltipStyle}>
-			<SongTooltip song={tooltipSong} />
-		</div>
+	{#if tooltipVisible && delayedTooltip.tooltipAnchor}
+		{#if tooltipSong}
+			<div class="tooltip" style={tooltipStyle}>
+				<SongTooltip song={tooltipSong} />
+			</div>
+		{:else if tooltipSummary}
+			<div class="tooltip" style={tooltipStyle}>
+				<div class="hex-tooltip-title">{tooltipSummary.title}</div>
+				<div class="hex-tooltip-meta">{tooltipSummary.artists.join(", ")}</div>
+				<div class="hex-tooltip-meta">loading chords…</div>
+			</div>
+		{/if}
 	{/if}
 </div>
 
@@ -1610,22 +1823,22 @@
 	}
 
 	.hex-tooltip-title {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
 		font-weight: 600;
 		margin-bottom: 0.125rem;
+	}
+
+	.hex-tooltip-chords {
+		color: #d4d4d8;
+		font-size: 0.7rem;
+		margin-bottom: 0.25rem;
 	}
 
 	.hex-tooltip-meta {
 		color: #a1a1aa;
 		font-size: 0.65rem;
-		margin-bottom: 0.375rem;
-	}
-
-	.hex-tooltip-row {
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-		font-size: 0.7rem;
-		color: #d4d4d8;
 	}
 
 	.hex-tooltip-swatch {
@@ -1633,14 +1846,5 @@
 		height: 0.5rem;
 		border-radius: 0.125rem;
 		flex-shrink: 0;
-	}
-
-	.hex-tooltip-name {
-		flex: 1;
-	}
-
-	.hex-tooltip-share {
-		color: #a1a1aa;
-		font-variant-numeric: tabular-nums;
 	}
 </style>

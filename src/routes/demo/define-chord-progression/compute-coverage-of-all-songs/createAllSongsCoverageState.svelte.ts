@@ -14,10 +14,12 @@ import coreProgressionsData from "$data/core-progressions.js";
 import { getCachedCoverage, setCachedCoverage } from "./coverageResultCache.js";
 
 export const createAllSongsCoverageState = () => {
-	let songs = $state<GroupedSong[]>([]);
+	// Raw, not deep $state: the corpus is tens of thousands of songs, and
+	// nothing mutates them in place, so per-object proxies are pure cost.
+	let songs = $state.raw<GroupedSong[]>([]);
 	let loading = $state(true);
 	let loadError = $state("");
-	let allSongsCoverageResult = $state<AllSongsCoverageResult | null>(null);
+	let allSongsCoverageResult = $state.raw<AllSongsCoverageResult | null>(null);
 	let coverageCacheKey = $state<string | null>(null);
 	let coverageRequestId = 0;
 
@@ -45,10 +47,13 @@ export const createAllSongsCoverageState = () => {
 				return;
 			}
 
-			await initCoverageWorkerPool($state.snapshot(songList));
+			await initCoverageWorkerPool(songList);
 			if (!active) return;
 
 			const coverages = await computeCoverageOfAllSongs(requestId);
+			// Each worker holds its own copy of its songs; free them now
+			// rather than when the page unmounts.
+			terminateCoverageWorkerPool();
 			if (!active) return;
 
 			allSongsCoverageResult = coverages;

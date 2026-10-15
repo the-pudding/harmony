@@ -12,8 +12,19 @@ export const fetchSongInputs = async (url: string): Promise<SongInput[]> => {
 	return applyHandReviewedCorrections(await response.json());
 };
 
-export const fetchGroupedAllSongs = async (): Promise<GroupedSong[]> =>
-	groupSongs(await fetchSongInputs(ALL_SONGS_DATA_URL));
+// Fetched and parsed once per page load and shared by every caller, since
+// the file is ~50 MB. A failed load is forgotten so the next call retries.
+let groupedAllSongsPromise: Promise<GroupedSong[]> | null = null;
+
+export const fetchGroupedAllSongs = (): Promise<GroupedSong[]> => {
+	groupedAllSongsPromise ??= fetchSongInputs(ALL_SONGS_DATA_URL)
+		.then(groupSongs)
+		.catch((error) => {
+			groupedAllSongsPromise = null;
+			throw error;
+		});
+	return groupedAllSongsPromise;
+};
 
 export const sortAllSongs = (songs: GroupedSong[]): GroupedSong[] =>
 	[...songs].sort((a, b) => a.title.localeCompare(b.title));

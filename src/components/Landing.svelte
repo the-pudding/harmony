@@ -1,22 +1,10 @@
 <script>
 	import Header from "$components/Header.svelte";
-	import HexMap from "$components/HexMap.svelte";
 
 	let { hed, byline } = $props();
 </script>
 
 <div class="landing-root">
-	<div class="background" aria-hidden="true">
-		<!-- <HexMap
-			zoomable={false}
-			pannable={false}
-			interactive={false}
-			showLabels={false}
-			showRotatingLabels={true}
-			theme="light"
-		/> -->
-	</div>
-
 	<div class="blur">
 		<div class="landing">
 			<div class="header">
@@ -43,17 +31,8 @@
 		height: 100%;
 	}
 
-	.background {
-		position: absolute;
-		inset: 0;
-		z-index: 0;
-		pointer-events: none;
-	}
-
 	.blur {
-		background: rgba(255, 255, 255, 0.6);
-		backdrop-filter: blur(1px);
-		-webkit-backdrop-filter: blur(1px);
+		background: rgba(0, 0, 0, 0.4);
 		position: absolute;
 		inset: 0;
 		overflow: hidden;
@@ -93,6 +72,8 @@
 		align-items: center;
 		gap: clamp(0.5rem, 4cqh, 2rem);
 		min-height: 0;
+		backdrop-filter: blur(3px);
+		-webkit-backdrop-filter: blur(3px);
 	}
 
 	h1 {

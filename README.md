@@ -26,6 +26,7 @@ This runs [`tasks/build-songs.js`](tasks/build-songs.js), which:
 - joins Billboard flags and chart year from `../harmony-data/data/tracker.csv` and `billboard.csv`
 - converts chord data into the format used by the chord-search matcher
 - writes `static/data/songs.json` (full corrected Top-10 corpus, used by all `/demo/` pages)
+- then runs `npm run hexmap` to rebuild the story map's data from it (see [Story map data](#story-map-data-npm-run-hexmap))
 
 Note: `src/data/hand-corrected-songs.ts` holds `handCorrectedSongs`; `src/data/hand-reviewed-songs.ts` holds `problematicSongs` and `trickySongsToMatchCorrectly` for reviewing song data before use in the UI. Hand corrections are applied at runtime when loading `songs.json`.
 
@@ -38,6 +39,27 @@ npm run dev
 ```
 
 The `/demo/chord-search` route fetches `/data/songs.json` at runtime. If the file is missing, run `npm run songs` first.
+
+## Story map data (`npm run hexmap`)
+
+The map on the story pages (`/`, via `HexMap.svelte`) doesn't compute anything from `songs.json` in the browser. Running coverage and UMAP over the whole corpus is slow and uses a lot of memory, so it's done once ahead of time by [`tasks/build-hexmap.ts`](tasks/build-hexmap.ts) (about a minute), which writes:
+
+- `static/data/hexmap.json`: each song's map position and progression coverage, plus its title and artists (~1.3 MB)
+- `static/data/song-shards/*.json`: the songs' chord data split into 256 small files, so a song's tooltip loads just the one it needs
+
+Both are gitignored, like `songs.json`. The `/demo/` pages still compute everything live and don't use them.
+
+`npm run songs` runs it for you. Run `npm run hexmap` on its own when the map's inputs change without the songs changing:
+
+- core progressions (`src/data/core-progressions.ts`) or song corrections (`hand-corrected-songs.ts`, `reviewed-corrections.json`)
+- the matching algorithm (e.g. `matchSongV2` or its weights)
+- the map layout: the vector options and UMAP `minDist` in [`hexMapLayout.ts`](src/routes/demo/harmony-map/embedding/hexMapLayout.ts), or the vector/UMAP code
+- a fresh clone or new machine, since the files aren't committed
+- before deploying, if any of the above changed since the last run, since the build ships whatever is in `static/data/`
+
+You don't need to rerun it for HexMap props (focus, labels, interaction, clustering and layout settings), the theme, screen size, or drawing code; those all apply in the browser.
+
+`npm run test` catches most stale data: [`hexMapSnapshot.test.ts`](src/data/hexMapSnapshot.test.ts) fails when the baked songs or coverage no longer match what the code computes. It doesn't check map positions, so rerun `npm run hexmap` after layout-only changes.
 
 ## Coverage cache (IndexedDB)
 

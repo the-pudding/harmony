@@ -176,7 +176,7 @@ export type HexRegion = {
 // for placing one label per region.
 export const findHexRegions = (
 	bins: ReadonlyMap<string, HexBin>,
-	summaries: ReadonlyMap<string, HexSummary>,
+	summaries: ReadonlyMap<string, Pick<HexSummary, "dominantName">>,
 	minimumHexCount: number
 ): HexRegion[] => {
 	const seen = new Set<string>();

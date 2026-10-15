@@ -7,4 +7,5 @@ functions
 .env
 /static/data/songs.json
 /static/data/popular-songs.json
-/static/data/popular-ug.json
+/static/data/popular-ug.json/static/data/hexmap.json
+/static/data/song-shards/

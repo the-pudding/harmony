@@ -1,14 +1,15 @@
 <script lang="ts">
 	// The hex map from /demo/embedding on its own: no settings bar, legend or
-	// inspector. Loads the songs, runs coverage and UMAP, and fills its parent.
-	// Interaction can be turned off for decorative uses (e.g. a background).
-	import { createAllSongsCoverageState } from "$routes/demo/define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
-	import { createEmbeddingState } from "$routes/demo/harmony-map/embedding/state/createEmbeddingState.svelte.js";
+	// inspector. Draws the prebuilt snapshot from `npm run hexmap` (positions
+	// and progression coverage per song) and fills its parent; clustering and
+	// layout run here, since they depend on the props below. Interaction can
+	// be turned off for decorative uses (e.g. a background), and focusCluster
+	// frames a single cluster.
 	import {
-		DEFAULT_SONG_VECTOR_OPTIONS,
-		type SongVectorOptions
-	} from "$routes/demo/harmony-map/embedding/vectors/constants.js";
-	import { groupSharesForSong } from "$routes/demo/harmony-map/embedding/vectors/index.js";
+		loadHexMapSnapshot,
+		loadShardedSong,
+		type HexMapSnapshot
+	} from "$data/hexMapSnapshot.js";
 	import { buildClusterInputPoints } from "$routes/demo/harmony-map/embedding/clustering/clusterInputPoints.js";
 	import { findDensityClusters } from "$routes/demo/harmony-map/embedding/clustering/densityClusters.js";
 	import { applyPurityRadialLayout } from "$routes/demo/harmony-map/embedding/layout/purityRadialLayout.js";
@@ -16,108 +17,121 @@
 	import { homogeneityColorFor } from "$routes/demo/harmony-map/homogeneityColors.js";
 	import {
 		computeSongHomogeneity,
-		effectiveProgressionCountFor
+		type ProgressionCoverage
 	} from "$routes/demo/shared/progressionHomogeneity.js";
-	import { untrack } from "svelte";
+	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
 	import EmbeddingScatter from "$routes/demo/harmony-map/components/EmbeddingScatter.svelte";
 	import type { ScatterPoint } from "$routes/demo/harmony-map/components/scatterPoint.js";
 
 	type Props = {
-		// Wheel, pinch and double-click zoom.
-		zoomable?: boolean;
-		// Drag to move the map.
-		pannable?: boolean;
-		// Hover tooltips and click-to-zoom on hexes.
-		interactive?: boolean;
-		// Region labels, all at once.
-		showLabels?: boolean;
-		// Region labels fading in and out one at a time, a few seconds apart.
-		showRotatingLabels?: boolean;
+		// Drag, wheel, pinch and double-click zoom, and click-to-zoom on hexes.
+		// Defaults to true, or false when focusCluster is set.
+		movable?: boolean;
+		// Hovering a colored hex outlines its cluster and names its
+		// progression; at dot zoom, hovering a song shows its tooltip.
+		hoverable?: boolean;
+		// Hide every region label.
+		hideLabels?: boolean;
+		// Only label these clusters, by name (e.g. ["stay with me"]). By
+		// default any cluster can be labeled, as space and zoom allow; when
+		// focusCluster is set, only that cluster is.
+		showLabels?: string[];
+		// Labels fade in and out a few at a time, a few seconds apart, instead
+		// of all showing at once.
+		rotateLabels?: boolean;
+		// Zoom in on and center this cluster, by name (e.g. "stay with me").
+		focusCluster?: string;
 		// "dark" draws on a near-black background; "light" has no background
 		// of its own and uses lighter grays between colored hexes.
 		theme?: "dark" | "light";
-		// Same meanings and defaults as /demo/embedding.
+		// Same meanings and defaults as /demo/embedding. (UMAP's minDist is
+		// baked into the snapshot; see HEX_MAP_UMAP_MIN_DIST.)
 		purityLayout?: boolean;
 		pureThreshold?: number;
-		// Read once when the map mounts; changing it later has no effect.
-		umapMinDist?: number;
 		clusterMinPoints?: number;
 		clusterMaxPoints?: number;
 		clusterMinProgressionShare?: number;
 	};
 
 	const {
-		zoomable = true,
-		pannable = true,
-		interactive = true,
-		showLabels = true,
-		showRotatingLabels = false,
+		focusCluster = undefined,
+		movable = focusCluster === undefined,
+		hoverable = true,
+		hideLabels = false,
+		showLabels = focusCluster === undefined ? undefined : [focusCluster],
+		rotateLabels = false,
 		theme = "dark",
 		purityLayout = true,
 		pureThreshold = 0.9,
-		umapMinDist = 0.05,
 		clusterMinPoints = 20,
 		clusterMaxPoints = 300,
 		clusterMinProgressionShare = 0.25
 	}: Props = $props();
 
-	const VECTOR_OPTIONS: SongVectorOptions = {
-		...DEFAULT_SONG_VECTOR_OPTIONS,
-		weighting: "chords",
-		useTfIdf: false,
-		l2Normalize: true,
-		weightChorus: false
-	};
-
 	const NO_SONG_KEYS = new Set<string>();
+	const NO_SONGS = new Map();
 
-	const coverage = createAllSongsCoverageState();
+	let snapshot = $state.raw<HexMapSnapshot | null>(null);
 
-	const embedding = createEmbeddingState({
-		getEntries: () => coverage.allSongsCoverageResult?.songCoverages ?? null,
-		getSongs: () => coverage.baseList,
-		getCoverageCacheKey: () => coverage.coverageCacheKey,
-		initialMethod: "umap",
-		initialUmapMinDist: untrack(() => umapMinDist)
+	onMount(() => {
+		let active = true;
+		void loadHexMapSnapshot().then((loaded) => {
+			if (active) snapshot = loaded;
+		});
+		return () => {
+			active = false;
+		};
 	});
 
-	embedding.setOptions(VECTOR_OPTIONS);
-	embedding.setDimension(2);
+	// Each song's progression coverage, decoded from the snapshot's columns.
+	const coverageBySongKey = $derived.by(() => {
+		const coverages = new Map<string, ProgressionCoverage[]>();
+		if (!snapshot) return coverages;
+		const { songKeys, progressions, progressionNames } = snapshot;
+		songKeys.forEach((songKey, index) => {
+			const flat = progressions[index];
+			const entries: ProgressionCoverage[] = [];
+			for (let at = 0; at < flat.length; at += 2) {
+				entries.push({
+					name: progressionNames[flat[at]],
+					coveragePercent: flat[at + 1]
+				});
+			}
+			coverages.set(songKey, entries);
+		});
+		return coverages;
+	});
 
-	const songCoverages = $derived(
-		coverage.allSongsCoverageResult?.songCoverages ?? []
-	);
-
-	const songByKey = $derived(
-		new Map(coverage.baseList.map((song) => [song.songKey, song]))
-	);
-
-	const homogeneityBySongKey = $derived(
+	const songSummaryByKey = $derived(
 		new Map(
-			songCoverages.map((entry) => [
-				entry.songKey,
-				computeSongHomogeneity(entry.progressionCounts)
+			(snapshot?.songKeys ?? []).map((songKey, index) => [
+				songKey,
+				{ title: snapshot!.titles[index], artists: snapshot!.artists[index] }
 			])
 		)
 	);
 
+	const homogeneityBySongKey = $derived(
+		new Map(
+			[...coverageBySongKey].map(([songKey, coverage]) => [
+				songKey,
+				computeSongHomogeneity(coverage)
+			])
+		)
+	);
+
+	// groupShares only colors plain-dot mode, which HexMap never uses.
 	const points = $derived.by((): ScatterPoint[] =>
-		songCoverages.flatMap((entry) => {
-			const coords = embedding.result.coordsByKey.get(entry.songKey);
-			if (!coords) return [];
-			return [
-				{
-					songKey: entry.songKey,
-					x: coords.x,
-					y: coords.y,
-					groupShares: groupSharesForSong(entry.progressionCounts),
-					homogeneityColor: homogeneityColorFor(
-						effectiveProgressionCountFor(entry.progressionCounts)
-					)
-				}
-			];
-		})
+		(snapshot?.songKeys ?? []).map((songKey, index) => ({
+			songKey,
+			x: snapshot!.x[index],
+			y: snapshot!.y[index],
+			groupShares: [],
+			homogeneityColor: homogeneityColorFor(
+				homogeneityBySongKey.get(songKey)?.effectiveProgressionCount ?? null
+			)
+		}))
 	);
 
 	// The progression most of a cluster's songs are built on, and the share
@@ -198,22 +212,25 @@
 		<div class="fade-wrap" in:fade={{ duration: 500 }}>
 			<EmbeddingScatter
 				points={displayPoints}
-				{songByKey}
+				songByKey={NO_SONGS}
+				{songSummaryByKey}
+				loadSong={loadShardedSong}
 				selectedSongKey={null}
 				coClusterSongKeys={NO_SONG_KEYS}
 				highlightedSongKeys={NO_SONG_KEYS}
-				method={embedding.method}
+				method="umap"
 				clusters={densityClusters}
 				emphasizedClusterHashes={null}
 				renderMode="hex"
 				{progressionSharesBySongKey}
 				{clusterRegionBySongKey}
 				{clusterNames}
-				{zoomable}
-				{pannable}
-				{interactive}
-				{showLabels}
-				{showRotatingLabels}
+				{movable}
+				{hoverable}
+				showLabels={!hideLabels && !rotateLabels}
+				showRotatingLabels={!hideLabels && rotateLabels}
+				labelNames={showLabels ?? null}
+				focusClusterName={focusCluster}
 				{theme}
 				onSelect={() => {}}
 			/>
