@@ -34,7 +34,6 @@
 		coords: Coords | null;
 		componentLoadings: ComponentLoading[][] | null;
 		explainedVariance: number[] | null;
-		highlightedSongKeys: Set<string>;
 		clusterSummaries: ClusterSummary[];
 		clustersAvailable: boolean;
 		hiddenClusterHashes: Set<string>;
@@ -56,7 +55,6 @@
 		coords,
 		componentLoadings,
 		explainedVariance,
-		highlightedSongKeys,
 		clusterSummaries,
 		clustersAvailable,
 		hiddenClusterHashes,
@@ -193,13 +191,6 @@
 		selectedSongKey === null ? null : (songByKey.get(selectedSongKey) ?? null)
 	);
 
-	// highlightedSongKeys is every named cluster's anchor song
-	// (src/data/named-clusters.ts) — this just reads whether the selected
-	// song is one of them; editing that file is the only way to change it.
-	const isSelectedClusterAnchor = $derived(
-		selectedSongKey !== null && highlightedSongKeys.has(selectedSongKey)
-	);
-
 	const loadingLabel = (loading: ComponentLoading): string =>
 		vocabulary.entries[loading.featureIndex]?.chordProgression ?? "";
 
@@ -267,9 +258,6 @@
 				{/if}
 				<span class="selected-artists">{selectedEntry.artists.join(", ")}</span>
 			</div>
-			{#if isSelectedClusterAnchor}
-				<span class="anchor-badge">cluster anchor ✓</span>
-			{/if}
 		</div>
 
 		<dl class="facts">
@@ -515,18 +503,6 @@
 		align-items: flex-start;
 		justify-content: space-between;
 		gap: 0.5rem;
-	}
-
-	.anchor-badge {
-		flex-shrink: 0;
-		font-family: inherit;
-		font-size: 0.6rem;
-		padding: 0.1875rem 0.5rem;
-		border-radius: 9999px;
-		border: 1px solid rgba(251, 191, 36, 0.6);
-		background: rgba(251, 191, 36, 0.16);
-		color: #fde68a;
-		white-space: nowrap;
 	}
 
 	.selected-identity {

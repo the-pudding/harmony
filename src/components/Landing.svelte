@@ -32,7 +32,6 @@
 	}
 
 	.blur {
-		background: rgba(0, 0, 0, 0.4);
 		position: absolute;
 		inset: 0;
 		overflow: hidden;
@@ -72,8 +71,8 @@
 		align-items: center;
 		gap: clamp(0.5rem, 4cqh, 2rem);
 		min-height: 0;
-		backdrop-filter: blur(3px);
-		-webkit-backdrop-filter: blur(3px);
+		/* backdrop-filter: blur(3px);
+		-webkit-backdrop-filter: blur(3px); */
 	}
 
 	h1 {

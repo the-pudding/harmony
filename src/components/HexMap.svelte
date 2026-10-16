@@ -12,6 +12,7 @@
 	} from "$data/hexMapSnapshot.js";
 	import { buildClusterInputPoints } from "$routes/demo/harmony-map/embedding/clustering/clusterInputPoints.js";
 	import { findDensityClusters } from "$routes/demo/harmony-map/embedding/clustering/densityClusters.js";
+	import { nameProgressionClusters } from "$routes/demo/harmony-map/embedding/clustering/progressionClusterNames.js";
 	import { applyPurityRadialLayout } from "$routes/demo/harmony-map/embedding/layout/purityRadialLayout.js";
 	import type { ClusterRegion } from "$routes/demo/harmony-map/embedding/layout/hexBins.js";
 	import { homogeneityColorFor } from "$routes/demo/harmony-map/homogeneityColors.js";
@@ -134,37 +135,22 @@
 		}))
 	);
 
-	// The progression most of a cluster's songs are built on, and the share
-	// of its songs that have it as their own main progression.
-	const mainProgressionOf = (
-		songKeys: readonly string[]
-	): { name: string; share: number } | null => {
-		const counts = new Map<string, number>();
-		for (const songKey of songKeys) {
-			const name = homogeneityBySongKey.get(songKey)?.dominantProgressionName;
-			if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
-		}
-		const [name, count] =
-			[...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0] ??
-			[];
-		return name === undefined || count === undefined || songKeys.length === 0
-			? null
-			: { name, share: count / songKeys.length };
-	};
-
-	// Only clusters with a clear main progression, named after it.
-	const clusters = $derived(
-		findDensityClusters(
-			buildClusterInputPoints(points),
-			clusterMinPoints,
-			clusterMaxPoints
-		).flatMap((cluster) => {
-			const main = mainProgressionOf(cluster.songKeys);
-			return main && main.share >= clusterMinProgressionShare
-				? [{ cluster, name: main.name }]
-				: [];
-		})
-	);
+	// Clusters named by progression (see progressionClusterNames.ts).
+	const clusters = $derived.by(() => {
+		const clusterPoints = buildClusterInputPoints(points);
+		return nameProgressionClusters(
+			findDensityClusters(clusterPoints, clusterMinPoints, clusterMaxPoints),
+			new Map(
+				[...homogeneityBySongKey].flatMap(([songKey, homogeneity]) =>
+					homogeneity
+						? [[songKey, homogeneity.dominantProgressionName] as const]
+						: []
+				)
+			),
+			new Map(clusterPoints.map((point) => [point.songKey, point])),
+			clusterMinProgressionShare
+		);
+	});
 
 	const densityClusters = $derived(clusters.map(({ cluster }) => cluster));
 
@@ -174,8 +160,8 @@
 
 	const clusterRegionBySongKey = $derived.by(() => {
 		const regions = new Map<string, ClusterRegion>();
-		for (const { cluster, name } of clusters) {
-			const region = { id: cluster.hash, name };
+		for (const { cluster, name, progressionNames, showLabel } of clusters) {
+			const region = { id: cluster.hash, name, progressionNames, showLabel };
 			for (const songKey of cluster.songKeys) regions.set(songKey, region);
 		}
 		return regions;
@@ -217,7 +203,6 @@
 				loadSong={loadShardedSong}
 				selectedSongKey={null}
 				coClusterSongKeys={NO_SONG_KEYS}
-				highlightedSongKeys={NO_SONG_KEYS}
 				method="umap"
 				clusters={densityClusters}
 				emphasizedClusterHashes={null}

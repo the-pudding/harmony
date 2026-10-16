@@ -48,7 +48,8 @@
 	const CLUSTER_MAX_POINTS = 300;
 	// A cluster is kept (outlined, colored in hex view and named) only when
 	// at least this share of its songs have the same main progression. It's
-	// named after that progression.
+	// named after that progression, or two of them for a near-tie (see
+	// progressionClusterNames.ts).
 	const CLUSTER_MIN_PROGRESSION_SHARE = 0.25;
 
 	let mapMode = $state(readMapModeFromUrl(currentSearchParams()));

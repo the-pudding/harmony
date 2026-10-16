@@ -271,9 +271,16 @@ export const assignRegionColors = (
 	return colorByName;
 };
 
-// A dense cluster as hex mode colors it: `name` is the progression most of
-// its songs are built on, which also picks its color.
-export type ClusterRegion = { id: string; name: string };
+// A dense cluster as hex mode colors it: `name` (see progressionClusterNames)
+// picks its color and label; `progressionNames` are the progressions in that
+// name, whose combined share sets how strongly it shows. `showLabel` false
+// colors the cluster but never labels it.
+export type ClusterRegion = {
+	id: string;
+	name: string;
+	progressionNames: readonly string[];
+	showLabel: boolean;
+};
 
 // The cluster that holds at least `minimumShare` of a hex's songs, or null
 // when no single cluster does (the hex is unclustered or split between
@@ -298,11 +305,12 @@ export const dominantClusterRegion = (
 	return top.count / songKeys.length >= minimumShare ? top.region : null;
 };
 
-// Average share of `name` across the songs, counting songs that don't use
-// it as 0. Sets how strongly a hex or dot shows its cluster's color.
+// Average combined share of `names` across the songs, counting songs that
+// use none of them as 0. Sets how strongly a hex or dot shows its cluster's
+// color.
 export const averageProgressionShare = (
 	songKeys: readonly string[],
-	name: string,
+	names: readonly string[],
 	sharesBySongKey: ReadonlyMap<string, readonly ProgressionShare[]>
 ): number =>
 	songKeys.length === 0
@@ -310,7 +318,8 @@ export const averageProgressionShare = (
 		: songKeys.reduce(
 				(sum, songKey) =>
 					sum +
-					(sharesBySongKey.get(songKey)?.find((entry) => entry.name === name)
-						?.share ?? 0),
+					(sharesBySongKey.get(songKey) ?? [])
+						.filter((entry) => names.includes(entry.name))
+						.reduce((songSum, entry) => songSum + entry.share, 0),
 				0
 			) / songKeys.length;

@@ -17,7 +17,6 @@ describe("scatterPointAlpha", () => {
 				hoveredSongKey: null,
 				selectedSongKey: null,
 				coClusterSongKeys: empty,
-				highlightedSongKeys: empty,
 				inYearSongKeys: new Set(["b"])
 			})
 		).toBe(SCATTER_YEAR_OUT_ALPHA);
@@ -30,7 +29,6 @@ describe("scatterPointAlpha", () => {
 				hoveredSongKey: null,
 				selectedSongKey: "selected",
 				coClusterSongKeys: new Set(["mate"]),
-				highlightedSongKeys: empty,
 				inYearSongKeys: new Set(["selected"])
 			})
 		).toBe(SCATTER_YEAR_OUT_IN_CLUSTER_ALPHA);
@@ -43,7 +41,6 @@ describe("scatterPointAlpha", () => {
 				hoveredSongKey: null,
 				selectedSongKey: "selected",
 				coClusterSongKeys: new Set(["mate"]),
-				highlightedSongKeys: empty,
 				inYearSongKeys: new Set(["selected", "mate"])
 			})
 		).toBe(SCATTER_YEAR_OUT_ALPHA);
@@ -56,7 +53,6 @@ describe("scatterPointAlpha", () => {
 				hoveredSongKey: null,
 				selectedSongKey: "selected",
 				coClusterSongKeys: new Set(["mate"]),
-				highlightedSongKeys: empty,
 				inYearSongKeys: new Set(["selected", "mate", "other"])
 			})
 		).toBe(SCATTER_DIMMED_ALPHA);
@@ -69,7 +65,6 @@ describe("scatterPointAlpha", () => {
 				hoveredSongKey: null,
 				selectedSongKey: null,
 				coClusterSongKeys: empty,
-				highlightedSongKeys: empty,
 				inYearSongKeys: new Set(["a"])
 			})
 		).toBe(SCATTER_NORMAL_ALPHA);
@@ -82,7 +77,6 @@ describe("scatterPointAlpha", () => {
 				hoveredSongKey: "a",
 				selectedSongKey: null,
 				coClusterSongKeys: empty,
-				highlightedSongKeys: empty,
 				inYearSongKeys: empty
 			})
 		).toBe(1);

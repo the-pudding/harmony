@@ -16,11 +16,6 @@
 	import type { YearDomain } from "../../shared/artists/artistStats.js";
 	import { songKeysMatchingGroupFilter } from "../../shared/progressionGroupShare.js";
 	import type { ScatterPoint } from "../components/scatterPoint.js";
-	import {
-		getNamedClusters,
-		namedClusterAnchorSongKeys,
-		resolveClusterNames
-	} from "../components/namedClusters.js";
 	import { HIGHLIGHT_RING_COLOR } from "../components/highlightSongMarker.js";
 	import type { EmbeddingMethod } from "../embedding/reducers/types.js";
 	import { UMAP_DRIVEN_METHODS } from "../embedding/reducers/types.js";
@@ -32,7 +27,10 @@
 		MIN_CLUSTER_POINTS
 	} from "../embedding/clustering/densityClusters.js";
 	import { computeClusterVisibleShares } from "../embedding/clustering/clusterVisibility.js";
-	import { computeVisibleAnchorSongKeys } from "../embedding/clustering/anchorVisibility.js";
+	import {
+		MIN_MAIN_PROGRESSION_SHARE,
+		nameProgressionClusters
+	} from "../embedding/clustering/progressionClusterNames.js";
 	import { toCalendarYear } from "../../../../data/songYear.js";
 	import YearScrubber from "../components/YearScrubber.svelte";
 	import type { EmbeddingState } from "../embedding/state/createEmbeddingState.svelte.js";
@@ -102,13 +100,11 @@
 		// the maximum aren't circled. Default to the shared constants.
 		clusterMinPoints?: number;
 		clusterMaxPoints?: number;
-		// When set, only clusters where at least this share of songs have the
-		// same main progression are kept, and each cluster is named by that
-		// progression. The named-clusters file and its anchor highlights
-		// aren't used. One list then drives outlines, the purity layout, the
-		// clusters tab and hex colors. null keeps every cluster and the file's
-		// names (the harmony map's behavior).
-		clusterMinProgressionShare?: number | null;
+		// Only clusters where at least this share of songs have the same main
+		// progression are kept, and each is named by progression (see
+		// progressionClusterNames.ts). One list drives outlines, the purity
+		// layout, the clusters tab and hex colors.
+		clusterMinProgressionShare?: number;
 	};
 
 	const {
@@ -130,7 +126,7 @@
 		mapMode = "scatter",
 		clusterMinPoints = MIN_CLUSTER_POINTS,
 		clusterMaxPoints = MAX_CLUSTER_POINTS,
-		clusterMinProgressionShare = null
+		clusterMinProgressionShare = MIN_MAIN_PROGRESSION_SHARE
 	}: Props = $props();
 
 	const AXIS_LABELS_BY_METHOD: Record<
@@ -169,15 +165,6 @@
 		onViewModeChange(nextMode);
 	};
 
-	// Every anchor song across named clusters (src/data/named-clusters.ts) is
-	// what shows highlighted on the map — editing happens in that file, not
-	// in the app, so there's no user-toggled highlight state anymore. Pages
-	// that name clusters by progression don't use the file, so show none.
-	const highlightedSongKeys = $derived(
-		clusterMinProgressionShare === null
-			? namedClusterAnchorSongKeys
-			: new Set<string>()
-	);
 	let hiddenClusterHashes = $state<Set<string>>(new Set());
 
 	const CLUSTERABLE_METHODS = new Set<EmbeddingMethod>(UMAP_DRIVEN_METHODS);
@@ -274,24 +261,6 @@
 			? null
 			: new Set(selectedArtistSummary.songs.map((song) => song.songKey))
 	);
-
-	// Which density-cluster hash(es) each song belongs to — lets the anchor
-	// highlight below know whether ITS cluster is currently hidden. (Defined
-	// here for readability; it forward-references allClusters, which is
-	// fine — $derived callbacks don't run until read, well after the whole
-	// script has finished its one top-to-bottom pass.)
-	// When an artist is selected, only their songs should read as
-	// "highlighted" on the map — named-cluster-anchor rings/labels would
-	// otherwise compete visually with the artist highlight. Scoped to the
-	// map view only; SongVectorInspector's "cluster anchor" badge still uses
-	// the unfiltered highlightedSongKeys below. See computeVisibleAnchorSongKeys
-	// for how an anchor's own cluster visibility (or, for a stray anchor
-	// with no cluster membership, whether every cluster is hidden) gates it.
-	const mapHighlightedSongKeys = $derived.by((): Set<string> => {
-		const base = artistSongKeys === null ? highlightedSongKeys : new Set<string>();
-		if (base.size === 0) return base;
-		return computeVisibleAnchorSongKeys(base, allClusters, hiddenClusterHashes);
-	});
 
 	const groupFilterSongKeys = $derived(
 		selectedGroupLabel === null
@@ -458,38 +427,30 @@
 		)
 	);
 
-	// The progression most of a cluster's songs are built on, and the share
-	// of its songs that have it as their own main progression.
-	const mainProgressionOf = (
-		songKeys: readonly string[]
-	): { name: string; share: number } | null => {
-		const counts = new Map<string, number>();
-		for (const songKey of songKeys) {
-			const name = homogeneityBySongKey.get(songKey)?.dominantProgressionName;
-			if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
-		}
-		const [name, count] =
-			[...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0] ??
-			[];
-		return name === undefined || count === undefined || songKeys.length === 0
-			? null
-			: { name, share: count / songKeys.length };
-	};
-
-	const allClusters = $derived.by(() => {
+	// Clusters named by progression (see progressionClusterNames.ts).
+	const progressionClusters = $derived.by(() => {
 		if (!clustersAvailable) return [];
-		const found = findDensityClusters(
-			clusterInputPoints,
-			clusterMinPoints,
-			clusterMaxPoints
-		);
-		if (clusterMinProgressionShare === null) return found;
-		return found.filter(
-			(cluster) =>
-				(mainProgressionOf(cluster.songKeys)?.share ?? 0) >=
-				clusterMinProgressionShare
+		return nameProgressionClusters(
+			findDensityClusters(
+				clusterInputPoints,
+				clusterMinPoints,
+				clusterMaxPoints
+			),
+			new Map(
+				[...homogeneityBySongKey].flatMap(([songKey, homogeneity]) =>
+					homogeneity
+						? [[songKey, homogeneity.dominantProgressionName] as const]
+						: []
+				)
+			),
+			new Map(clusterInputPoints.map((point) => [point.songKey, point])),
+			clusterMinProgressionShare
 		);
 	});
+
+	const allClusters = $derived(
+		progressionClusters.map(({ cluster }) => cluster)
+	);
 
 	const homogeneityBySongKey = $derived(
 		new Map(
@@ -517,10 +478,15 @@
 		(): Map<string, ClusterRegion> | null => {
 			if (!isRegionMapMode) return null;
 			const regions = new Map<string, ClusterRegion>();
-			for (const cluster of mapClusters) {
-				const main = mainProgressionOf(cluster.songKeys);
-				if (!main) continue;
-				const region = { id: cluster.hash, name: main.name };
+			for (const named of progressionClusters) {
+				const { cluster } = named;
+				if (hiddenClusterHashes.has(cluster.hash)) continue;
+				const region = {
+					id: cluster.hash,
+					name: named.name,
+					progressionNames: named.progressionNames,
+					showLabel: named.showLabel
+				};
 				for (const songKey of cluster.songKeys) regions.set(songKey, region);
 			}
 			return regions;
@@ -631,14 +597,9 @@
 	});
 
 	const clusterNamesByHash = $derived(
-		clusterMinProgressionShare === null
-			? resolveClusterNames(allClusters, getNamedClusters())
-			: new Map(
-					allClusters.flatMap((cluster) => {
-						const main = mainProgressionOf(cluster.songKeys);
-						return main ? [[cluster.hash, main.name] as const] : [];
-					})
-				)
+		new Map(
+			progressionClusters.map(({ cluster, name }) => [cluster.hash, name])
+		)
 	);
 
 	const clusterRankByHash = $derived(
@@ -742,7 +703,6 @@
 					{songByKey}
 					{selectedSongKey}
 					{coClusterSongKeys}
-					highlightedSongKeys={mapHighlightedSongKeys}
 					{visibleSongKeys}
 					inYearSongKeys={inYearSongKeys}
 					clusters={mapClusters}
@@ -760,7 +720,6 @@
 					{songByKey}
 					{selectedSongKey}
 					{coClusterSongKeys}
-					highlightedSongKeys={mapHighlightedSongKeys}
 					{visibleSongKeys}
 					inYearSongKeys={inYearSongKeys}
 					method={embedding.method}
@@ -835,7 +794,6 @@
 					coords={selectedCoords}
 					componentLoadings={embedding.result.componentLoadings}
 					explainedVariance={embedding.result.explainedVariance}
-					{highlightedSongKeys}
 					clusterSummaries={selectedSongClusterSummaries}
 					{clustersAvailable}
 					{hiddenClusterHashes}

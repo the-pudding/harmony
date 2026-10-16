@@ -7,8 +7,6 @@
 	import { dominantColorForGroupShares } from "./groupColorBlend.js";
 	import type { MapColorMode } from "../colorMode.js";
 	import {
-		applyHighlightMarkerDepthStyles,
-		createHighlightMarkerElement,
 		HIGHLIGHT_DEFAULT_POINT_RADIUS_PX,
 		highlightRingDiameterPx
 	} from "./highlightSongMarker.js";
@@ -47,7 +45,6 @@
 		songByKey: Map<string, GroupedSong>;
 		selectedSongKey: string | null;
 		coClusterSongKeys: Set<string>;
-		highlightedSongKeys: Set<string>;
 		visibleSongKeys?: Set<string> | null;
 		inYearSongKeys?: Set<string> | null;
 		clusters: DensityCluster[];
@@ -75,7 +72,6 @@
 		songByKey,
 		selectedSongKey,
 		coClusterSongKeys,
-		highlightedSongKeys,
 		visibleSongKeys = null,
 		inYearSongKeys = null,
 		clusters,
@@ -95,10 +91,8 @@
 	const POINT_SIZE_SCALE = 5;
 	const BASE_POINT_SIZE = 0.04;
 	const BASE_SELECTED_POINT_SIZE = 0.075;
-	const BASE_HIGHLIGHT_POINT_SIZE = 0.06;
 	const POINT_SIZE = BASE_POINT_SIZE * POINT_SIZE_SCALE;
 	const SELECTED_POINT_SIZE = BASE_SELECTED_POINT_SIZE * POINT_SIZE_SCALE;
-	const HIGHLIGHT_POINT_SIZE = BASE_HIGHLIGHT_POINT_SIZE * POINT_SIZE_SCALE;
 	const HOVER_PICK_RADIUS_PX = 12;
 	const JITTER_AMPLITUDE = 0.02;
 	const BACKGROUND_COLOR = 0x09090b;
@@ -139,7 +133,6 @@
 	let sceneLighting: SceneLighting | null = null;
 	let controlsInteractionActive = false;
 
-	const highlightLabels = new Map<string, CSS2DObject>();
 	const emphasisRings = new Map<string, CSS2DObject>();
 	let clusterSceneGeometries: ReturnType<typeof buildClusterSceneGeometries> = [];
 	let sceneClusterSpheres: SceneClusterSpheres | null = null;
@@ -250,14 +243,12 @@
 			hoveredSongKey,
 			selectedSongKey,
 			coClusterSongKeys,
-			highlightedSongKeys,
 			emphasizedSongKeys,
 			inYearSongKeys
 		});
 
 	const sizeFor = (songKey: string): number => {
 		if (songKey === selectedSongKey) return SELECTED_POINT_SIZE;
-		if (highlightedSongKeys.has(songKey)) return HIGHLIGHT_POINT_SIZE;
 		return POINT_SIZE;
 	};
 
@@ -394,56 +385,6 @@
 		ring.style.width = `${diameterPx}px`;
 		ring.style.height = `${diameterPx}px`;
 		return ring;
-	};
-
-	const syncHighlightLabels = () => {
-		if (!scene) return;
-
-		for (const [songKey, label] of highlightLabels) {
-			if (!highlightedSongKeys.has(songKey) || !pointBySongKey.has(songKey)) {
-				scene.remove(label);
-				highlightLabels.delete(songKey);
-			}
-		}
-
-		for (const songKey of highlightedSongKeys) {
-			const point = pointBySongKey.get(songKey);
-			if (!point) continue;
-
-			const title = songByKey.get(songKey)?.title ?? songKey;
-			const viewDistance = viewDistanceForPoint(point);
-			const depthStyle = labelDepthStyleFromViewDistance(viewDistance);
-			const pointRadiusPx = screenPointRadiusPx(songKey, point);
-			const ringDiameterPx = highlightRingDiameterPx(
-				pointRadiusPx,
-				HIGHLIGHT_RING_GAP_PX * depthStyle.depthScale
-			);
-			let label = highlightLabels.get(songKey);
-
-			if (!label) {
-				label = new CSS2DObject(
-					createHighlightMarkerElement(title, pointRadiusPx, HIGHLIGHT_RING_GAP_PX)
-				);
-				scene.add(label);
-				highlightLabels.set(songKey, label);
-			} else {
-				const titleElement = label.element.querySelector(".harmony-highlight-title");
-				if (titleElement) {
-					titleElement.textContent = title;
-					titleElement.setAttribute("title", title);
-				}
-			}
-
-			applyHighlightMarkerDepthStyles(label.element, depthStyle, ringDiameterPx);
-			// Depth styling only fades by camera distance — also fold in
-			// selection/emphasis fading so highlighted markers dim along
-			// with everything else once a song is selected.
-			label.element.style.opacity = String(
-				depthStyle.opacity * alphaFor(songKey)
-			);
-			label.position.copy(toScenePosition(point));
-			label.renderOrder = labelRenderOrderFromViewDistance(viewDistance);
-		}
 	};
 
 	const syncEmphasisRings = () => {
@@ -586,7 +527,6 @@
 		controls.update();
 		sceneLighting?.updateForCamera(camera);
 		updateMeshVisualAttributes();
-		syncHighlightLabels();
 		syncEmphasisRings();
 		renderer.render(scene, camera);
 		labelRenderer.render(scene, camera);
@@ -606,9 +546,7 @@
 
 	const clearOverlayObjects = () => {
 		if (!scene) return;
-		for (const label of highlightLabels.values()) scene.remove(label);
 		for (const ring of emphasisRings.values()) scene.remove(ring);
-		highlightLabels.clear();
 		emphasisRings.clear();
 	};
 
@@ -743,7 +681,6 @@
 		if (!pointsMesh) return;
 		void selectedSongKey;
 		void coClusterSongKeys;
-		void highlightedSongKeys;
 		void showTimeAxisGizmo;
 		void colorMode;
 		void emphasizedSongKeys;
@@ -862,43 +799,6 @@
 		pointer-events: none;
 		overflow: hidden;
 		z-index: 1;
-	}
-
-	.scatter-3d :global(.harmony-highlight-marker) {
-		width: 0;
-		height: 0;
-		overflow: visible;
-		pointer-events: none;
-	}
-
-	.scatter-3d :global(.harmony-highlight-ring) {
-		position: absolute;
-		left: 0;
-		top: 0;
-		width: var(--ring-size);
-		height: var(--ring-size);
-		border-radius: 9999px;
-		border: var(--ring-width) solid var(--ring-color);
-		box-sizing: border-box;
-		transform: translate(-50%, -50%);
-	}
-
-	.scatter-3d :global(.harmony-highlight-title) {
-		position: absolute;
-		left: 0;
-		top: 0;
-		transform: translate(
-			-50%,
-			calc(-100% - var(--ring-size) / 2 - var(--label-gap))
-		);
-		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
-		font-size: var(--label-font-size, 10px);
-		color: var(--label-color);
-		max-width: var(--label-max-width);
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		text-align: center;
 	}
 
 	.scatter-3d :global(.harmony-emphasis-ring) {

@@ -161,8 +161,14 @@ describe("assignRegionColors", () => {
 });
 
 describe("dominantClusterRegion", () => {
-	const axis = { id: "c1", name: "axis" };
-	const dooWop = { id: "c2", name: "doo wop" };
+	const region = (id: string, name: string) => ({
+		id,
+		name,
+		progressionNames: [name],
+		showLabel: true
+	});
+	const axis = region("c1", "axis");
+	const dooWop = region("c2", "doo wop");
 	const regions = new Map([
 		["a", axis],
 		["b", axis],
@@ -188,7 +194,23 @@ describe("averageProgressionShare", () => {
 			["c", [{ name: "doo wop", share: 1 }]]
 		]);
 		expect(
-			averageProgressionShare(["a", "b", "c"], "axis", shares)
+			averageProgressionShare(["a", "b", "c"], ["axis"], shares)
 		).toBeCloseTo(0.5);
+	});
+
+	it("sums the shares of several progressions", () => {
+		const shares = new Map([
+			[
+				"a",
+				[
+					{ name: "axis", share: 0.5 },
+					{ name: "doo wop", share: 0.25 }
+				]
+			],
+			["b", [{ name: "doo wop", share: 0.5 }]]
+		]);
+		expect(
+			averageProgressionShare(["a", "b"], ["axis", "doo wop"], shares)
+		).toBeCloseTo(0.625);
 	});
 });

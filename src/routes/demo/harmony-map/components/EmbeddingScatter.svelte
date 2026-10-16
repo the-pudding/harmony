@@ -36,17 +36,6 @@
 	import type { ScatterAxisLabels, ScatterPoint } from "./scatterPoint.js";
 	import { scatterPointAlpha } from "./scatterPoint.js";
 	import {
-		HIGHLIGHT_LABEL_COLOR,
-		HIGHLIGHT_LABEL_FONT,
-		HIGHLIGHT_LABEL_GAP_PX,
-		HIGHLIGHT_LABEL_MAX_WIDTH_PX,
-		HIGHLIGHT_RING_COLOR,
-		HIGHLIGHT_RING_OFFSET_PX,
-		HIGHLIGHT_RING_WIDTH_PX,
-		truncateLabelToWidth
-	} from "./highlightSongMarker.js";
-	import { getNamedClusters, resolveClusterNames } from "./namedClusters.js";
-	import {
 		assignRegionColors,
 		averageProgressionShare,
 		axialForPoint,
@@ -90,7 +79,6 @@
 		> | null;
 		selectedSongKey: string | null;
 		coClusterSongKeys: Set<string>;
-		highlightedSongKeys: Set<string>;
 		visibleSongKeys?: Set<string> | null;
 		inYearSongKeys?: Set<string> | null;
 		axisLabels?: ScatterAxisLabels | null;
@@ -159,8 +147,7 @@
 		// progression. Hex mode colors by cluster: songs missing from this
 		// map, and hexes no single cluster holds half of, are drawn gray.
 		clusterRegionBySongKey?: ReadonlyMap<string, ClusterRegion> | null;
-		// Outline labels by cluster hash. When omitted, names come from the
-		// named-clusters file.
+		// Outline labels by cluster hash. When omitted, clusters are unnamed.
 		clusterNames?: ReadonlyMap<string, string> | null;
 		// User interaction, both on by default. movable = drag, wheel, pinch
 		// and double-click zoom, and click-to-zoom on hexes; hoverable = hover
@@ -189,7 +176,6 @@
 		songSummaryByKey = null,
 		selectedSongKey,
 		coClusterSongKeys,
-		highlightedSongKeys,
 		visibleSongKeys = null,
 		inYearSongKeys = null,
 		axisLabels = null,
@@ -433,7 +419,7 @@
 	let rotatingLabels = $state<(LabelSpot & { id: number })[]>([]);
 
 	const resolvedClusterNames = $derived(
-		clusterNames ?? resolveClusterNames(clusters, getNamedClusters())
+		clusterNames ?? new Map<string, string>()
 	);
 
 	// Live geometry (centroid + radius) per drawn cluster, recomputed once per
@@ -574,7 +560,7 @@
 			region.name,
 			averageProgressionShare(
 				[songKey],
-				region.name,
+				region.progressionNames,
 				progressionSharesBySongKey ?? new Map()
 			),
 			gradientStrength
@@ -629,7 +615,6 @@
 			hoveredSongKey,
 			selectedSongKey,
 			coClusterSongKeys,
-			highlightedSongKeys,
 			emphasizedSongKeys,
 			inYearSongKeys
 		});
@@ -739,48 +724,6 @@
 		}
 	};
 
-	const drawHighlightedSongs = (context: CanvasRenderingContext2D) => {
-		if (highlightedSongKeys.size === 0) return;
-
-		context.font = HIGHLIGHT_LABEL_FONT;
-		context.textAlign = "center";
-		context.textBaseline = "alphabetic";
-
-		for (const songKey of highlightedSongKeys) {
-			if (!pointBySongKey.has(songKey)) continue;
-			const position = displayedPositions.get(songKey);
-			if (!position) continue;
-			const screen = toScreen(position);
-			const radius = radiusFor(songKey);
-
-			context.globalAlpha = alphaFor(songKey);
-			context.strokeStyle = HIGHLIGHT_RING_COLOR;
-			context.lineWidth = HIGHLIGHT_RING_WIDTH_PX;
-			context.beginPath();
-			context.arc(
-				screen.x,
-				screen.y,
-				radius + HIGHLIGHT_RING_OFFSET_PX,
-				0,
-				Math.PI * 2
-			);
-			context.stroke();
-
-			const title = songByKey.get(songKey)?.title ?? songKey;
-			const label = truncateLabelToWidth(
-				context,
-				title,
-				HIGHLIGHT_LABEL_MAX_WIDTH_PX
-			);
-			context.fillStyle = HIGHLIGHT_LABEL_COLOR;
-			context.fillText(
-				label,
-				screen.x,
-				screen.y - radius - HIGHLIGHT_RING_OFFSET_PX - HIGHLIGHT_LABEL_GAP_PX
-			);
-		}
-	};
-
 	const draw = () => {
 		const canvas = canvasEl;
 		const context = canvas?.getContext("2d");
@@ -836,8 +779,6 @@
 			context.arc(screen.x, screen.y, radiusFor(point.songKey), 0, Math.PI * 2);
 			context.fill();
 		}
-
-		drawHighlightedSongs(context);
 
 		const emphasized = [selectedSongKey, hoveredSongKey].filter(
 			(songKey): songKey is string =>
@@ -1045,7 +986,7 @@
 							? 0
 							: averageProgressionShare(
 									bin.songKeys,
-									region.name,
+									region.progressionNames,
 									progressionSharesBySongKey ?? new Map()
 								)
 				};
@@ -1066,9 +1007,12 @@
 			),
 			HEX_LABEL_MIN_HEXES
 		);
+		// Only regions that may be labeled.
 		const nameByRegionId = new Map(
 			[...regionByKey.values()].flatMap((region) =>
-				region === null ? [] : [[region.id, region.name] as const]
+				region === null || !region.showLabel
+					? []
+					: [[region.id, region.name] as const]
 			)
 		);
 		hexLayoutCache = {
@@ -1153,9 +1097,10 @@
 			x: number;
 			y: number;
 		}[] = [];
-		// A cluster can break into several patches; label only its biggest
-		// (regions come largest first).
-		const labeledRegionIds = new Set<string>();
+		// A cluster can break into several patches; only its biggest is a
+		// label candidate (regions come largest first). If that one doesn't
+		// fit, the cluster goes unlabeled rather than labeling a stray patch.
+		const consideredRegionIds = new Set<string>();
 		const extraPadding =
 			HEX_LABEL_EXTRA_PADDING_ZOOMED_OUT *
 			Math.max(
@@ -1167,8 +1112,10 @@
 		const paddingX = HEX_LABEL_PADDING_X + extraPadding;
 		const paddingY = HEX_LABEL_PADDING_Y + extraPadding;
 		for (const region of labelRegions) {
-			if (labeledRegionIds.has(region.name)) continue;
-			const labelText = nameByRegionId.get(region.name) ?? region.name;
+			if (consideredRegionIds.has(region.name)) continue;
+			consideredRegionIds.add(region.name);
+			const labelText = nameByRegionId.get(region.name);
+			if (labelText === undefined) continue;
 			if (labelNameSet && !labelNameSet.has(normalizeName(labelText))) {
 				continue;
 			}
@@ -1213,7 +1160,6 @@
 				continue;
 			}
 			placed.push(box);
-			labeledRegionIds.add(region.name);
 			// Stored like song positions (0–1 across the plot), so a label
 			// already showing stays put on the map when the plot resizes.
 			spots.push({
@@ -1549,7 +1495,6 @@
 		void clusters;
 		void emphasizedClusterHashes;
 		void resolvedClusterNames;
-		void highlightedSongKeys;
 		void hoveredClusterHit;
 		void emphasizedSongKeys;
 		void inYearSongKeys;
@@ -1709,7 +1654,10 @@
 	{#if hoveredHex}
 		{@const { region } = hoveredHex}
 		{@const songCount = clusterSizeByHash.get(region.id) ?? 0}
-		{@const chords = chordsByProgressionName.get(region.name)}
+		{@const chords = region.progressionNames
+			.map((name) => chordsByProgressionName.get(name))
+			.filter((chord) => chord !== undefined)
+			.join(" · ")}
 		<div class="tooltip" style={hoverCardStyle(hoveredHex.anchor, width)}>
 			<div class="hex-tooltip-title">
 				<span

@@ -122,7 +122,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 
 		{
 			// @michelle: this feels darker, more minor-y to me
-			name: "axis of angsty (we cant stop)",
+			name: "axis of angsty",
 			chordProgression: "I-iii-vi-IV",
 			scale: "major",
 			description: "swaps out the V for an angsty iii"

@@ -24,7 +24,6 @@ export type ScatterPointAlphaArgs = {
 	hoveredSongKey: string | null;
 	selectedSongKey: string | null;
 	coClusterSongKeys: ReadonlySet<string>;
-	highlightedSongKeys: ReadonlySet<string>;
 	emphasizedSongKeys?: ReadonlySet<string> | null;
 	inYearSongKeys?: ReadonlySet<string> | null;
 };
@@ -34,7 +33,6 @@ export const scatterPointAlpha = ({
 	hoveredSongKey,
 	selectedSongKey,
 	coClusterSongKeys,
-	highlightedSongKeys,
 	emphasizedSongKeys = null,
 	inYearSongKeys = null
 }: ScatterPointAlphaArgs): number => {
@@ -55,7 +53,7 @@ export const scatterPointAlpha = ({
 	}
 
 	if (selectedSongKey === null) {
-		return highlightedSongKeys.has(songKey) ? 1 : SCATTER_NORMAL_ALPHA;
+		return SCATTER_NORMAL_ALPHA;
 	}
 
 	if (inClusterFocus) return 1;
