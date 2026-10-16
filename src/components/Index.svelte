@@ -32,11 +32,6 @@
 		component ? (components[_.capitalize(component)] ?? null) : null
 	);
 
-	// One HexMap stays mounted behind every slide, so moving between map
-	// slides flies the same map to a new focus instead of reloading it.
-	// Landing uses it as a backdrop; "map" stages set its props from the doc
-	// (focusCluster, showLabels as a comma-separated list, and true/false for
-	// movable, hoverable, hideLabels and rotateLabels).
 	const LANDING_MAP_PROPS = {
 		movable: false,
 		hoverable: false,
@@ -87,8 +82,13 @@
 
 <Tap
 	ontap={onTap}
-	full
-	size={slideI === 0 ? "100%" : ["33%", "67%"]}
+	size="64px"
+	showArrows
+	disable={[
+		...(slideI === 0 ? ["left"] : []),
+		...(slideI === allSlides.length - 1 ? ["right"] : [])
+	]}
+	arrowStroke="#fff"
 	enableKeyboard={true}
 />
 
@@ -201,10 +201,10 @@
 	}
 
 	:global(article > .text button) {
-		font-family: Atlas Typewriter;
+		font-family: var(--font-mono);
 	}
 
 	:global(span.chord) {
-		font-family: Atlas Typewriter;
+		font-family: var(--font-mono);
 	}
 </style>

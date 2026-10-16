@@ -65,7 +65,10 @@
                 ]
               }
             }
-          ]
+          ],
+          "stage": {
+            "component": "map"
+          }
         },
         {
           "text": [
@@ -225,7 +228,7 @@
           "text": [
             {
               "type": "text",
-              "value": "This progression, named for the chorus of <strong>Poker Face</strong>, centers around a minor version of the <span class=chord>i</strong> chord (lowercase numeral = minor)."
+              "value": "This progression, named for the chorus of <strong>Poker Face</strong>, centers around a minor version of the <span class=chord>i</span> chord (lowercase numeral = minor)."
             },
             {
               "type": "text",
