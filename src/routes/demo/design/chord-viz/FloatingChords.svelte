@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createAllSongsCoverageState } from "../../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
 	import ChordVizPanel from "./ChordVizPanel.svelte";
 	import FloatingControls from "./FloatingControls.svelte";
 	import FloatingDefs from "./FloatingDefs.svelte";
@@ -10,7 +11,11 @@
 		floatingIdsFor,
 		type FloatingSettings
 	} from "./floatingEffects.js";
-	import type { ProgressionToken } from "./topProgressions.js";
+	import {
+		DEFAULT_PROGRESSION_FILTERS,
+		type ProgressionFilters,
+		type ProgressionToken
+	} from "./topProgressions.js";
 
 	const HEXAGONS_NOTEBOOK_URL = "https://observablehq.com/d/821fca17be68685d";
 
@@ -18,6 +23,8 @@
 	const ids = floatingIdsFor(uid);
 
 	let settings = $state<FloatingSettings>(DEFAULT_FLOATING_SETTINGS);
+	const coverage = createAllSongsCoverageState();
+	let filters = $state<ProgressionFilters>(DEFAULT_PROGRESSION_FILTERS);
 </script>
 
 <ChordVizPanel
@@ -32,7 +39,11 @@
 		{#snippet floatingChordRenderer({ tokens }: { tokens: ProgressionToken[] })}
 			<ProgressionChords {tokens} {settings} {ids} />
 		{/snippet}
-		<TopProgressionsList chordRenderer={floatingChordRenderer} />
+		<TopProgressionsList
+			chordRenderer={floatingChordRenderer}
+			{coverage}
+			bind:filters
+		/>
 	</div>
 </ChordVizPanel>
 

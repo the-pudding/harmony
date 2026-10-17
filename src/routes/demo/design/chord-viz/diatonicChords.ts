@@ -10,6 +10,10 @@ import {
 
 export type ChordTone = "major" | "minor";
 export type KeyTonality = "major" | "minor";
+export type ChordId = `${KeyTonality}.${string}`;
+
+export const chordIdOf = (tonality: KeyTonality, roman: string): ChordId =>
+	`${tonality}.${roman}`;
 
 export type DiatonicChord = {
 	degree: number;

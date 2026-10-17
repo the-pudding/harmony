@@ -1,11 +1,9 @@
-import { CHORD_APPEARANCE } from "./chordAppearance.js";
 import {
 	DEFAULT_PALETTE,
-	colorOf,
-	majorColor,
-	minorColor,
+	styleOf,
 	type ChordColors,
-	type ChordPalette
+	type ChordPalette,
+	type ChordStyle
 } from "./chordPalettes.js";
 import { CHORD_SHAPE_PATHS, type ChordShape } from "./chordShapes.js";
 import type { KeyTonality } from "./diatonicChords.js";
@@ -16,22 +14,20 @@ export type ChordAppearance = {
 	colors: ChordColors;
 };
 
-const FALLBACK_SHAPE: ChordShape = "circleish";
-
-const FALLBACK_COLOR = { major: majorColor("home"), minor: minorColor("home") };
+const FALLBACK_STYLE: Record<KeyTonality, ChordStyle> = {
+	major: DEFAULT_PALETTE["major.I"],
+	minor: DEFAULT_PALETTE["minor.i"]
+};
 
 export const appearanceFor = (
 	tonality: KeyTonality,
 	roman: string,
 	palette: ChordPalette = DEFAULT_PALETTE
 ): ChordAppearance => {
-	const spec = CHORD_APPEARANCE[tonality][roman] ?? {
-		shape: FALLBACK_SHAPE,
-		color: FALLBACK_COLOR[tonality]
-	};
+	const style = styleOf(palette, tonality, roman) ?? FALLBACK_STYLE[tonality];
 	return {
-		shape: spec.shape,
-		path: CHORD_SHAPE_PATHS[spec.shape],
-		colors: colorOf(palette, spec.color)
+		shape: style.shape,
+		path: CHORD_SHAPE_PATHS[style.shape],
+		colors: style.colors
 	};
 };

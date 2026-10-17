@@ -46,7 +46,7 @@ export const DEFAULT_PROGRESSION_FILTERS: ProgressionFilters = {
 	requiresMinorKey: false
 };
 
-export const TOP_PROGRESSIONS_LIMIT = 15;
+export const TOP_PROGRESSIONS_LIMIT = 5;
 const PROGRESSION_SEPARATOR = "-";
 
 export const ROW_CHORD_RADIUS = 18;

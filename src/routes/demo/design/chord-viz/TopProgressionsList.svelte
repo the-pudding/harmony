@@ -1,10 +1,9 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-	import { createAllSongsCoverageState } from "../../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
+	import type { createAllSongsCoverageState } from "../../define-chord-progression/compute-coverage-of-all-songs/createAllSongsCoverageState.svelte.js";
 	import ToggleSwitch from "../../../../chord-search-demo/ToggleSwitch.svelte";
 	import { tonalityOfScale, type KeyTonality } from "./diatonicChords.js";
 	import {
-		DEFAULT_PROGRESSION_FILTERS,
 		ROW_HEIGHT,
 		TOP_PROGRESSIONS_LIMIT,
 		rankProgressions,
@@ -20,14 +19,17 @@
 
 	type Props = {
 		chordRenderer: Snippet<[ChordRendererArgs]>;
-		filterable?: boolean;
+		coverage: ReturnType<typeof createAllSongsCoverageState>;
+		filters: ProgressionFilters;
+		showFilters?: boolean;
 	};
 
-	let { chordRenderer, filterable = true }: Props = $props();
-
-	const coverage = createAllSongsCoverageState();
-
-	let filters = $state<ProgressionFilters>(DEFAULT_PROGRESSION_FILTERS);
+	let {
+		chordRenderer,
+		coverage,
+		filters = $bindable(),
+		showFilters = true
+	}: Props = $props();
 
 	const rankedProgressions = $derived(
 		coverage.allSongsCoverageResult
@@ -41,7 +43,7 @@
 
 <section class="top-progressions">
 	<h4 class="title">Top {TOP_PROGRESSIONS_LIMIT} matched progressions</h4>
-	{#if filterable}
+	{#if showFilters}
 		<div class="filters">
 			<ToggleSwitch
 				checked={filters.requiresMinorChord}
