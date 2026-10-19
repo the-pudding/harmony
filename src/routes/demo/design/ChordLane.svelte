@@ -1,11 +1,15 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
+	import { LANE_BACKGROUND_WHITE } from "./chordLanes.js";
 	import { pointerFractionOf } from "./timelineStyles.js";
+
+	const DEFAULT_LANE_BACKGROUND = LANE_BACKGROUND_WHITE;
 
 	type Props = {
 		label: string;
 		heightPx: number;
 		widthPx?: number;
+		background?: string;
 		onSeek: (fraction: number) => void;
 		children: Snippet;
 	};
@@ -14,6 +18,7 @@
 		label,
 		heightPx,
 		widthPx = $bindable(0),
+		background = DEFAULT_LANE_BACKGROUND,
 		onSeek,
 		children
 	}: Props = $props();
@@ -25,6 +30,7 @@
 	aria-label="Seek, {label}"
 	title={label}
 	style:height="{heightPx}px"
+	style:--lane-background={background}
 	bind:clientWidth={widthPx}
 	onclick={(event) => onSeek(pointerFractionOf(event))}
 >
@@ -39,7 +45,7 @@
 		padding: 0;
 		border: none;
 		border-radius: 0.375rem;
-		background: #ffffff;
+		background: var(--lane-background);
 		cursor: pointer;
 		isolation: isolate;
 	}

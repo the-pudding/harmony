@@ -13,6 +13,9 @@
 		clustersOf,
 		glideTouchesCluster,
 		gliderFor,
+		hoverStrokeForBackground,
+		LANE_BACKGROUND_BLACK,
+		LANE_BACKGROUND_WHITE,
 		layoutLaneBlobs,
 		type LaneBlob,
 		type LaneChord,
@@ -25,8 +28,9 @@
 	const GOOEY_BLUR = 4;
 	const GOOEY_ALPHA_MATRIX = "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8";
 	const WATERCOLOR_SEED = 0;
-	const RESTING_FADE_COLOR = "#ffffff";
 	const RESTING_FADE = 0.55;
+	const LABEL_ON_WHITE = "gooey active chord";
+	const LABEL_ON_BLACK = "gooey active chord on black";
 	const SPACING: LaneSpacing = {
 		clusterKeyOf: byProgression,
 		overlapFraction: 0.2,
@@ -37,9 +41,15 @@
 		chords: LaneChord[];
 		progressFraction: number;
 		onSeek: (fraction: number) => void;
+		background?: string;
 	};
 
-	let { chords, progressFraction, onSeek }: Props = $props();
+	let {
+		chords,
+		progressFraction,
+		onSeek,
+		background = LANE_BACKGROUND_WHITE
+	}: Props = $props();
 
 	const uid = $props.id();
 	const gooeyId = `lane-gooey-${uid}`;
@@ -57,12 +67,13 @@
 	const clusters = $derived(clustersOf(chords, byProgression));
 	const glide = $derived(chordGlideAt(chords, progressFraction));
 	const glider = $derived(glide && gliderFor(chords, blobs, glide));
+	const hoverStroke = $derived(hoverStrokeForBackground(background));
+	const label = $derived(
+		background === LANE_BACKGROUND_BLACK ? LABEL_ON_BLACK : LABEL_ON_WHITE
+	);
 
 	const restingFill = (chord: LaneChord): string =>
-		interpolateRgb(
-			chord.appearance.colors.fill,
-			RESTING_FADE_COLOR
-		)(RESTING_FADE);
+		interpolateRgb(chord.appearance.colors.fill, background)(RESTING_FADE);
 
 	let hoveredIndex = $state<number | null>(null);
 
@@ -76,12 +87,13 @@
 </script>
 
 <ChordLane
-	label="gooey active chord"
+	{label}
 	heightPx={LANE_HEIGHT_PX}
 	bind:widthPx
+	{background}
 	{onSeek}
 >
-	<svg aria-hidden="true">
+	<svg aria-hidden="true" style:--hover-stroke={hoverStroke}>
 		<defs>
 			<filter id={gooeyId} {...FILTER_REGION}>
 				<feGaussianBlur
@@ -145,7 +157,7 @@
 <style>
 	.hover-target {
 		fill: none;
-		stroke: #18181b;
+		stroke: var(--hover-stroke);
 		stroke-width: 1.25px;
 		stroke-linejoin: round;
 		pointer-events: all;

@@ -39,9 +39,18 @@ export type Glider = LaneBlob & {
 };
 
 export const SHAPE_DIAMETER = 2 * BLOB_RADIUS;
+export const LANE_BACKGROUND_WHITE = "#ffffff";
+export const LANE_BACKGROUND_BLACK = "#000000";
+export const HOVER_STROKE_ON_LIGHT = "#18181b";
+export const HOVER_STROKE_ON_DARK = "#f4f4f5";
 const MAX_ASPECT_RATIO = 1.5;
 const MIN_BLOB_WIDTH_PX = 4;
 const HALF = 0.5;
+
+export const hoverStrokeForBackground = (background: string): string =>
+	background === LANE_BACKGROUND_BLACK
+		? HOVER_STROKE_ON_DARK
+		: HOVER_STROKE_ON_LIGHT;
 
 export const GLIDE_START_FRACTION = 0.6;
 const GLIDER_SCALE = 1.3;

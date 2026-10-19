@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { morphedShapePath } from "./chord-viz/chordShapes.js";
 import {
 	GLIDE_START_FRACTION,
+	HOVER_STROKE_ON_DARK,
+	HOVER_STROKE_ON_LIGHT,
+	LANE_BACKGROUND_BLACK,
+	LANE_BACKGROUND_WHITE,
 	SHAPE_DIAMETER,
 	activeChordIndexAt,
 	byProgression,
@@ -9,6 +13,7 @@ import {
 	clustersOf,
 	glideTouchesCluster,
 	gliderFor,
+	hoverStrokeForBackground,
 	laneChordsOf,
 	layoutLaneBlobs,
 	maxBlobScaleFor,
@@ -184,6 +189,17 @@ describe("morphedShapePath", () => {
 	it("differs between endpoints of a morph", () => {
 		expect(morphedShapePath("stableTriangle", "circleish", 0)).not.toBe(
 			morphedShapePath("stableTriangle", "circleish", 1)
+		);
+	});
+});
+
+describe("hoverStrokeForBackground", () => {
+	it("uses a dark stroke on white and a light stroke on black", () => {
+		expect(hoverStrokeForBackground(LANE_BACKGROUND_WHITE)).toBe(
+			HOVER_STROKE_ON_LIGHT
+		);
+		expect(hoverStrokeForBackground(LANE_BACKGROUND_BLACK)).toBe(
+			HOVER_STROKE_ON_DARK
 		);
 	});
 });

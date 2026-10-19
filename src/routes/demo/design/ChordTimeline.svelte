@@ -6,7 +6,7 @@
 	import Waveform from "./Waveform.svelte";
 	import ZoomControls from "./ZoomControls.svelte";
 	import type { KeyTonality } from "./chord-viz/diatonicChords.js";
-	import { laneChordsOf } from "./chordLanes.js";
+	import { LANE_BACKGROUND_BLACK, laneChordsOf } from "./chordLanes.js";
 	import { isActiveAt, type ChordTimeline } from "./chordTimeline.js";
 	import { pointerFractionOf, spanStyle, toPercent } from "./timelineStyles.js";
 	import { canStepZoom, steppedZoom } from "./timelineZoom.js";
@@ -161,6 +161,12 @@
 
 			<ChordWatercolorLane chords={laneChords} {progressFraction} {onSeek} />
 			<ChordGooeyLane chords={laneChords} {progressFraction} {onSeek} />
+			<ChordGooeyLane
+				chords={laneChords}
+				{progressFraction}
+				{onSeek}
+				background={LANE_BACKGROUND_BLACK}
+			/>
 
 			<span class="playhead" style="left: {toPercent(progressFraction)};"
 			></span>
