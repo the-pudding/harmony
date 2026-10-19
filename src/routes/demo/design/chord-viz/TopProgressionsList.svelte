@@ -104,14 +104,14 @@
 		min-width: 0;
 		padding: 0.5rem;
 		border-radius: 0.375rem;
-		box-shadow: 0 0 6px rgb(0 0 0 / 0.12);
+		box-shadow: var(--chord-viz-shadow);
 	}
 
 	.title {
 		margin: 0;
 		font-size: 0.75rem;
 		font-weight: 600;
-		color: #52525b;
+		color: var(--chord-viz-muted);
 	}
 
 	.filters {
@@ -123,7 +123,7 @@
 	.status {
 		margin: 0;
 		font-size: 0.75rem;
-		color: #71717a;
+		color: var(--chord-viz-muted-soft);
 	}
 
 	.list {
@@ -142,7 +142,7 @@
 		grid-column: 1 / -1;
 		grid-template-columns: subgrid;
 		align-items: start;
-		color: #71717a;
+		color: var(--chord-viz-muted-soft);
 	}
 
 	.variants {
@@ -161,7 +161,7 @@
 
 	.variant-count {
 		text-align: left;
-		color: #71717a;
+		color: var(--chord-viz-muted-soft);
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -174,7 +174,7 @@
 	}
 
 	.name {
-		color: #18181b;
+		color: var(--chord-viz-fg);
 		font-weight: 600;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -182,6 +182,6 @@
 	}
 
 	.count {
-		color: #71717a;
+		color: var(--chord-viz-muted-soft);
 	}
 </style>

@@ -37,7 +37,7 @@ export const floatingIdsFor = (uid: string): FloatingIds => ({
 export type GradientStop = { offset: string; color: string };
 
 export const DEFAULT_FLOATING_SETTINGS: FloatingSettings = {
-	animate: true,
+	animate: false,
 	gradient: "none",
 	blend: "normal"
 };

@@ -37,7 +37,7 @@
 		flex-wrap: wrap;
 		gap: 0.75rem 1.5rem;
 		font-size: 0.75rem;
-		color: #52525b;
+		color: var(--chord-viz-muted);
 	}
 
 	.slider {
@@ -48,6 +48,6 @@
 
 	.value {
 		min-width: 3rem;
-		color: #18181b;
+		color: var(--chord-viz-fg);
 	}
 </style>

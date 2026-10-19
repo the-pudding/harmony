@@ -1,17 +1,31 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
+	import {
+		PANEL_APPEARANCE_CARD,
+		chordVizThemeStyle,
+		type PanelAppearance
+	} from "./chordVizTheme.js";
 
 	type Props = {
 		title: string;
 		creditLabel: string;
 		creditUrl: string;
+		appearance?: PanelAppearance;
 		children: Snippet;
 	};
 
-	let { title, creditLabel, creditUrl, children }: Props = $props();
+	let {
+		title,
+		creditLabel,
+		creditUrl,
+		appearance = PANEL_APPEARANCE_CARD,
+		children
+	}: Props = $props();
+
+	const themeStyle = $derived(chordVizThemeStyle(appearance));
 </script>
 
-<div class="panel">
+<div class="panel" style={themeStyle}>
 	<div class="header">
 		<h3 class="title">{title}</h3>
 		<p class="credit">
@@ -31,8 +45,8 @@
 		gap: 1.5rem;
 		padding: 1.5rem;
 		border-radius: 0.5rem;
-		background: #ffffff;
-		color: #18181b;
+		background: var(--chord-viz-bg);
+		color: var(--chord-viz-fg);
 		isolation: isolate;
 	}
 
@@ -51,10 +65,10 @@
 	.credit {
 		margin: 0;
 		font-size: 0.75rem;
-		color: #52525b;
+		color: var(--chord-viz-muted);
 	}
 
 	.credit a {
-		color: #0c96da;
+		color: var(--chord-viz-link);
 	}
 </style>

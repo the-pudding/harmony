@@ -11,6 +11,7 @@
 		floatingIdsFor,
 		type FloatingSettings
 	} from "./floatingEffects.js";
+	import { PANEL_APPEARANCE_FLUSH } from "./chordVizTheme.js";
 	import {
 		DEFAULT_PROGRESSION_FILTERS,
 		type ProgressionFilters,
@@ -31,6 +32,7 @@
 	title="Floating chords"
 	creditLabel="Nadieh Bremer's SVG gradient & filter playground"
 	creditUrl={HEXAGONS_NOTEBOOK_URL}
+	appearance={PANEL_APPEARANCE_FLUSH}
 >
 	<FloatingDefs {ids} />
 	<FloatingControls {settings} onChange={(next) => (settings = next)} />

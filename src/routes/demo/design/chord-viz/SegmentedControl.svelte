@@ -34,7 +34,7 @@
 	}
 
 	.title {
-		color: #52525b;
+		color: var(--chord-viz-muted);
 	}
 
 	.options {
@@ -45,17 +45,17 @@
 
 	.option {
 		padding: 0.25rem 0.5rem;
-		border: 1px solid #d4d4d8;
+		border: 1px solid var(--chord-viz-control-border);
 		border-radius: 0.375rem;
-		background: #ffffff;
-		color: #3f3f46;
+		background: var(--chord-viz-control-bg);
+		color: var(--chord-viz-control-fg);
 		font: inherit;
 		cursor: pointer;
 	}
 
 	.option[aria-pressed="true"] {
-		border-color: #18181b;
-		background: #18181b;
-		color: #ffffff;
+		border-color: var(--chord-viz-control-active-border);
+		background: var(--chord-viz-control-active-bg);
+		color: var(--chord-viz-control-active-fg);
 	}
 </style>

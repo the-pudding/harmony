@@ -20,13 +20,27 @@
 	import { readDesignTab, replaceTabInUrl } from "./designUrlState.js";
 
 	const TAB_ID_PREFIX = "design";
+	const PURE_BLACK = "#000000";
+	const NEAR_BLACK = "#09090b";
+	const PAGE_FOREGROUND = "#f4f4f5";
 
 	let tab = $state(readDesignTab(currentSearchParams()));
+	const isChordVizTab = $derived(tab === DESIGN_TAB_CHORD_VIZ);
+	const pageBackground = $derived(isChordVizTab ? PURE_BLACK : NEAR_BLACK);
 
 	function selectTab(next: DesignTab) {
 		tab = next;
 		replaceTabInUrl(next);
 	}
+
+	$effect(() => {
+		if (!isChordVizTab) return;
+		const previousBackground = document.body.style.backgroundColor;
+		document.body.style.backgroundColor = PURE_BLACK;
+		return () => {
+			document.body.style.backgroundColor = previousBackground;
+		};
+	});
 </script>
 
 <svelte:head>
@@ -37,7 +51,11 @@
 	/>
 </svelte:head>
 
-<div class="page" style="--top-nav-height: {TOP_NAV_HEIGHT};">
+<div
+	class="page"
+	class:chord-viz-page={isChordVizTab}
+	style="--top-nav-height: {TOP_NAV_HEIGHT}; --page-background: {pageBackground}; --page-foreground: {PAGE_FOREGROUND};"
+>
 	<TopNavBar showSearch={false} />
 
 	<div class="content">
@@ -90,9 +108,13 @@
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 	}
 
+	.page.chord-viz-page :global(.top-nav) {
+		background: var(--page-background);
+	}
+
 	.page {
-		background: #09090b;
-		color: #f4f4f5;
+		background: var(--page-background);
+		color: var(--page-foreground);
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
@@ -120,6 +142,6 @@
 		font-size: 1.125rem;
 		font-weight: 600;
 		margin: 0;
-		color: #f4f4f5;
+		color: var(--page-foreground);
 	}
 </style>

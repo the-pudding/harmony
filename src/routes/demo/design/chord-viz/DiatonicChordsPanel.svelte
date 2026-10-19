@@ -18,6 +18,10 @@
 		CHORD_OVERLAP_GAP,
 		type WatercolorSettings
 	} from "./watercolor.js";
+	import {
+		PANEL_APPEARANCE_CARD,
+		type PanelAppearance
+	} from "./chordVizTheme.js";
 
 	const WATERCOLOR_NOTEBOOK_URL =
 		"https://observablehq.com/@veltman/watercolor";
@@ -25,12 +29,14 @@
 	type Props = {
 		settings?: WatercolorSettings;
 		filterable?: boolean;
+		appearance?: PanelAppearance;
 		controls?: Snippet;
 	};
 
 	let {
 		settings = DEFAULT_WATERCOLOR_SETTINGS,
 		filterable = false,
+		appearance = PANEL_APPEARANCE_CARD,
 		controls
 	}: Props = $props();
 
@@ -42,6 +48,7 @@
 	title="Diatonic chords"
 	creditLabel="Noah Veltman's Watercolor notebook"
 	creditUrl={WATERCOLOR_NOTEBOOK_URL}
+	{appearance}
 >
 	{@render controls?.()}
 	{#if filterable}
@@ -135,7 +142,7 @@
 		margin: 0;
 		font-size: 0.875rem;
 		font-weight: 600;
-		color: #18181b;
+		color: var(--chord-viz-fg);
 	}
 
 	.columns {
@@ -160,7 +167,7 @@
 	.row-label {
 		width: 4rem;
 		font-size: 0.75rem;
-		color: #52525b;
+		color: var(--chord-viz-muted);
 	}
 
 	.chords {
