@@ -1,0 +1,18 @@
+{
+	"songKey": "meghan-trainor__dear-future-husband",
+	"audioFile": "meghan-trainor__dear-future-husband.mp3",
+	"key": { "tonic": "C#", "scale": "major" },
+	"region": { "startSeconds": 36.532, "endSeconds": 60.809 },
+	"chords": [
+		{ "seconds": 36.807, "chord": "C#", "roman": "I" },
+		{ "seconds": 39.838, "chord": "Bbm", "roman": "vi" },
+		{ "seconds": 42.88, "chord": "F#", "roman": "IV" },
+		{ "seconds": 44.372, "chord": "Ab", "roman": "V" },
+		{ "seconds": 45.867, "chord": "C#", "roman": "I" },
+		{ "seconds": 48.891, "chord": "C#", "roman": "I" },
+		{ "seconds": 51.908, "chord": "Bbm", "roman": "vi" },
+		{ "seconds": 54.951, "chord": "F#", "roman": "IV" },
+		{ "seconds": 56.441, "chord": "Ab", "roman": "V" },
+		{ "seconds": 57.936, "chord": "C#", "roman": "I" }
+	]
+}

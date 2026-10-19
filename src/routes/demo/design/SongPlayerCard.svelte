@@ -45,7 +45,9 @@
 	</button>
 	<div class="meta">
 		<span class="title">{song.title}</span>
-		<span class="artist">{song.artist} · {song.year}</span>
+		<span class="artist"
+			>{song.artist}{song.year === null ? "" : ` · ${song.year}`}</span
+		>
 	</div>
 </article>
 

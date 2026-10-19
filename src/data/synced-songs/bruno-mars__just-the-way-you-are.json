@@ -1,0 +1,16 @@
+{
+	"songKey": "bruno-mars__just-the-way-you-are",
+	"audioFile": "bruno-mars__just-the-way-you-are.mp3",
+	"key": { "tonic": "F", "scale": "major" },
+	"region": { "startSeconds": 66.587, "endSeconds": 103.888 },
+	"chords": [
+		{ "seconds": 68.59, "chord": "F", "roman": "I" },
+		{ "seconds": 72.989, "chord": "Dm", "roman": "vi" },
+		{ "seconds": 77.403, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 81.785, "chord": "F", "roman": "I" },
+		{ "seconds": 86.216, "chord": "F", "roman": "I" },
+		{ "seconds": 90.597, "chord": "Dm", "roman": "vi" },
+		{ "seconds": 95.025, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 99.447, "chord": "F", "roman": "I" }
+	]
+}

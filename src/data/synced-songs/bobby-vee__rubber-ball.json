@@ -1,0 +1,19 @@
+{
+	"songKey": "bobby-vee__rubber-ball",
+	"audioFile": "bobby-vee__rubber-ball.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 0, "endSeconds": 9.465 },
+	"chords": [
+		{ "seconds": 0.897, "chord": "A", "roman": "I" },
+		{ "seconds": 1.767, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 2.56, "chord": "D", "roman": "IV" },
+		{ "seconds": 3.359, "chord": "E", "roman": "V" },
+		{ "seconds": 4.183, "chord": "A", "roman": "I" },
+		{ "seconds": 4.947, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 5.755, "chord": "D", "roman": "IV" },
+		{ "seconds": 6.549, "chord": "E", "roman": "V" },
+		{ "seconds": 7.393, "chord": "A", "roman": "I" },
+		{ "seconds": 8.177, "chord": "D", "roman": "IV" },
+		{ "seconds": 8.965, "chord": "A", "roman": "I" }
+	]
+}

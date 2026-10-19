@@ -6,7 +6,6 @@ import {
 	isActiveAt,
 	progressFractionOf,
 	sectionChordIndices,
-	truncateSectionsToChordCount,
 	type SongSectionChords
 } from "./chordTimeline.js";
 
@@ -117,18 +116,6 @@ describe("chordKeysOf", () => {
 			"verse-1",
 			"verse-2",
 			"chorus-0"
-		]);
-	});
-});
-
-describe("truncateSectionsToChordCount", () => {
-	it("keeps only the first chords, dropping empty sections and clipping groups", () => {
-		const truncated = truncateSectionsToChordCount(sections, 2);
-		expect(truncated.map((s) => s.chords.map((c) => c.name))).toEqual([
-			["C", "Am"]
-		]);
-		expect(truncated[0].groups.map((g) => [g.startIndex, g.length])).toEqual([
-			[1, 1]
 		]);
 	});
 });

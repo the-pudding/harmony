@@ -2,9 +2,14 @@ import type { CoreProgression } from "$data/core-progressions.js";
 import { applyHandReviewedCorrections } from "$data/applyHandReviewedCorrections.js";
 import { groupSongs, type SongSection } from "$data/songBrowser.js";
 import { formatRomanTokenFromParsed } from "../../../chord-processing/romanNumerals.js";
+import type { MusicalKey } from "../../../chord-processing/chordInKey.js";
+import { NOTE_NAMES } from "../../../chord-processing/chord-classifier/notes.js";
 import { parseSongTitleAndSectionLabel } from "../../../chord-processing/songIdentity.js";
-import type { ScaleName } from "../../../chord-processing/scale-intervals.js";
-import type { SongInput } from "../../../chord-processing/types.js";
+import type {
+	ProgressionChordInput,
+	SongInput,
+	StructuredChord
+} from "../../../chord-processing/types.js";
 import { collapseAdjacentRepeatedChords } from "../define-chord-progression/progression-matching-logic/collapsedProgression.js";
 import {
 	buildColoredHighlightSegments,
@@ -13,10 +18,6 @@ import {
 import { matchSongV2 } from "../match-algo-v2/match-algo-v2-logic/matchSongV2.js";
 import { DEFAULT_WEIGHTS } from "../match-algo-v2/match-algo-v2-logic/weights.js";
 import type { SectionChordGroup, SongSectionChords } from "./chordTimeline.js";
-import {
-	tonalityOfScale,
-	type KeyTonality
-} from "./chord-viz/diatonicChords.js";
 
 const SINGLE_CHORD_RUN_LENGTH = 1;
 
@@ -76,13 +77,6 @@ const groupedSectionIndexForOccurrence = (
 		section.label === label ? [sectionIndex] : []
 	)[occurrenceIndex];
 
-const DEFAULT_SONG_SCALE: ScaleName = "major";
-
-export const songTonalityOf = (songInputs: SongInput[]): KeyTonality => {
-	const [groupedSong] = groupSongs(applyHandReviewedCorrections(songInputs));
-	return tonalityOfScale(groupedSong?.sections[0]?.scale ?? DEFAULT_SONG_SCALE);
-};
-
 export const buildMatchedSongSections = (
 	songInputs: SongInput[],
 	coreProgressions: CoreProgression[]
@@ -118,4 +112,59 @@ export const buildMatchedSongSections = (
 			}
 		];
 	});
+};
+
+export type NamedChord = {
+	chord: StructuredChord;
+	name: string;
+	roman: string;
+};
+
+const progressionInputOf = ({
+	rootPitchClass,
+	suffix,
+	bassPitchClass
+}: StructuredChord): ProgressionChordInput => ({
+	noteName: NOTE_NAMES[rootPitchClass],
+	suffix,
+	...(bassPitchClass === undefined
+		? {}
+		: { bassNoteName: NOTE_NAMES[bassPitchClass] })
+});
+
+// Recorded chords as one section, with the core progressions they match.
+// Unlike buildMatchedSongSections, hand-reviewed corpus corrections don't
+// apply: these are the chords as played.
+export const buildRecordedSongSection = (
+	songKey: string,
+	chords: NamedChord[],
+	key: MusicalKey,
+	coreProgressions: CoreProgression[]
+): SongSectionChords => {
+	const id = `${songKey}-recorded`;
+	const [groupedSong] = groupSongs([
+		{
+			songKey,
+			title: songKey,
+			artists: [],
+			progression: chords.map(({ chord }) => progressionInputOf(chord)),
+			romanTokens: chords.map(({ roman }) => roman),
+			key: key.tonic,
+			scale: key.scale
+		}
+	]);
+	const section = groupedSong?.sections[0];
+	const groups = section
+		? sectionChordGroups(
+				section,
+				0,
+				matchSongV2(groupedSong, coreProgressions, DEFAULT_WEIGHTS).annotations
+			)
+		: [];
+	return {
+		id,
+		name: "",
+		chords: chords.map(({ name, roman }) => ({ name, roman })),
+		groups
+	};
 };

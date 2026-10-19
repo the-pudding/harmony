@@ -11,6 +11,7 @@ import { DEFAULT_ZOOM, isZoomLevel } from "./timelineZoom.js";
 const TAB_URL_PARAM = "tab";
 const ZOOM_URL_PARAM = "zoom";
 const PLAYHEAD_URL_PARAM = "t";
+const SONG_URL_PARAM = "song";
 const PLAYHEAD_URL_DECIMALS = 2;
 
 export type DesignUrlState = {
@@ -25,6 +26,10 @@ export const readDesignTab = (searchParams: URLSearchParams): DesignTab => {
 	const tab = searchParams.get(TAB_URL_PARAM) ?? "";
 	return isDesignTab(tab) ? tab : DEFAULT_DESIGN_TAB;
 };
+
+export const readDesignSongKey = (
+	searchParams: URLSearchParams
+): string | null => searchParams.get(SONG_URL_PARAM);
 
 export const readDesignUrlState = (
 	searchParams: URLSearchParams
@@ -73,3 +78,8 @@ export const replaceZoomInUrl = (zoom: number): void =>
 
 export const replacePlayheadInUrl = (seconds: number): void =>
 	replaceUrlParam(PLAYHEAD_URL_PARAM, playheadUrlValue(seconds));
+
+export const replaceSongInUrl = (songKey: string): void => {
+	replaceUrlParam(SONG_URL_PARAM, songKey);
+	replaceUrlParam(PLAYHEAD_URL_PARAM, null);
+};

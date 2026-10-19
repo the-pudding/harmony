@@ -1,0 +1,18 @@
+{
+	"songKey": "ben-e-king__stand-by-me",
+	"audioFile": "ben-e-king__stand-by-me.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 15.556, "endSeconds": 46.273 },
+	"chords": [
+		{ "seconds": 16.511, "chord": "A", "roman": "I" },
+		{ "seconds": 20.472, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 24.46, "chord": "D", "roman": "IV" },
+		{ "seconds": 26.5, "chord": "E", "roman": "V" },
+		{ "seconds": 28.535, "chord": "A", "roman": "I" },
+		{ "seconds": 32.498, "chord": "A", "roman": "I" },
+		{ "seconds": 36.453, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 40.488, "chord": "D", "roman": "IV" },
+		{ "seconds": 42.485, "chord": "E", "roman": "V" },
+		{ "seconds": 44.478, "chord": "A", "roman": "I" }
+	]
+}

@@ -1,14 +1,18 @@
 <script lang="ts">
-	import AlignmentControls from "./AlignmentControls.svelte";
-	import BassTapRecorder from "./BassTapRecorder.svelte";
+	import {
+		SYNCED_SONG_DATA_DIRECTORY,
+		type SyncedSongFile
+	} from "$data/syncedSongs.js";
+	import ChordRecorder from "./ChordRecorder.svelte";
+	import ChordSheet from "./ChordSheet.svelte";
 	import ChordTimeline from "./ChordTimeline.svelte";
-	import ChordTimingActions from "./ChordTimingActions.svelte";
-	import PlayerShortcutsHint from "./PlayerShortcutsHint.svelte";
+	import KeyControls from "./KeyControls.svelte";
+	import RegionControls from "./RegionControls.svelte";
 	import SongPlayerCard from "./SongPlayerCard.svelte";
-	import { chordNamesOf, progressFractionOf } from "./chordTimeline.js";
-	import { createChordTimings } from "./chordTimings.svelte.js";
+	import SyncedSongActions from "./SyncedSongActions.svelte";
+	import { tonalityOfScale } from "./chord-viz/diatonicChords.js";
 	import { currentSearchParams } from "../shared/currentSearchParams.js";
-	import { chordBeatsFilePath, type DesignSong } from "./designSongs.js";
+	import type { DesignSong } from "./designSongs.js";
 	import { SONG_START_SECONDS } from "./songTime.js";
 	import { readDesignUrlState } from "./designUrlState.js";
 	import { syncDesignUrlState } from "./designUrlSync.svelte.js";
@@ -17,15 +21,22 @@
 		playerActionFor,
 		type PlayerAction
 	} from "./playerShortcuts.js";
+	import { createSyncedSongTimings } from "./syncedSongTimings.svelte.js";
+	import {
+		buildSyncedChordTimeline,
+		type TimelineView
+	} from "./syncedTimings.js";
 	import { createWaveform } from "./waveform.svelte.js";
-	import { cropPeaksToFraction } from "./waveformPeaks.js";
+	import { cropPeaksToRange } from "./waveformPeaks.js";
 
 	type Props = {
 		song: DesignSong;
+		committedFile?: SyncedSongFile;
 		editing?: boolean;
+		onSaved?: (file: SyncedSongFile) => void;
 	};
 
-	let { song, editing = false }: Props = $props();
+	let { song, committedFile, editing = false, onSaved }: Props = $props();
 
 	const initialUrlState = readDesignUrlState(currentSearchParams());
 
@@ -37,56 +48,90 @@
 
 	syncDesignUrlState(() => ({ zoom, playheadSeconds: currentTime }));
 
-	const chordTimings = createChordTimings(
+	const timings = createSyncedSongTimings(
 		() => song,
+		() => committedFile,
 		() => duration
 	);
 	const waveform = createWaveform(() => song.audioSrc);
-	const visibleDuration = $derived(chordTimings.visibleDuration);
-	const progressFraction = $derived(
-		progressFractionOf(currentTime, visibleDuration)
+
+	const region = $derived(timings.region);
+	// Editing shows the whole audio so the region can be moved; otherwise
+	// only the region, which is the part with chord data.
+	const view = $derived<TimelineView>(
+		editing || !timings.hasRecordedChords
+			? { startSeconds: SONG_START_SECONDS, endSeconds: duration }
+			: region
 	);
+	const viewSeconds = $derived(view.endSeconds - view.startSeconds);
+
+	const fractionOf = (seconds: number): number =>
+		Number.isFinite(viewSeconds) && viewSeconds > 0
+			? Math.min(Math.max((seconds - view.startSeconds) / viewSeconds, 0), 1)
+			: 0;
+	const secondsAt = (fraction: number): number =>
+		view.startSeconds + fraction * viewSeconds;
+
+	const timeline = $derived(
+		buildSyncedChordTimeline(
+			timings.section,
+			timings.editable ? timings.chords : [],
+			region,
+			view
+		)
+	);
+	const progressFraction = $derived(fractionOf(currentTime));
 	const visibleWaveformPeaks = $derived(
 		waveform.peaks &&
-			cropPeaksToFraction(
-				waveform.peaks,
-				progressFractionOf(visibleDuration, duration)
-			)
+			(timings.editable
+				? cropPeaksToRange(
+						waveform.peaks,
+						view.startSeconds / duration,
+						view.endSeconds / duration
+					)
+				: waveform.peaks)
+	);
+	const regionFractions = $derived(
+		editing && timings.editable
+			? {
+					startFraction: fractionOf(region.startSeconds),
+					endFraction: fractionOf(region.endSeconds)
+				}
+			: null
 	);
 
-	function stopAtVisibleEnd() {
-		if (currentTime >= visibleDuration) paused = true;
+	const playbackStart = $derived(view.startSeconds);
+	const playbackEnd = $derived(view.endSeconds);
+	const restartSeconds = $derived(
+		timings.editable ? region.startSeconds : SONG_START_SECONDS
+	);
+
+	function stopAtPlaybackEnd() {
+		if (currentTime >= playbackEnd) paused = true;
 	}
 
 	function togglePlayback() {
-		if (paused && currentTime >= visibleDuration) {
-			currentTime = SONG_START_SECONDS;
+		if (paused && (currentTime < playbackStart || currentTime >= playbackEnd)) {
+			currentTime = playbackStart;
 		}
 		paused = !paused;
 	}
 
 	function restart() {
-		currentTime = SONG_START_SECONDS;
+		currentTime = restartSeconds;
 		paused = false;
 	}
 
 	const readPlaybackSeconds = (): number => audio?.currentTime ?? currentTime;
 
-	function startBassTapRecording() {
-		chordTimings.beginEdit();
+	function startRecording(fromSeconds: number) {
+		timings.startRecordingPass(fromSeconds);
 		paused = false;
 	}
 
 	function seekToSeconds(seconds: number) {
-		if (!Number.isFinite(visibleDuration)) return;
-		currentTime = Math.min(
-			Math.max(seconds, SONG_START_SECONDS),
-			visibleDuration
-		);
-	}
-
-	function seekTo(fraction: number) {
-		seekToSeconds(fraction * visibleDuration);
+		if (!Number.isFinite(playbackEnd)) return;
+		currentTime = Math.min(Math.max(seconds, playbackStart), playbackEnd);
 	}
 
 	const isActionAvailable = (action: PlayerAction): boolean =>
@@ -95,7 +140,7 @@
 	function runPlayerAction(action: PlayerAction) {
 		if (action.type === "togglePlayback") togglePlayback();
 		else if (action.type === "restart") restart();
-		else if (action.type === "undo") chordTimings.undo();
+		else if (action.type === "undo") timings.undo();
 		else seekToSeconds(currentTime + action.seconds);
 	}
 
@@ -119,62 +164,71 @@
 			onRestart={restart}
 		/>
 		{#if editing}
-			<ChordTimingActions
-				file={chordTimings.file}
-				targetFilePath={chordBeatsFilePath(song.songKey)}
-				hasLocalEdits={chordTimings.hasLocalEdits}
-				onDiscardLocalEdits={chordTimings.discardLocalEdits}
+			<SyncedSongActions
+				file={timings.file}
+				targetFilePath="{SYNCED_SONG_DATA_DIRECTORY}/{song.songKey}.json"
+				canSave={timings.editable}
+				hasLocalEdits={timings.hasLocalEdits}
+				hasRecordedChords={timings.hasRecordedChords}
+				onSaved={(file) => {
+					timings.markSaved(file);
+					onSaved?.(file);
+				}}
+				onDiscardLocalEdits={timings.discardLocalEdits}
+				onClearChords={timings.clearChords}
 			/>
 		{/if}
 	</div>
 	{#if editing}
 		<div class="tools">
-			<PlayerShortcutsHint />
-			<AlignmentControls
-				startSeconds={chordTimings.startSeconds}
-				beatsPerMinute={chordTimings.beatsPerMinute}
-				onStartSecondsChange={chordTimings.setStartSeconds}
-				onBeatsPerMinuteChange={chordTimings.setBeatsPerMinute}
-				onStartAtPlayhead={() => chordTimings.setStartSeconds(currentTime)}
-				endSongAtBeat={chordTimings.endSongAtBeat}
-				hidesAfterSongEnd={chordTimings.hidesAfterSongEnd}
-				onEndSongAtBeatChange={chordTimings.setEndSongAtBeat}
-				onToggleHidesAfterSongEnd={chordTimings.toggleHidesAfterSongEnd}
+			<RegionControls
+				{region}
+				disabled={!timings.editable}
+				onSetEdgeToPlayhead={(edge) => timings.setRegionEdge(edge, currentTime)}
 			/>
-			<BassTapRecorder
-				chordNames={chordNamesOf(song.sections)}
-				chordStartSeconds={chordTimings.chordStartSeconds}
+			<KeyControls musicalKey={timings.key} onKeyChange={timings.setKey} />
+			<ChordRecorder
+				musicalKey={timings.key}
+				{region}
 				{paused}
+				playheadSeconds={currentTime}
 				{readPlaybackSeconds}
-				onRecordingStart={startBassTapRecording}
-				onChordTap={(tap) =>
-					chordTimings.moveChordToSeconds(tap.chordIndex, tap.seconds)}
+				onPassStart={startRecording}
+				onChordChange={timings.recordChordChange}
+				onFollow={timings.followRecordingPass}
+				onPassEnd={timings.endRecordingPass}
 			/>
 		</div>
 	{/if}
+	{#if editing}
+		<ChordSheet sections={song.chordSheet} musicalKey={timings.key} />
+	{/if}
 	<ChordTimeline
-		timeline={chordTimings.timeline}
-		tonality={song.tonality}
+		{timeline}
+		tonality={tonalityOfScale(timings.key.scale)}
 		waveformPeaks={visibleWaveformPeaks}
-		beatFractions={chordTimings.beatFractions}
-		hiddenBeatCount={chordTimings.hiddenBeatCount}
-		chordBeats={chordTimings.chordBeats}
 		{progressFraction}
-		duration={visibleDuration}
-		editable={editing && chordTimings.editable}
+		{secondsAt}
+		editable={editing && timings.editable}
+		region={regionFractions}
 		{zoom}
 		onZoomChange={(nextZoom) => (zoom = nextZoom)}
-		onSeek={seekTo}
-		onChordEditStart={chordTimings.beginEdit}
-		onChordMove={chordTimings.moveChord}
-		onChordNudge={chordTimings.nudgeChord}
+		onSeek={(fraction) => seekToSeconds(secondsAt(fraction))}
+		onRegionEditStart={timings.beginEdit}
+		onRegionEdgeMove={(edge, fraction) =>
+			timings.moveRegion(edge, secondsAt(fraction))}
+		onChordEditStart={timings.beginEdit}
+		onChordMove={(index, fraction) =>
+			timings.moveChord(index, secondsAt(fraction))}
+		onChordNudge={timings.nudgeChord}
+		onChordDelete={timings.deleteChord}
 	/>
 	<audio
 		bind:this={audio}
 		bind:paused
 		bind:currentTime
 		bind:duration
-		ontimeupdate={stopAtVisibleEnd}
+		ontimeupdate={stopAtPlaybackEnd}
 		src={song.audioSrc}
 		preload="metadata"
 	></audio>

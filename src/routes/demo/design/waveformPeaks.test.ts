@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
 	computeWaveformPeaks,
-	cropPeaksToFraction,
+	cropPeaksToRange,
 	waveformAreaPath
 } from "./waveformPeaks.js";
 
-describe("cropPeaksToFraction", () => {
-	it("keeps the leading fraction of peaks, rounding up", () => {
-		expect(cropPeaksToFraction([1, 2, 3, 4], 0.5)).toEqual([1, 2]);
-		expect(cropPeaksToFraction([1, 2, 3, 4], 0.6)).toEqual([1, 2, 3]);
-		expect(cropPeaksToFraction([1, 2, 3, 4], 1)).toEqual([1, 2, 3, 4]);
+describe("cropPeaksToRange", () => {
+	it("keeps the peaks between two fractions, rounding outward", () => {
+		expect(cropPeaksToRange([1, 2, 3, 4], 0, 0.5)).toEqual([1, 2]);
+		expect(cropPeaksToRange([1, 2, 3, 4], 0, 0.6)).toEqual([1, 2, 3]);
+		expect(cropPeaksToRange([1, 2, 3, 4], 0.3, 1)).toEqual([2, 3, 4]);
+		expect(cropPeaksToRange([1, 2, 3, 4], 0, 1)).toEqual([1, 2, 3, 4]);
 	});
 });
 

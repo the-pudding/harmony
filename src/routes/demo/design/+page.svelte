@@ -7,8 +7,8 @@
 	import DiatonicChordsPanel from "./chord-viz/DiatonicChordsPanel.svelte";
 	import FloatingChords from "./chord-viz/FloatingChords.svelte";
 	import DesignSection from "./DesignSection.svelte";
-	import SyncedSongPlayer from "./SyncedSongPlayer.svelte";
-	import { rubberBall } from "./designSongs.js";
+	import SyncedSongDemo from "./SyncedSongDemo.svelte";
+	import SyncedSongRecorder from "./SyncedSongRecorder.svelte";
 	import {
 		DESIGN_TAB_CHORD_VIZ,
 		DESIGN_TAB_DEMOS,
@@ -18,6 +18,9 @@
 		type DesignTab
 	} from "./designTabs.js";
 	import { readDesignTab, replaceTabInUrl } from "./designUrlState.js";
+	import type { PageProps } from "./$types.js";
+
+	let { data }: PageProps = $props();
 
 	const TAB_ID_PREFIX = "design";
 	const PURE_BLACK = "#000000";
@@ -80,14 +83,14 @@
 		>
 			{#if tab === DESIGN_TAB_DEMOS}
 				<DesignSection title="Synced song player">
-					<SyncedSongPlayer song={rubberBall} />
+					<SyncedSongDemo />
 				</DesignSection>
 				<DesignSection title="Chord viz">
 					<DiatonicChordsPanel />
 				</DesignSection>
 			{:else if tab === DESIGN_TAB_SYNCED_SONG_PLAYER}
-				<DesignSection title="Synced song player">
-					<SyncedSongPlayer song={rubberBall} editing />
+				<DesignSection title="Record sync">
+					<SyncedSongRecorder audioOptions={data.syncedSongAudio} />
 				</DesignSection>
 			{:else if tab === DESIGN_TAB_CHORD_VIZ}
 				<DesignSection title="Chord viz">

@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { BEATS_PER_CHORD } from "./beatGrid.js";
-	import { BEAT_SNAP } from "./chordBeats.js";
 	import {
 		isActiveAt,
 		type TimelineChord,
@@ -9,6 +7,8 @@
 	import { formatTimestamp } from "./songTime.js";
 	import { spanStyle, toPercent } from "./timelineStyles.js";
 
+	const NUDGE_SECONDS = 0.01;
+	const SHIFT_NUDGE_SECONDS = 0.1;
 	const NUDGE_DIRECTION_BY_KEY: Record<string, number> = {
 		ArrowLeft: -1,
 		ArrowRight: 1
@@ -17,25 +17,25 @@
 	type Props = {
 		chords: TimelineChord[];
 		groups: TimelineGroup[];
-		chordBeats: number[];
 		progressFraction: number;
-		duration: number;
+		secondsAt: (fraction: number) => number;
 		editable: boolean;
 		onChordEditStart: () => void;
 		onChordMove: (index: number, startFraction: number) => void;
-		onChordNudge: (index: number, beatDelta: number) => void;
+		onChordNudge: (index: number, secondsDelta: number) => void;
+		onChordDelete: (index: number) => void;
 	};
 
 	let {
 		chords,
 		groups,
-		chordBeats,
 		progressFraction,
-		duration,
+		secondsAt,
 		editable,
 		onChordEditStart,
 		onChordMove,
-		onChordNudge
+		onChordNudge,
+		onChordDelete
 	}: Props = $props();
 
 	type ChordDrag = {
@@ -51,7 +51,7 @@
 	const draggedChord = $derived(drag === null ? undefined : chords[drag.index]);
 
 	const chordPosition = (chord: TimelineChord): string =>
-		`beat ${chordBeats[chord.index]} · ${formatTimestamp(chord.startFraction * duration)}`;
+		formatTimestamp(secondsAt(chord.startFraction));
 
 	const chordTitle = (chord: TimelineChord): string =>
 		editable ? `${chord.roman} · ${chordPosition(chord)}` : chord.roman;
@@ -83,12 +83,19 @@
 		drag = null;
 	}
 
+	const DELETE_KEYS = new Set(["Backspace", "Delete"]);
+
 	function nudge(event: KeyboardEvent, chord: TimelineChord) {
+		if (editable && DELETE_KEYS.has(event.key)) {
+			event.preventDefault();
+			onChordDelete(chord.index);
+			return;
+		}
 		const direction = NUDGE_DIRECTION_BY_KEY[event.key];
 		if (!editable || direction === undefined) return;
 		event.preventDefault();
-		const nudgeBeats = event.shiftKey ? BEATS_PER_CHORD : BEAT_SNAP;
-		onChordNudge(chord.index, direction * nudgeBeats);
+		const nudgeSeconds = event.shiftKey ? SHIFT_NUDGE_SECONDS : NUDGE_SECONDS;
+		onChordNudge(chord.index, direction * nudgeSeconds);
 	}
 </script>
 

@@ -14,7 +14,7 @@ export const DEFAULT_DESIGN_TAB: DesignTab = DESIGN_TAB_DEMOS;
 
 export const DESIGN_TAB_LABELS: Record<DesignTab, string> = {
 	[DESIGN_TAB_DEMOS]: "Demos",
-	[DESIGN_TAB_SYNCED_SONG_PLAYER]: "Synced song player",
+	[DESIGN_TAB_SYNCED_SONG_PLAYER]: "Record sync",
 	[DESIGN_TAB_CHORD_VIZ]: "Chord viz experimentation"
 };
 

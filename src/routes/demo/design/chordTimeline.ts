@@ -83,42 +83,6 @@ const groupContaining = (
 
 const SONG_END_FRACTION = 1;
 
-const clipGroupToChordCount = (
-	group: SectionChordGroup,
-	chordCount: number
-): SectionChordGroup[] =>
-	group.startIndex < chordCount
-		? [
-				{
-					...group,
-					length: Math.min(group.length, chordCount - group.startIndex)
-				}
-			]
-		: [];
-
-export const truncateSectionsToChordCount = (
-	sections: SongSectionChords[],
-	chordCount: number
-): SongSectionChords[] => {
-	const offsets = sectionChordOffsets(sections);
-	return sections.flatMap((section, sectionIndex) => {
-		const keptChordCount = Math.min(
-			section.chords.length,
-			chordCount - offsets[sectionIndex]
-		);
-		if (keptChordCount <= 0) return [];
-		return [
-			{
-				...section,
-				chords: section.chords.slice(0, keptChordCount),
-				groups: section.groups.flatMap((group) =>
-					clipGroupToChordCount(group, keptChordCount)
-				)
-			}
-		];
-	});
-};
-
 const chordKeyOf = (section: SongSectionChords, chordIndex: number): string =>
 	`${section.id}-${chordIndex}`;
 

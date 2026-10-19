@@ -8,6 +8,8 @@
 	import type { KeyTonality } from "./chord-viz/diatonicChords.js";
 	import { LANE_BACKGROUND_BLACK, laneChordsOf } from "./chordLanes.js";
 	import { isActiveAt, type ChordTimeline } from "./chordTimeline.js";
+	import { formatTimestamp } from "./songTime.js";
+	import type { RegionEdge } from "./syncedTimings.js";
 	import { pointerFractionOf, spanStyle, toPercent } from "./timelineStyles.js";
 	import { canStepZoom, steppedZoom } from "./timelineZoom.js";
 
@@ -15,46 +17,88 @@
 	const PLAYHEAD_VIEWPORT_ANCHOR = 0.25;
 	const ZOOM_IN_STEP = 1;
 	const ZOOM_OUT_STEP = -1;
+	const REGION_KEY_STEP_FRACTION = 0.002;
+	const REGION_EDGES: RegionEdge[] = ["start", "end"];
+
+	type RegionFractions = {
+		startFraction: number;
+		endFraction: number;
+	};
 
 	type Props = {
 		timeline: ChordTimeline;
 		tonality: KeyTonality;
 		waveformPeaks: number[] | null;
-		beatFractions: number[];
-		hiddenBeatCount: number;
-		chordBeats: number[];
 		progressFraction: number;
-		duration: number;
+		secondsAt: (fraction: number) => number;
 		editable: boolean;
+		region?: RegionFractions | null;
+		onRegionEditStart?: () => void;
+		onRegionEdgeMove?: (edge: RegionEdge, fraction: number) => void;
 		zoom: number;
 		onZoomChange: (zoom: number) => void;
 		onSeek: (fraction: number) => void;
 		onChordEditStart: () => void;
 		onChordMove: (index: number, startFraction: number) => void;
-		onChordNudge: (index: number, beatDelta: number) => void;
+		onChordNudge: (index: number, secondsDelta: number) => void;
+		onChordDelete: (index: number) => void;
 	};
 
 	let {
 		timeline,
 		tonality,
 		waveformPeaks,
-		beatFractions,
-		hiddenBeatCount,
-		chordBeats,
 		progressFraction,
-		duration,
+		secondsAt,
 		editable,
+		region = null,
+		onRegionEditStart,
+		onRegionEdgeMove,
 		zoom,
 		onZoomChange,
 		onSeek,
 		onChordEditStart,
 		onChordMove,
-		onChordNudge
+		onChordNudge,
+		onChordDelete
 	}: Props = $props();
 
 	let scroller = $state<HTMLDivElement>();
+	let regionDrag = $state<{ edge: RegionEdge; track: DOMRect } | null>(null);
 
-	const isTruncated = $derived(hiddenBeatCount > 0);
+	const regionFractionOf = (edge: RegionEdge, area: RegionFractions) =>
+		edge === "start" ? area.startFraction : area.endFraction;
+
+	function startRegionDrag(
+		event: PointerEvent & { currentTarget: HTMLElement },
+		edge: RegionEdge
+	) {
+		const track = event.currentTarget.parentElement?.getBoundingClientRect();
+		if (!track) return;
+		event.currentTarget.setPointerCapture(event.pointerId);
+		onRegionEditStart?.();
+		regionDrag = { edge, track };
+	}
+
+	function continueRegionDrag(event: PointerEvent) {
+		if (!regionDrag) return;
+		const { edge, track } = regionDrag;
+		onRegionEdgeMove?.(edge, (event.clientX - track.left) / track.width);
+	}
+
+	function nudgeRegionEdge(event: KeyboardEvent, edge: RegionEdge) {
+		if (!region) return;
+		const direction =
+			event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+		if (direction === 0) return;
+		event.preventDefault();
+		event.stopPropagation();
+		onRegionEditStart?.();
+		onRegionEdgeMove?.(
+			edge,
+			regionFractionOf(edge, region) + direction * REGION_KEY_STEP_FRACTION
+		);
+	}
 	const laneChords = $derived(laneChordsOf(timeline, tonality));
 
 	const trackMinWidth = $derived(
@@ -115,49 +159,71 @@
 				chords={timeline.chords}
 				groups={timeline.groups}
 				{progressFraction}
-				{duration}
+				{secondsAt}
 				{editable}
-				{chordBeats}
 				{onChordEditStart}
 				{onChordMove}
 				{onChordNudge}
+				{onChordDelete}
 			/>
 
-			<button
-				type="button"
-				class="track"
-				class:truncated={isTruncated}
-				aria-label="Seek"
-				onclick={(event) => onSeek(pointerFractionOf(event))}
-			>
-				{#if waveformPeaks}
-					<Waveform peaks={waveformPeaks} />
+			<div class="track-area">
+				<button
+					type="button"
+					class="track"
+					aria-label="Seek"
+					onclick={(event) => onSeek(pointerFractionOf(event))}
+				>
+					{#if waveformPeaks}
+						<Waveform peaks={waveformPeaks} />
+					{/if}
+					{#each timeline.chords as chord (chord.key)}
+						<span
+							class="chord-start"
+							style="left: {toPercent(chord.startFraction)};"
+						></span>
+					{/each}
+					{#each timeline.sections as section (section.key)}
+						<span
+							class="section-divider"
+							style="left: {toPercent(section.startFraction)};"
+						></span>
+					{/each}
+					<span class="progress" style="width: {toPercent(progressFraction)};"
+					></span>
+				</button>
+				{#if region}
+					<span
+						class="outside-region"
+						style="left: 0; width: {toPercent(region.startFraction)};"
+					></span>
+					<span
+						class="outside-region"
+						style="left: {toPercent(region.endFraction)}; right: 0;"
+					></span>
+					{#each REGION_EDGES as edge (edge)}
+						{@const fraction = regionFractionOf(edge, region)}
+						<span
+							class="region-handle"
+							class:dragging={regionDrag?.edge === edge}
+							role="slider"
+							tabindex="0"
+							aria-label="Region {edge}"
+							aria-valuemin={0}
+							aria-valuemax={100}
+							aria-valuenow={Math.round(fraction * 100)}
+							aria-valuetext={formatTimestamp(secondsAt(fraction))}
+							title="Drag to move the region {edge}"
+							style="left: {toPercent(fraction)};"
+							onpointerdown={(event) => startRegionDrag(event, edge)}
+							onpointermove={continueRegionDrag}
+							onpointerup={() => (regionDrag = null)}
+							onpointercancel={() => (regionDrag = null)}
+							onkeydown={(event) => nudgeRegionEdge(event, edge)}
+						></span>
+					{/each}
 				{/if}
-				{#each beatFractions as beatFraction (beatFraction)}
-					<span class="beat-line" style="left: {toPercent(beatFraction)};"
-					></span>
-				{/each}
-				{#each timeline.chords as chord (chord.key)}
-					<span
-						class="chord-start"
-						style="left: {toPercent(chord.startFraction)};"
-					></span>
-				{/each}
-				{#each timeline.sections as section (section.key)}
-					<span
-						class="section-divider"
-						style="left: {toPercent(section.startFraction)};"
-					></span>
-				{/each}
-				<span class="progress" style="width: {toPercent(progressFraction)};"
-				></span>
-			</button>
-
-			{#if isTruncated}
-				<span class="truncated-mark">
-					truncated, hiding {hiddenBeatCount} beats
-				</span>
-			{/if}
+			</div>
 
 			<ChordWatercolorLane chords={laneChords} {progressFraction} {onSeek} />
 			<ChordGooeyLane chords={laneChords} {progressFraction} {onSeek} />
@@ -230,7 +296,6 @@
 		overflow: hidden;
 	}
 
-	.beat-line,
 	.chord-start,
 	.section-divider {
 		position: absolute;
@@ -238,10 +303,6 @@
 		bottom: 0;
 		width: 1px;
 		pointer-events: none;
-	}
-
-	.beat-line {
-		background: rgba(244, 244, 245, 0.14);
 	}
 
 	.chord-start {
@@ -264,17 +325,51 @@
 		pointer-events: none;
 	}
 
-	.track.truncated {
-		border-top-right-radius: 0;
-		border-bottom-right-radius: 0;
-		border-right: 2px dashed #a1a1aa;
+	.track-area {
+		position: relative;
 	}
 
-	.truncated-mark {
-		align-self: flex-end;
-		font-size: 0.625rem;
-		color: #a1a1aa;
-		font-style: italic;
+	.outside-region {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		background: rgba(9, 9, 11, 0.6);
+		pointer-events: none;
+	}
+
+	.region-handle {
+		position: absolute;
+		top: -0.25rem;
+		bottom: -0.25rem;
+		width: 0.625rem;
+		margin-left: -0.3125rem;
+		cursor: ew-resize;
+		touch-action: none;
+		z-index: 2;
+	}
+
+	.region-handle::after {
+		content: "";
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 50%;
+		width: 3px;
+		margin-left: -1.5px;
+		border-radius: 2px;
+		background: #fcd34d;
+	}
+
+	.region-handle:hover::after,
+	.region-handle:focus-visible::after,
+	.region-handle.dragging::after {
+		width: 5px;
+		margin-left: -2.5px;
+		box-shadow: 0 0 6px rgba(252, 211, 77, 0.8);
+	}
+
+	.region-handle:focus-visible {
+		outline: none;
 	}
 
 	.playhead {
