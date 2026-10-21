@@ -23,12 +23,14 @@
 
 <style>
 	.chapters {
-		position: absolute;
-		top: 2rem;
+		/* sit above .text's blur, which feathers up into this area */
+		position: relative;
+		z-index: 1;
+		flex: none;
 		display: flex;
 		width: 100%;
 		justify-content: space-between;
-		padding: 0 1rem;
+		padding: 0.8rem 1rem 0 1rem;
 		opacity: 0;
 		transition: opacity 0.3s;
 	}
@@ -36,10 +38,13 @@
 		opacity: 1;
 	}
 	.chapter {
+		position: relative;
 		display: flex;
 		align-items: end;
 		flex: 1;
 		margin: 0 3px;
+		/* room for the label above the blocks */
+		padding-top: 1.2rem;
 	}
 	.chapter:first-of-type {
 		margin-left: 0;
@@ -52,7 +57,8 @@
 	}
 	.text {
 		position: absolute;
-		top: -1.2rem;
+		top: 0;
+		left: 0;
 		font-size: 12px;
 		white-space: nowrap;
 		opacity: 0.3;

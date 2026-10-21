@@ -11,7 +11,7 @@
 		"Atlas Grotesk", -apple-system, BlinkMacSystemFont, Helvetica, Arial,
 		sans-serif;
 	--font-serif: "Gooper SemiCondensed", Iowan Old Style, Times New Roman, Times, serif;
-	--font-mono: Menlo, Consolas, Monaco, monospace;
+	--font-mono: "Atlas Typewriter", Menlo, Consolas, Monaco, monospace;
 
 	/* z-index */
 	--z-bottom: -1;
@@ -21,7 +21,7 @@
 	--z-modal: 1000;
 
 	/* presets (used in reset.css) */
-	--font-body: var(--font-serif);
+	--font-body: var(--font-sans);
 	--font-form: var(--font-sans);
 
 	--radius-xs: 0.125rem;
@@ -100,4 +100,62 @@ svg {
 a:hover {
 	color: var(--color-link-hover);
 	text-decoration-color: var(--color-link-hover);
+}
+
+span.chord {
+	font-family: var(--font-mono);
+}
+
+strong {
+	font-family: var(--font-serif);
+}
+
+/* readable text over full-screen visuals: feathered blur behind + soft halo on glyphs */
+.frosted {
+	--blur: 4px;
+	--bleed: 3rem;
+	--feather: 3rem;
+	position: relative;
+	isolation: isolate;
+	overflow: clip;
+	overflow-clip-margin: var(--bleed);
+	text-shadow:
+		0 0 2px rgb(0 0 0 / 0.9),
+		0 0 8px rgb(0 0 0 / 0.6),
+		0 0 24px rgb(0 0 0 / 0.5);
+}
+
+/* Safari fallback for blur */
+@supports not (overflow-clip-margin: 1px) {
+	.frosted {
+		--bleed: 0px;
+		--feather: 1.5rem;
+	}
+}
+
+.frosted::before {
+	content: "";
+	position: absolute;
+	inset: calc(var(--bleed) * -1);
+	z-index: -1;
+	pointer-events: none;
+	backdrop-filter: blur(var(--blur)) brightness(0.7);
+	-webkit-backdrop-filter: blur(var(--blur)) brightness(0.7);
+	mask-image:
+		linear-gradient(
+			to right,
+			transparent,
+			#000 var(--feather),
+			#000 calc(100% - var(--feather)),
+			transparent
+		),
+		linear-gradient(
+			to bottom,
+			transparent,
+			#000 var(--feather),
+			#000 calc(100% - var(--feather)),
+			transparent
+		);
+	mask-composite: intersect;
+	-webkit-mask-composite: source-in;
 }

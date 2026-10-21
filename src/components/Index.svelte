@@ -109,14 +109,13 @@
 
 	{#if text.length}
 		<div
-			class="text"
+			class="text frosted"
 			style:height={textHeight ? `${textHeight}px` : null}
 			in:fade={{ duration: 250 }}
 		>
 			<div class="text-inner" bind:clientHeight={textHeight}>
 				{#key text}
 					<div
-						class="text-content"
 						in:fade={{ delay: 200, duration: 250 }}
 						out:fade={{ duration: 150 }}
 					>
@@ -180,18 +179,18 @@
 		width: 100%;
 		max-width: var(--col-width);
 		margin: 0 auto;
+		pointer-events: auto;
 		font-size: clamp(0.875rem, min(2.5svh, 4vw), 1.25rem);
 		flex: none;
-		overflow: hidden;
 		transition: height 400ms ease;
 	}
 
 	.text-inner {
-		padding: 2.5rem 1rem 0rem 1rem;
+		padding: 1rem;
 		display: grid;
 	}
 
-	.text-content {
+	.text-inner > div {
 		grid-area: 1 / 1;
 	}
 
@@ -200,11 +199,7 @@
 		min-height: 0;
 	}
 
-	:global(article > .text button) {
-		font-family: var(--font-mono);
-	}
-
-	:global(span.chord) {
+	.text :global(button) {
 		font-family: var(--font-mono);
 	}
 </style>
