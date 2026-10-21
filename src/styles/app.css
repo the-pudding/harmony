@@ -107,7 +107,7 @@ span.chord {
 }
 
 strong {
-	font-family: var(--font-serif);
+	/* font-family: var(--font-serif); */
 }
 
 /* readable text over full-screen visuals: feathered blur behind + soft halo on glyphs */

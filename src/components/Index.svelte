@@ -10,10 +10,19 @@
 	import { fade } from "svelte/transition";
 	import copy from "$data/copy.json";
 	import _ from "lodash";
+	import { setContext } from "svelte";
+
+	const debugSlide = 12;
 
 	const components = {
 		Landing,
 		Video
+	};
+	const LANDING_MAP_PROPS = {
+		movable: false,
+		hoverable: false,
+		rotateLabels: true,
+		centered: true
 	};
 
 	let slideCount = 0;
@@ -25,18 +34,18 @@
 		.map((d, i) => d.slides.map((s) => ({ ...s, section: i })))
 		.flat();
 
-	let slideI = $state(0);
+	let slideI = $state(debugSlide || 0);
 	let { text, stage } = $derived(allSlides[slideI]);
 	let { component, ...stageProps } = $derived(stage ?? {});
 	let StageComponent = $derived(
 		component ? (components[_.capitalize(component)] ?? null) : null
 	);
 
-	const LANDING_MAP_PROPS = {
-		movable: false,
-		hoverable: false,
-		rotateLabels: true
-	};
+	setContext("state", {
+		get slideI() {
+			return slideI;
+		}
+	});
 
 	const parseBoolean = (value) =>
 		value === undefined ? undefined : String(value).trim() === "true";
@@ -53,7 +62,8 @@
 			movable: parseBoolean(stage.movable),
 			hoverable: parseBoolean(stage.hoverable),
 			hideLabels: parseBoolean(stage.hideLabels),
-			rotateLabels: parseBoolean(stage.rotateLabels)
+			rotateLabels: parseBoolean(stage.rotateLabels),
+			centered: parseBoolean(stage.centered)
 		};
 		// Leave unset props out so HexMap's own defaults apply.
 		return Object.fromEntries(
@@ -72,6 +82,7 @@
 	let textHeight = $state();
 
 	const onTap = (dir) => {
+		if (debugSlide) return;
 		if (dir === "right" && slideI < allSlides.length - 1) {
 			slideI += 1;
 		} else if (dir === "left" && slideI > 0) {
@@ -201,5 +212,10 @@
 
 	.text :global(button) {
 		font-family: var(--font-mono);
+	}
+
+	.text :global(ol) {
+		font-size: var(--36px);
+		font-family: var(--font-serif);
 	}
 </style>

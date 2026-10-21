@@ -43,6 +43,10 @@
 		rotateLabels?: boolean;
 		// Zoom in on and center this cluster, by name (e.g. "stay with me").
 		focusCluster?: string;
+		// Center the map on the page. By default it sits a bit lower, to
+		// leave room for text above it (panning can still move it under).
+		// Always centered while focusCluster is set.
+		centered?: boolean;
 		// "dark" draws on a near-black background; "light" has no background
 		// of its own and uses lighter grays between colored hexes.
 		theme?: "dark" | "light";
@@ -57,6 +61,7 @@
 
 	const {
 		focusCluster = undefined,
+		centered = false,
 		movable = focusCluster === undefined,
 		hoverable = true,
 		hideLabels = false,
@@ -69,6 +74,17 @@
 		clusterMaxPoints = 300,
 		clusterMinProgressionShare = 0.25
 	}: Props = $props();
+
+	// Once a cluster has been focused, clearing focusCluster zooms back out
+	// (null) instead of leaving the scatter's scripted zoom off (undefined).
+	let hasFocusedCluster = false;
+	const focusClusterName = $derived.by(() => {
+		if (focusCluster !== undefined) hasFocusedCluster = true;
+		return focusCluster ?? (hasFocusedCluster ? null : undefined);
+	});
+
+	// How far below center the map sits when not centered.
+	const UNCENTERED_OFFSET_Y = 280;
 
 	const NO_SONG_KEYS = new Set<string>();
 	const NO_SONGS = new Map();
@@ -215,7 +231,10 @@
 				showLabels={!hideLabels && !rotateLabels}
 				showRotatingLabels={!hideLabels && rotateLabels}
 				labelNames={showLabels ?? null}
-				focusClusterName={focusCluster}
+				{focusClusterName}
+				offsetY={centered || focusCluster !== undefined
+					? 0
+					: UNCENTERED_OFFSET_Y}
 				{theme}
 				onSelect={() => {}}
 			/>

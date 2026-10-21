@@ -29,8 +29,7 @@
           ],
           "stage": {
             "component": "video",
-            "videoId": "dead-simple",
-            "caption": "All the greatest hits from the last 40 years just use 4 chords. Same 4 chords for every song, it’s dead simple to write a pop hit."
+            "videoId": "dead-simple"
           }
         },
         {
@@ -42,7 +41,7 @@
           ],
           "stage": {
             "component": "video",
-            "videoId": "dead-simple"
+            "videoId": "examples"
           }
         },
         {
@@ -65,10 +64,7 @@
                 ]
               }
             }
-          ],
-          "stage": {
-            "component": "map"
-          }
+          ]
         },
         {
           "text": [
@@ -146,7 +142,10 @@
               "type": "text",
               "value": "Here is every Billboard top-20 hit since 1958, arranged by the mix of progressions each one uses."
             }
-          ]
+          ],
+          "stage": {
+            "component": "map"
+          }
         },
         {
           "text": [
@@ -156,9 +155,12 @@
             },
             {
               "type": "text",
-              "value": "Learn more about how we matched chord progressions and made the map in the methods."
+              "value": "<span class=small>Learn more about how we matched chord progressions and made the map in the <a href=#methods>methods</a>.</span>"
             }
-          ]
+          ],
+          "stage": {
+            "component": "map"
+          }
         },
         {
           "text": [
@@ -170,7 +172,11 @@
               "type": "text",
               "value": "They were onto something, lots of songs rely heavily on this progression, but this only makes up about [2%] of songs in the dataset."
             }
-          ]
+          ],
+          "stage": {
+            "component": "map",
+            "focusCluster": "axis of awesome"
+          }
         },
         {
           "text": [
@@ -182,7 +188,10 @@
               "type": "text",
               "value": "Let’s take a closer look at this list, because these don’t all feel the same."
             }
-          ]
+          ],
+          "stage": {
+            "component": "map"
+          }
         },
         {
           "text": [

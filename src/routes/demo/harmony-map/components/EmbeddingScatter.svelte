@@ -59,6 +59,8 @@
 
 	const DEFAULT_FOCUS_SCALE = 8;
 	const FOCUS_TRANSITION_MS = 900;
+	// How far past the plot's edges the view can pan, in screen pixels.
+	const PAN_EDGE_PADDING = 200;
 	// When focusing a whole cluster, its bounding box is scaled to fill this
 	// fraction of the viewport's smaller dimension, so there's breathing room
 	// around the edge rather than the outermost points touching it.
@@ -97,6 +99,10 @@
 		// current member bounds to the viewport. Same undefined/null contract
 		// as focusSongKey; takes priority over it when both are set.
 		focusClusterName?: string | null;
+		// Shifts the resting view and focus targets down by this many screen
+		// pixels, e.g. to leave room for text over the top of the map.
+		// Changing it animates the view to the new resting position.
+		offsetY?: number;
 		// Optional blanket emphasis set (used by /story to highlight a whole
 		// progression family rather than one song's cluster). When set,
 		// everything NOT in it dims — independent of selectedSongKey /
@@ -186,6 +192,7 @@
 		focusSongKey = undefined,
 		focusScale = DEFAULT_FOCUS_SCALE,
 		focusClusterName = undefined,
+		offsetY = 0,
 		emphasizedSongKeys = null,
 		colorMode = "groups",
 		showClusterOutlines = true,
@@ -304,9 +311,9 @@
 	const HEX_CLICK_ZOOM_MS = 450;
 	const HOVERED_CLUSTER_STROKE_COLOR = "#ffffff";
 	const HOVERED_CLUSTER_STROKE_WIDTH = 2;
-	// Focusing a cluster in hex mode stops just short of the zoom where hexes
-	// turn into dots, so the map keeps its colored regions and labels.
-	const HEX_MAX_FOCUS_SCALE = 3.9;
+	// Focusing a cluster in hex mode zooms just past the zoom where hexes
+	// turn into dots, and no further, so the cluster's songs show as dots.
+	const HEX_FOCUS_SCALE = HEX_ZOOM.dotsAtZoom * 1.01;
 	// Rotating labels: ROTATING_LABEL_COUNT slots, each showing a label for
 	// about ROTATING_LABEL_HOLD_MS (± jitter), fading it out and, after a
 	// short gap, fading in a different one. Slots start together but swap at
@@ -602,7 +609,29 @@
 	): ZoomTransform =>
 		zoomIdentity
 			.scale(scale)
-			.translate(width / (2 * scale) - base.x, height / (2 * scale) - base.y);
+			.translate(
+				width / (2 * scale) - base.x,
+				(height / 2 + offsetY) / scale - base.y
+			);
+
+	// Keeps the plot (its full unzoomed frame, margins included) from being
+	// panned off screen: each edge can come at most PAN_EDGE_PADDING past the
+	// matching viewport edge, and the top edge is measured from offsetY down
+	// (below any text over the map). The padding lets clusters near the edge
+	// get roughly centered. Used for user gestures and scripted targets alike.
+	const constrainTransform = (t: ZoomTransform): ZoomTransform => {
+		const clamp = (value: number, a: number, b: number) =>
+			Math.min(Math.max(value, Math.min(a, b)), Math.max(a, b));
+		const pad = PAN_EDGE_PADDING;
+		const x = clamp(t.x, width - t.k * width - pad, pad);
+		const y = clamp(t.y, height - t.k * height - pad, offsetY + pad);
+		return x === t.x && y === t.y
+			? t
+			: zoomIdentity.translate(x, y).scale(t.k);
+	};
+
+	// The full, unzoomed view, shifted down by offsetY.
+	const homeTransform = $derived(zoomIdentity.translate(0, offsetY));
 
 	const radiusFor = (songKey: string): number => {
 		if (songKey === selectedSongKey) return SELECTED_POINT_RADIUS;
@@ -1353,6 +1382,7 @@
 		const canMove = movable;
 		zoomBehavior = zoom<HTMLCanvasElement, unknown>()
 			.scaleExtent([MIN_ZOOM, MAX_ZOOM])
+			.constrain(constrainTransform)
 			// d3's default filter (no ctrl-drag, primary button only), and
 			// nothing at all unless movable. Scripted zooms bypass the filter.
 			.filter((event) => {
@@ -1403,10 +1433,9 @@
 			(width * CLUSTER_FOCUS_PADDING) / boxWidth,
 			(height * CLUSTER_FOCUS_PADDING) / boxHeight
 		);
-		const scale = Math.min(
-			Math.max(fitScale, MIN_ZOOM),
-			hexMode ? HEX_MAX_FOCUS_SCALE : MAX_CLUSTER_FOCUS_SCALE
-		);
+		const scale = hexMode
+			? HEX_FOCUS_SCALE
+			: Math.min(Math.max(fitScale, MIN_ZOOM), MAX_CLUSTER_FOCUS_SCALE);
 		return transformCenteredOn(
 			{ x: (minX + maxX) / 2, y: (minY + maxY) / 2 },
 			scale
@@ -1419,17 +1448,21 @@
 	// when both are set. For either: a string animates the view to center on
 	// it (fitting the whole cluster, for focusClusterName), null animates
 	// back out to the full view. Cluster names match case-insensitively, and
-	// when several clusters share a name the biggest wins. The first focus
-	// jumps straight there; later ones animate.
+	// when several clusters share a name the biggest wins. A focus set from
+	// the start jumps straight there; once the map has been shown, focus
+	// changes animate.
 	let hasFocused = false;
 	$effect(() => {
-		if (focusClusterName === undefined && focusSongKey === undefined) return;
 		const canvas = canvasEl;
 		if (!canvas || !zoomBehavior || width === 0 || height === 0) return;
+		if (focusClusterName === undefined && focusSongKey === undefined) {
+			hasFocused = true;
+			return;
+		}
 
-		const targetTransform = ((): ZoomTransform | null => {
+		let targetTransform = ((): ZoomTransform | null => {
 			if (focusClusterName !== undefined) {
-				if (focusClusterName === null) return zoomIdentity;
+				if (focusClusterName === null) return homeTransform;
 				const target = normalizeName(focusClusterName);
 				const cluster = clusters
 					.filter((candidate) => {
@@ -1439,13 +1472,14 @@
 					.sort((a, b) => b.songKeys.length - a.songKeys.length)[0];
 				return cluster ? clusterFocusTransform(cluster.songKeys) : null;
 			}
-			if (focusSongKey === null) return zoomIdentity;
+			if (focusSongKey === null) return homeTransform;
 			if (focusSongKey === undefined) return null;
 			const point = normalizedPoints.find((p) => p.songKey === focusSongKey);
 			if (!point) return null;
 			return transformCenteredOn(toBasePixel(point), focusScale);
 		})();
 		if (!targetTransform) return;
+		targetTransform = constrainTransform(targetTransform);
 
 		if (!hasFocused) {
 			hasFocused = true;
@@ -1456,6 +1490,29 @@
 			.transition()
 			.duration(FOCUS_TRANSITION_MS)
 			.call(zoomBehavior.transform, targetTransform);
+	});
+
+	// Without a scripted focus, moves to the resting view when offsetY
+	// changes: a jump the first time, then animated. (With one, the effect
+	// above re-targets instead, since its targets depend on offsetY too.)
+	let hasPlacedHome = false;
+	$effect(() => {
+		const target = homeTransform;
+		const canvas = canvasEl;
+		if (!canvas || !zoomBehavior) return;
+		const isScripted = untrack(
+			() => focusClusterName !== undefined || focusSongKey !== undefined
+		);
+		if (isScripted) return;
+		if (!hasPlacedHome) {
+			hasPlacedHome = true;
+			select(canvas).call(zoomBehavior.transform, target);
+			return;
+		}
+		select(canvas)
+			.transition()
+			.duration(FOCUS_TRANSITION_MS)
+			.call(zoomBehavior.transform, target);
 	});
 
 	const flyToSongIfOffScreen = (songKey: string) => {
@@ -1471,7 +1528,7 @@
 			.duration(FLY_TO_TRANSITION_MS)
 			.call(
 				zoomBehavior.transform,
-				transformCenteredOn(toBasePixel(point), scale)
+				constrainTransform(transformCenteredOn(toBasePixel(point), scale))
 			);
 	};
 
