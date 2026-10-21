@@ -9,6 +9,13 @@
       "slides": [
         {
           "text": [],
+          "map": {
+            "visible": "true",
+            "movable": "false",
+            "hoverable": "false",
+            "rotateLabels": "true",
+            "centered": "true"
+          },
           "stage": {
             "component": "landing",
             "hed": "Mapping every pop hit’s chords",
@@ -143,8 +150,8 @@
               "value": "Here is every Billboard top-20 hit since 1958, arranged by the mix of progressions each one uses."
             }
           ],
-          "stage": {
-            "component": "map"
+          "map": {
+            "visible": "true"
           }
         },
         {
@@ -158,8 +165,8 @@
               "value": "<span class=small>Learn more about how we matched chord progressions and made the map in the <a href=#methods>methods</a>.</span>"
             }
           ],
-          "stage": {
-            "component": "map"
+          "map": {
+            "visible": "true"
           }
         },
         {
@@ -173,8 +180,8 @@
               "value": "They were onto something, lots of songs rely heavily on this progression, but this only makes up about [2%] of songs in the dataset."
             }
           ],
-          "stage": {
-            "component": "map",
+          "map": {
+            "visible": "true",
             "focusCluster": "axis of awesome"
           }
         },
@@ -189,8 +196,11 @@
               "value": "Let’s take a closer look at this list, because these don’t all feel the same."
             }
           ],
+          "map": {
+            "visible": "true"
+          },
           "stage": {
-            "component": "map"
+            "component": "list"
           }
         },
         {
@@ -199,7 +209,14 @@
               "type": "text",
               "value": "You’ll notice a lot of them involve combinations of only <span class=chord>I, IV, and V</span>. If you’re gonna learn 3 chords, learn those."
             }
-          ]
+          ],
+          "map": {
+            "visible": "true"
+          },
+          "stage": {
+            "component": "list",
+            "highlight": "I-IV vamp, happy walk up, beer never broke my <3, I-V vamp, sweet home alabama, Cheerleader (verse), V-IV vamp, happy walk down, IV-V vamp, major-y, Cheerleader (chorus)"
+          }
         },
         {
           "text": [

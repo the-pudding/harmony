@@ -3,8 +3,9 @@
 	"version": "6.23.0",
 	"scripts": {
 		"gdoc": "node tasks/fetch-google.js",
-		"songs": "vite-node tasks/build-songs.js && npm run hexmap",
+		"songs": "vite-node tasks/build-songs.js && npm run hexmap && npm run top-progressions",
 		"hexmap": "vite-node tasks/build-hexmap.ts",
+		"top-progressions": "vite-node tasks/build-top-progressions.ts",
 		"style": "node tasks/style-dictionary.js",
 		"dev": "vite dev",
 		"build": "vite build",

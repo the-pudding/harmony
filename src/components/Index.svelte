@@ -6,23 +6,19 @@
 	import Slider from "$components/helpers/Slider.svelte";
 	import Slide from "$components/helpers/Slider.Slide.svelte";
 	import Video from "$components/Video.svelte";
+	import List from "$components/List.svelte";
 	import CMS from "$components/helpers/CMS.svelte";
 	import { fade } from "svelte/transition";
 	import copy from "$data/copy.json";
 	import _ from "lodash";
 	import { setContext } from "svelte";
 
-	const debugSlide = 12;
+	const debugSlide = undefined; //13;
 
 	const components = {
 		Landing,
-		Video
-	};
-	const LANDING_MAP_PROPS = {
-		movable: false,
-		hoverable: false,
-		rotateLabels: true,
-		centered: true
+		Video,
+		List
 	};
 
 	let slideCount = 0;
@@ -35,7 +31,7 @@
 		.flat();
 
 	let slideI = $state(debugSlide || 0);
-	let { text, stage } = $derived(allSlides[slideI]);
+	let { text, stage, map } = $derived(allSlides[slideI]);
 	let { component, ...stageProps } = $derived(stage ?? {});
 	let StageComponent = $derived(
 		component ? (components[_.capitalize(component)] ?? null) : null
@@ -50,20 +46,20 @@
 	const parseBoolean = (value) =>
 		value === undefined ? undefined : String(value).trim() === "true";
 
-	const mapPropsFromStage = (stage) => {
+	const mapPropsFromCopy = (map) => {
 		const props = {
-			focusCluster: stage.focusCluster?.trim() || undefined,
-			showLabels: stage.showLabels
-				? String(stage.showLabels)
+			focusCluster: map.focusCluster?.trim() || undefined,
+			showLabels: map.showLabels
+				? String(map.showLabels)
 						.split(",")
 						.map((name) => name.trim())
 						.filter(Boolean)
 				: undefined,
-			movable: parseBoolean(stage.movable),
-			hoverable: parseBoolean(stage.hoverable),
-			hideLabels: parseBoolean(stage.hideLabels),
-			rotateLabels: parseBoolean(stage.rotateLabels),
-			centered: parseBoolean(stage.centered)
+			movable: parseBoolean(map.movable),
+			hoverable: parseBoolean(map.hoverable),
+			hideLabels: parseBoolean(map.hideLabels),
+			rotateLabels: parseBoolean(map.rotateLabels),
+			centered: parseBoolean(map.centered)
 		};
 		// Leave unset props out so HexMap's own defaults apply.
 		return Object.fromEntries(
@@ -72,11 +68,7 @@
 	};
 
 	let mapProps = $derived(
-		component === "landing"
-			? LANDING_MAP_PROPS
-			: component === "map"
-				? mapPropsFromStage(stageProps)
-				: null
+		parseBoolean(map?.visible) ? mapPropsFromCopy(map) : null
 	);
 
 	let textHeight = $state();
@@ -168,6 +160,7 @@
 		display: flex;
 		flex-direction: column;
 		pointer-events: none;
+		overflow: clip;
 	}
 
 	article

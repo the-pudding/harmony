@@ -1,0 +1,73 @@
+rank,name,chordProgression,scale,group,avgCoveragePercent,songCount,songSharePercent
+1,I-IV vamp,I-IV-I-IV,major,"Happy, major-y progressions",2.616,770,10.606
+2,happy walk up,I-IV-V,major,"Happy, major-y progressions",2.09,681,9.38
+3,doo wop,I-vi-IV-V,major,"Happy, major-y progressions",1.834,382,5.262
+4,beer never broke my <3,I-IV-I-V,major,"Happy, major-y progressions",1.627,531,7.314
+5,I-V vamp,I-V-I-V,major,"Happy, major-y progressions",1.358,496,6.832
+6,sweet home alabama,V-IV-I,major,"Happy, major-y progressions",1.344,693,9.545
+7,axis of awesome,I-V-vi-IV,major,Axis of awesome,1.278,272,3.747
+8,Cheerleader (verse),I-V-IV,major,"Happy, major-y progressions",1.221,455,6.267
+9,poker face (chorus),i-VI-III-VII,minor,Minor-y progressions,1.127,222,3.058
+10,beat it vamp,i-VII-i-VII,minor,Minor-y progressions,1.125,336,4.628
+11,V-IV vamp,V-IV-V-IV,major,"Happy, major-y progressions",1.013,365,5.028
+12,ii-V vamp,ii-V-ii-V,major,Jazzy progressions,0.993,283,3.898
+13,happy walk down,IV-V-I,major,"Happy, major-y progressions",0.886,555,7.645
+14,IV-V vamp,IV-V-IV-V,major,"Happy, major-y progressions",0.877,451,6.212
+15,major-y,I-V-IV-V,major,"Happy, major-y progressions",0.77,237,3.264
+16,jazz doo wop,I-vi-ii-V,major,Jazzy progressions,0.747,201,2.769
+17,i VI VII,i-VI-VII,minor,Minor-y progressions,0.643,177,2.438
+18,hey there delilah (chorus),I-vi-I-vi,major,"Happy, major-y progressions",0.565,191,2.631
+19,i v vamp,i-v-i-v,minor,Minor-y progressions,0.499,79,1.088
+20,jazz ii-V-I,ii-bii-I,major,Jazzy progressions,0.496,342,4.711
+21,never getting back together,IV-I-V-vi,major,Axis of awesome,0.486,142,1.956
+22,silly love songs,I-iii-IV,major,"Happy, major-y progressions",0.484,267,3.678
+23,party rock,i-VII-VI,minor,Minor-y progressions,0.479,159,2.19
+24,Cheerleader (chorus),I-IV-V-IV,major,"Happy, major-y progressions",0.471,191,2.631
+25,i iv vamp,i-iv-i-iv,minor,Minor-y progressions,0.467,92,1.267
+26,somebody that i used to know,i-VII-VI-VII,minor,Minor-y progressions,0.463,179,2.466
+27,mr. brightside,I-IV-vi-V,major,"Happy, major-y progressions",0.431,102,1.405
+28,(mini)axis of awesome,I-V-vi,major,Axis of awesome,0.419,267,3.678
+29,jazz changes (diatonic),vi-ii-V-I,major,Jazzy progressions,0.385,175,2.41
+30,go your own way,vi-IV-V,major,Minor-y progressions,0.359,257,3.54
+31,whatcha say,IV-I-vi-V,major,"Happy, major-y progressions",0.357,80,1.102
+32,i VI vamp,i-VI-i-VI,minor,Minor-y progressions,0.357,93,1.281
+33,blues rock,I-bIII-IV,major,"Happy, major-y progressions",0.326,185,2.548
+34,plagal cascade,i-III-VII-IV,minor,Minor-y progressions,0.322,79,1.088
+35,emo walk down,I-Imaj7-vi-V-IV,major,"Happy, major-y progressions",0.297,116,1.598
+36,jazz changes (dominant-y),III-VI-II-V,major,Jazzy progressions,0.285,137,1.887
+37,viva la vida,IV-V-I-vi,major,"Happy, major-y progressions",0.285,146,2.011
+38,flamenco walk down,i-VII-VI-V,minor,Minor-y progressions,0.272,64,0.882
+39,burnin up with you,i-III-VII-VI,minor,Minor-y progressions,0.254,60,0.826
+40,V i vamp,V-i-V-i,minor,Minor-y progressions,0.24,83,1.143
+41,hey there delilah (verse),I-iii-I-iii,major,Minor-y progressions,0.222,90,1.24
+42,axis of angsty,I-iii-vi-IV,major,"Happy, major-y progressions",0.218,58,0.799
+43,roxanne,ii-V-I-IV,major,Jazzy progressions,0.217,103,1.419
+44,stay with me,i-VI-III,minor,Minor-y progressions,0.184,56,0.771
+45,attention,i-VII-v-VI,minor,Minor-y progressions,0.181,32,0.441
+46,dangerous,i-III-VI,minor,Minor-y progressions,0.181,66,0.909
+47,broody walk down,i-VI-V,minor,Minor-y progressions,0.179,49,0.675
+48,royal road,IV-V-iii-vi,major,Minor-y progressions,0.173,66,0.909
+49,gangnam verse i-iv-v,i-iv-v,minor,Minor-y progressions,0.173,46,0.634
+50,dorian build up,ii-I-V,major,Minor-y progressions,0.171,102,1.405
+51,i want you to stay,I-ii-vi-IV,major,"Happy, major-y progressions",0.159,28,0.386
+52,classic i-iv-V,i-iv-V,minor,Minor-y progressions,0.157,35,0.482
+53,save your tears,I-vi-iii-V,major,"Happy, major-y progressions",0.141,32,0.441
+54,rockabye,i-VI-VII-v,minor,Minor-y progressions,0.132,34,0.468
+55,call me by your (flamenco) name,I-bII-I-bII,major,Minor-y progressions,0.13,36,0.496
+56,if i aint got you,IV-iii-ii-I,major,"Happy, major-y progressions",0.12,59,0.813
+57,scars to your beautiful (vamp),VI-i-VI-i,minor,Minor-y progressions,0.101,38,0.523
+58,addicted to love,I-bVII-IV-V,major,"Happy, major-y progressions",0.091,42,0.579
+59,IV-iv-I turnaround,IV-iv-I,major,"Happy, major-y progressions",0.08,62,0.854
+60,adore you,i-III-VI-VII,minor,Minor-y progressions,0.079,17,0.234
+61,lean on,VI-VII-i-III,minor,Minor-y progressions,0.068,29,0.399
+62,neo-soul,IV-iii-vi-ii,major,Jazzy progressions,0.06,34,0.468
+63,kissed a girl,i-III-iv-VI,minor,Minor-y progressions,0.057,22,0.303
+64,boyband,VI-V-i,minor,Minor-y progressions,0.046,39,0.537
+65,come & get it,i-III-VI-iv,minor,Minor-y progressions,0.045,23,0.317
+66,rising sun,i-III-IV-VI,minor,Minor-y progressions,0.04,16,0.22
+67,just like fire,i-VI-III-iv,minor,Minor-y progressions,0.039,11,0.152
+68,build me up buttercup,I-III-IV-V,major,"Happy, major-y progressions",0.038,16,0.22
+69,come undone,III-VI-VII-i,minor,Minor-y progressions,0.035,20,0.275
+70,tell me what you want,I-bIII-IV-bVII,major,"Happy, major-y progressions",0.026,26,0.358
+71,tainted love,i-III-VI-IV,minor,Minor-y progressions,0.024,3,0.041
+72,hit me baby one more time,i-V-III-iv-V,minor,Minor-y progressions,0.007,1,0.014
