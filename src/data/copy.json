@@ -118,11 +118,11 @@
             },
             {
               "type": "text",
-              "value": "Musicians notate this with roman numerals. The <span class=chord>I</span> is the home base chord, <span class=chord>ii</span> is a step away, <span class=chord>iii</span> is another step away, <span class=chord>IV, V, vi, vii.</span>"
+              "value": "Musicians notate this with roman numerals. The <span class=chord>I</span> is the home base chord, <span class=chord>ii</span> is a step away, <span class=chord>iii</span> is another step away, <span class=chord>IV</span>, <span class=chord>V</span>, <span class=chord>vi</span>, <span class=chord>vii</span>.</span>"
             },
             {
               "type": "text",
-              "value": "So, these songs all go <span class=chord>I-V-vi-IV</span>, which is the Axis of Awesome “four chords” progression."
+              "value": "So, these songs all go <span class=chords>I-V-vi-IV</span>, which is the Axis of Awesome “four chords” progression."
             }
           ]
         },
@@ -214,7 +214,7 @@
           "text": [
             {
               "type": "text",
-              "value": "You’ll notice a lot of them involve combinations of only <span class=chord>I, IV, and V</span>. If you’re gonna learn 3 chords, learn those."
+              "value": "You’ll notice a lot of them involve combinations of only <span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span>. If you’re gonna learn 3 chords, learn those."
             }
           ],
           "map": {

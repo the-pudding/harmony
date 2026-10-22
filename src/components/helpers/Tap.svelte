@@ -97,7 +97,7 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
-		z-index: var(--z-top);
+		z-index: var(--z-overlay);
 		pointer-events: none;
 	}
 

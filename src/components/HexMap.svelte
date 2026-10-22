@@ -95,7 +95,7 @@
 	// The inset is a second, unzoomed copy of the map drawn at full size and
 	// scaled down, so its hexes look like the zoomed-out map and its pixels
 	// line up with the main map's unzoomed (base) coordinates.
-	const INSET_WIDTH = 150;
+	const INSET_WIDTH = 120;
 	// The inset fades in once the view is zoomed in at least this far.
 	const INSET_MIN_ZOOM = 1.5;
 
@@ -270,6 +270,7 @@
 					? 0
 					: UNCENTERED_OFFSET_Y}
 				{theme}
+				simpleSongTooltip
 				onSelect={() => {}}
 				onTransformChange={(transform) => (viewTransform = transform)}
 			/>
@@ -360,6 +361,7 @@
 
 	.inset-map {
 		transform-origin: top left;
+		filter: grayscale(1);
 	}
 
 	.view-rect {

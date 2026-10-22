@@ -8,7 +8,10 @@
 	<div class="title">The Top Chord Progressions in Top-20 Hits, 1958-2026</div>
 
 	{#each data as { name, rank, chordProgression }}
-		<div class="row" class:highlighted={highlight?.includes(name)}>
+		<div
+			class="row"
+			class:faded={highlight?.length && !highlight?.includes(name)}
+		>
 			<span class="rank">{rank}</span>{name} (<span class="chord"
 				>{chordProgression}</span
 			>)
@@ -41,10 +44,11 @@
 		align-items: center;
 		padding: 0 4px;
 		width: fit-content;
+		transition: opacity 0.2s;
 	}
 
-	.row.highlighted {
-		background: #ffe0ae;
+	.row.faded {
+		opacity: 0.2;
 	}
 
 	.rank {

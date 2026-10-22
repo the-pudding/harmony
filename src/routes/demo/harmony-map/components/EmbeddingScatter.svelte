@@ -26,6 +26,7 @@
 	import type { MapColorMode } from "../colorMode.js";
 	import { clusterAnnotationAlpha } from "./clusterAnnotationStyle.js";
 	import SongTooltip from "../../shared/SongTooltip.svelte";
+	import HexSongTooltip from "./HexSongTooltip.svelte";
 	import { createDelayedHoverTooltip } from "../../shared/delayedHoverTooltip.svelte.js";
 	import { createClickAfterDragGuard } from "../../shared/clickAfterDragGuard.js";
 	import {
@@ -179,6 +180,9 @@
 		// Canvas pixels per CSS pixel. Defaults to the screen's; lower it when
 		// the map is shown scaled down (e.g. an inset) to save memory.
 		pixelRatio?: number | null;
+		// Hex mode: a simpler song tooltip (see HexSongTooltip) that shows the
+		// song's full chords when C is pressed.
+		simpleSongTooltip?: boolean;
 	};
 
 	const {
@@ -217,7 +221,8 @@
 		labelNames = null,
 		theme = "dark",
 		onTransformChange = null,
-		pixelRatio: pixelRatioOverride = null
+		pixelRatio: pixelRatioOverride = null,
+		simpleSongTooltip = false
 	}: Props = $props();
 
 	const normalizeName = (name: string): string => name.trim().toLowerCase();
@@ -549,6 +554,19 @@
 			])
 		)
 	);
+
+	// A progression's map color: the color of a region built on it.
+	const regionColorByProgressionName = $derived.by(() => {
+		const colors = new Map<string, string>();
+		for (const region of new Set(clusterRegionBySongKey?.values() ?? [])) {
+			const color = regionColorByName.get(region.name);
+			if (color === undefined) continue;
+			for (const name of region.progressionNames) {
+				if (!colors.has(name)) colors.set(name, color);
+			}
+		}
+		return colors;
+	});
 
 	const regionFill = (
 		name: string | null,
@@ -1332,6 +1350,30 @@
 		hoveredClusterHit = songKey === null ? findClusterAt(anchor) : null;
 	};
 
+	// Pressing C while a simple song tooltip is up shows or hides its full
+	// chords; each newly hovered song starts with them hidden.
+	let tooltipChordsExpanded = $state(false);
+
+	$effect(() => {
+		void delayedTooltip.tooltipSongKey;
+		tooltipChordsExpanded = false;
+	});
+
+	const handleWindowKeydown = (event: KeyboardEvent) => {
+		if (!simpleSongTooltip || delayedTooltip.tooltipSongKey === null) return;
+		if (event.key !== "c" && event.key !== "C") return;
+		if (event.metaKey || event.ctrlKey || event.altKey) return;
+		const target = event.target;
+		if (
+			target instanceof HTMLElement &&
+			(target.isContentEditable ||
+				["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
+		) {
+			return;
+		}
+		tooltipChordsExpanded = !tooltipChordsExpanded;
+	};
+
 	const handlePointerLeave = () => {
 		hoveredHex = null;
 		hoveredSongKey = null;
@@ -1681,6 +1723,8 @@
 	);
 </script>
 
+<svelte:window onkeydown={handleWindowKeydown} />
+
 <div
 	class="scatter"
 	bind:this={containerEl}
@@ -1759,9 +1803,22 @@
 	{/each}
 
 	{#if tooltipVisible && delayedTooltip.tooltipAnchor}
-		{#if tooltipSong}
+		{#if simpleSongTooltip && tooltipSong}
+			<div class="tooltip" style={tooltipStyle}>
+				<HexSongTooltip
+					song={tooltipSong}
+					colorForProgression={(name) => regionColorByProgressionName.get(name)}
+					expanded={tooltipChordsExpanded}
+				/>
+			</div>
+		{:else if tooltipSong}
 			<div class="tooltip" style={tooltipStyle}>
 				<SongTooltip song={tooltipSong} />
+			</div>
+		{:else if simpleSongTooltip && tooltipSummary}
+			<div class="tooltip" style={tooltipStyle}>
+				<div class="hex-tooltip-title">{tooltipSummary.title}</div>
+				<div class="hex-tooltip-meta">{tooltipSummary.artists.join(", ")}</div>
 			</div>
 		{:else if tooltipSummary}
 			<div class="tooltip" style={tooltipStyle}>

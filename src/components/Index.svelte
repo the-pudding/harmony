@@ -11,9 +11,11 @@
 	import { fade } from "svelte/transition";
 	import copy from "$data/copy.json";
 	import _ from "lodash";
+	import { chordify } from "$utils/chordify";
 	import { setContext } from "svelte";
+	import { spanStyle } from "$routes/demo/design/timelineStyles";
 
-	const debugSlide = 11;
+	const debugSlide = 7;
 
 	const components = {
 		Landing,
@@ -61,7 +63,6 @@
 			rotateLabels: parseBoolean(map.rotateLabels),
 			centered: parseBoolean(map.centered)
 		};
-		// Leave unset props out so HexMap's own defaults apply.
 		return Object.fromEntries(
 			Object.entries(props).filter(([, value]) => value !== undefined)
 		);
@@ -81,6 +82,7 @@
 			slideI -= 1;
 		}
 	};
+
 </script>
 
 <Tap
@@ -121,6 +123,7 @@
 					<div
 						in:fade={{ delay: 200, duration: 250 }}
 						out:fade={{ duration: 150 }}
+						{@attach chordify}
 					>
 						<CMS content={text} />
 					</div>
