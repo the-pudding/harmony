@@ -5,7 +5,7 @@
 	const { highlight, obscure } = $props();
 </script>
 
-<figure class="frosted" {@attach chordify}>
+<figure {@attach chordify}>
 	<div class="title">The Top Chord Progressions in Top-20 Hits, 1958-2026</div>
 
 	{#each data as { name, rank, chordProgression, scale }}
@@ -22,14 +22,10 @@
 
 <style>
 	figure {
-		justify-self: flex-end;
-		padding: 1rem;
-		padding-top: 0;
-		max-width: 450px;
 	}
 
 	.title {
-		font-size: var(--24px);
+		font-size: var(--14px);
 		font-weight: bold;
 		margin-bottom: 0.5rem;
 	}

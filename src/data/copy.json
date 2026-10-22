@@ -210,7 +210,7 @@
           "map": {
             "visible": "true"
           },
-          "stage": {
+          "overlay": {
             "component": "list",
             "highlight": "axis of awesome",
             "obscure": "true"
@@ -220,13 +220,13 @@
           "text": [
             {
               "type": "text",
-              "value": "You’ll notice a lot of them involve combinations of only <span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span>. If you’re gonna learn 3 chords, learn those."
+              "value": "You’ll notice a lot of them exclusively involve <span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span>. If you’re gonna learn 3 chords, learn those."
             }
           ],
           "map": {
             "visible": "true"
           },
-          "stage": {
+          "overlay": {
             "component": "list",
             "highlight": "I-IV vamp, happy walk up, beer never broke my <3, I-V vamp, sweet home alabama, Cheerleader (verse), V-IV vamp, happy walk down, IV-V vamp, major-y, Cheerleader (chorus)"
           }
@@ -263,7 +263,7 @@
             },
             {
               "type": "text",
-              "value": "Sometimes people say “major is happy and minor is sad”, but tell that to Poker Face… Just because a song is in a minor key doesn’t mean it’s sad, it’s much more <a href=https://www.youtube.com/watch?v=OMWszWYX2OQ target=_blank>nuanced</a>."
+              "value": "Sometimes people say that major is happy and minor is sad, but tell that to Poker Face… Just because a song is in a minor key doesn’t mean it’s sad, it’s much more <a href=https://www.youtube.com/watch?v=OMWszWYX2OQ target=_blank>nuanced</a>."
             },
             {
               "type": "text",

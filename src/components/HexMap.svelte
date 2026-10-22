@@ -34,11 +34,10 @@
 		// Hovering a colored hex outlines its cluster and names its
 		// progression; at dot zoom, hovering a song shows its tooltip.
 		hoverable?: boolean;
-		// Hide every region label.
+		// Hide every region label. Always hidden while focusCluster is set.
 		hideLabels?: boolean;
 		// Only label these clusters, by name (e.g. ["stay with me"]). By
-		// default any cluster can be labeled, as space and zoom allow; when
-		// focusCluster is set, only that cluster is.
+		// default any cluster can be labeled, as space and zoom allow.
 		showLabels?: string[];
 		// Labels fade in and out a few at a time, a few seconds apart, instead
 		// of all showing at once.
@@ -71,7 +70,7 @@
 		movable = focusCluster === undefined,
 		hoverable = true,
 		hideLabels = false,
-		showLabels = focusCluster === undefined ? undefined : [focusCluster],
+		showLabels = undefined,
 		rotateLabels = false,
 		theme = "dark",
 		purityLayout = true,
@@ -88,6 +87,9 @@
 		if (focusCluster !== undefined) hasFocusedCluster = true;
 		return focusCluster ?? (hasFocusedCluster ? null : undefined);
 	});
+
+	// A focused cluster isn't labeled.
+	const labelsVisible = $derived(!hideLabels && focusCluster === undefined);
 
 	// How far below center the map sits when not centered.
 	const UNCENTERED_OFFSET_Y = 280;
@@ -271,9 +273,10 @@
 				outlinedSongKeys={SYNCED_SONG_KEYS}
 				{movable}
 				{hoverable}
-				showLabels={!hideLabels && !rotateLabels}
-				showRotatingLabels={!hideLabels && rotateLabels}
+				showLabels={labelsVisible && !rotateLabels}
+				showRotatingLabels={labelsVisible && rotateLabels}
 				labelNames={showLabels ?? null}
+				showClusterNames={labelsVisible}
 				{focusClusterName}
 				{focusFrame}
 				offsetY={centered || focusCluster !== undefined

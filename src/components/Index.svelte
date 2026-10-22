@@ -16,7 +16,7 @@
 	import { setContext } from "svelte";
 	import { spanStyle } from "$routes/demo/design/timelineStyles";
 
-	const debugSlide = undefined; // 12;
+	const debugSlide = undefined; //14;
 
 	const components = {
 		Landing,
@@ -34,10 +34,20 @@
 		.flat();
 
 	let slideI = $state(debugSlide || 0);
-	let { text, stage, map } = $derived(allSlides[slideI]);
-	let { component, ...stageProps } = $derived(stage ?? {});
+	let { text, stage, overlay, map } = $derived(allSlides[slideI]);
+	let { component: stageComponentName, ...stageProps } = $derived(stage ?? {});
+	let { component: overlayComponentName, ...overlayProps } = $derived(
+		overlay ?? {}
+	);
 	let StageComponent = $derived(
-		component ? (components[_.capitalize(component)] ?? null) : null
+		stageComponentName
+			? (components[_.capitalize(stageComponentName)] ?? null)
+			: null
+	);
+	let OverlayComponent = $derived(
+		overlayComponentName
+			? (components[_.capitalize(overlayComponentName)] ?? null)
+			: null
 	);
 
 	setContext("state", {
@@ -108,6 +118,7 @@
 <div
 	class="map-layer"
 	class:visible={mapProps !== null}
+	class:faded={overlay}
 	aria-hidden={mapProps === null}
 >
 	<HexMap {...mapProps ?? {}} {focusFrame} theme="dark" />
@@ -119,6 +130,12 @@
 		activeSlide={slideI}
 		sections={sections.slice(1)}
 	/>
+
+	<div class="overlay" class:visible={OverlayComponent}>
+		{#if OverlayComponent}
+			<OverlayComponent {...overlayProps} />
+		{/if}
+	</div>
 
 	{#if text.length}
 		<div
@@ -142,7 +159,7 @@
 
 	<div class="stage">
 		<div
-			class="cluster-frame"
+			class="main"
 			bind:this={clusterFrameEl}
 			bind:clientHeight={clusterFrameHeight}
 		>
@@ -152,7 +169,7 @@
 		</div>
 
 		{#if showClusterPanel}
-			<div class="cluster-panel">
+			<div class="panel" in:fade={{ duration: 300, delay: 800 }}>
 				<Player cluster={mapProps.focusCluster} />
 			</div>
 		{/if}
@@ -174,6 +191,10 @@
 		opacity: 1;
 		visibility: visible;
 		transition: opacity 400ms ease;
+	}
+
+	.map-layer.faded {
+		opacity: 0.3;
 	}
 
 	article {
@@ -228,14 +249,44 @@
 		flex-direction: column;
 	}
 
-	.cluster-frame {
+	.main {
 		flex: 1;
 		min-height: 0;
 	}
 
-	.cluster-panel {
+	.panel {
 		flex: none;
 		height: 30svh;
+		pointer-events: auto;
+	}
+
+	.overlay {
+		position: fixed;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		display: flex;
+		justify-content: center;
+		background: var(--color-gray-800);
+		padding: 1rem;
+		box-shadow:
+			0 2px 4px rgba(0, 0, 0, 0.2),
+			0 8px 16px rgba(0, 0, 0, 0.25),
+			0 24px 48px rgba(0, 0, 0, 0.35),
+			inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+		z-index: var(--z-overlay);
+		opacity: 0;
+		transition: opacity 0.3s;
+		pointer-events: none;
+		width: 600px;
+		height: 450px;
+		max-width: 100%;
+		max-height: 80svh;
+		overflow: scroll;
+	}
+
+	.overlay.visible {
+		opacity: 1;
 		pointer-events: auto;
 	}
 

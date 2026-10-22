@@ -10,6 +10,7 @@
 </script>
 
 <div class="player" {@attach chordify}>
+	<div class="name">{cluster}</div>
 	<span class="chords">
 		{progression}
 	</span>
@@ -20,6 +21,12 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+	}
+
+	.name {
+		font-family: var(--font-serif);
+		font-size: var(--32px);
+		margin-bottom: 1rem;
 	}
 
 	.chords {

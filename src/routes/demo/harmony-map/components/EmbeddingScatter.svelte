@@ -86,7 +86,8 @@
 	const CLUSTER_FOCUS_PADDING = 0.65;
 	const MAX_CLUSTER_FOCUS_SCALE = 24;
 	// Same idea, for hex mode with a focusFrame: the cluster fits within this
-	// fraction of the frame's height (and the viewport's width).
+	// fraction of the frame's height (and the viewport's width), but zooms at
+	// least to HEX_FOCUS_SCALE so its songs show as dots.
 	const FRAME_FOCUS_FILL = 0.85;
 	// Hex mode without a focusFrame ignores fit and zooms just past the zoom
 	// where hexes turn into dots, so the cluster's songs show as dots.
@@ -294,6 +295,8 @@
 		// Draw the dashed cluster outlines + names. Defaults to true (existing
 		// behavior); /story defaults this off per beat.
 		showClusterOutlines?: boolean;
+		// Name each outlined cluster above its outline. Defaults to true.
+		showClusterNames?: boolean;
 		// Optional song set used to judge, per cluster, whether it "heavily
 		// involves" a highlighted family (used by /story alongside
 		// highlightFamily + showClusterOutlines) — a cluster whose members
@@ -388,6 +391,7 @@
 		emphasizedSongKeys = null,
 		colorMode = "groups",
 		showClusterOutlines = true,
+		showClusterNames = true,
 		familyEmphasisSongKeys = null,
 		emphasisFillColor = null,
 		accentSongKeys = null,
@@ -800,7 +804,7 @@
 			context.setLineDash([]);
 			context.globalAlpha = 1;
 
-			if (name) {
+			if (name && showClusterNames) {
 				context.globalAlpha = strokeAlpha;
 				context.fillStyle = CLUSTER_NAME_COLOR;
 				context.font = CLUSTER_NAME_FONT;
@@ -1711,13 +1715,15 @@
 		const boxHeight = Math.max(maxY - minY, 1);
 		if (hexMode && focusFrame && focusFrame.height > 0) {
 			// Capped by width too, so a wide cluster doesn't spill off the sides.
+			// Never below dot zoom, so a big cluster still shows as dots even if
+			// it then overflows the frame.
 			const frameScale = Math.min(
 				Math.max(
 					Math.min(
 						(focusFrame.height * FRAME_FOCUS_FILL) / boxHeight,
 						(width * FRAME_FOCUS_FILL) / boxWidth
 					),
-					MIN_ZOOM
+					HEX_FOCUS_SCALE
 				),
 				MAX_ZOOM
 			);
@@ -1858,6 +1864,7 @@
 		void inYearSongKeys;
 		void colorMode;
 		void showClusterOutlines;
+		void showClusterNames;
 		void familyEmphasisSongKeys;
 		void emphasisFillColor;
 		void pointsInDrawOrder;
