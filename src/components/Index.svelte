@@ -6,6 +6,7 @@
 	import Slider from "$components/helpers/Slider.svelte";
 	import Slide from "$components/helpers/Slider.Slide.svelte";
 	import Video from "$components/Video.svelte";
+	import Player from "$components/Player.svelte";
 	import List from "$components/List.svelte";
 	import CMS from "$components/helpers/CMS.svelte";
 	import { fade } from "svelte/transition";
@@ -15,7 +16,7 @@
 	import { setContext } from "svelte";
 	import { spanStyle } from "$routes/demo/design/timelineStyles";
 
-	const debugSlide = 11;
+	const debugSlide = undefined; // 12;
 
 	const components = {
 		Landing,
@@ -73,6 +74,14 @@
 	);
 
 	let textHeight = $state();
+	let clusterFrameEl = $state();
+	let clusterFrameHeight = $state(0);
+	let focusFrame = $derived(
+		clusterFrameEl && clusterFrameHeight > 0
+			? { top: clusterFrameEl.offsetTop, height: clusterFrameHeight }
+			: null
+	);
+	let showClusterPanel = $derived(mapProps?.focusCluster !== undefined);
 
 	const onTap = (dir) => {
 		if (debugSlide) return;
@@ -101,7 +110,7 @@
 	class:visible={mapProps !== null}
 	aria-hidden={mapProps === null}
 >
-	<HexMap {...mapProps ?? {}} theme="dark" />
+	<HexMap {...mapProps ?? {}} {focusFrame} theme="dark" />
 </div>
 
 <article>
@@ -132,8 +141,20 @@
 	{/if}
 
 	<div class="stage">
-		{#if StageComponent}
-			<StageComponent {...stageProps} />
+		<div
+			class="cluster-frame"
+			bind:this={clusterFrameEl}
+			bind:clientHeight={clusterFrameHeight}
+		>
+			{#if StageComponent}
+				<StageComponent {...stageProps} />
+			{/if}
+		</div>
+
+		{#if showClusterPanel}
+			<div class="cluster-panel">
+				<Player cluster={mapProps.focusCluster} />
+			</div>
 		{/if}
 	</div>
 </article>
@@ -203,6 +224,19 @@
 	.stage {
 		flex: 1;
 		min-height: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.cluster-frame {
+		flex: 1;
+		min-height: 0;
+	}
+
+	.cluster-panel {
+		flex: none;
+		height: 30svh;
+		pointer-events: auto;
 	}
 
 	.text :global(button) {

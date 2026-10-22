@@ -58,17 +58,189 @@
 	} from "../embedding/layout/watercolorWash.js";
 	import { paintHexWatercolor } from "../embedding/layout/hexWatercolorWash.js";
 
-	const DEFAULT_FOCUS_SCALE = 8;
-	const FOCUS_TRANSITION_MS = 900;
+	// ── Layout & zoom ─────────────────────────────────────────────────────
+	// Space between the canvas edge and the plotted area, in pixels.
+	const PLOT_MARGIN = 32;
+	const MIN_ZOOM = 1;
+	const MAX_ZOOM = 40;
 	// How far past the plot's edges the view can pan, in screen pixels.
 	const PAN_EDGE_PADDING = 200;
-	// When focusing a whole cluster, its bounding box is scaled to fill this
-	// fraction of the viewport's smaller dimension, so there's breathing room
-	// around the edge rather than the outermost points touching it.
+	// Tiny per-song offset (in normalized units) so stacked songs separate.
+	const JITTER_AMPLITUDE = 0.004;
+	// Hex mode: hex radius on screen at zoom 1, the zoom where hexes give way
+	// to dots, and how gently hexes shrink on screen as you zoom in (they go
+	// from 7px at 1× to about 5px just before dots take over).
+	const HEX_ZOOM = {
+		baseScreenRadius: 7,
+		dotsAtZoom: 4,
+		shrinkExponent: 0.25
+	} as const;
+
+	// ── Focus & camera moves ──────────────────────────────────────────────
+	// Zoom used when focusing a single song.
+	const DEFAULT_FOCUS_SCALE = 8;
+	const FOCUS_TRANSITION_MS = 900;
+	// How much of the screen a focused cluster fills. Its bounding box is
+	// scaled to fit within this fraction of both the viewport's width and
+	// height, leaving breathing room around the edge.
 	const CLUSTER_FOCUS_PADDING = 0.65;
 	const MAX_CLUSTER_FOCUS_SCALE = 24;
+	// Same idea, for hex mode with a focusFrame: the cluster fits within this
+	// fraction of the frame's height (and the viewport's width).
+	const FRAME_FOCUS_FILL = 0.85;
+	// Hex mode without a focusFrame ignores fit and zooms just past the zoom
+	// where hexes turn into dots, so the cluster's songs show as dots.
+	const HEX_FOCUS_SCALE = HEX_ZOOM.dotsAtZoom * 1.01;
+	// Flying to an off-screen song zooms out a bit on the way there.
 	const FLY_TO_ZOOM_OUT_FACTOR = 0.75;
 	const FLY_TO_TRANSITION_MS = 1300;
+	// Clicking a hex zooms in by this factor.
+	const HEX_CLICK_ZOOM_FACTOR = 2.5;
+	const HEX_CLICK_ZOOM_MS = 450;
+	// Points animating between layouts.
+	const TWEEN_DURATION_MS = 700;
+
+	// ── Points ────────────────────────────────────────────────────────────
+	const POINT_RADIUS = 3;
+	const SELECTED_POINT_RADIUS = 6;
+	const HOVER_PICK_RADIUS = 12;
+	const RING_WIDTH = 1.5;
+	// Used when colorMode is "off" — a plain, star-like white so a
+	// highlighted song/family reads clearly against an otherwise uncolored
+	// field.
+	const STAR_FILL_COLOR = "#e4e4e7";
+
+	// ── Outlined (called-out) songs & their labels ────────────────────────
+	const OUTLINE_COLOR = "#ffffff";
+	const OUTLINED_POINT_RADIUS = 10;
+	const OUTLINE_WIDTH = 3;
+	const OUTLINE_GLOW_BLUR = 10;
+	const OUTLINED_LABEL_TITLE_FONT =
+		"700 11px 'JetBrains Mono', ui-monospace, monospace";
+	const OUTLINED_LABEL_ARTIST_FONT =
+		"500 10px 'JetBrains Mono', ui-monospace, monospace";
+	// Space between a marker's edge and its label.
+	const OUTLINED_LABEL_GAP = 6;
+	const OUTLINED_LABEL_LINE_HEIGHT = 13;
+	// Empty space kept around each label so it doesn't touch its neighbors.
+	const OUTLINED_LABEL_PADDING = 3;
+
+	// ── Axes ──────────────────────────────────────────────────────────────
+	const AXIS_LABEL_COLOR = "rgba(161, 161, 170, 0.7)";
+	const AXIS_LABEL_FONT = '10px "JetBrains Mono", ui-monospace, monospace';
+
+	// ── Cluster outlines (dot mode) ───────────────────────────────────────
+	// Density clustering is only meaningful over layouts UMAP actually produced
+	// (see UMAP_DRIVEN_METHODS) — PCA/feature-axis positions are linear
+	// projections or hand-designed axes where geometric proximity doesn't mean
+	// "similar songs", so DBSCAN circles there would be visually plausible but
+	// semantically noise.
+	const CLUSTERABLE_METHODS = new Set<EmbeddingMethod>(UMAP_DRIVEN_METHODS);
+	const CLUSTER_RADIUS_PADDING = 8;
+	const CLUSTER_STROKE_COLOR = "#e4e4e7";
+	const CLUSTER_STROKE_WIDTH = 2;
+	const CLUSTER_UNNAMED_STROKE_ALPHA = 0.72;
+	const CLUSTER_DASH_PATTERN = [7, 5];
+	// A cluster "heavily involves" a highlighted family when at least this
+	// fraction of its songs are in familyEmphasisSongKeys; below that its
+	// outline fades to CLUSTER_DEEMPHASIZED_STROKE_ALPHA and its name hides.
+	const FAMILY_INVOLVEMENT_THRESHOLD = 0.5;
+	const CLUSTER_DEEMPHASIZED_STROKE_ALPHA = 0.15;
+	const CLUSTER_LABEL_COLOR = "rgba(244, 244, 245, 0.9)";
+	const CLUSTER_LABEL_FONT = '10px "JetBrains Mono", ui-monospace, monospace';
+	const CLUSTER_NAME_FONT =
+		'600 11px "JetBrains Mono", ui-monospace, monospace';
+	const CLUSTER_NAME_COLOR = "#f4f4f5";
+	// Space between a cluster's outline and its label.
+	const CLUSTER_LABEL_GAP = 6;
+
+	// ── Hex mode: colors ──────────────────────────────────────────────────
+	// Dark-surface categorical steps (dataviz reference palette). Color only
+	// keeps neighboring regions apart; labels and tooltips name them.
+	const REGION_PALETTE = [
+		"#3987e5",
+		"#d95926",
+		"#199e70",
+		"#c98500",
+		"#d55181",
+		"#008300",
+		"#9085e9",
+		"#e66767"
+	] as const;
+	// Pairs that failed or warned the palette validator (colorblind or
+	// normal-vision separation) on this page's #09090b surface. Neighboring
+	// regions never get one of these pairs.
+	const CONFUSABLE_REGION_PAIRS = new Set(
+		[
+			["#3987e5", "#9085e9"],
+			["#d95926", "#c98500"],
+			["#d95926", "#d55181"],
+			["#d95926", "#008300"],
+			["#d95926", "#e66767"],
+			["#199e70", "#d55181"],
+			["#199e70", "#008300"],
+			["#199e70", "#e66767"],
+			["#c98500", "#008300"],
+			["#c98500", "#e66767"],
+			["#d55181", "#e66767"]
+		].map(([a, b]) => (a < b ? `${a}|${b}` : `${b}|${a}`))
+	);
+	// Per theme: what a hex fades toward when it's only partly its main
+	// progression (faded), the fill for songs or hexes with no matched
+	// progression (unmatched), hexes and songs outside a clearly defined
+	// cluster (ambiguous), and region label text with its halo.
+	const HEX_THEME_COLORS = {
+		dark: {
+			faded: "#2a2a2e",
+			unmatched: "#27272a",
+			ambiguous: "#3f3f46",
+			labelText: "#f4f4f5",
+			labelHalo: "#09090b"
+		},
+		light: {
+			faded: "#ececee",
+			unmatched: "#f4f4f5",
+			ambiguous: "#e4e4e7",
+			labelText: "#18181b",
+			labelHalo: "#ffffff"
+		}
+	} as const;
+	// Faintest a hex can get, so even a mixed hex keeps a hint of its hue.
+	const MIN_REGION_TINT = 0.2;
+	// A hex takes a cluster's color only when that cluster holds at least
+	// this share of its songs; otherwise it's unclustered or split, and gray.
+	const MIN_CLUSTER_SHARE_OF_HEX = 0.5;
+	// Hexes are drawn slightly oversized so neighbors overlap and touch with
+	// no seams or gaps between them.
+	const HEX_OVERLAP_PX = 0.5;
+	// Border drawn around the hovered hex region.
+	const HOVERED_CLUSTER_STROKE_COLOR = "#ffffff";
+	const HOVERED_CLUSTER_STROKE_WIDTH = 2;
+
+	// ── Hex mode: region labels ───────────────────────────────────────────
+	const HEX_LABEL_FONT = "500 10px 'JetBrains Mono', ui-monospace, monospace";
+	// Any colored region this many hexes or larger can be labeled.
+	const HEX_LABEL_MIN_HEXES = 1;
+	// Empty space kept around each label so neighboring labels don't touch.
+	const HEX_LABEL_PADDING_X = 6;
+	const HEX_LABEL_PADDING_Y = 6;
+	// Extra space around labels when fully zoomed out, where they'd otherwise
+	// crowd; it eases away by HEX_LABEL_EXTRA_PADDING_UNTIL_ZOOM.
+	const HEX_LABEL_EXTRA_PADDING_ZOOMED_OUT = 4;
+	const HEX_LABEL_EXTRA_PADDING_UNTIL_ZOOM = 2;
+	// Nearby clusters often share a progression; skip a label when the same
+	// name is already shown within this distance.
+	const HEX_LABEL_REPEAT_DISTANCE_PX = 150;
+	// Rotating labels: ROTATING_LABEL_COUNT slots, each showing a label for
+	// about ROTATING_LABEL_HOLD_MS (± jitter), fading it out and, after a
+	// short gap, fading in a different one. Slots start together but swap at
+	// staggered times, so 4–5 labels are always up and they change one by one.
+	const ROTATING_LABEL_COUNT = 5;
+	const ROTATING_LABEL_HOLD_MS = 6000;
+	const ROTATING_LABEL_HOLD_JITTER_MS = 1500;
+	const ROTATING_LABEL_GAP_MS = 400;
+	const ROTATING_LABEL_START_STAGGER_MS = 250;
+	const ROTATING_LABEL_FADE_MS = 800;
 
 	type Props = {
 		points: ScatterPoint[];
@@ -100,6 +272,11 @@
 		// current member bounds to the viewport. Same undefined/null contract
 		// as focusSongKey; takes priority over it when both are set.
 		focusClusterName?: string | null;
+		// The part of the canvas a focused cluster should fill, in screen
+		// pixels from its top (e.g. the space below text over the map). In
+		// hex mode the cluster is scaled to almost fill its height and
+		// centered in it; otherwise the cluster focuses as usual.
+		focusFrame?: { top: number; height: number } | null;
 		// Shifts the resting view and focus targets down by this many screen
 		// pixels, e.g. to leave room for text over the top of the map.
 		// Changing it animates the view to the new resting position.
@@ -138,6 +315,10 @@
 		// emphasisFillColor wins when a song is in both sets.
 		accentSongKeys?: Set<string> | null;
 		accentFillColor?: string | null;
+		// Songs drawn as larger, white-ringed, glowing dots on top of
+		// everything else, with their titles and artists beside them. In hex
+		// mode, only once zoomed in to dots.
+		outlinedSongKeys?: Set<string> | null;
 		// "hex" groups songs into hexagons whose size follows the zoom: big
 		// when zoomed out, smaller as you zoom in, plain dots near max zoom.
 		// Each hex takes the color of its main progression, faded when the
@@ -202,6 +383,7 @@
 		focusSongKey = undefined,
 		focusScale = DEFAULT_FOCUS_SCALE,
 		focusClusterName = undefined,
+		focusFrame = null,
 		offsetY = 0,
 		emphasizedSongKeys = null,
 		colorMode = "groups",
@@ -210,6 +392,7 @@
 		emphasisFillColor = null,
 		accentSongKeys = null,
 		accentFillColor = null,
+		outlinedSongKeys = null,
 		renderMode = "dots",
 		progressionSharesBySongKey = null,
 		clusterRegionBySongKey = null,
@@ -240,142 +423,7 @@
 		])
 	);
 
-	// Hex mode: hex radius on screen at zoom 1, the zoom where hexes give way
-	// to dots, and how gently hexes shrink on screen as you zoom in (they go
-	// from 7px at 1× to about 5px just before dots take over).
-	const HEX_ZOOM = {
-		baseScreenRadius: 7,
-		dotsAtZoom: 4,
-		shrinkExponent: 0.25
-	} as const;
-	// Dark-surface categorical steps (dataviz reference palette). Color only
-	// keeps neighboring regions apart; labels and tooltips name them.
-	const REGION_PALETTE = [
-		"#3987e5",
-		"#d95926",
-		"#199e70",
-		"#c98500",
-		"#d55181",
-		"#008300",
-		"#9085e9",
-		"#e66767"
-	] as const;
-	// Pairs that failed or warned the palette validator (colorblind or
-	// normal-vision separation) on this page's #09090b surface. Neighboring
-	// regions never get one of these pairs.
-	const CONFUSABLE_REGION_PAIRS = new Set(
-		[
-			["#3987e5", "#9085e9"],
-			["#d95926", "#c98500"],
-			["#d95926", "#d55181"],
-			["#d95926", "#008300"],
-			["#d95926", "#e66767"],
-			["#199e70", "#d55181"],
-			["#199e70", "#008300"],
-			["#199e70", "#e66767"],
-			["#c98500", "#008300"],
-			["#c98500", "#e66767"],
-			["#d55181", "#e66767"]
-		].map(([a, b]) => (a < b ? `${a}|${b}` : `${b}|${a}`))
-	);
-	// Per theme: what a hex fades toward when it's only partly its main
-	// progression (faded), the fill for songs or hexes with no matched
-	// progression (unmatched), hexes and songs outside a clearly defined
-	// cluster (ambiguous), and region label text with its halo.
-	const HEX_THEME_COLORS = {
-		dark: {
-			faded: "#2a2a2e",
-			unmatched: "#27272a",
-			ambiguous: "#3f3f46",
-			labelText: "#f4f4f5",
-			labelHalo: "#09090b"
-		},
-		light: {
-			faded: "#ececee",
-			unmatched: "#f4f4f5",
-			ambiguous: "#e4e4e7",
-			labelText: "#18181b",
-			labelHalo: "#ffffff"
-		}
-	} as const;
 	const hexColors = $derived(HEX_THEME_COLORS[theme]);
-	// Faintest a hex can get, so even a mixed hex keeps a hint of its hue.
-	const MIN_REGION_TINT = 0.2;
-	// Hexes are drawn slightly oversized so neighbors overlap and touch with
-	// no seams or gaps between them.
-	const HEX_OVERLAP_PX = 0.5;
-	// A hex takes a cluster's color only when that cluster holds at least
-	// this share of its songs; otherwise it's unclustered or split, and gray.
-	const MIN_CLUSTER_SHARE_OF_HEX = 0.5;
-	const HEX_LABEL_FONT = "500 10px 'JetBrains Mono', ui-monospace, monospace";
-	// Any colored region this many hexes or larger can be labeled.
-	const HEX_LABEL_MIN_HEXES = 1;
-	// Empty space kept around each label so neighboring labels don't touch.
-	const HEX_LABEL_PADDING_X = 6;
-	const HEX_LABEL_PADDING_Y = 6;
-	// Extra space around labels when fully zoomed out, where they'd otherwise
-	// crowd; it eases away by HEX_LABEL_EXTRA_PADDING_UNTIL_ZOOM.
-	const HEX_LABEL_EXTRA_PADDING_ZOOMED_OUT = 4;
-	const HEX_LABEL_EXTRA_PADDING_UNTIL_ZOOM = 2;
-	// Nearby clusters often share a progression; skip a label when the same
-	// name is already shown within this distance.
-	const HEX_LABEL_REPEAT_DISTANCE_PX = 150;
-	const HEX_CLICK_ZOOM_FACTOR = 2.5;
-	const HEX_CLICK_ZOOM_MS = 450;
-	const HOVERED_CLUSTER_STROKE_COLOR = "#ffffff";
-	const HOVERED_CLUSTER_STROKE_WIDTH = 2;
-	// Focusing a cluster in hex mode zooms just past the zoom where hexes
-	// turn into dots, and no further, so the cluster's songs show as dots.
-	const HEX_FOCUS_SCALE = HEX_ZOOM.dotsAtZoom * 1.01;
-	// Rotating labels: ROTATING_LABEL_COUNT slots, each showing a label for
-	// about ROTATING_LABEL_HOLD_MS (± jitter), fading it out and, after a
-	// short gap, fading in a different one. Slots start together but swap at
-	// staggered times, so 4–5 labels are always up and they change one by one.
-	const ROTATING_LABEL_COUNT = 5;
-	const ROTATING_LABEL_HOLD_MS = 6000;
-	const ROTATING_LABEL_HOLD_JITTER_MS = 1500;
-	const ROTATING_LABEL_GAP_MS = 400;
-	const ROTATING_LABEL_START_STAGGER_MS = 250;
-	const ROTATING_LABEL_FADE_MS = 800;
-
-	// Density clustering is only meaningful over layouts UMAP actually produced
-	// (see UMAP_DRIVEN_METHODS) — PCA/feature-axis positions are linear
-	// projections or hand-designed axes where geometric proximity doesn't mean
-	// "similar songs", so DBSCAN circles there would be visually plausible but
-	// semantically noise.
-	const CLUSTERABLE_METHODS = new Set<EmbeddingMethod>(UMAP_DRIVEN_METHODS);
-
-	const PLOT_MARGIN = 32;
-	const POINT_RADIUS = 3;
-	const SELECTED_POINT_RADIUS = 6;
-	const HOVER_PICK_RADIUS = 12;
-	const RING_WIDTH = 1.5;
-	const TWEEN_DURATION_MS = 700;
-	const JITTER_AMPLITUDE = 0.004;
-	const MIN_ZOOM = 1;
-	const MAX_ZOOM = 40;
-	const AXIS_LABEL_COLOR = "rgba(161, 161, 170, 0.7)";
-	const AXIS_LABEL_FONT = '10px "JetBrains Mono", ui-monospace, monospace';
-	const CLUSTER_RADIUS_PADDING = 8;
-	const CLUSTER_STROKE_COLOR = "#e4e4e7";
-	const CLUSTER_STROKE_WIDTH = 2;
-	const CLUSTER_UNNAMED_STROKE_ALPHA = 0.72;
-	// A cluster "heavily involves" a highlighted family when at least this
-	// fraction of its songs are in familyEmphasisSongKeys; below that its
-	// outline fades to CLUSTER_DEEMPHASIZED_STROKE_ALPHA and its name hides.
-	const FAMILY_INVOLVEMENT_THRESHOLD = 0.5;
-	const CLUSTER_DEEMPHASIZED_STROKE_ALPHA = 0.15;
-	const CLUSTER_DASH_PATTERN = [7, 5];
-	const CLUSTER_LABEL_COLOR = "rgba(244, 244, 245, 0.9)";
-	const CLUSTER_LABEL_FONT = '10px "JetBrains Mono", ui-monospace, monospace';
-	const CLUSTER_NAME_FONT =
-		'600 11px "JetBrains Mono", ui-monospace, monospace';
-	const CLUSTER_NAME_COLOR = "#f4f4f5";
-	const CLUSTER_LABEL_GAP = 6;
-	// Used when colorMode is "off" — a plain, star-like white so a
-	// highlighted song/family reads clearly against an otherwise uncolored
-	// field.
-	const STAR_FILL_COLOR = "#e4e4e7";
 
 	const baseFillFor = (
 		context: CanvasRenderingContext2D,
@@ -600,6 +648,9 @@
 		);
 	};
 
+	const isOutlined = (songKey: string): boolean =>
+		outlinedSongKeys?.has(songKey) ?? false;
+
 	const pointsInDrawOrder = $derived(
 		accentSongKeys === null || accentFillColor === null
 			? drawablePoints
@@ -651,15 +702,14 @@
 		const pad = PAN_EDGE_PADDING;
 		const x = clamp(t.x, width - t.k * width - pad, pad);
 		const y = clamp(t.y, height - t.k * height - pad, offsetY + pad);
-		return x === t.x && y === t.y
-			? t
-			: zoomIdentity.translate(x, y).scale(t.k);
+		return x === t.x && y === t.y ? t : zoomIdentity.translate(x, y).scale(t.k);
 	};
 
 	// The full, unzoomed view, shifted down by offsetY.
 	const homeTransform = $derived(zoomIdentity.translate(0, offsetY));
 
 	const radiusFor = (songKey: string): number => {
+		if (isOutlined(songKey)) return OUTLINED_POINT_RADIUS;
 		if (songKey === selectedSongKey) return SELECTED_POINT_RADIUS;
 		return POINT_RADIUS;
 	};
@@ -809,6 +859,7 @@
 		drawClusters(context);
 
 		for (const point of pointsInDrawOrder) {
+			if (isOutlined(point.songKey)) continue;
 			const position = displayedPositions.get(point.songKey);
 			if (!position) continue;
 			const screen = toScreen(position);
@@ -835,6 +886,10 @@
 			context.fill();
 		}
 
+		drawOutlinedSongs(context, dotGradient);
+		// Only at dot zoom levels, not over hexes.
+		drawOutlinedSongLabels(context);
+
 		const emphasized = [selectedSongKey, hoveredSongKey].filter(
 			(songKey): songKey is string =>
 				songKey !== null && pointBySongKey.has(songKey)
@@ -858,6 +913,158 @@
 		}
 
 		context.globalAlpha = 1;
+	};
+
+	// outlinedSongKeys: a white glow, then the song's region color inside a
+	// white ring, so they stand out from the dots around them.
+	const drawOutlinedSongs = (
+		context: CanvasRenderingContext2D,
+		gradientStrength: number
+	) => {
+		if (!outlinedSongKeys) return;
+		for (const songKey of outlinedSongKeys) {
+			const position = displayedPositions.get(songKey);
+			if (!position) continue;
+			const screen = toScreen(position);
+			const radius = radiusFor(songKey);
+			const reach = radius + OUTLINE_GLOW_BLUR;
+			if (
+				screen.x < -reach ||
+				screen.y < -reach ||
+				screen.x > width + reach ||
+				screen.y > height + reach
+			) {
+				continue;
+			}
+			context.save();
+			context.globalAlpha = alphaFor(songKey);
+			context.beginPath();
+			context.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
+			context.shadowColor = OUTLINE_COLOR;
+			context.shadowBlur = OUTLINE_GLOW_BLUR;
+			context.fillStyle = OUTLINE_COLOR;
+			context.fill();
+			context.restore();
+
+			context.globalAlpha = alphaFor(songKey);
+			context.beginPath();
+			context.arc(screen.x, screen.y, radius - OUTLINE_WIDTH, 0, Math.PI * 2);
+			context.fillStyle = hexMode
+				? songRegionFill(songKey, gradientStrength)
+				: OUTLINE_COLOR;
+			context.fill();
+		}
+	};
+
+	type Box = { left: number; right: number; top: number; bottom: number };
+
+	const boxesOverlap = (a: Box, b: Box): boolean =>
+		a.left < b.right &&
+		a.right > b.left &&
+		a.top < b.bottom &&
+		a.bottom > b.top;
+
+	// Each on-screen outlinedSongKeys song's title, with its artists under it,
+	// beside its marker: to the right if that's free, else left, above, or
+	// below. Placed fresh each draw, so they never cover each other or a
+	// marker at any zoom or canvas size; a song with no free spot goes
+	// unlabeled. Drawn after every marker so none covers a label.
+	const drawOutlinedSongLabels = (context: CanvasRenderingContext2D) => {
+		if (!outlinedSongKeys || !songSummaryByKey) return;
+		const songs = [...outlinedSongKeys].flatMap((songKey) => {
+			const summary = songSummaryByKey.get(songKey);
+			const position = displayedPositions.get(songKey);
+			if (!summary || !position) return [];
+			const screen = toScreen(position);
+			const radius = radiusFor(songKey);
+			const lines: [string, string][] = [
+				[OUTLINED_LABEL_TITLE_FONT, summary.title]
+			];
+			if (summary.artists.length > 0) {
+				lines.push([OUTLINED_LABEL_ARTIST_FONT, summary.artists.join(", ")]);
+			}
+			return [{ songKey, screen, radius, lines }];
+		});
+		const markers: Box[] = songs.map(({ screen, radius }) => ({
+			left: screen.x - radius,
+			right: screen.x + radius,
+			top: screen.y - radius,
+			bottom: screen.y + radius
+		}));
+		const onScreen = songs.filter(
+			({ screen }) =>
+				screen.x >= 0 &&
+				screen.y >= 0 &&
+				screen.x <= width &&
+				screen.y <= height
+		);
+
+		const placed: Box[] = [];
+		const labels: { songKey: string; lines: [string, string][]; box: Box }[] =
+			[];
+		for (const { songKey, screen, radius, lines } of onScreen) {
+			const textWidth = Math.max(
+				...lines.map(([font, text]) => {
+					context.font = font;
+					return context.measureText(text).width;
+				})
+			);
+			const textHeight = lines.length * OUTLINED_LABEL_LINE_HEIGHT;
+			const reach = radius + OUTLINED_LABEL_GAP;
+			const candidates: [number, number][] = [
+				[screen.x + reach, screen.y - textHeight / 2],
+				[screen.x - reach - textWidth, screen.y - textHeight / 2],
+				[screen.x - textWidth / 2, screen.y - reach - textHeight],
+				[screen.x - textWidth / 2, screen.y + reach]
+			];
+			const free = candidates
+				.map(
+					([left, top]): Box => ({
+						left: left - OUTLINED_LABEL_PADDING,
+						right: left + textWidth + OUTLINED_LABEL_PADDING,
+						top: top - OUTLINED_LABEL_PADDING,
+						bottom: top + textHeight + OUTLINED_LABEL_PADDING
+					})
+				)
+				.filter(
+					(box) =>
+						!placed.some((other) => boxesOverlap(box, other)) &&
+						!markers.some((other) => boxesOverlap(box, other))
+				);
+			// Prefer a spot fully on the canvas, but one hanging off an edge
+			// still counts as free.
+			const box =
+				free.find(
+					(box) =>
+						box.left >= 0 &&
+						box.top >= 0 &&
+						box.right <= width &&
+						box.bottom <= height
+				) ?? free[0];
+			if (!box) continue;
+			placed.push(box);
+			labels.push({ songKey, lines, box });
+		}
+
+		context.textAlign = "left";
+		context.textBaseline = "middle";
+		context.lineJoin = "round";
+		context.lineWidth = 3;
+		context.strokeStyle = hexColors.labelHalo;
+		context.fillStyle = hexColors.labelText;
+		for (const { songKey, lines, box } of labels) {
+			context.globalAlpha = alphaFor(songKey);
+			const x = box.left + OUTLINED_LABEL_PADDING;
+			lines.forEach(([font, text], index) => {
+				const y =
+					box.top +
+					OUTLINED_LABEL_PADDING +
+					(index + 0.5) * OUTLINED_LABEL_LINE_HEIGHT;
+				context.font = font;
+				context.strokeText(text, x, y);
+				context.fillText(text, x, y);
+			});
+		}
 	};
 
 	const traceHex = (
@@ -1303,7 +1510,29 @@
 				: best;
 		}, null);
 
+	// The nearest outlinedSongKeys song whose marker is under the anchor, give
+	// or take the same slack plain dots get. Checked before plain dots, since
+	// the markers sit on top of them.
+	const findOutlinedSongAtAnchor = (anchor: HoverCardAnchor): string | null => {
+		if (!outlinedSongKeys) return null;
+		let hit: string | null = null;
+		let hitDistance = OUTLINED_POINT_RADIUS + HOVER_PICK_RADIUS - POINT_RADIUS;
+		for (const songKey of outlinedSongKeys) {
+			const position = displayedPositions.get(songKey);
+			if (!position) continue;
+			const screen = toScreen(position);
+			const distance = Math.hypot(screen.x - anchor.x, screen.y - anchor.y);
+			if (distance < hitDistance) {
+				hit = songKey;
+				hitDistance = distance;
+			}
+		}
+		return hit;
+	};
+
 	const findPointAtAnchor = (anchor: HoverCardAnchor): string | null => {
+		const outlined = findOutlinedSongAtAnchor(anchor);
+		if (outlined !== null) return outlined;
 		const hit = drawablePoints.reduce<{
 			songKey: string | null;
 			distance: number;
@@ -1480,6 +1709,27 @@
 
 		const boxWidth = Math.max(maxX - minX, 1);
 		const boxHeight = Math.max(maxY - minY, 1);
+		if (hexMode && focusFrame && focusFrame.height > 0) {
+			// Capped by width too, so a wide cluster doesn't spill off the sides.
+			const frameScale = Math.min(
+				Math.max(
+					Math.min(
+						(focusFrame.height * FRAME_FOCUS_FILL) / boxHeight,
+						(width * FRAME_FOCUS_FILL) / boxWidth
+					),
+					MIN_ZOOM
+				),
+				MAX_ZOOM
+			);
+			const centerX = (minX + maxX) / 2;
+			const centerY = (minY + maxY) / 2;
+			return zoomIdentity
+				.translate(
+					width / 2 - centerX * frameScale,
+					focusFrame.top + focusFrame.height / 2 - centerY * frameScale
+				)
+				.scale(frameScale);
+		}
 		const fitScale = Math.min(
 			(width * CLUSTER_FOCUS_PADDING) / boxWidth,
 			(height * CLUSTER_FOCUS_PADDING) / boxHeight
@@ -1622,6 +1872,8 @@
 		void showLabels;
 		void showRotatingLabels;
 		void labelNameSet;
+		void outlinedSongKeys;
+		void songSummaryByKey;
 		draw();
 	});
 
@@ -1757,6 +2009,7 @@
 		bind:this={canvasEl}
 		class:inert={!interactive}
 		class:grabbable={movable && !hoverable}
+		class:clickable={hoveredSongKey !== null && isOutlined(hoveredSongKey)}
 		style:width="{width}px"
 		style:height="{height}px"
 	></canvas>
@@ -1802,9 +2055,16 @@
 		</span>
 	{/each}
 
+	{#snippet playBanner()}
+		{#if delayedTooltip.tooltipSongKey !== null && isOutlined(delayedTooltip.tooltipSongKey)}
+			<div class="play-banner">Click to play!</div>
+		{/if}
+	{/snippet}
+
 	{#if tooltipVisible && delayedTooltip.tooltipAnchor}
 		{#if simpleSongTooltip && tooltipSong}
 			<div class="tooltip" style={tooltipStyle}>
+				{@render playBanner()}
 				<HexSongTooltip
 					song={tooltipSong}
 					colorForProgression={(name) => regionColorByProgressionName.get(name)}
@@ -1813,15 +2073,18 @@
 			</div>
 		{:else if tooltipSong}
 			<div class="tooltip" style={tooltipStyle}>
+				{@render playBanner()}
 				<SongTooltip song={tooltipSong} />
 			</div>
 		{:else if simpleSongTooltip && tooltipSummary}
 			<div class="tooltip" style={tooltipStyle}>
+				{@render playBanner()}
 				<div class="hex-tooltip-title">{tooltipSummary.title}</div>
 				<div class="hex-tooltip-meta">{tooltipSummary.artists.join(", ")}</div>
 			</div>
 		{:else if tooltipSummary}
 			<div class="tooltip" style={tooltipStyle}>
+				{@render playBanner()}
 				<div class="hex-tooltip-title">{tooltipSummary.title}</div>
 				<div class="hex-tooltip-meta">{tooltipSummary.artists.join(", ")}</div>
 				<div class="hex-tooltip-meta">loading chords…</div>
@@ -1851,6 +2114,10 @@
 		cursor: grab;
 	}
 
+	canvas.clickable {
+		cursor: pointer;
+	}
+
 	canvas.inert {
 		cursor: default;
 		pointer-events: none;
@@ -1869,6 +2136,15 @@
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.75rem;
 		color: #f4f4f5;
+	}
+
+	/* Bleeds to the tooltip's edges, over its padding. */
+	.play-banner {
+		margin: -0.875rem -1rem 0.75rem;
+		padding: 0.375rem 1rem;
+		background: #fff;
+		color: #09090b;
+		font-weight: 700;
 	}
 
 	/* Matches HEX_LABEL_FONT and the canvas labels' halo. */

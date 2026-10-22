@@ -119,7 +119,11 @@
             {
               "type": "text",
               "value": "Musicians notate this with roman numerals. The <span class=chord>I</span> is the home base chord, <span class=chord>ii</span> is a step away, <span class=chord>iii</span> is another step away, <span class=chord>IV</span>, <span class=chord>V</span>, <span class=chord>vi</span>, <span class=chord>vii</span>.</span>"
-            },
+            }
+          ]
+        },
+        {
+          "text": [
             {
               "type": "text",
               "value": "So, these songs all go <span class=chords>I-V-vi-IV</span>, which is the Axis of Awesome “four chords” progression."
@@ -207,7 +211,9 @@
             "visible": "true"
           },
           "stage": {
-            "component": "list"
+            "component": "list",
+            "highlight": "axis of awesome",
+            "obscure": "true"
           }
         },
         {
@@ -253,7 +259,15 @@
           "text": [
             {
               "type": "text",
-              "value": "Some progressions borrow from outside the key. Sweet Home Mixolydian, named for \"Sweet Home Alabama,\" detours to a chord from the Mixolydian mode (not important unless you’re a nerd, but that’s the major scale with a lowered 7th), which gives it a bluesy sound before it resolves through the <span class=chord>IV</span>."
+              "value": "This progression, named for the chorus of <strong>Poker Face</strong>, centers around a minor version of the <span class=chord>i</span> chord."
+            },
+            {
+              "type": "text",
+              "value": "Sometimes people say “major is happy and minor is sad”, but tell that to Poker Face… Just because a song is in a minor key doesn’t mean it’s sad, it’s much more <a href=https://www.youtube.com/watch?v=OMWszWYX2OQ target=_blank>nuanced</a>."
+            },
+            {
+              "type": "text",
+              "value": "Instead, musicians often refer to minor as a <strong>darker</strong> sound, and major as a <strong>brighter</strong> sound. It’s like a different color palette to work with."
             }
           ]
         },
@@ -261,11 +275,7 @@
           "text": [
             {
               "type": "text",
-              "value": "This progression, named for the chorus of <strong>Poker Face</strong>, centers around a minor version of the <span class=chord>i</span> chord (lowercase numeral = minor)."
-            },
-            {
-              "type": "text",
-              "value": "Minor progressions tend to feel a bit darker than major ones, it’s like a different color palette to work with."
+              "value": "Tk one more"
             }
           ]
         },

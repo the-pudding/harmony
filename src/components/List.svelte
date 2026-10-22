@@ -2,7 +2,7 @@
 	import data from "$data/top-progressions.csv";
 	import { chordify } from "$utils/chordify";
 
-	const { highlight } = $props();
+	const { highlight, obscure } = $props();
 </script>
 
 <figure class="frosted" {@attach chordify}>
@@ -12,6 +12,7 @@
 		<div
 			class="row"
 			class:faded={highlight?.length && !highlight?.includes(name)}
+			class:obscure={obscure === "true" && !highlight?.includes(name)}
 		>
 			<span class="rank">{rank}</span>{name}
 			<span class="chords" data-tonality={scale}>{chordProgression}</span>
@@ -49,6 +50,11 @@
 
 	.row.faded {
 		opacity: 0.2;
+	}
+
+	.row.obscure {
+		opacity: 1;
+		filter: blur(3px);
 	}
 
 	.rank {

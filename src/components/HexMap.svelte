@@ -20,6 +20,7 @@
 		computeSongHomogeneity,
 		type ProgressionCoverage
 	} from "$routes/demo/shared/progressionHomogeneity.js";
+	import { committedSyncedSongs } from "$data/syncedSongs.js";
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
 	import { zoomIdentity, type ZoomTransform } from "d3";
@@ -44,6 +45,9 @@
 		rotateLabels?: boolean;
 		// Zoom in on and center this cluster, by name (e.g. "stay with me").
 		focusCluster?: string;
+		// The part of the map, in pixels from its top, that a focused cluster
+		// is zoomed to almost fill the height of and centered in.
+		focusFrame?: { top: number; height: number } | null;
 		// Center the map on the page. By default it sits a bit lower, to
 		// leave room for text above it (panning can still move it under).
 		// Always centered while focusCluster is set.
@@ -62,6 +66,7 @@
 
 	const {
 		focusCluster = undefined,
+		focusFrame = null,
 		centered = false,
 		movable = focusCluster === undefined,
 		hoverable = true,
@@ -89,6 +94,9 @@
 
 	const NO_SONG_KEYS = new Set<string>();
 	const NO_SONGS = new Map();
+
+	// Songs with time-synced chord data in src/data/synced-songs.
+	const SYNCED_SONG_KEYS = new Set(Object.keys(committedSyncedSongs));
 
 	let snapshot = $state.raw<HexMapSnapshot | null>(null);
 
@@ -260,12 +268,14 @@
 				{progressionSharesBySongKey}
 				{clusterRegionBySongKey}
 				{clusterNames}
+				outlinedSongKeys={SYNCED_SONG_KEYS}
 				{movable}
 				{hoverable}
 				showLabels={!hideLabels && !rotateLabels}
 				showRotatingLabels={!hideLabels && rotateLabels}
 				labelNames={showLabels ?? null}
 				{focusClusterName}
+				{focusFrame}
 				offsetY={centered || focusCluster !== undefined
 					? 0
 					: UNCENTERED_OFFSET_Y}
