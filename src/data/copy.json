@@ -17,7 +17,7 @@
             "centered": "true"
           },
           "stage": {
-            "component": "landing",
+            "component": "Landing",
             "hed": "Mapping every pop hit’s chords",
             "byline": "By <a href=https://pudding.cool/author/michelle-pera-mcghee/ target=_blank>Michelle Pera-McGhee</a> and <a href=https://pudding.cool/author/david-mora/ target=_blank>David Mora</a>"
           }
@@ -35,7 +35,7 @@
             }
           ],
           "stage": {
-            "component": "video",
+            "component": "Video",
             "videoId": "dead-simple"
           }
         },
@@ -47,7 +47,7 @@
             }
           ],
           "stage": {
-            "component": "video",
+            "component": "Video",
             "videoId": "examples"
           }
         },
@@ -211,7 +211,7 @@
             "visible": "true"
           },
           "overlay": {
-            "component": "list",
+            "component": "List",
             "highlight": "axis of awesome",
             "obscure": "true"
           }
@@ -227,7 +227,7 @@
             "visible": "true"
           },
           "overlay": {
-            "component": "list",
+            "component": "List",
             "highlight": "I-IV vamp, happy walk up, beer never broke my <3, I-V vamp, sweet home alabama, Cheerleader (verse), V-IV vamp, happy walk down, IV-V vamp, major-y, Cheerleader (chorus)"
           }
         },
@@ -318,7 +318,10 @@
               "type": "text",
               "value": "There’s a pretty even split between songs with few progressions and songs with a lot of progressions."
             }
-          ]
+          ],
+          "stage": {
+            "component": "EffectiveBar"
+          }
         },
         {
           "text": [
@@ -330,7 +333,10 @@
               "type": "text",
               "value": "The median song went from 4.4 effective progressions in the 1970s (the most diverse decade) to 1.9 in the 2010s (the most homogenous)."
             }
-          ]
+          ],
+          "stage": {
+            "component": "EffectiveDecades"
+          }
         },
         {
           "text": [

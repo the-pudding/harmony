@@ -27,6 +27,7 @@ This runs [`tasks/build-songs.js`](tasks/build-songs.js), which:
 - converts chord data into the format used by the chord-search matcher
 - writes `static/data/songs.json` (full corrected Top-10 corpus, used by all `/demo/` pages)
 - then runs `npm run hexmap` to rebuild the story map's data from it (see [Story map data](#story-map-data-npm-run-hexmap))
+- then runs `npm run charts` to rebuild the story's chart data (see [Chart data](#chart-data-npm-run-charts))
 
 Note: `src/data/hand-corrected-songs.ts` holds `handCorrectedSongs`; `src/data/hand-reviewed-songs.ts` holds `problematicSongs` and `trickySongsToMatchCorrectly` for reviewing song data before use in the UI. Hand corrections are applied at runtime when loading `songs.json`.
 
@@ -60,6 +61,24 @@ Both are gitignored, like `songs.json`. The `/demo/` pages still compute everyth
 You don't need to rerun it for HexMap props (focus, labels, interaction, clustering and layout settings), the theme, screen size, or drawing code; those all apply in the browser.
 
 `npm run test` catches most stale data: [`hexMapSnapshot.test.ts`](src/data/hexMapSnapshot.test.ts) fails when the baked songs or coverage no longer match what the code computes. It doesn't check map positions, so rerun `npm run hexmap` after layout-only changes.
+
+## Chart data (`npm run charts`)
+
+The story's charts read small CSVs from [`src/data/charts/`](src/data/charts) (import them via `$data/charts/...`). Unlike `hexmap.json`, these **are committed**, so after rebuilding them, commit the changed CSVs.
+
+[`tasks/build-charts.ts`](tasks/build-charts.ts) rebuilds all of them in one go. It computes coverage for every song in `songs.json` once, then writes:
+
+- `top-progressions.csv`: core progressions ranked by average coverage, with song counts and shares
+- `effective-progressions.csv`: how many songs fall into each effective-progression bucket (≈1, ≈2, ≈3, 4–5, 6+)
+- `effective-progressions-by-decade.csv`: the same buckets per decade; `sharePercent` is within each decade
+
+`npm run songs` runs it for you. Run `npm run charts` on its own when the charts' inputs change without the songs changing:
+
+- core progressions (`src/data/core-progressions.ts`) or song corrections (`hand-corrected-songs.ts`, `reviewed-corrections.json`)
+- the matching algorithm (e.g. `matchSongV2` or its weights)
+- the bucket boundaries in [`progressionHomogeneity.ts`](src/routes/demo/shared/progressionHomogeneity.ts)
+
+To add a chart, write a function in `tasks/build-charts.ts` that returns an array of rows, and add `{ file, build }` to its `charts` array.
 
 ## Coverage cache (IndexedDB)
 

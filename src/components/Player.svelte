@@ -1,5 +1,5 @@
 <script>
-	import progressionsData from "$data/top-progressions.csv";
+	import progressionsData from "$data/charts/top-progressions.csv";
 	import { chordify } from "$utils/chordify";
 
 	let { cluster } = $props();

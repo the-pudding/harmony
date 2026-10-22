@@ -7,6 +7,8 @@
 	import Slide from "$components/helpers/Slider.Slide.svelte";
 	import Video from "$components/Video.svelte";
 	import Player from "$components/Player.svelte";
+	import EffectiveBar from "$components/EffectiveBar.svelte";
+	import EffectiveDecades from "$components/EffectiveDecades.svelte";
 	import List from "$components/List.svelte";
 	import CMS from "$components/helpers/CMS.svelte";
 	import { fade } from "svelte/transition";
@@ -16,12 +18,14 @@
 	import { setContext } from "svelte";
 	import { spanStyle } from "$routes/demo/design/timelineStyles";
 
-	const debugSlide = undefined; //14;
+	const debugSlide = 21;
 
 	const components = {
 		Landing,
 		Video,
-		List
+		List,
+		EffectiveBar,
+		EffectiveDecades
 	};
 
 	let slideCount = 0;
@@ -40,14 +44,10 @@
 		overlay ?? {}
 	);
 	let StageComponent = $derived(
-		stageComponentName
-			? (components[_.capitalize(stageComponentName)] ?? null)
-			: null
+		stageComponentName ? (components[stageComponentName] ?? null) : null
 	);
 	let OverlayComponent = $derived(
-		overlayComponentName
-			? (components[_.capitalize(overlayComponentName)] ?? null)
-			: null
+		overlayComponentName ? (components[overlayComponentName] ?? null) : null
 	);
 
 	setContext("state", {

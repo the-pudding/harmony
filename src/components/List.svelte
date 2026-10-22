@@ -1,5 +1,5 @@
 <script>
-	import data from "$data/top-progressions.csv";
+	import data from "$data/charts/top-progressions.csv";
 	import { chordify } from "$utils/chordify";
 
 	const { highlight, obscure } = $props();
