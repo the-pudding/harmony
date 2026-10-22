@@ -151,14 +151,21 @@
             }
           ],
           "map": {
-            "visible": "true"
+            "visible": "true",
+            "movable": "false",
+            "hoverable": "false",
+            "hideLabels": "true"
           }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "Here's how the map works. Songs sit near others with a similar mix of progressions. The purists, built mostly from one progression, cluster at the center of each island, and mixed songs spread out between them."
+              "value": "Here's how the map works. Each dot is a song, placed near songs that use a similar mix of chord progressions. When enough similar songs gather in one area, they form a cluster. Songs in grey don't have enough close neighbors to belong to any cluster; their mix of progressions is too unusual."
+            },
+            {
+              "type": "text",
+              "value": "The purists, built mostly from one progression, are at the center of each cluster, and mixed songs spread out between them."
             },
             {
               "type": "text",

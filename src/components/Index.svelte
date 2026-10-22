@@ -13,7 +13,7 @@
 	import _ from "lodash";
 	import { setContext } from "svelte";
 
-	const debugSlide = undefined; //13;
+	const debugSlide = 11;
 
 	const components = {
 		Landing,
@@ -210,5 +210,10 @@
 	.text :global(ol) {
 		font-size: var(--36px);
 		font-family: var(--font-serif);
+	}
+
+	.text :global(span.small) {
+		font-size: var(--12px);
+		opacity: 0.75;
 	}
 </style>

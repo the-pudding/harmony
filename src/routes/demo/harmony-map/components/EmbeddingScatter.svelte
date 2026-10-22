@@ -173,6 +173,12 @@
 		// lighter grays and dark label text; the canvas itself is always
 		// transparent, so the page provides the background.
 		theme?: "dark" | "light";
+		// Called with the pan/zoom transform whenever it changes (user or
+		// scripted), e.g. to show where the view is on an overview map.
+		onTransformChange?: ((transform: ZoomTransform) => void) | null;
+		// Canvas pixels per CSS pixel. Defaults to the screen's; lower it when
+		// the map is shown scaled down (e.g. an inset) to save memory.
+		pixelRatio?: number | null;
 	};
 
 	const {
@@ -209,7 +215,9 @@
 		showLabels = true,
 		showRotatingLabels = false,
 		labelNames = null,
-		theme = "dark"
+		theme = "dark",
+		onTransformChange = null,
+		pixelRatio: pixelRatioOverride = null
 	}: Props = $props();
 
 	const normalizeName = (name: string): string => name.trim().toLowerCase();
@@ -758,7 +766,7 @@
 		const context = canvas?.getContext("2d");
 		if (!canvas || !context || width === 0 || height === 0) return;
 
-		const pixelRatio = window.devicePixelRatio || 1;
+		const pixelRatio = pixelRatioOverride ?? (window.devicePixelRatio || 1);
 		const pixelWidth = Math.round(width * pixelRatio);
 		const pixelHeight = Math.round(height * pixelRatio);
 		if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
@@ -1396,6 +1404,7 @@
 			.on("end", delayedTooltip.endDrag)
 			.on("zoom", (event) => {
 				transform = event.transform;
+				onTransformChange?.(event.transform);
 				// Hexes re-bin as the zoom changes, so a hovered hex is stale.
 				hoveredHex = null;
 			});

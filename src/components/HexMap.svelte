@@ -22,6 +22,7 @@
 	} from "$routes/demo/shared/progressionHomogeneity.js";
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
+	import { zoomIdentity, type ZoomTransform } from "d3";
 	import EmbeddingScatter from "$routes/demo/harmony-map/components/EmbeddingScatter.svelte";
 	import type { ScatterPoint } from "$routes/demo/harmony-map/components/scatterPoint.js";
 
@@ -90,6 +91,34 @@
 	const NO_SONGS = new Map();
 
 	let snapshot = $state.raw<HexMapSnapshot | null>(null);
+
+	// The inset is a second, unzoomed copy of the map drawn at full size and
+	// scaled down, so its hexes look like the zoomed-out map and its pixels
+	// line up with the main map's unzoomed (base) coordinates.
+	const INSET_WIDTH = 150;
+	// The inset fades in once the view is zoomed in at least this far.
+	const INSET_MIN_ZOOM = 1.5;
+
+	let width = $state(0);
+	let height = $state(0);
+	let viewTransform = $state.raw<ZoomTransform>(zoomIdentity);
+
+	const insetScale = $derived(width > 0 ? INSET_WIDTH / width : 0);
+
+	// The main view's corners in base coordinates, scaled into the inset and
+	// clamped to it so the outline stays visible when panned past the edge.
+	const viewRect = $derived.by(() => {
+		const [left, top] = viewTransform.invert([0, 0]);
+		const [right, bottom] = viewTransform.invert([width, height]);
+		const clampX = (x: number) => Math.min(Math.max(x, 0), width);
+		const clampY = (y: number) => Math.min(Math.max(y, 0), height);
+		return {
+			x: clampX(left) * insetScale,
+			y: clampY(top) * insetScale,
+			width: (clampX(right) - clampX(left)) * insetScale,
+			height: (clampY(bottom) - clampY(top)) * insetScale
+		};
+	});
 
 	onMount(() => {
 		let active = true;
@@ -209,7 +238,12 @@
 	);
 </script>
 
-<div class="hex-map" class:dark={theme === "dark"}>
+<div
+	class="hex-map"
+	class:dark={theme === "dark"}
+	bind:clientWidth={width}
+	bind:clientHeight={height}
+>
 	{#if displayPoints.length > 0}
 		<div class="fade-wrap" in:fade={{ duration: 500 }}>
 			<EmbeddingScatter
@@ -237,7 +271,52 @@
 					: UNCENTERED_OFFSET_Y}
 				{theme}
 				onSelect={() => {}}
+				onTransformChange={(transform) => (viewTransform = transform)}
 			/>
+
+			{#if width > 0 && height > 0}
+				<div
+					class="inset"
+					class:visible={viewTransform.k >= INSET_MIN_ZOOM}
+					aria-hidden="true"
+					style:width="{width * insetScale}px"
+					style:height="{height * insetScale}px"
+				>
+					<div
+						class="inset-map"
+						style:width="{width}px"
+						style:height="{height}px"
+						style:transform="scale({insetScale})"
+					>
+						<EmbeddingScatter
+							points={displayPoints}
+							songByKey={NO_SONGS}
+							selectedSongKey={null}
+							coClusterSongKeys={NO_SONG_KEYS}
+							method="umap"
+							clusters={densityClusters}
+							emphasizedClusterHashes={null}
+							renderMode="hex"
+							{progressionSharesBySongKey}
+							{clusterRegionBySongKey}
+							{clusterNames}
+							movable={false}
+							hoverable={false}
+							showLabels={false}
+							pixelRatio={insetScale * (window.devicePixelRatio || 1)}
+							{theme}
+							onSelect={() => {}}
+						/>
+					</div>
+					<div
+						class="view-rect"
+						style:left="{viewRect.x}px"
+						style:top="{viewRect.y}px"
+						style:width="{viewRect.width}px"
+						style:height="{viewRect.height}px"
+					></div>
+				</div>
+			{/if}
 		</div>
 	{/if}
 </div>
@@ -255,5 +334,41 @@
 
 	.hex-map.dark {
 		background: #09090b;
+	}
+
+	.inset {
+		position: fixed;
+		bottom: 1rem;
+		left: 1rem;
+		overflow: hidden;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: 4px;
+		background: #09090b;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 300ms ease;
+	}
+
+	.inset.visible {
+		opacity: 1;
+	}
+
+	.hex-map:not(.dark) .inset {
+		border-color: rgba(0, 0, 0, 0.2);
+		background: white;
+	}
+
+	.inset-map {
+		transform-origin: top left;
+	}
+
+	.view-rect {
+		position: absolute;
+		box-sizing: border-box;
+		border: 1.5px solid white;
+	}
+
+	.hex-map:not(.dark) .view-rect {
+		border-color: #18181b;
 	}
 </style>
