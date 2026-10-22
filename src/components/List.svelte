@@ -1,20 +1,20 @@
 <script>
 	import data from "$data/top-progressions.csv";
+	import { chordify } from "$utils/chordify";
 
 	const { highlight } = $props();
 </script>
 
-<figure class="frosted">
+<figure class="frosted" {@attach chordify}>
 	<div class="title">The Top Chord Progressions in Top-20 Hits, 1958-2026</div>
 
-	{#each data as { name, rank, chordProgression }}
+	{#each data as { name, rank, chordProgression, scale }}
 		<div
 			class="row"
 			class:faded={highlight?.length && !highlight?.includes(name)}
 		>
-			<span class="rank">{rank}</span>{name} (<span class="chord"
-				>{chordProgression}</span
-			>)
+			<span class="rank">{rank}</span>{name}
+			<span class="chords" data-tonality={scale}>{chordProgression}</span>
 		</div>
 	{/each}
 </figure>
@@ -33,8 +33,8 @@
 		margin-bottom: 0.5rem;
 	}
 
-	.chord {
-		font-size: var(--12px);
+	.chords {
+		margin-left: 0.5rem;
 	}
 
 	.row {

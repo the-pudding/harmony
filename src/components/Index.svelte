@@ -15,7 +15,7 @@
 	import { setContext } from "svelte";
 	import { spanStyle } from "$routes/demo/design/timelineStyles";
 
-	const debugSlide = 7;
+	const debugSlide = 11;
 
 	const components = {
 		Landing,
@@ -82,7 +82,6 @@
 			slideI -= 1;
 		}
 	};
-
 </script>
 
 <Tap

@@ -102,11 +102,10 @@ a:hover {
 	text-decoration-color: var(--color-link-hover);
 }
 
-span.chord {
+span.chord, span.chords {
 	font-family: var(--font-mono);
 }
 
-/* watercolor chords mounted by chordify */
 span.chord[data-chord] svg,
 span.chords[data-chords] svg {
 	display: inline-block;

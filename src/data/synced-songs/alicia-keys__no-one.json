@@ -1,0 +1,20 @@
+{
+	"songKey": "alicia-keys__no-one",
+	"audioFile": "alicia-keys__no-one.mp3",
+	"key": { "tonic": "E", "scale": "major" },
+	"region": { "startSeconds": 34.579, "endSeconds": 66.813 },
+	"chords": [
+		{ "seconds": 34.753, "chord": "E", "roman": "I" },
+		{ "seconds": 37.415, "chord": "B", "roman": "V" },
+		{ "seconds": 40.085, "chord": "C#m", "roman": "vi" },
+		{ "seconds": 42.745, "chord": "A", "roman": "IV" },
+		{ "seconds": 45.433, "chord": "E", "roman": "I" },
+		{ "seconds": 48.116, "chord": "B", "roman": "V" },
+		{ "seconds": 50.786, "chord": "C#m", "roman": "vi" },
+		{ "seconds": 53.42, "chord": "A", "roman": "IV" },
+		{ "seconds": 56.088, "chord": "E", "roman": "I" },
+		{ "seconds": 58.761, "chord": "B", "roman": "V" },
+		{ "seconds": 61.427, "chord": "C#m", "roman": "vi" },
+		{ "seconds": 64.1, "chord": "A", "roman": "IV" }
+	]
+}

@@ -1,0 +1,18 @@
+{
+	"songKey": "noah-kahan__stick-season",
+	"audioFile": "noah-kahan__stick-season.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 51.062, "endSeconds": 83.946 },
+	"chords": [
+		{ "seconds": 51.181, "chord": "A", "roman": "I" },
+		{ "seconds": 55.267, "chord": "E", "roman": "V" },
+		{ "seconds": 59.4, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 63.396, "chord": "D", "roman": "IV" },
+		{ "seconds": 67.569, "chord": "A", "roman": "I" },
+		{ "seconds": 71.648, "chord": "E", "roman": "V" },
+		{ "seconds": 75.764, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 79.787, "chord": "D", "roman": "IV" },
+		{ "seconds": 81.852, "chord": "E", "roman": "V" },
+		{ "seconds": 83.868, "chord": "A", "roman": "I" }
+	]
+}

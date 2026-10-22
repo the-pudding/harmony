@@ -1,0 +1,20 @@
+{
+	"songKey": "taylor-swift__all-too-well-taylor-s-version",
+	"audioFile": "taylor-swift__all-too-well-taylor-s-version.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 87.949, "endSeconds": 118.957 },
+	"chords": [
+		{ "seconds": 88.216, "chord": "C", "roman": "I" },
+		{ "seconds": 90.805, "chord": "G", "roman": "V" },
+		{ "seconds": 93.355, "chord": "Am", "roman": "vi" },
+		{ "seconds": 95.965, "chord": "F", "roman": "IV" },
+		{ "seconds": 98.524, "chord": "C", "roman": "I" },
+		{ "seconds": 101.132, "chord": "G", "roman": "V" },
+		{ "seconds": 103.671, "chord": "Am", "roman": "vi" },
+		{ "seconds": 106.251, "chord": "F", "roman": "IV" },
+		{ "seconds": 108.842, "chord": "C", "roman": "I" },
+		{ "seconds": 111.428, "chord": "G", "roman": "V" },
+		{ "seconds": 114.012, "chord": "Am", "roman": "vi" },
+		{ "seconds": 116.559, "chord": "F", "roman": "IV" }
+	]
+}
