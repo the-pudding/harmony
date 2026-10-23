@@ -165,7 +165,7 @@
           "text": [
             {
               "type": "text",
-              "value": "Here's how the map works. Each dot is a song, placed near songs that use a similar mix of chord progressions. When enough similar songs gather in one area, they form a cluster. Songs in grey don't have enough close neighbors to belong to any cluster; their mix of progressions is too unusual."
+              "value": "Here's how the map works. Zoom in on these islands, and you’ll see each dot as a song, placed near songs that use a similar mix of chord progressions. When enough similar songs gather in one area, they form a cluster. Songs in grey don't have enough close neighbors to belong to any cluster; their mix of progressions is too unusual."
             },
             {
               "type": "text",

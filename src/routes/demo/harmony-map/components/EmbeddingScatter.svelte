@@ -361,6 +361,9 @@
 		// Called with the pan/zoom transform whenever it changes (user or
 		// scripted), e.g. to show where the view is on an overview map.
 		onTransformChange?: ((transform: ZoomTransform) => void) | null;
+		// Called on every click on the map with the outlinedSongKeys song
+		// under the pointer, or null when the click missed them all.
+		onOutlinedSongClick?: ((songKey: string | null) => void) | null;
 		// Canvas pixels per CSS pixel. Defaults to the screen's; lower it when
 		// the map is shown scaled down (e.g. an inset) to save memory.
 		pixelRatio?: number | null;
@@ -408,6 +411,7 @@
 		labelNames = null,
 		theme = "dark",
 		onTransformChange = null,
+		onOutlinedSongClick = null,
 		pixelRatio: pixelRatioOverride = null,
 		simpleSongTooltip = false
 	}: Props = $props();
@@ -1617,6 +1621,9 @@
 	const handleClick = (event: MouseEvent) => {
 		if (clickGuard.shouldSuppressClick()) return;
 		if (!containerEl) return;
+		onOutlinedSongClick?.(
+			findOutlinedSongAtAnchor(anchorFromMouseEvent(event, containerEl))
+		);
 		if (hexFrame) {
 			// Clicking a hex zooms in on it, toward finer hexes and then dots.
 			const anchor = anchorFromMouseEvent(event, containerEl);
@@ -2062,16 +2069,9 @@
 		</span>
 	{/each}
 
-	{#snippet playBanner()}
-		{#if delayedTooltip.tooltipSongKey !== null && isOutlined(delayedTooltip.tooltipSongKey)}
-			<div class="play-banner">Click to play!</div>
-		{/if}
-	{/snippet}
-
 	{#if tooltipVisible && delayedTooltip.tooltipAnchor}
 		{#if simpleSongTooltip && tooltipSong}
 			<div class="tooltip" style={tooltipStyle}>
-				{@render playBanner()}
 				<HexSongTooltip
 					song={tooltipSong}
 					colorForProgression={(name) => regionColorByProgressionName.get(name)}
@@ -2080,18 +2080,15 @@
 			</div>
 		{:else if tooltipSong}
 			<div class="tooltip" style={tooltipStyle}>
-				{@render playBanner()}
 				<SongTooltip song={tooltipSong} />
 			</div>
 		{:else if simpleSongTooltip && tooltipSummary}
 			<div class="tooltip" style={tooltipStyle}>
-				{@render playBanner()}
 				<div class="hex-tooltip-title">{tooltipSummary.title}</div>
 				<div class="hex-tooltip-meta">{tooltipSummary.artists.join(", ")}</div>
 			</div>
 		{:else if tooltipSummary}
 			<div class="tooltip" style={tooltipStyle}>
-				{@render playBanner()}
 				<div class="hex-tooltip-title">{tooltipSummary.title}</div>
 				<div class="hex-tooltip-meta">{tooltipSummary.artists.join(", ")}</div>
 				<div class="hex-tooltip-meta">loading chords…</div>
@@ -2143,15 +2140,6 @@
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 		font-size: 0.75rem;
 		color: #f4f4f5;
-	}
-
-	/* Bleeds to the tooltip's edges, over its padding. */
-	.play-banner {
-		margin: -0.875rem -1rem 0.75rem;
-		padding: 0.375rem 1rem;
-		background: #fff;
-		color: #09090b;
-		font-weight: 700;
 	}
 
 	/* Matches HEX_LABEL_FONT and the canvas labels' halo. */

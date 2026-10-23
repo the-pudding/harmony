@@ -18,7 +18,7 @@
 	import { setContext } from "svelte";
 	import { spanStyle } from "$routes/demo/design/timelineStyles";
 
-	const debugSlide = 21;
+	const debugSlide = 12;
 
 	const components = {
 		Landing,
@@ -38,6 +38,7 @@
 		.flat();
 
 	let slideI = $state(debugSlide || 0);
+	let playingSongId = $state();
 	let { text, stage, overlay, map } = $derived(allSlides[slideI]);
 	let { component: stageComponentName, ...stageProps } = $derived(stage ?? {});
 	let { component: overlayComponentName, ...overlayProps } = $derived(
@@ -93,6 +94,14 @@
 	);
 	let showClusterPanel = $derived(mapProps?.focusCluster !== undefined);
 
+	// The text and panel sit over the map and catch its clicks, so clicking
+	// their blank space stops the playing song too, like blank map space does.
+	const INTERACTIVE =
+		'a, button, input, select, textarea, audio, video, [tabindex]:not([tabindex="-1"])';
+	const onArticleClick = (event) => {
+		if (!event.target.closest(INTERACTIVE)) playingSongId = undefined;
+	};
+
 	const onTap = (dir) => {
 		if (debugSlide) return;
 		if (dir === "right" && slideI < allSlides.length - 1) {
@@ -121,10 +130,16 @@
 	class:faded={overlay}
 	aria-hidden={mapProps === null}
 >
-	<HexMap {...mapProps ?? {}} {focusFrame} theme="dark" />
+	<HexMap
+		{...mapProps ?? {}}
+		{focusFrame}
+		theme="dark"
+		onSongClick={(songKey) => (playingSongId = songKey ?? undefined)}
+	/>
 </div>
 
-<article>
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+<article onclick={onArticleClick}>
 	<Chapters
 		visible={slideI > 0}
 		activeSlide={slideI}
@@ -170,7 +185,10 @@
 
 		{#if showClusterPanel}
 			<div class="panel" in:fade={{ duration: 300, delay: 800 }}>
-				<Player cluster={mapProps.focusCluster} />
+				<Player
+					cluster={mapProps.focusCluster}
+					bind:playingSongKey={playingSongId}
+				/>
 			</div>
 		{/if}
 	</div>

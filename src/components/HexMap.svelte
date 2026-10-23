@@ -54,6 +54,9 @@
 		// "dark" draws on a near-black background; "light" has no background
 		// of its own and uses lighter grays between colored hexes.
 		theme?: "dark" | "light";
+		// Called when the map is clicked, with the synced song clicked on, or
+		// null when the click missed them.
+		onSongClick?: (songKey: string | null) => void;
 		// Same meanings and defaults as /demo/embedding. (UMAP's minDist is
 		// baked into the snapshot; see HEX_MAP_UMAP_MIN_DIST.)
 		purityLayout?: boolean;
@@ -73,6 +76,7 @@
 		showLabels = undefined,
 		rotateLabels = false,
 		theme = "dark",
+		onSongClick = undefined,
 		purityLayout = true,
 		pureThreshold = 0.9,
 		clusterMinPoints = 20,
@@ -286,6 +290,7 @@
 				simpleSongTooltip
 				onSelect={() => {}}
 				onTransformChange={(transform) => (viewTransform = transform)}
+				onOutlinedSongClick={onSongClick}
 			/>
 
 			{#if width > 0 && height > 0}
