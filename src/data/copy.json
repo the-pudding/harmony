@@ -220,9 +220,40 @@
           "text": [
             {
               "type": "text",
-              "value": "Tk one of the top ones like I-IV vamp or happy walkup (maybe one for each), show examples"
+              "value": "At the top we have <strong>I-IV</strong>, so just going back and forth between <span class=chord>I</span> and <span class=chord>IV</span>."
             }
-          ]
+          ],
+          "map": {
+            "visible": "true"
+          },
+          "overlay": {
+            "component": "List",
+            "highlight": "I-IV vamp"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Tk"
+            }
+          ],
+          "map": {
+            "visible": "true",
+            "focusCluster": "I-IV vamp"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Next is <strong>happy walk up</strong>. Tk “La Bamba”"
+            }
+          ],
+          "map": {
+            "visible": "true",
+            "focusCluster": "happy walk up"
+          }
         },
         {
           "text": [
@@ -267,14 +298,6 @@
           "text": [
             {
               "type": "text",
-              "value": "Tk doo wop?"
-            }
-          ]
-        },
-        {
-          "text": [
-            {
-              "type": "text",
               "value": "This progression looks different than the others because it’s in a minor key."
             },
             {
@@ -285,7 +308,11 @@
               "type": "text",
               "value": "Instead, musicians often refer to minor as a <strong>darker</strong> sound, and major as a <strong>brighter</strong> sound. It’s like a different color palette to work with."
             }
-          ]
+          ],
+          "map": {
+            "visible": "true",
+            "focusCluster": "poker face (chorus)"
+          }
         },
         {
           "text": [
@@ -295,9 +322,12 @@
             },
             {
               "type": "text",
-              "value": "Explore all the clusters at the end in explore mode."
+              "value": "<span class=small>Explore all the clusters and search for your favorite songs at the end in explore mode!</span>"
             }
-          ]
+          ],
+          "map": {
+            "visible": "true"
+          }
         }
       ]
     },
@@ -309,6 +339,16 @@
             {
               "type": "text",
               "value": "Ok, but even if pop songs pull from a variety of progressions, perhaps each song just endlessly loops that single progression, without creativity or nuance?"
+            },
+            {
+              "type": "ol",
+              "value": {
+                "li": [
+                  "<s><span class=\"sr-only\">crossed out: </span>built on a single four-chord progression 🧱</s>",
+                  "looped for the entire song 🔁",
+                  "and recycled decade after decade? 🗓️"
+                ]
+              }
             }
           ]
         },
@@ -355,6 +395,16 @@
             {
               "type": "text",
               "value": "So even though it’s not the case that most songs are just 1 loop, songs are getting loopier. The Axis of Awesome boys had their finger on something real."
+            },
+            {
+              "type": "ol",
+              "value": {
+                "li": [
+                  "<s><span class=\"sr-only\">crossed out: </span>built on a single four-chord progression 🧱</s>",
+                  "<s><span class=\"sr-only\">crossed out: </span>looped for the entire song 🔁</s>",
+                  "and recycled decade after decade? 🗓️"
+                ]
+              }
             }
           ]
         }
@@ -368,6 +418,16 @@
             {
               "type": "text",
               "value": "What about the final claim, that progressions are deployed ubiquitously across time?"
+            },
+            {
+              "type": "ol",
+              "value": {
+                "li": [
+                  "<s><span class=\"sr-only\">crossed out: </span>built on a single four-chord progression 🧱</s>",
+                  "<s><span class=\"sr-only\">crossed out: </span>looped for the entire song 🔁</s>",
+                  "and recycled decade after decade? 🗓️"
+                ]
+              }
             }
           ]
         },

@@ -23,7 +23,7 @@
 	import mutedSvg from "$svg/muted.svg";
 	import unmutedSvg from "$svg/unmuted.svg";
 
-	const debugSlide = undefined; //30;
+	const debugSlide = undefined;
 
 	const components = {
 		Landing,
@@ -331,6 +331,16 @@
 	.text :global(ol) {
 		font-size: var(--36px);
 		font-family: var(--font-serif);
+		margin-top: 3rem;
+	}
+
+	.text :global(s) {
+		color: var(--color-fg-light);
+		text-decoration: line-through 0.1em var(--color-fg);
+	}
+
+	.text :global(li:has(s))::marker {
+		color: var(--color-fg-light);
 	}
 
 	.text :global(span.small) {
