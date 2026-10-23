@@ -220,7 +220,15 @@
           "text": [
             {
               "type": "text",
-              "value": "You’ll notice a lot of them exclusively involve <span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span>. If you’re gonna learn 3 chords, learn those."
+              "value": "Tk one of the top ones like I-IV vamp or happy walkup (maybe one for each), show examples"
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "You’ll notice a lot of these top progressions exclusively involve <span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span>. If you’re gonna learn 3 chords, learn those."
             }
           ],
           "map": {
@@ -259,11 +267,19 @@
           "text": [
             {
               "type": "text",
-              "value": "This progression, named for the chorus of <strong>Poker Face</strong>, centers around a minor version of the <span class=chord>i</span> chord."
+              "value": "Tk doo wop?"
+            }
+          ]
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "This progression looks different than the others because it’s in a minor key."
             },
             {
               "type": "text",
-              "value": "Sometimes people say that major is happy and minor is sad, but tell that to Poker Face… Just because a song is in a minor key doesn’t mean it’s sad, it’s much more <a href=https://www.youtube.com/watch?v=OMWszWYX2OQ target=_blank>nuanced</a>."
+              "value": "Sometimes people say that major is happy and minor is sad, but tell that to Poker Face by Lady Gaga… Just because a song is in a minor key doesn’t mean it’s sad, it’s much more <a href=https://www.youtube.com/watch?v=OMWszWYX2OQ target=_blank>nuanced</a>."
             },
             {
               "type": "text",
@@ -275,15 +291,11 @@
           "text": [
             {
               "type": "text",
-              "value": "Tk one more"
-            }
-          ]
-        },
-        {
-          "text": [
+              "value": "So pop doesn't run on just one formula. It has many, and they produce different emotional journeys."
+            },
             {
               "type": "text",
-              "value": "So pop doesn't run on one formula. It has many, and they produce different emotional journeys."
+              "value": "Explore all the clusters at the end in explore mode."
             }
           ]
         }
@@ -377,43 +389,62 @@
               "type": "text",
               "value": "“The four chords” surged in the late 2000s, their performance was in 2009. This progression is [3x] more common in the 2000s vs other decades, and was found in a full [11%] of songs."
             }
-          ]
+          ],
+          "stage": {
+            "component": "ClusterPercentOverTime",
+            "cluster": "axis of awesome"
+          }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "It begs the question: Did every decade have its own version of Axis of Awesome chord progression?"
+              "value": "It begs the question: Did every decade have its own version of the <strong>Axis of Awesome</strong> chord progression?"
             },
             {
               "type": "text",
               "value": "Interestingly, not really…"
-            },
-            {
-              "type": "text",
-              "value": "…with one huge exception: the 50s and 60s was dominated by doo wop."
-            },
-            {
-              "type": "text",
-              "value": "[1 in 9] songs during that period included a doo wop progression. It was [2.6x] more common then than overall in the dataset."
             }
-          ]
+          ],
+          "stage": {
+            "component": "Signatures"
+          }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "The <strong>doo wop</strong> progression is <span class=chord>I-vi-IV-V</span>."
+              "value": "…with one huge exception: the 50s and 60s was dominated by <strong>doo wop</strong>."
             },
             {
               "type": "text",
-              "value": "It’s the same 4 chords as <strong>Axis of Awesome</strong>, in a different order."
+              "value": "[1 in 9] songs during that period included a <strong>doo wop</strong> progression. It was [2.6x] more common then than overall in the dataset."
+            }
+          ],
+          "stage": {
+            "component": "ClusterPercentOverTime",
+            "cluster": "doo wop"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "The <strong>doo wop</strong> progression is <span class=chords>I-vi-IV-V</span>."
+            },
+            {
+              "type": "text",
+              "value": "It’s the same 4 chords as <strong>Axis of Awesome</strong> (<span class=chords>I-V-vi-IV</span>), in a different order."
             },
             {
               "type": "text",
               "value": "These two classic progressions dominated and defined their respective eras."
             }
-          ]
+          ],
+          "map": {
+            "visible": "true",
+            "focusCluster": "doo wop"
+          }
         }
       ]
     }

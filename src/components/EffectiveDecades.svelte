@@ -24,7 +24,7 @@
 </script>
 
 <figure id="effective-decades">
-	<h3>Songs by effective progression count, by decade</h3>
+	<h3 class="chart-title">Songs by effective progression count, by decade</h3>
 
 	<div class="legend">
 		{#each legend as { band, label, color } (band)}
@@ -63,13 +63,6 @@
 	figure {
 		max-width: 700px;
 		margin: 2rem auto;
-	}
-
-	h3 {
-		font-size: var(--32px);
-		font-weight: bold;
-		font-family: var(--font-serif);
-		margin-bottom: 1rem;
 	}
 
 	.legend {

@@ -106,6 +106,10 @@ span.chord, span.chords {
 	font-family: var(--font-mono);
 }
 
+span.chords {
+	white-space: nowrap;
+}
+
 span.chord[data-chord] svg,
 span.chords[data-chords] svg {
 	display: inline-block;
@@ -117,8 +121,10 @@ span.chords[data-chords] svg {
 	text-shadow: none;
 }
 
-strong {
-	/* font-family: var(--font-serif); */
+.chart-title {
+	font-size: var(--28px);
+	font-family: var(--font-serif);
+	margin-bottom: 1rem;
 }
 
 /* readable text over full-screen visuals: feathered blur behind + soft halo on glyphs */

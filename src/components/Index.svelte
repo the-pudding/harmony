@@ -9,6 +9,8 @@
 	import Player from "$components/Player.svelte";
 	import EffectiveBar from "$components/EffectiveBar.svelte";
 	import EffectiveDecades from "$components/EffectiveDecades.svelte";
+	import ClusterPercentOverTime from "$components/ClusterPercentOverTime.svelte";
+	import Signatures from "$components/Signatures.svelte";
 	import List from "$components/List.svelte";
 	import CMS from "$components/helpers/CMS.svelte";
 	import { fade } from "svelte/transition";
@@ -18,14 +20,16 @@
 	import { setContext } from "svelte";
 	import { spanStyle } from "$routes/demo/design/timelineStyles";
 
-	const debugSlide = undefined; //12;
+	const debugSlide = 30;
 
 	const components = {
 		Landing,
 		Video,
 		List,
 		EffectiveBar,
-		EffectiveDecades
+		EffectiveDecades,
+		ClusterPercentOverTime,
+		Signatures
 	};
 
 	let slideCount = 0;
@@ -94,8 +98,6 @@
 	);
 	let showClusterPanel = $derived(mapProps?.focusCluster !== undefined);
 
-	// The text and panel sit over the map and catch its clicks, so clicking
-	// their blank space stops the playing song too, like blank map space does.
 	const INTERACTIVE =
 		'a, button, input, select, textarea, audio, video, [tabindex]:not([tabindex="-1"])';
 	const onArticleClick = (event) => {
@@ -165,7 +167,7 @@
 						out:fade={{ duration: 150 }}
 						{@attach chordify}
 					>
-						<CMS content={text} />
+						<CMS content={text} {components} />
 					</div>
 				{/key}
 			</div>
@@ -296,7 +298,6 @@
 		opacity: 0;
 		transition: opacity 0.3s;
 		pointer-events: none;
-		width: 600px;
 		height: 450px;
 		max-width: 100%;
 		max-height: 80svh;

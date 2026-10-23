@@ -2,7 +2,8 @@
 	import raw from "$data/charts/effective-progressions.csv";
 	import { HOMOGENEITY_BANDS } from "$routes/demo/shared/progressionHomogeneity";
 
-	const colorFor = (label) => HOMOGENEITY_BANDS.find((b) => b.label === label)?.color;
+	const colorFor = (label) =>
+		HOMOGENEITY_BANDS.find((b) => b.label === label)?.color;
 
 	const data = raw.map((d) => ({
 		...d,
@@ -15,14 +16,18 @@
 </script>
 
 <figure id="effective-bar">
-	<h3>Songs by effective progression count</h3>
+	<h3 class="chart-title">Songs by effective progression count</h3>
 
 	<div class="bars">
 		{#each data as { band, label, songCount, sharePercent, color } (band)}
 			<div class="row">
 				<span class="label">{label}</span>
 				<div class="track">
-					<div class="fill" style:width="{(sharePercent / max) * 100}%" style:background={color}></div>
+					<div
+						class="fill"
+						style:width="{(sharePercent / max) * 100}%"
+						style:background={color}
+					></div>
 				</div>
 				<span class="value">
 					<strong>{sharePercent.toFixed(1)}%</strong>
@@ -37,13 +42,6 @@
 	figure {
 		max-width: 700px;
 		margin: 2rem auto;
-	}
-
-	h3 {
-		font-size: var(--32px);
-		font-weight: bold;
-		font-family: var(--font-serif);
-		margin-bottom: 1rem;
 	}
 
 	.bars {

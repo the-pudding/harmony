@@ -50,7 +50,7 @@
 
 	.row.obscure {
 		opacity: 1;
-		filter: blur(3px);
+		filter: blur(8px);
 	}
 
 	.rank {

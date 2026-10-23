@@ -1,17 +1,27 @@
 <script>
 	import progressionsData from "$data/charts/top-progressions.csv";
 	import { chordify } from "$utils/chordify";
+	import { committedSyncedSongs } from "$data/syncedSongs";
 	import reference from "$data/synced-songs/reference.csv";
 
 	let { cluster, playingSongKey = $bindable() } = $props();
 
-	const songs = $derived(reference.filter((d) => d.cluster === cluster));
-
 	let audioEls = $state({});
+	let chordsEl = $state();
+	let currentTime = $state(0);
+	const songs = $derived(
+		reference
+			.filter((d) => d.cluster === cluster)
+			.map((d) => ({ ...d, data: committedSyncedSongs[d.songKey] }))
+	);
+	const currentTimeData = $derived(
+		songs.find((d) => d.songKey === playingSongKey)?.data?.chords
+	);
 
 	const playFromStart = (song) => {
 		const audioEl = audioEls[song.songKey];
 		audioEl.currentTime = song.startSeconds;
+		currentTime = song.startSeconds;
 		audioEl.play();
 	};
 
@@ -38,25 +48,52 @@
 
 	const stopAtEnd = (song) => {
 		const audioEl = audioEls[song.songKey];
-		if (
-			song.songKey === playingSongKey &&
-			audioEl.currentTime >= song.endSeconds
-		) {
+		if (song.songKey !== playingSongKey) return;
+		currentTime = audioEl.currentTime;
+		if (audioEl.currentTime >= song.endSeconds) {
 			audioEl.pause();
 			playNext();
 		}
 	};
 
-	$effect(playCurrentSong);
-
 	const progression = $derived(
 		progressionsData.find((d) => d.name === cluster)?.chordProgression
 	);
+	const loop = $derived(progression?.split("-").map((d) => d.trim()) ?? []);
+
+	const activeChordIndex = $derived.by(() => {
+		if (!currentTimeData || !loop.length) return null;
+		let pos = 0;
+		let index = null;
+		for (const { seconds, roman } of currentTimeData) {
+			if (seconds > currentTime) break;
+			if (roman === loop[pos]) index = pos;
+			else if (roman === loop[0]) index = 0;
+			else {
+				index = null;
+				continue;
+			}
+			pos = (index + 1) % loop.length;
+		}
+		return index;
+	});
+
+	$effect(playCurrentSong);
+
+	$effect(() => {
+		chordsEl?.querySelectorAll(".chord").forEach((el, i) => {
+			el.classList.toggle("playing", i === activeChordIndex);
+			el.classList.toggle(
+				"faded",
+				activeChordIndex !== null && i !== activeChordIndex
+			);
+		});
+	});
 </script>
 
 <div class="player" {@attach chordify}>
 	<div class="name">{cluster}</div>
-	<span class="chords">
+	<span class="chords" bind:this={chordsEl}>
 		{progression}
 	</span>
 
@@ -85,5 +122,21 @@
 
 	.chords {
 		font-size: var(--40px);
+	}
+
+	.chords :global(.chord) {
+		transition:
+			transform 150ms,
+			opacity 150ms;
+	}
+
+	.chords :global(.chord.playing) {
+		opacity: 1;
+		transform: scale(1.3);
+	}
+
+	.chords :global(.chord.faded) {
+		opacity: 0.4;
+		transform: scale(1);
 	}
 </style>

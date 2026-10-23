@@ -13,7 +13,9 @@ import { progressionGroupNameByProgressionName } from "../src/data/core-progress
 import { groupSongs } from "../src/data/songBrowser.js";
 import { sortAllSongs } from "../src/data/songBrowserData.js";
 import { toCalendarYear } from "../src/data/songYear.js";
+import { byYearFile } from "../src/utils/clusterChartFile.js";
 import { computeSongCoverage } from "../src/routes/demo/define-chord-progression/compute-coverage-of-all-songs/computeSongCoverage.js";
+import { computeDecadeHistory } from "../src/routes/demo/history/decadeSignatures.js";
 import { computeTopProgressions } from "../src/routes/demo/history/topProgressions.js";
 import {
 	buildHomogeneityBandShares,
@@ -25,6 +27,7 @@ const SONGS_PATH = path.join(ROOT, "static/data/songs.json");
 const OUTPUT_DIR = path.join(ROOT, "src/data/charts");
 const PERCENT_DECIMALS = 3;
 const DECADE_YEARS = 10;
+const SIGNATURE_DECADES = [1970, 1980, 1990];
 
 const round = (value: number): number =>
 	Number(value.toFixed(PERCENT_DECIMALS));
@@ -74,7 +77,9 @@ const buildTopProgressions = () =>
 	}));
 
 const buildEffectiveProgressions = () =>
-	toBandRows(songsWithEffectiveCount.map((song) => song.effectiveProgressionCount));
+	toBandRows(
+		songsWithEffectiveCount.map((song) => song.effectiveProgressionCount)
+	);
 
 // Long format: one row per decade × band; sharePercent is within the decade.
 const buildEffectiveProgressionsByDecade = () => {
@@ -91,13 +96,64 @@ const buildEffectiveProgressionsByDecade = () => {
 		);
 };
 
+// One row per calendar year: the share of that year's songs containing the
+// named core progression at least once. Songs without a year are left out.
+const buildProgressionShareByYear = (progressionName: string) => () => {
+	const songsByYear = Map.groupBy(
+		songs.flatMap((song, i) =>
+			song.year === undefined
+				? []
+				: [{ year: song.year, coverage: coverages[i] }]
+		),
+		(song) => toCalendarYear(song.year)
+	);
+	return [...songsByYear]
+		.sort(([a], [b]) => a - b)
+		.map(([year, yearSongs]) => {
+			const matchingCount = yearSongs.filter(({ coverage }) =>
+				coverage.progressionCounts.some(
+					(p) => p.isCore && p.name === progressionName
+				)
+			).length;
+			return { year, percent: round((matchingCount / yearSongs.length) * 100) };
+		});
+};
+
+// Each decade's top signature progression (most over-represented vs. the whole
+// corpus), as ranked on the history page.
+const decadeHistory = computeDecadeHistory(
+	coverages,
+	new Map(songs.map((song) => [song.songKey, song]))
+);
+const signatureCharts = SIGNATURE_DECADES.flatMap((decade) => {
+	const signature = decadeHistory.find((d) => d.decade === decade)
+		?.signatures[0];
+	if (!signature) return [];
+	console.log(`${decade}s signature: ${signature.name}`);
+	return [
+		{
+			file: byYearFile(signature.name, decade),
+			build: buildProgressionShareByYear(signature.name)
+		}
+	];
+});
+
 const charts: { file: string; build: () => object[] }[] = [
 	{ file: "top-progressions.csv", build: buildTopProgressions },
 	{ file: "effective-progressions.csv", build: buildEffectiveProgressions },
 	{
 		file: "effective-progressions-by-decade.csv",
 		build: buildEffectiveProgressionsByDecade
-	}
+	},
+	{
+		file: byYearFile("axis of awesome"),
+		build: buildProgressionShareByYear("axis of awesome")
+	},
+	{
+		file: byYearFile("doo wop"),
+		build: buildProgressionShareByYear("doo wop")
+	},
+	...signatureCharts
 ];
 
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
