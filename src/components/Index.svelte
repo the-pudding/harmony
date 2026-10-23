@@ -18,7 +18,7 @@
 	import { setContext } from "svelte";
 	import { spanStyle } from "$routes/demo/design/timelineStyles";
 
-	const debugSlide = 12;
+	const debugSlide = undefined; //12;
 
 	const components = {
 		Landing,
