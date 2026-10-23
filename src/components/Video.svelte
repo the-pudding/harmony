@@ -1,6 +1,7 @@
 <script>
 	import playSvg from "$svg/play.svg";
 	import { getContext } from "svelte";
+	import { audio } from "$runes/audio.svelte";
 
 	let { videoId, caption } = $props();
 
@@ -69,6 +70,7 @@
 		<video
 			src="assets/video/{videoId}.mp4"
 			playsinline
+			muted={audio.muted}
 			bind:paused
 			onclick={() => (paused = !paused)}
 		>
@@ -146,6 +148,7 @@
 		left: 50%;
 		transform: translate(-50%, -50%);
 		background: none;
+		border: none;
 		padding: 0;
 		height: 3rem;
 		opacity: 1;

@@ -3,6 +3,7 @@
 	import { chordify } from "$utils/chordify";
 	import { committedSyncedSongs } from "$data/syncedSongs";
 	import reference from "$data/synced-songs/reference.csv";
+	import { audio } from "$runes/audio.svelte";
 
 	let { cluster, playingSongKey = $bindable() } = $props();
 
@@ -101,6 +102,7 @@
 		<audio
 			bind:this={audioEls[song.songKey]}
 			src={`assets/audio/synced-songs/${song.songKey}.mp3`}
+			muted={audio.muted}
 			ontimeupdate={() => stopAtEnd(song)}
 			onended={playNext}
 		></audio>

@@ -1,7 +1,16 @@
 <script>
 	import Header from "$components/Header.svelte";
+	import { audio } from "$runes/audio.svelte";
+	import { getContext } from "svelte";
 
 	let { hed, byline } = $props();
+
+	const appState = getContext("state");
+
+	const start = (muted) => {
+		audio.muted = muted;
+		appState.slideI = 1;
+	};
 </script>
 
 <div class="landing-root">
@@ -16,8 +25,10 @@
 			<div class="byline">{@html byline}</div>
 
 			<div class="buttons">
-				<button class="audio">Start with audio</button>
-				<button class="muted">Stay muted</button>
+				<button class="audio" onclick={() => start(false)}>
+					Start with audio
+				</button>
+				<button class="muted" onclick={() => start(true)}>Stay muted</button>
 			</div>
 		</div>
 	</div>

@@ -19,8 +19,11 @@
 	import { chordify } from "$utils/chordify";
 	import { setContext } from "svelte";
 	import { spanStyle } from "$routes/demo/design/timelineStyles";
+	import { audio } from "$runes/audio.svelte";
+	import mutedSvg from "$svg/muted.svg";
+	import unmutedSvg from "$svg/unmuted.svg";
 
-	const debugSlide = 30;
+	const debugSlide = undefined; //30;
 
 	const components = {
 		Landing,
@@ -58,6 +61,9 @@
 	setContext("state", {
 		get slideI() {
 			return slideI;
+		},
+		set slideI(value) {
+			slideI = value;
 		}
 	});
 
@@ -196,6 +202,15 @@
 	</div>
 </article>
 
+<button
+	class="mute-toggle"
+	aria-label="Mute"
+	aria-pressed={audio.muted}
+	onclick={() => (audio.muted = !audio.muted)}
+>
+	{@html audio.muted ? mutedSvg : unmutedSvg}
+</button>
+
 <style>
 	.map-layer {
 		position: fixed;
@@ -321,5 +336,22 @@
 	.text :global(span.small) {
 		font-size: var(--12px);
 		opacity: 0.75;
+	}
+
+	.mute-toggle {
+		position: fixed;
+		right: 1rem;
+		bottom: 1rem;
+		z-index: var(--z-overlay);
+		width: 2.5rem;
+		height: 2.5rem;
+		padding: 0.375rem;
+	}
+
+	.mute-toggle :global(svg) {
+		display: block;
+		width: 100%;
+		height: 100%;
+		fill: currentColor;
 	}
 </style>
