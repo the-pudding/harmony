@@ -1,0 +1,26 @@
+{
+	"songKey": "the-beatles__twist-and-shout",
+	"audioFile": "the-beatles__twist-and-shout.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 6.993, "endSeconds": 29.594 },
+	"chords": [
+		{ "seconds": 8.638, "chord": "D", "roman": "I" },
+		{ "seconds": 9.563, "chord": "G", "roman": "IV" },
+		{ "seconds": 10.255, "chord": "A", "roman": "V" },
+		{ "seconds": 12.365, "chord": "D", "roman": "I" },
+		{ "seconds": 13.304, "chord": "G", "roman": "IV" },
+		{ "seconds": 14.003, "chord": "A", "roman": "V" },
+		{ "seconds": 16.164, "chord": "D", "roman": "I" },
+		{ "seconds": 17.102, "chord": "G", "roman": "IV" },
+		{ "seconds": 17.809, "chord": "A", "roman": "V" },
+		{ "seconds": 19.926, "chord": "D", "roman": "I" },
+		{ "seconds": 20.863, "chord": "G", "roman": "IV" },
+		{ "seconds": 21.62, "chord": "A", "roman": "V" },
+		{ "seconds": 23.607, "chord": "D", "roman": "I" },
+		{ "seconds": 24.533, "chord": "G", "roman": "IV" },
+		{ "seconds": 25.267, "chord": "A", "roman": "V" },
+		{ "seconds": 27.334, "chord": "D", "roman": "I" },
+		{ "seconds": 28.306, "chord": "G", "roman": "IV" },
+		{ "seconds": 29.013, "chord": "A", "roman": "V" }
+	]
+}

@@ -1,0 +1,20 @@
+{
+	"songKey": "kelly-clarkson__stronger-what-doesn-t-kill-you",
+	"audioFile": "kelly-clarkson__stronger-what-doesn-t-kill-you.mp3",
+	"key": { "tonic": "A", "scale": "minor" },
+	"region": { "startSeconds": 42.422, "endSeconds": 69.261 },
+	"chords": [
+		{ "seconds": 44.365, "chord": "Am", "roman": "i" },
+		{ "seconds": 46.432, "chord": "F", "roman": "VI" },
+		{ "seconds": 48.503, "chord": "C", "roman": "III" },
+		{ "seconds": 50.554, "chord": "G", "roman": "VII" },
+		{ "seconds": 52.647, "chord": "Am", "roman": "i" },
+		{ "seconds": 54.712, "chord": "F", "roman": "VI" },
+		{ "seconds": 56.768, "chord": "C", "roman": "III" },
+		{ "seconds": 58.859, "chord": "G", "roman": "VII" },
+		{ "seconds": 60.924, "chord": "Am", "roman": "i" },
+		{ "seconds": 63.006, "chord": "F", "roman": "VI" },
+		{ "seconds": 65.033, "chord": "C", "roman": "III" },
+		{ "seconds": 67.11, "chord": "G", "roman": "VII" }
+	]
+}

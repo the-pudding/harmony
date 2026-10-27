@@ -1,0 +1,16 @@
+{
+	"songKey": "nelly__just-a-dream",
+	"audioFile": "nelly__just-a-dream.mp3",
+	"key": { "tonic": "Eb", "scale": "minor" },
+	"region": { "startSeconds": 20.287, "endSeconds": 42.872 },
+	"chords": [
+		{ "seconds": 21.424, "chord": "Ebm", "roman": "i" },
+		{ "seconds": 24.118, "chord": "B", "roman": "VI" },
+		{ "seconds": 26.765, "chord": "F#", "roman": "III" },
+		{ "seconds": 29.427, "chord": "C#", "roman": "VII" },
+		{ "seconds": 32.121, "chord": "Ebm", "roman": "i" },
+		{ "seconds": 34.795, "chord": "B", "roman": "VI" },
+		{ "seconds": 37.453, "chord": "F#", "roman": "III" },
+		{ "seconds": 40.126, "chord": "C#", "roman": "VII" }
+	]
+}

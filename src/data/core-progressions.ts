@@ -420,7 +420,7 @@ const minoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
-			name: "poker face (chorus)",
+			name: "we found love",
 			chordProgression: "i-VI-III-VII",
 			scale: "minor",
 			description: ""

@@ -1,0 +1,26 @@
+{
+	"songKey": "los-lobos__la-bamba",
+	"audioFile": "los-lobos__la-bamba.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 55.476, "endSeconds": 75.847 },
+	"chords": [
+		{ "seconds": 57.662, "chord": "C", "roman": "I" },
+		{ "seconds": 58.43, "chord": "F", "roman": "IV" },
+		{ "seconds": 59.036, "chord": "G", "roman": "V" },
+		{ "seconds": 60.742, "chord": "C", "roman": "I" },
+		{ "seconds": 61.517, "chord": "F", "roman": "IV" },
+		{ "seconds": 62.092, "chord": "G", "roman": "V" },
+		{ "seconds": 63.825, "chord": "C", "roman": "I" },
+		{ "seconds": 64.593, "chord": "F", "roman": "IV" },
+		{ "seconds": 65.171, "chord": "G", "roman": "V" },
+		{ "seconds": 66.909, "chord": "C", "roman": "I" },
+		{ "seconds": 67.675, "chord": "F", "roman": "IV" },
+		{ "seconds": 68.245, "chord": "G", "roman": "V" },
+		{ "seconds": 69.943, "chord": "C", "roman": "I" },
+		{ "seconds": 70.676, "chord": "F", "roman": "IV" },
+		{ "seconds": 71.224, "chord": "G", "roman": "V" },
+		{ "seconds": 72.961, "chord": "C", "roman": "I" },
+		{ "seconds": 73.747, "chord": "F", "roman": "IV" },
+		{ "seconds": 74.345, "chord": "G", "roman": "V" }
+	]
+}

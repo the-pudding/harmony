@@ -23,7 +23,7 @@
 	import mutedSvg from "$svg/muted.svg";
 	import unmutedSvg from "$svg/unmuted.svg";
 
-	const debugSlide = undefined;
+	const debugSlide = 21; // undefined;
 
 	const components = {
 		Landing,
@@ -142,6 +142,7 @@
 		{...mapProps ?? {}}
 		{focusFrame}
 		theme="dark"
+		playingSongKey={playingSongId}
 		onSongClick={(songKey) => (playingSongId = songKey ?? undefined)}
 	/>
 </div>
@@ -356,6 +357,17 @@
 		width: 2.5rem;
 		height: 2.5rem;
 		padding: 0.375rem;
+	}
+
+	.mute-toggle[aria-pressed="true"] {
+		background: var(--color-gray-200);
+		border-color: var(--color-gray-200);
+		color: var(--color-gray-900);
+	}
+
+	.mute-toggle[aria-pressed="true"]:hover {
+		background: var(--color-gray-300);
+		border-color: var(--color-gray-300);
 	}
 
 	.mute-toggle :global(svg) {

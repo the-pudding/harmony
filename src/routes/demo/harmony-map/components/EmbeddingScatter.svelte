@@ -116,6 +116,13 @@
 	const OUTLINED_POINT_RADIUS = 10;
 	const OUTLINE_WIDTH = 3;
 	const OUTLINE_GLOW_BLUR = 10;
+	// playingSongKey's marker is bigger with a wider glow, and the other
+	// outlined songs (and their labels) fade back to this alpha.
+	const PLAYING_POINT_RADIUS = 18;
+	const PLAYING_GLOW_BLUR = 28;
+	const NOT_PLAYING_ALPHA = 0.3;
+	// How long the playing marker takes to grow (and the last one to shrink).
+	const PLAYING_TWEEN_MS = 400;
 	const OUTLINED_LABEL_TITLE_FONT =
 		"700 11px 'JetBrains Mono', ui-monospace, monospace";
 	const OUTLINED_LABEL_ARTIST_FONT =
@@ -322,6 +329,9 @@
 		// everything else, with their titles and artists beside them. In hex
 		// mode, only once zoomed in to dots.
 		outlinedSongKeys?: Set<string> | null;
+		// One of outlinedSongKeys to call out above the rest (e.g. the song
+		// playing): drawn bigger and on top, with the others faded.
+		playingSongKey?: string | null;
 		// "hex" groups songs into hexagons whose size follows the zoom: big
 		// when zoomed out, smaller as you zoom in, plain dots near max zoom.
 		// Each hex takes the color of its main progression, faded when the
@@ -400,6 +410,7 @@
 		accentSongKeys = null,
 		accentFillColor = null,
 		outlinedSongKeys = null,
+		playingSongKey = null,
 		renderMode = "dots",
 		progressionSharesBySongKey = null,
 		clusterRegionBySongKey = null,
@@ -716,8 +727,27 @@
 	// The full, unzoomed view, shifted down by offsetY.
 	const homeTransform = $derived(zoomIdentity.translate(0, offsetY));
 
+	// Each outlined song's eased playing emphasis, from 0 (not playing) to 1
+	// (playing), and how far the rest are faded, from 0 (nothing playing) to
+	// 1. Tweened toward playingSongKey by the effect below, which redraws
+	// each frame itself, so these aren't reactive.
+	let playingEmphasis = new Map<string, number>();
+	let playingFade = 0;
+
+	const emphasisFor = (songKey: string): number =>
+		playingEmphasis.get(songKey) ?? 0;
+
+	const lerp = (from: number, to: number, t: number): number =>
+		from + (to - from) * t;
+
 	const radiusFor = (songKey: string): number => {
-		if (isOutlined(songKey)) return OUTLINED_POINT_RADIUS;
+		if (isOutlined(songKey)) {
+			return lerp(
+				OUTLINED_POINT_RADIUS,
+				PLAYING_POINT_RADIUS,
+				emphasisFor(songKey)
+			);
+		}
 		if (songKey === selectedSongKey) return SELECTED_POINT_RADIUS;
 		return POINT_RADIUS;
 	};
@@ -731,6 +761,18 @@
 			emphasizedSongKeys,
 			inYearSongKeys
 		});
+
+	// alphaFor, faded further when another outlined song is playing.
+	const outlinedAlphaFor = (songKey: string): number =>
+		alphaFor(songKey) *
+		lerp(1, NOT_PLAYING_ALPHA, playingFade * (1 - emphasisFor(songKey)));
+
+	// outlinedSongKeys, most emphasized last, so the playing song (and one
+	// shrinking back) draws on top.
+	const outlinedInDrawOrder = (): string[] =>
+		outlinedSongKeys
+			? [...outlinedSongKeys].sort((a, b) => emphasisFor(a) - emphasisFor(b))
+			: [];
 
 	const drawAxisLabels = (context: CanvasRenderingContext2D) => {
 		if (!axisLabels) return;
@@ -929,13 +971,17 @@
 		context: CanvasRenderingContext2D,
 		gradientStrength: number
 	) => {
-		if (!outlinedSongKeys) return;
-		for (const songKey of outlinedSongKeys) {
+		for (const songKey of outlinedInDrawOrder()) {
 			const position = displayedPositions.get(songKey);
 			if (!position) continue;
 			const screen = toScreen(position);
 			const radius = radiusFor(songKey);
-			const reach = radius + OUTLINE_GLOW_BLUR;
+			const glowBlur = lerp(
+				OUTLINE_GLOW_BLUR,
+				PLAYING_GLOW_BLUR,
+				emphasisFor(songKey)
+			);
+			const reach = radius + glowBlur;
 			if (
 				screen.x < -reach ||
 				screen.y < -reach ||
@@ -945,16 +991,16 @@
 				continue;
 			}
 			context.save();
-			context.globalAlpha = alphaFor(songKey);
+			context.globalAlpha = outlinedAlphaFor(songKey);
 			context.beginPath();
 			context.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
 			context.shadowColor = OUTLINE_COLOR;
-			context.shadowBlur = OUTLINE_GLOW_BLUR;
+			context.shadowBlur = glowBlur;
 			context.fillStyle = OUTLINE_COLOR;
 			context.fill();
 			context.restore();
 
-			context.globalAlpha = alphaFor(songKey);
+			context.globalAlpha = outlinedAlphaFor(songKey);
 			context.beginPath();
 			context.arc(screen.x, screen.y, radius - OUTLINE_WIDTH, 0, Math.PI * 2);
 			context.fillStyle = hexMode
@@ -979,20 +1025,22 @@
 	// unlabeled. Drawn after every marker so none covers a label.
 	const drawOutlinedSongLabels = (context: CanvasRenderingContext2D) => {
 		if (!outlinedSongKeys || !songSummaryByKey) return;
-		const songs = [...outlinedSongKeys].flatMap((songKey) => {
-			const summary = songSummaryByKey.get(songKey);
-			const position = displayedPositions.get(songKey);
-			if (!summary || !position) return [];
-			const screen = toScreen(position);
-			const radius = radiusFor(songKey);
-			const lines: [string, string][] = [
-				[OUTLINED_LABEL_TITLE_FONT, summary.title]
-			];
-			if (summary.artists.length > 0) {
-				lines.push([OUTLINED_LABEL_ARTIST_FONT, summary.artists.join(", ")]);
-			}
-			return [{ songKey, screen, radius, lines }];
-		});
+		const songs = outlinedInDrawOrder()
+			.reverse()
+			.flatMap((songKey) => {
+				const summary = songSummaryByKey.get(songKey);
+				const position = displayedPositions.get(songKey);
+				if (!summary || !position) return [];
+				const screen = toScreen(position);
+				const radius = radiusFor(songKey);
+				const lines: [string, string][] = [
+					[OUTLINED_LABEL_TITLE_FONT, summary.title]
+				];
+				if (summary.artists.length > 0) {
+					lines.push([OUTLINED_LABEL_ARTIST_FONT, summary.artists.join(", ")]);
+				}
+				return [{ songKey, screen, radius, lines }];
+			});
 		const markers: Box[] = songs.map(({ screen, radius }) => ({
 			left: screen.x - radius,
 			right: screen.x + radius,
@@ -1061,7 +1109,7 @@
 		context.strokeStyle = hexColors.labelHalo;
 		context.fillStyle = hexColors.labelText;
 		for (const { songKey, lines, box } of labels) {
-			context.globalAlpha = alphaFor(songKey);
+			context.globalAlpha = outlinedAlphaFor(songKey);
 			const x = box.left + OUTLINED_LABEL_PADDING;
 			lines.forEach(([font, text], index) => {
 				const y =
@@ -1658,6 +1706,44 @@
 		const targets = normalizedPoints;
 		untrack(() => tweenTo(targets));
 		return () => cancelAnimationFrame(tweenFrame);
+	});
+
+	// Eases playingEmphasis and playingFade toward playingSongKey, from
+	// wherever they are (mid-tween included), redrawing each frame.
+	$effect(() => {
+		const target = playingSongKey;
+		const fromEmphasis = new Map(playingEmphasis);
+		const fromFade = playingFade;
+		const songKeys = new Set([...fromEmphasis.keys()]);
+		if (target) songKeys.add(target);
+		const startedAt = performance.now();
+
+		let frame = 0;
+		const step = () => {
+			const progress = Math.min(
+				1,
+				(performance.now() - startedAt) / PLAYING_TWEEN_MS
+			);
+			const eased = easeCubicInOut(progress);
+			playingEmphasis = new Map(
+				[...songKeys]
+					.map((songKey): [string, number] => [
+						songKey,
+						lerp(
+							fromEmphasis.get(songKey) ?? 0,
+							songKey === target ? 1 : 0,
+							eased
+						)
+					])
+					.filter(([, emphasis]) => emphasis > 0)
+			);
+			playingFade = lerp(fromFade, target ? 1 : 0, eased);
+			draw();
+			if (progress < 1) frame = requestAnimationFrame(step);
+		};
+		// Started on the next frame so draw()'s reads aren't tracked here.
+		frame = requestAnimationFrame(step);
+		return () => cancelAnimationFrame(frame);
 	});
 
 	// Hoisted out of the effect below (rather than a local const inside it) so

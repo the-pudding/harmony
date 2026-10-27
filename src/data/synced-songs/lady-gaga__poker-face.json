@@ -1,0 +1,16 @@
+{
+	"songKey": "lady-gaga__poker-face",
+	"audioFile": "lady-gaga__poker-face.mp3",
+	"key": { "tonic": "Ab", "scale": "minor" },
+	"region": { "startSeconds": 56.522, "endSeconds": 72.9 },
+	"chords": [
+		{ "seconds": 56.754, "chord": "Abm", "roman": "i" },
+		{ "seconds": 58.755, "chord": "E", "roman": "VI" },
+		{ "seconds": 60.764, "chord": "B", "roman": "III" },
+		{ "seconds": 62.756, "chord": "F#", "roman": "VII" },
+		{ "seconds": 64.776, "chord": "Abm", "roman": "i" },
+		{ "seconds": 66.815, "chord": "E", "roman": "VI" },
+		{ "seconds": 68.838, "chord": "B", "roman": "III" },
+		{ "seconds": 70.83, "chord": "F#", "roman": "VII" }
+	]
+}

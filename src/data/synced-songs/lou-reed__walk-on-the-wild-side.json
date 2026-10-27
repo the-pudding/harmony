@@ -1,0 +1,16 @@
+{
+	"songKey": "lou-reed__walk-on-the-wild-side",
+	"audioFile": "lou-reed__walk-on-the-wild-side.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 10.654, "endSeconds": 29.572 },
+	"chords": [
+		{ "seconds": 10.927, "chord": "C", "roman": "I" },
+		{ "seconds": 13.314, "chord": "F", "roman": "IV" },
+		{ "seconds": 15.704, "chord": "C", "roman": "I" },
+		{ "seconds": 18.025, "chord": "F", "roman": "IV" },
+		{ "seconds": 20.414, "chord": "C", "roman": "I" },
+		{ "seconds": 22.725, "chord": "F", "roman": "IV" },
+		{ "seconds": 25.102, "chord": "C", "roman": "I" },
+		{ "seconds": 27.472, "chord": "F", "roman": "IV" }
+	]
+}

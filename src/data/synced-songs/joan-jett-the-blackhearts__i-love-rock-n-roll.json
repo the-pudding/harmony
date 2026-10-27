@@ -1,0 +1,15 @@
+{
+	"songKey": "joan-jett-the-blackhearts__i-love-rock-n-roll",
+	"audioFile": "joan-jett-the-blackhearts__i-love-rock-n-roll.mp3",
+	"key": { "tonic": "E", "scale": "major" },
+	"region": { "startSeconds": 69.205, "endSeconds": 80.489 },
+	"chords": [
+		{ "seconds": 70.01, "chord": "E", "roman": "I" },
+		{ "seconds": 72.559, "chord": "A", "roman": "IV" },
+		{ "seconds": 73.845, "chord": "B", "roman": "V" },
+		{ "seconds": 75.085, "chord": "E", "roman": "I" },
+		{ "seconds": 77.505, "chord": "A", "roman": "IV" },
+		{ "seconds": 78.789, "chord": "B", "roman": "V" },
+		{ "seconds": 79.376, "chord": "E", "roman": "I" }
+	]
+}

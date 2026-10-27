@@ -57,6 +57,8 @@
 		// Called when the map is clicked, with the synced song clicked on, or
 		// null when the click missed them.
 		onSongClick?: (songKey: string | null) => void;
+		// The synced song playing, drawn bigger with the others faded.
+		playingSongKey?: string | null;
 		// Same meanings and defaults as /demo/embedding. (UMAP's minDist is
 		// baked into the snapshot; see HEX_MAP_UMAP_MIN_DIST.)
 		purityLayout?: boolean;
@@ -77,6 +79,7 @@
 		rotateLabels = false,
 		theme = "dark",
 		onSongClick = undefined,
+		playingSongKey = null,
 		purityLayout = true,
 		pureThreshold = 0.9,
 		clusterMinPoints = 20,
@@ -275,6 +278,7 @@
 				{clusterRegionBySongKey}
 				{clusterNames}
 				outlinedSongKeys={SYNCED_SONG_KEYS}
+				{playingSongKey}
 				{movable}
 				{hoverable}
 				showLabels={labelsVisible && !rotateLabels}

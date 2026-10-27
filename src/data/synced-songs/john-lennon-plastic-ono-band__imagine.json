@@ -1,0 +1,16 @@
+{
+	"songKey": "john-lennon-plastic-ono-band__imagine",
+	"audioFile": "john-lennon-plastic-ono-band__imagine.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 14.018, "endSeconds": 39.297 },
+	"chords": [
+		{ "seconds": 14.164, "chord": "C", "roman": "I" },
+		{ "seconds": 17.33, "chord": "F", "roman": "IV" },
+		{ "seconds": 20.501, "chord": "C", "roman": "I" },
+		{ "seconds": 23.676, "chord": "F", "roman": "IV" },
+		{ "seconds": 26.784, "chord": "C", "roman": "I" },
+		{ "seconds": 29.958, "chord": "F", "roman": "IV" },
+		{ "seconds": 33.149, "chord": "C", "roman": "I" },
+		{ "seconds": 36.351, "chord": "F", "roman": "IV" }
+	]
+}

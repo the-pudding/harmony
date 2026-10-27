@@ -41,7 +41,9 @@
 		align-items: center;
 		padding: 0 4px;
 		width: fit-content;
-		transition: opacity 0.2s;
+		transition:
+			opacity 0.2s,
+			filter 0.2s;
 	}
 
 	.row.faded {

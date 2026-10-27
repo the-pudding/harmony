@@ -184,7 +184,7 @@
           "text": [
             {
               "type": "text",
-              "value": "Here is the <strong>Axis of Awesome</strong> cluster."
+              "value": "Here is the <strong class=progression>axis of awesome</strong> cluster."
             },
             {
               "type": "text",
@@ -200,11 +200,7 @@
           "text": [
             {
               "type": "text",
-              "value": "So, what’s on the rest of the map? These are the most common chord progressions in our dataset."
-            },
-            {
-              "type": "text",
-              "value": "Let’s take a closer look at this list, because these don’t all feel the same."
+              "value": "So, what’s on the rest of the map?"
             }
           ],
           "map": {
@@ -220,7 +216,25 @@
           "text": [
             {
               "type": "text",
-              "value": "At the top we have <strong>I-IV</strong>, so just going back and forth between <span class=chord>I</span> and <span class=chord>IV</span>."
+              "value": "These are the most common chord progressions in our dataset."
+            },
+            {
+              "type": "text",
+              "value": "Let’s take a closer look at this list, because they each have their own distinct feel."
+            }
+          ],
+          "map": {
+            "visible": "true"
+          },
+          "overlay": {
+            "component": "List"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "At the top we have <strong class=progression>I-IV vamp</strong>, so just going back and forth between <span class=chord>I</span> and <span class=chord>IV</span>."
             }
           ],
           "map": {
@@ -235,7 +249,7 @@
           "text": [
             {
               "type": "text",
-              "value": "Tk"
+              "value": "You can hear it in tunes like <strong>Imagine</strong> and <strong>Walk on the Wild Side</strong>."
             }
           ],
           "map": {
@@ -247,7 +261,7 @@
           "text": [
             {
               "type": "text",
-              "value": "Next is <strong>happy walk up</strong>. Tk “La Bamba”"
+              "value": "Next is <strong class=progression>happy walk up</strong>. We named it that because Tk these songs are so fun!"
             }
           ],
           "map": {
@@ -298,20 +312,34 @@
           "text": [
             {
               "type": "text",
-              "value": "This progression looks different than the others because it’s in a minor key."
+              "value": "Different orderings of these chords produce different journeys of tension and release Tk."
+            }
+          ],
+          "map": {
+            "visible": "true"
+          },
+          "overlay": {
+            "component": "List"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "This progression looks different from the others… because it’s in a minor key! Sometimes people say that major is happy and minor is sad, but tell that to <strong>We Found Love</strong>… Just because a song is in a minor key <a href=https://www.youtube.com/watch?v=OMWszWYX2OQ target=_blank>doesn’t necessarily mean it’s sad</a>."
             },
             {
               "type": "text",
-              "value": "Sometimes people say that major is happy and minor is sad, but tell that to Poker Face by Lady Gaga… Just because a song is in a minor key doesn’t mean it’s sad, it’s much more <a href=https://www.youtube.com/watch?v=OMWszWYX2OQ target=_blank>nuanced</a>."
+              "value": "Instead, musicians often refer to minor as a <strong>darker</strong> sound than major (brighter). Songs like <strong>Cool for The Summer</strong>, <strong>Stronger</strong>, and <strong>Poker Face</strong> use this progression to paint with a darker palette."
             },
             {
               "type": "text",
-              "value": "Instead, musicians often refer to minor as a <strong>darker</strong> sound, and major as a <strong>brighter</strong> sound. It’s like a different color palette to work with."
+              "value": "<span class=small>Tk this is actually just minor axis!</span>"
             }
           ],
           "map": {
             "visible": "true",
-            "focusCluster": "poker face (chorus)"
+            "focusCluster": "we found love"
           }
         },
         {
@@ -459,7 +487,7 @@
           "text": [
             {
               "type": "text",
-              "value": "It begs the question: Did every decade have its own version of the <strong>Axis of Awesome</strong> chord progression?"
+              "value": "It begs the question: Did every decade have its own version of the <strong class=progression>axis of awesome</strong> chord progression?"
             },
             {
               "type": "text",
@@ -474,11 +502,11 @@
           "text": [
             {
               "type": "text",
-              "value": "…with one huge exception: the 50s and 60s was dominated by <strong>doo wop</strong>."
+              "value": "…with one huge exception: the 50s and 60s was dominated by <strong class=progression>doo wop</strong>."
             },
             {
               "type": "text",
-              "value": "[1 in 9] songs during that period included a <strong>doo wop</strong> progression. It was [2.6x] more common then than overall in the dataset."
+              "value": "[1 in 9] songs during that period included a <strong class=progression>doo wop</strong> progression. It was [2.6x] more common then than overall in the dataset."
             }
           ],
           "stage": {
@@ -490,11 +518,11 @@
           "text": [
             {
               "type": "text",
-              "value": "The <strong>doo wop</strong> progression is <span class=chords>I-vi-IV-V</span>."
+              "value": "The <strong class=progression>doo wop</strong> progression is <span class=chords>I-vi-IV-V</span>."
             },
             {
               "type": "text",
-              "value": "It’s the same 4 chords as <strong>Axis of Awesome</strong> (<span class=chords>I-V-vi-IV</span>), in a different order."
+              "value": "It’s the same 4 chords as <strong class=progression>Axis of Awesome</strong> (<span class=chords>I-V-vi-IV</span>), in a different order."
             },
             {
               "type": "text",
