@@ -83,7 +83,11 @@
               "type": "text",
               "value": "But to compare thousands of songs, we first need a way to tell when two of them are doing the same thing."
             }
-          ]
+          ],
+          "stage": {
+            "component": "UltimateGuitar",
+            "songs": "3"
+          }
         }
       ]
     },
@@ -96,7 +100,11 @@
               "type": "text",
               "value": "A chord is a combination of two or more notes. A chord progression is a series of chords that often loops multiple times in a song."
             }
-          ]
+          ],
+          "stage": {
+            "component": "UltimateGuitar",
+            "songs": "1"
+          }
         },
         {
           "text": [
