@@ -1,0 +1,17 @@
+{
+	"songKey": "journey__dont-stop-believin",
+	"audioFile": "journey__dont-stop-believin.mp3",
+	"key": { "tonic": "E", "scale": "major" },
+	"region": { "startSeconds": 16.638, "endSeconds": 33.854 },
+	"chords": [
+		{ "seconds": 17.515, "chord": "E", "roman": "I" },
+		{ "seconds": 19.568, "chord": "B", "roman": "V" },
+		{ "seconds": 21.588, "chord": "C#m", "roman": "vi" },
+		{ "seconds": 23.603, "chord": "A", "roman": "IV" },
+		{ "seconds": 25.625, "chord": "E", "roman": "I" },
+		{ "seconds": 27.688, "chord": "B", "roman": "V" },
+		{ "seconds": 29.707, "chord": "Abm", "roman": "iii" },
+		{ "seconds": 31.75, "chord": "A", "roman": "IV" },
+		{ "seconds": 33.843, "chord": "E", "roman": "I" }
+	]
+}

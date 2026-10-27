@@ -98,7 +98,11 @@
           "text": [
             {
               "type": "text",
-              "value": "A chord is a combination of two or more notes. A chord progression is a series of chords that often loops multiple times in a song."
+              "value": "Time for some quick music theory."
+            },
+            {
+              "type": "text",
+              "value": "A <strong>chord</strong> is a combination of two or more notes. A <strong>chord progression</strong> is a series of chords that often loops multiple times in a song, underneath the melody."
             }
           ],
           "stage": {
@@ -114,7 +118,7 @@
             },
             {
               "type": "text",
-              "value": "“All Too Well” goes <button>C-G-Am-F.</button> “With Or Without You” goes <button>D-A-Bm-G.</button> “Demons” goes <button>Eb-Bb-Cm-Ab.</button> On paper, these are different progressions. But to your ear, they move in the same way."
+              "value": "“Don’t Stop Believin’” goes <button>E-B-C#m-A.</button> “With Or Without You” goes <button>D-A-Bm-G.</button> “Demons” goes <button>Eb-Bb-Cm-Ab.</button> On paper, these are different progressions. But to your ear, they move in the same way."
             }
           ]
         },
