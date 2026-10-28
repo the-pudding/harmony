@@ -1,1 +1,0 @@
-import{S as u,p as a}from"./D3u_fpFz.js";const c=(o,n)=>o===4&&n===7?"maj":o===3&&n===7?"min":o===3&&n===6?"dim":o===4&&n===8?"aug":o===4?"maj":"min",m=(o,n)=>{const r=u[o],s=n-1,i=r[s],t=r[(s+2)%7]+(s+2>=7?12:0),e=r[(s+4)%7]+(s+4>=7?12:0);return c(t-i,e-i)},p=(o,n)=>{const r=a(o);return r?r.flat||r.sharp?!0:r.quality!==m(n,r.degree):!1};export{m as d,p as i};

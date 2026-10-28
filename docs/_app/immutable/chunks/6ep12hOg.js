@@ -1,1 +1,0 @@
-import{p as r}from"./BgSAqw-J.js";import{s as t}from"./BbkTH6y1.js";const s={get data(){return r.data},get error(){return r.error},get form(){return r.form},get params(){return r.params},get route(){return r.route},get state(){return r.state},get status(){return r.status},get url(){return r.url}};t.updated.check;export{s as p};
