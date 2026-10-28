@@ -52,13 +52,17 @@
 
 	const colorByName = $derived(mapColors.byProgression);
 
-	const segmentsFor = ({ result, homogeneity }) =>
-		(homogeneity?.progressionShares ?? []).map(({ name, share }, i) => ({
+	// label only the biggest slice that's a map cluster (shares come sorted)
+	const segmentsFor = ({ result, homogeneity }) => {
+		const shares = homogeneity?.progressionShares ?? [];
+		const labeledName = shares.find(({ name }) => colorByName.has(name))?.name;
+		return shares.map(({ name, share }) => ({
 			name,
 			percent: share * result.explainedPercent,
 			color: colorByName.get(name),
-			labeled: i === 0
+			labeled: name === labeledName
 		}));
+	};
 
 	const annotationsFor = ({ result }) =>
 		result.annotations.map((annotation, i) => {
@@ -185,7 +189,6 @@
 	.bar {
 		--bar-height: 1.5rem;
 		--label-size-px: 12px;
-		--segment-gap: 0px;
 		font-family: var(--font-mono);
 	}
 

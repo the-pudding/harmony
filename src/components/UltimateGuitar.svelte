@@ -33,6 +33,18 @@
 		{ line: 1, x: 255, w: 112, start: 10.8, end: 14.3 } // going anywhere
 	];
 
+	// While playing, everything outside the lines we hear is dimmed and
+	// blurred. A mask cuts a soft-edged hole for both chord rows + lyrics.
+	const FOCUS = { x: 6, y: 336, w: 438, h: 127 };
+	const FOCUS_FEATHER = 6;
+	const focusMask = `url("data:image/svg+xml,${encodeURIComponent(
+		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${IMAGE_W} ${IMAGE_H}" preserveAspectRatio="none">` +
+			`<defs><filter id="f" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${FOCUS_FEATHER}"/></filter>` +
+			`<mask id="m"><rect width="${IMAGE_W}" height="${IMAGE_H}" fill="white"/>` +
+			`<rect x="${FOCUS.x}" y="${FOCUS.y}" width="${FOCUS.w}" height="${FOCUS.h}" rx="4" fill="black" filter="url(#f)"/></mask></defs>` +
+			`<rect width="${IMAGE_W}" height="${IMAGE_H}" mask="url(#m)"/></svg>`
+	)}")`;
+
 	// the stems are a clip of the full song starting here (found by
 	// cross-correlating all.mp3 against the full track)
 	const CLIP_START = 17.466;
@@ -268,6 +280,13 @@
 					<img src="{base}/assets/img/ug-{d.id}.png" alt="" />
 
 					{#if d.id === FEATURED}
+						<div
+							class="focus-veil"
+							class:visible={single && !paused}
+							style:mask-image={focusMask}
+							style:-webkit-mask-image={focusMask}
+						></div>
+
 						<svg
 							class="highlights"
 							viewBox="0 0 {IMAGE_W} {IMAGE_H}"
@@ -362,6 +381,23 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+	}
+
+	.focus-veil {
+		position: absolute;
+		inset: 0;
+		background: rgba(255, 255, 255, 0.7);
+		backdrop-filter: blur(4px);
+		-webkit-backdrop-filter: blur(4px);
+		mask-size: 100% 100%;
+		-webkit-mask-size: 100% 100%;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 500ms ease;
+	}
+
+	.focus-veil.visible {
+		opacity: 1;
 	}
 
 	.highlights {
