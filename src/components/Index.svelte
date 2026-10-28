@@ -26,7 +26,7 @@
 	import mutedSvg from "$svg/muted.svg";
 	import unmutedSvg from "$svg/unmuted.svg";
 
-	const debugSlide = 5; //undefined;
+	const debugSlide = undefined;
 
 	const components = {
 		Landing,
@@ -117,7 +117,9 @@
 	// article is pointer-events: none, so most "blank space" clicks land on
 	// the body or the map beneath it; listen on the window to catch them all
 	const onWindowClick = (event) => {
-		if (event.target.closest(INTERACTIVE)) return;
+		// use the dispatch-time path: handlers like the mute toggle can swap
+		// out event.target before the click bubbles here
+		if (event.composedPath().some((el) => el.matches?.(INTERACTIVE))) return;
 		stopAllAudio();
 		// the map clears its own song on background clicks
 		if (articleEl?.contains(event.target)) playingSongId = undefined;

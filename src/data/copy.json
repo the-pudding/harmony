@@ -195,7 +195,7 @@
       ]
     },
     {
-      "title": "Lots of journeys",
+      "title": "Lots of journeys 🧱",
       "slides": [
         {
           "text": [
@@ -414,7 +414,7 @@
       ]
     },
     {
-      "title": "Getting loopier",
+      "title": "Getting loopier 🔁",
       "slides": [
         {
           "text": [
@@ -473,34 +473,20 @@
             {
               "type": "text",
               "value": "The median song went from 4.4 effective progressions in the 1970s (the most diverse decade) to 1.9 in the 2010s (the most homogenous)."
+            },
+            {
+              "type": "text",
+              "value": "So even though it’s not the case that most songs are just 1 loop, songs are getting loopier. The Axis of Awesome boys had their finger on something real."
             }
           ],
           "stage": {
             "component": "EffectiveDecades"
           }
-        },
-        {
-          "text": [
-            {
-              "type": "text",
-              "value": "So even though it’s not the case that most songs are just 1 loop, songs are getting loopier. The Axis of Awesome boys had their finger on something real."
-            },
-            {
-              "type": "ol",
-              "value": {
-                "li": [
-                  "<s><span class=\"sr-only\">crossed out: </span>built on a single four-chord progression 🧱</s>",
-                  "<s><span class=\"sr-only\">crossed out: </span>looped for the entire song 🔁</s>",
-                  "and recycled decade after decade? 🗓️"
-                ]
-              }
-            }
-          ]
         }
       ]
     },
     {
-      "title": "Era definers",
+      "title": "Era definers 🗓️",
       "slides": [
         {
           "text": [
