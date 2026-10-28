@@ -12,6 +12,7 @@
 	import EffectiveBar from "$components/EffectiveBar.svelte";
 	import EffectiveDecades from "$components/EffectiveDecades.svelte";
 	import ClusterPercentOverTime from "$components/ClusterPercentOverTime.svelte";
+	import EffectiveProgressions from "$components/EffectiveProgressions.svelte";
 	import Signatures from "$components/Signatures.svelte";
 	import List from "$components/List.svelte";
 	import CMS from "$components/helpers/CMS.svelte";
@@ -25,7 +26,7 @@
 	import mutedSvg from "$svg/muted.svg";
 	import unmutedSvg from "$svg/unmuted.svg";
 
-	const debugSlide = undefined;
+	const debugSlide = 24; // undefined;
 
 	const components = {
 		Landing,
@@ -36,7 +37,8 @@
 		ClusterPercentOverTime,
 		Signatures,
 		UltimateGuitar,
-		RomanNumerals
+		RomanNumerals,
+		EffectiveProgressions
 	};
 
 	let slideCount = 0;

@@ -21,6 +21,7 @@
 		type ProgressionCoverage
 	} from "$routes/demo/shared/progressionHomogeneity.js";
 	import { committedSyncedSongs } from "$data/syncedSongs.js";
+	import { mapColors } from "$runes/mapColors.svelte.js";
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
 	import { zoomIdentity, type ZoomTransform } from "d3";
@@ -295,6 +296,7 @@
 				onSelect={() => {}}
 				onTransformChange={(transform) => (viewTransform = transform)}
 				onOutlinedSongClick={onSongClick}
+				onProgressionColors={(colors) => (mapColors.byProgression = colors)}
 			/>
 
 			{#if width > 0 && height > 0}

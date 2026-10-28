@@ -13,6 +13,7 @@
 		formatEffectiveProgressionCount
 	} from "../../shared/progressionHomogeneity.js";
 	import SongChordsDisplay from "../../define-chord-progression/components/SongChordsDisplay.svelte";
+	import ProgressionShareBar from "./ProgressionShareBar.svelte";
 
 	type Props = {
 		song: GroupedSong;
@@ -23,14 +24,6 @@
 	};
 
 	const { song, colorForProgression, expanded }: Props = $props();
-
-	const UNCLUSTERED_PROGRESSION_COLOR = "#71717a";
-	// Bar labels: a monospace character's width at the labels' font size,
-	// the space kept between labels, and how many rows they can stack into
-	// before a label that still doesn't fit is left off.
-	const LABEL_CHAR_WIDTH_PX = 5.8;
-	const LABEL_GAP_PX = 8;
-	const LABEL_ROW_COUNT = 2;
 
 	const result = $derived(
 		matchSongV2(song, coreProgressionsData, DEFAULT_WEIGHTS)
@@ -44,61 +37,8 @@
 		(homogeneity?.progressionShares ?? []).map(({ name, share }) => ({
 			name,
 			percent: share * result.explainedPercent,
-			clusterColor: colorForProgression(name)
+			color: colorForProgression(name)
 		}))
-	);
-
-	let barWidth = $state(0);
-
-	// Percent and name for the slivers that belong to a map cluster, each centered under
-	// its sliver where it fits, biggest slivers first. A label that would
-	// overlap one already placed drops to the next row, or is skipped.
-	const labels = $derived.by(() => {
-		const rows: { left: number; right: number }[][] = Array.from(
-			{ length: LABEL_ROW_COUNT },
-			() => []
-		);
-		const placed: {
-			name: string;
-			text: string;
-			color: string;
-			left: number;
-			row: number;
-		}[] = [];
-		let start = 0;
-		for (const segment of segments) {
-			const center = ((start + segment.percent / 2) / 100) * barWidth;
-			start += segment.percent;
-			if (segment.clusterColor === undefined || barWidth === 0) continue;
-			const text = `${Math.round(segment.percent)}% ${segment.name}`;
-			const width = text.length * LABEL_CHAR_WIDTH_PX;
-			const left = Math.min(
-				Math.max(center - width / 2, 0),
-				Math.max(barWidth - width, 0)
-			);
-			const right = left + width;
-			const row = rows.findIndex((intervals) =>
-				intervals.every(
-					(other) =>
-						right + LABEL_GAP_PX <= other.left ||
-						left >= other.right + LABEL_GAP_PX
-				)
-			);
-			if (row === -1) continue;
-			rows[row].push({ left, right });
-			placed.push({
-				name: segment.name,
-				text,
-				color: segment.clusterColor,
-				left,
-				row
-			});
-		}
-		return placed;
-	});
-
-	const labelRowCount = $derived(
-		labels.reduce((count, { row }) => Math.max(count, row + 1), 0)
 	);
 
 	const calendarYear = $derived(
@@ -116,29 +56,7 @@
 		<span class="muted">— {song.artists.join(", ")}</span>
 	</div>
 
-	<div class="bar-wrap" bind:clientWidth={barWidth}>
-		<div class="bar">
-			{#each segments as segment (segment.name)}
-				<div
-					class="segment"
-					style:width="{segment.percent}%"
-					style:background={segment.clusterColor ?? UNCLUSTERED_PROGRESSION_COLOR}
-				></div>
-			{/each}
-		</div>
-		{#if labelRowCount > 0}
-			<div class="labels" style:--row-count={labelRowCount}>
-				{#each labels as label (label.name)}
-					<span
-						class="label"
-						style:left="{label.left}px"
-						style:--row={label.row}
-						style:color={label.color}>{label.text}</span
-					>
-				{/each}
-			</div>
-		{/if}
-	</div>
+	<ProgressionShareBar {segments} />
 
 	<div class="summary">
 		<strong>{result.explainedPercent}%</strong> of song matched
@@ -185,39 +103,6 @@
 
 	.muted {
 		color: #71717a;
-	}
-
-	.bar-wrap {
-		position: relative;
-	}
-
-	.bar {
-		display: flex;
-		gap: 1px;
-		height: 0.625rem;
-		border-radius: 0.1875rem;
-		overflow: hidden;
-		background: #27272a;
-	}
-
-	.segment {
-		flex-shrink: 0;
-	}
-
-	/* LABEL_CHAR_WIDTH_PX assumes .label's font size. */
-	.labels {
-		--label-line: 0.85rem;
-		position: relative;
-		height: calc(var(--row-count) * var(--label-line));
-		margin-top: 0.25rem;
-	}
-
-	.label {
-		position: absolute;
-		top: calc(var(--row) * var(--label-line));
-		font-size: 0.6rem;
-		line-height: var(--label-line);
-		white-space: nowrap;
 	}
 
 	.summary {

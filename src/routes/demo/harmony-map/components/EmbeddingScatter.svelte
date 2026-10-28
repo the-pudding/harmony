@@ -380,6 +380,10 @@
 		// Hex mode: a simpler song tooltip (see HexSongTooltip) that shows the
 		// song's full chords when C is pressed.
 		simpleSongTooltip?: boolean;
+		// Called with each progression's map color whenever they change.
+		onProgressionColors?:
+			| ((colors: ReadonlyMap<string, string>) => void)
+			| null;
 	};
 
 	const {
@@ -424,7 +428,8 @@
 		onTransformChange = null,
 		onOutlinedSongClick = null,
 		pixelRatio: pixelRatioOverride = null,
-		simpleSongTooltip = false
+		simpleSongTooltip = false,
+		onProgressionColors = null
 	}: Props = $props();
 
 	const normalizeName = (name: string): string => name.trim().toLowerCase();
@@ -633,6 +638,10 @@
 			}
 		}
 		return colors;
+	});
+
+	$effect(() => {
+		onProgressionColors?.(regionColorByProgressionName);
 	});
 
 	const regionFill = (

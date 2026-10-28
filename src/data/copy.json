@@ -31,7 +31,7 @@
           "text": [
             {
               "type": "text",
-              "value": "In 2009, the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of pop songs – from Journey’s “Don’t Stop Believing” to Beyoncé’s “If I Were A Boy” – are built off of the same 4 chords."
+              "value": "In 2009, the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of pop songs – from Journey’s “Don’t Stop Believin’” to Beyoncé’s “If I Were A Boy” – are built off of the same 4 chords."
             }
           ],
           "stage": {
@@ -159,11 +159,11 @@
             },
             {
               "type": "text",
-              "value": "Basically, you could sing “Don’t Stop Believin’” over any of these, and it would sound right."
+              "value": "Basically, you could sing the beginning of “Don’t Stop Believin’” over any of these, and it would sound right."
             },
             {
               "type": "text",
-              "value": "This is what we’ll call the <strong class=progression>axis of awesome</strong> progression (aka “the four chords”)."
+              "value": "This is what we’ll call the <strong class=progression>axis of awesome</strong> progression."
             }
           ],
           "stage": {
@@ -182,7 +182,15 @@
               "type": "text",
               "value": "Songs also differ in how much they lean on a progression. Some are 100% one progression on repeat. Others use it as one ingredient in a more varied harmonic recipe."
             }
-          ]
+          ],
+          "stage": {
+            "component": "EffectiveProgressions",
+            "songs": [
+              "journey__dont-stop-believin",
+              "justin-bieber-featuring-chance-the-rapper__holy"
+            ],
+            "showEffective": "false"
+          }
         }
       ]
     },
@@ -434,9 +442,16 @@
             },
             {
               "type": "text",
-              "value": "We’ll call that a song’s number of <strong>effective progressions</strong>. That way, a song dominated by 1 progression with a 2nd that appears only once gets a score of 1.1 effective progressions, rather than 2."
+              "value": "We’ll call that a song’s number of <strong>effective progressions</strong>. That way, a song dominated by one progression, with a couple of others sprinkled in, scores close to 1, while a song that spreads its time across many progressions scores higher."
             }
-          ]
+          ],
+          "stage": {
+            "component": "EffectiveProgressions",
+            "songs": [
+              "olivia-rodrigo__drop-dead",
+              "olivia-rodrigo__drivers-license"
+            ]
+          }
         },
         {
           "text": [
