@@ -21,7 +21,7 @@
 	import { chordify } from "$utils/chordify";
 	import { setContext } from "svelte";
 	import { spanStyle } from "$routes/demo/design/timelineStyles";
-	import { audio } from "$runes/audio.svelte";
+	import { audio, stopAllAudio } from "$runes/audio.svelte";
 	import mutedSvg from "$svg/muted.svg";
 	import unmutedSvg from "$svg/unmuted.svg";
 
@@ -109,9 +109,16 @@
 	let showClusterPanel = $derived(mapProps?.focusCluster !== undefined);
 
 	const INTERACTIVE =
-		'a, button, input, select, textarea, audio, video, [tabindex]:not([tabindex="-1"])';
-	const onArticleClick = (event) => {
-		if (!event.target.closest(INTERACTIVE)) playingSongId = undefined;
+		'a, button, input, label, select, textarea, audio, video, [tabindex]:not([tabindex="-1"])';
+	let articleEl = $state();
+
+	// article is pointer-events: none, so most "blank space" clicks land on
+	// the body or the map beneath it; listen on the window to catch them all
+	const onWindowClick = (event) => {
+		if (event.target.closest(INTERACTIVE)) return;
+		stopAllAudio();
+		// the map clears its own song on background clicks
+		if (articleEl?.contains(event.target)) playingSongId = undefined;
 	};
 
 	const onTap = (dir) => {
@@ -151,8 +158,9 @@
 	/>
 </div>
 
-<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-<article onclick={onArticleClick}>
+<svelte:window onclick={onWindowClick} />
+
+<article bind:this={articleEl}>
 	<Chapters
 		visible={slideI > 0}
 		activeSlide={slideI}
@@ -256,6 +264,7 @@
 				input,
 				select,
 				textarea,
+				label,
 				audio,
 				video,
 				[tabindex]:not([tabindex="-1"])

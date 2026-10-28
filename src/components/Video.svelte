@@ -1,13 +1,20 @@
 <script>
 	import playSvg from "$svg/play.svg";
 	import { getContext } from "svelte";
-	import { audio } from "$runes/audio.svelte";
+	import { audio, onStopAll } from "$runes/audio.svelte";
 
 	let { videoId, caption } = $props();
 
 	const appState = getContext("state");
 
+	let videoEl = $state();
 	let paused = $state(true);
+
+	onStopAll(() => {
+		if (!videoEl) return;
+		videoEl.pause();
+		videoEl.currentTime = 0;
+	});
 
 	const positionCues = (track) => {
 		const apply = () => {
@@ -68,6 +75,7 @@
 <figure>
 	<div class="video-wrapper">
 		<video
+			bind:this={videoEl}
 			src="assets/video/{videoId}.mp4"
 			playsinline
 			muted={audio.muted}

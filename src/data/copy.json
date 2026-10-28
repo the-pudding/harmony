@@ -98,11 +98,7 @@
           "text": [
             {
               "type": "text",
-              "value": "Time for some quick music theory."
-            },
-            {
-              "type": "text",
-              "value": "A <strong>chord</strong> is a combination of two or more notes. A <strong>chord progression</strong> is a series of chords that often loops multiple times in a song, underneath the melody."
+              "value": "Underneath the melody is a song’s harmony, a bed of chords (multiple notes played together) that shift in a repeating pattern called a <strong>chord progression</strong>."
             }
           ],
           "stage": {
@@ -159,7 +155,11 @@
           "text": [
             {
               "type": "text",
-              "value": "So, we can describe all of these progressions as <span class=chords>I-V-vi-IV</span>. Basically, you could sing “Don’t Stop Believin’” over any of these, and it would sound right."
+              "value": "So, we can describe all of these progressions as <span class=chords>I-V-vi-IV</span>."
+            },
+            {
+              "type": "text",
+              "value": "Basically, you could sing “Don’t Stop Believin’” over any of these, and it would sound right."
             },
             {
               "type": "text",

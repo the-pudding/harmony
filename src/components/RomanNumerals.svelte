@@ -1,6 +1,6 @@
 <script>
 	import { base } from "$app/paths";
-	import { audio } from "$runes/audio.svelte";
+	import { audio, onStopAll } from "$runes/audio.svelte";
 	import { flip } from "svelte/animate";
 	import { fade } from "svelte/transition";
 	import { cubicInOut } from "svelte/easing";
@@ -104,6 +104,11 @@
 	});
 
 	$effect(() => stopAll);
+
+	onStopAll(() => {
+		stopAll();
+		playingKey = null;
+	});
 </script>
 
 <figure

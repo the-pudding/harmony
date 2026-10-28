@@ -2,45 +2,86 @@
 	import { base } from "$app/paths";
 	import playSvg from "$svg/play.svg";
 	import { committedSyncedSongs } from "$data/syncedSongs";
-	import { audio } from "$runes/audio.svelte";
+	import { audio, onStopAll } from "$runes/audio.svelte";
+	import Switch from "$components/ui/Switch.svelte";
 
 	let { songs = 3 } = $props();
 
 	const SONG_KEY = "journey__dont-stop-believin";
 	const song = committedSyncedSongs[SONG_KEY];
-
-	// The [Intro] chord boxes on ug-dont-stop-believin.png, in its 573×791
-	// pixel space, in the order they're played. One per chord in the song's
-	// synced region.
 	const IMAGE_W = 573;
 	const IMAGE_H = 791;
-	const ROWS = [
-		{ y: 295, h: 16 },
-		{ y: 313, h: 17 }
+	// the first two lines of [Verse 1], one box per chord in song.chords
+	const chordBoxes = [
+		{ x: 15, y: 367, w: 14, h: 16 },
+		{ x: 92, y: 367, w: 14, h: 16 },
+		{ x: 215, y: 367, w: 30, h: 16 },
+		{ x: 338, y: 367, w: 14, h: 16 },
+		{ x: 15, y: 403, w: 14, h: 16 },
+		{ x: 138, y: 403, w: 14, h: 16 },
+		{ x: 300, y: 403, w: 30, h: 16 },
+		{ x: 338, y: 403, w: 14, h: 16 }
 	];
-	const COLS = [
-		{ x: 15, w: 14 },
-		{ x: 45, w: 15 },
-		{ x: 76, w: 30 },
-		{ x: 122, w: 15 }
+
+	// each phrase fills left to right while it's sung (start/end in clip time)
+	const LYRIC_Y = [384, 420];
+	const LYRIC_H = 18;
+	const lyrics = [
+		{ line: 0, x: 39, w: 179, start: 1.2, end: 3.6 }, // Just a small town girl,
+		{ line: 0, x: 247, w: 189, start: 5.0, end: 7.7 }, // livin' in a lonely world
+		{ line: 1, x: 39, w: 212, start: 9.3, end: 10.8 }, // She took the midnight train
+		{ line: 1, x: 255, w: 112, start: 10.8, end: 14.3 } // going anywhere
 	];
-	const chordBoxes = ROWS.flatMap((row) =>
-		COLS.map((col) => ({ ...row, ...col }))
-	);
+
+	// the stems are a clip of the full song starting here (found by
+	// cross-correlating all.mp3 against the full track)
+	const CLIP_START = 17.466;
+	const CLIP_END = song.region.endSeconds - CLIP_START;
+	const stemSrc = (stem) =>
+		`${base}/assets/audio/dont-stop-believin/${stem}.mp3`;
 
 	let audioEl = $state();
 	let paused = $state(true);
 	let currentTime = $state(0);
+	let chordsOn = $state(true);
+	let melodyOn = $state(true);
 
-	// Index into song.chords of the chord sounding now, or null outside it.
+	// at least one part is always on
+	let stem = $derived(
+		chordsOn && melodyOn ? "all" : chordsOn ? "instrumental" : "vocals"
+	);
+
+	// swap stems without losing our place
+	$effect(() => {
+		if (!audioEl) return;
+		const src = stemSrc(stem);
+		if (audioEl.src.endsWith(src)) return;
+		const time = audioEl.currentTime;
+		const wasPlaying = !audioEl.paused;
+		audioEl.src = src;
+		if (!time && !wasPlaying) return;
+		audioEl.addEventListener(
+			"loadedmetadata",
+			() => {
+				audioEl.currentTime = time;
+				if (wasPlaying) audioEl.play();
+			},
+			{ once: true }
+		);
+		audioEl.load();
+	});
+
 	let activeChordIndex = $derived.by(() => {
 		if (paused) return null;
 		let index = null;
 		song.chords.forEach((d, i) => {
-			if (d.seconds <= currentTime) index = i;
+			if (d.seconds <= currentTime + CLIP_START) index = i;
 		});
 		return index;
 	});
+
+	const lyricProgress = (d) =>
+		Math.min(Math.max((currentTime - d.start) / (d.end - d.start), 0), 1);
 
 	const togglePlay = () => {
 		if (!audioEl) return;
@@ -48,16 +89,21 @@
 			audioEl.pause();
 			return;
 		}
-		const { startSeconds, endSeconds } = song.region;
-		if (audioEl.currentTime < startSeconds || audioEl.currentTime >= endSeconds)
-			audioEl.currentTime = startSeconds;
+		if (audioEl.ended || audioEl.currentTime >= CLIP_END)
+			audioEl.currentTime = 0;
 		audioEl.play();
 	};
 
-	const stopAtEnd = () => {
-		if (audioEl.currentTime < song.region.endSeconds) return;
+	onStopAll(() => {
+		if (!audioEl) return;
 		audioEl.pause();
-		audioEl.currentTime = song.region.startSeconds;
+		audioEl.currentTime = 0;
+	});
+
+	const stopAtEnd = () => {
+		if (audioEl.currentTime < CLIP_END) return;
+		audioEl.pause();
+		audioEl.currentTime = 0;
 	};
 
 	$effect(() => {
@@ -71,7 +117,6 @@
 		return () => cancelAnimationFrame(frame);
 	});
 
-	// stop when we leave the single-song step
 	$effect(() => {
 		if (!single) audioEl?.pause();
 	});
@@ -95,7 +140,8 @@
 
 	let width = $state(0);
 	let height = $state(0);
-	let entered = $state(false);
+	// how many cards have started flying in
+	let enteredCount = $state(0);
 
 	let single = $derived(+songs === 1);
 
@@ -153,7 +199,7 @@
 	});
 
 	const transformFor = (pos, i) => {
-		if (entered) {
+		if (i < enteredCount) {
 			return `translate(${pos.x}px, ${pos.y}px) rotate(${pos.rotate}deg)`;
 		}
 		// start below the stage, tilted, before the intro
@@ -161,85 +207,139 @@
 		return `translate(${pos.x}px, ${height + 80}px) rotate(${tilt}deg)`;
 	};
 
+	// Stagger the intro with timers rather than transition-delay: the stage
+	// resizes while the text box animates, and every retarget would re-apply
+	// the delay, stalling the later cards until the resizing stops.
+	const STAGGER = 90;
+	let introStarted = false;
+	let introTimers = [];
+
 	$effect(() => {
 		// wait for a measured layout + painted start position before flying in
-		if (!width || !height || entered) return;
-		let frame = requestAnimationFrame(() => {
-			frame = requestAnimationFrame(() => (entered = true));
+		if (!width || !height || introStarted) return;
+		introStarted = true;
+		requestAnimationFrame(() => {
+			requestAnimationFrame(() => {
+				introTimers = images.map((_, i) =>
+					setTimeout(() => (enteredCount = i + 1), i * STAGGER)
+				);
+			});
 		});
-		return () => cancelAnimationFrame(frame);
 	});
+
+	$effect(() => () => introTimers.forEach(clearTimeout));
 </script>
 
-<div
-	class="ultimate-guitar"
-	bind:clientWidth={width}
-	bind:clientHeight={height}
->
-	{#if width && height}
-		{#each images as d, i (d.id)}
-			{@const pos = layout[i]}
-			<div
-				class="card"
-				style:width="{pos.w}px"
-				style:height="{pos.h}px"
-				style:transform={transformFor(pos, i)}
-				style:opacity={entered ? pos.opacity : 0}
-				style:z-index={d.z}
-				style:transition-delay="{(single ? 0 : i) * 90}ms"
-			>
-				<img src="{base}/assets/img/ug-{d.id}.png" alt="" />
-
-				{#if d.id === FEATURED}
-					<svg
-						class="chord-boxes"
-						viewBox="0 0 {IMAGE_W} {IMAGE_H}"
-						preserveAspectRatio="none"
-						aria-hidden="true"
-					>
-						{#each chordBoxes as box, j}
-							<rect
-								x={box.x}
-								y={box.y}
-								width={box.w}
-								height={box.h}
-								data-chord={song.chords[j]?.chord}
-								class:active={j === activeChordIndex}
-							/>
-						{/each}
-					</svg>
-
-					<button
-						class="play"
-						class:enabled={single}
-						class:visible={single && paused}
-						aria-label="{paused ? 'Play' : 'Pause'} Don't Stop Believin'"
-						tabindex={single ? 0 : -1}
-						onclick={togglePlay}
-					>
-						{@html playSvg}
-					</button>
-				{/if}
+<div class="ultimate-guitar">
+	{#if +songs === 1}
+		<div class="controls">
+			<!-- at least one part is always on -->
+			<div class="part chords">
+				<Switch
+					bind:checked={chordsOn}
+					disabled={chordsOn && !melodyOn}
+					labelText="Chords"
+					size="sm"
+				/>
 			</div>
-		{/each}
+			<div class="part melody">
+				<Switch
+					bind:checked={melodyOn}
+					disabled={melodyOn && !chordsOn}
+					labelText="Melody"
+					size="sm"
+				/>
+			</div>
+		</div>
 	{/if}
+
+	<div class="stage" bind:clientWidth={width} bind:clientHeight={height}>
+		{#if width && height}
+			{#each images as d, i (d.id)}
+				{@const pos = layout[i]}
+				<div
+					class="card"
+					style:width="{pos.w}px"
+					style:height="{pos.h}px"
+					style:transform={transformFor(pos, i)}
+					style:opacity={i < enteredCount ? pos.opacity : 0}
+					style:z-index={d.z}
+				>
+					<img src="{base}/assets/img/ug-{d.id}.png" alt="" />
+
+					{#if d.id === FEATURED}
+						<svg
+							class="highlights"
+							viewBox="0 0 {IMAGE_W} {IMAGE_H}"
+							preserveAspectRatio="none"
+							aria-hidden="true"
+						>
+							{#each chordBoxes as box, j}
+								<rect
+									class="chord"
+									x={box.x}
+									y={box.y}
+									width={box.w}
+									height={box.h}
+									data-chord={song.chords[j]?.chord}
+									class:active={chordsOn && j === activeChordIndex}
+								/>
+							{/each}
+
+							{#if melodyOn && !paused}
+								{#each lyrics as d}
+									<rect
+										class="lyric"
+										x={d.x}
+										y={LYRIC_Y[d.line]}
+										width={d.w * lyricProgress(d)}
+										height={LYRIC_H}
+									/>
+								{/each}
+							{/if}
+						</svg>
+
+						<button
+							class="play"
+							class:enabled={single}
+							class:visible={single && paused}
+							aria-label="{paused ? 'Play' : 'Pause'} Don't Stop Believin'"
+							tabindex={single ? 0 : -1}
+							onclick={togglePlay}
+						>
+							{@html playSvg}
+						</button>
+					{/if}
+				</div>
+			{/each}
+		{/if}
+	</div>
 
 	<audio
 		bind:this={audioEl}
 		bind:paused
-		src="{base}/assets/audio/synced-songs/{song.audioFile}"
 		preload="none"
 		muted={audio.muted}
 		ontimeupdate={stopAtEnd}
+		onended={() => (audioEl.currentTime = 0)}
 	></audio>
 </div>
 
 <style>
 	.ultimate-guitar {
-		position: relative;
+		--color-chords: #ffe0ae;
+		--color-melody: #7edef6;
+		display: flex;
+		flex-direction: column;
 		isolation: isolate;
 		width: 100%;
 		height: 100%;
+	}
+
+	.stage {
+		position: relative;
+		flex: 1;
+		min-height: 0;
 	}
 
 	.card {
@@ -264,7 +364,7 @@
 		object-fit: cover;
 	}
 
-	.chord-boxes {
+	.highlights {
 		position: absolute;
 		inset: 0;
 		width: 100%;
@@ -272,8 +372,21 @@
 		pointer-events: none;
 	}
 
-	.chord-boxes rect {
+	/* multiply keeps the dark text on top readable */
+	.highlights rect {
+		mix-blend-mode: multiply;
+	}
+
+	.highlights .chord {
 		fill: transparent;
+	}
+
+	.highlights .chord.active {
+		fill: var(--color-chords);
+	}
+
+	.highlights .lyric {
+		fill: var(--color-melody);
 	}
 
 	button.play {
@@ -308,6 +421,55 @@
 
 	button.play:hover :global(svg) {
 		transform: scale(1.1);
+	}
+
+	.controls {
+		position: relative;
+		z-index: 10;
+		flex-shrink: 0;
+		width: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.5rem 1.25rem;
+		max-width: 550px;
+		margin: 0 auto;
+		padding: 0 1rem;
+		box-sizing: border-box;
+		font-family: var(--font-mono);
+	}
+
+	.part.chords {
+		--part-color: var(--color-chords);
+	}
+
+	.part.melody {
+		--part-color: var(--color-melody);
+	}
+
+	.part :global(.bits-switch) {
+		font-family: inherit;
+		color: var(--color-gray-300);
+	}
+
+	.part :global([data-switch-root]),
+	.part :global([data-switch-root]:hover) {
+		background: var(--color-gray-800);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+	}
+
+	.part :global([data-switch-root][data-state="checked"]) {
+		background: var(--part-color);
+		border-color: var(--part-color);
+	}
+
+	.part :global([data-switch-thumb]) {
+		background: var(--color-gray-400);
+	}
+
+	.part :global([data-state="checked"] [data-switch-thumb]) {
+		background: #09090b;
 	}
 
 	@media (prefers-reduced-motion: reduce) {
