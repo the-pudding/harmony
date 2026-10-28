@@ -171,8 +171,6 @@
 	.scrolling {
 		position: relative;
 		z-index: -1;
-		padding-top: 1rem;
-		padding-left: 1rem;
 	}
 
 	.track {
@@ -180,6 +178,7 @@
 	}
 
 	.row {
+		text-align: center;
 		font-size: var(--12px);
 	}
 

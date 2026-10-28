@@ -24,7 +24,7 @@
 	import mutedSvg from "$svg/muted.svg";
 	import unmutedSvg from "$svg/unmuted.svg";
 
-	const debugSlide = undefined;
+	const debugSlide = 2; // undefined;
 
 	const components = {
 		Landing,

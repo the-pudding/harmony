@@ -7,6 +7,7 @@
 		"hexmap": "vite-node tasks/build-hexmap.ts",
 		"charts": "vite-node tasks/build-charts.ts",
 		"style": "node tasks/style-dictionary.js",
+		"vtt": "node tasks/vtt-timer.js",
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
