@@ -1,21 +1,31 @@
 <script>
-	let { activeSlide, sections, visible = true } = $props();
+	let { activeSlide, sections, visible = true, onselect } = $props();
 </script>
 
 <div class="chapters" class:visible>
 	{#each sections as { title, slides }, i}
 		{@const chapterActive = slides.some((s) => s.i === activeSlide)}
 		<div class="chapter" class:active={chapterActive}>
-			<span class="text">
+			<button class="text" onclick={() => onselect?.(slides[0].i)}>
 				{i + 1}<span class="title"> — {title}</span>
-			</span>
+			</button>
 			{#if chapterActive}
-				{#each slides as slide}
+				{#each slides as slide, j}
 					{@const active = slide.i === activeSlide}
-					<div class="block" class:active />
+					<button
+						class="block"
+						class:active
+						aria-label="Slide {j + 1} of {title}"
+						aria-current={active ? "step" : undefined}
+						onclick={() => onselect?.(slide.i)}
+					></button>
 				{/each}
 			{:else}
-				<div class="block" />
+				<button
+					class="block"
+					aria-label="Go to chapter {i + 1}: {title}"
+					onclick={() => onselect?.(slides[0].i)}
+				></button>
 			{/if}
 		</div>
 	{/each}
@@ -55,22 +65,32 @@
 	.chapter.active {
 		flex: 5;
 	}
+	button {
+		padding: 0;
+		border: none;
+		color: inherit;
+		font: inherit;
+		cursor: pointer;
+	}
 	.text {
 		position: absolute;
 		top: 0;
 		left: 0;
 		font-size: 12px;
 		white-space: nowrap;
+		background: none;
 		opacity: 0.3;
 	}
-	.chapter.active .text {
-		opacity: 1;
+	.text:hover {
+		background: none;
+		color: inherit;
+		opacity: 0.6;
 	}
 	.title {
-		visibility: hidden;
+		display: none;
 	}
 	.chapter.active .title {
-		visibility: visible;
+		display: inline;
 	}
 	.block {
 		position: relative;
@@ -82,13 +102,24 @@
 		opacity: 0.3;
 		transition: opacity calc(var(--1s) * 0.4);
 	}
+	/* the bar is only 2px tall, so extend the hit area around it */
+	.block::before {
+		content: "";
+		position: absolute;
+		inset: -8px -1px;
+	}
+	.block:hover {
+		background: var(--color-fg);
+		opacity: 0.6;
+	}
 	.block:first-of-type {
 		margin-left: 0;
 	}
 	.block:last-of-type {
 		margin-right: 0;
 	}
-	.block.active {
+	.block.active,
+	.chapter.active .text {
 		opacity: 1;
 	}
 

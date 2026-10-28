@@ -114,13 +114,23 @@
           "text": [
             {
               "type": "text",
-              "value": "But the literal chord names you might be familiar with – like <span class=chord>C, D, Ab</span> – miss something important."
+              "value": "But the literal chord names you might be familiar with – like <span class=chord>C</span>, <span class=chord>D</span>, or <span class=chord>E</span> – miss something important."
             },
             {
               "type": "text",
-              "value": "“Don’t Stop Believin’” goes <button>E-B-C#m-A.</button> “With Or Without You” goes <button>D-A-Bm-G.</button> “Demons” goes <button>Eb-Bb-Cm-Ab.</button> On paper, these are different progressions. But to your ear, they move in the same way."
+              "value": "“I’m Yours”, “Don’t Stop Believin’”, and “You’re Beautiful” all have different chords on paper. But to your ear, they move in the same way."
             }
-          ]
+          ],
+          "stage": {
+            "component": "RomanNumerals",
+            "keys": [
+              "B",
+              "E",
+              "Eb"
+            ],
+            "symbols": "chords",
+            "labelHome": "false"
+          }
         },
         {
           "text": [
@@ -130,17 +140,41 @@
             },
             {
               "type": "text",
-              "value": "Musicians notate this with roman numerals. The <span class=chord>I</span> is the home base chord, <span class=chord>ii</span> is a step away, <span class=chord>iii</span> is another step away, <span class=chord>IV</span>, <span class=chord>V</span>, <span class=chord>vi</span>, <span class=chord>vii</span>.</span>"
+              "value": "Musicians notate this with roman numerals. The <span class=chord>I</span> is the home base chord, <span class=chord>ii</span> is a step away, <span class=chord>iii</span> is another step away, so on and so forth."
+            },
+            {
+              "type": "text",
+              "value": "<span class=small>Click any chord to flip between its name and numeral.</span>"
             }
-          ]
+          ],
+          "stage": {
+            "component": "RomanNumerals",
+            "keys": [
+              "E"
+            ],
+            "symbols": "numerals"
+          }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "So, these songs all go <span class=chords>I-V-vi-IV</span>, which is the Axis of Awesome “four chords” progression."
+              "value": "So, we can describe all of these progressions as <span class=chords>I-V-vi-IV</span>. Basically, you could sing “Don’t Stop Believin’” over any of these, and it would sound right."
+            },
+            {
+              "type": "text",
+              "value": "This is what we’ll call the <strong class=progression>axis of awesome</strong> progression (aka “the four chords”)."
             }
-          ]
+          ],
+          "stage": {
+            "component": "RomanNumerals",
+            "keys": [
+              "B",
+              "E",
+              "Eb"
+            ],
+            "symbols": "numerals"
+          }
         },
         {
           "text": [

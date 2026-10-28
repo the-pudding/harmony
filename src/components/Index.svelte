@@ -8,6 +8,7 @@
 	import Video from "$components/Video.svelte";
 	import Player from "$components/Player.svelte";
 	import UltimateGuitar from "$components/UltimateGuitar.svelte";
+	import RomanNumerals from "$components/RomanNumerals.svelte";
 	import EffectiveBar from "$components/EffectiveBar.svelte";
 	import EffectiveDecades from "$components/EffectiveDecades.svelte";
 	import ClusterPercentOverTime from "$components/ClusterPercentOverTime.svelte";
@@ -24,7 +25,7 @@
 	import mutedSvg from "$svg/muted.svg";
 	import unmutedSvg from "$svg/unmuted.svg";
 
-	const debugSlide = 2; // undefined;
+	const debugSlide = undefined;
 
 	const components = {
 		Landing,
@@ -34,7 +35,8 @@
 		EffectiveDecades,
 		ClusterPercentOverTime,
 		Signatures,
-		UltimateGuitar
+		UltimateGuitar,
+		RomanNumerals
 	};
 
 	let slideCount = 0;
@@ -155,6 +157,7 @@
 		visible={slideI > 0}
 		activeSlide={slideI}
 		sections={sections.slice(1)}
+		onselect={(i) => (slideI = i)}
 	/>
 
 	<div class="overlay" class:visible={OverlayComponent}>
