@@ -574,6 +574,31 @@
           }
         }
       ]
+    },
+    {
+      "title": "Explore",
+      "slides": [
+        {
+          "text": [
+            {
+              "type": "ExploreControls",
+              "value": {}
+            }
+          ],
+          "map": {
+            "visible": "true",
+            "centered": "true"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Methods + Footer"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

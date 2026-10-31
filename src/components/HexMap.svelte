@@ -60,6 +60,23 @@
 		onSongClick?: (songKey: string | null) => void;
 		// The synced song playing, drawn bigger with the others faded.
 		playingSongKey?: string | null;
+		// While movable and no focusCluster is set: a cluster the user picked,
+		// by name, which the view fits (in focusFrame) without locking it.
+		selectedCluster?: string | null;
+		// While movable and no focusCluster is set: a song the user picked,
+		// which the view centers and zooms in on (in focusFrame) without
+		// locking it. Takes priority over selectedCluster for moving the view.
+		selectedSong?: string | null;
+		// While movable and no focusCluster is set, called on every click
+		// with the cluster clicked (or null for a gray hex or empty space)
+		// and the synced song clicked, if any.
+		onClusterClick?: (
+			clusterName: string | null,
+			songKey: string | null
+		) => void;
+		// While movable and no focusCluster is set, called whenever the user
+		// pans or zooms.
+		onUserMove?: () => void;
 		// Same meanings and defaults as /demo/embedding. (UMAP's minDist is
 		// baked into the snapshot; see HEX_MAP_UMAP_MIN_DIST.)
 		purityLayout?: boolean;
@@ -81,6 +98,10 @@
 		theme = "dark",
 		onSongClick = undefined,
 		playingSongKey = null,
+		selectedCluster = null,
+		selectedSong = null,
+		onClusterClick = undefined,
+		onUserMove = undefined,
 		purityLayout = true,
 		pureThreshold = 0.9,
 		clusterMinPoints = 20,
@@ -95,6 +116,9 @@
 		if (focusCluster !== undefined) hasFocusedCluster = true;
 		return focusCluster ?? (hasFocusedCluster ? null : undefined);
 	});
+
+	// Picking clusters is only for maps the user can explore.
+	const explorable = $derived(movable && focusCluster === undefined);
 
 	// A focused cluster isn't labeled.
 	const labelsVisible = $derived(!hideLabels && focusCluster === undefined);
@@ -279,6 +303,7 @@
 				{clusterRegionBySongKey}
 				{clusterNames}
 				outlinedSongKeys={SYNCED_SONG_KEYS}
+				outlinedTitlePrefix="🎧"
 				{playingSongKey}
 				{movable}
 				{hoverable}
@@ -287,6 +312,10 @@
 				labelNames={showLabels ?? null}
 				showClusterNames={labelsVisible}
 				{focusClusterName}
+				selectedClusterName={explorable && !selectedSong
+					? selectedCluster
+					: null}
+				zoomSongKey={explorable ? selectedSong : null}
 				{focusFrame}
 				offsetY={centered || focusCluster !== undefined
 					? 0
@@ -296,6 +325,8 @@
 				onSelect={() => {}}
 				onTransformChange={(transform) => (viewTransform = transform)}
 				onOutlinedSongClick={onSongClick}
+				onClusterClick={explorable ? onClusterClick : null}
+				onUserMove={explorable ? onUserMove : null}
 				onProgressionColors={(colors) => (mapColors.byProgression = colors)}
 			/>
 

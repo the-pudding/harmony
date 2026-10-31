@@ -93,10 +93,11 @@
 	// where hexes turn into dots, so the cluster's songs show as dots.
 	const HEX_FOCUS_SCALE = HEX_ZOOM.dotsAtZoom * 1.01;
 	// Flying to an off-screen song zooms out a bit on the way there.
+	// Zooming to zoomSongKey goes this far past HEX_FOCUS_SCALE in hex mode.
+	const ZOOM_SONG_HEX_FACTOR = 2;
 	const FLY_TO_ZOOM_OUT_FACTOR = 0.75;
 	const FLY_TO_TRANSITION_MS = 1300;
-	// Clicking a hex zooms in by this factor.
-	const HEX_CLICK_ZOOM_FACTOR = 2.5;
+	// Clicking a hex zooms in, around the click, to HEX_FOCUS_SCALE.
 	const HEX_CLICK_ZOOM_MS = 450;
 	// Points animating between layouts.
 	const TWEEN_DURATION_MS = 700;
@@ -116,8 +117,9 @@
 	const OUTLINED_POINT_RADIUS = 10;
 	const OUTLINE_WIDTH = 3;
 	const OUTLINE_GLOW_BLUR = 10;
-	// playingSongKey's marker is bigger with a wider glow, and the other
-	// outlined songs (and their labels) fade back to this alpha.
+	// The spotlit song (playingSongKey, else zoomSongKey) gets a bigger
+	// marker with a wider glow, and every other song (and outlined songs'
+	// labels) fades back to this alpha.
 	const PLAYING_POINT_RADIUS = 18;
 	const PLAYING_GLOW_BLUR = 28;
 	const NOT_PLAYING_ALPHA = 0.3;
@@ -280,6 +282,16 @@
 		// current member bounds to the viewport. Same undefined/null contract
 		// as focusSongKey; takes priority over it when both are set.
 		focusClusterName?: string | null;
+		// A cluster the user picked (by name, like focusClusterName): the view
+		// animates to fit it when it's set, and again when focusFrame changes,
+		// but stays put when it's cleared, and the map stays movable.
+		selectedClusterName?: string | null;
+		// A song the user picked (e.g. from a search): the view animates to
+		// center it (in focusFrame) and zoom in when it's set, and again when
+		// focusFrame changes, but stays put when it's cleared, and the map
+		// stays movable. Unless another song is playing, it's spotlit like
+		// playingSongKey, even if it isn't outlined.
+		zoomSongKey?: string | null;
 		// The part of the canvas a focused cluster should fill, in screen
 		// pixels from its top (e.g. the space below text over the map). In
 		// hex mode the cluster is scaled to almost fill its height and
@@ -329,6 +341,10 @@
 		// everything else, with their titles and artists beside them. In hex
 		// mode, only once zoomed in to dots.
 		outlinedSongKeys?: Set<string> | null;
+		// Put before outlinedSongKeys songs' titles in their labels (e.g. an
+		// emoji marking them playable), so they stand apart from a spotlit
+		// song that isn't outlined.
+		outlinedTitlePrefix?: string | null;
 		// One of outlinedSongKeys to call out above the rest (e.g. the song
 		// playing): drawn bigger and on top, with the others faded.
 		playingSongKey?: string | null;
@@ -374,6 +390,16 @@
 		// Called on every click on the map with the outlinedSongKeys song
 		// under the pointer, or null when the click missed them all.
 		onOutlinedSongClick?: ((songKey: string | null) => void) | null;
+		// Hex mode: called on every click, after onOutlinedSongClick, with the
+		// name of the cluster clicked (the hex's, or at dot zoom the nearest
+		// song's), or null for a gray hex or empty space, and the
+		// outlinedSongKeys song clicked, if any.
+		onClusterClick?:
+			| ((clusterName: string | null, songKey: string | null) => void)
+			| null;
+		// Called whenever the user drags, wheels or pinches the view (not on
+		// scripted or click-to-zoom moves).
+		onUserMove?: (() => void) | null;
 		// Canvas pixels per CSS pixel. Defaults to the screen's; lower it when
 		// the map is shown scaled down (e.g. an inset) to save memory.
 		pixelRatio?: number | null;
@@ -403,6 +429,8 @@
 		focusSongKey = undefined,
 		focusScale = DEFAULT_FOCUS_SCALE,
 		focusClusterName = undefined,
+		selectedClusterName = null,
+		zoomSongKey = null,
 		focusFrame = null,
 		offsetY = 0,
 		emphasizedSongKeys = null,
@@ -414,6 +442,7 @@
 		accentSongKeys = null,
 		accentFillColor = null,
 		outlinedSongKeys = null,
+		outlinedTitlePrefix = null,
 		playingSongKey = null,
 		renderMode = "dots",
 		progressionSharesBySongKey = null,
@@ -427,6 +456,8 @@
 		theme = "dark",
 		onTransformChange = null,
 		onOutlinedSongClick = null,
+		onClusterClick = null,
+		onUserMove = null,
 		pixelRatio: pixelRatioOverride = null,
 		simpleSongTooltip = false,
 		onProgressionColors = null
@@ -736,23 +767,34 @@
 	// The full, unzoomed view, shifted down by offsetY.
 	const homeTransform = $derived(zoomIdentity.translate(0, offsetY));
 
-	// Each outlined song's eased playing emphasis, from 0 (not playing) to 1
-	// (playing), and how far the rest are faded, from 0 (nothing playing) to
-	// 1. Tweened toward playingSongKey by the effect below, which redraws
-	// each frame itself, so these aren't reactive.
+	// Each song's eased spotlight emphasis, from 0 to 1 (spotlit), and how
+	// far the rest are faded, from 0 (nothing spotlit) to 1. Tweened toward
+	// spotlightSongKey by the effect below, which redraws each frame itself,
+	// so these aren't reactive.
 	let playingEmphasis = new Map<string, number>();
 	let playingFade = 0;
 
+	const spotlightSongKey = $derived(playingSongKey ?? zoomSongKey);
+
 	const emphasisFor = (songKey: string): number =>
 		playingEmphasis.get(songKey) ?? 0;
+
+	// Drawn as a ringed, glowing marker: outlined songs, plus a spotlit (or
+	// fading-out) song that isn't outlined.
+	const isMarked = (songKey: string): boolean =>
+		isOutlined(songKey) || emphasisFor(songKey) > 0;
+
+	// How much a song fades while another is spotlit.
+	const spotlightFadeFor = (songKey: string): number =>
+		lerp(1, NOT_PLAYING_ALPHA, playingFade * (1 - emphasisFor(songKey)));
 
 	const lerp = (from: number, to: number, t: number): number =>
 		from + (to - from) * t;
 
 	const radiusFor = (songKey: string): number => {
-		if (isOutlined(songKey)) {
+		if (isMarked(songKey)) {
 			return lerp(
-				OUTLINED_POINT_RADIUS,
+				isOutlined(songKey) ? OUTLINED_POINT_RADIUS : POINT_RADIUS,
 				PLAYING_POINT_RADIUS,
 				emphasisFor(songKey)
 			);
@@ -771,17 +813,16 @@
 			inYearSongKeys
 		});
 
-	// alphaFor, faded further when another outlined song is playing.
+	// alphaFor, faded further when another song is spotlit.
 	const outlinedAlphaFor = (songKey: string): number =>
-		alphaFor(songKey) *
-		lerp(1, NOT_PLAYING_ALPHA, playingFade * (1 - emphasisFor(songKey)));
+		alphaFor(songKey) * spotlightFadeFor(songKey);
 
-	// outlinedSongKeys, most emphasized last, so the playing song (and one
+	// Marked songs, most emphasized last, so the spotlit song (and one
 	// shrinking back) draws on top.
 	const outlinedInDrawOrder = (): string[] =>
-		outlinedSongKeys
-			? [...outlinedSongKeys].sort((a, b) => emphasisFor(a) - emphasisFor(b))
-			: [];
+		[...new Set([...(outlinedSongKeys ?? []), ...playingEmphasis.keys()])].sort(
+			(a, b) => emphasisFor(a) - emphasisFor(b)
+		);
 
 	const drawAxisLabels = (context: CanvasRenderingContext2D) => {
 		if (!axisLabels) return;
@@ -918,7 +959,7 @@
 		drawClusters(context);
 
 		for (const point of pointsInDrawOrder) {
-			if (isOutlined(point.songKey)) continue;
+			if (isMarked(point.songKey)) continue;
 			const position = displayedPositions.get(point.songKey);
 			if (!position) continue;
 			const screen = toScreen(position);
@@ -931,7 +972,8 @@
 			) {
 				continue;
 			}
-			context.globalAlpha = alphaFor(point.songKey);
+			context.globalAlpha =
+				alphaFor(point.songKey) * spotlightFadeFor(point.songKey);
 			context.fillStyle =
 				emphasisFillColor && emphasizedSongKeys?.has(point.songKey)
 					? emphasisFillColor
@@ -974,8 +1016,9 @@
 		context.globalAlpha = 1;
 	};
 
-	// outlinedSongKeys: a white glow, then the song's region color inside a
-	// white ring, so they stand out from the dots around them.
+	// Marked songs: a white glow, then the song's region color inside a
+	// white ring, so they stand out from the dots around them. A song that
+	// isn't outlined grows its ring and glow in with its emphasis.
 	const drawOutlinedSongs = (
 		context: CanvasRenderingContext2D,
 		gradientStrength: number
@@ -985,11 +1028,14 @@
 			if (!position) continue;
 			const screen = toScreen(position);
 			const radius = radiusFor(songKey);
+			const emphasis = emphasisFor(songKey);
+			const outlined = isOutlined(songKey);
 			const glowBlur = lerp(
-				OUTLINE_GLOW_BLUR,
+				outlined ? OUTLINE_GLOW_BLUR : 0,
 				PLAYING_GLOW_BLUR,
-				emphasisFor(songKey)
+				emphasis
 			);
+			const outlineWidth = outlined ? OUTLINE_WIDTH : OUTLINE_WIDTH * emphasis;
 			const reach = radius + glowBlur;
 			if (
 				screen.x < -reach ||
@@ -1011,7 +1057,13 @@
 
 			context.globalAlpha = outlinedAlphaFor(songKey);
 			context.beginPath();
-			context.arc(screen.x, screen.y, radius - OUTLINE_WIDTH, 0, Math.PI * 2);
+			context.arc(
+				screen.x,
+				screen.y,
+				Math.max(0, radius - outlineWidth),
+				0,
+				Math.PI * 2
+			);
 			context.fillStyle = hexMode
 				? songRegionFill(songKey, gradientStrength)
 				: OUTLINE_COLOR;
@@ -1042,9 +1094,11 @@
 				if (!summary || !position) return [];
 				const screen = toScreen(position);
 				const radius = radiusFor(songKey);
-				const lines: [string, string][] = [
-					[OUTLINED_LABEL_TITLE_FONT, summary.title]
-				];
+				const title =
+					outlinedTitlePrefix && isOutlined(songKey)
+						? `${outlinedTitlePrefix} ${summary.title}`
+						: summary.title;
+				const lines: [string, string][] = [[OUTLINED_LABEL_TITLE_FONT, title]];
 				if (summary.artists.length > 0) {
 					lines.push([OUTLINED_LABEL_ARTIST_FONT, summary.artists.join(", ")]);
 				}
@@ -1678,12 +1732,25 @@
 	const handleClick = (event: MouseEvent) => {
 		if (clickGuard.shouldSuppressClick()) return;
 		if (!containerEl) return;
-		onOutlinedSongClick?.(
-			findOutlinedSongAtAnchor(anchorFromMouseEvent(event, containerEl))
-		);
+		const anchor = anchorFromMouseEvent(event, containerEl);
+		// Outlined songs are only drawn once zoomed in to dots, so they can
+		// only be clicked then.
+		const outlinedSongKey = hexFrame ? null : findOutlinedSongAtAnchor(anchor);
+		onOutlinedSongClick?.(outlinedSongKey);
+		if (hexMode) {
+			const hexKey = hexFrame ? hexKeyAtAnchor(anchor) : null;
+			const songKey = hexFrame ? null : findPointAtAnchor(anchor);
+			const region = hexFrame
+				? hexKey === null
+					? null
+					: (hexFrame.regionByKey.get(hexKey) ?? null)
+				: songKey === null
+					? null
+					: (clusterRegionBySongKey?.get(songKey) ?? null);
+			onClusterClick?.(region?.name ?? null, outlinedSongKey);
+		}
 		if (hexFrame) {
-			// Clicking a hex zooms in on it, toward finer hexes and then dots.
-			const anchor = anchorFromMouseEvent(event, containerEl);
+			// Clicking a hex zooms in on it just far enough to show dots.
 			if (
 				movable &&
 				canvasEl &&
@@ -1693,10 +1760,7 @@
 				select(canvasEl)
 					.transition()
 					.duration(HEX_CLICK_ZOOM_MS)
-					.call(zoomBehavior.scaleBy, HEX_CLICK_ZOOM_FACTOR, [
-						anchor.x,
-						anchor.y
-					]);
+					.call(zoomBehavior.scaleTo, HEX_FOCUS_SCALE, [anchor.x, anchor.y]);
 			}
 			return;
 		}
@@ -1717,10 +1781,10 @@
 		return () => cancelAnimationFrame(tweenFrame);
 	});
 
-	// Eases playingEmphasis and playingFade toward playingSongKey, from
+	// Eases playingEmphasis and playingFade toward spotlightSongKey, from
 	// wherever they are (mid-tween included), redrawing each frame.
 	$effect(() => {
-		const target = playingSongKey;
+		const target = spotlightSongKey;
 		const fromEmphasis = new Map(playingEmphasis);
 		const fromFade = playingFade;
 		const songKeys = new Set([...fromEmphasis.keys()]);
@@ -1782,6 +1846,8 @@
 			.on("zoom", (event) => {
 				transform = event.transform;
 				onTransformChange?.(event.transform);
+				// Scripted zooms have no sourceEvent.
+				if (event.sourceEvent) onUserMove?.();
 				// Hexes re-bin as the zoom changes, so a hovered hex is stale.
 				hoveredHex = null;
 			});
@@ -1851,6 +1917,30 @@
 		);
 	};
 
+	// clusterFocusTransform for the biggest cluster with this name
+	// (case-insensitive), or null if there's none.
+	const namedClusterFocusTransform = (
+		clusterName: string
+	): ZoomTransform | null => {
+		const target = normalizeName(clusterName);
+		const cluster = clusters
+			.filter((candidate) => {
+				const name = resolvedClusterNames.get(candidate.hash);
+				return name !== undefined && normalizeName(name) === target;
+			})
+			.sort((a, b) => b.songKeys.length - a.songKeys.length)[0];
+		return cluster ? clusterFocusTransform(cluster.songKeys) : null;
+	};
+
+	// Moves the view instantly. d3 runs the zoom handlers synchronously here,
+	// and they read hover state, so it's untracked: otherwise the calling
+	// effect would re-run (and zoom back) whenever a song is hovered.
+	const jumpTo = (canvas: HTMLCanvasElement, target: ZoomTransform) => {
+		untrack(() => {
+			if (zoomBehavior) select(canvas).call(zoomBehavior.transform, target);
+		});
+	};
+
 	// Scripted zoom (e.g. /story's beats): fully inert when both focusSongKey
 	// and focusClusterName are undefined (their prop defaults), so ordinary
 	// interactive pages never trigger this. focusClusterName takes priority
@@ -1872,14 +1962,7 @@
 		let targetTransform = ((): ZoomTransform | null => {
 			if (focusClusterName !== undefined) {
 				if (focusClusterName === null) return homeTransform;
-				const target = normalizeName(focusClusterName);
-				const cluster = clusters
-					.filter((candidate) => {
-						const name = resolvedClusterNames.get(candidate.hash);
-						return name !== undefined && normalizeName(name) === target;
-					})
-					.sort((a, b) => b.songKeys.length - a.songKeys.length)[0];
-				return cluster ? clusterFocusTransform(cluster.songKeys) : null;
+				return namedClusterFocusTransform(focusClusterName);
 			}
 			if (focusSongKey === null) return homeTransform;
 			if (focusSongKey === undefined) return null;
@@ -1892,13 +1975,62 @@
 
 		if (!hasFocused) {
 			hasFocused = true;
-			select(canvas).call(zoomBehavior.transform, targetTransform);
+			jumpTo(canvas, targetTransform);
 			return;
 		}
 		select(canvas)
 			.transition()
 			.duration(FOCUS_TRANSITION_MS)
 			.call(zoomBehavior.transform, targetTransform);
+	});
+
+	// Fits selectedClusterName, again whenever the frame or size changes
+	// (e.g. a panel opening below the map shrinks the frame).
+	$effect(() => {
+		const clusterName = selectedClusterName;
+		const canvas = canvasEl;
+		void focusFrame;
+		if (!clusterName || !canvas || !zoomBehavior) return;
+		if (width === 0 || height === 0) return;
+		untrack(() => {
+			const target = namedClusterFocusTransform(clusterName);
+			if (!target || !zoomBehavior) return;
+			select(canvas)
+				.transition()
+				.duration(FOCUS_TRANSITION_MS)
+				.call(zoomBehavior.transform, constrainTransform(target));
+		});
+	});
+
+	// Centers zoomSongKey, in focusFrame when there is one, again whenever
+	// the frame or size changes.
+	$effect(() => {
+		const songKey = zoomSongKey;
+		const canvas = canvasEl;
+		void focusFrame;
+		if (!songKey || !canvas || !zoomBehavior) return;
+		if (width === 0 || height === 0) return;
+		untrack(() => {
+			const point = pointBySongKey.get(songKey);
+			if (!point || !zoomBehavior) return;
+			const base = toBasePixel(point);
+			const scale = hexMode
+				? Math.min(HEX_FOCUS_SCALE * ZOOM_SONG_HEX_FACTOR, MAX_ZOOM)
+				: focusScale;
+			const target =
+				focusFrame && focusFrame.height > 0
+					? zoomIdentity
+							.translate(
+								width / 2 - base.x * scale,
+								focusFrame.top + focusFrame.height / 2 - base.y * scale
+							)
+							.scale(scale)
+					: transformCenteredOn(base, scale);
+			select(canvas)
+				.transition()
+				.duration(FOCUS_TRANSITION_MS)
+				.call(zoomBehavior.transform, constrainTransform(target));
+		});
 	});
 
 	// Without a scripted focus, moves to the resting view when offsetY
@@ -1915,7 +2047,7 @@
 		if (isScripted) return;
 		if (!hasPlacedHome) {
 			hasPlacedHome = true;
-			select(canvas).call(zoomBehavior.transform, target);
+			jumpTo(canvas, target);
 			return;
 		}
 		select(canvas)

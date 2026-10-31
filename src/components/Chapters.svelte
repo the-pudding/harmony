@@ -1,9 +1,16 @@
 <script>
-	let { activeSlide, sections, visible = true, onselect } = $props();
+	let { activeSlide, sections, onselect } = $props();
+
+	let visibleSections = $derived(
+		sections.filter((d) => d.title !== "Explore" && d.title !== "Intro")
+	);
+	let visible = $derived(
+		visibleSections.some((d) => d.slides.some((s) => s.i === activeSlide))
+	);
 </script>
 
 <div class="chapters" class:visible>
-	{#each sections as { title, slides }, i}
+	{#each visibleSections as { title, slides }, i}
 		{@const chapterActive = slides.some((s) => s.i === activeSlide)}
 		<div class="chapter" class:active={chapterActive}>
 			<button class="text" onclick={() => onselect?.(slides[0].i)}>

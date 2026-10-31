@@ -44,6 +44,9 @@
 	const onKeyDown = (e: KeyboardEvent) => {
 		const dir = e.key.replace("Arrow", "").toLowerCase() as Direction;
 		const hasDir = directions.includes(dir);
+		// arrow keys in a text field move its caret (or its own list)
+		const target = e.target as HTMLElement | null;
+		if (target?.closest?.("input, textarea, select, [contenteditable]")) return;
 		if (enableKeyboard && hasDir) {
 			e.preventDefault();
 			ontap?.(dir);

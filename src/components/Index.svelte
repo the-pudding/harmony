@@ -14,19 +14,21 @@
 	import ClusterPercentOverTime from "$components/ClusterPercentOverTime.svelte";
 	import EffectiveProgressions from "$components/EffectiveProgressions.svelte";
 	import Signatures from "$components/Signatures.svelte";
+	import ExploreControls from "$components/ExploreControls.svelte";
 	import List from "$components/List.svelte";
 	import CMS from "$components/helpers/CMS.svelte";
 	import { fade } from "svelte/transition";
 	import copy from "$data/copy.json";
 	import _ from "lodash";
 	import { chordify } from "$utils/chordify";
-	import { setContext } from "svelte";
+	import { setContext, untrack } from "svelte";
+	import reference from "$data/synced-songs/reference.csv";
 	import { spanStyle } from "$routes/demo/design/timelineStyles";
 	import { audio, stopAllAudio } from "$runes/audio.svelte";
 	import mutedSvg from "$svg/muted.svg";
 	import unmutedSvg from "$svg/unmuted.svg";
 
-	const debugSlide = undefined;
+	const debugSlide = 32; // undefined;
 
 	const components = {
 		Landing,
@@ -38,7 +40,8 @@
 		Signatures,
 		UltimateGuitar,
 		RomanNumerals,
-		EffectiveProgressions
+		EffectiveProgressions,
+		ExploreControls
 	};
 
 	let slideCount = 0;
@@ -108,7 +111,58 @@
 			? { top: clusterFrameEl.offsetTop, height: clusterFrameHeight }
 			: null
 	);
-	let showClusterPanel = $derived(mapProps?.focusCluster !== undefined);
+	// On explorable maps, a clicked cluster with featured songs (in
+	// reference.csv) gets the player too, until the user clicks elsewhere,
+	// pans or zooms.
+	let exploredCluster = $state();
+	// a song picked in ExploreControls' search, which the map zooms to
+	let searchedSong = $state();
+	let activeCluster = $derived(mapProps?.focusCluster ?? exploredCluster);
+	let showClusterPanel = $derived(activeCluster !== undefined);
+
+	const clusterBySongKey = new Map(
+		reference.map((d) => [d.songKey, d.cluster])
+	);
+	const songsByCluster = _.groupBy(reference, "cluster");
+	const featuredClusterNamed = (name) =>
+		Object.keys(songsByCluster).find(
+			(cluster) => cluster.toLowerCase() === name?.trim().toLowerCase()
+		);
+
+	const exploreCluster = (clusterName, songKey) => {
+		searchedSong = undefined;
+		const cluster =
+			clusterBySongKey.get(songKey) ?? featuredClusterNamed(clusterName);
+		exploredCluster = cluster;
+		playingSongId =
+			cluster === undefined
+				? undefined
+				: clusterBySongKey.get(songKey) === cluster
+					? songKey
+					: songsByCluster[cluster][0].songKey;
+	};
+
+	const stopExploring = () => {
+		searchedSong = undefined;
+		if (exploredCluster === undefined) return;
+		exploredCluster = undefined;
+		playingSongId = undefined;
+	};
+
+	// zooms to any song; featured ones also open their cluster's player
+	const pickSong = (songKey) => {
+		searchedSong = songKey;
+		exploredCluster = clusterBySongKey.get(songKey);
+		playingSongId = exploredCluster === undefined ? undefined : songKey;
+	};
+
+	setContext("explore", { pickSong });
+
+	// a new slide starts with nothing explored
+	$effect(() => {
+		slideI;
+		untrack(stopExploring);
+	});
 
 	const INTERACTIVE =
 		'a, button, input, label, select, textarea, audio, video, [tabindex]:not([tabindex="-1"])';
@@ -159,6 +213,10 @@
 		theme="dark"
 		playingSongKey={playingSongId}
 		onSongClick={(songKey) => (playingSongId = songKey ?? undefined)}
+		selectedCluster={exploredCluster ?? null}
+		selectedSong={searchedSong ?? null}
+		onClusterClick={exploreCluster}
+		onUserMove={stopExploring}
 	/>
 </div>
 
@@ -166,7 +224,6 @@
 
 <article bind:this={articleEl}>
 	<Chapters
-		visible={slideI > 0}
 		activeSlide={slideI}
 		sections={sections.slice(1)}
 		onselect={(i) => (slideI = i)}
@@ -211,10 +268,7 @@
 
 		{#if showClusterPanel}
 			<div class="panel" in:fade={{ duration: 300, delay: 800 }}>
-				<Player
-					cluster={mapProps.focusCluster}
-					bind:playingSongKey={playingSongId}
-				/>
+				<Player cluster={activeCluster} bind:playingSongKey={playingSongId} />
 			</div>
 		{/if}
 	</div>
@@ -365,6 +419,11 @@
 	.text :global(span.small) {
 		font-size: var(--12px);
 		opacity: 0.75;
+	}
+
+	.text :global(h2) {
+		font-family: var(--font-serif);
+		font-weight: bold;
 	}
 
 	.mute-toggle {
