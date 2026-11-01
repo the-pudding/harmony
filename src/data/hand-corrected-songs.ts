@@ -30,7 +30,7 @@ const vivaLaVidaSection = (
 	romanTokens: string[]
 ): CorrectedSongSection => ({ name, key: "Ab", scale: "major", romanTokens });
 
-const VIVA_LA_VIDA_DADD11 = "Vsus4";
+const VIVA_LA_VIDA_DADD11 = "V";
 
 const vivaLaVidaLoop = (nTimes: number): string[] =>
 	repeatNTimes(["IV", VIVA_LA_VIDA_DADD11, "I", "vi"], nTimes);
@@ -641,7 +641,7 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 	{
 		id: "coldplay__viva-la-vida",
 		technicalNotes:
-			"HT stores this in F minor as VI-VII-III-i. Chords from UG (written in G major, Dadd11 → Vsus4, the closest supported voicing) transposed to the recorded key of Ab major.",
+			"HT stores this in F minor as VI-VII-III-i. Chords from UG (written in G major, Dadd11 → V) transposed to the recorded key of Ab major.",
 		correctedSongContents: {
 			sections: [
 				vivaLaVidaSection("Intro", vivaLaVidaLoop(2)),
