@@ -41,10 +41,19 @@ export type HeadlineMetric = {
 	unit: "count" | "percent";
 };
 
+export type RelativeCoreMatch = {
+	songKey: string;
+	title: string;
+	artists: string[];
+	exactPercent: number;
+	relativePercent: number;
+};
+
 export type MatchingChangeReport = {
 	headline: HeadlineMetric[];
 	cores: ChangedRow[];
 	clusters: ChangedRow[];
+	relativeCores: ChangedRow[];
 };
 
 export const TOP_CHANGED_ROWS = 12;
@@ -227,11 +236,37 @@ const buildClusterRows = (
 	);
 };
 
+const retainedCoverage = (match: RelativeCoreMatch): number =>
+	match.relativePercent - match.exactPercent;
+
+export const buildRelativeCoreRow = (
+	name: string,
+	matches: readonly RelativeCoreMatch[]
+): ChangedRow => ({
+	name,
+	before: matches.filter((match) => match.exactPercent > NO_COVERAGE).length,
+	after: matches.filter((match) => match.relativePercent > NO_COVERAGE).length,
+	examples: largestFirst(
+		matches.filter((match) => retainedCoverage(match) > NO_COVERAGE),
+		retainedCoverage
+	)
+		.slice(0, EXAMPLES_PER_ROW)
+		.map((match) => ({
+			songKey: match.songKey,
+			title: match.title,
+			artists: match.artists,
+			beforePercent: match.exactPercent,
+			afterPercent: match.relativePercent
+		}))
+});
+
 export const buildMatchingChangeReport = (
 	before: MatchingSnapshot,
-	after: MatchingSnapshot
+	after: MatchingSnapshot,
+	relativeCores: ChangedRow[] = []
 ): MatchingChangeReport => ({
 	headline: buildHeadline(before, after),
 	cores: buildCoreRows(before, after),
-	clusters: buildClusterRows(before, after)
+	clusters: buildClusterRows(before, after),
+	relativeCores
 });

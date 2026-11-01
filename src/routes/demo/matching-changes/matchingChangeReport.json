@@ -1282,5 +1282,49 @@
 				}
 			]
 		}
+	],
+	"relativeCores": [
+		{
+			"name": "jazz changes (dominant-y)",
+			"before": 56,
+			"after": 142,
+			"examples": [
+				{
+					"songKey": "blood-sweat-tears__spinning-wheel",
+					"title": "Spinning Wheel",
+					"artists": ["Blood", "Sweat", "Tears"],
+					"beforePercent": 0,
+					"afterPercent": 71.42857142857143
+				},
+				{
+					"songKey": "earth-wind-fire__shining-star",
+					"title": "Shining Star",
+					"artists": ["Earth", "Wind", "Fire"],
+					"beforePercent": 0,
+					"afterPercent": 64.86486486486487
+				},
+				{
+					"songKey": "syndicate-of-sound__little-girl",
+					"title": "Little Girl",
+					"artists": ["Syndicate Of Sound"],
+					"beforePercent": 0,
+					"afterPercent": 61.224489795918366
+				},
+				{
+					"songKey": "donny-marie-osmond__deep-purple",
+					"title": "Deep Purple",
+					"artists": ["Donny", "Marie Osmond"],
+					"beforePercent": 0,
+					"afterPercent": 54.54545454545455
+				},
+				{
+					"songKey": "men-without-hats__the-safety-dance",
+					"title": "The Safety Dance",
+					"artists": ["Men Without Hats"],
+					"beforePercent": 0,
+					"afterPercent": 39.130434782608695
+				}
+			]
+		}
 	]
 }

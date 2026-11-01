@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
 	buildMatchingChangeReport,
+	buildRelativeCoreRow,
 	EXAMPLES_PER_ROW,
 	percentChange,
 	songChangeMagnitude,
 	type MatchingSnapshot,
+	type RelativeCoreMatch,
 	type SnapshotSong
 } from "./matchingChangeReport.js";
 
@@ -348,5 +350,43 @@ describe("buildMatchingChangeReport", () => {
 		expect(zetaRow?.before).toBe(EXAMPLES_PER_ROW + 1);
 		expect(zetaRow?.after).toBe(EXAMPLES_PER_ROW);
 		expect(zetaRow?.examples).toHaveLength(EXAMPLES_PER_ROW);
+	});
+});
+
+const relativeMatch = (
+	songKey: string,
+	exactPercent: number,
+	relativePercent: number
+): RelativeCoreMatch => ({
+	songKey,
+	title: songKey,
+	artists: [],
+	exactPercent,
+	relativePercent
+});
+
+describe("buildRelativeCoreRow", () => {
+	const matches = [
+		relativeMatch("exact-only", COVERAGE_TEN, COVERAGE_TEN),
+		relativeMatch("small-gain", COVERAGE_TEN, COVERAGE_FIFTEEN),
+		relativeMatch("large-gain", 0, COVERAGE_THIRTY),
+		relativeMatch("unmatched", 0, 0)
+	];
+	const row = buildRelativeCoreRow(CORE_ALPHA, matches);
+
+	it("counts songs matching exactly vs with the opt-out", () => {
+		expect(row.before).toBe(2);
+		expect(row.after).toBe(3);
+	});
+
+	it("lists only retained songs, largest retained coverage first", () => {
+		expect(row.examples.map((example) => example.songKey)).toEqual([
+			"large-gain",
+			"small-gain"
+		]);
+		expect(row.examples[0]).toMatchObject({
+			beforePercent: 0,
+			afterPercent: COVERAGE_THIRTY
+		});
 	});
 });

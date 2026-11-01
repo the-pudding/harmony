@@ -77,6 +77,23 @@
 				{/each}
 			</ul>
 		</section>
+
+		{#if report.relativeCores.length > 0}
+			<section class="section">
+				<h2 class="section-title">Kept on relative matching</h2>
+				<p class="page-description">
+					These cores set <code>matchRomanNumeralsExactly: false</code>, so they
+					still match their shape on any degree. Counts are songs matching
+					exactly → songs matching with the opt-out; examples are songs it
+					retains.
+				</p>
+				<ul class="rows">
+					{#each report.relativeCores as row (row.name)}
+						<ChangedRowCard {row} variant="core" />
+					{/each}
+				</ul>
+			</section>
+		{/if}
 	</div>
 </div>
 
