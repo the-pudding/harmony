@@ -617,9 +617,9 @@
 				song regardless of how many times it repeats within that song (so a
 				12x-looped chorus doesn't outweigh a progression stated twice).
 				Cadence is classified from the literal shape each song actually
-				matched, not a progression's canonical spelling — matching is tonic-
-				rotation-invariant, so the same progression can genuinely resolve in
-				one song's key and not another's.
+				matched, not the canonical display spelling — songs sharing a core
+				name can still end on different degrees when they matched different
+				authored variants.
 			</p>
 			{#if progressionCadenceHistory.length === 0 && coverage.allSongsCoverageResult}
 				<p class="empty">Not enough dated progression matches to compute cadence trends.</p>

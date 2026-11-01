@@ -2,7 +2,7 @@ import type { SongCoverageEntry } from "../define-chord-progression/compute-cove
 
 // No signal proves a song's matching is safe to skip (see plan notes: even
 // 100% coverage can come entirely from non-core "gap fill" slices, or from a
-// core progression matched on the wrong rotation). So every song eventually
+// mis-assigned core progression). So every song eventually
 // gets reviewed — this only decides the ORDER, front-loading the songs most
 // likely to be silently wrong rather than visibly incomplete.
 export type ReviewRiskTier = 1 | 2 | 3;

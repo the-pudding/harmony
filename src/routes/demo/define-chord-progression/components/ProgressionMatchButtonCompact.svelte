@@ -33,10 +33,9 @@
 
 	const scaleName = $derived(humanizeScale(match.scale));
 
-	// Display the progression's registered spelling, not the literal one this
-	// particular song happened to match — matching is tonic-rotation-
-	// invariant, so the same named progression can read as different roman-
-	// numeral strings across songs (see canonicalChordProgressionByName).
+	// Display the progression's registered spelling, not necessarily the
+	// literal string this song matched (alternate authored variants / triad
+	// folding — see canonicalChordProgressionByName).
 	const displayChordProgression = $derived(
 		match.isCoreProgression
 			? (canonicalChordProgressionByName.get(match.name) ?? match.chordProgression)

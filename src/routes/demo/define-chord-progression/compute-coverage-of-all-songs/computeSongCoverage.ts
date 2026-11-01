@@ -17,15 +17,11 @@ export type SongBiasOverride = {
 export type SongProgressionCount = {
 	chordProgression: string;
 	// Canonical core-progression identity (e.g. "sweet home alabama"). Two
-	// songs can match the exact same named progression but end up with
-	// different literal `chordProgression` spellings, because matching is
-	// tonic-rotation-invariant while the roman-numeral label reflects
-	// whichever chord the song's own key happens to call "I" (e.g. a
-	// mixolydian song reads as I-bVII-IV in its stored key, even though it's
-	// the same shape as "sweet home alabama"'s V-IV-I). `name` is always
-	// reliable and rotation-proof — use it for any cross-song identity
-	// check (filtering, aggregation, embeddings). For non-core matches it
-	// just equals the literal roman string, so it's always safe to use.
+	// songs can match the same named progression with different literal
+	// `chordProgression` strings when the core lists multiple authored
+	// variants or the matcher folds extensions to triads. Use `name` for any
+	// cross-song identity check (filtering, aggregation, embeddings). For
+	// non-core matches it equals the literal roman string.
 	name: string;
 	scale: ScaleName;
 	matchCount: number;
@@ -40,8 +36,8 @@ export type SongCoverageEntry = {
 	artists: string[];
 	coveragePercent: number;
 	// Canonical names (see SongProgressionCount.name) of the core
-	// progressions this song matches — the rotation-proof identity to use
-	// for any cross-song filtering, charting, or aggregation.
+	// progressions this song matches — use for cross-song filtering,
+	// charting, or aggregation.
 	matchingProgressions: string[];
 	progressionCounts: SongProgressionCount[];
 	biasOverrides: SongBiasOverride[];

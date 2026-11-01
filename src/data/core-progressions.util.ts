@@ -33,12 +33,11 @@ export const progressionGroupNameByChordProgression = new Map(
 );
 
 // The authored spelling to DISPLAY for a named core progression, regardless
-// of which literal spelling a particular song actually matched. Matching is
-// tonic-rotation-invariant, so the same named progression can read as
-// different roman-numeral strings depending on which chord a song's own key
-// calls "I" (e.g. one "doo wop" song matches as I-vi-IV-V, another as
-// III-i-VI-VII) — those are the same shape, just rotated, so showing the
-// registered spelling everywhere keeps the label consistent across songs.
+// of which literal spelling a particular song actually matched. A core can
+// register several variant spellings (or the matcher may fold extensions to
+// triads), so the same named progression can still read as different roman-
+// numeral strings across songs — showing the first registered spelling
+// everywhere keeps the label consistent.
 // This is purely a display concern: highlighting/interaction still key off
 // the literal per-song chordProgression, since that's what's actually
 // covered in that song's own chart.
@@ -82,10 +81,9 @@ export const progressionGroupNameFor = (
 export type WeightedProgression = {
 	chordProgression: string;
 	// Canonical core-progression name, when known — see
-	// SongProgressionCount.name. Matching is tonic-rotation-invariant, so a
-	// song's literal chordProgression spelling doesn't always match one of
-	// a progression's authored variant strings even when it's really that
-	// progression. `name` is rotation-proof and should be preferred.
+	// SongProgressionCount.name. A song's literal chordProgression may differ
+	// from the first authored variant (alternate registered spellings, triad
+	// folding). Prefer `name` for cross-song identity.
 	name?: string;
 	matchCount: number;
 };

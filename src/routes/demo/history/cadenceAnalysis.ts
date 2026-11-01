@@ -128,12 +128,9 @@ export const computeCadenceHistory = (
 // the ones that happen to be catalogued in core-progressions.ts.
 //
 // Cadence is classified from the literal spelling that song matched, not
-// a progression's canonical/registered spelling — matching is tonic-
-// rotation-invariant, so the same named progression can read as ending on
-// the tonic in one song's key and not in another's (e.g. "sweet home
-// alabama" is registered as V-IV-I, a genuine plagal cadence, but a
-// rotated rendition reading as I-bVII-IV in a different song's own key
-// never resolves there).
+// the progression's canonical display spelling — two songs sharing a core
+// name can still differ (e.g. axis-of-awesome family members are separate
+// authored variants with different ending degrees).
 export type ProgressionCadenceDecadeRow = CadencePercentages & {
 	decade: number;
 	progressionInstanceCount: number;

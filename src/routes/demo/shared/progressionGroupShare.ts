@@ -28,9 +28,8 @@ export type ProgressionGroupShare = {
 // within a family is "did the algo select this named core progression as a
 // final match anywhere in the song" (not just the dominant one), so a
 // family's children can sum to more than the family's own share. Identity is
-// the canonical name — never the literal roman spelling — because matching
-// is tonic-rotation-invariant and a song can match under an un-authored
-// rotation (e.g. axis of awesome as vi-IV-I-V).
+// the canonical name — never the literal roman spelling — since the same
+// core can match as different authored variants or triad-folded spellings.
 export const buildProgressionGroupShares = (
 	songCoverages: readonly SongCoverageEntry[]
 ): ProgressionGroupShare[] => {

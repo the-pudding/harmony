@@ -7,9 +7,8 @@
 		progressions: ArtistProgressionStat[];
 		limit: number;
 		// Canonical progression names (see SongProgressionCount.name), not
-		// literal spellings — matching is tonic-rotation-invariant, so this
-		// must match by identity, not by whichever literal string an artist's
-		// songs happened to spell it as.
+		// literal spellings — same core can read differently per song when
+		// variants or triad folding differ.
 		highlightedProgressions?: string[] | null;
 		onSelectProgression?: (name: string) => void;
 	};

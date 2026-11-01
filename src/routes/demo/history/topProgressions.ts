@@ -15,8 +15,7 @@ export type TopProgressionRow = {
 	songSharePercent: number;
 };
 
-// Keyed by canonical core-progression name — see decadeSignatures.ts's same
-// map for why (rotation-proof identity vs. literal per-song spelling).
+// Keyed by canonical core-progression name — see decadeSignatures.ts.
 const progressionByName = new Map(coreProgressions.map((p) => [p.name, p]));
 
 // Ranks core progressions by average per-song density — for every song

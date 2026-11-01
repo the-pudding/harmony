@@ -40,10 +40,10 @@ export const coreProgressionIdentityFor = (
 ): CoreProgressionIdentity | null =>
 	identityByVariant.get(chordProgression) ?? null;
 
-// Rotation-proof lookup by canonical name (see SongProgressionCount.name) —
-// prefer this over coreProgressionIdentityFor(chordProgression) when a
-// match's canonical name is already known, since the literal spelling a
-// song matched may be an un-authored rotation that isn't in `variants`.
+// Lookup by canonical name (see SongProgressionCount.name) — prefer this
+// over coreProgressionIdentityFor(chordProgression) when the match's name
+// is already known, since the literal spelling may be an alternate authored
+// variant or triad-folded form not listed first in `variants`.
 export const coreProgressionIdentityForName = (
 	name: string
 ): CoreProgressionIdentity | null => identityByName.get(name) ?? null;

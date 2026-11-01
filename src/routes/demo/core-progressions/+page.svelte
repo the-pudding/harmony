@@ -37,9 +37,7 @@
 	const groupMatchCount = (group: ProgressionGroup): number => {
 		const result = coverage.allSongsCoverageResult;
 		if (!result) return 0;
-		// Names, not literal spellings: matching is tonic-rotation-invariant,
-		// so a song can match a progression under a spelling that was never
-		// authored as a variant (see ProgressionGroupSection.svelte).
+		// Names, not literal spellings (see ProgressionGroupSection.svelte).
 		const names = group.progressions.map((p) => p.name);
 		return filterCoverageResultForProgressions(result, names).songCoverages
 			.length;

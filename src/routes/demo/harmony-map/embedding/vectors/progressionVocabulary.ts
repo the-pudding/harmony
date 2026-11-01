@@ -25,19 +25,15 @@ export type ProgressionVocabulary = {
 type ProgressionStats = {
 	isCore: boolean;
 	documentFrequency: number;
-	// Every literal spelling actually observed for this name, including
-	// un-authored rotations (e.g. "I-bVII-IV" for "sweet home alabama") —
-	// matching is tonic-rotation-invariant, so a song's own literal
-	// chordProgression string doesn't always match one of the progression's
-	// authored `variants`, but it must still resolve to this dimension.
+	// Every literal spelling observed for this canonical name (authored
+	// variants plus triad-folded or other matcher output) — all must map to
+	// the same vocabulary dimension.
 	observedSpellings: Set<string>;
 };
 
-// Grouped by canonical name (rotation-proof — see SongProgressionCount.name)
-// rather than literal spelling, so a song matching two differently-spelled
-// occurrences of the same named progression counts once here and sums its
-// occurrences in songVectors — otherwise one musical idea would split across
-// multiple axes and each fragment would look artificially rare to IDF.
+// Grouped by canonical name (see SongProgressionCount.name) rather than
+// literal spelling, so differently-spelled matches of the same core count
+// once for document frequency and share one embedding axis.
 const accumulateDocumentFrequencies = (
 	songs: readonly SongProgressionCounts[]
 ): Map<string, ProgressionStats> =>
@@ -95,9 +91,8 @@ export const buildProgressionVocabulary = (
 
 	return {
 		entries,
-		// Every variant (authored or an observed rotation) resolves to its
-		// shared dimension, so callers can look up by whichever spelling the
-		// matcher happened to select for a given song.
+		// Every listed variant resolves to the same dimension, so callers can
+		// look up by whichever spelling the matcher selected for a song.
 		indexByChordProgression: new Map(
 			entries.flatMap((entry) =>
 				entry.variants.map((variant): [string, number] => [
