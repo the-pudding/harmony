@@ -174,10 +174,7 @@ describe("buildCoreProgressionDisplayMatches", () => {
 	it("returns one entry per core with zero stats when songMatches is null", () => {
 		const rows = buildCoreProgressionDisplayMatches(sampleCores, null, null);
 		expect(rows).toHaveLength(sampleCores.length);
-		expect(rows.map((row) => row.name)).toEqual([
-			"axis of awesome",
-			"doo wop"
-		]);
+		expect(rows.map((row) => row.name)).toEqual(["axis of awesome", "doo wop"]);
 		for (const row of rows) {
 			expect(row.matchCount).toBe(0);
 			expect(row.coveragePercent).toBe(0);
@@ -200,7 +197,6 @@ describe("buildCoreProgressionDisplayMatches", () => {
 				description: "",
 				matchCount: 3,
 				coveragePercent: 40,
-				isCoreProgression: true,
 				...matchHighlightForCoreProgression(
 					true,
 					axisVariant,

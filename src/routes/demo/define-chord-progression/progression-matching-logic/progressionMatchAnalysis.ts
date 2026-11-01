@@ -275,9 +275,10 @@ const isPositionInMatch = (
 	{ start, length }: SubProgressionMatch,
 	sectionLength: number
 ): boolean =>
-	Array.from({ length }, (_, offset) => (start + offset) % sectionLength).includes(
-		position
-	);
+	Array.from(
+		{ length },
+		(_, offset) => (start + offset) % sectionLength
+	).includes(position);
 
 export type ChordAnnotation = {
 	parsedProgression: ParsedProgressionChord[];
@@ -386,11 +387,7 @@ export const buildColoredHighlightSegments = (
 		collapsedIndexByOriginalPosition(originalRanges);
 
 	const matchesByAnnotation = annotations.map((annotation) =>
-		matchesForAnnotation(
-			sectionIndex,
-			annotation,
-			collapsedIndexByOriginal
-		)
+		matchesForAnnotation(sectionIndex, annotation, collapsedIndexByOriginal)
 	);
 
 	const positionGroups: PositionGroup[] = Array.from(

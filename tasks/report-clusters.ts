@@ -70,7 +70,8 @@ const clusters = nameProgressionClusters(
 
 const countBy = <T>(items: readonly T[], keyOf: (item: T) => string) =>
 	items.reduce(
-		(counts, item) => counts.set(keyOf(item), (counts.get(keyOf(item)) ?? 0) + 1),
+		(counts, item) =>
+			counts.set(keyOf(item), (counts.get(keyOf(item)) ?? 0) + 1),
 		new Map<string, number>()
 	);
 
@@ -130,7 +131,8 @@ const report = {
 		byCore: sortedRecord(
 			countBy(
 				crossScaleSongs.flatMap((c) => crossScaleMatches(c)),
-				(count) => `${count.name} (core ${coreScaleByName.get(count.name)}, section ${count.scale})`
+				(count) =>
+					`${count.name} (core ${coreScaleByName.get(count.name)}, section ${count.scale})`
 			)
 		)
 	},
