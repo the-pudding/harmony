@@ -27,6 +27,3 @@ export const hasConsecutivelyRepeatedBlock = (
 			(_, offset) => minBlockLength + offset
 		).some((blockLength) => blockRepeatsAt(tokens, start, blockLength))
 	);
-
-export const isSelfRepeatingProgression = (chordProgression: string): boolean =>
-	hasConsecutivelyRepeatedBlock(chordProgression.split("-"));

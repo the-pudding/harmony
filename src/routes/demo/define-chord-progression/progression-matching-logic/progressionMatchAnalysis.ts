@@ -1,35 +1,25 @@
 import type { CoreProgression } from "$data/core-progressions.js";
 import { chordProgressionVariants } from "$data/core-progressions.util.js";
-import {
-	isChorusSectionLabel,
-	type GroupedSong,
-	type SongSection
-} from "../../../../data/songBrowser.js";
+import type { SongSection } from "../../../../data/songBrowser.js";
 import type { ScaleName } from "../../../../chord-processing/scales.js";
 import {
 	romanTokenOffsetFromTonic,
 	romanTokensToParsedProgression
 } from "../../../../chord-processing/romanNumerals.js";
-import {
-	isPositionInMatch,
-	toAbstractProgression
-} from "../../../../chord-processing/match-chord-progressions/index.js";
 import type {
 	ParsedProgressionChord,
 	SubProgressionMatch
 } from "../../../../chord-processing/types.js";
 import { matchHighlightForCoreProgression } from "../components/progressionColors.js";
-import { isSelfRepeatingProgression } from "./progressionConstraints.js";
 import {
 	collapseAdjacentRepeatedChords,
 	collapseMatchingTemplates,
-	matchProgressionSelectiveExactness
+	matchProgressionSelectiveExactness,
+	templateShapeKey
 } from "./collapsedProgression.js";
 
-export const MIN_FULL_SECTION_OCCURRENCES = 1;
-
-export const MATCH_RATE_INTEGER_DISPLAY_THRESHOLD_PERCENT = 1;
-export const MATCH_RATE_LOW_PRECISION_DECIMAL_PLACES = 2;
+const MATCH_RATE_INTEGER_DISPLAY_THRESHOLD_PERCENT = 1;
+const MATCH_RATE_LOW_PRECISION_DECIMAL_PLACES = 2;
 const PERCENT_MULTIPLIER = 100;
 
 export const formatMatchRatePercent = (percent: number): string => {
@@ -59,31 +49,15 @@ export type ProgressionWithMatchStats = {
 	chorusMatchCount?: number;
 	coveragePercent: number;
 	isCoreProgression: boolean;
-	matchRomanNumeralsExactly?: boolean;
 	isStrictSubset?: boolean;
-	isFullSectionSingleMatch?: boolean;
-	isSectionStartBiasWinner?: boolean;
-	sectionStartBiasSacrificedPercent?: number;
 	highlightPalette: ChordHighlightPalette;
 };
 
-export type CoreProgressionWithStats = ProgressionWithMatchStats;
-
-export type ChordHighlightSegment = {
-	matchIndex: number;
-	indices: number[];
-};
-
 // Keyed on the selective matching shape: bare triads collapse to base quality,
-// but specified extensions / slash bass are preserved so I-Imaj7 ≠ I-vi.
+// but specified extensions are preserved so I-Imaj7 ≠ I-vi.
 export const abstractProgressionKey = (
 	parsed: ParsedProgressionChord[]
-): string =>
-	JSON.stringify(
-		toAbstractProgression(
-			collapseMatchingTemplates(parsed).map(({ chord }) => chord)
-		)
-	);
+): string => templateShapeKey(collapseMatchingTemplates(parsed));
 
 export const scopedToScale = (key: string, scale: ScaleName): string =>
 	`${scale}|${key}`;
@@ -92,46 +66,8 @@ export const progressionMatchListKey = (
 	match: Pick<ProgressionWithMatchStats, "chordProgression" | "scale">
 ): string => scopedToScale(match.chordProgression, match.scale);
 
-const progressionChordCountFromString = (chordProgression: string): number =>
-	chordProgression.split("-").length;
-
-export const preferProgressionMatch = <T extends ProgressionWithMatchStats>(
-	left: T,
-	right: T
-): T => {
-	if (right.coveragePercent !== left.coveragePercent) {
-		return right.coveragePercent > left.coveragePercent ? right : left;
-	}
-	if (right.matchCount !== left.matchCount) {
-		return right.matchCount > left.matchCount ? right : left;
-	}
-	const rightLength = progressionChordCountFromString(right.chordProgression);
-	const leftLength = progressionChordCountFromString(left.chordProgression);
-	if (rightLength !== leftLength) {
-		return rightLength > leftLength ? right : left;
-	}
-	return left;
-};
-
-export const dedupeMatchesByChordProgression = <
-	T extends ProgressionWithMatchStats
->(
-	matches: readonly T[]
-): T[] => {
-	const byChordProgression = new Map<string, T>();
-	for (const match of matches) {
-		const existing = byChordProgression.get(match.chordProgression);
-		byChordProgression.set(
-			match.chordProgression,
-			existing ? preferProgressionMatch(existing, match) : match
-		);
-	}
-	return [...byChordProgression.values()];
-};
-
 export type CoreLookupEntry = {
 	name: string;
-	matchRomanNumeralsExactly: boolean;
 	firstChordRootPitchClass: number;
 	parsed: ParsedProgressionChord[];
 };
@@ -150,8 +86,6 @@ export const buildCoreLookupEntries = (
 				return [
 					{
 						name: progression.name,
-						matchRomanNumeralsExactly:
-							progression.matchRomanNumeralsExactly ?? false,
 						firstChordRootPitchClass: parsed[0].rootPitchClass,
 						parsed
 					}
@@ -174,83 +108,16 @@ export const lookupCoreEntry = (
 	section: SongSection,
 	startIndex: number
 ): CoreLookupEntry | undefined => {
-	const eligible = entries.filter((entry) => {
-		if (!unitMatchesCore(unit, entry.parsed)) return false;
-		return (
-			!entry.matchRomanNumeralsExactly ||
+	const eligible = entries.filter(
+		(entry) =>
+			unitMatchesCore(unit, entry.parsed) &&
 			matchStartsOnExpectedTonic(
 				section,
 				startIndex,
 				entry.firstChordRootPitchClass
 			)
-		);
-	});
-	const exact = [...eligible]
-		.reverse()
-		.find((entry) => entry.matchRomanNumeralsExactly);
-	return exact ?? eligible[eligible.length - 1];
-};
-
-const toNonOverlappingMatches = (
-	matches: SubProgressionMatch[],
-	sectionLength: number
-): SubProgressionMatch[] => {
-	const covered = new Set<number>();
-	return matches.filter(({ start, length }) => {
-		const positions = Array.from(
-			{ length },
-			(_, i) => (start + i) % sectionLength
-		);
-		if (positions.some((p) => covered.has(p))) return false;
-		positions.forEach((p) => covered.add(p));
-		return true;
-	});
-};
-
-// One occurrence's footprint inside one section — the shape both raw song
-
-export const computeStatsForParsedProgression = (
-	song: GroupedSong,
-	parsed: ParsedProgressionChord[],
-	matchRomanNumeralsExactly = false
-): {
-	matchCount: number;
-	chorusMatchCount: number;
-	coveragePercent: number;
-} => {
-	const totalChords = song.sections.reduce(
-		(sum, section) => sum + section.parsedProgression.length,
-		0
 	);
-	if (totalChords === 0) {
-		return { matchCount: 0, chorusMatchCount: 0, coveragePercent: 0 };
-	}
-
-	const stats = song.sections.reduce(
-		(accumulator, section) => {
-			const matches = getSectionMatches(
-				section,
-				parsed,
-				matchRomanNumeralsExactly
-			);
-			return {
-				matchCount: accumulator.matchCount + matches.length,
-				chorusMatchCount:
-					accumulator.chorusMatchCount +
-					(isChorusSectionLabel(section.label) ? matches.length : 0),
-				coveredPositions:
-					accumulator.coveredPositions +
-					matches.reduce((sum, m) => sum + m.length, 0)
-			};
-		},
-		{ matchCount: 0, chorusMatchCount: 0, coveredPositions: 0 }
-	);
-
-	return {
-		matchCount: stats.matchCount,
-		chorusMatchCount: stats.chorusMatchCount,
-		coveragePercent: (stats.coveredPositions / totalChords) * 100
-	};
+	return eligible[eligible.length - 1];
 };
 
 export const buildProgressionMatchRates = (
@@ -319,100 +186,97 @@ export const pickPrimaryVariant = <T extends { chordProgression: string }>(
 	);
 };
 
-export const collapseDisplayMatchesByName = (
-	matches: ProgressionWithMatchStats[],
-	progressionMatchCounts: Record<string, number> | null
-): ProgressionWithMatchStats[] => {
-	const variantsByName = matches.reduce<
-		Record<string, ProgressionWithMatchStats[]>
-	>(
-		(acc, match) => ({
-			...acc,
-			[match.name]: [...(acc[match.name] ?? []), match]
-		}),
-		{}
-	);
-	return Object.values(variantsByName).map((variants) =>
-		pickPrimaryVariant(variants, progressionMatchCounts)
-	);
-};
+const UNMATCHED_SONG_STATS = { matchCount: 0, coveragePercent: 0 };
+
+const parsedCoreVariants = (progression: CoreProgression) =>
+	chordProgressionVariants(progression.chordProgression).flatMap((variant) => {
+		const parsed = romanTokensToParsedProgression(
+			variant.split("-"),
+			progression.scale
+		);
+		return parsed ? [{ chordProgression: variant, parsed }] : [];
+	});
 
 export const buildCoreProgressionDisplayMatches = (
 	coreProgressions: CoreProgression[],
-	song: GroupedSong | null
+	songMatches: readonly ProgressionWithMatchStats[] | null,
+	progressionMatchCounts: Record<string, number> | null
 ): ProgressionWithMatchStats[] =>
-	coreProgressions
-		.flatMap((progression) =>
-			chordProgressionVariants(progression.chordProgression).map(
-				(variant): ProgressionWithMatchStats | null => {
-					if (isSelfRepeatingProgression(variant)) return null;
-					const parsed = romanTokensToParsedProgression(
-						variant.split("-"),
-						progression.scale
-					);
-					if (!parsed) return null;
+	coreProgressions.flatMap((progression): ProgressionWithMatchStats[] => {
+		const variants = parsedCoreVariants(progression);
+		if (variants.length === 0) return [];
+		const songMatch = songMatches?.find(
+			(match) => match.isCoreProgression && match.name === progression.name
+		);
+		const displayVariant =
+			variants.find(
+				(variant) => variant.chordProgression === songMatch?.chordProgression
+			) ?? pickPrimaryVariant(variants, progressionMatchCounts);
+		const stats = songMatch ?? UNMATCHED_SONG_STATS;
+		return [
+			{
+				...progression,
+				chordProgression: displayVariant.chordProgression,
+				parsedProgression: displayVariant.parsed,
+				matchCount: stats.matchCount,
+				coveragePercent: stats.coveragePercent,
+				...matchHighlightForCoreProgression(
+					true,
+					displayVariant.chordProgression,
+					progression.name
+				)
+			}
+		];
+	});
 
-					const exact = progression.matchRomanNumeralsExactly ?? false;
-					const stats = song
-						? computeStatsForParsedProgression(song, parsed, exact)
-						: { matchCount: 0, coveragePercent: 0 };
-
-					return {
-						...progression,
-						chordProgression: variant,
-						parsedProgression: parsed,
-						matchCount: stats.matchCount,
-						coveragePercent: stats.coveragePercent,
-						...matchHighlightForCoreProgression(true, variant, progression.name)
-					};
-				}
-			)
-		)
-		.filter((match): match is ProgressionWithMatchStats => match !== null);
+export const tonicOffsetAt = (
+	section: SongSection,
+	index: number
+): number | null => {
+	const token = section.romanTokens[index];
+	return token ? romanTokenOffsetFromTonic(token, section.scale) : null;
+};
 
 export const matchStartsOnExpectedTonic = (
 	section: SongSection,
 	matchStart: number,
-	expectedTonicOffset: number
+	expectedTonicOffset: number | null
 ): boolean => {
-	const token = section.romanTokens[matchStart];
-	if (!token) return true;
-	const offset = romanTokenOffsetFromTonic(token, section.scale);
-	if (offset === null) return true;
-	return offset === expectedTonicOffset;
+	const offset = tonicOffsetAt(section, matchStart);
+	return (
+		offset === null ||
+		expectedTonicOffset === null ||
+		offset === expectedTonicOffset
+	);
 };
 
-export function getSectionMatches(
+export const matchSectionProgressionExactly = (
 	section: SongSection,
-	searchProgression: ParsedProgressionChord[] | null,
-	matchRomanNumeralsExactly = false
-): SubProgressionMatch[] {
-	if (!searchProgression || searchProgression.length === 0) return [];
-	const sectionLength = section.parsedProgression.length;
-	const rawMatches = matchProgressionSelectiveExactness(
-		section.parsedProgression,
+	searchProgression: ParsedProgressionChord[],
+	searchTonicOffset: number | null,
+	fromIndex = 0
+): SubProgressionMatch[] =>
+	matchProgressionSelectiveExactness(
+		section.parsedProgression.slice(fromIndex),
 		searchProgression
-	);
-	const filteredMatches =
-		matchRomanNumeralsExactly && searchProgression.length > 0
-			? rawMatches.filter((match) =>
-					matchStartsOnExpectedTonic(
-						section,
-						match.start,
-						searchProgression[0].rootPitchClass
-					)
-				)
-			: rawMatches;
-	return toNonOverlappingMatches(filteredMatches, sectionLength);
-}
+	)
+		.map((match) => ({ ...match, start: match.start + fromIndex }))
+		.filter((match) =>
+			matchStartsOnExpectedTonic(section, match.start, searchTonicOffset)
+		);
 
-export const matchPositions = (
-	match: SubProgressionMatch,
+export const exactProgressionKey = (
+	parsed: ParsedProgressionChord[],
+	tonicOffset: number | null
+): string => `${tonicOffset}|${abstractProgressionKey(parsed)}`;
+
+const isPositionInMatch = (
+	position: number,
+	{ start, length }: SubProgressionMatch,
 	sectionLength: number
-): number[] =>
-	Array.from(
-		{ length: match.length },
-		(_, index) => (match.start + index) % sectionLength
+): boolean =>
+	Array.from({ length }, (_, offset) => (start + offset) % sectionLength).includes(
+		position
 	);
 
 export type ChordAnnotation = {
@@ -420,8 +284,7 @@ export type ChordAnnotation = {
 	palette: ChordHighlightPalette;
 	isStrictSubset?: boolean;
 	chordProgression?: string;
-	highlightPositionsBySection?: number[][];
-	matchRomanNumeralsExactly?: boolean;
+	highlightPositionsBySection: number[][];
 };
 
 export type ColoredHighlightSegment = {
@@ -482,11 +345,6 @@ const collapsedIndexByOriginalPosition = (
 		Array.from({ length: range.length }, () => collapsedIndex)
 	);
 
-const originalPositionsFromMatches = (
-	matches: SubProgressionMatch[],
-	sectionLength: number
-): number[] => matches.flatMap((match) => matchPositions(match, sectionLength));
-
 const collapsedPositionsFromOriginal = (
 	originalPositions: number[],
 	collapsedIndexByOriginal: number[]
@@ -503,23 +361,12 @@ const collapsedPositionsFromOriginal = (
 	].sort((a, b) => a - b);
 
 const matchesForAnnotation = (
-	section: SongSection,
 	sectionIndex: number,
 	annotation: ChordAnnotation,
 	collapsedIndexByOriginal: number[]
 ): SubProgressionMatch[] => {
-	const allowedPositions =
-		annotation.highlightPositionsBySection?.[sectionIndex];
 	const originalPositions =
-		allowedPositions ??
-		originalPositionsFromMatches(
-			getSectionMatches(
-				section,
-				annotation.parsedProgression,
-				annotation.matchRomanNumeralsExactly ?? false
-			),
-			section.parsedProgression.length
-		);
+		annotation.highlightPositionsBySection[sectionIndex] ?? [];
 	return matchesFromClaimedPositions(
 		collapsedPositionsFromOriginal(originalPositions, collapsedIndexByOriginal),
 		annotation.parsedProgression.length
@@ -540,7 +387,6 @@ export const buildColoredHighlightSegments = (
 
 	const matchesByAnnotation = annotations.map((annotation) =>
 		matchesForAnnotation(
-			section,
 			sectionIndex,
 			annotation,
 			collapsedIndexByOriginal
@@ -590,30 +436,3 @@ export const buildColoredHighlightSegments = (
 	}
 	return segments;
 };
-
-export function buildChordHighlightSegments(
-	section: SongSection,
-	matches: SubProgressionMatch[]
-): ChordHighlightSegment[] {
-	const sectionLength = section.parsedProgression.length;
-	const positionToMatchIndex = Array.from(
-		{ length: sectionLength },
-		(_, position) =>
-			matches.findIndex((match) =>
-				isPositionInMatch(position, match, sectionLength)
-			)
-	);
-	const segments: ChordHighlightSegment[] = [];
-
-	for (let position = 0; position < sectionLength; position++) {
-		const matchIndex = positionToMatchIndex[position];
-		const lastSegment = segments[segments.length - 1];
-		if (lastSegment && lastSegment.matchIndex === matchIndex) {
-			lastSegment.indices.push(position);
-		} else {
-			segments.push({ matchIndex, indices: [position] });
-		}
-	}
-
-	return segments;
-}

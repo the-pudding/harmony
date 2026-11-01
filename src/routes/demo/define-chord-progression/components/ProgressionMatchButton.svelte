@@ -13,8 +13,6 @@
 
 	const TOOLTIP_GAP_PX = 6;
 
-	const EXACT_BADGE_COLOR = "#fac850";
-
 	type Props = {
 		match: ProgressionWithMatchStats;
 		active: boolean;
@@ -49,10 +47,9 @@
 	const scaleName = $derived(humanizeScale(match.scale));
 	const scaleLabel = $derived(`scale: ${scaleName}`);
 
-	// Display the progression's registered spelling, not the literal one
-	// this particular song happened to match — matching is tonic-rotation-
-	// invariant, so the same named progression can read as different
-	// roman-numeral strings across songs (see canonicalChordProgressionByName).
+	// Display the progression's registered spelling, not necessarily the
+	// literal string this song matched (alternate authored variants / triad
+	// folding — see canonicalChordProgressionByName).
 	const displayChordProgression = $derived(
 		match.isCoreProgression
 			? (canonicalChordProgressionByName.get(match.name) ?? match.chordProgression)
@@ -114,12 +111,6 @@
 	/>
 {:else}
 
-{#snippet criterionBadge(label: string, hint: string, color: string)}<span
-		class="prog-badge"
-		style:--prog-badge-color={color}
-		title={hint}>{label}</span
-	>{/snippet}
-
 <button
 	class="prog-btn"
 	class:active
@@ -140,11 +131,7 @@
 	{#if match.isCoreProgression}
 		<span class="prog-scale"
 			><span class="prog-scale-label">scale:</span>
-			{scaleName}{#if match.matchRomanNumeralsExactly}{@render criterionBadge(
-					"exact",
-					"Matches only when the first chord is the tonic of this scale — not just any rotation",
-					EXACT_BADGE_COLOR
-				)}{/if}</span
+			{scaleName}</span
 		>
 	{/if}
 	<span class="prog-chords-row">
@@ -351,27 +338,6 @@
 
 	.prog-scale-label {
 		color: rgba(161, 161, 170, 0.55);
-	}
-
-	.prog-badge {
-		margin-left: 0.3rem;
-		font-size: 0.55rem;
-		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		white-space: nowrap;
-		color: color-mix(in srgb, var(--prog-badge-color) 70%, transparent);
-		border: 1px solid
-			color-mix(in srgb, var(--prog-badge-color) 30%, transparent);
-		border-radius: 0.2rem;
-		padding: 0 0.25rem;
-		vertical-align: middle;
-	}
-
-	.prog-btn.active .prog-badge,
-	.prog-btn:hover .prog-badge {
-		color: color-mix(in srgb, var(--prog-badge-color) 90%, transparent);
-		border-color: color-mix(in srgb, var(--prog-badge-color) 50%, transparent);
 	}
 
 	.prog-btn.active .prog-scale {

@@ -1,24 +1,23 @@
 import { describe, expect, it } from "vitest";
-import songs from "../../../../../static/data/songs.json";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
+import type { ScaleName } from "../../../../chord-processing/scales.js";
 import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
-import { groupSongs } from "../../../../data/songBrowser.js";
-import {
-	buildColoredHighlightSegments,
-	getSectionMatches
-} from "./progressionMatchAnalysis.js";
 import type { CoreProgression } from "$data/core-progressions.js";
-import coreProgressions from "$data/core-progressions.js";
+import { matchSongV2 } from "../../match-algo-v2/match-algo-v2-logic/matchSongV2.js";
+import { countContiguousRepeats } from "../../match-algo-v2/match-algo-v2-logic/candidates.js";
+import {
+	matchSectionProgressionExactly,
+	tonicOffsetAt
+} from "./progressionMatchAnalysis.js";
 
 const makeSection = (
 	romanTokens: string[],
-	scale: "major" | "minor" = "major"
+	scale: ScaleName = "major"
 ): SongSection => ({
 	label: null,
 	chords: romanTokens,
 	romanTokens,
-	parsedProgression:
-		romanTokensToParsedProgression(romanTokens, scale) ?? [],
+	parsedProgression: romanTokensToParsedProgression(romanTokens, scale) ?? [],
 	keyLabel: null,
 	scale
 });
@@ -31,208 +30,99 @@ const makeSong = (sections: SongSection[]): GroupedSong => ({
 	sections
 });
 
-// i-VI-III in minor: pitch classes 0, 8, 3 (A, F, C in A minor)
-const stayWithMeParsed = romanTokensToParsedProgression(
-	["i", "VI", "III"],
-	"minor"
-)!;
+const repeated = (tokens: string[]): string[] => [...tokens, ...tokens];
 
-// I-V-vi in major: pitch classes 0, 7, 9 (C, G, Am in C major)
-const miniAxisParsed = romanTokensToParsedProgression(
-	["I", "V", "vi"],
-	"major"
-)!;
+const MINOR_DESCENT_NAME = "minor descent";
+const MAJOR_DESCENT_NAME = "major descent";
 
-describe("getSectionMatches — matchRomanNumeralsExactly", () => {
-	describe("i-VI-III (stay with me)", () => {
-		it("matches a minor section starting on the tonic", () => {
-			const section = makeSection(
-				["i", "VI", "III", "i", "VI", "III"],
-				"minor"
-			);
-			const matches = getSectionMatches(section, stayWithMeParsed, true);
-			expect(matches).toHaveLength(2);
-		});
+const minorDescentCore: CoreProgression = {
+	name: MINOR_DESCENT_NAME,
+	chordProgression: "i-VII-VI-III",
+	scale: "minor",
+	description: ""
+};
 
-		it("does not match when the same intervals start on a non-tonic degree in a major section", () => {
-			// Annie's Song shape: vi-IV-I appears inside a major section
-			const section = makeSection(
-				["IV", "V", "vi", "IV", "I", "vi", "IV", "I"],
-				"major"
-			);
-			const matches = getSectionMatches(section, stayWithMeParsed, true);
-			expect(matches).toHaveLength(0);
-		});
+const majorDescentCore: CoreProgression = {
+	name: MAJOR_DESCENT_NAME,
+	chordProgression: "vi-V-IV-I",
+	scale: "major",
+	description: ""
+};
 
-		it("without the flag, the same major section matches on intervals alone", () => {
-			const section = makeSection(
-				["IV", "V", "vi", "IV", "I", "vi", "IV", "I"],
-				"major"
-			);
-			const matches = getSectionMatches(section, stayWithMeParsed, false);
-			expect(matches.length).toBeGreaterThan(0);
-		});
+const matchedCoreNames = (
+	section: SongSection,
+	cores: CoreProgression[]
+): string[] =>
+	matchSongV2(makeSong([section]), cores)
+		.matches.filter((match) => match.isCoreProgression)
+		.map((match) => match.name);
 
-		it("falls back to interval matching when romanTokens are empty", () => {
-			const section: SongSection = {
-				label: null,
-				chords: [],
-				romanTokens: [],
-				parsedProgression:
-					romanTokensToParsedProgression(["vi", "IV", "I"], "major") ?? [],
-				keyLabel: null,
-				scale: "major"
-			};
-			const matches = getSectionMatches(section, stayWithMeParsed, true);
-			expect(matches.length).toBeGreaterThan(0);
-		});
-
-		it("accepts matches within a section where i appears mid-section, not just at position 0", () => {
-			// "III" appears first but the match at position 1 (starting on "i") is valid
-			const section = makeSection(
-				["III", "i", "VI", "III", "i", "VI", "III"],
-				"minor"
-			);
-			const matches = getSectionMatches(section, stayWithMeParsed, true);
-			expect(matches.length).toBeGreaterThan(0);
-			matches.forEach((m) => {
-				expect(section.romanTokens[m.start]).toBe("i");
-			});
-		});
+describe("exact roman numeral matching in matchSongV2", () => {
+	it("does not match i-VII-VI-III against a major section playing vi-V-IV-I", () => {
+		const section = makeSection(repeated(["vi", "V", "IV", "I"]));
+		expect(matchedCoreNames(section, [minorDescentCore])).toEqual([]);
 	});
 
-	describe("I-V-vi ((mini)axis of awesome)", () => {
-		it("matches a major section starting on I", () => {
-			const section = makeSection(["I", "V", "vi", "I", "V", "vi"], "major");
-			const matches = getSectionMatches(section, miniAxisParsed, true);
-			expect(matches).toHaveLength(2);
-		});
-
-		it("does not match a minor section with the same deltas starting on III", () => {
-			// III-VII-i in minor has same deltas [7,2] as I-V-vi in major
-			const section = makeSection(
-				["III", "VII", "i", "III", "VII", "i"],
-				"minor"
-			);
-			const matches = getSectionMatches(section, miniAxisParsed, true);
-			expect(matches).toHaveLength(0);
-		});
-
-		it("without the flag, the minor section also matches", () => {
-			const section = makeSection(
-				["III", "VII", "i", "III", "VII", "i"],
-				"minor"
-			);
-			const matches = getSectionMatches(section, miniAxisParsed, false);
-			expect(matches.length).toBeGreaterThan(0);
-		});
-	});
-});
-
-describe("core-progressions data assertions", () => {
-	it("'stay with me' is i-VI-III, minor, and matchRomanNumeralsExactly", () => {
-		const p = coreProgressions.find((c) => c.name === "stay with me");
-		expect(p).toBeDefined();
-		expect(p!.chordProgression).toBe("i-VI-III");
-		expect(p!.scale).toBe("minor");
-		expect(p!.matchRomanNumeralsExactly).toBe(true);
+	it("does not match vi-V-IV-I against a minor section playing i-VII-VI-III", () => {
+		const section = makeSection(repeated(["i", "VII", "VI", "III"]), "minor");
+		expect(matchedCoreNames(section, [majorDescentCore])).toEqual([]);
 	});
 
-	it("'(mini)axis of awesome' is I-V-vi, major, and matchRomanNumeralsExactly", () => {
-		const p = coreProgressions.find((c) => c.name === "(mini)axis of awesome");
-		expect(p).toBeDefined();
-		expect(p!.chordProgression).toBe("I-V-vi");
-		expect(p!.scale).toBe("major");
-		expect(p!.matchRomanNumeralsExactly).toBe(true);
-	});
-});
-
-describe("buildColoredHighlightSegments — matchRomanNumeralsExactly in annotations", () => {
-	const paulAnkaSong = groupSongs(
-		(songs as { songKey: string }[]).filter(
-			(s) => s.songKey === "paul-anka__my-home-town"
-		) as Parameters<typeof groupSongs>[0]
-	)[0];
-
-	const chromaticTailSection =
-		paulAnkaSong.sections.find((section) =>
-			section.romanTokens.includes("biii")
-		) ?? paulAnkaSong.sections[0];
-
-	const jazzProgression: CoreProgression = {
-		name: "jazz ii-V-I",
-		chordProgression: ["ii-bii-I", "ii-bII-I", "ii-V-I"],
-		scale: "major",
-		matchRomanNumeralsExactly: true,
-		description: ""
-	};
-
-	const iiBiiIParsed = romanTokensToParsedProgression(
-		["ii", "bII", "I"],
-		"major"
-	)!;
-
-	const highlightedRomanTokens = (
-		section: SongSection,
-		matchRomanNumeralsExactly: boolean
-	): string[] => {
-		const segments = buildColoredHighlightSegments(section, 0, [
-			{
-				parsedProgression: iiBiiIParsed,
-				palette: { fill: "#000", border: "#000" },
-				matchRomanNumeralsExactly
-			}
-		]);
-		return segments
-			.filter((segment) => segment.palette !== null)
-			.flatMap((segment) =>
-				segment.indices.map((position) => section.romanTokens[position])
-			);
-	};
-
-	it("does not highlight biii-bVI-bII when exact roman matching is enabled", () => {
-		const section = chromaticTailSection;
-		const highlighted = highlightedRomanTokens(section, true);
-		expect(highlighted).not.toContain("biii");
-		expect(highlighted).not.toContain("bVI");
-	});
-
-	it("ii-V-I row display respects exact matching at the chromatic tail", () => {
-		const iiVIParsed = romanTokensToParsedProgression(
-			["ii", "V", "I"],
-			"major"
-		)!;
-		const section = chromaticTailSection;
-		const chromaticTailStart = section.romanTokens.findIndex(
-			(token) => token === "biii"
+	it("matches each core only on its own roman numerals", () => {
+		const majorSection = makeSection(repeated(["vi", "V", "IV", "I"]));
+		const minorSection = makeSection(
+			repeated(["i", "VII", "VI", "III"]),
+			"minor"
 		);
-		expect(chromaticTailStart).toBeGreaterThan(-1);
+		const cores = [minorDescentCore, majorDescentCore];
+		expect(matchedCoreNames(majorSection, cores)).toEqual([MAJOR_DESCENT_NAME]);
+		expect(matchedCoreNames(minorSection, cores)).toEqual([MINOR_DESCENT_NAME]);
+	});
 
-		const looseHighlights = buildColoredHighlightSegments(section, 0, [
-			{
-				parsedProgression: iiVIParsed,
-				palette: { fill: "#000", border: "#000" },
-				matchRomanNumeralsExactly: false
-			}
-		])
-			.filter((segment) => segment.palette !== null)
-			.filter((segment) =>
-				segment.indices.some((position) => position >= chromaticTailStart)
-			);
+	it("matches the same tonic-relative chords spelled in a different scale", () => {
+		const section = makeSection(repeated(["i", "bVII", "bVI", "bIII"]));
+		expect(matchedCoreNames(section, [minorDescentCore])).toEqual([
+			MINOR_DESCENT_NAME
+		]);
+	});
 
-		const exactHighlights = buildColoredHighlightSegments(section, 0, [
-			{
-				parsedProgression: iiVIParsed,
-				palette: { fill: "#000", border: "#000" },
-				matchRomanNumeralsExactly: true
-			}
-		])
-			.filter((segment) => segment.palette !== null)
-			.filter((segment) =>
-				segment.indices.some((position) => position >= chromaticTailStart)
-			);
+	it("keeps transposed non-core slices in one song as separate progressions", () => {
+		const tonicSection = makeSection(repeated(["I", "IV", "V"]));
+		const transposedSection = makeSection(repeated(["IV", "bVII", "I"]));
+		const result = matchSongV2(makeSong([tonicSection, transposedSection]), []);
+		expect(
+			result.matches.map((match) => match.chordProgression).sort()
+		).toEqual(["I-IV-V", "IV-bVII-I"]);
+	});
+});
 
-		expect(looseHighlights.length).toBeGreaterThan(0);
-		expect(exactHighlights).toHaveLength(0);
+describe("matchSectionProgressionExactly", () => {
+	it("only keeps matches whose first chord sits on the search tonic offset", () => {
+		const section = makeSection(["I", "IV", "V", "II", "V", "VI"]);
+		const unit = section.parsedProgression.slice(0, 3);
+		const matches = matchSectionProgressionExactly(
+			section,
+			unit,
+			tonicOffsetAt(section, 0)
+		);
+		expect(matches.map((match) => match.start)).toEqual([0]);
+	});
+});
+
+describe("countContiguousRepeats", () => {
+	it("does not count a transposed copy of the unit as a repeat", () => {
+		const section = makeSection(["I", "IV", "V", "II", "V", "VI"]);
+		const unit = section.parsedProgression.slice(0, 3);
+		expect(
+			countContiguousRepeats(section, 0, unit, tonicOffsetAt(section, 0))
+		).toEqual({ repeatCount: 1, coveredLength: unit.length });
+	});
+
+	it("counts back-to-back copies on the same roman numerals", () => {
+		const section = makeSection(repeated(["I", "IV", "V"]));
+		const unit = section.parsedProgression.slice(0, 3);
+		expect(
+			countContiguousRepeats(section, 0, unit, tonicOffsetAt(section, 0))
+		).toEqual({ repeatCount: 2, coveredLength: unit.length * 2 });
 	});
 });

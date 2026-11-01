@@ -19,7 +19,6 @@ const happyMajoryProgressions: ProgressionGroup = {
 			name: "I-IV vamp",
 			chordProgression: "I-IV-I-IV",
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		// Disabled: a shape that starts and ends on the same chord collapses poorly
@@ -29,7 +28,6 @@ const happyMajoryProgressions: ProgressionGroup = {
 			name: "I-V vamp",
 			chordProgression: "I-V-I-V",
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
@@ -37,14 +35,12 @@ const happyMajoryProgressions: ProgressionGroup = {
 			name: "hey there delilah (chorus)",
 			chordProgression: "I-vi-I-vi",
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "Cheerleader (verse)",
 			chordProgression: "I-V-IV",
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
@@ -63,14 +59,12 @@ const happyMajoryProgressions: ProgressionGroup = {
 			name: "happy walk up", // found as a "potential core progression" cuz it gets matched a lot by our algorithm
 			chordProgression: "I-IV-V",
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "happy walk down", // found as a "potential core progression" cuz it gets matched a lot by our algorithm
 			chordProgression: "IV-V-I",
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
@@ -193,7 +187,6 @@ const happyMajoryProgressions: ProgressionGroup = {
 			name: "IV-iv-I turnaround",
 			chordProgression: "IV-iv-I",
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description:
 				"TODO: try to match just IV-iv? (often I only arrives in a subsequent section)"
 		},
@@ -241,7 +234,6 @@ const axisOfAwesomeProgressions: ProgressionGroup = {
 			name: "(mini)axis of awesome",
 			chordProgression: "I-V-vi",
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
@@ -267,35 +259,30 @@ const minoryProgressions: ProgressionGroup = {
 			name: "party rock",
 			chordProgression: "i-VII-VI",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "come & get it",
 			chordProgression: "i-III-VI-iv",
 			scale: "minor",
-			// matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "classic i-iv-V", // TODO: better name
 			chordProgression: "i-iv-V",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "gangnam verse i-iv-v",
 			chordProgression: "i-iv-v",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "i VI vamp",
 			chordProgression: "i-VI-i-VI",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
@@ -309,21 +296,18 @@ const minoryProgressions: ProgressionGroup = {
 			name: "scars to your beautiful (vamp)",
 			chordProgression: "VI-i-VI-i",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "dangerous",
 			chordProgression: "i-III-VI",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "i VI VII",
 			chordProgression: "i-VI-VII",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
@@ -343,28 +327,24 @@ const minoryProgressions: ProgressionGroup = {
 			name: "tainted love",
 			chordProgression: "i-III-VI-IV",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: "lifts out of the i, then brightens onto a major IV"
 		},
 		{
 			name: "adore you",
 			chordProgression: "i-III-VI-VII",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: "a full lift out of the i, rising all the way to the VII"
 		},
 		{
 			name: "lean on",
 			chordProgression: "VI-VII-i-III",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: "the adore you cycle, rotated to start on the VI"
 		},
 		{
 			name: "come undone",
 			chordProgression: "III-VI-VII-i",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: "the adore you cycle, rotated to land on the i"
 		},
 		{
@@ -377,7 +357,6 @@ const minoryProgressions: ProgressionGroup = {
 			name: "dorian build up",
 			chordProgression: "ii-I-V",
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description:
 				"experimental: game up in Good 4 U prominently, it's sort of a spin on ii-V-I, but doesn't require the jazzy extensions to sound fresh..."
 		},
@@ -410,7 +389,6 @@ const minoryProgressions: ProgressionGroup = {
 			name: "broody walk down",
 			chordProgression: "i-VI-V",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: "Similar to i-VII-VI-V, but jumps to the VI"
 		},
 		{
@@ -435,14 +413,12 @@ const minoryProgressions: ProgressionGroup = {
 			name: "boyband",
 			chordProgression: "VI-V-i",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "go your own way",
 			chordProgression: "vi-IV-V",
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
@@ -461,28 +437,24 @@ const minoryProgressions: ProgressionGroup = {
 			name: "i v vamp",
 			chordProgression: "i-v-i-v",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "i iv vamp",
 			chordProgression: "i-iv-i-iv",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "stay with me",
 			chordProgression: "i-VI-III",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: "a pop-y, emo minor progression"
 		},
 		{
 			name: "just like fire",
 			chordProgression: "i-VI-III-iv",
 			scale: "minor",
-			matchRomanNumeralsExactly: true,
 			description: "stay with me, but sinking into a iv rather than resolving"
 		},
 		// These probably appear like once, but it helps with matching iconic songs:
@@ -510,14 +482,12 @@ const jazzyProgressions: ProgressionGroup = {
 			name: "jazz ii-V-I",
 			chordProgression: ["ii-bii-I", "ii-bII-I", "ii-V-I"],
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description: ""
 		},
 		{
 			name: "roxanne",
 			chordProgression: "ii-V-I-IV",
 			scale: "major",
-			matchRomanNumeralsExactly: true,
 			description: "resolves the ii-V-I, then keeps moving with a plagal IV"
 		},
 		{
@@ -562,7 +532,6 @@ export type CoreProgression = {
 	scale: ScaleName;
 	description: string;
 	technicalNotes?: string;
-	matchRomanNumeralsExactly?: boolean;
 };
 
 export const allProgressionGroups: ProgressionGroup[] = [

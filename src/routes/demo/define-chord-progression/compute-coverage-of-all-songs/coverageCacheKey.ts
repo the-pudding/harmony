@@ -2,14 +2,11 @@ import type { CoreProgression } from "$data/core-progressions.js";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 import { hashString } from "../../../../utils/hashString.js";
 
-export const COVERAGE_CACHE_SCHEMA_VERSION = 11;
+export const COVERAGE_CACHE_SCHEMA_VERSION = 12;
 
 const progressionFingerprint = (progressions: CoreProgression[]): string =>
 	progressions
-		.map(
-			(p) =>
-				`${p.name}:${JSON.stringify(p.chordProgression)}:${p.scale}:${p.matchRomanNumeralsExactly ?? false}`
-		)
+		.map((p) => `${p.name}:${JSON.stringify(p.chordProgression)}:${p.scale}`)
 		.join("|");
 
 const songCorpusFingerprint = (songs: GroupedSong[]): string =>

@@ -47,13 +47,9 @@
 		)
 	);
 
-	// Canonical names — the rotation-proof identity to filter/chart/highlight
-	// by. Matching is tonic-rotation-invariant, so a song can match one of
-	// this group's progressions under a spelling that was never authored as
-	// a variant (e.g. a mixolydian song reads as "I-bVII-IV", the same shape
-	// as "sweet home alabama"'s authored "V-IV-I"); coverageResult
-	// reports canonical names, so filtering by name (instead of enumerating
-	// authored variant strings) is what catches those songs too.
+	// Canonical names to filter/chart/highlight by. coverageResult reports
+	// names, so filtering by name (not enumerating every authored variant
+	// string) includes all songs that matched any member of this group.
 	const groupProgressionNames = $derived(group.progressions.map((p) => p.name));
 
 	const filteredCoverage = $derived(
@@ -153,7 +149,7 @@
 
 	<CoreProgressionRow
 		coreProgressions={group.progressions}
-		selectedSong={null}
+		selectedSongMatches={null}
 		activeProgression={activeProgressionInGroup}
 		progressionMatchCounts={filteredCoverage?.progressionMatchCounts ?? null}
 		songCoverages={coverageResult?.songCoverages ?? null}

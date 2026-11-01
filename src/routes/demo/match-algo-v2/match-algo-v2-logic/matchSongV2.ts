@@ -5,7 +5,7 @@ import type {
   ChordAnnotation,
   ProgressionWithMatchStats,
 } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
-import { abstractProgressionKey, scopedToScale } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
+import { exactProgressionKey, scopedToScale } from "../../define-chord-progression/progression-matching-logic/progressionMatchAnalysis.js";
 import {
 	colorForNonCoreProgression,
 	highlightPaletteFromColor,
@@ -24,7 +24,6 @@ export type UnifiedProgression = {
 	romanString: string;
 	scale: ScaleName;
 	coreName?: string;
-	matchRomanNumeralsExactly: boolean;
 	highlightPalette: ChordHighlightPalette;
 	spans: TileSpan[];
 };
@@ -89,7 +88,6 @@ const toMatchStats = (
 			? (claimedChordCount(unified) / totalChords) * PERCENT_MULTIPLIER
 			: 0,
 	isCoreProgression: unified.coreName !== undefined,
-	matchRomanNumeralsExactly: unified.matchRomanNumeralsExactly,
 	highlightPalette: unified.highlightPalette
 });
 
@@ -144,11 +142,11 @@ export const matchSongV2 = (
     }
   );
 
-  // Unify spans that share the same harmonic pattern (abstract key + scale)
+  // Unify spans that share the same roman numerals (tonic-anchored key + scale)
   const byKey = new Map<string, TileSpan[]>();
   for (const span of allSpans) {
     const key = scopedToScale(
-      abstractProgressionKey(span.tile.tile.unit),
+      exactProgressionKey(span.tile.tile.unit, span.tile.tile.unitTonicOffset),
       song.sections[span.sectionIndex].scale
     );
     const existing = byKey.get(key);
@@ -166,7 +164,6 @@ export const matchSongV2 = (
 			romanString: firstSpan.tile.tile.unitRomanString,
 			scale: section.scale,
 			coreName: firstSpan.tile.tile.coreName,
-			matchRomanNumeralsExactly: firstSpan.tile.tile.matchRomanNumeralsExactly,
 			highlightPalette: UNGROUPED_PROGRESSION_PALETTE, // placeholder
 			spans
 		};
@@ -200,8 +197,7 @@ export const matchSongV2 = (
 			highlightPositionsBySection: buildHighlightPositionsBySection(
 				unified.spans,
 				song.sections.length
-			),
-			matchRomanNumeralsExactly: unified.matchRomanNumeralsExactly
+			)
 		})
 	);
 

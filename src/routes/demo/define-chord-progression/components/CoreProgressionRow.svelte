@@ -1,11 +1,10 @@
 <script lang="ts">
 	import type { CoreProgression } from "$data/core-progressions.js";
 	import { chordProgressionVariants } from "$data/core-progressions.util.js";
-	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import {
 		aggregateVariantMatchStats,
 		buildCoreProgressionDisplayMatches,
-		collapseDisplayMatchesByName,
+		type ProgressionWithMatchStats,
 		type SongProgressionMatchList
 	} from "../progression-matching-logic/progressionMatchAnalysis.js";
 	import { matchOutline } from "./progressionColors.js";
@@ -18,7 +17,7 @@
 
 	type Props = {
 		coreProgressions: CoreProgression[];
-		selectedSong: GroupedSong | null;
+		selectedSongMatches: ProgressionWithMatchStats[] | null;
 		activeProgression: string | null;
 		progressionMatchCounts: Record<string, number> | null;
 		songCoverages: SongProgressionMatchList[] | null;
@@ -28,7 +27,7 @@
 
 	let {
 		coreProgressions,
-		selectedSong,
+		selectedSongMatches,
 		activeProgression,
 		progressionMatchCounts,
 		songCoverages,
@@ -46,16 +45,12 @@
 	);
 
 	// Aggregate stats (corpus-wide "how many songs match this progression")
-	// key on the progression's canonical name, not its literal spelling:
-	// matching is tonic-rotation-invariant, so a song can match a named
-	// progression under a spelling that was never authored as a variant
-	// (e.g. a mixolydian song reads as "I-bVII-IV", the same shape as "sweet
-	// home alabama"'s authored "V-IV-I"). `songCoverages` reports
-	// canonical names, so a single-element [name] set is both simpler and
-	// more complete than enumerating authored variant strings.
+	// key on the progression's canonical name, since `songCoverages` reports
+	// canonical names rather than literal variant spellings.
 	const displayMatches = $derived.by(() => {
-		const matches = collapseDisplayMatchesByName(
-			buildCoreProgressionDisplayMatches(coreProgressions, selectedSong),
+		const matches = buildCoreProgressionDisplayMatches(
+			coreProgressions,
+			selectedSongMatches,
 			progressionMatchCounts
 		);
 		if (!songCoverages) return matches;

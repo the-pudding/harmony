@@ -1,21 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
-import type { GroupedSong, SongSection } from "../../../../data/songBrowser.js";
+import type { SongSection } from "../../../../data/songBrowser.js";
 import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
-import type { ScaleName } from "../../../../chord-processing/scales.js";
+import type { CoreProgression } from "$data/core-progressions.js";
 import {
 	aggregateVariantMatchStats,
 	buildColoredHighlightSegments,
-	collapseDisplayMatchesByName,
-	computeStatsForParsedProgression,
-	dedupeMatchesByChordProgression,
+	buildCoreProgressionDisplayMatches,
 	buildProgressionMatchRates,
 	formatMatchRatePercent,
 	pickPrimaryVariant,
 	type ProgressionWithMatchStats
 } from "./progressionMatchAnalysis.js";
-import coreProgressions from "$data/core-progressions.js";
-import { chordProgressionVariants } from "$data/core-progressions.util.js";
+import { matchHighlightForCoreProgression } from "../components/progressionColors.js";
 
 const chord = (
 	rootPitchClass: number,
@@ -28,12 +25,9 @@ const chord = (
 	display: ""
 });
 
-// C major: I=C, vi=Am, iii=Em, V=G
 const C_MAJOR = chord(0, "major");
 const A_MINOR = chord(9, "minor");
-const A_MINOR7 = chord(9, "minor7");
-const E_MINOR = chord(4, "minor");
-const E_MINOR7 = chord(4, "minor7");
+const F_MAJOR = chord(5, "major");
 const G_MAJOR = chord(7, "major");
 
 const makeSection = (
@@ -46,210 +40,6 @@ const makeSection = (
 	parsedProgression,
 	keyLabel: null,
 	scale: "major"
-});
-
-const saveYourTearsCore = coreProgressions.find(
-	(p) => p.name === "save your tears"
-)!;
-const darkDooWopParsed = romanTokensToParsedProgression(
-	chordProgressionVariants(saveYourTearsCore.chordProgression)[0].split("-")
-)!;
-
-// Regression: the-weeknd "Save Your Tears" — the HookTheory source transcribes
-// the vi and iii chords with 7th extensions (vi7, iii7). The suffix for vi7 is
-// "minor7" while the core progression I-vi-iii-V uses plain "minor". Before the
-// fix, the strict suffix comparison caused 0 matches in any HookTheory section,
-// blatantly missing the "verse" (2 instances) and one "chorus" (2 instances).
-//
-// Each section below mirrors a real HookTheory section: 8 chords = I-vi7-iii7-V
-// repeated twice, which contains 2 non-overlapping instances of I-vi-iii-V.
-const saveYourTearsHooktheory: GroupedSong = {
-	songKey: "the-weeknd__save-your-tears",
-	title: "Save Your Tears",
-	artists: ["The Weeknd"],
-	keyLabel: "C major",
-	sections: [
-		makeSection([
-			C_MAJOR,
-			A_MINOR7,
-			E_MINOR7,
-			G_MAJOR,
-			C_MAJOR,
-			A_MINOR7,
-			E_MINOR7,
-			G_MAJOR
-		]),
-		makeSection([
-			C_MAJOR,
-			A_MINOR7,
-			E_MINOR7,
-			G_MAJOR,
-			C_MAJOR,
-			A_MINOR7,
-			E_MINOR7,
-			G_MAJOR
-		])
-	]
-};
-
-// The same song but with plain (no-extension) chords, as in the UG source.
-const saveYourTearsUg: GroupedSong = {
-	songKey: "the-weeknd__save-your-tears",
-	title: "Save Your Tears",
-	artists: ["The Weeknd"],
-	keyLabel: "C major",
-	sections: [
-		makeSection([
-			C_MAJOR,
-			A_MINOR,
-			E_MINOR,
-			G_MAJOR,
-			C_MAJOR,
-			A_MINOR,
-			E_MINOR,
-			G_MAJOR
-		]),
-		makeSection([
-			C_MAJOR,
-			A_MINOR,
-			E_MINOR,
-			G_MAJOR,
-			C_MAJOR,
-			A_MINOR,
-			E_MINOR,
-			G_MAJOR
-		])
-	]
-};
-
-describe("computeStatsForParsedProgression — extension-stripping regression (save your tears)", () => {
-	it("counts I-vi7-iii7-V sections as matching I-vi-iii-V (save your tears)", () => {
-		const stats = computeStatsForParsedProgression(
-			saveYourTearsHooktheory,
-			darkDooWopParsed
-		);
-		expect(stats.matchCount).toBe(4);
-	});
-
-	it("counts the same matches as the plain (no-extension) version", () => {
-		const statsWithExtensions = computeStatsForParsedProgression(
-			saveYourTearsHooktheory,
-			darkDooWopParsed
-		);
-		const statsPlain = computeStatsForParsedProgression(
-			saveYourTearsUg,
-			darkDooWopParsed
-		);
-		expect(statsWithExtensions.matchCount).toBe(statsPlain.matchCount);
-		expect(statsWithExtensions.coveragePercent).toBe(
-			statsPlain.coveragePercent
-		);
-	});
-
-	it("covers 100% of each 7th-chord section when the whole section is the pattern", () => {
-		const stats = computeStatsForParsedProgression(
-			saveYourTearsHooktheory,
-			darkDooWopParsed
-		);
-		expect(stats.coveragePercent).toBe(100);
-	});
-});
-
-describe("computeStatsForParsedProgression — chorusMatchCount", () => {
-	const ivviProgression = [C_MAJOR, G_MAJOR, A_MINOR, C_MAJOR];
-
-	it("counts matches inside a chorus-labeled section as chorus matches", () => {
-		const song: GroupedSong = {
-			songKey: "chorus-test",
-			title: "Chorus Test",
-			artists: [],
-			keyLabel: null,
-			sections: [
-				makeSection(ivviProgression, "Verse"),
-				makeSection(ivviProgression, "Chorus")
-			]
-		};
-		const stats = computeStatsForParsedProgression(song, ivviProgression);
-		expect(stats.matchCount).toBe(2);
-		expect(stats.chorusMatchCount).toBe(1);
-	});
-
-	it("excludes pre-chorus sections from chorusMatchCount", () => {
-		const song: GroupedSong = {
-			songKey: "pre-chorus-test",
-			title: "Pre-Chorus Test",
-			artists: [],
-			keyLabel: null,
-			sections: [makeSection(ivviProgression, "Pre-Chorus")]
-		};
-		const stats = computeStatsForParsedProgression(song, ivviProgression);
-		expect(stats.matchCount).toBe(1);
-		expect(stats.chorusMatchCount).toBe(0);
-	});
-});
-
-// Travis Scott "Highest in the Room" — the outro is:
-//   vi · i · v · VI · iv · i · v · VI · iv · i
-// i-v-VI-iv appears at positions 1-4 and 5-8: 2 non-overlapping matches.
-// i-v-VI-iv-i appears at positions 1-5 and 5-9, sharing position 5, so only 1
-// non-overlapping instance. Before the fix, computeStatsForParsedProgression
-// counted raw (overlapping) matches, causing i-v-VI-iv-i to show "2×" in the UI.
-//
-// Both the section and the search are built with romanTokensToParsedProgression
-// so their abstract (interval-based) representations are consistent.
-
-const OUTRO_TOKENS = ["vi", "i", "v", "VI", "iv", "i", "v", "VI", "iv", "i"];
-
-const makeTokenSection = (romanTokens: string[]): SongSection => ({
-	label: null,
-	chords: romanTokens,
-	romanTokens,
-	parsedProgression: romanTokensToParsedProgression(romanTokens) ?? [],
-	keyLabel: null,
-	scale: "minor"
-});
-
-const outroTokenSong: GroupedSong = {
-	songKey: "travis-scott__highest-in-the-room",
-	title: "Highest in the Room",
-	artists: ["Travis Scott"],
-	keyLabel: null,
-	sections: [makeTokenSection(OUTRO_TOKENS)]
-};
-
-const parse = (progression: string) =>
-	romanTokensToParsedProgression(progression.split("-"))!;
-
-describe("computeStatsForParsedProgression — overlapping match regression (highest in the room)", () => {
-	it("counts i-v-VI-iv-i as only 1 non-overlapping match in the outro", () => {
-		const stats = computeStatsForParsedProgression(
-			outroTokenSong,
-			parse("i-v-VI-iv-i")
-		);
-		expect(stats.matchCount).toBe(1);
-	});
-
-	it("counts i-v-VI-iv as 2 non-overlapping matches in the outro", () => {
-		const stats = computeStatsForParsedProgression(
-			outroTokenSong,
-			parse("i-v-VI-iv")
-		);
-		expect(stats.matchCount).toBe(2);
-	});
-
-	it("outro coverage is higher for i-v-VI-iv than i-v-VI-iv-i", () => {
-		const statsLong = computeStatsForParsedProgression(
-			outroTokenSong,
-			parse("i-v-VI-iv-i")
-		);
-		const statsShort = computeStatsForParsedProgression(
-			outroTokenSong,
-			parse("i-v-VI-iv")
-		);
-		expect(statsShort.coveragePercent).toBeGreaterThan(
-			statsLong.coveragePercent
-		);
-	});
 });
 
 describe("buildProgressionMatchRates", () => {
@@ -323,46 +113,8 @@ describe("aggregateVariantMatchStats", () => {
 	});
 });
 
-describe("dedupeMatchesByChordProgression", () => {
-	const match = (
-		chordProgression: string,
-		scale: ScaleName,
-		coveragePercent: number,
-		matchCount: number
-	): ProgressionWithMatchStats =>
-		({
-			name: "",
-			chordProgression,
-			parsedProgression: [],
-			scale,
-			description: "",
-			matchCount,
-			coveragePercent,
-			isCoreProgression: false,
-			highlightPalette: { fill: "", border: "" }
-		}) as ProgressionWithMatchStats;
-
-	it("collapses same roman string across scales to one row", () => {
-		const deduped = dedupeMatchesByChordProgression([
-			match("VII-i-III", "minor", 40, 5),
-			match("VII-i-III", "dorian", 40, 5)
-		]);
-		expect(deduped).toHaveLength(1);
-		expect(deduped[0].scale).toBe("minor");
-	});
-
-	it("keeps the stronger coverage when scales collide", () => {
-		const deduped = dedupeMatchesByChordProgression([
-			match("VII-i-III", "minor", 30, 4),
-			match("VII-i-III", "dorian", 45, 4)
-		]);
-		expect(deduped).toHaveLength(1);
-		expect(deduped[0].scale).toBe("dorian");
-	});
-});
-
-describe("collapseDisplayMatchesByName", () => {
-	const match = (
+describe("pickPrimaryVariant", () => {
+	const variantRow = (
 		name: string,
 		chordProgression: string
 	): ProgressionWithMatchStats =>
@@ -378,28 +130,96 @@ describe("collapseDisplayMatchesByName", () => {
 			highlightPalette: { fill: "", border: "" }
 		}) as ProgressionWithMatchStats;
 
-	it("keeps one row per name, preferring the higher-count variant", () => {
-		const collapsed = collapseDisplayMatchesByName(
-			[
-				match("jazz ii-V-I", "ii-bii-I"),
-				match("jazz ii-V-I", "ii-V-I"),
-				match("doo wop", "I-vi-IV-V")
-			],
-			{ "ii-bii-I": 0, "ii-V-I": 12, "I-vi-IV-V": 4 }
-		);
-		expect(collapsed.map((row) => row.chordProgression)).toEqual([
-			"ii-V-I",
-			"I-vi-IV-V"
-		]);
-	});
-
-	it("pickPrimaryVariant falls back to the first variant when counts tie at zero", () => {
+	it("falls back to the first variant when counts tie at zero", () => {
 		expect(
 			pickPrimaryVariant(
-				[match("jazz ii-V-I", "ii-bii-I"), match("jazz ii-V-I", "ii-V-I")],
+				[
+					variantRow("jazz ii-V-I", "ii-bii-I"),
+					variantRow("jazz ii-V-I", "ii-V-I")
+				],
 				null
 			).chordProgression
 		).toBe("ii-bii-I");
+	});
+
+	it("prefers the variant with the higher progression match count", () => {
+		expect(
+			pickPrimaryVariant(
+				[
+					variantRow("jazz ii-V-I", "ii-bii-I"),
+					variantRow("jazz ii-V-I", "ii-V-I")
+				],
+				{ "ii-bii-I": 0, "ii-V-I": 12 }
+			).chordProgression
+		).toBe("ii-V-I");
+	});
+});
+
+describe("buildCoreProgressionDisplayMatches", () => {
+	const sampleCores: CoreProgression[] = [
+		{
+			name: "axis of awesome",
+			chordProgression: "I-V-vi-IV",
+			scale: "major",
+			description: ""
+		},
+		{
+			name: "doo wop",
+			chordProgression: "I-vi-IV-V",
+			scale: "major",
+			description: ""
+		}
+	];
+
+	it("returns one entry per core with zero stats when songMatches is null", () => {
+		const rows = buildCoreProgressionDisplayMatches(sampleCores, null, null);
+		expect(rows).toHaveLength(sampleCores.length);
+		expect(rows.map((row) => row.name)).toEqual([
+			"axis of awesome",
+			"doo wop"
+		]);
+		for (const row of rows) {
+			expect(row.matchCount).toBe(0);
+			expect(row.coveragePercent).toBe(0);
+			expect(row.isCoreProgression).toBe(true);
+		}
+	});
+
+	it("uses the matched variant and song stats when songMatches contains a core hit", () => {
+		const axisVariant = "I-V-vi-IV";
+		const axisParsed = romanTokensToParsedProgression(
+			axisVariant.split("-"),
+			"major"
+		)!;
+		const songMatches: ProgressionWithMatchStats[] = [
+			{
+				name: "axis of awesome",
+				chordProgression: axisVariant,
+				parsedProgression: axisParsed,
+				scale: "major",
+				description: "",
+				matchCount: 3,
+				coveragePercent: 40,
+				isCoreProgression: true,
+				...matchHighlightForCoreProgression(
+					true,
+					axisVariant,
+					"axis of awesome"
+				)
+			}
+		];
+		const rows = buildCoreProgressionDisplayMatches(
+			sampleCores,
+			songMatches,
+			null
+		);
+		const axisRow = rows.find((row) => row.name === "axis of awesome");
+		expect(axisRow?.chordProgression).toBe(axisVariant);
+		expect(axisRow?.matchCount).toBe(3);
+		expect(axisRow?.coveragePercent).toBe(40);
+		const dooWopRow = rows.find((row) => row.name === "doo wop");
+		expect(dooWopRow?.matchCount).toBe(0);
+		expect(dooWopRow?.coveragePercent).toBe(0);
 	});
 });
 
@@ -429,7 +249,7 @@ const highlightedIndices = (
 		.filter((segment) => segment.palette !== null)
 		.flatMap((segment) => segment.indices);
 
-describe("buildColoredHighlightSegments — slash bass ignored in matching", () => {
+describe("buildColoredHighlightSegments — slash bass display", () => {
 	const C_SHARP = 1;
 	const E_FLAT = 3;
 	const A_FLAT = 8;
@@ -447,16 +267,7 @@ describe("buildColoredHighlightSegments — slash bass ignored in matching", () 
 	const CLAIMED_POSITIONS = [0, 1, 2, 3, 4, 5];
 	const palette = { fill: "#000", border: "#000" };
 
-	it("rematches a slash-bass unit onto plain triads (slash bass ignored)", () => {
-		const section = makeSection([...PLAIN_VI_VII_III, ...PLAIN_VI_VII_III]);
-		expect(
-			highlightedIndices(section, 0, [
-				{ parsedProgression: SLASH_VI_VII_III, palette }
-			])
-		).toEqual(CLAIMED_POSITIONS);
-	});
-
-	it("respects claimed positions when highlightPositionsBySection is provided", () => {
+	it("highlights original indices for a slash-bass template over plain triads", () => {
 		const section = makeSection([...PLAIN_VI_VII_III, ...PLAIN_VI_VII_III]);
 		expect(
 			highlightedIndices(section, 0, [
@@ -471,7 +282,6 @@ describe("buildColoredHighlightSegments — slash bass ignored in matching", () 
 });
 
 describe("buildColoredHighlightSegments — collapse repeated chords for display", () => {
-	const F_MAJOR = chord(5, "major");
 	const I_VI_IV = [C_MAJOR, A_MINOR, F_MAJOR];
 	const I_I_VI_IV_LOOP = [
 		C_MAJOR,

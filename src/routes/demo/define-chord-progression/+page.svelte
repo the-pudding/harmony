@@ -69,11 +69,9 @@
 			: null
 	);
 
-	// SongCoverageBeeswarm highlights corpus-wide by canonical name (matching
-	// is tonic-rotation-invariant, so a song can match this progression under
-	// a spelling that was never authored as a variant — see
-	// ProgressionGroupSection.svelte for the fuller explanation). pinned
-	// progression itself stays a literal spelling for FinalAnnotatedSong,
+	// SongCoverageBeeswarm highlights corpus-wide by canonical name (see
+	// ProgressionGroupSection.svelte). pinned progression itself stays a
+	// literal spelling for FinalAnnotatedSong,
 	// which highlights this one song's own chord spans and needs the exact
 	// literal string that appears in its own annotations.
 	const pinnedProgressionName = $derived(
@@ -154,7 +152,7 @@
 					</div>
 					<CoreProgressionRow
 						{coreProgressions}
-						selectedSong={selectedSong ?? null}
+						selectedSongMatches={v2Result?.matches ?? null}
 						activeProgression={pinnedProgression}
 						progressionMatchCounts={allSongsCoverageResult?.progressionMatchCounts ??
 							null}

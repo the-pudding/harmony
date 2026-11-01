@@ -1,11 +1,8 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import type { ChordAnnotation } from "../progression-matching-logic/progressionMatchAnalysis.js";
-	import type { ChordHighlightPalette } from "./progressionColors.js";
-	import type { ParsedProgressionChord } from "../../../../chord-processing/types.js";
 	import { formatRomanTokenFromParsed } from "../../../../chord-processing/romanNumerals.js";
 	import { buildColoredHighlightSegments } from "../progression-matching-logic/progressionMatchAnalysis.js";
-	import { UNGROUPED_PROGRESSION_PALETTE } from "./progressionColors.js";
 
 	const DIMMED_HIGHLIGHT_OPACITY = 0.22;
 
@@ -19,21 +16,13 @@
 
 	type Props = {
 		song: GroupedSong;
-		parsedProgression?: ParsedProgressionChord[] | null;
-		highlightPalette?: ChordHighlightPalette;
-		isStrictSubset?: boolean;
-		matchRomanNumeralsExactly?: boolean;
-		annotations?: ChordAnnotation[];
+		annotations: ChordAnnotation[];
 		focusedProgression?: string | null;
 		compact?: boolean;
 	};
 
 	let {
 		song,
-		parsedProgression = null,
-		highlightPalette,
-		isStrictSubset = false,
-		matchRomanNumeralsExactly = false,
 		annotations,
 		focusedProgression = null,
 		compact = false
@@ -41,20 +30,6 @@
 
 	const SECTION_LABEL_CHORD_GAP_PX = 2;
 	const SECTION_LABEL_RIGHT_PADDING_PX = 6;
-
-	const effectiveAnnotations = $derived(
-		annotations ??
-			(parsedProgression
-				? [
-						{
-							parsedProgression,
-							palette: highlightPalette ?? UNGROUPED_PROGRESSION_PALETTE,
-							isStrictSubset,
-							matchRomanNumeralsExactly
-						}
-					]
-				: [])
-	);
 
 	// Per-section key labels only appear when the key actually varies across
 	// sections; uniform-key songs show it once in the metadata line instead.
@@ -86,7 +61,7 @@
 			{@const segments = buildColoredHighlightSegments(
 				section,
 				sectionIndex,
-				effectiveAnnotations
+				annotations
 			)}
 			{#if section.label || (showPerSectionKeys && section.keyLabel)}
 				<div class="section-label-cell">

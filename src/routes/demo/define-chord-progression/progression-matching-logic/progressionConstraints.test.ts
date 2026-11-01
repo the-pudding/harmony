@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
 	hasConsecutivelyRepeatedBlock,
-	isSelfRepeatingProgression,
 	MIN_PROGRESSION_LENGTH,
 	MAX_PROGRESSION_LENGTH
 } from "./progressionConstraints.js";
@@ -113,32 +112,3 @@ describe("hasConsecutivelyRepeatedBlock", () => {
 	});
 });
 
-describe("isSelfRepeatingProgression", () => {
-	it("rejects the the-weeknd pattern doubled", () => {
-		expect(isSelfRepeatingProgression("I-vi-iii-V-I-vi-iii-V")).toBe(true);
-	});
-
-	it("rejects the IV-V vamp repeated four times", () => {
-		expect(isSelfRepeatingProgression("IV-V-IV-V-IV-V-IV-V")).toBe(true);
-	});
-
-	it("allows the the-weeknd pattern un-doubled", () => {
-		expect(isSelfRepeatingProgression("I-vi-iii-V")).toBe(false);
-	});
-
-	it("allows the IV-V vamp (only a 2-chord repeat, below minimum)", () => {
-		expect(isSelfRepeatingProgression("IV-V-IV-V")).toBe(false);
-	});
-
-	it("allows the axis of awesome (I-V-vi-IV)", () => {
-		expect(isSelfRepeatingProgression("I-V-vi-IV")).toBe(false);
-	});
-
-	it("allows the doo wop progression (I-vi-IV-V)", () => {
-		expect(isSelfRepeatingProgression("I-vi-IV-V")).toBe(false);
-	});
-
-	it("allows the pachelbel canon (long but non-repeating internally)", () => {
-		expect(isSelfRepeatingProgression("I-V-vi-iii-IV-I-IV-V")).toBe(false);
-	});
-});

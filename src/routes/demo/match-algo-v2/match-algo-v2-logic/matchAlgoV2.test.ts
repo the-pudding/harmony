@@ -398,7 +398,6 @@ const stayWithMeCore: CoreProgression = {
 	name: STAY_WITH_ME_NAME,
 	chordProgression: "i-VI-III",
 	scale: "minor",
-	matchRomanNumeralsExactly: true,
 	description: ""
 };
 
@@ -408,8 +407,8 @@ const vivaSong = groupSongs(
 	) as Parameters<typeof groupSongs>[0]
 )[0];
 
-describe("v2 relative vs exact roman matching", () => {
-	it("matches IV-V-I-vi in major as a relative of VI-VII-III-i in minor", () => {
+describe("v2 exact roman matching", () => {
+	it("does not match IV-V-I-vi in major against VI-VII-III-i in minor", () => {
 		const vi = chord(8, "major");
 		const vii = chord(10, "maj7");
 		const iii = chord(3, "major");
@@ -425,11 +424,10 @@ describe("v2 relative vs exact roman matching", () => {
 		const viva = result.matches.find(
 			(match) => match.name === VIVA_LA_VIDA_NAME
 		);
-		expect(viva?.isCoreProgression).toBe(true);
-		expect(viva?.matchRomanNumeralsExactly).toBe(false);
+		expect(viva).toBeUndefined();
 	});
 
-	it("does not treat vi-IV-I in major as stay with me when exact roman matching is required", () => {
+	it("does not treat vi-IV-I in major as stay with me", () => {
 		const section = makeSection(
 			[A_min, F, C, A_min, F, C],
 			["vi", "IV", "I", "vi", "IV", "I"]
@@ -440,7 +438,7 @@ describe("v2 relative vs exact roman matching", () => {
 		).toBe(false);
 	});
 
-	it("does treat i-VI-III in minor as stay with me when exact roman matching is required", () => {
+	it("does treat i-VI-III in minor as stay with me", () => {
 		const i = chord(0, "minor");
 		const VI = chord(8, "major");
 		const III = chord(3, "major");
@@ -455,20 +453,18 @@ describe("v2 relative vs exact roman matching", () => {
 		expect(
 			result.matches.some(
 				(match) =>
-					match.name === STAY_WITH_ME_NAME &&
-					match.isCoreProgression &&
-					match.matchRomanNumeralsExactly === true
+					match.name === STAY_WITH_ME_NAME && match.isCoreProgression
 			)
 		).toBe(true);
 	});
 
-	it("labels Coldplay Viva La Vida as the viva la vida core", () => {
+	it("does not label Coldplay Viva La Vida, stored in minor as VI-VII-III-i, as the major viva la vida core", () => {
 		const result = matchSongV2(vivaSong, coreProgressions);
 		expect(
 			result.matches.some(
 				(match) => match.name === VIVA_LA_VIDA_NAME && match.isCoreProgression
 			)
-		).toBe(true);
+		).toBe(false);
 	});
 });
 
@@ -480,7 +476,6 @@ const iViVampCore: CoreProgression = {
 	name: I_VI_VAMP_NAME,
 	chordProgression: "i-VI-i-VI",
 	scale: "minor",
-	matchRomanNumeralsExactly: true,
 	description: ""
 };
 

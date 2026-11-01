@@ -183,6 +183,12 @@ const templateDeltas = (templates: MatchingTemplate[]): number[] =>
 			)
 		);
 
+export const templateShapeKey = (templates: MatchingTemplate[]): string =>
+	JSON.stringify({
+		suffixes: templates.map(({ chord }) => chord.suffix),
+		deltas: templateDeltas(templates)
+	});
+
 const matchesLiberalTemplate = (
 	sectionChord: ParsedProgressionChord,
 	template: ParsedProgressionChord
