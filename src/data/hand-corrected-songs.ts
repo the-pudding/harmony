@@ -25,6 +25,20 @@ export type HandCorrectedSong = {
 const repeatNTimes = (chordArray: string[], nTimes: number): string[] =>
 	Array.from({ length: nTimes }, () => chordArray).flat();
 
+const vivaLaVidaSection = (
+	name: string,
+	romanTokens: string[]
+): CorrectedSongSection => ({ name, key: "Ab", scale: "major", romanTokens });
+
+const VIVA_LA_VIDA_DADD11 = "Vsus4";
+
+const vivaLaVidaLoop = (nTimes: number): string[] =>
+	repeatNTimes(["IV", VIVA_LA_VIDA_DADD11, "I", "vi"], nTimes);
+
+const vivaLaVidaTurnaround = ["IV", VIVA_LA_VIDA_DADD11, "iii", "vi"];
+
+const vivaLaVidaChorus = [...vivaLaVidaLoop(3), ...vivaLaVidaTurnaround];
+
 export const handCorrectedSongs: HandCorrectedSong[] = [
 	{
 		id: "desiigner__panda",
@@ -622,6 +636,31 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 		keyAdjustment: {
 			chordsRelativeToKey: "G",
 			transposeToKey: "Ab"
+		}
+	},
+	{
+		id: "coldplay__viva-la-vida",
+		technicalNotes:
+			"HT stores this in F minor as VI-VII-III-i. Chords from UG (written in G major, Dadd11 → Vsus4, the closest supported voicing) transposed to the recorded key of Ab major.",
+		correctedSongContents: {
+			sections: [
+				vivaLaVidaSection("Intro", vivaLaVidaLoop(2)),
+				vivaLaVidaSection("Verse 1", vivaLaVidaLoop(2)),
+				vivaLaVidaSection("Interlude 1", vivaLaVidaLoop(2)),
+				vivaLaVidaSection("Verse 2", vivaLaVidaLoop(4)),
+				vivaLaVidaSection("Chorus 1", vivaLaVidaChorus),
+				vivaLaVidaSection("Interlude 2", vivaLaVidaLoop(2)),
+				vivaLaVidaSection("Verse 3", vivaLaVidaLoop(4)),
+				vivaLaVidaSection("Chorus 2", vivaLaVidaChorus),
+				vivaLaVidaSection("Interlude 3", [
+					...repeatNTimes(["IV", "vi"], 3),
+					VIVA_LA_VIDA_DADD11,
+					VIVA_LA_VIDA_DADD11,
+					...vivaLaVidaLoop(2)
+				]),
+				vivaLaVidaSection("Chorus 3", vivaLaVidaChorus),
+				vivaLaVidaSection("Outro", repeatNTimes(vivaLaVidaTurnaround, 2))
+			]
 		}
 	}
 ];

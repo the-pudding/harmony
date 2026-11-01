@@ -64,6 +64,11 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "johnny-bristol__hang-on-in-there-baby",
 		chordProgressionIssues:
 			"Say it's in D major, but looks like it's actually shifted, treating the I as the V."
+	},
+	{
+		id: "george-michael__i-want-your-sex-from-beverly-hills-cop-ii",
+		chordProgressionIssues:
+			"Song says its in F major, but is really in Bb mixolydian. Further, the chords are just one giant section labeled 'a few tips' lol"
 	}
 ];
 
