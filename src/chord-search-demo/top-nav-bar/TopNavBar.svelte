@@ -60,6 +60,12 @@
 				>core progressions</a
 			>
 			<a
+				href="/demo/matching-changes"
+				class="page-link"
+				class:active={page.url.pathname === "/demo/matching-changes"}
+				>matching changes</a
+			>
+			<a
 				href="/demo/harmony-map"
 				class="page-link"
 				class:active={page.url.pathname === "/demo/harmony-map"}>harmony map</a
