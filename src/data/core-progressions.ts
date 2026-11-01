@@ -1,6 +1,5 @@
 import type { ScaleName } from "../chord-processing/scales.js";
 
-
 export type ProgressionGroup = {
 	name: string;
 	description: string;
@@ -515,6 +514,7 @@ const jazzyProgressions: ProgressionGroup = {
 				"I-VI-II-V"
 			],
 			scale: "major",
+			matchRomanNumeralsExactly: false,
 			description: ""
 		},
 		{
@@ -532,7 +532,12 @@ export type CoreProgression = {
 	scale: ScaleName;
 	description: string;
 	technicalNotes?: string;
+	matchRomanNumeralsExactly?: boolean;
 };
+
+export const matchesRomanNumeralsExactly = (
+	progression: Pick<CoreProgression, "matchRomanNumeralsExactly">
+): boolean => progression.matchRomanNumeralsExactly ?? true;
 
 export const allProgressionGroups: ProgressionGroup[] = [
 	happyMajoryProgressions,
@@ -556,7 +561,8 @@ export const UNGROUPED_PROGRESSION_GROUP_LABEL = "no core match";
 export const progressionGroupColorByName = new Map(
 	allProgressionGroups.map((group) => [
 		group.name,
-		CORE_PROGRESSION_GROUP_COLORS[group.name] ?? UNGROUPED_PROGRESSION_GROUP_COLOR
+		CORE_PROGRESSION_GROUP_COLORS[group.name] ??
+			UNGROUPED_PROGRESSION_GROUP_COLOR
 	])
 );
 

@@ -79,6 +79,17 @@ describe("exact roman numeral matching in matchSongV2", () => {
 		expect(matchedCoreNames(minorSection, cores)).toEqual([MINOR_DESCENT_NAME]);
 	});
 
+	it("matches relative spellings when a core opts out of exact roman numerals", () => {
+		const section = makeSection(repeated(["vi", "V", "IV", "I"]));
+		const relativeMinorDescentCore = {
+			...minorDescentCore,
+			matchRomanNumeralsExactly: false
+		};
+		expect(matchedCoreNames(section, [relativeMinorDescentCore])).toEqual([
+			MINOR_DESCENT_NAME
+		]);
+	});
+
 	it("matches the same tonic-relative chords spelled in a different scale", () => {
 		const section = makeSection(repeated(["i", "bVII", "bVI", "bIII"]));
 		expect(matchedCoreNames(section, [minorDescentCore])).toEqual([

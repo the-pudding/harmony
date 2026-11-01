@@ -1,4 +1,7 @@
-import type { CoreProgression } from "$data/core-progressions.js";
+import {
+	matchesRomanNumeralsExactly,
+	type CoreProgression
+} from "$data/core-progressions.js";
 import { chordProgressionVariants } from "$data/core-progressions.util.js";
 import type { SongSection } from "../../../../data/songBrowser.js";
 import type { ScaleName } from "../../../../chord-processing/scales.js";
@@ -66,9 +69,15 @@ export const progressionMatchListKey = (
 	match: Pick<ProgressionWithMatchStats, "chordProgression" | "scale">
 ): string => scopedToScale(match.chordProgression, match.scale);
 
+export const coreTonicOffset = (
+	progression: CoreProgression,
+	parsed: ParsedProgressionChord[]
+): number | null =>
+	matchesRomanNumeralsExactly(progression) ? parsed[0].rootPitchClass : null;
+
 export type CoreLookupEntry = {
 	name: string;
-	firstChordRootPitchClass: number;
+	expectedTonicOffset: number | null;
 	parsed: ParsedProgressionChord[];
 };
 
@@ -86,7 +95,7 @@ export const buildCoreLookupEntries = (
 				return [
 					{
 						name: progression.name,
-						firstChordRootPitchClass: parsed[0].rootPitchClass,
+						expectedTonicOffset: coreTonicOffset(progression, parsed),
 						parsed
 					}
 				];
@@ -111,11 +120,7 @@ export const lookupCoreEntry = (
 	const eligible = entries.filter(
 		(entry) =>
 			unitMatchesCore(unit, entry.parsed) &&
-			matchStartsOnExpectedTonic(
-				section,
-				startIndex,
-				entry.firstChordRootPitchClass
-			)
+			matchStartsOnExpectedTonic(section, startIndex, entry.expectedTonicOffset)
 	);
 	return eligible[eligible.length - 1];
 };

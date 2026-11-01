@@ -5,6 +5,7 @@ import { hasConsecutivelyRepeatedBlock } from "../../define-chord-progression/pr
 import { chordProgressionVariants } from "$data/core-progressions.util.js";
 import { romanTokensToParsedProgression } from "../../../../chord-processing/romanNumerals.js";
 import {
+	coreTonicOffset,
 	lookupCoreEntry,
 	matchSectionProgressionExactly,
 	tonicOffsetAt,
@@ -33,7 +34,12 @@ export const countContiguousRepeats = (
 	unitTonicOffset: number | null
 ): { repeatCount: number; coveredLength: number } => {
 	const sorted = [
-		...matchSectionProgressionExactly(section, unit, unitTonicOffset, startIndex)
+		...matchSectionProgressionExactly(
+			section,
+			unit,
+			unitTonicOffset,
+			startIndex
+		)
 	].sort((a, b) => a.start - b.start);
 	let repeatCount = 0;
 	let pos = startIndex;
@@ -146,7 +152,7 @@ const generateSelfRepeatingCoreCandidates = (
 			const parsedCore = romanTokensToParsedProgression(tokens, core.scale);
 			if (!parsedCore) continue;
 
-			const unitTonicOffset = parsedCore[0].rootPitchClass;
+			const unitTonicOffset = coreTonicOffset(core, parsedCore);
 			const { repeatCount, coveredLength } = countContiguousRepeats(
 				section,
 				startIndex,
