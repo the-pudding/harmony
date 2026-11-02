@@ -73,7 +73,12 @@ export const problematicSongs: ProblematicSong[] = [
 	{
 		id: "billie-eilish__lunch",
 		chordProgressionIssues:
-			"The progression is written as i-iv vamping, but it actually seems to be iv-v vamping in the song, so the chords are written wrong."
+			"The progression is written as i-iv vamping, but it actually seems to be iv-i vamping (in that order), so the chords are written wrong."
+	},
+	{
+		id: "jagged-edge__where-the-party-at",
+		chordProgressionIssues:
+			"Chords area way off. This song seems to have a sort of Flamenco vibe to it, with verses flirting a sort of C-C#-Eb, and choruses doing more like a G-Ab-Bb thing."
 	}
 ];
 
@@ -139,6 +144,11 @@ export const trickySongsToMatchCorrectly: TrickySongToMatchCorrectly[] = [
 		id: "cher__believe",
 		chordMatchingChallenges:
 			"Overall great matches. Just in verse we match 2 3-chord core progressions (mostly correct), but the second one matches I-iii-IV and just leaves out the final V. I guess this it a 3-chord core progression being preferred over a 4-chord non-core? Is this the right tradeoff?"
+	},
+	{
+		id: "drake__in-my-feelings",
+		chordMatchingChallenges:
+			"Song is hand-input as repeating IV-iii-IV-iii, but the current algo awkwardly matches it as 2 three-chord patterns: IV-iii-IV and iii-IV-iii. Meanwhile leaving 2 chords unmatched :shrug:"
 	}
 ];
 
