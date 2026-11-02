@@ -3,7 +3,10 @@
 	"version": "6.23.0",
 	"scripts": {
 		"gdoc": "node tasks/fetch-google.js",
-		"songs": "vite-node tasks/build-songs.js && npm run hexmap && npm run charts",
+		"songs": "vite-node tasks/build-songs.cli.js && npm run hexmap && npm run charts",
+		"keys:flag": "vite-node tasks/key-review/flag-keys.ts",
+		"keys:apply": "vite-node tasks/key-review/apply-key-decisions.ts",
+		"keys:report": "vite-node tasks/key-review/key-review-report.ts",
 		"hexmap": "vite-node tasks/build-hexmap.ts",
 		"charts": "vite-node tasks/build-charts.ts",
 		"style": "node tasks/style-dictionary.js",

@@ -630,15 +630,6 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 		}
 	},
 	{
-		id: "connie-francis__many-tears-ago",
-		technicalNotes:
-			"UG chords are letter-correct for G major, but key detection labeled them as D major. Actual recording is Ab major (up a half step from the written G shapes).",
-		keyAdjustment: {
-			chordsRelativeToKey: "G",
-			transposeToKey: "Ab"
-		}
-	},
-	{
 		id: "coldplay__viva-la-vida",
 		technicalNotes:
 			"HT stores this in F minor as VI-VII-III-i. Chords from UG (written in G major, Dadd11 → V) transposed to the recorded key of Ab major.",

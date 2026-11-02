@@ -3,13 +3,20 @@ import path from "path";
 import { csvParse } from "d3";
 import { SCALE_INTERVALS } from "../src/chord-processing/scale-intervals.js";
 import { parseRomanToken } from "../src/chord-processing/romanNumerals.js";
+import {
+	logKeyReviewSummary,
+	runKeyReview
+} from "./key-review/keyReviewBuildStep.js";
 
 const HARMONY_ROOT = process.cwd();
 const DATA_ROOT = path.join(HARMONY_ROOT, "../harmony-data");
 const OUTPUT_PATH = path.join(HARMONY_ROOT, "static/data/songs.json");
 const TRACKER_PATH = path.join(DATA_ROOT, "data/tracker.csv");
 const BILLBOARD_PATH = path.join(DATA_ROOT, "data/hot100-clean.csv");
-const SLUG_YEAR_ALIASES_PATH = path.join(DATA_ROOT, "data/slug-year-aliases.csv");
+const SLUG_YEAR_ALIASES_PATH = path.join(
+	DATA_ROOT,
+	"data/slug-year-aliases.csv"
+);
 const BILLBOARD_TOP_RANK = 100;
 const MISSING_POPULARITY_SCORE = 0;
 const SONG_SOURCE_DIRS = [{ dirPath: path.join(DATA_ROOT, "songs/corrected") }];
@@ -716,6 +723,7 @@ const buildSongs = (sourceDirs, trackerIndex, billboardIndex) => {
 	};
 
 	const seenSongKeys = new Set();
+	const metaBySongKey = new Map();
 
 	const songs = sourceDirs.flatMap(({ dirPath }) =>
 		readSongFiles(dirPath).flatMap((filePath) => {
@@ -731,6 +739,10 @@ const buildSongs = (sourceDirs, trackerIndex, billboardIndex) => {
 			}
 			seenSongKeys.add(lookupKey);
 			seenSongKeys.add(contentKey);
+			metaBySongKey.set(contentKey, {
+				capo: songData.capo ?? 0,
+				url: songData.url ?? ""
+			});
 
 			const trackerEntry =
 				trackerIndex.get(fileSlug) ?? trackerIndex.get(contentKey);
@@ -765,7 +777,7 @@ const buildSongs = (sourceDirs, trackerIndex, billboardIndex) => {
 
 	songs.sort(compareSongsByPopularity);
 
-	return { songs, stats };
+	return { songs, stats, metaBySongKey };
 };
 
 const listArtistSlugs = () => {
@@ -904,22 +916,36 @@ const logSummary = (stats) => {
 	}
 };
 
-const main = () => {
+const assertDataRootExists = () => {
 	if (!fs.existsSync(DATA_ROOT)) {
 		throw new Error(`harmony-data not found at ${DATA_ROOT}`);
 	}
+};
 
+const buildMainDataset = () => {
+	assertDataRootExists();
 	const trackerIndex = loadTrackerIndex();
 	const billboardIndex = loadBillboardIndex(trackerIndex);
-
-	const { songs, stats } = buildSongs(
-		SONG_SOURCE_DIRS,
+	return {
 		trackerIndex,
-		billboardIndex
-	);
+		billboardIndex,
+		...buildSongs(SONG_SOURCE_DIRS, trackerIndex, billboardIndex)
+	};
+};
+
+const main = () => {
+	const {
+		trackerIndex,
+		billboardIndex,
+		songs: rawSongs,
+		stats,
+		metaBySongKey
+	} = buildMainDataset();
+	const keyReview = runKeyReview(rawSongs, metaBySongKey);
 	ensureOutputDir();
-	fs.writeFileSync(OUTPUT_PATH, JSON.stringify(songs));
+	fs.writeFileSync(OUTPUT_PATH, JSON.stringify(keyReview.songs));
 	logSummary(stats);
+	logKeyReviewSummary(keyReview);
 	console.log(`Output: ${OUTPUT_PATH}`);
 
 	buildAndWriteArtistDatasets(trackerIndex, billboardIndex);
@@ -934,11 +960,9 @@ const main = () => {
 	console.log(`Output: ${POPULAR_UG_OUTPUT_PATH}`);
 };
 
-if (!process.env.VITEST) {
-	main();
-}
-
 export {
+	buildMainDataset,
+	main,
 	chordToProgressionInput,
 	chordsToRomanTokens,
 	degreeQualityToRoman,

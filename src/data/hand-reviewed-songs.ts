@@ -69,6 +69,11 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "george-michael__i-want-your-sex-from-beverly-hills-cop-ii",
 		chordProgressionIssues:
 			"Song says its in F major, but is really in Bb mixolydian. Further, the chords are just one giant section labeled 'a few tips' lol"
+	},
+	{
+		id: "billie-eilish__lunch",
+		chordProgressionIssues:
+			"The progression is written as i-iv vamping, but it actually seems to be iv-v vamping in the song, so the chords are written wrong."
 	}
 ];
 
