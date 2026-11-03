@@ -11,7 +11,17 @@ import {
 	type AssessedSong,
 	type SongSourceMeta
 } from "./keyReviewPipeline.js";
-import { KEY_REVIEW_LEDGER_PATH } from "./keyReviewPaths.js";
+import {
+	KEY_REVIEW_LEDGER_PATH,
+	SECTION_LEDGER_PATH
+} from "./keyReviewPaths.js";
+import {
+	isSectionRowFresh,
+	readSectionLedger,
+	sectionLedgerRowChangesSong,
+	type SectionLedger
+} from "./sectionLedger.js";
+import { rekeySectionTo } from "./rekeySong.js";
 import type { Tonality, TonalityModel } from "./tonalityModel.js";
 
 const MAX_LOGGED_FLAGGED_SONGS = 50;
@@ -20,6 +30,7 @@ const MARGIN_DECIMALS = 2;
 export type KeyReviewResult = {
 	songs: SongInput[];
 	ledger: Ledger;
+	sectionLedger: SectionLedger;
 	snapshots: Map<string, SongKeySnapshot>;
 	model: TonalityModel;
 	pending: AssessedSong[];
@@ -28,13 +39,30 @@ export type KeyReviewResult = {
 export const formatTonality = ({ tonicPc, scale }: Tonality): string =>
 	`${NOTE_NAMES[tonicPc]} ${scale}`;
 
+export const applySectionKeyLedger = (
+	songs: SongInput[],
+	sectionLedger: SectionLedger
+): SongInput[] =>
+	songs.map((section) => {
+		const row = sectionLedger.get(section.id);
+		if (
+			!row ||
+			!isSectionRowFresh(row, section) ||
+			!sectionLedgerRowChangesSong(row)
+		)
+			return section;
+		return rekeySectionTo(section, row.key, row.scale, row.transpose);
+	});
+
 export const runKeyReview = (
 	rawSongs: SongInput[],
 	metaBySongKey: Map<string, SongSourceMeta>,
-	ledger: Ledger = readLedger(KEY_REVIEW_LEDGER_PATH)
+	ledger: Ledger = readLedger(KEY_REVIEW_LEDGER_PATH),
+	sectionLedger: SectionLedger = readSectionLedger(SECTION_LEDGER_PATH)
 ): KeyReviewResult => {
 	const snapshots = buildSongSnapshots(rawSongs, metaBySongKey);
-	const songs = applyKeyReviewLedger(rawSongs, snapshots, ledger);
+	const songLevelCorrected = applyKeyReviewLedger(rawSongs, snapshots, ledger);
+	const songs = applySectionKeyLedger(songLevelCorrected, sectionLedger);
 	const model = trainModelFromCorpus(songs, snapshots, ledger);
 	const pending = assessSongs(
 		rawSongs,
@@ -43,7 +71,7 @@ export const runKeyReview = (
 		model,
 		isUnreviewedOrStale
 	);
-	return { songs, ledger, snapshots, model, pending };
+	return { songs, ledger, sectionLedger, snapshots, model, pending };
 };
 
 const formatFlaggedSong = ({ snapshot, status, assessment }: AssessedSong) => {

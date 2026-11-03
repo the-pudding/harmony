@@ -65,6 +65,62 @@ const relabelRomanTokens = (
 	);
 };
 
+/**
+ * Rekey an individual section to a specific key/scale, respelling its roman
+ * tokens under the new tonal centre. Used for section-level ledger overrides.
+ *
+ * `transpose` is the chromatic shift (semitones) applied to the progression
+ * pitches. For relative/mode changes transpose is 0; for pitch-shifted
+ * modulations it is non-zero.
+ */
+export const rekeySectionTo = (
+	section: SongInput,
+	newKey: string,
+	newScale: string,
+	transpose: number
+): SongInput => {
+	if (
+		transpose === 0 &&
+		section.key !== undefined &&
+		toPitchClass(section.key) === toPitchClass(newKey) &&
+		section.scale === newScale
+	)
+		return section;
+
+	const progression = section.progression.map((chord) =>
+		transposeChord(chord, transpose)
+	);
+
+	const tokens = section.romanTokens ?? [];
+	const hasMatchingTokens = tokens.length === section.progression.length;
+
+	const newTonicPc = toPitchClass(newKey);
+	const oldTonicPc = toPitchClass(section.key ?? newKey);
+	const tonicShift = newTonicPc - oldTonicPc - transpose;
+
+	const romanTokens = hasMatchingTokens
+		? tokens.map((token, index) =>
+				respellRomanToken(token, {
+					rootIntervalFromNewTonic:
+						toPitchClass(section.progression[index].noteName) +
+						transpose -
+						newTonicPc,
+					fromScale: section.scale ?? newScale,
+					toScale: newScale,
+					tonicShift
+				})
+			)
+		: tokens;
+
+	return {
+		...section,
+		progression,
+		romanTokens,
+		key: canonicalNoteName(newKey),
+		scale: newScale
+	};
+};
+
 export const rekeySection = (
 	section: SongInput,
 	row: LedgerRow,

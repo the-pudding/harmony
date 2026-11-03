@@ -103,27 +103,17 @@ export const keyTonalityIssues: KeyTonalityIssue[] = [
 	{
 		id: "el-debarge__who-s-johnny-short-circuit-theme",
 		keyTonalityIssues:
-			"Most sections are Eb major I–IV–ii–V; the chorus sits in G major (VII as color). One song-level key is wrong — needs per-section keys."
-	},
-	{
-		id: "jan-dean__ride-the-wild-surf",
-		keyTonalityIssues:
-			"Modulates: long A major verse, Bb and Eb sections elsewhere. No single song key fits; section-level labeling required."
+			"Most sections are Eb major I–IV–ii–V; the chorus modulates to G major. Auto-review missed it (labeled ook=0.48, just below threshold). Needs manual section-level correction."
 	},
 	{
 		id: "sergio-mendes-brasil-66__the-look-of-love",
 		keyTonalityIssues:
-			"Scrape mixes centers (Dm, Cm, others). Clearest cadences on Dm; several sections want their own tonic."
-	},
-	{
-		id: "the-diamonds__she-say-oom-dooby-doom",
-		keyTonalityIssues:
-			"Tab stitches sections in different keys (main chorus loop C# major I–vi–IV–V). Song-level C# misses earlier/later sections."
+			"Scrape mixes tonal centers (Dm, Cm, others). Clearest cadences on Dm; mode-shift sections confirmed ambiguous."
 	},
 	{
 		id: "the-honeydrippers__sea-of-love",
 		keyTonalityIssues:
-			"G major with passing B in the first half; modulates toward Ab major later. Review chose F# mixolydian from garbled Romans — wrong."
+			"Song-level review wrongly chose F# mixolydian. Break-4 and chorus-5 corrected to G major via section ledger. Intro/verse sections still carry the wrong song-level label."
 	}
 ];
 
