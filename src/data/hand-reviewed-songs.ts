@@ -79,6 +79,16 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "jagged-edge__where-the-party-at",
 		chordProgressionIssues:
 			"Chords area way off. This song seems to have a sort of Flamenco vibe to it, with verses flirting a sort of C-C#-Eb, and choruses doing more like a G-Ab-Bb thing."
+	},
+	{
+		id: "the-blackbyrds__walking-in-rhythm",
+		chordProgressionIssues:
+			"Song is very obviously in Bb with a simple I-ii vamp, then a vi-V-IV section. UG link looks fine. Seems like this something went wrong with the scrape, cuz what we scarped doesn't match the website."
+	},
+	{
+		id: "we-five__you-were-on-my-mind",
+		chordProgressionIssues:
+			"Chords are correct for the part in the key of E major, but then it modulates to F major when in the song it's actually F# major (so chords are wrong starting about halfway through the song)."
 	}
 ];
 
