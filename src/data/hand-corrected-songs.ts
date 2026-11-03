@@ -558,6 +558,25 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 		}
 	},
 	{
+		id: "the-blackbyrds__walking-in-rhythm",
+		correctedSongContents: {
+			sections: [
+				{
+					name: "Verse",
+					key: "Bb",
+					scale: "major",
+					romanTokens: repeatNTimes(["I", "ii"], 8)
+				},
+				{
+					name: "Bridge",
+					key: "Bb",
+					scale: "major",
+					romanTokens: repeatNTimes(["vi", "V", "IV", "V"], 4)
+				}
+			]
+		}
+	},
+	{
 		id: "dee-dee-sharp__mashed-potato-time",
 		technicalNotes:
 			"Chords were correct from UG (song is literally one progression repeating), but there were two snags: 1. it was all one section (so the two intro chords threw our algo off), and 2. the UG added an alternate key at the end to play without capo, which got picked up as if it were part of the song (sloppy/odd formatting)",

@@ -1,4 +1,5 @@
 export const CHORD_PROGRESSION_ISSUES_LABEL = "chordProgressionIssues:";
+export const KEY_TONALITY_ISSUES_LABEL = "keyTonalityIssues:";
 
 export type ProblematicSong = {
 	id: string;
@@ -92,6 +93,40 @@ export const problematicSongs: ProblematicSong[] = [
 	}
 ];
 
+export type KeyTonalityIssue = {
+	id: string;
+	keyTonalityIssues: string;
+};
+
+/** Per-section / modulation cases called out after song-level key review (not all low-confidence rows). */
+export const keyTonalityIssues: KeyTonalityIssue[] = [
+	{
+		id: "el-debarge__who-s-johnny-short-circuit-theme",
+		keyTonalityIssues:
+			"Most sections are Eb major I–IV–ii–V; the chorus sits in G major (VII as color). One song-level key is wrong — needs per-section keys."
+	},
+	{
+		id: "jan-dean__ride-the-wild-surf",
+		keyTonalityIssues:
+			"Modulates: long A major verse, Bb and Eb sections elsewhere. No single song key fits; section-level labeling required."
+	},
+	{
+		id: "sergio-mendes-brasil-66__the-look-of-love",
+		keyTonalityIssues:
+			"Scrape mixes centers (Dm, Cm, others). Clearest cadences on Dm; several sections want their own tonic."
+	},
+	{
+		id: "the-diamonds__she-say-oom-dooby-doom",
+		keyTonalityIssues:
+			"Tab stitches sections in different keys (main chorus loop C# major I–vi–IV–V). Song-level C# misses earlier/later sections."
+	},
+	{
+		id: "the-honeydrippers__sea-of-love",
+		keyTonalityIssues:
+			"G major with passing B in the first half; modulates toward Ab major later. Review chose F# mixolydian from garbled Romans — wrong."
+	}
+];
+
 export type TrickySongToMatchCorrectly = {
 	id: string;
 	chordMatchingChallenges: string;
@@ -172,6 +207,13 @@ const chordProgressionIssuesBySongId = new Map(
 export const getChordProgressionIssues = (
 	songKey: string
 ): string | undefined => chordProgressionIssuesBySongId.get(songKey);
+
+const keyTonalityIssuesBySongId = new Map(
+	keyTonalityIssues.map((song) => [song.id, song.keyTonalityIssues])
+);
+
+export const getKeyTonalityIssues = (songKey: string): string | undefined =>
+	keyTonalityIssuesBySongId.get(songKey);
 
 const chordMatchingChallengesBySongId = new Map(
 	trickySongsToMatchCorrectly.map((song) => [

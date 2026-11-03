@@ -3,6 +3,7 @@
 	import {
 		getChordProgressionIssues,
 		getChordMatchingChallenges,
+		getKeyTonalityIssues,
 		TRICKY_TO_MATCH_EMOJI
 	} from "$data/hand-reviewed-songs.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
@@ -11,6 +12,7 @@
 	const HAND_CORRECTED_TITLE = "hand corrected";
 	const HAND_CORRECTED_EMOJI = "✏️";
 	const PROBLEMATIC_EMOJI = "🔴";
+	const KEY_TONALITY_EMOJI = "🎹";
 	const HAND_CORRECTED_SONG_IDS = new Set(
 		handCorrectedSongs.map((song) => song.id)
 	);
@@ -29,6 +31,7 @@
 	);
 	const isProblematic = $derived(chordProgressionIssues !== undefined);
 	const chordMatchingChallenges = $derived(getChordMatchingChallenges(song.songKey));
+	const keyTonalityIssues = $derived(getKeyTonalityIssues(song.songKey));
 </script>
 
 <div class="song-title-row">
@@ -63,6 +66,13 @@
 					aria-label={chordMatchingChallenges}>{TRICKY_TO_MATCH_EMOJI}</span
 				>
 			{/if}
+			{#if keyTonalityIssues}
+				<span
+					class="status-icon status-icon-key"
+					title={keyTonalityIssues}
+					aria-label={keyTonalityIssues}>{KEY_TONALITY_EMOJI}</span
+				>
+			{/if}
 		{/snippet}
 		{#snippet trailing()}
 			<span class="artist">— {song.artists.join(", ")}</span>
@@ -95,6 +105,10 @@
 
 	.status-icon-tricky {
 		opacity: 0.8;
+	}
+
+	.status-icon-key {
+		opacity: 0.85;
 	}
 
 	.artist,

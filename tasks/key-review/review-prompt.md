@@ -32,6 +32,8 @@ Write `harmony-data/data/key-review-decisions/<same file name as your queue batc
 ]
 ```
 
+- One **ledger row per song** (`data/key-review.csv`). Reviewers pick a single home key (and optional `recordedKey` transposition). `rekeySong.ts` respells Roman numerals only on sections whose key/scale matched the song’s **primary labeled** tonality (the mode that covers the most chords across sections); other sections keep their own key labels and only move with transpose.
+- **Section-level keys in the scrape:** both UG and HookTheory JSON use per-section `key` and `scale` (see `harmony-data/README.md`). UG also sets top-level `detectedKey`. Modulations and wrong section labels are not fully modeled by the automated review — use `keyTonalityIssues` / hand corrections.
 - `labeled`: copy it verbatim from the queue entry.
 - `verdict`: `confirmed` if the labeled key is right, otherwise `corrected`. A confirmed decision keeps the labeled key and scale and has no `recordedKey`.
 - `key`: the tonic note name (`C`, `C#`, `D`, `Eb`, `E`, `F`, `F#`, `G`, `Ab`, `A`, `Bb`, `B`) of the chords **exactly as listed**. It must be the home chord you see in the `chords` strings.

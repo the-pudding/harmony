@@ -1,4 +1,5 @@
 import { pitchClass } from "../../src/chord-processing/chord-classifier/notes.js";
+import { keyTonalityIssues } from "../../src/data/hand-reviewed-songs.js";
 import type { SongCoverageEntry } from "../../src/routes/demo/define-chord-progression/compute-coverage-of-all-songs/computeSongCoverage.js";
 import {
 	REVIEW_METHODS,
@@ -318,6 +319,23 @@ const impactSection = (input: ReportInput): string => {
 	].join("\n");
 };
 
+const humanReviewSection = (): string => {
+	const tonalityRows = keyTonalityIssues.map(
+		({ id, keyTonalityIssues: note }) => [`\`${id}\``, note.replace(/\|/g, "/")]
+	);
+	return [
+		"## Human review (David)",
+		"",
+		"**David** reviewed every song that the detector flagged for key review (agent-assisted queue batches, human sign-off on decisions merged into `data/key-review.csv`). Auto-confirmed songs were accepted without a separate pass. The ledger now covers the full main dataset (7,260 songs); nothing remains in the review queue.",
+		"",
+		"Remaining **key / scrape / matching** concerns are recorded in `harmony/src/data/hand-reviewed-songs.ts` (`problematicSongs`, `trickySongsToMatchCorrectly`, and `keyTonalityIssues`). **All other songs — including every hand-reviewed key verdict not listed there — were deemed fine** for build output (`songs.json`) and the app.",
+		"",
+		"### `keyTonalityIssues` (modulation / multi-center — not fixable with one song-level key)",
+		"",
+		table(["Song", "Note"], tonalityRows)
+	].join("\n");
+};
+
 const openItemsSection = (
 	input: ReportInput,
 	songs: ReviewedSong[]
@@ -341,9 +359,43 @@ const openItemsSection = (
 					: `${tonalityLabel(song.row.key, song.row.scale)}${song.row.transpose ? ` (transpose ${signed(song.row.transpose)})` : ""}`,
 				song.row.note.replace(/\|/g, "/")
 			])
-		)
+		),
+		"",
+		"These rows kept `confidence: low` as a ledger reminder; they were still accepted unless listed in `hand-reviewed-songs.ts` above. Runtime chord fixes also live in `hand-corrected-songs.ts` where noted in the follow-up section."
 	].join("\n");
 };
+
+const handFollowUpSection = (): string =>
+	[
+		"## Hand follow-up (after automated review)",
+		"",
+		"Automated review writes **one ledger row per song**. Both UG and HookTheory JSON already carry **per-section** `key` and `scale`; the pipeline labels each song from whichever section tonality covers the most chords, then applies a single rekey. Sections that already had a different key keep that label and only follow transpose — modulations are not fully modeled.",
+		"",
+		"The Harmony app loads `songs.json` and then applies **`hand-corrected-songs.ts`** (per-section keys and Romans) and documents scrape/key limits in **`harmony/src/data/hand-reviewed-songs.ts`** (`keyTonalityIssues`, 🎹 in the song browser). Those runtime layers supersede the ledger where both exist.",
+		"",
+		table(
+			["Song", "Ledger / build", "Runtime override or note"],
+			[
+				[
+					"`drake__in-my-feelings`",
+					"C# minor (low confidence)",
+					"Hand-corrected: **Ab major**, IV–iii (`hand-corrected-songs.ts`)"
+				],
+				[
+					"`the-blackbyrds__walking-in-rhythm`",
+					"C# minor (bad scrape interlude)",
+					"Hand-corrected: **Bb major** I–ii + vi–V–IV–V"
+				],
+				[
+					"Other low-confidence rows below",
+					"Best song-level guess",
+					"See `keyTonalityIssues` for the five modulation / multi-center cases (El DeBarge, Jan & Dean, Sergio Mendes, Diamonds, Honeydrippers)"
+				]
+			]
+		),
+		"",
+		"`keys:apply` dedupes decision files by `songKey` (newest batch wins) and skips statistical misfit hold-back for timestamped queue decision files (`batch-YYYYMMDD-HHMM-NNN.json`), so expert re-review batches can land in the ledger."
+	].join("\n");
 
 export const buildKeyReviewReport = (input: ReportInput): string => {
 	const songs = reviewedSongs(input);
@@ -352,7 +404,9 @@ export const buildKeyReviewReport = (input: ReportInput): string => {
 		"",
 		`Generated ${input.generatedAt} by \`npm run keys:report\` in harmony from \`data/key-review.csv\`. Regenerate it after each review round.`,
 		"",
-		"Every song in the main dataset (`songs/corrected/`) is scored against all 12 tonics × the common modes in the data. The model is trained on HookTheory and hand-reviewed songs. Songs whose labeled key fits clearly worse than another key, that use a rare mode, that have many out-of-key chords, or that carry a suspicious capo shift are flagged and hand-reviewed. `harmony/tasks/build-songs.js` applies every verdict when it builds `songs.json`.",
+		"Every song in the main dataset (`songs/corrected/`) is scored against all 12 tonics × the common modes in the data. The model is trained on HookTheory and hand-reviewed songs. Songs whose labeled key fits clearly worse than another key, that use a rare mode, that have many out-of-key chords, or that carry a suspicious capo shift are flagged and hand-reviewed. `harmony/tasks/build-songs.js` applies every verdict when it builds `songs.json`. See **Human review (David)** below for sign-off and what still lives in `hand-reviewed-songs.ts`.",
+		"",
+		humanReviewSection(),
 		"",
 		headlineSection(input, songs),
 		"",
@@ -365,6 +419,8 @@ export const buildKeyReviewReport = (input: ReportInput): string => {
 		impactSection(input),
 		"",
 		openItemsSection(input, songs),
+		"",
+		handFollowUpSection(),
 		""
 	].join("\n");
 };
