@@ -31,7 +31,7 @@ rank,name,chordProgression,scale,group,avgCoveragePercent,songCount,songSharePer
 30,whatcha say,IV-I-vi-V,major,"Happy, major-y progressions",0.305,56,0.771
 31,jazz changes (dominant-y),III-VI-II-V,major,Jazzy progressions,0.298,142,1.956
 32,somebody that i used to know,i-VII-VI-VII,minor,Minor-y progressions,0.294,82,1.129
-33,(minor)axis of awesome,vi-IV-I-V,major,"Happy, major-y progressions",0.282,109,1.501
+33,toto,vi-IV-I-V,major,"Happy, major-y progressions",0.282,109,1.501
 34,viva la vida,IV-V-I-vi,major,"Happy, major-y progressions",0.252,119,1.639
 35,jazz changes (diatonic),vi-ii-V-I,major,Jazzy progressions,0.241,115,1.584
 36,emo walk down,I-Imaj7-vi-V-IV,major,"Happy, major-y progressions",0.233,82,1.129

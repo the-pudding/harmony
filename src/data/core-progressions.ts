@@ -121,7 +121,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: "swaps out the V for an angsty iii"
 		},
 		{
-			name: "(minor)axis of awesome",
+			name: "toto",
 			chordProgression: "vi-IV-I-V",
 			scale: "major",
 			description: "repeats starting on vi instead of I"

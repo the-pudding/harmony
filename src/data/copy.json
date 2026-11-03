@@ -242,7 +242,7 @@
             },
             {
               "type": "text",
-              "value": "They were onto something, lots of songs rely heavily on this progression, but this only makes up about [2%] of songs in the dataset."
+              "value": "They were onto something, lots of songs rely heavily on this progression, but this only makes up about [3%] of songs in the dataset."
             }
           ],
           "map": {
@@ -274,20 +274,6 @@
             },
             {
               "type": "text",
-              "value": "Let’s take a closer look at this list, because they each have their own distinct feel."
-            }
-          ],
-          "map": {
-            "visible": "true"
-          },
-          "overlay": {
-            "component": "List"
-          }
-        },
-        {
-          "text": [
-            {
-              "type": "text",
               "value": "At the top we have <strong class=progression>I-IV vamp</strong>, so just going back and forth between <span class=chord>I</span> and <span class=chord>IV</span>."
             }
           ],
@@ -295,8 +281,7 @@
             "visible": "true"
           },
           "overlay": {
-            "component": "List",
-            "highlight": "I-IV vamp"
+            "component": "List"
           }
         },
         {
@@ -315,7 +300,7 @@
           "text": [
             {
               "type": "text",
-              "value": "Next is <strong class=progression>happy walk up</strong>. We named it that because Tk these songs are so fun!"
+              "value": "Next is <strong class=progression>happy walk up</strong>."
             }
           ],
           "map": {
@@ -366,7 +351,11 @@
           "text": [
             {
               "type": "text",
-              "value": "Different orderings of these chords produce different journeys of tension and release Tk."
+              "value": "Maybe this list is a little less diverse than we thought."
+            },
+            {
+              "type": "text",
+              "value": "In fact, several progressions here are actually <i>very</i> close cousins of the <strong class=progression>axis of awesome</strong> progression."
             }
           ],
           "map": {
@@ -380,27 +369,52 @@
           "text": [
             {
               "type": "text",
-              "value": "This progression looks different from the others… because it’s in a minor key! Sometimes people say that major is happy and minor is sad, but tell that to <strong>We Found Love</strong>… Just because a song is in a minor key <a href=https://www.youtube.com/watch?v=OMWszWYX2OQ target=_blank>doesn’t necessarily mean it’s sad</a>."
+              "value": "These progressions use the same chords, either rotated or swapped slightly. It’s the same tension and release logic."
             },
             {
               "type": "text",
-              "value": "Instead, musicians often refer to minor as a <strong>darker</strong> sound than major (brighter). Songs like <strong>Cool for The Summer</strong>, <strong>Stronger</strong>, and <strong>Poker Face</strong> use this progression to paint with a darker palette."
-            },
-            {
-              "type": "text",
-              "value": "<span class=small>Tk this is actually just minor axis!</span>"
+              "value": "Songs from these clusters are even used in the Axis of Awesome medley, like Africa by Toto."
             }
           ],
           "map": {
-            "visible": "true",
-            "focusCluster": "we found love"
+            "visible": "true"
+          },
+          "overlay": {
+            "component": "List",
+            "highlight": "doo wop, viva la vida, mr. brightside, whatcha say, never getting back together, we found love, toto"
           }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "So pop doesn't run on just one formula. It has many, and they produce different emotional journeys."
+              "value": "Some progressions manage to break the rules a bit more."
+            },
+            {
+              "type": "text",
+              "value": "So often we see songs starting with the I/home chord. These ones don’t, they imply that sense of home, but never return to it, restlessness."
+            }
+          ],
+          "map": {
+            "visible": "true"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "These songs borrow chords from outside the key. Sounds a little funky and unexpected."
+            }
+          ],
+          "map": {
+            "visible": "true"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "So, no, pop isn’t all <strong class=progression>axis of awesome</strong>. But a big chunk do work on very similar principles. The songs that stand out often break those rules, playing with the feeling of tension, release, expectation."
             },
             {
               "type": "text",
