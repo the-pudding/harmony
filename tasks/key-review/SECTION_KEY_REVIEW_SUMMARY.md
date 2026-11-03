@@ -21,7 +21,21 @@ npm scripts: `keys:flag-sections`, `keys:apply-sections`, `keys:calibrate-sectio
 
 - **3,507** section decisions in `key-review-sections.csv` (**563** corrected, **2,944** confirmed as “keep song key for this section”).
 - **`npm run songs`** now applies section ledger rows when building `songs.json`: affected sections get updated `key` / `scale`, transposed chord roots where needed, and Romans analyzed from the **section** tonality instead of only the song-level label.
-- Modulating or mis-labeled sections that were previously forced through a single song key (e.g. Jan & Dean Bb sections, We Five E-major verses, Diamonds D/E sections, partial Honeydrippers G-major sections) are corrected at section granularity where the ledger says so.
+- Modulating or mis-labeled sections that were previously forced through a single song key are corrected at section granularity where the ledger says so (see **Example fixes** below).
+
+### Example fixes (spot-check in the app)
+
+Open the define-chord-progression demo with `?song=<songKey>` (local dev: `npm run dev`, then links like below).
+
+| Song | What changed | Demo link |
+| --- | --- | --- |
+| **We Five** — *You Were on My Mind* | Song labeled Ab major; later verses re-keyed to **E major** (modulation mid-tab). | [we-five__you-were-on-my-mind](http://localhost:5173/demo/define-chord-progression/?song=we-five__you-were-on-my-mind) |
+| **Jan & Dean** — *Ride the Wild Surf* | A major song label; **Bb major** sections (`in Bb`, key-change markers). | [jan-dean__ride-the-wild-surf](http://localhost:5173/demo/define-chord-progression/?song=jan-dean__ride-the-wild-surf) |
+| **The Diamonds** — *She Say (Oom Dooby Doom)* | Song labeled C# major; early verses **D major**, later verses **E major**. | [the-diamonds__she-say-oom-dooby-doom](http://localhost:5173/demo/define-chord-progression/?song=the-diamonds__she-say-oom-dooby-doom) |
+| **The Honeydrippers** — *Sea of Love* | Wrong song-level F# mixolydian; **break** and one **chorus** corrected to **G major** (other sections still on song label). | [the-honeydrippers__sea-of-love](http://localhost:5173/demo/define-chord-progression/?song=the-honeydrippers__sea-of-love) |
+| **Sergio Mendes & Brasil ’66** — *Scarborough Fair* | Choruses corrected from C minor to **B minor**. | [sergio-mendes-brasil-66__scarborough-fair](http://localhost:5173/demo/define-chord-progression/?song=sergio-mendes-brasil-66__scarborough-fair) |
+
+**Not fixed yet** (still worth comparing): [el-debarge__who-s-johnny-short-circuit-theme](http://localhost:5173/demo/define-chord-progression/?song=el-debarge__who-s-johnny-short-circuit-theme) — G major chorus still under Eb song/section label.
 
 **Process & docs**
 
