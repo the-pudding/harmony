@@ -1,6 +1,5 @@
 <script>
-	import progressionsData from "$data/charts/top-progressions.csv";
-	import Chord from "$components/Chord.svelte";
+	import SyncedChords from "$components/SyncedChords.svelte";
 	import { committedSyncedSongs } from "$data/syncedSongs";
 	import reference from "$data/synced-songs/reference.csv";
 	import { audio } from "$runes/audio.svelte";
@@ -58,30 +57,6 @@
 		}
 	};
 
-	const progressionData = $derived(
-		progressionsData.find((d) => d.name === cluster)
-	);
-	const progression = $derived(progressionData?.chordProgression);
-	const tonality = $derived(progressionData?.scale ?? "major");
-	const loop = $derived(progression?.split("-").map((d) => d.trim()) ?? []);
-
-	const activeChordIndex = $derived.by(() => {
-		if (!currentTimeData || !loop.length) return null;
-		let pos = 0;
-		let index = null;
-		for (const { seconds, roman } of currentTimeData) {
-			if (seconds > currentTime) break;
-			if (roman === loop[pos]) index = pos;
-			else if (roman === loop[0]) index = 0;
-			else {
-				index = null;
-				continue;
-			}
-			pos = (index + 1) % loop.length;
-		}
-		return index;
-	});
-
 	$effect(playCurrentSong);
 
 	$effect(() => {
@@ -107,22 +82,7 @@
 			<button aria-label="Next song" onclick={playNext}>&rarr;</button>
 		{/if}
 	</div>
-	<span class="chords" data-chords={progression}>
-		{#each loop as roman, i (`${progression}-${i}`)}
-			<span
-				class="chord"
-				class:playing={i === activeChordIndex}
-				class:faded={activeChordIndex !== null && i !== activeChordIndex}
-			>
-				<Chord chord={roman} {tonality} />
-			</span>
-		{/each}
-	</span>
-
-	<div class="key" class:visible={songKeySignature}>
-		Key: {songKeySignature?.tonic}
-		{songKeySignature?.scale}
-	</div>
+	<SyncedChords {cluster} chords={currentTimeData} {currentTime} />
 
 	{#each songs as song (song.songKey)}
 		<audio
@@ -154,35 +114,4 @@
 		font-size: var(--32px);
 	}
 
-	.chords {
-		font-size: var(--40px);
-	}
-
-	.chord {
-		display: inline-block;
-		transition:
-			transform 150ms,
-			opacity 150ms;
-	}
-
-	.chord.playing {
-		opacity: 1;
-		transform: scale(1.3);
-	}
-
-	.chord.faded {
-		opacity: 0.4;
-		transform: scale(1);
-	}
-
-	.key {
-		margin-top: 1.5rem;
-		font-size: var(--14px);
-		opacity: 0;
-		transition: opacity 0.2s;
-	}
-
-	.key.visible {
-		opacity: 0.6;
-	}
 </style>

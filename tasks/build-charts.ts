@@ -119,6 +119,32 @@ const buildProgressionShareByYear = (progressionName: string) => () => {
 		});
 };
 
+// A roman numeral's root, dropping extensions and inversions
+// (e.g. "V7/3" → "V", "bVIImaj7" → "bVII").
+const ROMAN_ROOT = /^[b#]?(?:VII|VI|IV|V|III|II|I|vii|vi|iv|v|iii|ii|i)/;
+
+// One row per chord root: its share of every chord in every song section,
+// most common first. Counts chord changes, not time held.
+const buildChordShares = () => {
+	const counts = new Map<string, number>();
+	for (const song of songs) {
+		for (const section of song.sections) {
+			for (const token of section.romanTokens) {
+				const chord = token.match(ROMAN_ROOT)?.[0] ?? token;
+				counts.set(chord, (counts.get(chord) ?? 0) + 1);
+			}
+		}
+	}
+	const total = [...counts.values()].reduce((sum, count) => sum + count, 0);
+	return [...counts]
+		.sort(([, a], [, b]) => b - a)
+		.map(([chord, count]) => ({
+			chord,
+			count,
+			percent: round((count / total) * 100)
+		}));
+};
+
 // Each decade's top signature progression (most over-represented vs. the whole
 // corpus), as ranked on the history page.
 const decadeHistory = computeDecadeHistory(
@@ -141,6 +167,7 @@ const signatureCharts = SIGNATURE_DECADES.flatMap((decade) => {
 const charts: { file: string; build: () => object[] }[] = [
 	{ file: "top-progressions.csv", build: buildTopProgressions },
 	{ file: "effective-progressions.csv", build: buildEffectiveProgressions },
+	{ file: "chord-shares.csv", build: buildChordShares },
 	{
 		file: "effective-progressions-by-decade.csv",
 		build: buildEffectiveProgressionsByDecade

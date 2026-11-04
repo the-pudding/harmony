@@ -4,7 +4,9 @@ import { songShardFor, songShardUrl } from "$data/hexMapSnapshot.js";
 import { groupSongs } from "$data/songBrowser.js";
 import {
 	SYNCED_SONG_AUDIO_DIRECTORY,
-	type SyncedSongAudio
+	SYNCED_VIDEO_DIRECTORY,
+	type SyncedSongAudio,
+	type SyncedVideo
 } from "$data/syncedSongs.js";
 import type { MusicalKey } from "../../../chord-processing/chordInKey.js";
 import { SCALE_INTERVALS } from "../../../chord-processing/scale-intervals.js";
@@ -22,6 +24,8 @@ export type DesignSong = {
 	// The key numerals are counted from until a recording picks its own.
 	key: MusicalKey;
 	chordSheet: ChordSheetSection[];
+	// Set when the chords are timed against a video instead of the audio.
+	videoId?: string;
 };
 
 export const DEFAULT_KEY: MusicalKey = { tonic: "C", scale: "major" };
@@ -86,6 +90,23 @@ export const loadDesignSong = async (
 	audio: SyncedSongAudio
 ): Promise<DesignSong> =>
 	buildDesignSong(audio, await fetchSongInputs(audio.songKey));
+
+// The video's song, playing the video instead of the song's audio.
+export const loadDesignVideo = async ({
+	videoId,
+	songKey
+}: SyncedVideo): Promise<DesignSong> => {
+	const audioFile = `${videoId}.mp4`;
+	const song = buildDesignSong(
+		{ songKey, audioFile },
+		await fetchSongInputs(songKey)
+	);
+	return {
+		...song,
+		audioSrc: `${base}/${SYNCED_VIDEO_DIRECTORY}/${encodeURIComponent(audioFile)}`,
+		videoId
+	};
+};
 
 // "ben-e-king__stand-by-me" → "ben e king — stand by me", before the
 // corpus has been loaded for a proper title.

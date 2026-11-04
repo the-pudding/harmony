@@ -2,6 +2,8 @@
 	import playSvg from "$svg/play.svg";
 	import { getContext } from "svelte";
 	import { audio, onStopAll } from "$runes/audio.svelte";
+	import SyncedChords from "$components/SyncedChords.svelte";
+	import { committedSyncedVideos, syncedVideos } from "$data/syncedSongs";
 
 	let { videoId, caption } = $props();
 
@@ -9,11 +11,30 @@
 
 	let videoEl = $state();
 	let paused = $state(true);
+	let currentTime = $state(0);
+
+	const sync = $derived(committedSyncedVideos[videoId]);
+	const cluster = $derived(
+		syncedVideos.find((d) => d.videoId === videoId)?.cluster
+	);
+
+	// timeupdate only fires ~4x/sec, too coarse for chord changes
+	$effect(() => {
+		if (!sync || !videoEl || paused) return;
+		let frame;
+		const tick = () => {
+			currentTime = videoEl.currentTime;
+			frame = requestAnimationFrame(tick);
+		};
+		frame = requestAnimationFrame(tick);
+		return () => cancelAnimationFrame(frame);
+	});
 
 	onStopAll(() => {
 		if (!videoEl) return;
 		videoEl.pause();
 		videoEl.currentTime = 0;
+		currentTime = 0;
 	});
 
 	const positionCues = (track) => {
@@ -100,6 +121,12 @@
 		>
 			{@html playSvg}
 		</button>
+
+		{#if sync}
+			<div class="shania-player" class:faded={paused}>
+				<SyncedChords {cluster} chords={sync.chords} {currentTime} />
+			</div>
+		{/if}
 	</div>
 
 	{#if videoId === "examples"}
@@ -192,6 +219,20 @@
 
 	.song-name {
 		font-size: var(--16px);
+	}
+
+	.shania-player {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, 100%);
+		pointer-events: none;
+		opacity: 1;
+		transition: opacity 0.3s;
+	}
+
+	.shania-player.faded {
+		opacity: 0.4;
 	}
 
 	@keyframes scroll-up {

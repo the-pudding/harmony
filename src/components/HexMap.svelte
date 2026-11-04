@@ -30,7 +30,7 @@
 
 	type Props = {
 		// Drag, wheel, pinch and double-click zoom, and click-to-zoom on hexes.
-		// Defaults to true, or false when focusCluster is set.
+		// Always off while focusCluster is set.
 		movable?: boolean;
 		// Hovering a colored hex outlines its cluster and names its
 		// progression; at dot zoom, hovering a song shows its tooltip.
@@ -90,7 +90,7 @@
 		focusCluster = undefined,
 		focusFrame = null,
 		centered = false,
-		movable = focusCluster === undefined,
+		movable = true,
 		hoverable = true,
 		hideLabels = false,
 		showLabels = undefined,
@@ -117,7 +117,9 @@
 		return focusCluster ?? (hasFocusedCluster ? null : undefined);
 	});
 
-	// Picking clusters is only for maps the user can explore.
+	// A focused cluster locks the view. Derived rather than a prop default,
+	// since defaults are only evaluated once and focusCluster changes over
+	// the life of the map.
 	const explorable = $derived(movable && focusCluster === undefined);
 
 	// A focused cluster isn't labeled.
@@ -305,7 +307,7 @@
 				outlinedSongKeys={SYNCED_SONG_KEYS}
 				outlinedTitlePrefix="🎧"
 				{playingSongKey}
-				{movable}
+				movable={explorable}
 				{hoverable}
 				showLabels={labelsVisible && !rotateLabels}
 				showRotatingLabels={labelsVisible && rotateLabels}

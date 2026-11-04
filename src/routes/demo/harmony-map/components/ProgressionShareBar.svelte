@@ -10,6 +10,12 @@
 		color?: string;
 		// Defaults to labeling every colored sliver.
 		labeled?: boolean;
+		// The label under the sliver; defaults to "<percent>% <name>".
+		labelText?: string;
+		// Text drawn on the sliver itself, hidden when the sliver is too
+		// narrow for it.
+		barLabel?: string;
+		barLabelColor?: string;
 	};
 </script>
 
@@ -28,6 +34,8 @@
 	// space kept between labels.
 	const LABEL_CHAR_WIDTH_EM = 0.6;
 	const LABEL_GAP_PX = 8;
+	// Room kept on each side of a label drawn on its sliver.
+	const BAR_LABEL_PADDING_PX = 3;
 
 	let barWidth = $state(0);
 	let labelFontSize = $state(0);
@@ -60,7 +68,8 @@
 			start += segment.percent;
 			const labeled = segment.labeled ?? segment.color !== undefined;
 			if (!labeled || barWidth === 0) continue;
-			const text = `${Math.round(segment.percent)}% ${segment.name}`;
+			const text =
+				segment.labelText ?? `${Math.round(segment.percent)}% ${segment.name}`;
 			const width = text.length * charWidth;
 			const left = Math.min(
 				Math.max(center - width / 2, 0),
@@ -87,6 +96,11 @@
 		return placed;
 	});
 
+	const barLabelFits = (segment: ProgressionShareSegment): boolean =>
+		(segment.percent / 100) * barWidth >=
+		(segment.barLabel?.length ?? 0) * labelFontSize * LABEL_CHAR_WIDTH_EM +
+			BAR_LABEL_PADDING_PX * 2;
+
 	const usedRowCount = $derived(
 		labels.reduce((count, { row }) => Math.max(count, row + 1), 0)
 	);
@@ -103,7 +117,12 @@
 				class="segment"
 				style:width="{segment.percent}%"
 				style:background={segment.color ?? UNCOLORED_PROGRESSION_COLOR}
-			></div>
+				style:color={segment.barLabelColor}
+			>
+				{#if segment.barLabel && barLabelFits(segment)}<span class="bar-label"
+						>{segment.barLabel}</span
+					>{/if}
+			</div>
 		{/each}
 	</div>
 	{#if usedRowCount > 0}
@@ -121,7 +140,8 @@
 </div>
 
 <style>
-	/* Override --label-size-px / --bar-height / --segment-gap from outside.
+	/* Override --label-size-px / --bar-height / --segment-gap / --track-color
+	   from outside.
 	   The label layout reads --label-size-px, so keep it in px. */
 	.progression-share-bar {
 		--label-size-px: 9.6px;
@@ -135,11 +155,21 @@
 		height: var(--bar-height, 0.625rem);
 		border-radius: 0.1875rem;
 		overflow: hidden;
-		background: #27272a;
+		background: var(--track-color, #27272a);
 	}
 
 	.segment {
 		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+	}
+
+	.bar-label {
+		font-size: var(--label-size-px);
+		font-weight: 600;
+		white-space: nowrap;
 	}
 
 	.labels {

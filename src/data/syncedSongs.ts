@@ -96,6 +96,47 @@ export const committedSyncedSongs: Record<string, SyncedSongFile> =
 			.map((file) => [file.songKey, file])
 	);
 
+// Videos in static/assets/video/{videoId}.mp4 with chords recorded against
+// the video's own timing (a live take, say, that doesn't line up with the
+// song's synced audio). Same file shape as a synced song, saved at
+// src/data/synced-videos/{videoId}.json and kept out of reference.csv; each
+// video names its song (for the key and chord sheet) and cluster here.
+export const SYNCED_VIDEO_DIRECTORY = "assets/video";
+export const SYNCED_VIDEO_DATA_DIRECTORY = "src/data/synced-videos";
+
+export type SyncedVideo = {
+	videoId: string;
+	songKey: string;
+	cluster: string;
+};
+
+export const syncedVideos: SyncedVideo[] = [
+	{
+		videoId: "shania",
+		songKey: "shania-twain__you-re-still-the-one",
+		cluster: "happy walk up"
+	}
+];
+
+export const isSyncedVideoId = (value: unknown): value is string =>
+	syncedVideos.some((video) => video.videoId === value);
+
+const syncedVideoModules = import.meta.glob<unknown>("./synced-videos/*.json", {
+	eager: true,
+	import: "default"
+});
+
+// Every committed synced video, by video id (its file name).
+export const committedSyncedVideos: Record<string, SyncedSongFile> =
+	Object.fromEntries(
+		Object.entries(syncedVideoModules)
+			.filter(([, file]) => isSyncedSongFile(file))
+			.map(([modulePath, file]) => [
+				modulePath.replace(/^.*\/|\.json$/g, ""),
+				file as SyncedSongFile
+			])
+	);
+
 // Which top-progression cluster each synced song belongs to, one row per
 // song key at src/data/synced-songs/reference.csv, with the song's trimmed
 // region (seconds into the audio). Saving a song in the Record

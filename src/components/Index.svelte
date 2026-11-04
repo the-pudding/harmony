@@ -10,6 +10,7 @@
 	import UltimateGuitar from "$components/UltimateGuitar.svelte";
 	import RomanNumerals from "$components/RomanNumerals.svelte";
 	import EffectiveBar from "$components/EffectiveBar.svelte";
+	import ChordShares from "$components/ChordShares.svelte";
 	import EffectiveDecades from "$components/EffectiveDecades.svelte";
 	import ClusterPercentOverTime from "$components/ClusterPercentOverTime.svelte";
 	import EffectiveProgressions from "$components/EffectiveProgressions.svelte";
@@ -35,6 +36,7 @@
 		Video,
 		List,
 		EffectiveBar,
+		ChordShares,
 		EffectiveDecades,
 		ClusterPercentOverTime,
 		Signatures,
@@ -99,9 +101,24 @@
 		);
 	};
 
-	let mapProps = $derived(
-		parseBoolean(map?.visible) ? mapPropsFromCopy(map) : null
-	);
+	// a <button><strong class=progression> in the text refocuses the map on
+	// that cluster; the slide's own focusCluster comes back on the next visit
+	let textFocusCluster = $state();
+	let mapProps = $derived.by(() => {
+		if (!parseBoolean(map?.visible)) return null;
+		const props = mapPropsFromCopy(map);
+		return textFocusCluster === undefined
+			? props
+			: { ...props, focusCluster: textFocusCluster };
+	});
+
+	const onTextClick = (event) => {
+		const strong = event.target
+			.closest("button")
+			?.querySelector("strong.progression, strong.progressions");
+		const cluster = strong?.textContent.trim();
+		if (cluster) textFocusCluster = cluster;
+	};
 
 	let textHeight = $state();
 	let clusterFrameEl = $state();
@@ -158,9 +175,10 @@
 
 	setContext("explore", { pickSong });
 
-	// a new slide starts with nothing explored
+	// a new slide starts with nothing explored, on its own focusCluster
 	$effect(() => {
 		slideI;
+		textFocusCluster = undefined;
 		untrack(stopExploring);
 	});
 
@@ -229,15 +247,22 @@
 		onselect={(i) => (slideI = i)}
 	/>
 
-	<div class="overlay" class:visible={OverlayComponent}>
+	<div
+		class="overlay"
+		class:visible={OverlayComponent}
+		class:list={overlayComponentName === "List"}
+	>
 		{#if OverlayComponent}
 			<OverlayComponent {...overlayProps} />
 		{/if}
 	</div>
 
 	{#if text.length}
+		<!-- clicks are delegated from the <button>s inside, which handle keys -->
+		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 		<div
 			class="text frosted"
+			onclick={onTextClick}
 			style:height={textHeight ? `${textHeight}px` : null}
 			in:fade={{ duration: 250 }}
 		>
@@ -386,10 +411,13 @@
 		opacity: 0;
 		transition: opacity 0.3s;
 		pointer-events: none;
-		height: 450px;
 		max-width: 100%;
 		max-height: 80svh;
 		overflow: scroll;
+	}
+
+	.overlay.list {
+		height: 450px;
 	}
 
 	.overlay.visible {

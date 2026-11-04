@@ -1,10 +1,12 @@
 export const DESIGN_TAB_DEMOS = "demos";
 export const DESIGN_TAB_SYNCED_SONG_PLAYER = "synced-song-player";
+export const DESIGN_TAB_SYNCED_VIDEO = "synced-video";
 export const DESIGN_TAB_CHORD_VIZ = "chord-viz";
 
 export const DESIGN_TABS = [
 	DESIGN_TAB_DEMOS,
 	DESIGN_TAB_SYNCED_SONG_PLAYER,
+	DESIGN_TAB_SYNCED_VIDEO,
 	DESIGN_TAB_CHORD_VIZ
 ] as const;
 
@@ -15,6 +17,7 @@ export const DEFAULT_DESIGN_TAB: DesignTab = DESIGN_TAB_DEMOS;
 export const DESIGN_TAB_LABELS: Record<DesignTab, string> = {
 	[DESIGN_TAB_DEMOS]: "Demos",
 	[DESIGN_TAB_SYNCED_SONG_PLAYER]: "Record sync",
+	[DESIGN_TAB_SYNCED_VIDEO]: "Record video sync",
 	[DESIGN_TAB_CHORD_VIZ]: "Chord viz experimentation"
 };
 

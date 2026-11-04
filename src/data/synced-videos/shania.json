@@ -1,0 +1,11 @@
+{
+	"songKey": "shania-twain__you-re-still-the-one",
+	"audioFile": "shania.mp4",
+	"key": { "tonic": "Eb", "scale": "major" },
+	"region": { "startSeconds": 0, "endSeconds": 14.142 },
+	"chords": [
+		{ "seconds": 0.251, "chord": "Eb", "roman": "I" },
+		{ "seconds": 3.919, "chord": "Ab", "roman": "IV" },
+		{ "seconds": 5.967, "chord": "Bb", "roman": "V" }
+	]
+}

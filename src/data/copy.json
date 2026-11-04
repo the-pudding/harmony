@@ -312,7 +312,7 @@
           "text": [
             {
               "type": "text",
-              "value": "You’ll notice a lot of these top progressions exclusively involve <span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span>. If you’re gonna learn 3 chords, learn those."
+              "value": "You’ll notice a lot of these top progressions exclusively involve <span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span>."
             }
           ],
           "map": {
@@ -331,21 +331,50 @@
             },
             {
               "type": "text",
-              "value": "The <span class=chord>I</span> is our home base, the starting chord of the key. It feels stable and resolved."
+              "value": "The <span class=chord>I</span> is home base. It feels stable and resolved."
             },
             {
               "type": "text",
-              "value": "The <span class=chord>IV</span> is a little step away from home."
+              "value": "The <span class=chord>IV</span> creates gentle movement away from home."
             },
             {
               "type": "text",
-              "value": "The <span class=chord>V</span> is further, more unstable. It really wants to go back to <span class=chord>I</span>."
+              "value": "The <span class=chord>V</span> creates tension and expectation. It really wants to go back to the <span class=chord>I</span>."
             },
             {
               "type": "text",
-              "value": "Like in <strong>You’re Still The One</strong> by Shania Twain, where it ends on the <span class=chord>V</span>. My ear, at least, is begging for it to end back on the <span class=chord>I</span> and come home ."
+              "value": "Like in “You’re Still The One” by Shania Twain, where it ends on the <span class=chord>V</span>. My ear, at least, is waiting for it to finally return home to the <span class=chord>I</span>."
             }
-          ]
+          ],
+          "stage": {
+            "component": "Video",
+            "videoId": "shania"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Just three chords are enough to tell a whole story: leave home, go somewhere new, come back."
+            },
+            {
+              "type": "text",
+              "value": "<span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span> are the most common chords in these hits, making up [51%] of all chords across all songs."
+            },
+            {
+              "type": "text",
+              "value": "If you’re gonna learn 3 chords, learn those."
+            }
+          ],
+          "map": {
+            "visible": "true",
+            "movable": "false",
+            "hoverable": "false",
+            "hideLabels": "true"
+          },
+          "overlay": {
+            "component": "ChordShares"
+          }
         },
         {
           "text": [
@@ -355,7 +384,7 @@
             },
             {
               "type": "text",
-              "value": "In fact, several progressions here are actually <i>very</i> close cousins of the <strong class=progression>axis of awesome</strong> progression."
+              "value": "In fact, several progressions here are actually very close cousins of the <strong class=progression>axis of awesome</strong> progression."
             }
           ],
           "map": {
@@ -369,19 +398,28 @@
           "text": [
             {
               "type": "text",
-              "value": "These progressions use the same chords, either rotated or swapped slightly. It’s the same tension and release logic."
+              "value": "For example, <button><strong class=progression>never getting back together</strong></button> takes the same four chords (<span class=chords>I-V-vi-IV</span>) and shifts everything over one slot."
             },
             {
               "type": "text",
-              "value": "Songs from these clusters are even used in the Axis of Awesome medley, like Africa by Toto."
+              "value": "Same with <button><strong class=progression>toto</strong></button>. “Africa” by Toto is in the Axis of Awesome medley, but notice how they start <a href=https://youtu.be/5pidokakU4I?si=Ok_bLed7HrtG7njH&t=200 target=_blank>singing</a> it halfway through the 4-chord loop so that it lines up properly."
             }
           ],
           "map": {
-            "visible": "true"
-          },
-          "overlay": {
-            "component": "List",
-            "highlight": "doo wop, viva la vida, mr. brightside, whatcha say, never getting back together, we found love, toto"
+            "visible": "true",
+            "focusCluster": "never getting back together"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "<button><strong class=progression>doo wop</strong></button>, <button><strong class=progression>viva la vida</strong></button>, <button><strong class=progression>mr. brightside</strong></button>, and <button><strong class=progression>whatcha say</strong></button> all involve the same four chords (<span class=chords>I-V-vi-IV</span>), just rearranged slightly."
+            }
+          ],
+          "map": {
+            "visible": "true",
+            "focusCluster": "whatcha say"
           }
         },
         {
@@ -392,29 +430,31 @@
             },
             {
               "type": "text",
-              "value": "So often we see songs starting with the I/home chord. These ones don’t, they imply that sense of home, but never return to it, restlessness."
+              "value": "Like <strong class=progression>IV-V vamp</strong>, which in a song like “Dreams” by Fleetwood Mac implies a home base, but never actually returns to the <span class=chord>I</span> chord, creating a sort of floating feeling."
             }
           ],
           "map": {
-            "visible": "true"
+            "visible": "true",
+            "focusCluster": "IV-V vamp"
           }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "These songs borrow chords from outside the key. Sounds a little funky and unexpected."
+              "value": "Or <strong class=progression>broody walk down</strong>, which borrows that <span class=chord data-tonality=minor>V</span> chord from outside the key to create a funky and unexpected sound."
             }
           ],
           "map": {
-            "visible": "true"
+            "visible": "true",
+            "focusCluster": "broody walk down"
           }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "So, no, pop isn’t all <strong class=progression>axis of awesome</strong>. But a big chunk do work on very similar principles. The songs that stand out often break those rules, playing with the feeling of tension, release, expectation."
+              "value": "So, no, pop isn’t all <strong class=progression>axis of awesome</strong>. But a big chunk do work on very similar principles. The songs that stand out often break those rules, playing with what we’ve come to expect."
             },
             {
               "type": "text",

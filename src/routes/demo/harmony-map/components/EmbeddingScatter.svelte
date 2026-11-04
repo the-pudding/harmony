@@ -80,6 +80,9 @@
 	// Zoom used when focusing a single song.
 	const DEFAULT_FOCUS_SCALE = 8;
 	const FOCUS_TRANSITION_MS = 900;
+	// Scripted focus changes (focusClusterName / focusSongKey) move slower,
+	// since they happen without the user asking to move the map.
+	const SCRIPTED_FOCUS_TRANSITION_MS = 2000;
 	// How much of the screen a focused cluster fills. Its bounding box is
 	// scaled to fit within this fraction of both the viewport's width and
 	// height, leaving breathing room around the edge.
@@ -1980,7 +1983,7 @@
 		}
 		select(canvas)
 			.transition()
-			.duration(FOCUS_TRANSITION_MS)
+			.duration(SCRIPTED_FOCUS_TRANSITION_MS)
 			.call(zoomBehavior.transform, targetTransform);
 	});
 

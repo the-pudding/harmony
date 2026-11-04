@@ -16,6 +16,8 @@
 		canSave: boolean;
 		hasLocalEdits: boolean;
 		hasRecordedChords: boolean;
+		// Saves to the video's file instead, with no cluster to pick.
+		videoId?: string;
 		onSaved: (file: SyncedSongFile) => void;
 		onDiscardLocalEdits: () => void;
 		onClearChords: () => void;
@@ -27,6 +29,7 @@
 		canSave,
 		hasLocalEdits,
 		hasRecordedChords,
+		videoId,
 		onSaved,
 		onDiscardLocalEdits,
 		onClearChords
@@ -59,7 +62,11 @@
 			const response = await fetch(SAVE_URL, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ file: savedFile, cluster: savedFileCluster })
+				body: JSON.stringify(
+					videoId
+						? { file: savedFile, videoId }
+						: { file: savedFile, cluster: savedFileCluster }
+				)
 			});
 			if (!response.ok) {
 				throw new Error(
@@ -68,7 +75,7 @@
 						: `HTTP ${response.status}`
 				);
 			}
-			savedClusters[savedFile.songKey] = savedFileCluster;
+			if (!videoId) savedClusters[savedFile.songKey] = savedFileCluster;
 			onSaved(savedFile);
 		} catch (error) {
 			saveError = error instanceof Error ? error.message : String(error);
@@ -83,28 +90,30 @@
 </script>
 
 <div class="actions">
-	<select
-		aria-label="Cluster"
-		value={cluster}
-		onchange={(event) =>
-			(pickedCluster = {
-				songKey: file.songKey,
-				cluster: event.currentTarget.value
-			})}
-	>
-		<option value="" disabled>Pick a cluster…</option>
-		{#each syncedSongClusters as name (name)}
-			<option value={name}>{name}</option>
-		{/each}
-	</select>
+	{#if !videoId}
+		<select
+			aria-label="Cluster"
+			value={cluster}
+			onchange={(event) =>
+				(pickedCluster = {
+					songKey: file.songKey,
+					cluster: event.currentTarget.value
+				})}
+		>
+			<option value="" disabled>Pick a cluster…</option>
+			{#each syncedSongClusters as name (name)}
+				<option value={name}>{name}</option>
+			{/each}
+		</select>
+	{/if}
 	<button
 		type="button"
 		class="save"
 		disabled={!canSave ||
-			!cluster ||
+			!(videoId || cluster) ||
 			!(hasLocalEdits || hasUnsavedCluster) ||
 			saving}
-		title={cluster ? undefined : "Pick a cluster to save"}
+		title={videoId || cluster ? undefined : "Pick a cluster to save"}
 		onclick={save}>{saving ? "Saving…" : "Save"}</button
 	>
 	<button type="button" disabled={!canSave} onclick={copyJson}

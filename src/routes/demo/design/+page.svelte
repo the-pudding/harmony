@@ -9,11 +9,13 @@
 	import DesignSection from "./DesignSection.svelte";
 	import SyncedSongDemo from "./SyncedSongDemo.svelte";
 	import SyncedSongRecorder from "./SyncedSongRecorder.svelte";
+	import SyncedVideoRecorder from "./SyncedVideoRecorder.svelte";
 	import {
 		DESIGN_TAB_CHORD_VIZ,
 		DESIGN_TAB_DEMOS,
 		DESIGN_TAB_LABELS,
 		DESIGN_TAB_SYNCED_SONG_PLAYER,
+		DESIGN_TAB_SYNCED_VIDEO,
 		DESIGN_TABS,
 		type DesignTab
 	} from "./designTabs.js";
@@ -91,6 +93,10 @@
 			{:else if tab === DESIGN_TAB_SYNCED_SONG_PLAYER}
 				<DesignSection title="Record sync">
 					<SyncedSongRecorder audioOptions={data.syncedSongAudio} />
+				</DesignSection>
+			{:else if tab === DESIGN_TAB_SYNCED_VIDEO}
+				<DesignSection title="Record video sync">
+					<SyncedVideoRecorder />
 				</DesignSection>
 			{:else if tab === DESIGN_TAB_CHORD_VIZ}
 				<DesignSection title="Chord viz">

@@ -129,7 +129,7 @@ span.chord, span.chords {
 	font-family: var(--font-mono);
 }
 
-span.chords {
+span.chords, span.chord-glue {
 	white-space: nowrap;
 }
 

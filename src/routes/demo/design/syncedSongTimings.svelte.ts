@@ -21,8 +21,8 @@ import {
 } from "./syncedTimings.js";
 import { popUndoEntry, pushUndoEntry } from "./undoHistory.js";
 
-const storageKeyFor = (songKey: string): string =>
-	`synced-song-chords:${songKey}`;
+const storageKeyFor = ({ songKey, videoId }: DesignSong): string =>
+	videoId ? `synced-video-chords:${videoId}` : `synced-song-chords:${songKey}`;
 
 // The chords there when recording (re)started, the chords played since, and
 // the stretch of audio the pass has covered.
@@ -40,7 +40,7 @@ export const createSyncedSongTimings = (
 	getDuration: () => number
 ) => {
 	const song = $derived(getSong());
-	const storageKey = $derived(storageKeyFor(song.songKey));
+	const storageKey = $derived(storageKeyFor(song));
 
 	let committedFile = $state.raw(getCommittedFile());
 	const committedTimings = $derived(
@@ -48,7 +48,7 @@ export const createSyncedSongTimings = (
 	);
 
 	let localTimings = $state.raw<SyncedTimings | null>(
-		parseStoredTimings(storage.get<unknown>(storageKeyFor(getSong().songKey)))
+		parseStoredTimings(storage.get<unknown>(storageKeyFor(getSong())))
 	);
 	let undoStack = $state.raw<(SyncedTimings | null)[]>([]);
 	let pass: RecordingPass | null = null;

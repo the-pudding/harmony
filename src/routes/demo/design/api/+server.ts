@@ -4,7 +4,9 @@ import { json } from "@sveltejs/kit";
 import { csvFormat, csvParse } from "d3-dsv";
 import {
 	isSyncedSongFile,
+	isSyncedVideoId,
 	SYNCED_SONG_DATA_DIRECTORY,
+	SYNCED_VIDEO_DATA_DIRECTORY,
 	SYNCED_SONG_REFERENCE_FILE,
 	syncedSongClusters,
 	type SyncedSongReferenceRow
@@ -13,12 +15,17 @@ import { formatJsonLikeRepo } from "../formatJsonLikeRepo.js";
 import type { RequestHandler } from "./$types.js";
 
 // Dev-only: writes src/data/synced-songs/{songKey}.json, and the song's
-// cluster row in src/data/synced-songs/reference.csv, with plain node:fs,
+// cluster row in src/data/synced-songs/reference.csv (or, given a videoId,
+// just src/data/synced-videos/{videoId}.json), with plain node:fs,
 // which only works when a real Node process is serving requests
 // (`npm run dev`). The static build drops this route.
 export const prerender = false;
 
 const DATA_DIRECTORY = path.join(process.cwd(), SYNCED_SONG_DATA_DIRECTORY);
+const VIDEO_DATA_DIRECTORY = path.join(
+	process.cwd(),
+	SYNCED_VIDEO_DATA_DIRECTORY
+);
 const REFERENCE_PATH = path.join(DATA_DIRECTORY, SYNCED_SONG_REFERENCE_FILE);
 
 // Replaces the song's row, or adds one, keeping rows sorted by cluster and
@@ -47,12 +54,22 @@ const writeReferenceRow = (row: SyncedSongReferenceRow) => {
 
 export const POST: RequestHandler = async ({ request }) => {
 	const body: unknown = await request.json();
-	const { file, cluster } = (body ?? {}) as {
+	const { file, cluster, videoId } = (body ?? {}) as {
 		file?: unknown;
 		cluster?: unknown;
+		videoId?: unknown;
 	};
 	if (!isSyncedSongFile(file)) {
 		return json({ error: "not a synced song file" }, { status: 400 });
+	}
+	if (videoId !== undefined) {
+		if (!isSyncedVideoId(videoId)) {
+			return json({ error: "unknown video" }, { status: 400 });
+		}
+		const videoFilePath = path.join(VIDEO_DATA_DIRECTORY, `${videoId}.json`);
+		fs.mkdirSync(VIDEO_DATA_DIRECTORY, { recursive: true });
+		fs.writeFileSync(videoFilePath, await formatJsonLikeRepo(file));
+		return json({ path: path.relative(process.cwd(), videoFilePath) });
 	}
 	if (typeof cluster !== "string" || !syncedSongClusters.includes(cluster)) {
 		return json({ error: "unknown cluster" }, { status: 400 });

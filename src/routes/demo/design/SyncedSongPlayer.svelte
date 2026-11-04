@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		SYNCED_SONG_DATA_DIRECTORY,
+		SYNCED_VIDEO_DATA_DIRECTORY,
 		type SyncedSongFile
 	} from "$data/syncedSongs.js";
 	import ChordRecorder from "./ChordRecorder.svelte";
@@ -44,7 +45,7 @@
 	let currentTime = $state(initialUrlState.playheadSeconds);
 	let duration = $state(NaN);
 	let zoom = $state(initialUrlState.zoom);
-	let audio = $state<HTMLAudioElement>();
+	let audio = $state<HTMLMediaElement>();
 
 	syncDesignUrlState(() => ({ zoom, playheadSeconds: currentTime }));
 
@@ -166,7 +167,10 @@
 		{#if editing}
 			<SyncedSongActions
 				file={timings.file}
-				targetFilePath="{SYNCED_SONG_DATA_DIRECTORY}/{song.songKey}.json"
+				targetFilePath={song.videoId
+					? `${SYNCED_VIDEO_DATA_DIRECTORY}/${song.videoId}.json`
+					: `${SYNCED_SONG_DATA_DIRECTORY}/${song.songKey}.json`}
+				videoId={song.videoId}
 				canSave={timings.editable}
 				hasLocalEdits={timings.hasLocalEdits}
 				hasRecordedChords={timings.hasRecordedChords}
@@ -223,15 +227,30 @@
 		onChordNudge={timings.nudgeChord}
 		onChordDelete={timings.deleteChord}
 	/>
-	<audio
-		bind:this={audio}
-		bind:paused
-		bind:currentTime
-		bind:duration
-		ontimeupdate={stopAtPlaybackEnd}
-		src={song.audioSrc}
-		preload="metadata"
-	></audio>
+	{#if song.videoId}
+		<!-- svelte-ignore a11y_media_has_caption -->
+		<video
+			bind:this={audio}
+			bind:paused
+			bind:currentTime
+			bind:duration
+			ontimeupdate={stopAtPlaybackEnd}
+			onclick={togglePlayback}
+			src={song.audioSrc}
+			preload="metadata"
+			playsinline
+		></video>
+	{:else}
+		<audio
+			bind:this={audio}
+			bind:paused
+			bind:currentTime
+			bind:duration
+			ontimeupdate={stopAtPlaybackEnd}
+			src={song.audioSrc}
+			preload="metadata"
+		></audio>
+	{/if}
 </section>
 
 <style>
@@ -239,6 +258,13 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
+	}
+
+	video {
+		align-self: flex-start;
+		max-width: min(100%, 32rem);
+		border-radius: 0.5rem;
+		cursor: pointer;
 	}
 
 	.tools {
