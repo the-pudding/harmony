@@ -175,11 +175,13 @@
 
 	setContext("explore", { pickSong });
 
-	// a new slide starts with nothing explored, on its own focusCluster
+	// a new slide starts with nothing explored or playing, on its own
+	// focusCluster
 	$effect(() => {
 		slideI;
 		textFocusCluster = undefined;
 		untrack(stopExploring);
+		playingSongId = undefined;
 	});
 
 	const INTERACTIVE =

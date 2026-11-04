@@ -12,6 +12,8 @@
 		labeled?: boolean;
 		// The label under the sliver; defaults to "<percent>% <name>".
 		labelText?: string;
+		// The label's color; defaults to the sliver's.
+		labelColor?: string;
 		// Text drawn on the sliver itself, hidden when the sliver is too
 		// narrow for it.
 		barLabel?: string;
@@ -25,9 +27,12 @@
 		// How many rows labels can stack into before one that still doesn't
 		// fit is left off.
 		labelRowCount?: number;
+		// Labels centered under their sliver, or starting at its left edge.
+		labelAlign?: "center" | "start";
 	};
 
-	const { segments, labelRowCount = 2 }: Props = $props();
+	const { segments, labelRowCount = 2, labelAlign = "center" }: Props =
+		$props();
 
 	const UNCOLORED_PROGRESSION_COLOR = "#71717a";
 	// A monospace character's width as a fraction of the font size, and the
@@ -64,6 +69,7 @@
 		const charWidth = labelFontSize * LABEL_CHAR_WIDTH_EM;
 		let start = 0;
 		for (const segment of segments) {
+			const segmentLeft = (start / 100) * barWidth;
 			const center = ((start + segment.percent / 2) / 100) * barWidth;
 			start += segment.percent;
 			const labeled = segment.labeled ?? segment.color !== undefined;
@@ -72,7 +78,7 @@
 				segment.labelText ?? `${Math.round(segment.percent)}% ${segment.name}`;
 			const width = text.length * charWidth;
 			const left = Math.min(
-				Math.max(center - width / 2, 0),
+				Math.max(labelAlign === "start" ? segmentLeft : center - width / 2, 0),
 				Math.max(barWidth - width, 0)
 			);
 			const right = left + width;
@@ -88,7 +94,8 @@
 			placed.push({
 				name: segment.name,
 				text,
-				color: segment.color ?? UNCOLORED_PROGRESSION_COLOR,
+				color:
+					segment.labelColor ?? segment.color ?? UNCOLORED_PROGRESSION_COLOR,
 				left,
 				row
 			});

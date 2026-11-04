@@ -313,6 +313,10 @@
             {
               "type": "text",
               "value": "You’ll notice a lot of these top progressions exclusively involve <span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span>."
+            },
+            {
+              "type": "text",
+              "value": "If you’re gonna learn 3 chords, learn those."
             }
           ],
           "map": {
@@ -355,15 +359,11 @@
           "text": [
             {
               "type": "text",
-              "value": "Just three chords are enough to tell a whole story: leave home, go somewhere new, come back."
-            },
-            {
-              "type": "text",
               "value": "<span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span> are the most common chords in these hits, making up [51%] of all chords across all songs."
             },
             {
               "type": "text",
-              "value": "If you’re gonna learn 3 chords, learn those."
+              "value": "<span class=chord>vi</span>, the final chord in <strong class=progression>axis of awesome</strong> (<span class=chords>I-V-vi-IV</span>), is next most common at [7%]."
             }
           ],
           "map": {
@@ -426,29 +426,36 @@
           "text": [
             {
               "type": "text",
-              "value": "Some progressions manage to break the rules a bit more."
+              "value": "This is the recipe for many hits: a small set of familiar chords, moving in a pleasing, but predictable way."
             },
             {
               "type": "text",
-              "value": "Like <strong class=progression>IV-V vamp</strong>, which in a song like “Dreams” by Fleetwood Mac implies a home base, but never actually returns to the <span class=chord>I</span> chord, creating a sort of floating feeling."
+              "value": "Some songs manage to break the rules a bit more."
+            },
+            {
+              "type": "text",
+              "value": "One way to break the rules is to use a chord outside of the song’s key to create extra brightness, tension, interest."
             }
           ],
           "map": {
-            "visible": "true",
-            "focusCluster": "IV-V vamp"
+            "visible": "true"
           }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "Or <strong class=progression>broody walk down</strong>, which borrows that <span class=chord data-tonality=minor>V</span> chord from outside the key to create a funky and unexpected sound."
+              "value": "Still WIP"
+            },
+            {
+              "type": "text",
+              "value": "Build Me Up Buttercup, Baby One More Time, Survivor, Wake me up when September ends"
+            },
+            {
+              "type": "text",
+              "value": "This all may be too much! We could probably just end on 2 steps ago."
             }
-          ],
-          "map": {
-            "visible": "true",
-            "focusCluster": "broody walk down"
-          }
+          ]
         },
         {
           "text": [
@@ -557,10 +564,6 @@
                   "and recycled decade after decade? 🗓️"
                 ]
               }
-            },
-            {
-              "type": "text",
-              "value": "Many of the most common progressions are. There are only a few standouts that really define an era."
             }
           ]
         },
@@ -568,11 +571,15 @@
           "text": [
             {
               "type": "text",
-              "value": "The Axis of Awesome sketch and its claims are a product of their time period."
+              "value": "The <strong class=progression>axis of awesome</strong> progression hasn’t always been a thing, it surged in the late 2000s."
             },
             {
               "type": "text",
-              "value": "“The four chords” surged in the late 2000s, their performance was in 2009. This progression is [3x] more common in the 2000s vs other decades, and was found in a full [11%] of songs."
+              "value": "This progression is [3x] more common in the 2000s compared to other decades, and was found in a full [11%] of songs."
+            },
+            {
+              "type": "text",
+              "value": "The Axis of Awesome sketch, performed in 2009, is a product of its time period."
             }
           ],
           "stage": {

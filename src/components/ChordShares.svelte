@@ -10,6 +10,8 @@
 	// How many of the biggest other chords get their name on the bar (each
 	// hides when its sliver gets too narrow for it).
 	const NAMED_OTHER_COUNT = 5;
+	// Other chords that also get their percent under the bar.
+	const PERCENT_LABELED_OTHERS = ["vi"];
 	const palette = paletteById("journey-from-home");
 
 	const percentByChord = new Map(raw.map((d) => [d.chord, +d.percent]));
@@ -40,7 +42,9 @@
 				name: d.chord,
 				percent: +d.percent,
 				color: "var(--color-gray-600)",
-				labeled: false,
+				labeled: PERCENT_LABELED_OTHERS.includes(d.chord),
+				labelText: `${Math.round(+d.percent)}%`,
+				labelColor: "white",
 				barLabel: i < NAMED_OTHER_COUNT ? d.chord : undefined,
 				barLabelColor: "var(--color-fg)"
 			}))
@@ -51,7 +55,7 @@
 	<div class="chart-title">51% of all chords used are I, IV or V</div>
 
 	<div class="bar">
-		<ProgressionShareBar {segments} labelRowCount={1} />
+		<ProgressionShareBar {segments} labelRowCount={1} labelAlign="start" />
 	</div>
 </figure>
 
