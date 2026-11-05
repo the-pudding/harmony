@@ -13,7 +13,10 @@ import { progressionGroupNameByProgressionName } from "../src/data/core-progress
 import { groupSongs } from "../src/data/songBrowser.js";
 import { sortAllSongs } from "../src/data/songBrowserData.js";
 import { toCalendarYear } from "../src/data/songYear.js";
-import { byYearFile } from "../src/utils/clusterChartFile.js";
+import {
+	byYearFile,
+	isDecadeByYearFile
+} from "../src/utils/clusterChartFile.js";
 import { computeSongCoverage } from "../src/routes/demo/define-chord-progression/compute-coverage-of-all-songs/computeSongCoverage.js";
 import { computeDecadeHistory } from "../src/routes/demo/history/decadeSignatures.js";
 import { computeTopProgressions } from "../src/routes/demo/history/topProgressions.js";
@@ -27,7 +30,14 @@ const SONGS_PATH = path.join(ROOT, "static/data/songs.json");
 const OUTPUT_DIR = path.join(ROOT, "src/data/charts");
 const PERCENT_DECIMALS = 3;
 const DECADE_YEARS = 10;
-const SIGNATURE_DECADES = [1970, 1980, 1990];
+// 1950s and 1960s are charted as the pooled "1950s-60s" entry instead (the
+// corpus only starts in 1958), so they're skipped on their own.
+const POOLED_EARLY_DECADES = [1950, 1960];
+// Editorial picks that replace the computed top signature for a decade.
+const SIGNATURE_OVERRIDES: Record<string, string> = {
+	"1950s-60s": "doo wop",
+	"2000s": "axis of awesome"
+};
 
 const round = (value: number): number =>
 	Number(value.toFixed(PERCENT_DECIMALS));
@@ -151,18 +161,21 @@ const decadeHistory = computeDecadeHistory(
 	coverages,
 	new Map(songs.map((song) => [song.songKey, song]))
 );
-const signatureCharts = SIGNATURE_DECADES.flatMap((decade) => {
-	const signature = decadeHistory.find((d) => d.decade === decade)
-		?.signatures[0];
-	if (!signature) return [];
-	console.log(`${decade}s signature: ${signature.name}`);
-	return [
-		{
-			file: byYearFile(signature.name, decade),
-			build: buildProgressionShareByYear(signature.name)
-		}
-	];
-});
+const signatureCharts = decadeHistory
+	.filter(({ decade }) => !POOLED_EARLY_DECADES.includes(decade))
+	.flatMap(({ decadeLabel, signatures }) => {
+		const name = SIGNATURE_OVERRIDES[decadeLabel] ?? signatures[0]?.name;
+		if (!name) return [];
+		console.log(
+			`${decadeLabel} signature: ${name}${SIGNATURE_OVERRIDES[decadeLabel] ? " (override)" : ""}`
+		);
+		return [
+			{
+				file: byYearFile(name, decadeLabel),
+				build: buildProgressionShareByYear(name)
+			}
+		];
+	});
 
 const charts: { file: string; build: () => object[] }[] = [
 	{ file: "top-progressions.csv", build: buildTopProgressions },
@@ -184,6 +197,11 @@ const charts: { file: string; build: () => object[] }[] = [
 ];
 
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+// A decade's signature can change between runs, so clear the old decade files
+// rather than leaving a stale one for the chart to pick up.
+for (const file of fs.readdirSync(OUTPUT_DIR)) {
+	if (isDecadeByYearFile(file)) fs.rmSync(path.join(OUTPUT_DIR, file));
+}
 console.log(
 	`${songs.length} songs (${songsWithEffectiveCount.length} with matched progressions)`
 );

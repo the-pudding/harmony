@@ -180,6 +180,8 @@
 		"#9085e9",
 		"#e66767"
 	] as const;
+	// Clusters whose color is fixed rather than auto-assigned, by name.
+	const PINNED_REGION_COLORS = new Map([["axis of awesome", "#9085e9"]]);
 	// Pairs that failed or warned the palette validator (colorblind or
 	// normal-vision separation) on this page's #09090b surface. Neighboring
 	// regions never get one of these pairs.
@@ -643,7 +645,9 @@
 				weight: total.weight
 			})),
 			REGION_PALETTE,
-			CONFUSABLE_REGION_PAIRS
+			CONFUSABLE_REGION_PAIRS,
+			undefined,
+			PINNED_REGION_COLORS
 		);
 	});
 

@@ -224,11 +224,14 @@ export type ColorCandidate = {
 // `confusablePairs` (pairs too similar to tell apart, including for
 // colorblind readers). Heaviest progressions pick first. Color only keeps
 // neighbors apart; labels and tooltips carry which progression is which.
+// `pinnedColors` fixes a color for specific names; they're placed before
+// everything else, and the rest steer around them as usual.
 export const assignRegionColors = (
 	candidates: readonly ColorCandidate[],
 	palette: readonly string[],
 	confusablePairs: ReadonlySet<string>,
-	neighborCount = 8
+	neighborCount = 8,
+	pinnedColors: ReadonlyMap<string, string> = new Map()
 ): Map<string, string> => {
 	const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 	const ordered = [...candidates].sort(
@@ -236,8 +239,15 @@ export const assignRegionColors = (
 	);
 	const colorByName = new Map<string, string>();
 	const usage = new Map(palette.map((color) => [color, 0]));
+	for (const candidate of ordered) {
+		const pinned = pinnedColors.get(candidate.name);
+		if (pinned === undefined) continue;
+		colorByName.set(candidate.name, pinned);
+		usage.set(pinned, (usage.get(pinned) ?? 0) + 1);
+	}
 
 	for (const candidate of ordered) {
+		if (colorByName.has(candidate.name)) continue;
 		const neighbors = ordered
 			.filter(
 				(other) => other.name !== candidate.name && colorByName.has(other.name)

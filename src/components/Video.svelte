@@ -1,5 +1,5 @@
 <script>
-	import playSvg from "$svg/play.svg";
+	import PlayButton from "$components/PlayButton.svelte";
 	import { getContext } from "svelte";
 	import { audio, onStopAll } from "$runes/audio.svelte";
 	import SyncedChords from "$components/SyncedChords.svelte";
@@ -113,14 +113,15 @@
 			/>
 		</video>
 
-		<button
-			class="play"
-			style:color={"rgba(255, 255, 255, .6)"}
-			onclick={() => (paused = !paused)}
-			class:visible={paused}
-		>
-			{@html playSvg}
-		</button>
+		<!-- hidden while playing, back (dimmed) on hover so you can pause -->
+		<div class="play" class:hidden={!paused}>
+			<PlayButton
+				{paused}
+				label="video"
+				showLabel={false}
+				onclick={() => (paused = !paused)}
+			/>
+		</div>
 
 		{#if sync}
 			<div class="shania-player" class:faded={paused}>
@@ -177,30 +178,30 @@
 		position: relative;
 	}
 
-	button.play {
+	.play {
 		position: absolute;
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
-		background: none;
-		border: none;
-		padding: 0;
-		height: 3rem;
-		opacity: 1;
+		transition: opacity 0.3s ease;
 	}
 
-	button.play.visible {
-		opacity: 1;
+	.play.hidden {
+		opacity: 0;
+		pointer-events: none;
 	}
 
-	button.play :global(svg) {
-		height: 100%;
-		width: auto;
-		transition: transform 0.2s ease;
+	.play.hidden:focus-within {
+		opacity: 0.6;
+		pointer-events: auto;
 	}
 
-	button.play:hover :global(svg) {
-		transform: scale(1.1);
+	/* only on real hover, so taps on touch screens don't leave it stuck on */
+	@media (hover: hover) {
+		.video-wrapper:hover .play.hidden {
+			opacity: 0.6;
+			pointer-events: auto;
+		}
 	}
 
 	.scrolling {

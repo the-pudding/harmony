@@ -5,10 +5,7 @@
 		tonalityOfScale
 	} from "$routes/demo/design/chord-viz/diatonicChords.js";
 	import { diatonicQualityForDegree } from "../chord-processing/diatonicQuality.js";
-	import {
-		NOTE_NAMES,
-		noteNameToPitchClass
-	} from "../chord-processing/chord-classifier/notes.js";
+	import { noteNameToPitchClass } from "../chord-processing/chord-classifier/notes.js";
 	import { SCALE_INTERVALS } from "../chord-processing/scale-intervals.js";
 	import { parseRomanToken } from "../chord-processing/romanNumerals.js";
 
@@ -23,6 +20,8 @@
 		chordDuration = 1.5
 	} = $props();
 
+	const uid = $props.id();
+
 	const SIZE = 400;
 	const R = 180;
 	const NODE_R = 32;
@@ -30,18 +29,36 @@
 
 	const tonality = $derived(tonalityOfScale(scale));
 
+	const LETTERS = ["C", "D", "E", "F", "G", "A", "B"];
+	const LETTER_PITCHES = [0, 2, 4, 5, 7, 9, 11];
+
+	// spell each scale degree on its own letter (one of each A–G), so the
+	// accidental is whatever it takes to reach the right pitch from that letter
+	const spellDegree = (tonicLetterIndex, i, pitch) => {
+		const letterIndex = (tonicLetterIndex + i) % 7;
+		// signed semitone offset from the natural letter, in -6..5
+		const offset = ((((pitch - LETTER_PITCHES[letterIndex]) % 12) + 18) % 12) - 6;
+		const accidental = offset > 0 ? "#".repeat(offset) : "b".repeat(-offset);
+		return { letter: LETTERS[letterIndex], accidental };
+	};
+
 	const chords = $derived.by(() => {
 		const tonic = noteNameToPitchClass(key);
+		const tonicLetterIndex = LETTERS.indexOf(key[0].toUpperCase());
 		const intervals = SCALE_INTERVALS[scale];
 		return diatonicChordsOf(scale).map(({ degree, roman }, i) => {
 			const quality = diatonicQualityForDegree(scale, degree);
-			const root = NOTE_NAMES[(tonic + intervals[i]) % 12];
+			const { letter, accidental } = spellDegree(
+				tonicLetterIndex,
+				i,
+				(tonic + intervals[i]) % 12
+			);
 			const angle = (i / intervals.length) * Math.PI * 2 - Math.PI / 2;
 			return {
 				degree,
 				roman,
-				letter: root[0],
-				marker: `${root.slice(1)}${SUFFIXES[quality] ?? ""}`,
+				letter,
+				marker: `${accidental}${SUFFIXES[quality] ?? ""}`,
 				x: SIZE / 2 + Math.cos(angle) * R,
 				y: SIZE / 2 + Math.sin(angle) * R
 			};
@@ -96,6 +113,8 @@
 				// line ends at the arrowhead's base so it doesn't poke through the tip
 				line: `M${x1},${y1} L${bx},${by}`,
 				head: `M${x2},${y2} L${bx - uy * HEAD_WIDTH},${by + ux * HEAD_WIDTH} L${bx + uy * HEAD_WIDTH},${by - ux * HEAD_WIDTH} Z`,
+				// the final step back home is drawn dotted
+				isReturn: i === stops.length - 1,
 				// head starts at the line's start and rides its tip to the end
 				headDx: x1 - bx,
 				headDy: y1 - by
@@ -136,15 +155,35 @@
 				<path class="link" {d} />
 			{/each}
 
-			{#each steps as { line, head, headDx, headDy }, i}
+			{#each steps as { line, head, headDx, headDy, isReturn }, i}
 				{@const p = progressOf(i)}
-				<path
-					class="arrow-line"
-					d={line}
-					pathLength="1"
-					stroke-width={LINE_WIDTH}
-					style:stroke-dashoffset={1 - p}
-				/>
+				{#if isReturn}
+					<!-- dots can't also use the dash trick to draw in, so a solid line in a mask reveals them -->
+					<mask id="{uid}-return" maskUnits="userSpaceOnUse">
+						<path
+							class="arrow-line"
+							d={line}
+							pathLength="1"
+							stroke-width={LINE_WIDTH * 2}
+							style:stroke-dashoffset={1 - p}
+						/>
+					</mask>
+					<path
+						class="arrow-line dotted"
+						d={line}
+						stroke-width={LINE_WIDTH}
+						style:stroke-dasharray="0 {LINE_WIDTH * 2}"
+						mask="url(#{uid}-return)"
+					/>
+				{:else}
+					<path
+						class="arrow-line"
+						d={line}
+						pathLength="1"
+						stroke-width={LINE_WIDTH}
+						style:stroke-dashoffset={1 - p}
+					/>
+				{/if}
 				<path
 					class="arrow-head"
 					d={head}
@@ -215,6 +254,15 @@
 		stroke: currentColor;
 		opacity: 0.8;
 		stroke-dasharray: 1;
+	}
+
+	mask .arrow-line {
+		stroke: white;
+		opacity: 1;
+	}
+
+	.arrow-line.dotted {
+		stroke-linecap: round;
 	}
 
 	.arrow-head {

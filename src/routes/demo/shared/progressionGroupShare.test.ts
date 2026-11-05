@@ -5,7 +5,7 @@ import {
 	songKeysMatchingGroupFilter
 } from "./progressionGroupShare.js";
 
-const TOTO_NAME = "toto";
+const TOTO_NAME = "say something";
 const AXIS_NAME = "axis of awesome";
 const AXIS_GROUP = "Axis of awesome";
 const HAPPY_GROUP = "Happy, major-y progressions";

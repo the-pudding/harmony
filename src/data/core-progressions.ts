@@ -121,7 +121,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: "swaps out the V for an angsty iii"
 		},
 		{
-			name: "toto",
+			name: "say something",
 			chordProgression: "vi-IV-I-V",
 			scale: "major",
 			description: "repeats starting on vi instead of I"
@@ -546,13 +546,12 @@ export const allProgressionGroups: ProgressionGroup[] = [
 	axisOfAwesomeProgressions
 ];
 
-// Explicit per-group colors rather than a cycling palette: axis-of-awesome is
-// a shade of major-y's blue since it's displayed as major-y's sub-family.
+// Explicit per-group colors rather than a cycling palette.
 const CORE_PROGRESSION_GROUP_COLORS: Record<string, string> = {
 	[happyMajoryProgressions.name]: "#4e79a7", // blue
 	[minoryProgressions.name]: "#f28e2c", // orange
 	[jazzyProgressions.name]: "#59a14f", // green
-	[axisOfAwesomeProgressions.name]: "#76b7b2" // light blue, sub-family of major-y
+	[axisOfAwesomeProgressions.name]: "#b07aa1" // purple
 };
 
 export const UNGROUPED_PROGRESSION_GROUP_COLOR = "#52525b";

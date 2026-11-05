@@ -1,9 +1,8 @@
 <script>
 	import { base } from "$app/paths";
-	import playSvg from "$svg/play.svg";
+	import PlayButton from "$components/PlayButton.svelte";
 	import { committedSyncedSongs } from "$data/syncedSongs";
 	import { audio, onStopAll } from "$runes/audio.svelte";
-	import Switch from "$components/ui/Switch.svelte";
 
 	let { songs = 3 } = $props();
 
@@ -55,13 +54,29 @@
 	let audioEl = $state();
 	let paused = $state(true);
 	let currentTime = $state(0);
-	let chordsOn = $state(true);
-	let melodyOn = $state(true);
-
-	// at least one part is always on
+	// which parts we hear: chords only, melody only, or both
+	const MODES = [
+		{ value: "chords", label: "Just chords" },
+		{ value: "both", label: "Both" },
+		{ value: "melody", label: "Just melody" }
+	];
+	let mode = $state("both");
+	let chordsOn = $derived(mode !== "melody");
+	let melodyOn = $derived(mode !== "chords");
 	let stem = $derived(
-		chordsOn && melodyOn ? "all" : chordsOn ? "instrumental" : "vocals"
+		mode === "both" ? "all" : mode === "chords" ? "instrumental" : "vocals"
 	);
+
+	let progress = $derived(Math.min(currentTime / CLIP_END, 1));
+
+	// the selected pill slides between options, so measure where each one sits
+	let modeEls = $state([]);
+	let modesWidth = $state(0);
+	let pill = $derived.by(() => {
+		modesWidth; // re-measure when the control resizes (e.g. fonts load)
+		const el = modeEls[MODES.findIndex((m) => m.value === mode)];
+		return el ? { x: el.offsetLeft, w: el.offsetWidth } : null;
+	});
 
 	// swap stems without losing our place
 	$effect(() => {
@@ -245,22 +260,44 @@
 <div class="ultimate-guitar">
 	{#if +songs === 1}
 		<div class="controls">
-			<!-- at least one part is always on -->
-			<div class="part chords">
-				<Switch
-					bind:checked={chordsOn}
-					disabled={chordsOn && !melodyOn}
-					labelText="Chords"
-					size="sm"
-				/>
-			</div>
-			<div class="part melody">
-				<Switch
-					bind:checked={melodyOn}
-					disabled={melodyOn && !chordsOn}
-					labelText="Melody"
-					size="sm"
-				/>
+			<PlayButton
+				{paused}
+				{progress}
+				label="Don't Stop Believin'"
+				onclick={togglePlay}
+			/>
+
+			<div
+				class="modes"
+				role="radiogroup"
+				aria-label="Parts to hear"
+				bind:clientWidth={modesWidth}
+			>
+				{#if pill}
+					<span
+						class="pill {mode}"
+						style:transform="translateX({pill.x}px)"
+						style:width="{pill.w}px"
+						aria-hidden="true"
+					>
+						<span class="half left"></span>
+						<span class="half right"></span>
+					</span>
+				{/if}
+				{#each MODES as m, i}
+					<button
+						class="mode {m.value}"
+						role="radio"
+						aria-checked={mode === m.value}
+						bind:this={modeEls[i]}
+						onclick={() => (mode = m.value)}
+					>
+						{#if m.value !== "both"}
+							<span class="swatch" aria-hidden="true"></span>
+						{/if}
+						{m.label}
+					</button>
+				{/each}
 			</div>
 		</div>
 	{/if}
@@ -317,17 +354,6 @@
 								{/each}
 							{/if}
 						</svg>
-
-						<button
-							class="play"
-							class:enabled={single}
-							class:visible={single && paused}
-							aria-label="{paused ? 'Play' : 'Pause'} Don't Stop Believin'"
-							tabindex={single ? 0 : -1}
-							onclick={togglePlay}
-						>
-							{@html playSvg}
-						</button>
 					{/if}
 				</div>
 			{/each}
@@ -425,92 +451,121 @@
 		fill: var(--color-melody);
 	}
 
-	button.play {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		background: none;
-		border: none;
-		padding: 0;
-		height: 3rem;
-		color: rgba(0, 0, 0, 0.6);
-		opacity: 0;
-		pointer-events: none;
-		transition: opacity 0.2s ease;
-	}
-
-	/* stays clickable while playing, so tapping it again pauses */
-	button.play.enabled {
-		pointer-events: auto;
-	}
-
-	button.play.visible {
-		opacity: 1;
-	}
-
-	button.play :global(svg) {
-		height: 100%;
-		width: auto;
-		transition: transform 0.2s ease;
-	}
-
-	button.play:hover :global(svg) {
-		transform: scale(1.1);
-	}
-
 	.controls {
 		position: relative;
 		z-index: 10;
 		flex-shrink: 0;
-		width: 100%;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		flex-wrap: wrap;
-		gap: 0.5rem 1.25rem;
-		max-width: 550px;
+		gap: 0.75rem 1rem;
 		margin: 0 auto;
-		padding: 0 1rem;
-		box-sizing: border-box;
+		padding: 0 1rem 0.5rem;
 		font-family: var(--font-mono);
 	}
 
-	.part.chords {
-		--part-color: var(--color-chords);
-	}
-
-	.part.melody {
-		--part-color: var(--color-melody);
-	}
-
-	.part :global(.bits-switch) {
-		font-family: inherit;
-		color: var(--color-gray-300);
-	}
-
-	.part :global([data-switch-root]),
-	.part :global([data-switch-root]:hover) {
+	/* one segmented control for the three listening modes */
+	.modes {
+		position: relative;
+		display: flex;
+		padding: 3px;
+		gap: 2px;
+		border-radius: 999px;
 		background: var(--color-gray-800);
-		border: 1px solid rgba(255, 255, 255, 0.2);
+		border: 1px solid rgba(255, 255, 255, 0.15);
 	}
 
-	.part :global([data-switch-root][data-state="checked"]) {
-		background: var(--part-color);
-		border-color: var(--part-color);
+	.mode {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.4rem 0.8rem;
+		border: none;
+		border-radius: 999px;
+		background: transparent;
+		color: var(--color-gray-300);
+		font-family: inherit;
+		font-size: var(--14px, 0.875rem);
+		line-height: 1;
+		white-space: nowrap;
+		opacity: 0.45;
+		cursor: pointer;
+		transition:
+			color 0.3s ease,
+			opacity 0.3s ease;
 	}
 
-	.part :global([data-switch-thumb]) {
-		background: var(--color-gray-400);
+	.mode.chords {
+		--part: var(--color-chords);
 	}
 
-	.part :global([data-state="checked"] [data-switch-thumb]) {
-		background: #09090b;
+	.mode.melody {
+		--part: var(--color-melody);
+	}
+
+	.swatch {
+		width: 0.6rem;
+		height: 0.6rem;
+		border-radius: 50%;
+		background: var(--part);
+		flex-shrink: 0;
+		transition: opacity 0.3s ease;
+	}
+
+	.mode:hover {
+		opacity: 0.8;
+	}
+
+	.mode[aria-checked="true"] {
+		color: #09090b;
+		opacity: 1;
+	}
+
+	.mode[aria-checked="true"] .swatch {
+		opacity: 0;
+	}
+
+	/* slides under the selected option; each half recolors so "Both"
+	   can blend from gold to blue while the pill moves */
+	.pill {
+		position: absolute;
+		top: 3px;
+		bottom: 3px;
+		left: 0;
+		display: flex;
+		border-radius: 999px;
+		overflow: hidden;
+		pointer-events: none;
+		transition:
+			transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+			width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	.half {
+		flex: 1;
+		transition: background-color 0.35s ease;
+	}
+
+	.pill.chords .half,
+	.pill.both .left {
+		background-color: var(--color-chords);
+	}
+
+	.pill.melody .half,
+	.pill.both .right {
+		background-color: var(--color-melody);
 	}
 
 	@media (prefers-reduced-motion: reduce) {
 		.card {
 			transition: opacity 300ms ease;
+		}
+
+		.pill,
+		.half {
+			transition: none;
 		}
 	}
 </style>

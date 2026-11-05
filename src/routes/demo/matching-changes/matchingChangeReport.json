@@ -252,7 +252,7 @@
 					"beforePercent": 98.18181818181819,
 					"afterPercent": 0,
 					"dominantBefore": "we found love",
-					"dominantAfter": "toto"
+					"dominantAfter": "say something"
 				},
 				{
 					"songKey": "ed-sheeran__shivers",
@@ -261,7 +261,7 @@
 					"beforePercent": 96.96969696969697,
 					"afterPercent": 0,
 					"dominantBefore": "we found love",
-					"dominantAfter": "toto"
+					"dominantAfter": "say something"
 				},
 				{
 					"songKey": "the-chainsmokers-featuring-rozes__roses",
@@ -270,7 +270,7 @@
 					"beforePercent": 90,
 					"afterPercent": 0,
 					"dominantBefore": "we found love",
-					"dominantAfter": "toto"
+					"dominantAfter": "say something"
 				},
 				{
 					"songKey": "taylor-swift__sparks-fly",
@@ -279,7 +279,7 @@
 					"beforePercent": 87.27272727272727,
 					"afterPercent": 0,
 					"dominantBefore": "we found love",
-					"dominantAfter": "toto"
+					"dominantAfter": "say something"
 				},
 				{
 					"songKey": "a-great-big-world-christina-aguilera__say-something",
@@ -288,7 +288,7 @@
 					"beforePercent": 75.67567567567568,
 					"afterPercent": 0,
 					"dominantBefore": "we found love",
-					"dominantAfter": "toto"
+					"dominantAfter": "say something"
 				}
 			]
 		},
@@ -345,7 +345,7 @@
 			]
 		},
 		{
-			"name": "toto",
+			"name": "say something",
 			"before": 0,
 			"after": 109,
 			"examples": [
@@ -356,7 +356,7 @@
 					"beforePercent": 0,
 					"afterPercent": 98.18181818181819,
 					"dominantBefore": "we found love",
-					"dominantAfter": "toto"
+					"dominantAfter": "say something"
 				},
 				{
 					"songKey": "ed-sheeran__shivers",
@@ -365,7 +365,7 @@
 					"beforePercent": 0,
 					"afterPercent": 96.96969696969697,
 					"dominantBefore": "we found love",
-					"dominantAfter": "toto"
+					"dominantAfter": "say something"
 				},
 				{
 					"songKey": "the-chainsmokers-featuring-rozes__roses",
@@ -374,7 +374,7 @@
 					"beforePercent": 0,
 					"afterPercent": 90,
 					"dominantBefore": "we found love",
-					"dominantAfter": "toto"
+					"dominantAfter": "say something"
 				},
 				{
 					"songKey": "taylor-swift__sparks-fly",
@@ -383,7 +383,7 @@
 					"beforePercent": 0,
 					"afterPercent": 87.27272727272727,
 					"dominantBefore": "we found love",
-					"dominantAfter": "toto"
+					"dominantAfter": "say something"
 				},
 				{
 					"songKey": "a-great-big-world-christina-aguilera__say-something",
@@ -392,7 +392,7 @@
 					"beforePercent": 0,
 					"afterPercent": 75.67567567567568,
 					"dominantBefore": "we found love",
-					"dominantAfter": "toto"
+					"dominantAfter": "say something"
 				}
 			]
 		},
