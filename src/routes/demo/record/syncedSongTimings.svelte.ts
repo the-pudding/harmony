@@ -2,7 +2,7 @@ import coreProgressions from "$data/core-progressions.js";
 import type { SyncedSongFile } from "$data/syncedSongs.js";
 import storage from "$utils/localStorage.js";
 import type { MusicalKey } from "../../../chord-processing/chordInKey.js";
-import type { DesignSong } from "./designSongs.js";
+import type { RecordSong } from "./recordSongs.js";
 import { buildRecordedSongSection } from "./matchedSongSections.js";
 import {
 	fromSyncedSongFile,
@@ -21,7 +21,7 @@ import {
 } from "./syncedTimings.js";
 import { popUndoEntry, pushUndoEntry } from "./undoHistory.js";
 
-const storageKeyFor = ({ songKey, videoId }: DesignSong): string =>
+const storageKeyFor = ({ songKey, videoId }: RecordSong): string =>
 	videoId ? `synced-video-chords:${videoId}` : `synced-song-chords:${songKey}`;
 
 // The chords there when recording (re)started, the chords played since, and
@@ -35,7 +35,7 @@ type RecordingPass = {
 
 // Unsaved edits live in localStorage until they're saved to the repo.
 export const createSyncedSongTimings = (
-	getSong: () => DesignSong,
+	getSong: () => RecordSong,
 	getCommittedFile: () => SyncedSongFile | undefined,
 	getDuration: () => number
 ) => {

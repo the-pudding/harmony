@@ -2,12 +2,12 @@ import { easeCubicInOut, interpolateRgb } from "d3";
 import {
 	appearanceFor,
 	type ChordAppearance
-} from "./chord-viz/chordAppearanceLookup.js";
-import type { ChordPalette } from "./chord-viz/chordPalettes.js";
-import { morphedShapePath } from "./chord-viz/chordShapes.js";
-import type { KeyTonality } from "./chord-viz/diatonicChords.js";
-import { simplifyRomanToken } from "./chord-viz/topProgressions.js";
-import { BLOB_RADIUS } from "./chord-viz/watercolor.js";
+} from "../design/chord-viz/chordAppearanceLookup.js";
+import type { ChordPalette } from "../design/chord-viz/chordPalettes.js";
+import { morphedShapePath } from "../design/chord-viz/chordShapes.js";
+import type { KeyTonality } from "../design/chord-viz/diatonicChords.js";
+import { simplifyRomanToken } from "../design/chord-viz/topProgressions.js";
+import { BLOB_RADIUS } from "../design/chord-viz/watercolor.js";
 import { isActiveAt, type ChordTimeline } from "./chordTimeline.js";
 
 type FractionSpan = { startFraction: number; endFraction: number };

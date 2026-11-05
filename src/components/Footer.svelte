@@ -10,7 +10,7 @@
 	let stories = $state<StoryRecirc[]>([]);
 	let storyCount = $state(0);
 
-	let { recirc = false, recent = true, recircImages = false } = $props();
+	let { recirc = true, recent = true, recircImages = true } = $props();
 
 	const v = Date.now();
 	const url = `https://pudding.cool/assets/data/stories.json?v=${v}`;
@@ -163,7 +163,7 @@
 
 <style>
 	footer {
-		margin-top: 100px;
+		/* margin-top: 100px; */
 	}
 
 	.c {

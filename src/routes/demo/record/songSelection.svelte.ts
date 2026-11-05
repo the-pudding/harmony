@@ -1,13 +1,13 @@
 import type { SyncedSongAudio } from "$data/syncedSongs.js";
 import { currentSearchParams } from "../shared/currentSearchParams.js";
-import { loadDesignSong, type DesignSong } from "./designSongs.js";
-import { readDesignSongKey, replaceSongInUrl } from "./designUrlState.js";
+import { loadRecordSong, type RecordSong } from "./recordSongs.js";
+import { readRecordSongKey, replaceSongInUrl } from "./recordUrlState.js";
 
 // The song picked from `getOptions` (kept in the URL), loaded with its
 // title, artist and key. Falls back to the first option.
 export const createSongSelection = (getOptions: () => SyncedSongAudio[]) => {
-	let pickedSongKey = $state(readDesignSongKey(currentSearchParams()));
-	let song = $state.raw<DesignSong | null>(null);
+	let pickedSongKey = $state(readRecordSongKey(currentSearchParams()));
+	let song = $state.raw<RecordSong | null>(null);
 	let loadError = $state("");
 
 	const selected = $derived(
@@ -21,7 +21,7 @@ export const createSongSelection = (getOptions: () => SyncedSongAudio[]) => {
 		loadError = "";
 		if (!audio) return;
 		let isCurrent = true;
-		loadDesignSong(audio)
+		loadRecordSong(audio)
 			.then((loaded) => {
 				if (isCurrent) song = loaded;
 			})

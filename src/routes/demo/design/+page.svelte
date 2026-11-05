@@ -1,47 +1,17 @@
 <script lang="ts">
 	import { TOP_NAV_HEIGHT } from "../../../chord-search-demo/constants.js";
 	import TopNavBar from "../../../chord-search-demo/top-nav-bar/TopNavBar.svelte";
-	import TabList from "../shared/TabList.svelte";
-	import { currentSearchParams } from "../shared/currentSearchParams.js";
+	import DemoSection from "../shared/DemoSection.svelte";
 	import ChordViz from "./chord-viz/ChordViz.svelte";
 	import DiatonicChordsPanel from "./chord-viz/DiatonicChordsPanel.svelte";
 	import FloatingChords from "./chord-viz/FloatingChords.svelte";
-	import DesignSection from "./DesignSection.svelte";
-	import SyncedSongDemo from "./SyncedSongDemo.svelte";
-	import SyncedSongRecorder from "./SyncedSongRecorder.svelte";
-	import SyncedVideoRecorder from "./SyncedVideoRecorder.svelte";
-	import {
-		DESIGN_TAB_CHORD_VIZ,
-		DESIGN_TAB_DEMOS,
-		DESIGN_TAB_LABELS,
-		DESIGN_TAB_SYNCED_SONG_PLAYER,
-		DESIGN_TAB_SYNCED_VIDEO,
-		DESIGN_TABS,
-		type DesignTab
-	} from "./designTabs.js";
-	import { readDesignTab, replaceTabInUrl } from "./designUrlState.js";
-	import type { PageProps } from "./$types.js";
 
-	let { data }: PageProps = $props();
-
-	const TAB_ID_PREFIX = "design";
-	const PURE_BLACK = "#000000";
-	const NEAR_BLACK = "#09090b";
+	const PAGE_BACKGROUND = "#000000";
 	const PAGE_FOREGROUND = "#f4f4f5";
 
-	let tab = $state(readDesignTab(currentSearchParams()));
-	const isChordVizTab = $derived(tab === DESIGN_TAB_CHORD_VIZ);
-	const pageBackground = $derived(isChordVizTab ? PURE_BLACK : NEAR_BLACK);
-
-	function selectTab(next: DesignTab) {
-		tab = next;
-		replaceTabInUrl(next);
-	}
-
 	$effect(() => {
-		if (!isChordVizTab) return;
 		const previousBackground = document.body.style.backgroundColor;
-		document.body.style.backgroundColor = PURE_BLACK;
+		document.body.style.backgroundColor = PAGE_BACKGROUND;
 		return () => {
 			document.body.style.backgroundColor = previousBackground;
 		};
@@ -58,8 +28,7 @@
 
 <div
 	class="page"
-	class:chord-viz-page={isChordVizTab}
-	style="--top-nav-height: {TOP_NAV_HEIGHT}; --page-background: {pageBackground}; --page-foreground: {PAGE_FOREGROUND};"
+	style="--top-nav-height: {TOP_NAV_HEIGHT}; --page-background: {PAGE_BACKGROUND}; --page-foreground: {PAGE_FOREGROUND};"
 >
 	<TopNavBar showSearch={false} />
 
@@ -68,43 +37,13 @@
 			<h1 class="page-title">Design</h1>
 		</div>
 
-		<TabList
-			tabs={DESIGN_TABS}
-			labels={DESIGN_TAB_LABELS}
-			{tab}
-			idPrefix={TAB_ID_PREFIX}
-			ariaLabel="Design views"
-			onselect={selectTab}
-		/>
-
-		<div
-			class="tab-panel"
-			role="tabpanel"
-			id="{TAB_ID_PREFIX}-panel-{tab}"
-			aria-labelledby="{TAB_ID_PREFIX}-tab-{tab}"
-		>
-			{#if tab === DESIGN_TAB_DEMOS}
-				<DesignSection title="Synced song player">
-					<SyncedSongDemo />
-				</DesignSection>
-				<DesignSection title="Chord viz">
-					<DiatonicChordsPanel />
-				</DesignSection>
-			{:else if tab === DESIGN_TAB_SYNCED_SONG_PLAYER}
-				<DesignSection title="Record sync">
-					<SyncedSongRecorder audioOptions={data.syncedSongAudio} />
-				</DesignSection>
-			{:else if tab === DESIGN_TAB_SYNCED_VIDEO}
-				<DesignSection title="Record video sync">
-					<SyncedVideoRecorder />
-				</DesignSection>
-			{:else if tab === DESIGN_TAB_CHORD_VIZ}
-				<DesignSection title="Chord viz">
-					<ChordViz />
-					<FloatingChords />
-				</DesignSection>
-			{/if}
-		</div>
+		<DemoSection title="Diatonic chords">
+			<DiatonicChordsPanel />
+		</DemoSection>
+		<DemoSection title="Chord viz">
+			<ChordViz />
+			<FloatingChords />
+		</DemoSection>
 	</div>
 </div>
 
@@ -117,7 +56,7 @@
 		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 	}
 
-	.page.chord-viz-page :global(.top-nav) {
+	.page :global(.top-nav) {
 		background: var(--page-background);
 	}
 
@@ -139,12 +78,6 @@
 		max-width: 80rem;
 		margin: 0 auto;
 		box-sizing: border-box;
-	}
-
-	.tab-panel {
-		display: flex;
-		flex-direction: column;
-		gap: 2rem;
 	}
 
 	.page-title {

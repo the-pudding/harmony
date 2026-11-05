@@ -7,10 +7,10 @@
 		type SyncedSongFile
 	} from "$data/syncedSongs.js";
 	import SyncedSongPlayer from "./SyncedSongPlayer.svelte";
-	import { loadDesignVideo, type DesignSong } from "./designSongs.js";
+	import { loadRecordVideo, type RecordSong } from "./recordSongs.js";
 
 	let videoId = $state(syncedVideos[0]?.videoId);
-	let song = $state.raw<DesignSong | null>(null);
+	let song = $state.raw<RecordSong | null>(null);
 	let loadError = $state("");
 	// Saved this session, before the data module reloads with them.
 	let savedFiles = $state.raw<Record<string, SyncedSongFile>>({});
@@ -23,7 +23,7 @@
 		loadError = "";
 		if (!picked) return;
 		let isCurrent = true;
-		loadDesignVideo(picked)
+		loadRecordVideo(picked)
 			.then((loaded) => {
 				if (isCurrent) song = loaded;
 			})
@@ -48,7 +48,7 @@
 				<code>src/data/syncedSongs.ts</code>.
 			</li>
 			<li>
-				Record it like a synced song (see <em>Record sync</em>): check the key,
+				Record it like a synced song (see the <em>Record audio</em> tab): check the key,
 				set the region, and play along on a MIDI keyboard. Chord times are
 				seconds into the video.
 			</li>

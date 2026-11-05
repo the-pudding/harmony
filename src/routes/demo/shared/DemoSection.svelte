@@ -9,13 +9,13 @@
 	let { title, children }: Props = $props();
 </script>
 
-<section class="design-section">
+<section class="demo-section">
 	<h2 class="section-title">{title}</h2>
 	{@render children()}
 </section>
 
 <style>
-	.design-section {
+	.demo-section {
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;

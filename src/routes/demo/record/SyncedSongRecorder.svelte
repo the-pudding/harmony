@@ -1,14 +1,17 @@
 <script lang="ts">
 	import {
+		committedSyncedSongClusters,
 		committedSyncedSongs,
+		syncedSongClusters,
 		SYNCED_SONG_AUDIO_DIRECTORY,
 		SYNCED_SONG_DATA_DIRECTORY,
 		type SyncedSongAudio,
 		type SyncedSongFile
 	} from "$data/syncedSongs.js";
+	import LabeledSelect from "./LabeledSelect.svelte";
 	import SongPicker from "./SongPicker.svelte";
 	import SyncedSongPlayer from "./SyncedSongPlayer.svelte";
-	import { songKeyLabel } from "./designSongs.js";
+	import { songKeyLabel } from "./recordSongs.js";
 	import { createSongSelection } from "./songSelection.svelte.js";
 
 	type Props = {
@@ -24,16 +27,55 @@
 	const committedFileOf = (songKey: string): SyncedSongFile | undefined =>
 		savedFiles[songKey] ?? committedSyncedSongs[songKey];
 
+	const isSaved = (songKey: string): boolean => !!committedFileOf(songKey);
+
 	const optionLabel = (option: SyncedSongAudio): string =>
-		`${songKeyLabel(option.songKey)}${committedFileOf(option.songKey) ? " · saved" : ""}`;
+		`${songKeyLabel(option.songKey)} · ${isSaved(option.songKey) ? "✅ saved" : "⬜ not saved yet"}`;
+
+	// Songs still to record first, then saved ones, each in file order.
+	const sortedAudioOptions = $derived(
+		[...audioOptions].sort(
+			(a, b) => Number(isSaved(a.songKey)) - Number(isSaved(b.songKey))
+		)
+	);
+
+	const clusterOptions = syncedSongClusters.map((name) => ({
+		value: name,
+		label: name
+	}));
+	// Cluster rows in reference.csv by song key, including ones saved since
+	// the page loaded, and clusters picked but not saved yet, per song so
+	// switching songs shows that song's own.
+	let savedClusters = $state<Record<string, string>>({
+		...committedSyncedSongClusters
+	});
+	let pickedClusters = $state<Record<string, string>>({});
+	const selectedSongKey = $derived(selection.selectedSongKey);
+	const savedCluster = $derived(
+		selectedSongKey ? (savedClusters[selectedSongKey] ?? "") : ""
+	);
+	const cluster = $derived(
+		selectedSongKey
+			? (pickedClusters[selectedSongKey] ?? savedCluster)
+			: ""
+	);
+
+	function pickCluster(name: string) {
+		if (selectedSongKey) pickedClusters[selectedSongKey] = name;
+	}
+
+	function markSaved(file: SyncedSongFile, savedFileCluster: string) {
+		savedFiles = { ...savedFiles, [file.songKey]: file };
+		savedClusters[file.songKey] = savedFileCluster;
+	}
 </script>
 
 <div class="recorder">
-	<div class="how-to">
-		<p class="how-to-heading">How to record a synced song</p>
+	<details class="how-to">
+		<summary class="how-to-heading">How to record a synced song</summary>
 		<ol>
 			<li>
-				Pick a song. Its audio comes from
+				Pick a song and the cluster it belongs to. Its audio comes from
 				<code
 					>static/{SYNCED_SONG_AUDIO_DIRECTORY}/{"{artist}__{song}"}.mp3</code
 				>
@@ -69,7 +111,7 @@
 				browser.
 			</li>
 		</ol>
-	</div>
+	</details>
 
 	{#if audioOptions.length === 0}
 		<p class="message">
@@ -77,12 +119,21 @@
 			<code>static/{SYNCED_SONG_AUDIO_DIRECTORY}/</code> and reload.
 		</p>
 	{:else}
-		<SongPicker
-			options={audioOptions}
-			songKey={selection.selectedSongKey}
-			labelOf={optionLabel}
-			onSelect={selection.select}
-		/>
+		<div class="pickers">
+			<SongPicker
+				options={sortedAudioOptions}
+				songKey={selection.selectedSongKey}
+				labelOf={optionLabel}
+				onSelect={selection.select}
+			/>
+			<LabeledSelect
+				label="Cluster"
+				options={clusterOptions}
+				value={cluster}
+				placeholder="Pick a cluster…"
+				onSelect={pickCluster}
+			/>
+		</div>
 
 		{#if selection.loadError}
 			<p class="message error">{selection.loadError}</p>
@@ -91,8 +142,9 @@
 				<SyncedSongPlayer
 					song={selection.song}
 					committedFile={committedFileOf(selection.song.songKey)}
-					onSaved={(file) =>
-						(savedFiles = { ...savedFiles, [file.songKey]: file })}
+					{cluster}
+					hasUnsavedCluster={cluster !== savedCluster}
+					onSaved={markSaved}
 					editing
 				/>
 			{/key}
@@ -120,8 +172,16 @@
 		color: #a1a1aa;
 	}
 
+	.pickers {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 1rem;
+	}
+
 	.how-to-heading {
-		margin: 0 0 0.375rem;
+		cursor: pointer;
+		margin: 0;
 		font-size: 0.625rem;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
@@ -129,7 +189,7 @@
 	}
 
 	ol {
-		margin: 0;
+		margin: 0.5rem 0 0;
 		padding-left: 1.25rem;
 	}
 

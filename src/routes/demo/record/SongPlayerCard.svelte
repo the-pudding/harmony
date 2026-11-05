@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { DesignSong } from "./designSongs.js";
+	import type { RecordSong } from "./recordSongs.js";
 
 	type Props = {
-		song: DesignSong;
+		song: RecordSong;
 		paused: boolean;
 		onTogglePlayback: () => void;
 		onRestart: () => void;

@@ -2,7 +2,7 @@
 	import { committedSyncedSongs } from "$data/syncedSongs.js";
 	import SongPicker from "./SongPicker.svelte";
 	import SyncedSongPlayer from "./SyncedSongPlayer.svelte";
-	import { songKeyLabel } from "./designSongs.js";
+	import { songKeyLabel } from "./recordSongs.js";
 	import { createSongSelection } from "./songSelection.svelte.js";
 
 	const syncedSongs = Object.values(committedSyncedSongs)
@@ -15,7 +15,7 @@
 <div class="demo">
 	{#if syncedSongs.length === 0}
 		<p class="message">
-			No synced songs yet. Record one in the Record sync tab and save it.
+			No synced songs yet. Record one in the Record audio tab and save it.
 		</p>
 	{:else}
 		<SongPicker

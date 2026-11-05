@@ -5,6 +5,7 @@ import {
 	SYNCED_SONG_AUDIO_DIRECTORY,
 	type SyncedSongAudio
 } from "$data/syncedSongs.js";
+import { loadClusterIdeas } from "./loadClusterIdeas.server.js";
 import type { PageServerLoad } from "./$types.js";
 
 const AUDIO_DIRECTORY = path.join(
@@ -30,5 +31,6 @@ const listSyncedSongAudio = (): SyncedSongAudio[] => {
 };
 
 export const load: PageServerLoad = () => ({
-	syncedSongAudio: listSyncedSongAudio()
+	syncedSongAudio: listSyncedSongAudio(),
+	clusterIdeas: loadClusterIdeas()
 });

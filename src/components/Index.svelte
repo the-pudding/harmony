@@ -17,6 +17,7 @@
 	import Signatures from "$components/Signatures.svelte";
 	import ExploreControls from "$components/ExploreControls.svelte";
 	import List from "$components/List.svelte";
+	import Footer from "$components/Footer.svelte";
 	import CMS from "$components/helpers/CMS.svelte";
 	import { fade } from "svelte/transition";
 	import copy from "$data/copy.json";
@@ -24,12 +25,12 @@
 	import { chordify } from "$utils/chordify";
 	import { setContext, untrack } from "svelte";
 	import reference from "$data/synced-songs/reference.csv";
-	import { spanStyle } from "$routes/demo/design/timelineStyles";
+	import { spanStyle } from "$routes/demo/record/timelineStyles";
 	import { audio, stopAllAudio } from "$runes/audio.svelte";
 	import mutedSvg from "$svg/muted.svg";
 	import unmutedSvg from "$svg/unmuted.svg";
 
-	const debugSlide = undefined;
+	const debugSlide = 34; // undefined;
 
 	const components = {
 		Landing,
@@ -43,7 +44,8 @@
 		UltimateGuitar,
 		RomanNumerals,
 		EffectiveProgressions,
-		ExploreControls
+		ExploreControls,
+		Footer
 	};
 
 	let slideCount = 0;

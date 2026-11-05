@@ -364,6 +364,10 @@
             {
               "type": "text",
               "value": "<span class=chord>vi</span>, the final chord in <strong class=progression>axis of awesome</strong> (<span class=chords>I-V-vi-IV</span>), is next most common at [7%]."
+            },
+            {
+              "type": "text",
+              "value": "You can tell a complete musical story with just 3 or 4 chords."
             }
           ],
           "map": {
@@ -631,9 +635,15 @@
           "text": [
             {
               "type": "text",
-              "value": "Methods + Footer"
+              "value": "Methods methods methods"
             }
           ]
+        },
+        {
+          "text": [],
+          "stage": {
+            "component": "Footer"
+          }
         }
       ]
     }

@@ -1,4 +1,4 @@
-// Time-synced chord data recorded in the Record sync tab of /demo/design.
+// Time-synced chord data recorded in the Record tab of /demo/record.
 // One file per song at src/data/synced-songs/{songKey}.json, listing each
 // chord change heard in its audio at static/assets/audio/synced-songs/
 // {audioFile}: when it starts (seconds into the audio), the chord, and its

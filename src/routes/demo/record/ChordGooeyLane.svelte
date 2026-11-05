@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { interpolateRgb } from "d3";
 	import ChordLane from "./ChordLane.svelte";
-	import WatercolorFilters from "./chord-viz/WatercolorFilters.svelte";
+	import WatercolorFilters from "../design/chord-viz/WatercolorFilters.svelte";
 	import {
 		DEFAULT_WATERCOLOR_SETTINGS,
 		FILTER_REGION,
 		watercolorFilterIdsFor
-	} from "./chord-viz/watercolor.js";
+	} from "../design/chord-viz/watercolor.js";
 	import {
 		byProgression,
 		chordGlideAt,

@@ -1,9 +1,7 @@
 <script>
 	let { activeSlide, sections, onselect } = $props();
 
-	let visibleSections = $derived(
-		sections.filter((d) => d.title !== "Explore" && d.title !== "Intro")
-	);
+	let visibleSections = $derived(sections.filter((d) => d.title !== "Intro"));
 	let visible = $derived(
 		visibleSections.some((d) => d.slides.some((s) => s.i === activeSlide))
 	);

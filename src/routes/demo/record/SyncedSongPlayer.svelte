@@ -11,12 +11,12 @@
 	import RegionControls from "./RegionControls.svelte";
 	import SongPlayerCard from "./SongPlayerCard.svelte";
 	import SyncedSongActions from "./SyncedSongActions.svelte";
-	import { tonalityOfScale } from "./chord-viz/diatonicChords.js";
+	import { tonalityOfScale } from "../design/chord-viz/diatonicChords.js";
 	import { currentSearchParams } from "../shared/currentSearchParams.js";
-	import type { DesignSong } from "./designSongs.js";
+	import type { RecordSong } from "./recordSongs.js";
 	import { SONG_START_SECONDS } from "./songTime.js";
-	import { readDesignUrlState } from "./designUrlState.js";
-	import { syncDesignUrlState } from "./designUrlSync.svelte.js";
+	import { readRecordUrlState } from "./recordUrlState.js";
+	import { syncRecordUrlState } from "./recordUrlSync.svelte.js";
 	import {
 		isTypingTarget,
 		playerActionFor,
@@ -31,15 +31,25 @@
 	import { cropPeaksToRange } from "./waveformPeaks.js";
 
 	type Props = {
-		song: DesignSong;
+		song: RecordSong;
 		committedFile?: SyncedSongFile;
 		editing?: boolean;
-		onSaved?: (file: SyncedSongFile) => void;
+		// Audio songs only: the cluster picked for the song, saved with it.
+		cluster?: string;
+		hasUnsavedCluster?: boolean;
+		onSaved?: (file: SyncedSongFile, cluster: string) => void;
 	};
 
-	let { song, committedFile, editing = false, onSaved }: Props = $props();
+	let {
+		song,
+		committedFile,
+		editing = false,
+		cluster,
+		hasUnsavedCluster,
+		onSaved
+	}: Props = $props();
 
-	const initialUrlState = readDesignUrlState(currentSearchParams());
+	const initialUrlState = readRecordUrlState(currentSearchParams());
 
 	let paused = $state(true);
 	let currentTime = $state(initialUrlState.playheadSeconds);
@@ -47,7 +57,7 @@
 	let zoom = $state(initialUrlState.zoom);
 	let audio = $state<HTMLMediaElement>();
 
-	syncDesignUrlState(() => ({ zoom, playheadSeconds: currentTime }));
+	syncRecordUrlState(() => ({ zoom, playheadSeconds: currentTime }));
 
 	const timings = createSyncedSongTimings(
 		() => song,
@@ -171,12 +181,14 @@
 					? `${SYNCED_VIDEO_DATA_DIRECTORY}/${song.videoId}.json`
 					: `${SYNCED_SONG_DATA_DIRECTORY}/${song.songKey}.json`}
 				videoId={song.videoId}
+				{cluster}
+				{hasUnsavedCluster}
 				canSave={timings.editable}
 				hasLocalEdits={timings.hasLocalEdits}
 				hasRecordedChords={timings.hasRecordedChords}
-				onSaved={(file) => {
+				onSaved={(file, savedCluster) => {
 					timings.markSaved(file);
-					onSaved?.(file);
+					onSaved?.(file, savedCluster);
 				}}
 				onDiscardLocalEdits={timings.discardLocalEdits}
 				onClearChords={timings.clearChords}

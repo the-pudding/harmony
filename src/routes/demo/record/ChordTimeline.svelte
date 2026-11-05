@@ -5,7 +5,7 @@
 	import ChordWatercolorLane from "./ChordWatercolorLane.svelte";
 	import Waveform from "./Waveform.svelte";
 	import ZoomControls from "./ZoomControls.svelte";
-	import type { KeyTonality } from "./chord-viz/diatonicChords.js";
+	import type { KeyTonality } from "../design/chord-viz/diatonicChords.js";
 	import { LANE_BACKGROUND_BLACK, laneChordsOf } from "./chordLanes.js";
 	import { isActiveAt, type ChordTimeline } from "./chordTimeline.js";
 	import { formatTimestamp } from "./songTime.js";

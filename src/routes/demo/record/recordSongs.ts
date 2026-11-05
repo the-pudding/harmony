@@ -14,7 +14,7 @@ import { resolveSongKey } from "../../../chord-processing/songIdentity.js";
 import type { SongInput } from "../../../chord-processing/types.js";
 import { buildChordSheet, type ChordSheetSection } from "./chordSheet.js";
 
-export type DesignSong = {
+export type RecordSong = {
 	songKey: string;
 	audioFile: string;
 	title: string;
@@ -59,10 +59,10 @@ const corpusKeyOf = (songInputs: SongInput[]): MusicalKey => {
 
 // Title, artist and key from the corpus; a song that isn't in it is named
 // after its file and starts in C major.
-export const buildDesignSong = (
+export const buildRecordSong = (
 	audio: SyncedSongAudio,
 	songInputs: SongInput[]
-): DesignSong => {
+): RecordSong => {
 	const correctedInputs = applyHandReviewedCorrections(songInputs);
 	const [groupedSong] = groupSongs(correctedInputs);
 	const [artistSlug, titleSlug] = audio.songKey.split("__");
@@ -86,18 +86,18 @@ const fetchSongInputs = async (songKey: string): Promise<SongInput[]> => {
 	return inputs.filter((input) => resolveSongKey(input) === songKey);
 };
 
-export const loadDesignSong = async (
+export const loadRecordSong = async (
 	audio: SyncedSongAudio
-): Promise<DesignSong> =>
-	buildDesignSong(audio, await fetchSongInputs(audio.songKey));
+): Promise<RecordSong> =>
+	buildRecordSong(audio, await fetchSongInputs(audio.songKey));
 
 // The video's song, playing the video instead of the song's audio.
-export const loadDesignVideo = async ({
+export const loadRecordVideo = async ({
 	videoId,
 	songKey
-}: SyncedVideo): Promise<DesignSong> => {
+}: SyncedVideo): Promise<RecordSong> => {
 	const audioFile = `${videoId}.mp4`;
-	const song = buildDesignSong(
+	const song = buildRecordSong(
 		{ songKey, audioFile },
 		await fetchSongInputs(songKey)
 	);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { morphedShapePath } from "./chord-viz/chordShapes.js";
+import { morphedShapePath } from "../design/chord-viz/chordShapes.js";
 import {
 	GLIDE_START_FRACTION,
 	HOVER_STROKE_ON_DARK,
