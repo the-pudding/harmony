@@ -105,10 +105,30 @@
 				spelling: progressionSpelling(progressionName)
 			}));
 
+	// Clusters named with every word of the query (e.g. "jazz doo wop"),
+	// name prefix matches first, then bigger clusters.
+	const clusterNameResults = (q) => {
+		const words = q.split(" ");
+		return clusters
+			.flatMap((cluster) => {
+				const name = normalize(cluster.name);
+				if (!words.every((word) => name.includes(word))) return [];
+				return [{ cluster, rank: name.startsWith(q) ? 0 : 1 }];
+			})
+			.sort((a, b) => a.rank - b.rank || b.cluster.songCount - a.cluster.songCount)
+			.map(({ cluster }) => ({
+				type: "cluster",
+				key: cluster.name,
+				cluster,
+				spelling: cluster.progressionNames.map(progressionSpelling).join(" · ")
+			}));
+	};
+
 	const results = $derived.by(() => {
 		if (parsed.kind !== "text") return clusterResults(parsed.codes);
 		const q = normalize(query);
-		return q ? songResults(q) : [];
+		if (!q) return [];
+		return [...clusterNameResults(q), ...songResults(q)].slice(0, MAX_RESULTS);
 	});
 
 	$effect(() => {
