@@ -1,0 +1,24 @@
+{
+	"songKey": "t-i-featuring-rihanna__live-your-life",
+	"audioFile": "t-i-featuring-rihanna__live-your-life.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 36.905, "endSeconds": 61.82 },
+	"chords": [
+		{ "seconds": 37.875, "chord": "G", "roman": "IV" },
+		{ "seconds": 39.167, "chord": "D", "roman": "I" },
+		{ "seconds": 40.767, "chord": "A", "roman": "V" },
+		{ "seconds": 42.111, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 43.776, "chord": "G", "roman": "IV" },
+		{ "seconds": 45.095, "chord": "D", "roman": "I" },
+		{ "seconds": 46.785, "chord": "A", "roman": "V" },
+		{ "seconds": 48.121, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 49.763, "chord": "G", "roman": "IV" },
+		{ "seconds": 51.099, "chord": "D", "roman": "I" },
+		{ "seconds": 52.756, "chord": "A", "roman": "V" },
+		{ "seconds": 54.112, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 55.772, "chord": "G", "roman": "IV" },
+		{ "seconds": 57.144, "chord": "D", "roman": "I" },
+		{ "seconds": 58.767, "chord": "A", "roman": "V" },
+		{ "seconds": 60.11, "chord": "Bm", "roman": "vi" }
+	]
+}

@@ -1,0 +1,20 @@
+{
+	"songKey": "taylor-swift__we-are-never-ever-getting-back-together",
+	"audioFile": "taylor-swift__we-are-never-ever-getting-back-together.mp3",
+	"key": { "tonic": "G", "scale": "major" },
+	"region": { "startSeconds": 42.551, "endSeconds": 59.561 },
+	"chords": [
+		{ "seconds": 43.729, "chord": "C", "roman": "IV" },
+		{ "seconds": 45.137, "chord": "G", "roman": "I" },
+		{ "seconds": 46.478, "chord": "D", "roman": "V" },
+		{ "seconds": 47.912, "chord": "Em", "roman": "vi" },
+		{ "seconds": 49.282, "chord": "C", "roman": "IV" },
+		{ "seconds": 50.675, "chord": "G", "roman": "I" },
+		{ "seconds": 52.064, "chord": "D", "roman": "V" },
+		{ "seconds": 53.482, "chord": "Em", "roman": "vi" },
+		{ "seconds": 54.848, "chord": "C", "roman": "IV" },
+		{ "seconds": 56.273, "chord": "G", "roman": "I" },
+		{ "seconds": 57.658, "chord": "D", "roman": "V" },
+		{ "seconds": 59.049, "chord": "Em", "roman": "vi" }
+	]
+}

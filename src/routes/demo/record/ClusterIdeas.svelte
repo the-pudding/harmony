@@ -7,6 +7,7 @@
 		MAX_GROUP_SIZE,
 		MIN_GROUP_SIZE,
 		MIN_SHARE_PERCENT,
+		type ClusterIdeaSong,
 		type ClusterIdeasByMode
 	} from "./clusterIdeas.js";
 	import { RECORD_TAB_AUDIO } from "./recordTabs.js";
@@ -54,6 +55,30 @@
 		`?tab=${RECORD_TAB_AUDIO}&song=${encodeURIComponent(songKey)}`;
 </script>
 
+{#snippet songRow(song: ClusterIdeaSong, isExtra: boolean)}
+	<tr class:extra={isExtra}>
+		<td class="year">{song.year}</td>
+		<td class="title">
+			{song.title}
+			<span class="artists">— {song.artists.join(", ")}</span>
+		</td>
+		<td class="share">{Math.round(song.sharePercent)}%</td>
+		<td class="status">
+			{#if committedSyncedSongs[song.songKey]}
+				<span class="badge synced">✅ synced</span>
+			{:else if hasAudio.has(song.songKey)}
+				<a
+					class="badge audio"
+					href={recordHref(song.songKey)}
+					data-sveltekit-reload>record →</a
+				>
+			{:else}
+				<span class="badge none">no audio</span>
+			{/if}
+		</td>
+	</tr>
+{/snippet}
+
 <div class="ideas">
 	<p class="intro">
 		Groups of {MIN_GROUP_SIZE}–{MAX_GROUP_SIZE} songs in the same key where the
@@ -99,33 +124,25 @@
 							key</span
 						>
 					</div>
-					<table>
-						<tbody>
-							{#each idea.songs as song (song.songKey)}
-								<tr>
-									<td class="year">{song.year}</td>
-									<td class="title">
-										{song.title}
-										<span class="artists">— {song.artists.join(", ")}</span>
-									</td>
-									<td class="share">{Math.round(song.sharePercent)}%</td>
-									<td class="status">
-										{#if committedSyncedSongs[song.songKey]}
-											<span class="badge synced">✅ synced</span>
-										{:else if hasAudio.has(song.songKey)}
-											<a
-												class="badge audio"
-												href={recordHref(song.songKey)}
-												data-sveltekit-reload>record →</a
-											>
-										{:else}
-											<span class="badge none">no audio</span>
-										{/if}
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
+					<div class="songs-scroll">
+						<table>
+							<tbody>
+								{#each idea.songs as song (song.songKey)}
+									{@render songRow(song, false)}
+								{/each}
+								{#if idea.otherSongs.length > 0}
+									<tr class="divider">
+										<td colspan="4">
+											{idea.otherSongs.length} more in {idea.keyLabel}, strongest first
+										</td>
+									</tr>
+									{#each idea.otherSongs as song (song.songKey)}
+										{@render songRow(song, true)}
+									{/each}
+								{/if}
+							</tbody>
+						</table>
+					</div>
 				</li>
 			{/each}
 		</ol>
@@ -196,6 +213,21 @@
 
 	.meta {
 		color: #71717a;
+	}
+
+	.songs-scroll {
+		max-height: 18rem;
+		overflow-y: auto;
+	}
+
+	.divider td {
+		padding-top: 0.75rem;
+		color: #71717a;
+		border-top: 1px solid rgba(63, 63, 70, 0.9);
+	}
+
+	.extra {
+		opacity: 0.8;
 	}
 
 	table {

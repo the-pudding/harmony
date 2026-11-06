@@ -1,0 +1,16 @@
+{
+	"songKey": "taylor-swift__bad-blood-taylor-s-version",
+	"audioFile": "taylor-swift__bad-blood-taylor-s-version.mp3",
+	"key": { "tonic": "G", "scale": "major" },
+	"region": { "startSeconds": 56.808, "endSeconds": 68.491 },
+	"chords": [
+		{ "seconds": 57.296, "chord": "C", "roman": "IV" },
+		{ "seconds": 58.754, "chord": "G", "roman": "I" },
+		{ "seconds": 60.141, "chord": "D", "roman": "V" },
+		{ "seconds": 61.582, "chord": "Em", "roman": "vi" },
+		{ "seconds": 62.962, "chord": "C", "roman": "IV" },
+		{ "seconds": 64.379, "chord": "G", "roman": "I" },
+		{ "seconds": 65.799, "chord": "D", "roman": "V" },
+		{ "seconds": 67.192, "chord": "Em", "roman": "vi" }
+	]
+}

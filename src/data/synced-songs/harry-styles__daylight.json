@@ -1,0 +1,18 @@
+{
+	"songKey": "harry-styles__daylight",
+	"audioFile": "harry-styles__daylight.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 66.646, "endSeconds": 86.564 },
+	"chords": [
+		{ "seconds": 66.923, "chord": "C", "roman": "I" },
+		{ "seconds": 69.366, "chord": "F", "roman": "IV" },
+		{ "seconds": 71.851, "chord": "C", "roman": "I" },
+		{ "seconds": 74.353, "chord": "F", "roman": "IV" },
+		{ "seconds": 76.804, "chord": "C", "roman": "I" },
+		{ "seconds": 79.286, "chord": "F", "roman": "IV" },
+		{ "seconds": 81.734, "chord": "C", "roman": "I" },
+		{ "seconds": 84.214, "chord": "F", "roman": "IV" },
+		{ "seconds": 86.679, "chord": "C", "roman": "I" },
+		{ "seconds": 89.172, "chord": "F", "roman": "IV" }
+	]
+}

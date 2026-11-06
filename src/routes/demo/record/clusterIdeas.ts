@@ -31,6 +31,8 @@ export type ClusterKeyIdea = {
 	keyLabel: string;
 	// Oldest first.
 	songs: ClusterIdeaSong[];
+	// Every other song in this key, strongest first, covers counted once.
+	otherSongs: ClusterIdeaSong[];
 	decadeCount: number;
 	// Every song in the cluster in this key, before picking the group.
 	candidateCount: number;
@@ -50,6 +52,17 @@ const normalizedTitle = (title: string): string =>
 const byStrength = (a: ClusterIdeaSong, b: ClusterIdeaSong): number =>
 	songStrength(b) - songStrength(a);
 
+// Strongest first. Covers of the same title count once.
+const distinctByStrength = (songs: ClusterIdeaSong[]): ClusterIdeaSong[] => {
+	const seenTitles = new Set<string>();
+	return [...songs].sort(byStrength).filter((song) => {
+		const title = normalizedTitle(song.title);
+		if (seenTitles.has(title)) return false;
+		seenTitles.add(title);
+		return true;
+	});
+};
+
 // With `spreadAcrossYears`, the strongest song from each decade first, so
 // the group spans time, then the next strongest overall until there are
 // enough. Without it, just the strongest songs. Covers of the same title
@@ -58,13 +71,7 @@ export const pickKeyGroup = (
 	songs: ClusterIdeaSong[],
 	spreadAcrossYears = true
 ): ClusterIdeaSong[] => {
-	const seenTitles = new Set<string>();
-	const distinct = [...songs].sort(byStrength).filter((song) => {
-		const title = normalizedTitle(song.title);
-		if (seenTitles.has(title)) return false;
-		seenTitles.add(title);
-		return true;
-	});
+	const distinct = distinctByStrength(songs);
 
 	if (!spreadAcrossYears) {
 		return distinct
@@ -107,6 +114,9 @@ export const buildClusterKeyIdeas = (
 			{
 				keyLabel,
 				songs: group,
+				otherSongs: distinctByStrength(songs).filter(
+					(song) => !group.includes(song)
+				),
 				decadeCount: new Set(group.map((song) => decadeOf(song.year))).size,
 				candidateCount: songs.length
 			}

@@ -1,0 +1,20 @@
+{
+	"songKey": "jay-sean__down",
+	"audioFile": "jay-sean__down.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 61.364, "endSeconds": 84.332 },
+	"chords": [
+		{ "seconds": 62.548, "chord": "G", "roman": "IV" },
+		{ "seconds": 64.381, "chord": "D", "roman": "I" },
+		{ "seconds": 66.182, "chord": "A", "roman": "V" },
+		{ "seconds": 67.989, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 69.811, "chord": "G", "roman": "IV" },
+		{ "seconds": 71.649, "chord": "D", "roman": "I" },
+		{ "seconds": 73.465, "chord": "A", "roman": "V" },
+		{ "seconds": 75.254, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 77.071, "chord": "G", "roman": "IV" },
+		{ "seconds": 78.909, "chord": "D", "roman": "I" },
+		{ "seconds": 80.735, "chord": "A", "roman": "V" },
+		{ "seconds": 82.526, "chord": "Bm", "roman": "vi" }
+	]
+}
