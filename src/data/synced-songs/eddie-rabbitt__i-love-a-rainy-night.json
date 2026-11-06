@@ -1,0 +1,20 @@
+{
+	"songKey": "eddie-rabbitt__i-love-a-rainy-night",
+	"audioFile": "eddie-rabbitt__i-love-a-rainy-night.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 43.783, "endSeconds": 58.85 },
+	"chords": [
+		{ "seconds": 44.287, "chord": "C", "roman": "I" },
+		{ "seconds": 46.094, "chord": "F", "roman": "IV" },
+		{ "seconds": 47.019, "chord": "G", "roman": "V" },
+		{ "seconds": 47.922, "chord": "C", "roman": "I" },
+		{ "seconds": 49.757, "chord": "F", "roman": "IV" },
+		{ "seconds": 50.688, "chord": "G", "roman": "V" },
+		{ "seconds": 51.61, "chord": "C", "roman": "I" },
+		{ "seconds": 53.368, "chord": "F", "roman": "IV" },
+		{ "seconds": 54.291, "chord": "G", "roman": "V" },
+		{ "seconds": 55.254, "chord": "C", "roman": "I" },
+		{ "seconds": 57.019, "chord": "F", "roman": "IV" },
+		{ "seconds": 57.765, "chord": "G", "roman": "V" }
+	]
+}

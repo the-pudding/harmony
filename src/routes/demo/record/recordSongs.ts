@@ -30,7 +30,7 @@ export type RecordSong = {
 
 export const DEFAULT_KEY: MusicalKey = { tonic: "C", scale: "major" };
 
-const audioSrcOf = (audioFile: string): string =>
+export const audioSrcOf = (audioFile: string): string =>
 	`${base}/${SYNCED_SONG_AUDIO_DIRECTORY}/${encodeURIComponent(audioFile)}`;
 
 const titleCase = (slug: string): string =>

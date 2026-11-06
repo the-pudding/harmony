@@ -1,0 +1,26 @@
+{
+	"songKey": "deep-blue-something__breakfast-at-tiffany-s",
+	"audioFile": "deep-blue-something__breakfast-at-tiffany-s.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 0, "endSeconds": 26.361 },
+	"chords": [
+		{ "seconds": 0.372, "chord": "D", "roman": "I" },
+		{ "seconds": 2.631, "chord": "G", "roman": "IV" },
+		{ "seconds": 3.471, "chord": "A", "roman": "V" },
+		{ "seconds": 4.77, "chord": "D", "roman": "I" },
+		{ "seconds": 6.93, "chord": "G", "roman": "IV" },
+		{ "seconds": 7.777, "chord": "A", "roman": "V" },
+		{ "seconds": 9.133, "chord": "D", "roman": "I" },
+		{ "seconds": 11.281, "chord": "G", "roman": "IV" },
+		{ "seconds": 12.097, "chord": "A", "roman": "V" },
+		{ "seconds": 13.498, "chord": "D", "roman": "I" },
+		{ "seconds": 15.664, "chord": "G", "roman": "IV" },
+		{ "seconds": 16.501, "chord": "A", "roman": "V" },
+		{ "seconds": 17.842, "chord": "D", "roman": "I" },
+		{ "seconds": 19.997, "chord": "G", "roman": "IV" },
+		{ "seconds": 20.835, "chord": "A", "roman": "V" },
+		{ "seconds": 22.164, "chord": "D", "roman": "I" },
+		{ "seconds": 24.352, "chord": "G", "roman": "IV" },
+		{ "seconds": 25.222, "chord": "A", "roman": "V" }
+	]
+}

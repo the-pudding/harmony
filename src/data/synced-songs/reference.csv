@@ -1,20 +1,29 @@
-cluster,songKey,startSeconds,endSeconds
-axis of awesome,alicia-keys__no-one,34.579,66.813
-axis of awesome,journey__dont-stop-believin,16.638,33.854
-axis of awesome,noah-kahan__stick-season,51.062,83.946
-axis of awesome,taylor-swift__all-too-well-taylor-s-version,87.949,118.957
-doo wop,ben-e-king__stand-by-me,15.556,46.273
-doo wop,bobby-vee__rubber-ball,0,9.465
-doo wop,bruno-mars__just-the-way-you-are,66.587,103.888
-doo wop,meghan-trainor__dear-future-husband,36.532,60.809
-happy walk up,joan-jett-the-blackhearts__i-love-rock-n-roll,69.205,80.489
-happy walk up,los-lobos__la-bamba,55.476,75.847
-happy walk up,shania-twain__you-re-still-the-one,16.645,45.384
-happy walk up,the-beatles__twist-and-shout,6.993,29.594
-I-IV vamp,john-lennon-plastic-ono-band__imagine,14.018,39.297
-I-IV vamp,lou-reed__walk-on-the-wild-side,10.654,29.572
-we found love,demi-lovato__cool-for-the-summer,10.904,36.469
-we found love,kelly-clarkson__stronger-what-doesn-t-kill-you,42.422,69.261
-we found love,lady-gaga__poker-face,56.522,72.9
-we found love,nelly__just-a-dream,20.287,42.872
-we found love,rihanna-featuring-calvin-harris__we-found-love,149.146,179.319
+cluster,songKey,startSeconds,endSeconds,visible
+axis of awesome,alicia-keys__no-one,34.579,66.813,true
+axis of awesome,journey__dont-stop-believin,16.638,33.854,true
+axis of awesome,taylor-swift__all-too-well-taylor-s-version,87.949,118.957,true
+axis of awesome,maroon-5-featuring-cardi-b__girls-like-you,38.878,62.191,true
+axis of awesome,adele__someone-like-you,73.454,109.893,true
+axis of awesome,noah-kahan__stick-season,51.062,83.946,true
+axis of awesome,henry-lee-summer__i-wish-i-had-a-girl,39.044,69.624,true
+doo wop,ben-e-king__stand-by-me,15.556,46.273,true
+doo wop,bruno-mars__just-the-way-you-are,66.587,103.888,true
+doo wop,carpenters__please-mr-postman,9.433,38.335,true
+doo wop,sean-kingston__beautiful-girls,31.359,62.126,true
+doo wop,the-drifters__there-goes-my-baby,15.254,44.99,true
+doo wop,bobby-vee__rubber-ball,0,9.465,false
+doo wop,meghan-trainor__dear-future-husband,36.532,60.809,false
+happy walk up,los-lobos__la-bamba,55.476,75.847,true
+happy walk up,eddie-rabbitt__i-love-a-rainy-night,43.783,58.85,true
+happy walk up,olivia-rodrigo__drop-dead,50.482,80.112,true
+happy walk up,the-beatles__twist-and-shout,6.993,29.594,true
+happy walk up,deep-blue-something__breakfast-at-tiffany-s,0,26.361,true
+happy walk up,joan-jett-the-blackhearts__i-love-rock-n-roll,69.205,80.489,false
+happy walk up,shania-twain__you-re-still-the-one,16.645,45.384,false
+I-IV vamp,john-lennon-plastic-ono-band__imagine,14.018,39.297,true
+I-IV vamp,lou-reed__walk-on-the-wild-side,10.654,29.572,true
+we found love,demi-lovato__cool-for-the-summer,10.904,36.469,true
+we found love,kelly-clarkson__stronger-what-doesn-t-kill-you,42.422,69.261,true
+we found love,lady-gaga__poker-face,56.522,72.9,true
+we found love,nelly__just-a-dream,20.287,42.872,true
+we found love,rihanna-featuring-calvin-harris__we-found-love,149.146,179.319,true

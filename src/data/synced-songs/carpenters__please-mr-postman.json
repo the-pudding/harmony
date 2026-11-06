@@ -1,0 +1,16 @@
+{
+	"songKey": "carpenters__please-mr-postman",
+	"audioFile": "carpenters__please-mr-postman.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 9.433, "endSeconds": 38.335 },
+	"chords": [
+		{ "seconds": 9.562, "chord": "A", "roman": "I" },
+		{ "seconds": 13.179, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 16.806, "chord": "D", "roman": "IV" },
+		{ "seconds": 20.397, "chord": "E", "roman": "V" },
+		{ "seconds": 23.951, "chord": "A", "roman": "I" },
+		{ "seconds": 27.571, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 31.159, "chord": "D", "roman": "IV" },
+		{ "seconds": 34.76, "chord": "E", "roman": "V" }
+	]
+}

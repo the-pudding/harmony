@@ -68,3 +68,33 @@ describe("buildClusterKeyIdeas", () => {
 		expect(ideas[0].decadeCount).toBe(3);
 	});
 });
+
+describe("without spreading across years", () => {
+	it("takes the strongest songs even from one decade", () => {
+		const group = pickKeyGroup(
+			[
+				candidate("A", 1961, "A major", 100),
+				candidate("B", 1962, "A major", 100),
+				candidate("C", 1963, "A major", 100),
+				candidate("D", 2007, "A major", 50)
+			],
+			false
+		);
+		expect(group.map((song) => song.title)).toEqual(["A", "B", "C", "D"]);
+	});
+
+	it("ranks keys by strength alone", () => {
+		const ideas = buildClusterKeyIdeas(
+			[
+				candidate("A1", 1960, "A major"),
+				candidate("A2", 1980, "A major"),
+				candidate("A3", 2000, "A major"),
+				candidate("G1", 1960, "G major", 100, 5000),
+				candidate("G2", 1961, "G major", 100, 5000),
+				candidate("G3", 1962, "G major", 100, 5000)
+			],
+			false
+		);
+		expect(ideas.map((idea) => idea.keyLabel)).toEqual(["G major", "A major"]);
+	});
+});

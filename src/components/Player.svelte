@@ -1,7 +1,9 @@
 <script>
 	import SyncedChords from "$components/SyncedChords.svelte";
-	import { committedSyncedSongs } from "$data/syncedSongs";
-	import reference from "$data/synced-songs/reference.csv";
+	import {
+		committedSyncedSongs,
+		featuredSyncedSongs as reference
+	} from "$data/syncedSongs";
 	import { audio } from "$runes/audio.svelte";
 
 	let { cluster, playingSongKey = $bindable() } = $props();

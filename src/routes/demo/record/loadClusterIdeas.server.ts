@@ -8,6 +8,7 @@ import type { HexMapSnapshot } from "$data/hexMapSnapshot.js";
 import {
 	buildClusterKeyIdeas,
 	type ClusterIdeaCandidate,
+	type ClusterIdeasByMode,
 	type ClusterKeyIdea
 } from "./clusterIdeas.js";
 
@@ -49,7 +50,7 @@ const readSongFacts = (): Map<string, SongFacts> => {
 	return facts;
 };
 
-const buildAllClusterIdeas = (): Record<string, ClusterKeyIdea[]> => {
+const buildAllClusterIdeas = (): ClusterIdeasByMode => {
 	const hexMap = JSON.parse(
 		fs.readFileSync(path.join(DATA_DIRECTORY, "hexmap.json"), "utf8")
 	) as HexMapSnapshot;
@@ -81,16 +82,20 @@ const buildAllClusterIdeas = (): Record<string, ClusterKeyIdea[]> => {
 		}
 	});
 
-	return Object.fromEntries(
-		[...candidatesByCluster].map(([cluster, candidates]) => [
-			cluster,
-			buildClusterKeyIdeas(candidates)
-		])
-	);
+	const ideasFor = (
+		spreadAcrossYears: boolean
+	): Record<string, ClusterKeyIdea[]> =>
+		Object.fromEntries(
+			[...candidatesByCluster].map(([cluster, candidates]) => [
+				cluster,
+				buildClusterKeyIdeas(candidates, spreadAcrossYears)
+			])
+		);
+	return { spread: ideasFor(true), strongest: ideasFor(false) };
 };
 
 // songs.json is ~50 MB, so build once per server process.
-let cachedIdeas: Record<string, ClusterKeyIdea[]> | null = null;
+let cachedIdeas: ClusterIdeasByMode | null = null;
 
-export const loadClusterIdeas = (): Record<string, ClusterKeyIdea[]> =>
+export const loadClusterIdeas = (): ClusterIdeasByMode =>
 	(cachedIdeas ??= buildAllClusterIdeas());

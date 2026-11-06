@@ -20,7 +20,7 @@
 		computeSongHomogeneity,
 		type ProgressionCoverage
 	} from "$routes/demo/shared/progressionHomogeneity.js";
-	import { committedSyncedSongs } from "$data/syncedSongs.js";
+	import { featuredSyncedSongs } from "$data/syncedSongs.js";
 	import { mapColors } from "$runes/mapColors.svelte.js";
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
@@ -131,8 +131,10 @@
 	const NO_SONG_KEYS = new Set<string>();
 	const NO_SONGS = new Map();
 
-	// Songs with time-synced chord data in src/data/synced-songs.
-	const SYNCED_SONG_KEYS = new Set(Object.keys(committedSyncedSongs));
+	// Featured synced songs: rows in reference.csv checked as visible.
+	const SYNCED_SONG_KEYS = new Set(
+		featuredSyncedSongs.map((row) => row.songKey)
+	);
 
 	let snapshot = $state.raw<HexMapSnapshot | null>(null);
 

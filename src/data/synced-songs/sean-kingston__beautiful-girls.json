@@ -1,0 +1,18 @@
+{
+	"songKey": "sean-kingston__beautiful-girls",
+	"audioFile": "sean-kingston__beautiful-girls.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 31.359, "endSeconds": 62.126 },
+	"chords": [
+		{ "seconds": 32.977, "chord": "A", "roman": "I" },
+		{ "seconds": 36.658, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 40.363, "chord": "D", "roman": "IV" },
+		{ "seconds": 42.199, "chord": "E", "roman": "V" },
+		{ "seconds": 44.057, "chord": "A", "roman": "I" },
+		{ "seconds": 47.75, "chord": "A", "roman": "I" },
+		{ "seconds": 51.436, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 55.164, "chord": "D", "roman": "IV" },
+		{ "seconds": 56.974, "chord": "E", "roman": "V" },
+		{ "seconds": 58.848, "chord": "A", "roman": "I" }
+	]
+}

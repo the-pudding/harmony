@@ -1,0 +1,24 @@
+{
+	"songKey": "olivia-rodrigo__drop-dead",
+	"audioFile": "olivia-rodrigo__drop-dead.mp3",
+	"key": { "tonic": "Ab", "scale": "major" },
+	"region": { "startSeconds": 50.482, "endSeconds": 80.112 },
+	"chords": [
+		{ "seconds": 50.542, "chord": "Ab", "roman": "I" },
+		{ "seconds": 52.412, "chord": "Ab", "roman": "I" },
+		{ "seconds": 54.24, "chord": "C#", "roman": "IV" },
+		{ "seconds": 56.074, "chord": "Eb", "roman": "V" },
+		{ "seconds": 57.916, "chord": "Ab", "roman": "I" },
+		{ "seconds": 59.757, "chord": "Ab", "roman": "I" },
+		{ "seconds": 61.592, "chord": "C#", "roman": "IV" },
+		{ "seconds": 63.469, "chord": "Eb", "roman": "V" },
+		{ "seconds": 65.314, "chord": "Ab", "roman": "I" },
+		{ "seconds": 67.137, "chord": "Ab", "roman": "I" },
+		{ "seconds": 68.977, "chord": "C#", "roman": "IV" },
+		{ "seconds": 70.835, "chord": "Eb", "roman": "V" },
+		{ "seconds": 72.676, "chord": "Ab", "roman": "I" },
+		{ "seconds": 74.523, "chord": "Ab", "roman": "I" },
+		{ "seconds": 76.383, "chord": "C#", "roman": "IV" },
+		{ "seconds": 78.229, "chord": "Eb", "roman": "V" }
+	]
+}

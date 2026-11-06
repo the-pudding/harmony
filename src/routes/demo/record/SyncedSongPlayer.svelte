@@ -168,12 +168,6 @@
 
 <section class="synced-player">
 	<div class="header">
-		<SongPlayerCard
-			{song}
-			{paused}
-			onTogglePlayback={togglePlayback}
-			onRestart={restart}
-		/>
 		{#if editing}
 			<SyncedSongActions
 				file={timings.file}
@@ -192,6 +186,14 @@
 				}}
 				onDiscardLocalEdits={timings.discardLocalEdits}
 				onClearChords={timings.clearChords}
+			/>
+		{:else}
+			<!-- Recording plays from the timeline and shortcuts instead. -->
+			<SongPlayerCard
+				{song}
+				{paused}
+				onTogglePlayback={togglePlayback}
+				onRestart={restart}
 			/>
 		{/if}
 	</div>

@@ -8,6 +8,12 @@ import { SCALE_INTERVALS } from "../chord-processing/scale-intervals.js";
 import type { MusicalKey } from "../chord-processing/chordInKey.js";
 import topProgressions from "./charts/top-progressions.csv";
 import syncedSongReference from "./synced-songs/reference.csv";
+import {
+	parseReferenceRows,
+	type SyncedSongReferenceRow
+} from "./syncedSongReference.js";
+
+export type { SyncedSongReferenceRow };
 
 export type SyncedSongRegion = {
 	startSeconds: number;
@@ -139,16 +145,18 @@ export const committedSyncedVideos: Record<string, SyncedSongFile> =
 
 // Which top-progression cluster each synced song belongs to, one row per
 // song key at src/data/synced-songs/reference.csv, with the song's trimmed
-// region (seconds into the audio). Saving a song in the Record
-// sync tab adds or replaces its row.
+// region (seconds into the audio) and whether it's shown. Saving a song in
+// the Record audio tab adds or updates its row; the Featured songs tab sets
+// each cluster's play order and visibility. See syncedSongReference.ts.
 export const SYNCED_SONG_REFERENCE_FILE = "reference.csv";
 
-export type SyncedSongReferenceRow = {
-	cluster: string;
-	songKey: string;
-	startSeconds: number;
-	endSeconds: number;
-};
+export const syncedSongReferenceRows: SyncedSongReferenceRow[] =
+	parseReferenceRows(syncedSongReference);
+
+// The rows the app features: visible ones, in play order within each
+// cluster.
+export const featuredSyncedSongs: SyncedSongReferenceRow[] =
+	syncedSongReferenceRows.filter((row) => row.visible);
 
 // Every top-progression name, in rank order: the clusters a song can join.
 export const syncedSongClusters: string[] = topProgressions.map(
@@ -157,10 +165,5 @@ export const syncedSongClusters: string[] = topProgressions.map(
 
 export const committedSyncedSongClusters: Record<string, string> =
 	Object.fromEntries(
-		(
-			syncedSongReference as Pick<
-				SyncedSongReferenceRow,
-				"cluster" | "songKey"
-			>[]
-		).map((row) => [row.songKey, row.cluster])
+		syncedSongReferenceRows.map((row) => [row.songKey, row.cluster])
 	);

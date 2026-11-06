@@ -1,0 +1,16 @@
+{
+	"songKey": "the-drifters__there-goes-my-baby",
+	"audioFile": "the-drifters__there-goes-my-baby.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 15.254, "endSeconds": 44.99 },
+	"chords": [
+		{ "seconds": 15.541, "chord": "A", "roman": "I" },
+		{ "seconds": 19.167, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 22.848, "chord": "D", "roman": "IV" },
+		{ "seconds": 26.487, "chord": "E", "roman": "V" },
+		{ "seconds": 30.204, "chord": "A", "roman": "I" },
+		{ "seconds": 33.85, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 37.529, "chord": "D", "roman": "IV" },
+		{ "seconds": 41.224, "chord": "E", "roman": "V" }
+	]
+}

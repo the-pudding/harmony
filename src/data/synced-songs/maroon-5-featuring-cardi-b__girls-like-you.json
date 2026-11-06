@@ -1,0 +1,20 @@
+{
+	"songKey": "maroon-5-featuring-cardi-b__girls-like-you",
+	"audioFile": "maroon-5-featuring-cardi-b__girls-like-you.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 38.878, "endSeconds": 62.191 },
+	"chords": [
+		{ "seconds": 39.497, "chord": "C", "roman": "I" },
+		{ "seconds": 41.411, "chord": "G", "roman": "V" },
+		{ "seconds": 43.337, "chord": "Am", "roman": "vi" },
+		{ "seconds": 45.24, "chord": "F", "roman": "IV" },
+		{ "seconds": 47.17, "chord": "C", "roman": "I" },
+		{ "seconds": 49.098, "chord": "G", "roman": "V" },
+		{ "seconds": 50.992, "chord": "Am", "roman": "vi" },
+		{ "seconds": 52.911, "chord": "F", "roman": "IV" },
+		{ "seconds": 54.818, "chord": "C", "roman": "I" },
+		{ "seconds": 56.763, "chord": "G", "roman": "V" },
+		{ "seconds": 58.678, "chord": "Am", "roman": "vi" },
+		{ "seconds": 60.584, "chord": "F", "roman": "IV" }
+	]
+}

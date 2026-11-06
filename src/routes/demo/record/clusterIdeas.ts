@@ -50,10 +50,14 @@ const normalizedTitle = (title: string): string =>
 const byStrength = (a: ClusterIdeaSong, b: ClusterIdeaSong): number =>
 	songStrength(b) - songStrength(a);
 
-// The strongest song from each decade first, so the group spans time, then
-// the next strongest overall until there are enough. Covers of the same
-// title count once.
-export const pickKeyGroup = (songs: ClusterIdeaSong[]): ClusterIdeaSong[] => {
+// With `spreadAcrossYears`, the strongest song from each decade first, so
+// the group spans time, then the next strongest overall until there are
+// enough. Without it, just the strongest songs. Covers of the same title
+// count once.
+export const pickKeyGroup = (
+	songs: ClusterIdeaSong[],
+	spreadAcrossYears = true
+): ClusterIdeaSong[] => {
 	const seenTitles = new Set<string>();
 	const distinct = [...songs].sort(byStrength).filter((song) => {
 		const title = normalizedTitle(song.title);
@@ -61,6 +65,12 @@ export const pickKeyGroup = (songs: ClusterIdeaSong[]): ClusterIdeaSong[] => {
 		seenTitles.add(title);
 		return true;
 	});
+
+	if (!spreadAcrossYears) {
+		return distinct
+			.slice(0, MAX_GROUP_SIZE)
+			.sort((a, b) => a.year - b.year);
+	}
 
 	const bestPerDecade = new Map<number, ClusterIdeaSong>();
 	for (const song of distinct) {
@@ -78,10 +88,11 @@ export const pickKeyGroup = (songs: ClusterIdeaSong[]): ClusterIdeaSong[] => {
 	return picked.sort((a, b) => a.year - b.year);
 };
 
-// The best keys for a cluster: groups covering more decades rank first,
-// then stronger songs.
+// The best keys for a cluster. With `spreadAcrossYears`, groups covering
+// more decades rank first, then stronger songs; without it, strength alone.
 export const buildClusterKeyIdeas = (
-	candidates: ClusterIdeaCandidate[]
+	candidates: ClusterIdeaCandidate[],
+	spreadAcrossYears = true
 ): ClusterKeyIdea[] => {
 	const byKey = new Map<string, ClusterIdeaSong[]>();
 	for (const { keyLabel, ...song } of candidates) {
@@ -90,7 +101,7 @@ export const buildClusterKeyIdeas = (
 	}
 
 	const ideas = [...byKey].flatMap(([keyLabel, songs]): ClusterKeyIdea[] => {
-		const group = pickKeyGroup(songs);
+		const group = pickKeyGroup(songs, spreadAcrossYears);
 		if (group.length < MIN_GROUP_SIZE) return [];
 		return [
 			{
@@ -108,7 +119,15 @@ export const buildClusterKeyIdeas = (
 	return ideas
 		.sort(
 			(a, b) =>
-				b.decadeCount - a.decadeCount || totalStrength(b) - totalStrength(a)
+				(spreadAcrossYears ? b.decadeCount - a.decadeCount : 0) ||
+				totalStrength(b) - totalStrength(a)
 		)
 		.slice(0, KEY_IDEAS_PER_CLUSTER);
+};
+
+export type ClusterIdeasByMode = {
+	// Groups spread across decades.
+	spread: Record<string, ClusterKeyIdea[]>;
+	// The strongest songs, whenever they're from.
+	strongest: Record<string, ClusterKeyIdea[]>;
 };

@@ -24,7 +24,7 @@
 	import _ from "lodash";
 	import { chordify } from "$utils/chordify";
 	import { setContext, untrack } from "svelte";
-	import reference from "$data/synced-songs/reference.csv";
+	import { featuredSyncedSongs as reference } from "$data/syncedSongs";
 	import { spanStyle } from "$routes/demo/record/timelineStyles";
 	import { audio, stopAllAudio } from "$runes/audio.svelte";
 	import mutedSvg from "$svg/muted.svg";

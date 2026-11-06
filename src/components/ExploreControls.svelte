@@ -1,7 +1,7 @@
 <script>
 	import { getContext, onMount } from "svelte";
 	import { loadHexMapSnapshot } from "$data/hexMapSnapshot.js";
-	import reference from "$data/synced-songs/reference.csv";
+	import { featuredSyncedSongs as reference } from "$data/syncedSongs";
 
 	const MAX_RESULTS = 12;
 	const FEATURED_EMOJI = "🎧";

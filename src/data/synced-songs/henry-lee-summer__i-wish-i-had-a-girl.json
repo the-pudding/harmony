@@ -1,0 +1,24 @@
+{
+	"songKey": "henry-lee-summer__i-wish-i-had-a-girl",
+	"audioFile": "henry-lee-summer__i-wish-i-had-a-girl.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 39.044, "endSeconds": 69.624 },
+	"chords": [
+		{ "seconds": 39.325, "chord": "A", "roman": "I" },
+		{ "seconds": 41.202, "chord": "E", "roman": "V" },
+		{ "seconds": 43.1, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 44.933, "chord": "D", "roman": "IV" },
+		{ "seconds": 46.845, "chord": "A", "roman": "I" },
+		{ "seconds": 48.711, "chord": "E", "roman": "V" },
+		{ "seconds": 50.586, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 52.454, "chord": "D", "roman": "IV" },
+		{ "seconds": 54.341, "chord": "A", "roman": "I" },
+		{ "seconds": 56.23, "chord": "E", "roman": "V" },
+		{ "seconds": 58.122, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 60.01, "chord": "D", "roman": "IV" },
+		{ "seconds": 61.895, "chord": "A", "roman": "I" },
+		{ "seconds": 63.764, "chord": "E", "roman": "V" },
+		{ "seconds": 65.616, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 67.521, "chord": "D", "roman": "IV" }
+	]
+}

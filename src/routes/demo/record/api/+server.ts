@@ -11,6 +11,13 @@ import {
 	syncedSongClusters,
 	type SyncedSongReferenceRow
 } from "$data/syncedSongs.js";
+import {
+	parseReferenceRows,
+	REFERENCE_COLUMNS,
+	reorderClusterRows,
+	upsertReferenceRow,
+	type FeaturedSongSetting
+} from "$data/syncedSongReference.js";
 import { formatJsonLikeRepo } from "../formatJsonLikeRepo.js";
 import type { RequestHandler } from "./$types.js";
 
@@ -28,29 +35,16 @@ const VIDEO_DATA_DIRECTORY = path.join(
 );
 const REFERENCE_PATH = path.join(DATA_DIRECTORY, SYNCED_SONG_REFERENCE_FILE);
 
-// Replaces the song's row, or adds one, keeping rows sorted by cluster and
-// then song key so the file diffs cleanly.
-const writeReferenceRow = (row: SyncedSongReferenceRow) => {
-	const rows: SyncedSongReferenceRow[] = fs.existsSync(REFERENCE_PATH)
-		? csvParse(fs.readFileSync(REFERENCE_PATH, "utf8")).map((d) => ({
-				cluster: d.cluster ?? "",
-				songKey: d.songKey ?? "",
-				startSeconds: Number(d.startSeconds),
-				endSeconds: Number(d.endSeconds)
-			}))
+const readReferenceRows = (): SyncedSongReferenceRow[] =>
+	fs.existsSync(REFERENCE_PATH)
+		? parseReferenceRows(csvParse(fs.readFileSync(REFERENCE_PATH, "utf8")))
 		: [];
-	const nextRows = [
-		...rows.filter((other) => other.songKey !== row.songKey),
-		row
-	].sort(
-		(a, b) =>
-			a.cluster.localeCompare(b.cluster) || a.songKey.localeCompare(b.songKey)
-	);
+
+const writeReferenceRows = (rows: SyncedSongReferenceRow[]) =>
 	fs.writeFileSync(
 		REFERENCE_PATH,
-		`${csvFormat(nextRows, ["cluster", "songKey", "startSeconds", "endSeconds"])}\n`
+		`${csvFormat(rows, REFERENCE_COLUMNS)}\n`
 	);
-};
 
 export const POST: RequestHandler = async ({ request }) => {
 	const body: unknown = await request.json();
@@ -82,10 +76,43 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	fs.mkdirSync(DATA_DIRECTORY, { recursive: true });
 	fs.writeFileSync(filePath, await formatJsonLikeRepo(file));
-	writeReferenceRow({
-		cluster,
-		songKey: file.songKey,
-		...file.region
-	});
+	writeReferenceRows(
+		upsertReferenceRow(readReferenceRows(), {
+			cluster,
+			songKey: file.songKey,
+			...file.region
+		})
+	);
 	return json({ path: path.relative(process.cwd(), filePath) });
+};
+
+const isFeaturedSongSettings = (
+	value: unknown
+): value is FeaturedSongSetting[] =>
+	Array.isArray(value) &&
+	value.every(
+		(song) =>
+			typeof song?.songKey === "string" && typeof song?.visible === "boolean"
+	);
+
+// Sets one cluster's play order and which of its songs are visible, in
+// reference.csv.
+export const PUT: RequestHandler = async ({ request }) => {
+	const body: unknown = await request.json();
+	const { cluster, songs } = (body ?? {}) as {
+		cluster?: unknown;
+		songs?: unknown;
+	};
+	if (typeof cluster !== "string" || !isFeaturedSongSettings(songs)) {
+		return json({ error: "expected a cluster and its songs" }, { status: 400 });
+	}
+	const nextRows = reorderClusterRows(readReferenceRows(), cluster, songs);
+	if (!nextRows) {
+		return json(
+			{ error: "reference.csv changed; reload and try again" },
+			{ status: 409 }
+		);
+	}
+	writeReferenceRows(nextRows);
+	return json({ ok: true });
 };

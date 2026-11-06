@@ -5,14 +5,14 @@
 	import TabList from "../shared/TabList.svelte";
 	import { currentSearchParams } from "../shared/currentSearchParams.js";
 	import ClusterIdeas from "./ClusterIdeas.svelte";
-	import SyncedSongDemo from "./SyncedSongDemo.svelte";
+	import FeaturedSongs from "./FeaturedSongs.svelte";
 	import SyncedSongRecorder from "./SyncedSongRecorder.svelte";
 	import SyncedVideoRecorder from "./SyncedVideoRecorder.svelte";
 	import {
 		RECORD_TAB_AUDIO,
 		RECORD_TAB_IDEAS,
 		RECORD_TAB_LABELS,
-		RECORD_TAB_PLAYBACK,
+		RECORD_TAB_FEATURED,
 		RECORD_TAB_VIDEO,
 		RECORD_TABS,
 		type RecordTab
@@ -76,9 +76,9 @@
 				<DemoSection title="Record video sync">
 					<SyncedVideoRecorder />
 				</DemoSection>
-			{:else if tab === RECORD_TAB_PLAYBACK}
-				<DemoSection title="Synced song player">
-					<SyncedSongDemo />
+			{:else if tab === RECORD_TAB_FEATURED}
+				<DemoSection title="Featured songs">
+					<FeaturedSongs />
 				</DemoSection>
 			{:else if tab === RECORD_TAB_IDEAS}
 				<DemoSection title="Ideas by cluster">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_RECORD_TAB, RECORD_TAB_PLAYBACK } from "./recordTabs.js";
+import { DEFAULT_RECORD_TAB, RECORD_TAB_FEATURED } from "./recordTabs.js";
 import {
 	playheadUrlValue,
 	readRecordTab,
@@ -29,8 +29,8 @@ describe("readRecordUrlState", () => {
 
 describe("readRecordTab", () => {
 	it("reads a known tab and falls back to the default", () => {
-		expect(readRecordTab(new URLSearchParams("tab=playback"))).toBe(
-			RECORD_TAB_PLAYBACK
+		expect(readRecordTab(new URLSearchParams("tab=featured"))).toBe(
+			RECORD_TAB_FEATURED
 		);
 		expect(readRecordTab(new URLSearchParams("tab=nope"))).toBe(
 			DEFAULT_RECORD_TAB
@@ -42,7 +42,7 @@ describe("readRecordTab", () => {
 describe("URL values", () => {
 	it("omits the default tab", () => {
 		expect(tabUrlValue(DEFAULT_RECORD_TAB)).toBeNull();
-		expect(tabUrlValue(RECORD_TAB_PLAYBACK)).toBe(RECORD_TAB_PLAYBACK);
+		expect(tabUrlValue(RECORD_TAB_FEATURED)).toBe(RECORD_TAB_FEATURED);
 	});
 
 	it("omits the default zoom", () => {

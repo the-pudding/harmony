@@ -1,0 +1,28 @@
+{
+	"songKey": "adele__someone-like-you",
+	"audioFile": "adele__someone-like-you.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 73.454, "endSeconds": 109.893 },
+	"chords": [
+		{ "seconds": 73.83, "chord": "A", "roman": "I" },
+		{ "seconds": 75.49, "chord": "E", "roman": "V" },
+		{ "seconds": 77.283, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 79.013, "chord": "D", "roman": "IV" },
+		{ "seconds": 80.825, "chord": "A", "roman": "I" },
+		{ "seconds": 82.558, "chord": "E", "roman": "V" },
+		{ "seconds": 84.323, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 86.088, "chord": "D", "roman": "IV" },
+		{ "seconds": 87.927, "chord": "A", "roman": "I" },
+		{ "seconds": 89.689, "chord": "E", "roman": "V" },
+		{ "seconds": 91.463, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 93.226, "chord": "D", "roman": "IV" },
+		{ "seconds": 94.998, "chord": "A", "roman": "I" },
+		{ "seconds": 96.788, "chord": "E", "roman": "V" },
+		{ "seconds": 98.571, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 100.345, "chord": "D", "roman": "IV" },
+		{ "seconds": 102.109, "chord": "A", "roman": "I" },
+		{ "seconds": 103.894, "chord": "E", "roman": "V" },
+		{ "seconds": 105.688, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 107.427, "chord": "D", "roman": "IV" }
+	]
+}

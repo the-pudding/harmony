@@ -1,18 +1,19 @@
 <script lang="ts">
 	import { committedSyncedSongs, syncedSongClusters } from "$data/syncedSongs.js";
+	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
 	import { currentSearchParams } from "../shared/currentSearchParams.js";
 	import LabeledSelect from "./LabeledSelect.svelte";
 	import {
 		MAX_GROUP_SIZE,
 		MIN_GROUP_SIZE,
 		MIN_SHARE_PERCENT,
-		type ClusterKeyIdea
+		type ClusterIdeasByMode
 	} from "./clusterIdeas.js";
 	import { RECORD_TAB_AUDIO } from "./recordTabs.js";
 	import { readRecordCluster, replaceClusterInUrl } from "./recordUrlState.js";
 
 	type Props = {
-		ideas: Record<string, ClusterKeyIdea[]>;
+		ideas: ClusterIdeasByMode;
 		// Songs with audio in static/, ready to record.
 		audioSongKeys: string[];
 	};
@@ -21,10 +22,15 @@
 
 	const DEFAULT_CLUSTER = "doo wop";
 
+	let spreadAcrossYears = $state(true);
+	const ideasByCluster = $derived(
+		spreadAcrossYears ? ideas.spread : ideas.strongest
+	);
+
 	const clusterOptions = $derived(
 		syncedSongClusters.map((name) => ({
 			value: name,
-			label: `${name}${ideas[name]?.length ? "" : " · no groups"}`
+			label: `${name}${ideasByCluster[name]?.length ? "" : " · no groups"}`
 		}))
 	);
 
@@ -36,7 +42,7 @@
 				? DEFAULT_CLUSTER
 				: syncedSongClusters[0]
 	);
-	const keyIdeas = $derived(ideas[cluster] ?? []);
+	const keyIdeas = $derived(ideasByCluster[cluster] ?? []);
 	const hasAudio = $derived(new Set(audioSongKeys));
 
 	function pickCluster(name: string) {
@@ -52,18 +58,30 @@
 	<p class="intro">
 		Groups of {MIN_GROUP_SIZE}–{MAX_GROUP_SIZE} songs in the same key where the
 		cluster's progression covers at least {MIN_SHARE_PERCENT}% of the chords.
-		Each group takes the strongest song from as many decades as it can
-		(strength is coverage weighted by popularity). Keys are ranked by decades
-		covered, then strength. Songs whose sections disagree on the key are left
-		out.
+		Strength is coverage weighted by popularity.
+		{#if spreadAcrossYears}
+			Each group takes the strongest song from as many decades as it can, and
+			keys are ranked by decades covered, then strength.
+		{:else}
+			Each group is the strongest songs in the key, whenever they're from, and
+			keys are ranked by strength.
+		{/if}
+		Songs whose sections disagree on the key are left out.
 	</p>
 
-	<LabeledSelect
-		label="Cluster"
-		options={clusterOptions}
-		value={cluster}
-		onSelect={pickCluster}
-	/>
+	<div class="controls">
+		<LabeledSelect
+			label="Cluster"
+			options={clusterOptions}
+			value={cluster}
+			onSelect={pickCluster}
+		/>
+		<ToggleSwitch
+			label="Spread across years"
+			checked={spreadAcrossYears}
+			onchange={(checked) => (spreadAcrossYears = checked)}
+		/>
+	</div>
 
 	{#if keyIdeas.length === 0}
 		<p class="message">
@@ -127,6 +145,13 @@
 		margin: 0;
 		line-height: 1.6;
 		color: #a1a1aa;
+	}
+
+	.controls {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 1.5rem;
 	}
 
 	.message {
