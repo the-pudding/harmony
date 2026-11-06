@@ -1,8 +1,8 @@
 <script lang="ts">
 	// A pared-down song tooltip for the hex map: title, year and artist, one
 	// bar splitting the song by matched progression (in each progression's
-	// map color, labeled where it belongs to a cluster), and the full
-	// sections and chords only when expanded.
+	// map color, labeled where it belongs to a cluster), and a hint at what
+	// clicking does.
 	import coreProgressionsData from "$data/core-progressions.js";
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
 	import { toCalendarYear } from "../../../../data/songYear.js";
@@ -12,7 +12,6 @@
 		computeSongHomogeneity,
 		formatEffectiveProgressionCount
 	} from "../../shared/progressionHomogeneity.js";
-	import SongChordsDisplay from "../../define-chord-progression/components/SongChordsDisplay.svelte";
 	import ProgressionShareBar from "./ProgressionShareBar.svelte";
 
 	type Props = {
@@ -20,10 +19,11 @@
 		// A progression's color on the map, or undefined when no colored
 		// region is built on it.
 		colorForProgression: (name: string) => string | undefined;
-		expanded: boolean;
+		// What clicking the song does; nothing is shown when empty.
+		hint: string;
 	};
 
-	const { song, colorForProgression, expanded }: Props = $props();
+	const { song, colorForProgression, hint }: Props = $props();
 
 	const result = $derived(
 		matchSongV2(song, coreProgressionsData, DEFAULT_WEIGHTS)
@@ -44,7 +44,6 @@
 	const calendarYear = $derived(
 		song.year === undefined ? undefined : toCalendarYear(song.year)
 	);
-
 </script>
 
 <div class="hex-song-tooltip">
@@ -62,23 +61,15 @@
 		<strong>{result.explainedPercent}%</strong> of song matched
 		{#if homogeneity}
 			with <strong
-				>{formatEffectiveProgressionCount(homogeneity.effectiveProgressionCount)}</strong
+				>{formatEffectiveProgressionCount(
+					homogeneity.effectiveProgressionCount
+				)}</strong
 			> effective progressions
 		{/if}
 	</div>
 
-	<div class="hint">
-		{#if expanded}
-			to collapse hit <kbd>C</kbd>
-		{:else}
-			for full chords, press <kbd>C</kbd>
-		{/if}
-	</div>
-
-	{#if expanded}
-		<div class="chords">
-			<SongChordsDisplay {song} annotations={result.annotations} compact />
-		</div>
+	{#if hint}
+		<div class="hint">{hint}</div>
 	{/if}
 </div>
 
@@ -117,18 +108,5 @@
 	.hint {
 		color: #71717a;
 		font-size: 0.65rem;
-	}
-
-	kbd {
-		padding: 0 0.25rem;
-		border: 1px solid #3f3f46;
-		border-radius: 0.1875rem;
-		color: #d4d4d8;
-		font-family: inherit;
-	}
-
-	.chords {
-		padding-top: 0.375rem;
-		border-top: 1px solid #27272a;
 	}
 </style>

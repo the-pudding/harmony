@@ -22,6 +22,9 @@ export type HexMapSnapshot = {
 	progressions: number[][];
 	// Per song, its popularityScore (0 when unknown).
 	popularity: number[];
+	// Per song, its calendar year (0 when unknown). Absent from snapshots
+	// built before this column existed.
+	years?: number[];
 	// The map's progression clusters, largest first (see hexMapClusters.ts).
 	clusters: SnapshotCluster[];
 };

@@ -78,6 +78,11 @@
 		// While movable and no focusCluster is set, called whenever the user
 		// pans or zooms.
 		onUserMove?: () => void;
+		// While movable and no focusCluster is set, called with a song's key
+		// when the user clicks a song at dot zoom, to open its full chords.
+		onSongOpen?: (songId: string) => void;
+		// The song whose chords are open, which gets the selected look.
+		openSongId?: string | null;
 		// Same meanings and defaults as /demo/embedding. (UMAP's minDist and
 		// the cluster settings are baked into the snapshot; see
 		// HEX_MAP_UMAP_MIN_DIST and hexMapClusters.ts.)
@@ -101,6 +106,8 @@
 		selectedSong = null,
 		onClusterClick = undefined,
 		onUserMove = undefined,
+		onSongOpen = undefined,
+		openSongId = null,
 		purityLayout = true,
 		pureThreshold = 0.9
 	}: Props = $props();
@@ -131,6 +138,23 @@
 	const SYNCED_SONG_KEYS = new Set(
 		featuredSyncedSongs.map((row) => row.songKey)
 	);
+
+	// Featured songs per cluster (lowercased name), for the hex tooltip.
+	const featuredCountByCluster = new Map<string, number>();
+	for (const { cluster } of featuredSyncedSongs) {
+		const name = cluster.toLowerCase();
+		featuredCountByCluster.set(
+			name,
+			(featuredCountByCluster.get(name) ?? 0) + 1
+		);
+	}
+
+	const hexClickHint = (regionName: string): string => {
+		const count = featuredCountByCluster.get(regionName.toLowerCase()) ?? 0;
+		return count === 0
+			? "Click to zoom in (no playable songs available)"
+			: `Click to start an audio tour of ${count} ${count === 1 ? "song" : "songs"} in this cluster`;
+	};
 
 	let snapshot = $state.raw<HexMapSnapshot | null>(null);
 
@@ -302,6 +326,9 @@
 					: UNCENTERED_OFFSET_Y}
 				{theme}
 				simpleSongTooltip
+				hexClickHint={explorable ? hexClickHint : null}
+				onSongOpen={explorable ? onSongOpen : null}
+				openSongId={explorable ? openSongId : null}
 				onSelect={() => {}}
 				onTransformChange={(transform) => (viewTransform = transform)}
 				onOutlinedSongClick={onSongClick}

@@ -7,6 +7,7 @@
 	import Slide from "$components/helpers/Slider.Slide.svelte";
 	import Video from "$components/Video.svelte";
 	import Player from "$components/Player.svelte";
+	import SongChordsDrawer from "$components/SongChordsDrawer.svelte";
 	import UltimateGuitar from "$components/UltimateGuitar.svelte";
 	import RomanNumerals from "$components/RomanNumerals.svelte";
 	import EffectiveBar from "$components/EffectiveBar.svelte";
@@ -139,6 +140,8 @@
 	// reference.csv) gets the player too, until the user clicks elsewhere,
 	// pans or zooms.
 	let exploredCluster = $state();
+	// the song whose full chords are open in the side drawer
+	let chordsSongId = $state();
 	// a song picked in ExploreControls' search, which the map zooms to
 	let searchedSong = $state();
 	// a cluster without featured songs picked in ExploreControls' search,
@@ -180,6 +183,7 @@
 
 	// zooms to any song; featured ones also open their cluster's player
 	const pickSong = (songKey) => {
+		audio.muted = false;
 		searchedSong = songKey;
 		searchedCluster = undefined;
 		exploredCluster = clusterBySongKey.get(songKey);
@@ -203,12 +207,13 @@
 	$effect(() => {
 		slideI;
 		textFocusCluster = undefined;
+		chordsSongId = undefined;
 		untrack(stopExploring);
 		playingSongId = undefined;
 	});
 
 	const INTERACTIVE =
-		'a, button, input, label, select, textarea, audio, video, [tabindex]:not([tabindex="-1"])';
+		'a, button, input, label, select, textarea, audio, video, [tabindex]:not([tabindex="-1"]), [data-chords-drawer]';
 	let articleEl = $state();
 
 	// article is pointer-events: none, so most "blank space" clicks land on
@@ -235,10 +240,12 @@
 	ontap={onTap}
 	size="64px"
 	showArrows
-	disable={[
-		...(slideI === 0 ? ["left"] : []),
-		...(slideI === allSlides.length - 1 ? ["right"] : [])
-	]}
+	disable={chordsSongId
+		? ["left", "right"]
+		: [
+				...(slideI === 0 ? ["left"] : []),
+				...(slideI === allSlides.length - 1 ? ["right"] : [])
+			]}
 	arrowStroke="#fff"
 	enableKeyboard={true}
 />
@@ -254,11 +261,19 @@
 		{focusFrame}
 		theme="dark"
 		playingSongKey={playingSongId}
-		onSongClick={(songKey) => (playingSongId = songKey ?? undefined)}
+		onSongClick={(songKey) => {
+			playingSongId = songKey ?? undefined;
+			if (songKey) audio.muted = false;
+		}}
 		selectedCluster={exploredCluster ?? searchedCluster ?? null}
 		selectedSong={searchedSong ?? null}
 		onClusterClick={exploreCluster}
 		onUserMove={stopExploring}
+		openSongId={chordsSongId ?? null}
+		onSongOpen={(songId) => {
+			chordsSongId = songId;
+			audio.muted = false;
+		}}
 	/>
 </div>
 
@@ -325,6 +340,17 @@
 		{/if}
 	</div>
 </article>
+
+{#if chordsSongId}
+	<SongChordsDrawer
+		songId={chordsSongId}
+		onClose={() => (chordsSongId = undefined)}
+		onPickSong={(songId) => {
+			chordsSongId = songId;
+			pickSong(songId);
+		}}
+	/>
+{/if}
 
 <button
 	class="mute-toggle"

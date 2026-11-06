@@ -8,6 +8,7 @@ import type { SongInput } from "../src/chord-processing/types.js";
 import { resolveSongKey } from "../src/chord-processing/songIdentity.js";
 import { applyHandReviewedCorrections } from "../src/data/applyHandReviewedCorrections.js";
 import { groupSongs } from "../src/data/songBrowser.js";
+import { toCalendarYear } from "../src/data/songYear.js";
 import { sortAllSongs } from "../src/data/songBrowserData.js";
 import {
 	SONG_SHARD_COUNT,
@@ -66,6 +67,14 @@ for (const input of inputs) {
 	);
 }
 
+const yearBySongKey = new Map<string, number>();
+for (const input of inputs) {
+	const songKey = resolveSongKey(input);
+	if (input.year !== undefined && !yearBySongKey.has(songKey)) {
+		yearBySongKey.set(songKey, toCalendarYear(input.year));
+	}
+}
+
 const placed = coverages.filter((entry) => coordsByKey.has(entry.songKey));
 const columns = {
 	songKeys: placed.map((entry) => entry.songKey),
@@ -84,7 +93,10 @@ const columns = {
 			round(count.coveragePercent, COVERAGE_DECIMALS)
 		])
 	),
-	popularity: placed.map((entry) => popularityBySongKey.get(entry.songKey) ?? 0)
+	popularity: placed.map(
+		(entry) => popularityBySongKey.get(entry.songKey) ?? 0
+	),
+	years: placed.map((entry) => yearBySongKey.get(entry.songKey) ?? 0)
 };
 // From the rounded columns, so these are exactly the clusters HexMap would
 // compute from the file.

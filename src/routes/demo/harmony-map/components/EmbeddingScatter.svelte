@@ -297,6 +297,9 @@
 		// stays movable. Unless another song is playing, it's spotlit like
 		// playingSongKey, even if it isn't outlined.
 		zoomSongKey?: string | null;
+		// The song whose details the page has open: spotlit like
+		// playingSongKey (which wins), but the view doesn't move.
+		openSongId?: string | null;
 		// The part of the canvas a focused cluster should fill, in screen
 		// pixels from its top (e.g. the space below text over the map). In
 		// hex mode the cluster is scaled to almost fill its height and
@@ -408,9 +411,17 @@
 		// Canvas pixels per CSS pixel. Defaults to the screen's; lower it when
 		// the map is shown scaled down (e.g. an inset) to save memory.
 		pixelRatio?: number | null;
-		// Hex mode: a simpler song tooltip (see HexSongTooltip) that shows the
-		// song's full chords when C is pressed.
+		// Hex mode: a simpler song tooltip (see HexSongTooltip).
 		simpleSongTooltip?: boolean;
+		// Hex mode: what clicking a hex does, for its tooltip, given the
+		// region's name. Null or omitted shows only the song count (plus
+		// "click to zoom in" when movable).
+		hexClickHint?: ((regionName: string) => string | null) | null;
+		// Hex mode, at dot zoom: called to open a song's full chords when any
+		// song is clicked (after onOutlinedSongClick, so an outlined song also
+		// plays). A click on a song that isn't outlined then doesn't reach
+		// onClusterClick. A double-click over a song doesn't zoom.
+		onSongOpen?: ((songId: string) => void) | null;
 		// Called with each progression's map color whenever they change.
 		onProgressionColors?:
 			| ((colors: ReadonlyMap<string, string>) => void)
@@ -436,6 +447,7 @@
 		focusClusterName = undefined,
 		selectedClusterName = null,
 		zoomSongKey = null,
+		openSongId = null,
 		focusFrame = null,
 		offsetY = 0,
 		emphasizedSongKeys = null,
@@ -465,6 +477,8 @@
 		onUserMove = null,
 		pixelRatio: pixelRatioOverride = null,
 		simpleSongTooltip = false,
+		hexClickHint = null,
+		onSongOpen = null,
 		onProgressionColors = null
 	}: Props = $props();
 
@@ -781,7 +795,9 @@
 	let playingEmphasis = new Map<string, number>();
 	let playingFade = 0;
 
-	const spotlightSongKey = $derived(playingSongKey ?? zoomSongKey);
+	const spotlightSongKey = $derived(
+		playingSongKey ?? openSongId ?? zoomSongKey
+	);
 
 	const emphasisFor = (songKey: string): number =>
 		playingEmphasis.get(songKey) ?? 0;
@@ -1710,30 +1726,6 @@
 		hoveredClusterHit = songKey === null ? findClusterAt(anchor) : null;
 	};
 
-	// Pressing C while a simple song tooltip is up shows or hides its full
-	// chords; each newly hovered song starts with them hidden.
-	let tooltipChordsExpanded = $state(false);
-
-	$effect(() => {
-		void delayedTooltip.tooltipSongKey;
-		tooltipChordsExpanded = false;
-	});
-
-	const handleWindowKeydown = (event: KeyboardEvent) => {
-		if (!simpleSongTooltip || delayedTooltip.tooltipSongKey === null) return;
-		if (event.key !== "c" && event.key !== "C") return;
-		if (event.metaKey || event.ctrlKey || event.altKey) return;
-		const target = event.target;
-		if (
-			target instanceof HTMLElement &&
-			(target.isContentEditable ||
-				["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
-		) {
-			return;
-		}
-		tooltipChordsExpanded = !tooltipChordsExpanded;
-	};
-
 	const handlePointerLeave = () => {
 		hoveredHex = null;
 		hoveredSongKey = null;
@@ -1749,6 +1741,14 @@
 		// only be clicked then.
 		const outlinedSongKey = hexFrame ? null : findOutlinedSongAtAnchor(anchor);
 		onOutlinedSongClick?.(outlinedSongKey);
+		if (hexMode && !hexFrame && onSongOpen) {
+			const clickedSongId = outlinedSongKey ?? findPointAtAnchor(anchor);
+			if (clickedSongId !== null) {
+				onSongOpen(clickedSongId);
+				// A plain song has no cluster player to open.
+				if (outlinedSongKey === null) return;
+			}
+		}
 		if (hexMode) {
 			const hexKey = hexFrame ? hexKeyAtAnchor(anchor) : null;
 			const songKey = hexFrame ? null : findPointAtAnchor(anchor);
@@ -1779,6 +1779,11 @@
 		if (!hoverable) return;
 		const songKey = findPointAt(event);
 		onSelect(songKey === selectedSongKey ? null : songKey);
+	};
+
+	const songAtDoubleClick = (event: MouseEvent): string | null => {
+		if (!onSongOpen || !hexMode || hexFrame || !containerEl) return null;
+		return findPointAtAnchor(anchorFromMouseEvent(event, containerEl));
 	};
 
 	$effect(() => {
@@ -1849,6 +1854,10 @@
 			.filter((event) => {
 				if (!canMove) return false;
 				if (event.ctrlKey && event.type !== "wheel") return false;
+				// A double-click on a song opens its chords, not a zoom.
+				if (event.type === "dblclick" && songAtDoubleClick(event) !== null) {
+					return false;
+				}
 				return !event.button;
 			})
 			.on("start", () => {
@@ -2228,8 +2237,6 @@
 	);
 </script>
 
-<svelte:window onkeydown={handleWindowKeydown} />
-
 <div
 	class="scatter"
 	bind:this={containerEl}
@@ -2270,6 +2277,7 @@
 	{#if hoveredHex}
 		{@const { region } = hoveredHex}
 		{@const songCount = clusterSizeByHash.get(region.id) ?? 0}
+		{@const clickHint = hexClickHint?.(region.name)}
 		{@const chords = region.progressionNames
 			.map((name) => chordsByProgressionName.get(name))
 			.filter((chord) => chord !== undefined)
@@ -2288,10 +2296,13 @@
 			{/if}
 			<div class="hex-tooltip-meta">
 				{songCount}
-				{songCount === 1 ? "song" : "songs"}{movable
-					? " · click to zoom in"
-					: ""}
+				{songCount === 1 ? "song" : "songs"}
 			</div>
+			{#if clickHint ?? (movable && !hexClickHint ? "Click to zoom in" : null)}
+				<div class="hex-tooltip-hint">
+					👆 {clickHint ?? "Click to zoom in"}
+				</div>
+			{/if}
 		</div>
 	{/if}
 
@@ -2314,7 +2325,11 @@
 				<HexSongTooltip
 					song={tooltipSong}
 					colorForProgression={(name) => regionColorByProgressionName.get(name)}
-					expanded={tooltipChordsExpanded}
+					hint={!onSongOpen
+						? ""
+						: isOutlined(delayedTooltip.tooltipSongKey ?? "")
+							? "👆 Click to hear a clip and see the full chords"
+							: "👆 Click to pull up the full chords"}
 				/>
 			</div>
 		{:else if tooltipSong}
@@ -2419,6 +2434,12 @@
 
 	.hex-tooltip-meta {
 		color: #a1a1aa;
+		font-size: 0.65rem;
+	}
+
+	.hex-tooltip-hint {
+		margin-top: 0.25rem;
+		color: #d4d4d8;
 		font-size: 0.65rem;
 	}
 
