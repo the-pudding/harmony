@@ -1,8 +1,8 @@
 <script lang="ts">
 	// The hex map from /demo/embedding on its own: no settings bar, legend or
 	// inspector. Draws the prebuilt snapshot from `npm run hexmap` (positions
-	// and progression coverage per song) and fills its parent; clustering and
-	// layout run here, since they depend on the props below. Interaction can
+	// progression coverage and clusters) and fills its parent; layout runs
+	// here, since it depends on the props below. Interaction can
 	// be turned off for decorative uses (e.g. a background), and focusCluster
 	// frames a single cluster.
 	import {
@@ -10,9 +10,10 @@
 		loadShardedSong,
 		type HexMapSnapshot
 	} from "$data/hexMapSnapshot.js";
-	import { buildClusterInputPoints } from "$routes/demo/harmony-map/embedding/clustering/clusterInputPoints.js";
-	import { findDensityClusters } from "$routes/demo/harmony-map/embedding/clustering/densityClusters.js";
-	import { nameProgressionClusters } from "$routes/demo/harmony-map/embedding/clustering/progressionClusterNames.js";
+	import {
+		decodeSnapshotCoverage,
+		namedClustersFromSnapshot
+	} from "$data/hexMapClusters.js";
 	import { applyPurityRadialLayout } from "$routes/demo/harmony-map/embedding/layout/purityRadialLayout.js";
 	import type { ClusterRegion } from "$routes/demo/harmony-map/embedding/layout/hexBins.js";
 	import { homogeneityColorFor } from "$routes/demo/harmony-map/homogeneityColors.js";
@@ -77,13 +78,11 @@
 		// While movable and no focusCluster is set, called whenever the user
 		// pans or zooms.
 		onUserMove?: () => void;
-		// Same meanings and defaults as /demo/embedding. (UMAP's minDist is
-		// baked into the snapshot; see HEX_MAP_UMAP_MIN_DIST.)
+		// Same meanings and defaults as /demo/embedding. (UMAP's minDist and
+		// the cluster settings are baked into the snapshot; see
+		// HEX_MAP_UMAP_MIN_DIST and hexMapClusters.ts.)
 		purityLayout?: boolean;
 		pureThreshold?: number;
-		clusterMinPoints?: number;
-		clusterMaxPoints?: number;
-		clusterMinProgressionShare?: number;
 	};
 
 	const {
@@ -103,10 +102,7 @@
 		onClusterClick = undefined,
 		onUserMove = undefined,
 		purityLayout = true,
-		pureThreshold = 0.9,
-		clusterMinPoints = 20,
-		clusterMaxPoints = 300,
-		clusterMinProgressionShare = 0.25
+		pureThreshold = 0.9
 	}: Props = $props();
 
 	// Once a cluster has been focused, clearing focusCluster zooms back out
@@ -180,17 +176,8 @@
 	const coverageBySongKey = $derived.by(() => {
 		const coverages = new Map<string, ProgressionCoverage[]>();
 		if (!snapshot) return coverages;
-		const { songKeys, progressions, progressionNames } = snapshot;
-		songKeys.forEach((songKey, index) => {
-			const flat = progressions[index];
-			const entries: ProgressionCoverage[] = [];
-			for (let at = 0; at < flat.length; at += 2) {
-				entries.push({
-					name: progressionNames[flat[at]],
-					coveragePercent: flat[at + 1]
-				});
-			}
-			coverages.set(songKey, entries);
+		snapshot.songKeys.forEach((songKey, index) => {
+			coverages.set(songKey, decodeSnapshotCoverage(snapshot!, index));
 		});
 		return coverages;
 	});
@@ -226,22 +213,11 @@
 		}))
 	);
 
-	// Clusters named by progression (see progressionClusterNames.ts).
-	const clusters = $derived.by(() => {
-		const clusterPoints = buildClusterInputPoints(points);
-		return nameProgressionClusters(
-			findDensityClusters(clusterPoints, clusterMinPoints, clusterMaxPoints),
-			new Map(
-				[...homogeneityBySongKey].flatMap(([songKey, homogeneity]) =>
-					homogeneity
-						? [[songKey, homogeneity.dominantProgressionName] as const]
-						: []
-				)
-			),
-			new Map(clusterPoints.map((point) => [point.songKey, point])),
-			clusterMinProgressionShare
-		);
-	});
+	// Clusters named by progression, precomputed by `npm run hexmap` (see
+	// hexMapClusters.ts).
+	const clusters = $derived(
+		snapshot ? namedClustersFromSnapshot(snapshot) : []
+	);
 
 	const densityClusters = $derived(clusters.map(({ cluster }) => cluster));
 

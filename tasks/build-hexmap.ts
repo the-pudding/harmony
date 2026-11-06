@@ -14,6 +14,7 @@ import {
 	songShardFor,
 	type HexMapSnapshot
 } from "../src/data/hexMapSnapshot.js";
+import { computeHexMapClusters } from "../src/data/hexMapClusters.js";
 import { computeSongCoverage } from "../src/routes/demo/define-chord-progression/compute-coverage-of-all-songs/computeSongCoverage.js";
 import { computeHexMapLayout } from "../src/routes/demo/harmony-map/embedding/hexMapLayout.js";
 
@@ -56,8 +57,17 @@ const indexFor = (name: string): number => {
 	return index;
 };
 
+const popularityBySongKey = new Map<string, number>();
+for (const input of inputs) {
+	const songKey = resolveSongKey(input);
+	popularityBySongKey.set(
+		songKey,
+		Math.max(popularityBySongKey.get(songKey) ?? 0, input.popularityScore ?? 0)
+	);
+}
+
 const placed = coverages.filter((entry) => coordsByKey.has(entry.songKey));
-const snapshot: HexMapSnapshot = {
+const columns = {
 	songKeys: placed.map((entry) => entry.songKey),
 	titles: placed.map((entry) => entry.title),
 	artists: placed.map((entry) => entry.artists),
@@ -73,7 +83,14 @@ const snapshot: HexMapSnapshot = {
 			indexFor(count.name),
 			round(count.coveragePercent, COVERAGE_DECIMALS)
 		])
-	)
+	),
+	popularity: placed.map((entry) => popularityBySongKey.get(entry.songKey) ?? 0)
+};
+// From the rounded columns, so these are exactly the clusters HexMap would
+// compute from the file.
+const snapshot: HexMapSnapshot = {
+	...columns,
+	clusters: time("clusters", () => computeHexMapClusters(columns))
 };
 fs.writeFileSync(SNAPSHOT_PATH, JSON.stringify(snapshot));
 
@@ -93,4 +110,5 @@ const megabytes = (bytes: number) => `${(bytes / 1e6).toFixed(1)} MB`;
 console.log(
 	`${placed.length} songs, ${progressionNames.length} progressions → ${path.relative(ROOT, SNAPSHOT_PATH)} (${megabytes(fs.statSync(SNAPSHOT_PATH).size)})`
 );
+console.log(`${snapshot.clusters.length} clusters`);
 console.log(`${SONG_SHARD_COUNT} shards → ${path.relative(ROOT, SHARD_DIR)}/`);

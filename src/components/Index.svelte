@@ -136,6 +136,9 @@
 	let exploredCluster = $state();
 	// a song picked in ExploreControls' search, which the map zooms to
 	let searchedSong = $state();
+	// a cluster without featured songs picked in ExploreControls' search,
+	// which the map zooms to without opening the player
+	let searchedCluster = $state();
 	let activeCluster = $derived(mapProps?.focusCluster ?? exploredCluster);
 	let showClusterPanel = $derived(activeCluster !== undefined);
 
@@ -150,6 +153,7 @@
 
 	const exploreCluster = (clusterName, songKey) => {
 		searchedSong = undefined;
+		searchedCluster = undefined;
 		const cluster =
 			clusterBySongKey.get(songKey) ?? featuredClusterNamed(clusterName);
 		exploredCluster = cluster;
@@ -163,6 +167,7 @@
 
 	const stopExploring = () => {
 		searchedSong = undefined;
+		searchedCluster = undefined;
 		if (exploredCluster === undefined) return;
 		exploredCluster = undefined;
 		playingSongId = undefined;
@@ -171,11 +176,22 @@
 	// zooms to any song; featured ones also open their cluster's player
 	const pickSong = (songKey) => {
 		searchedSong = songKey;
+		searchedCluster = undefined;
 		exploredCluster = clusterBySongKey.get(songKey);
 		playingSongId = exploredCluster === undefined ? undefined : songKey;
 	};
 
-	setContext("explore", { pickSong });
+	// zooms to any cluster; featured ones also open the player
+	const pickCluster = (clusterName) => {
+		if (featuredClusterNamed(clusterName) !== undefined) {
+			exploreCluster(clusterName, null);
+			return;
+		}
+		exploreCluster(null, null);
+		searchedCluster = clusterName;
+	};
+
+	setContext("explore", { pickSong, pickCluster });
 
 	// a new slide starts with nothing explored or playing, on its own
 	// focusCluster
@@ -235,7 +251,7 @@
 		theme="dark"
 		playingSongKey={playingSongId}
 		onSongClick={(songKey) => (playingSongId = songKey ?? undefined)}
-		selectedCluster={exploredCluster ?? null}
+		selectedCluster={exploredCluster ?? searchedCluster ?? null}
 		selectedSong={searchedSong ?? null}
 		onClusterClick={exploreCluster}
 		onUserMove={stopExploring}

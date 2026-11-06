@@ -6,6 +6,7 @@ import { base } from "$app/paths";
 // Stored as parallel columns, which keeps the JSON small.
 import type { SongInput } from "../chord-processing/types.js";
 import { groupSongs, type GroupedSong } from "./songBrowser.js";
+import type { SnapshotCluster } from "./hexMapClusters.js";
 
 export const HEX_MAP_SNAPSHOT_URL = `${base}/data/hexmap.json`;
 
@@ -19,6 +20,10 @@ export type HexMapSnapshot = {
 	progressionNames: string[];
 	// Per song, flattened [nameIndex, coveragePercent, nameIndex, ...].
 	progressions: number[][];
+	// Per song, its popularityScore (0 when unknown).
+	popularity: number[];
+	// The map's progression clusters, largest first (see hexMapClusters.ts).
+	clusters: SnapshotCluster[];
 };
 
 // The full chord data for each song lives in small shards so a song tooltip

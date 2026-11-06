@@ -2,11 +2,16 @@
 	import { getContext, onMount } from "svelte";
 	import { loadHexMapSnapshot } from "$data/hexMapSnapshot.js";
 	import { featuredSyncedSongs as reference } from "$data/syncedSongs";
+	import {
+		detectQuery,
+		matchRank,
+		progressionSpelling
+	} from "$data/progressionQuery.js";
 
 	const MAX_RESULTS = 12;
 	const FEATURED_EMOJI = "🎧";
 
-	const { pickSong } = getContext("explore");
+	const { pickSong, pickCluster } = getContext("explore");
 	const featuredSongKeys = new Set(reference.map((d) => d.songKey));
 
 	const normalize = (text) =>
@@ -19,31 +24,49 @@
 			.trim();
 
 	let songs = $state.raw([]);
+	let clusters = $state.raw([]);
 	let query = $state("");
 	let open = $state(false);
 	let activeIndex = $state(0);
 	const listId = "explore-search-results";
 
 	onMount(() => {
-		loadHexMapSnapshot().then(({ songKeys, titles, artists }) => {
-			songs = songKeys.map((songKey, i) => {
-				const artist = artists[i].join(", ");
-				return {
-					songKey,
-					title: titles[i],
-					artist,
-					featured: featuredSongKeys.has(songKey),
-					searchTitle: normalize(titles[i]),
-					searchArtist: normalize(artist),
-					searchBoth: normalize(`${titles[i]} ${artist}`)
-				};
-			});
-		});
+		loadHexMapSnapshot().then(
+			({ songKeys, titles, artists, popularity, clusters: mapClusters }) => {
+				songs = songKeys.map((songKey, i) => {
+					const artist = artists[i].join(", ");
+					return {
+						songKey,
+						title: titles[i],
+						artist,
+						popularity: popularity[i],
+						featured: featuredSongKeys.has(songKey),
+						searchTitle: normalize(titles[i]),
+						searchArtist: normalize(artist),
+						searchBoth: normalize(`${titles[i]} ${artist}`)
+					};
+				});
+				// Far-away repeats share a name with a larger cluster (listed
+				// first), and picking by name zooms to that one anyway.
+				const seen = new Set();
+				clusters = mapClusters.flatMap((cluster) => {
+					if (!cluster.showLabel || seen.has(cluster.name)) return [];
+					seen.add(cluster.name);
+					return [
+						{
+							name: cluster.name,
+							progressionNames: cluster.progressionNames,
+							songCount: cluster.songIndexes.length
+						}
+					];
+				});
+			}
+		);
 	});
 
-	const results = $derived.by(() => {
-		const q = normalize(query);
-		if (!q) return [];
+	const parsed = $derived(detectQuery(query));
+
+	const songResults = (q) => {
 		const words = q.split(" ");
 		return songs
 			.flatMap((song) => {
@@ -53,11 +76,39 @@
 					song.searchArtist,
 					song.searchBoth
 				].some((text) => text.startsWith(q));
-				return [{ song, rank: (song.featured ? 0 : 2) + (startsWith ? 0 : 1) }];
+				return [{ song, rank: startsWith ? 0 : 1 }];
 			})
-			.sort((a, b) => a.rank - b.rank)
+			.sort((a, b) => a.rank - b.rank || b.song.popularity - a.song.popularity)
 			.slice(0, MAX_RESULTS)
-			.map((d) => d.song);
+			.map(({ song }) => ({ type: "song", key: song.songKey, song }));
+	};
+
+	// Clusters whose progressions start with the query come first, then
+	// ones that contain it; bigger clusters first within each.
+	const clusterResults = (codes) =>
+		clusters
+			.flatMap((cluster) => {
+				let best = null;
+				for (const progressionName of cluster.progressionNames) {
+					const rank = matchRank(codes, progressionName);
+					if (rank !== null && (best === null || rank < best.rank))
+						best = { rank, progressionName };
+				}
+				return best ? [{ cluster, ...best }] : [];
+			})
+			.sort((a, b) => a.rank - b.rank || b.cluster.songCount - a.cluster.songCount)
+			.slice(0, MAX_RESULTS)
+			.map(({ cluster, progressionName }) => ({
+				type: "cluster",
+				key: cluster.name,
+				cluster,
+				spelling: progressionSpelling(progressionName)
+			}));
+
+	const results = $derived.by(() => {
+		if (parsed.kind !== "text") return clusterResults(parsed.codes);
+		const q = normalize(query);
+		return q ? songResults(q) : [];
 	});
 
 	$effect(() => {
@@ -65,10 +116,15 @@
 		activeIndex = 0;
 	});
 
-	const choose = (song) => {
-		query = `${song.title} — ${song.artist}`;
+	const choose = (result) => {
 		open = false;
-		pickSong(song.songKey);
+		if (result.type === "cluster") {
+			query = result.cluster.name;
+			pickCluster(result.cluster.name);
+		} else {
+			query = `${result.song.title} — ${result.song.artist}`;
+			pickSong(result.song.songKey);
+		}
 	};
 
 	const onKeyDown = (event) => {
@@ -94,7 +150,7 @@
 	<div class="search">
 		<input
 			type="search"
-			placeholder="Search for a song or artist"
+			placeholder="Search artists and songs. Or, progressions: 'ii V I' or 'Dm G C'"
 			autocomplete="off"
 			spellcheck="false"
 			role="combobox"
@@ -111,27 +167,46 @@
 		/>
 		{#if open && query.trim()}
 			<ul id={listId} role="listbox">
-				{#each results as song, i (song.songKey)}
+				{#if parsed.kind !== "text"}
+					<li class="heading" role="presentation">
+						Progression: {parsed.romanTokens.join(" → ")}{#if parsed.keyLabel}
+							<span class="key"> in {parsed.keyLabel}</span>{/if}
+					</li>
+				{/if}
+				{#each results as result, i (result.key)}
 					<li id="{listId}-{i}" role="option" aria-selected={i === activeIndex}>
 						<button
 							tabindex="-1"
 							class:active={i === activeIndex}
 							onmousedown={(event) => event.preventDefault()}
-							onclick={() => choose(song)}
+							onclick={() => choose(result)}
 							onmouseenter={() => (activeIndex = i)}
 						>
-							<span class="title"
-								>{#if song.featured}<span
-										class="featured"
-										title="Featured: plays a clip">{FEATURED_EMOJI}</span
-									>{" "}{/if}{song.title}</span
-							>
-							<span class="artist">{song.artist}</span>
+							{#if result.type === "cluster"}
+								<span class="title">{result.cluster.name}</span>
+								<span class="artist"
+									>{result.spelling} · {result.cluster.songCount} songs</span
+								>
+							{:else}
+								<span class="title"
+									>{#if result.song.featured}<span
+											class="featured"
+											title="Featured: plays a clip">{FEATURED_EMOJI}</span
+										>{" "}{/if}{result.song.title}</span
+								>
+								<span class="artist">{result.song.artist}</span>
+							{/if}
 						</button>
 					</li>
 				{:else}
 					<li class="empty">
-						{songs.length ? "No matches" : "Loading songs…"}
+						{#if !songs.length}
+							Loading songs…
+						{:else if parsed.kind !== "text"}
+							No clusters built on that progression
+						{:else}
+							No matches
+						{/if}
 					</li>
 				{/each}
 			</ul>
@@ -153,6 +228,7 @@
 		background: rgb(0 0 0 / 0.5);
 		border: 1px solid rgb(255 255 255 / 0.25);
 		border-radius: 4px;
+		text-overflow: ellipsis;
 	}
 
 	input:focus {
@@ -219,6 +295,17 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		opacity: 0.6;
+	}
+
+	.heading {
+		padding: 0.25rem 0.75rem 0.375rem;
+		font-size: var(--12px, 0.75rem);
+		letter-spacing: 0.02em;
+		opacity: 0.7;
+	}
+
+	.key {
+		opacity: 0.8;
 	}
 
 	.empty {
