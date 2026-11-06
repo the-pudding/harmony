@@ -17,7 +17,7 @@ import {
 } from "../src/data/hexMapSnapshot.js";
 import { computeHexMapClusters } from "../src/data/hexMapClusters.js";
 import { computeSongCoverage } from "../src/routes/demo/define-chord-progression/compute-coverage-of-all-songs/computeSongCoverage.js";
-import { computeHexMapLayout } from "../src/routes/demo/harmony-map/embedding/hexMapLayout.js";
+import { computeHexMapLayout } from "../src/components/hexmap/embedding/hexMapLayout.js";
 
 const ROOT = process.cwd();
 const SONGS_PATH = path.join(ROOT, "static/data/songs.json");

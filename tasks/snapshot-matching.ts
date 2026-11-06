@@ -12,10 +12,10 @@ import {
 	computeSongCoverage,
 	type SongCoverageEntry
 } from "../src/routes/demo/define-chord-progression/compute-coverage-of-all-songs/computeSongCoverage.js";
-import { computeHexMapLayout } from "../src/routes/demo/harmony-map/embedding/hexMapLayout.js";
-import { buildClusterInputPoints } from "../src/routes/demo/harmony-map/embedding/clustering/clusterInputPoints.js";
-import { findDensityClusters } from "../src/routes/demo/harmony-map/embedding/clustering/densityClusters.js";
-import { nameProgressionClusters } from "../src/routes/demo/harmony-map/embedding/clustering/progressionClusterNames.js";
+import { computeHexMapLayout } from "../src/components/hexmap/embedding/hexMapLayout.js";
+import { buildClusterInputPoints } from "../src/components/hexmap/embedding/clustering/clusterInputPoints.js";
+import { findDensityClusters } from "../src/components/hexmap/embedding/clustering/densityClusters.js";
+import { nameProgressionClusters } from "../src/components/hexmap/embedding/clustering/progressionClusterNames.js";
 import { computeSongHomogeneity } from "../src/routes/demo/shared/progressionHomogeneity.js";
 
 const CLUSTER_MIN_POINTS = 20;

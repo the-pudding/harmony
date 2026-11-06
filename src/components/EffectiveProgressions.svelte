@@ -13,7 +13,7 @@
 		UNGROUPED_PROGRESSION_PALETTE
 	} from "$routes/demo/define-chord-progression/components/progressionColors";
 	import SongChordsDisplay from "$routes/demo/define-chord-progression/components/SongChordsDisplay.svelte";
-	import ProgressionShareBar from "$routes/demo/harmony-map/components/ProgressionShareBar.svelte";
+	import ProgressionShareBar from "$components/hexmap/components/ProgressionShareBar.svelte";
 	import { mapColors } from "$runes/mapColors.svelte";
 
 	let { songs = [], showEffective = true } = $props();

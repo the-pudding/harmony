@@ -21,7 +21,7 @@
 		formatEffectiveProgressionCount
 	} from "$routes/demo/shared/progressionHomogeneity.js";
 	import SongChordsDisplay from "$routes/demo/define-chord-progression/components/SongChordsDisplay.svelte";
-	import ProgressionShareBar from "$routes/demo/harmony-map/components/ProgressionShareBar.svelte";
+	import ProgressionShareBar from "$components/hexmap/components/ProgressionShareBar.svelte";
 
 	type Props = {
 		songId: string;

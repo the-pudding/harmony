@@ -1,5 +1,5 @@
 <script lang="ts">
-	// The hex map from /demo/embedding on its own: no settings bar, legend or
+	// The story's hex map: no settings bar, legend or
 	// inspector. Draws the prebuilt snapshot from `npm run hexmap` (positions
 	// progression coverage and clusters) and fills its parent; layout runs
 	// here, since it depends on the props below. Interaction can
@@ -14,9 +14,9 @@
 		decodeSnapshotCoverage,
 		namedClustersFromSnapshot
 	} from "$data/hexMapClusters.js";
-	import { applyPurityRadialLayout } from "$routes/demo/harmony-map/embedding/layout/purityRadialLayout.js";
-	import type { ClusterRegion } from "$routes/demo/harmony-map/embedding/layout/hexBins.js";
-	import { homogeneityColorFor } from "$routes/demo/harmony-map/homogeneityColors.js";
+	import { applyPurityRadialLayout } from "$components/hexmap/embedding/layout/purityRadialLayout.js";
+	import type { ClusterRegion } from "$components/hexmap/embedding/layout/hexBins.js";
+	import { homogeneityColorFor } from "$components/hexmap/homogeneityColors.js";
 	import {
 		computeSongHomogeneity,
 		type ProgressionCoverage
@@ -26,8 +26,8 @@
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
 	import { zoomIdentity, type ZoomTransform } from "d3";
-	import EmbeddingScatter from "$routes/demo/harmony-map/components/EmbeddingScatter.svelte";
-	import type { ScatterPoint } from "$routes/demo/harmony-map/components/scatterPoint.js";
+	import EmbeddingScatter from "$components/hexmap/components/EmbeddingScatter.svelte";
+	import type { ScatterPoint } from "$components/hexmap/components/scatterPoint.js";
 
 	type Props = {
 		// Drag, wheel, pinch and double-click zoom, and click-to-zoom on hexes.
@@ -83,7 +83,7 @@
 		onSongOpen?: (songId: string) => void;
 		// The song whose chords are open, which gets the selected look.
 		openSongId?: string | null;
-		// Same meanings and defaults as /demo/embedding. (UMAP's minDist and
+		// (UMAP's minDist and
 		// the cluster settings are baked into the snapshot; see
 		// HEX_MAP_UMAP_MIN_DIST and hexMapClusters.ts.)
 		purityLayout?: boolean;

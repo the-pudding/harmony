@@ -54,7 +54,7 @@ Both are gitignored, like `songs.json`. The `/demo/` pages still compute everyth
 
 - core progressions (`src/data/core-progressions.ts`) or song corrections (`hand-corrected-songs.ts`, `reviewed-corrections.json`)
 - the matching algorithm (e.g. `matchSongV2` or its weights)
-- the map layout: the vector options and UMAP `minDist` in [`hexMapLayout.ts`](src/routes/demo/harmony-map/embedding/hexMapLayout.ts), or the vector/UMAP code
+- the map layout: the vector options and UMAP `minDist` in [`hexMapLayout.ts`](src/components/hexmap/embedding/hexMapLayout.ts), or the vector/UMAP code
 - a fresh clone or new machine, since the files aren't committed
 - before deploying, if any of the above changed since the last run, since the build ships whatever is in `static/data/`
 
@@ -82,7 +82,7 @@ To add a chart, write a function in `tasks/build-charts.ts` that returns an arra
 
 ## Coverage cache (IndexedDB)
 
-All `/demo/` pages that run the core-progression coverage algorithm (`define-chord-progression`, `core-progressions`, `harmony-map`, `artists`) cache the result in the browser's IndexedDB so the worker-pool computation only runs once.
+All `/demo/` pages that run the core-progression coverage algorithm (`define-chord-progression`, `core-progressions`, `artists`) cache the result in the browser's IndexedDB so the worker-pool computation only runs once.
 
 The cache key is a SHA-256 fingerprint of:
 
@@ -94,13 +94,13 @@ The cache key is a SHA-256 fingerprint of:
 
 ## Naming map clusters
 
-`/harmony-map` circles dense groups of songs and can label them (e.g. "doo wop", "axis"). Those names are shared, hand-curated data committed in [`src/data/named-clusters.ts`](src/data/named-clusters.ts) — not browser storage — so everyone who pulls the repo sees the same names.
+The story's hex map circles dense groups of songs and can label them (e.g. "doo wop", "axis"). Those names are shared, hand-curated data committed in [`src/data/named-clusters.ts`](src/data/named-clusters.ts) — not browser storage — so everyone who pulls the repo sees the same names.
 
 Each entry is `{ anchorSongKey, name }`. A cluster is identified by **one representative song**, not by its exact membership — membership shifts a little every time the embedding re-runs, but as long as that one song is still grouped there, the name still resolves. That song is also what shows as "highlighted" (a ring + label) on the map. Keep **one entry per name and per anchor song**; re-anchoring an existing cluster to a different song should replace its entry, not add a second one.
 
 There's no in-app editing — a browser page can't write to files on disk, and routing edits through the site only added a copy-paste step. To name, rename, or re-anchor a cluster:
 
-1. On `/harmony-map`, find the song you want as the anchor (search, or click a point in the cluster) and copy its `songKey` — click through to its `/demo/define-chord-progression` page and read it out of the `?song=` URL param.
+1. On the story's explorable map, find the song you want as the anchor (search, or click a point in the cluster) and copy its `songKey` — click through to its `/demo/define-chord-progression` page and read it out of the `?song=` URL param.
 2. Add or edit its entry directly in the `namedClusters` array in `src/data/named-clusters.ts`, e.g.:
    ```ts
    { anchorSongKey: "jason-mraz__im-yours", name: "axis" }

@@ -4,7 +4,7 @@
 		paletteById,
 		styleOf
 	} from "$routes/demo/design/chord-viz/chordPalettes.js";
-	import ProgressionShareBar from "$routes/demo/harmony-map/components/ProgressionShareBar.svelte";
+	import ProgressionShareBar from "$components/hexmap/components/ProgressionShareBar.svelte";
 
 	const FEATURED = ["I", "IV", "V"];
 	// How many of the biggest other chords get their name on the bar (each

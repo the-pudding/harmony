@@ -1,16 +1,16 @@
 // The hex map's progression clusters, computed once by tasks/build-hexmap.ts
 // from the snapshot's own (rounded) columns and stored in it, so HexMap and
 // the Explore search read the same clusters without recomputing them.
-import { buildClusterInputPoints } from "../routes/demo/harmony-map/embedding/clustering/clusterInputPoints.js";
+import { buildClusterInputPoints } from "../components/hexmap/embedding/clustering/clusterInputPoints.js";
 import {
 	findDensityClusters,
 	hashSongKeys,
 	type DensityCluster
-} from "../routes/demo/harmony-map/embedding/clustering/densityClusters.js";
+} from "../components/hexmap/embedding/clustering/densityClusters.js";
 import {
 	nameProgressionClusters,
 	type NamedProgressionCluster
-} from "../routes/demo/harmony-map/embedding/clustering/progressionClusterNames.js";
+} from "../components/hexmap/embedding/clustering/progressionClusterNames.js";
 import {
 	computeSongHomogeneity,
 	type ProgressionCoverage
