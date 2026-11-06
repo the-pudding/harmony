@@ -4,9 +4,10 @@
 	import { featuredSyncedSongs as reference } from "$data/syncedSongs";
 	import {
 		detectQuery,
-		matchRank,
+		matchProgression,
 		progressionSpelling
 	} from "$data/progressionQuery.js";
+	import { highlightSegments } from "$data/searchHighlight.js";
 
 	const MAX_RESULTS = 12;
 	const FEATURED_EMOJI = "🎧";
@@ -66,6 +67,16 @@
 
 	const parsed = $derived(detectQuery(query));
 
+	const plain = (text) => [{ text, match: false }];
+
+	// A matched spelling, "I–V–vi–IV", with the matched chords (and the
+	// dashes between two of them) marked.
+	const spellingSegments = ({ tokens, matched }) =>
+		tokens.flatMap((token, i) => [
+			...(i > 0 ? [{ text: "–", match: matched[i - 1] && matched[i] }] : []),
+			{ text: token, match: matched[i] }
+		]);
+
 	const songResults = (q) => {
 		const words = q.split(" ");
 		return songs
@@ -80,7 +91,13 @@
 			})
 			.sort((a, b) => a.rank - b.rank || b.song.popularity - a.song.popularity)
 			.slice(0, MAX_RESULTS)
-			.map(({ song }) => ({ type: "song", key: song.songKey, song }));
+			.map(({ song }) => ({
+				type: "song",
+				key: song.songKey,
+				song,
+				title: highlightSegments(song.title, words),
+				detail: highlightSegments(song.artist, words)
+			}));
 	};
 
 	// Clusters whose progressions start with the query come first, then
@@ -90,19 +107,22 @@
 			.flatMap((cluster) => {
 				let best = null;
 				for (const progressionName of cluster.progressionNames) {
-					const rank = matchRank(codes, progressionName);
-					if (rank !== null && (best === null || rank < best.rank))
-						best = { rank, progressionName };
+					const match = matchProgression(codes, progressionName);
+					if (match && (best === null || match.rank < best.rank)) best = match;
 				}
-				return best ? [{ cluster, ...best }] : [];
+				return best ? [{ cluster, rank: best.rank, match: best }] : [];
 			})
 			.sort((a, b) => a.rank - b.rank || b.cluster.songCount - a.cluster.songCount)
 			.slice(0, MAX_RESULTS)
-			.map(({ cluster, progressionName }) => ({
+			.map(({ cluster, match }) => ({
 				type: "cluster",
 				key: cluster.name,
 				cluster,
-				spelling: progressionSpelling(progressionName)
+				title: plain(cluster.name),
+				detail: [
+					...spellingSegments(match),
+					...plain(` · ${cluster.songCount} songs`)
+				]
 			}));
 
 	// Clusters named with every word of the query (e.g. "jazz doo wop"),
@@ -120,7 +140,10 @@
 				type: "cluster",
 				key: cluster.name,
 				cluster,
-				spelling: cluster.progressionNames.map(progressionSpelling).join(" · ")
+				title: highlightSegments(cluster.name, words),
+				detail: plain(
+					`${cluster.progressionNames.map(progressionSpelling).join(" · ")} · ${cluster.songCount} songs`
+				)
 			}));
 	};
 
@@ -165,6 +188,10 @@
 	};
 </script>
 
+{#snippet highlighted(segments)}{#each segments as segment, i (i)}{#if segment.match}<mark
+				>{segment.text}</mark
+			>{:else}{segment.text}{/if}{/each}{/snippet}
+
 <div class="controls">
 	<h2>Explore</h2>
 	<div class="search">
@@ -202,20 +229,13 @@
 							onclick={() => choose(result)}
 							onmouseenter={() => (activeIndex = i)}
 						>
-							{#if result.type === "cluster"}
-								<span class="title">{result.cluster.name}</span>
-								<span class="artist"
-									>{result.spelling} · {result.cluster.songCount} songs</span
-								>
-							{:else}
-								<span class="title"
-									>{#if result.song.featured}<span
-											class="featured"
-											title="Featured: plays a clip">{FEATURED_EMOJI}</span
-										>{" "}{/if}{result.song.title}</span
-								>
-								<span class="artist">{result.song.artist}</span>
-							{/if}
+							<span class="title"
+								>{#if result.song?.featured}<span
+										class="featured"
+										title="Featured: plays a clip">{FEATURED_EMOJI}</span
+									>{" "}{/if}{@render highlighted(result.title)}</span
+							>
+							<span class="artist">{@render highlighted(result.detail)}</span>
 						</button>
 					</li>
 				{:else}
@@ -314,7 +334,15 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		opacity: 0.6;
+		color: color-mix(in srgb, var(--color-fg) 60%, transparent);
+	}
+
+	mark {
+		padding: 0 0.0625rem;
+		border-radius: 2px;
+		background: rgb(250 204 21 / 0.3);
+		color: #fff;
+		font-weight: 700;
 	}
 
 	.heading {

@@ -94,10 +94,8 @@ const romanCodes = (
 ): number[] | null => {
 	if (chords.some((chord) => chord === null)) return null;
 	const intervals = SCALE_INTERVALS[scale];
-	return dedupeAdjacent(
-		(chords as RomanChord[]).map((chord) =>
-			codeFor(intervals[chord.degree - 1] + chord.accidental, chord.quality)
-		)
+	return (chords as RomanChord[]).map((chord) =>
+		codeFor(intervals[chord.degree - 1] + chord.accidental, chord.quality)
 	);
 };
 
@@ -222,7 +220,7 @@ export const detectQuery = (text: string): ProgressionQuery => {
 
 	const romans = tokens.map(parseRoman);
 	if (romans.every((chord) => chord !== null)) {
-		const codes = romanCodes(romans)!;
+		const codes = dedupeAdjacent(romanCodes(romans)!);
 		return codes.length >= MIN_PROGRESSION_CHORDS
 			? { kind: "roman", romanTokens: tokens, codes }
 			: { kind: "text" };
@@ -247,68 +245,104 @@ const coreProgressionByName = new Map(
 	)
 );
 
-const spellingCodes = (spelling: string, scale?: ScaleName): number[] | null =>
-	romanCodes(
-		spelling.split("-").map((token) => parseRoman(cleanDataToken(token))),
+// One spelling of a progression, in one key frame, with its repeated
+// chords collapsed: runs[i] is the [first, last] token behind codes[i].
+type SpellingCodes = { tokens: string[]; codes: number[]; runs: [number, number][] };
+
+const spellingVariants = (spelling: string, scale?: ScaleName): SpellingCodes[] => {
+	const tokens = spelling.split("-");
+	const raw = romanCodes(
+		tokens.map((token) => parseRoman(cleanDataToken(token))),
 		scale
 	);
+	if (!raw || raw.length === 0) return [];
+	return RELATIVE_KEY_SHIFTS.map((shift) => {
+		const codes: number[] = [];
+		const runs: [number, number][] = [];
+		raw.forEach((code, index) => {
+			const shifted = shiftCode(code, shift);
+			if (codes.length && codes[codes.length - 1] === shifted)
+				runs[runs.length - 1][1] = index;
+			else {
+				codes.push(shifted);
+				runs.push([index, index]);
+			}
+		});
+		return { tokens, codes, runs };
+	});
+};
 
-const codesByProgressionName = new Map<string, number[][]>();
+const variantsByProgressionName = new Map<string, SpellingCodes[]>();
 
 // Every way a named progression can be matched: each spelling, in its own
 // key and shifted to its relative major/minor.
-const progressionCodes = (progressionName: string): number[][] => {
-	let cached = codesByProgressionName.get(progressionName);
+const progressionVariants = (progressionName: string): SpellingCodes[] => {
+	let cached = variantsByProgressionName.get(progressionName);
 	if (cached) return cached;
 	const core = coreProgressionByName.get(progressionName);
-	const spellings = core
-		? chordProgressionVariants(core.chordProgression).map((spelling) =>
-				spellingCodes(spelling, core.scale)
+	cached = core
+		? chordProgressionVariants(core.chordProgression).flatMap((spelling) =>
+				spellingVariants(spelling, core.scale)
 			)
-		: [spellingCodes(progressionName)];
-	cached = spellings
-		.filter((codes): codes is number[] => codes !== null && codes.length > 0)
-		.flatMap((codes) =>
-			RELATIVE_KEY_SHIFTS.map((shift) =>
-				dedupeAdjacent(codes.map((code) => shiftCode(code, shift)))
-			)
-		);
-	codesByProgressionName.set(progressionName, cached);
+		: spellingVariants(progressionName);
+	variantsByProgressionName.set(progressionName, cached);
 	return cached;
 };
 
-const startsWith = (codes: number[], query: number[]): boolean =>
-	query.length <= codes.length && query.every((code, index) => codes[index] === code);
-
-// Contains the query anywhere, wrapping around the end, since a progression
-// loops.
-const containsLooped = (codes: number[], query: number[]): boolean => {
-	if (query.length > codes.length) return false;
+// Where the query sits in the codes, as code indexes, wrapping around the
+// end (a progression loops), preferring a match at the start. Null if absent.
+const findInLoop = (codes: number[], query: number[]): number[] | null => {
 	const looped =
 		codes.length > 1 && codes[0] === codes[codes.length - 1]
 			? codes.slice(0, -1)
 			: codes;
-	return looped.some((_, start) =>
-		query.every((code, index) => looped[(start + index) % looped.length] === code)
-	);
+	if (query.length > codes.length) return null;
+	if (query.every((code, index) => codes[index] === code))
+		return query.map((_, index) => index);
+	if (query.length > looped.length) return null;
+	for (let start = 0; start < looped.length; start++) {
+		const indexes = query.map((_, index) => (start + index) % looped.length);
+		if (indexes.every((at, index) => looped[at] === query[index])) return indexes;
+	}
+	return null;
 };
 
 export const MATCH_STARTS_WITH = 0;
 export const MATCH_CONTAINS = 1;
 
-// How well a named progression matches the query's codes: MATCH_STARTS_WITH,
-// MATCH_CONTAINS, or null.
-export const matchRank = (
+export type ProgressionMatch = {
+	// MATCH_STARTS_WITH or MATCH_CONTAINS.
+	rank: number;
+	// The matched spelling's roman numerals, and which of them the query
+	// matched.
+	tokens: string[];
+	matched: boolean[];
+};
+
+// How a named progression matches the query's codes, or null.
+export const matchProgression = (
 	query: number[],
 	progressionName: string
-): number | null => {
-	let rank: number | null = null;
-	for (const codes of progressionCodes(progressionName)) {
-		if (startsWith(codes, query)) return MATCH_STARTS_WITH;
-		if (containsLooped(codes, query)) rank = MATCH_CONTAINS;
+): ProgressionMatch | null => {
+	let best: ProgressionMatch | null = null;
+	for (const { tokens, codes, runs } of progressionVariants(progressionName)) {
+		const indexes = findInLoop(codes, query);
+		if (!indexes) continue;
+		const rank = indexes[0] === 0 ? MATCH_STARTS_WITH : MATCH_CONTAINS;
+		if (best && best.rank <= rank) continue;
+		const matched = tokens.map(() => false);
+		for (const at of indexes) {
+			const [first, last] = runs[at];
+			for (let token = first; token <= last; token++) matched[token] = true;
+		}
+		best = { rank, tokens, matched };
+		if (rank === MATCH_STARTS_WITH) break;
 	}
-	return rank;
+	return best;
 };
+
+export const matchRank = (query: number[], progressionName: string): number | null =>
+	matchProgression(query, progressionName)?.rank ?? null;
 
 // A progression name's roman spelling, for display ("I–V–vi–IV").
 export const progressionSpelling = (progressionName: string): string =>

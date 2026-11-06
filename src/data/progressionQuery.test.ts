@@ -3,6 +3,7 @@ import {
 	MATCH_CONTAINS,
 	MATCH_STARTS_WITH,
 	detectQuery,
+	matchProgression,
 	matchRank,
 	progressionSpelling
 } from "./progressionQuery.js";
@@ -95,5 +96,28 @@ describe("progressionSpelling", () => {
 	it("spells core progressions by their roman numerals", () => {
 		expect(progressionSpelling("happy walk up")).toBe("I–IV–V");
 		expect(progressionSpelling("V-I-bII-I")).toBe("V–I–bII–I");
+	});
+});
+
+describe("matchProgression", () => {
+	const marked = (query: string, name: string) => {
+		const match = matchProgression(codesOf(query), name);
+		return match?.tokens
+			.map((token, index) => (match.matched[index] ? `[${token}]` : token))
+			.join("-");
+	};
+
+	it("marks the matched sub-progression", () => {
+		expect(marked("I V", "I-V-vi-IV")).toBe("[I]-[V]-vi-IV");
+		expect(marked("vi IV", "I-V-vi-IV")).toBe("I-V-[vi]-[IV]");
+		expect(marked("IV I", "I-V-vi-IV")).toBe("[I]-V-vi-[IV]");
+	});
+
+	it("marks repeated chords the query folded together", () => {
+		expect(marked("I IV", "I-I-IV-V")).toBe("[I]-[I]-[IV]-V");
+	});
+
+	it("marks the spelling of the matching core variant", () => {
+		expect(marked("I IV", "happy walk up")).toBe("[I]-[IV]-V");
 	});
 });
