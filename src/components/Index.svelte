@@ -27,10 +27,11 @@
 	import { featuredSyncedSongs as reference } from "$data/syncedSongs";
 	import { spanStyle } from "$routes/demo/record/timelineStyles";
 	import { audio, stopAllAudio } from "$runes/audio.svelte";
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (1/3): ?slide=N URL persistence. See
+	// src/utils/slideParam.js for full removal instructions. Delete this import.
+	import { readSlideParam, writeSlideParam } from "$utils/slideParam";
 	import mutedSvg from "$svg/muted.svg";
 	import unmutedSvg from "$svg/unmuted.svg";
-
-	const debugSlide = undefined;
 
 	const components = {
 		Landing,
@@ -57,7 +58,11 @@
 		.map((d, i) => d.slides.map((s) => ({ ...s, section: i })))
 		.flat();
 
-	let slideI = $state(debugSlide || 0);
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (2/3): when removing, change the next line
+	// to `$state(0)`.
+	let slideI = $state(readSlideParam(allSlides.length));
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (3/3): delete the next line entirely.
+	$effect(() => writeSlideParam(slideI));
 	let playingSongId = $state();
 	let { text, stage, overlay, map } = $derived(allSlides[slideI]);
 	let { component: stageComponentName, ...stageProps } = $derived(stage ?? {});
@@ -218,7 +223,6 @@
 	};
 
 	const onTap = (dir) => {
-		if (debugSlide) return;
 		if (dir === "right" && slideI < allSlides.length - 1) {
 			slideI += 1;
 		} else if (dir === "left" && slideI > 0) {
