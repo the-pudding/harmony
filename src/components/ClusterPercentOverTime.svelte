@@ -31,7 +31,7 @@
 	const name = $derived(progression?.name ?? cluster);
 
 	const margin = { top: 16, right: 16, bottom: 32, left: 40 };
-	const height = small ? 120 : 240;
+	const height = $derived(small ? 120 : 240);
 
 	let width = $state(0);
 
