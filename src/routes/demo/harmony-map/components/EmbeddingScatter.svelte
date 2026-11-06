@@ -920,7 +920,12 @@
 				);
 			}
 
-			if (hoveredClusterHit?.cluster.hash === cluster.hash) {
+			// song count under the hovered cluster; hex maps already show it in
+			// the hex tooltip, so it'd just be a stray number when zoomed in
+			if (
+				renderMode !== "hex" &&
+				hoveredClusterHit?.cluster.hash === cluster.hash
+			) {
 				context.globalAlpha = strokeAlpha;
 				context.fillStyle = CLUSTER_LABEL_COLOR;
 				context.font = CLUSTER_LABEL_FONT;

@@ -291,7 +291,10 @@
 			bind:clientHeight={clusterFrameHeight}
 		>
 			{#if StageComponent}
-				<StageComponent {...stageProps} />
+				<!-- a fresh <video>/<track> per video, or the old track's cues linger -->
+				{#key stageProps.videoId}
+					<StageComponent {...stageProps} />
+				{/key}
 			{/if}
 		</div>
 

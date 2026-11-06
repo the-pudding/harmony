@@ -1,5 +1,6 @@
 <script>
 	import { base } from "$app/paths";
+	import { getContext, untrack } from "svelte";
 	import { audio, onStopAll } from "$runes/audio.svelte";
 	import { flip } from "svelte/animate";
 	import { fade } from "svelte/transition";
@@ -105,9 +106,18 @@
 
 	$effect(() => stopAll);
 
-	onStopAll(() => {
+	const stop = () => {
 		stopAll();
 		playingKey = null;
+	};
+
+	onStopAll(stop);
+
+	// this component can persist across slides; a new slide stops playback
+	const appState = getContext("state");
+	$effect(() => {
+		appState?.slideI;
+		untrack(stop);
 	});
 </script>
 

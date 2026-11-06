@@ -31,7 +31,7 @@
           "text": [
             {
               "type": "text",
-              "value": "In 2009, the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of pop songs – from Journey’s “Don’t Stop Believin’” to Beyoncé’s “If I Were A Boy” – are built off of the same 4 chords."
+              "value": "In 2009, the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of pop songs – from Journey’s “Don’t Stop Believin’” to Beyoncé’s “If I Were A Boy” – are built off of the same four chords."
             }
           ],
           "stage": {
@@ -43,7 +43,7 @@
           "text": [
             {
               "type": "text",
-              "value": "Chords provide the harmonic foundation for a song, so people cite this video as proof that all pop music is formulaic and sounds the same. The sheer volume of songs makes a compelling case."
+              "value": "People cite this video as proof that all pop music is formulaic and sounds the same. The sheer volume of songs built on this foundation makes a compelling case."
             }
           ],
           "stage": {
@@ -274,7 +274,7 @@
             },
             {
               "type": "text",
-              "value": "At the top we have <strong class=progression>I-IV vamp</strong>, so just going back and forth between <span class=chord>I</span> and <span class=chord>IV</span>."
+              "value": "At the top is <strong class=progression>I-IV vamp</strong>, so just going back and forth between <span class=chord>I</span> and <span class=chord>IV</span>."
             }
           ],
           "map": {
@@ -288,7 +288,7 @@
           "text": [
             {
               "type": "text",
-              "value": "You can hear it in tunes like <strong>Imagine</strong> and <strong>Walk on the Wild Side</strong>."
+              "value": "You can hear it in tunes like “Imagine” and “Walk on the Wild Side.”"
             }
           ],
           "map": {
@@ -613,6 +613,36 @@
             "visible": "true",
             "focusCluster": "doo wop"
           }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "“The four chords” joke works because it’s not true, but it’s also not <i>not</i> true."
+            },
+            {
+              "type": "text",
+              "value": "<span class=chords>I-V-vi-IV</span> on repeat works for a reason, and you can hear it and similar sounds across pop music going way back."
+            },
+            {
+              "type": "text",
+              "value": "*WIP*"
+            },
+            {
+              "type": "text",
+              "value": "Curious what the next generation’s <strong class=progression>axis of awesome</strong> progression will be? It’s probably a tiny dot on our map right now, or maybe not even a cluster yet…"
+            },
+            {
+              "type": "ol",
+              "value": {
+                "li": [
+                  "<s><span class=\"sr-only\">crossed out: </span>built on a single four-chord progression 🧱</s>",
+                  "<s><span class=\"sr-only\">crossed out: </span>looped for the entire song 🔁</s>",
+                  "<s>and recycled decade after decade? 🗓️</s>"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
