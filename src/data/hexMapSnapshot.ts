@@ -1,4 +1,5 @@
 import { base } from "$app/paths";
+import { version } from "$app/environment";
 // Everything HexMap needs that doesn't depend on its props or the screen:
 // each song's UMAP position and progression coverage, plus enough to name it
 // in a tooltip. Built by tasks/build-hexmap.ts (npm run hexmap) so the story
@@ -8,7 +9,9 @@ import type { SongInput } from "../chord-processing/types.js";
 import { groupSongs, type GroupedSong } from "./songBrowser.js";
 import type { SnapshotCluster } from "./hexMapClusters.js";
 
-export const HEX_MAP_SNAPSHOT_URL = `${base}/data/hexmap.json`;
+// ?v= busts browser/CDN caches on each deploy (GitHub Pages caches for 10
+// min), so new code never reads a stale snapshot.
+export const HEX_MAP_SNAPSHOT_URL = `${base}/data/hexmap.json?v=${version}`;
 
 export type HexMapSnapshot = {
 	songKeys: string[];
@@ -34,7 +37,7 @@ export type HexMapSnapshot = {
 export const SONG_SHARD_COUNT = 256;
 
 export const songShardUrl = (shard: number): string =>
-	`${base}/data/song-shards/${shard}.json`;
+	`${base}/data/song-shards/${shard}.json?v=${version}`;
 
 // FNV-1a over the song key; stable across the build task and the browser.
 export const songShardFor = (songKey: string): number => {
