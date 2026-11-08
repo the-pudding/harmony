@@ -94,6 +94,11 @@
 		linkedSongKey?: string | null;
 		// Called with the song hovered on the map (or null) as it changes.
 		onSongHover?: (songKey: string | null) => void;
+		// At dot zoom, the cluster whose title is drawn elsewhere (full size,
+		// by its player), and a callback with where that title goes, in
+		// viewport pixels (or null when it's not on screen).
+		mergedTitleClusterName?: string | null;
+		onMergedTitleAnchor?: (anchor: { x: number; y: number } | null) => void;
 		// (UMAP's minDist and
 		// the cluster settings are baked into the snapshot; see
 		// HEX_MAP_UMAP_MIN_DIST and hexMapClusters.ts.)
@@ -123,6 +128,8 @@
 		openSongId = null,
 		linkedSongKey = null,
 		onSongHover = undefined,
+		mergedTitleClusterName = null,
+		onMergedTitleAnchor = undefined,
 		purityLayout = true,
 		pureThreshold = 0.9
 	}: Props = $props();
@@ -350,6 +357,8 @@
 				onSongColors={(colorOf) => (mapColors.bySong = colorOf)}
 				{linkedSongKey}
 				onSongHover={onSongHover ?? null}
+				{mergedTitleClusterName}
+				onMergedTitleAnchor={onMergedTitleAnchor ?? null}
 			/>
 
 			{#if width > 0 && height > 0}

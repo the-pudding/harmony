@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy, untrack } from "svelte";
+	import { onDestroy, onMount, untrack } from "svelte";
 	import { zoomIdentity, type ZoomTransform } from "d3";
 	import { createDelayedHoverTooltip } from "../../../routes/demo/shared/delayedHoverTooltip.svelte.js";
 	import { createClickAfterDragGuard } from "../../../routes/demo/shared/clickAfterDragGuard.js";
@@ -15,6 +15,7 @@
 	} from "../embedding/layout/hexBins.js";
 	import {
 		HEX_ZOOM,
+		HEX_LABEL_FONT,
 		HEX_MIN_SHARE_FADE,
 		DEFAULT_FOCUS_SCALE,
 		HEX_FOCUS_SCALE,
@@ -37,6 +38,12 @@
 	import HexRegionTooltip from "./scatter/HexRegionTooltip.svelte";
 	import { datedBeeswarmSongs } from "$components/charts/ClusterYearBeeswarm.svelte";
 	import RotatingLabels from "./scatter/RotatingLabels.svelte";
+	import ClusterTitles from "./scatter/ClusterTitles.svelte";
+	import {
+		clusterTitleSpots,
+		placeClusterTitles,
+		type ClusterTitleSpot
+	} from "./scatter/clusterTitles.js";
 	import ScatterSongTooltip from "./scatter/ScatterSongTooltip.svelte";
 	import { normalizeName } from "./scatter/clusterNames.js";
 	import { createPositionTween } from "./scatter/positionTween.svelte.js";
@@ -134,7 +141,9 @@
 		onProgressionColors = null,
 		onSongColors = null,
 		linkedSongKey = null,
-		onSongHover = null
+		onSongHover = null,
+		mergedTitleClusterName = null,
+		onMergedTitleAnchor = null
 	}: Props = $props();
 
 	const labelNameSet = $derived(
@@ -197,6 +206,44 @@
 	// like song positions (0–1 across the plot). Rotating labels are picked
 	// from these.
 	let labelSpots = $state<LabelSpot[]>([]);
+
+	// In hex mode at dot zoom, each named cluster's title spot from the last
+	// frame; titles are HTML (ClusterTitles), not painted.
+	let titleSpots = $state.raw<ClusterTitleSpot[]>([]);
+	const setTitleSpots = (spots: ClusterTitleSpot[]) => {
+		if (spots.length === 0 && untrack(() => titleSpots.length) === 0) return;
+		titleSpots = spots;
+	};
+
+	const placedTitles = $derived(
+		placeClusterTitles(titleSpots, {
+			width,
+			height,
+			mergedName: mergedTitleClusterName,
+			bottom:
+				focusFrame && focusFrame.height > 0
+					? focusFrame.top + focusFrame.height
+					: height
+		})
+	);
+
+	// Where the merged cluster's player goes, in viewport pixels.
+	$effect(() => {
+		const { merged } = placedTitles;
+		if (!onMergedTitleAnchor) return;
+		if (!merged || !containerEl) {
+			onMergedTitleAnchor(null);
+			return;
+		}
+		const rect = containerEl.getBoundingClientRect();
+		onMergedTitleAnchor({ x: rect.left + merged.x, y: rect.top + merged.y });
+	});
+
+	// Canvas labels use web fonts, which may arrive after the first paint.
+	let fontsLoaded = $state(0);
+	onMount(() => {
+		void document.fonts.load(HEX_LABEL_FONT).then(() => fontsLoaded++);
+	});
 
 	const resolvedClusterNames = $derived(
 		clusterNames ?? new Map<string, string>()
@@ -335,6 +382,7 @@
 				pixelRatioOverride ?? (window.devicePixelRatio || 1)
 			);
 		if (!context) return;
+		void fontsLoaded;
 		const scene: Scene = {
 			context,
 			viewport,
@@ -359,6 +407,7 @@
 			sharesBySongKey: progressionSharesBySongKey
 		});
 		hexFrame = layout;
+		setTitleSpots([]);
 		drawHexes(scene, {
 			layout,
 			mode: hexPaintMode,
@@ -407,7 +456,8 @@
 					names: resolvedClusterNames,
 					emphasizedClusterHashes,
 					familyEmphasisSongKeys,
-					showNames: showClusterNames,
+					// Hex maps title clusters in HTML instead (see titleSpots).
+					showNames: showClusterNames && !hexMode,
 					// Hex maps already show the count in the hex tooltip.
 					countClusterHash:
 						renderMode === "hex"
@@ -415,6 +465,11 @@
 							: (hoveredClusterHit?.cluster.hash ?? null)
 				})
 			: [];
+		setTitleSpots(
+			hexMode && showClusterNames
+				? clusterTitleSpots(clusterHits, resolvedClusterNames)
+				: []
+		);
 
 		drawDots(scene, {
 			points: pointsInDrawOrder,
@@ -790,6 +845,16 @@
 				: null}
 		/>
 	{/if}
+
+	<ClusterTitles
+		titles={placedTitles.titles}
+		onSelect={onClusterClick
+			? (name) => {
+					delayedTooltip.clearHover();
+					onClusterClick?.(name, null);
+				}
+			: null}
+	/>
 
 	<RotatingLabels
 		labels={rotating.labels}

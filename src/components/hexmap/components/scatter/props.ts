@@ -188,4 +188,13 @@ export type EmbeddingScatterProps = {
 	linkedSongKey?: string | null;
 	// Called with the hovered song (or null) whenever it changes.
 	onSongHover?: ((songKey: string | null) => void) | null;
+	// In hex mode at dot zoom, the cluster (by name) whose title is drawn
+	// elsewhere, full size, e.g. by its player; its title is left out here
+	// and room is kept for it.
+	mergedTitleClusterName?: string | null;
+	// Called with where that title goes (its top center, in viewport
+	// pixels), or null when the cluster isn't titled on screen.
+	onMergedTitleAnchor?:
+		| ((anchor: { x: number; y: number } | null) => void)
+		| null;
 };

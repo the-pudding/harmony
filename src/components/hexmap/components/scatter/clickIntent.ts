@@ -63,7 +63,8 @@ export const resolveClick = (input: ClickInput): ClickAction[] => {
 		actions.push({ kind: "outlinedSongClick", songKey: outlinedSongKey });
 	}
 
-	// A plain song replaces whatever was playing, and opens its chords.
+	// A plain song replaces whatever was playing, picks its cluster, and
+	// opens its chords.
 	if (
 		atHexDots &&
 		input.canToggleChords &&
@@ -73,6 +74,7 @@ export const resolveClick = (input: ClickInput): ClickAction[] => {
 		if (playingSongKey !== null) {
 			actions.push({ kind: "outlinedSongClick", songKey: null });
 		}
+		actions.push({ kind: "clusterClick", name: input.regionName, songKey });
 		actions.push({ kind: "toggleChords", songKey });
 		return actions;
 	}

@@ -40,9 +40,9 @@
 		pointer-events: none;
 		white-space: nowrap;
 		font:
-			500 10px "JetBrains Mono",
-			ui-monospace,
-			monospace;
+			700 14px "Gooper SemiCondensed",
+			Georgia,
+			serif;
 		color: var(--label-text);
 		text-shadow:
 			-1.5px 0 var(--label-halo),

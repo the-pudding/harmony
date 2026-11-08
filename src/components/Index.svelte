@@ -163,6 +163,10 @@
 	let beeswarmHoverSong = $state(null);
 	// a song hovered on the map, ringed in the explore panel's beeswarm
 	let mapHoverSong = $state(null);
+	// where the explored cluster's title sits under it on the map at dot
+	// zoom; the player draws its header there instead of in the panel
+	let playerAnchor = $state(null);
+	let playerHeight = $state(0);
 	let activeCluster = $derived(mapProps?.focusCluster ?? exploredCluster);
 	let showClusterPanel = $derived(activeCluster !== undefined);
 
@@ -176,17 +180,20 @@
 		);
 
 	const exploreCluster = (clusterName, songKey) => {
-		// a background or gray-hex click leaves the explore slide's panel up
-		if (onExploreSlide && clusterName === null && songKey === null) return;
+		const featuredSong = clusterBySongKey.has(songKey);
+		// a click on the background, a gray hex or an unclustered dot leaves
+		// the explore slide's panel up
+		if (onExploreSlide && clusterName === null && !featuredSong) return;
 		searchedSong = undefined;
 		const featured =
 			clusterBySongKey.get(songKey) ?? featuredClusterNamed(clusterName);
 		exploredCluster =
 			featured ?? (onExploreSlide ? (clusterName ?? undefined) : undefined);
+		// a plain dot opens its own chords, so its cluster's samples wait
 		playingSongId =
-			featured === undefined
+			featured === undefined || (songKey && !featuredSong)
 				? undefined
-				: clusterBySongKey.get(songKey) === featured
+				: featuredSong
 					? songKey
 					: songsByCluster[featured][0].songKey;
 	};
@@ -286,6 +293,8 @@
 		openSongId={chordsSongId ?? null}
 		linkedSongKey={beeswarmHoverSong}
 		onSongHover={(songKey) => (mapHoverSong = songKey)}
+		mergedTitleClusterName={exploredCluster ?? null}
+		onMergedTitleAnchor={(anchor) => (playerAnchor = anchor)}
 		onSongChordsToggle={onExploreSlide
 			? (songId) => {
 					chordsSongId = chordsSongId === songId ? undefined : songId;
@@ -357,7 +366,20 @@
 				class:explore={onExploreSlide}
 				in:fade={{ duration: 300, delay: 800 }}
 			>
-				<Player cluster={activeCluster} bind:playingSongKey={playingSongId} />
+				<!-- keeps the player's room while it's drawn under its cluster -->
+				<div
+					class="player-slot"
+					style:min-height={playerAnchor && exploredCluster !== undefined
+						? `${playerHeight}px`
+						: null}
+				>
+					<Player
+						cluster={activeCluster}
+						bind:playingSongKey={playingSongId}
+						bind:height={playerHeight}
+						anchor={exploredCluster !== undefined ? playerAnchor : null}
+					/>
+				</div>
 				{#if onExploreSlide}
 					<ClusterBeeswarm
 						cluster={activeCluster}

@@ -1,5 +1,5 @@
 <script>
-	import SyncedChords from "$components/SyncedChords.svelte";
+	import ClusterTitle from "$components/ClusterTitle.svelte";
 	import {
 		committedSyncedSongs,
 		featuredSyncedSongs as reference
@@ -9,7 +9,15 @@
 	import { appearanceFor } from "$routes/demo/design/chord-viz/chordAppearanceLookup.js";
 	import { paletteById } from "$routes/demo/design/chord-viz/chordPalettes.js";
 
-	let { cluster, playingSongKey = $bindable() } = $props();
+	let {
+		cluster,
+		playingSongKey = $bindable(),
+		// where to draw the header and chords instead of in place, in
+		// viewport pixels (top center), e.g. under the cluster on the map
+		anchor = null,
+		// the player's height, so its slot can keep the space while anchored
+		height = $bindable(0)
+	} = $props();
 
 	let audioEls = $state({});
 	let currentTime = $state(0);
@@ -114,17 +122,20 @@
 	});
 </script>
 
-<div class="player">
-	<div class="header">
-		{#if songs.length > 1}
-			<button aria-label="Previous song" onclick={playPrev}>&larr;</button>
-		{/if}
-		<div class="name">{cluster}</div>
-		{#if songs.length > 1}
-			<button aria-label="Next song" onclick={playNext}>&rarr;</button>
-		{/if}
-	</div>
-	<SyncedChords {cluster} chords={currentTimeData} {currentTime} />
+<div
+	class="player"
+	class:anchored={anchor !== null}
+	style:left={anchor ? `${anchor.x}px` : null}
+	style:top={anchor ? `${anchor.y}px` : null}
+	bind:clientHeight={height}
+>
+	<ClusterTitle
+		{cluster}
+		chords={currentTimeData}
+		{currentTime}
+		onPrev={songs.length > 1 ? playPrev : null}
+		onNext={songs.length > 1 ? playNext : null}
+	/>
 
 	{#each songs as song (song.songKey)}
 		<audio
@@ -144,16 +155,15 @@
 		align-items: center;
 	}
 
-	.header {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		margin-bottom: 1rem;
+	/* Under its cluster on the map; only the arrows take clicks, so the
+	   map can still be dragged from behind it. */
+	.player.anchored {
+		position: fixed;
+		transform: translateX(-50%);
+		pointer-events: none;
 	}
 
-	.name {
-		font-family: var(--font-serif);
-		font-size: var(--32px);
+	.player.anchored :global(button) {
+		pointer-events: auto;
 	}
-
 </style>

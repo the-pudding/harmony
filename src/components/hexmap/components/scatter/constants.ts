@@ -104,8 +104,9 @@ export const CLUSTER_DEEMPHASIZED_STROKE_ALPHA = 0.15;
 export const CLUSTER_LABEL_COLOR = "rgba(244, 244, 245, 0.9)";
 export const CLUSTER_LABEL_FONT =
 	'10px "JetBrains Mono", ui-monospace, monospace';
+// Cluster names use the story's serif (Gooper), like the player's title.
 export const CLUSTER_NAME_FONT =
-	'600 11px "JetBrains Mono", ui-monospace, monospace';
+	'700 14px "Gooper SemiCondensed", Georgia, serif';
 export const CLUSTER_NAME_COLOR = "#f4f4f5";
 // Space between a cluster's outline and its label.
 export const CLUSTER_LABEL_GAP = 6;
@@ -179,8 +180,7 @@ export const HOVERED_CLUSTER_STROKE_COLOR = "#ffffff";
 export const HOVERED_CLUSTER_STROKE_WIDTH = 2;
 
 // ── Hex mode: region labels ───────────────────────────────────────────
-export const HEX_LABEL_FONT =
-	"500 10px 'JetBrains Mono', ui-monospace, monospace";
+export const HEX_LABEL_FONT = CLUSTER_NAME_FONT;
 // Any colored region this many hexes or larger can be labeled.
 export const HEX_LABEL_MIN_HEXES = 1;
 // Empty space kept around each label so neighboring labels don't touch.

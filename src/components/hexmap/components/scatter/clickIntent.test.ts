@@ -74,14 +74,21 @@ describe("resolveClick", () => {
 		).toEqual([{ kind: "outlinedSongClick", songKey: null }]);
 	});
 
-	it("opens a plain song's chords at hex dot zoom, stopping what's playing", () => {
+	it("opens a plain song's chords and picks its cluster at hex dot zoom, stopping what's playing", () => {
 		expect(
-			resolveClick({ ...hexDotsClick, songKey: "a", playingSongKey: "p" })
+			resolveClick({
+				...hexDotsClick,
+				songKey: "a",
+				playingSongKey: "p",
+				regionName: "axis"
+			})
 		).toEqual([
 			{ kind: "outlinedSongClick", songKey: null },
+			{ kind: "clusterClick", name: "axis", songKey: "a" },
 			{ kind: "toggleChords", songKey: "a" }
 		]);
 		expect(resolveClick({ ...hexDotsClick, songKey: "a" })).toEqual([
+			{ kind: "clusterClick", name: null, songKey: "a" },
 			{ kind: "toggleChords", songKey: "a" }
 		]);
 	});
