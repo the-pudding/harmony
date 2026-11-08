@@ -18,6 +18,8 @@
 		playingSongKey = null,
 		// the song hovered on the map, ringed here too
 		mapHoveredSongKey = null,
+		// the song whose chords are open (one without a sample), ringed
+		selectedSongKey = null,
 		onHoverSong = null
 	} = $props();
 
@@ -83,6 +85,7 @@
 			{annotations}
 			highlightedSongKey={playingSongKey}
 			linkedSongKey={mapHoveredSongKey}
+			{selectedSongKey}
 			{onHoverSong}
 		/>
 	</div>

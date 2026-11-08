@@ -328,6 +328,7 @@
 						cluster={activeCluster}
 						playingSongKey={explore.playingSongKey ?? null}
 						mapHoveredSongKey={hoveredOnMap}
+						selectedSongKey={explore.chordsSongKey ?? null}
 						onHoverSong={(songKey) => (hoveredInBeeswarm = songKey)}
 					/>
 				{/if}

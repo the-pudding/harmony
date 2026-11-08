@@ -85,6 +85,7 @@ export const createExplore = (options: { readonly exploreSlide: boolean }) => {
 		// The user panned or zoomed away.
 		userMoved() {
 			state.searchedSongKey = undefined;
+			state.chordsSongKey = undefined;
 			if (state.clusterName === undefined) return;
 			state.clusterName = undefined;
 			state.playingSongKey = undefined;

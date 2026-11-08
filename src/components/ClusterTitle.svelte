@@ -40,10 +40,9 @@
 		align-items: center;
 	}
 
-	/* The same layout, scaled down whole (by SMALL_TITLE_ZOOM). */
-	.cluster-title.small {
-		pointer-events: none;
-	}
+	/* Scaled down whole (by SMALL_TITLE_ZOOM) via the zoom style. It inherits
+	   pointer-events from its wrapper (ClusterTitles), so the chords take
+	   clicks along with the name when the wrapper is a button. */
 
 	.header {
 		display: flex;

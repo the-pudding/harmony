@@ -48,6 +48,7 @@
 		annotations = [],
 		highlightedSongKey = null,
 		linkedSongKey = null,
+		selectedSongKey = null,
 		onHoverSong = null
 	}: {
 		songs: readonly BeeswarmSong[];
@@ -62,6 +63,9 @@
 		highlightedSongKey?: string | null;
 		// Ringed, e.g. a song hovered on the map beside the chart.
 		linkedSongKey?: string | null;
+		// Ringed (without the label emphasis of highlightedSongKey), e.g. a
+		// song without a sample that was clicked on the map.
+		selectedSongKey?: string | null;
 		// Turns on hovering; called with the hovered song, or null.
 		onHoverSong?: ((songKey: string | null) => void) | null;
 	} = $props();
@@ -180,12 +184,17 @@
 	);
 
 	const ringedNodes = $derived(
-		[...new Set([highlightedSongKey, hoveredSongKey, linkedSongKey])].flatMap(
-			(songKey) => {
-				const node = songKey === null ? undefined : nodeBySongKey.get(songKey);
-				return node ? [node] : [];
-			}
-		)
+		[
+			...new Set([
+				highlightedSongKey,
+				selectedSongKey,
+				hoveredSongKey,
+				linkedSongKey
+			])
+		].flatMap((songKey) => {
+			const node = songKey === null ? undefined : nodeBySongKey.get(songKey);
+			return node ? [node] : [];
+		})
 	);
 
 	const setHovered = (songKey: string | null) => {
