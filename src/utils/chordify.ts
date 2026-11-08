@@ -4,7 +4,7 @@ import Chord from "$components/Chord.svelte";
 import type { KeyTonality } from "$routes/demo/design/chord-viz/diatonicChords.js";
 
 // roman numeral w/ optional accidental, quality, extension, or secondary (e.g. bVII, ii7, vii°, V/V)
-const romanRe =
+export const romanRe =
 	/^[b#♭♯]?(?:VII|VI|IV|V|III|II|I|vii|vi|iv|v|iii|ii|i)(?:[°ø+]|maj|dim|aug|sus|add|\d|\/[^\s-]+)*$/;
 
 // the svg chords allow line breaks beside them, so punctuation touching a

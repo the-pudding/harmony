@@ -27,6 +27,11 @@
 	import { clusterAnnotationAlpha } from "./clusterAnnotationStyle.js";
 	import SongTooltip from "../../../routes/demo/shared/SongTooltip.svelte";
 	import HexSongTooltip from "./HexSongTooltip.svelte";
+	import WatercolorProgressionChords from "$routes/demo/design/chord-viz/WatercolorProgressionChords.svelte";
+	import { progressionTokensOf } from "$routes/demo/design/chord-viz/topProgressions.js";
+	import { paletteById } from "$routes/demo/design/chord-viz/chordPalettes.js";
+	import { DEFAULT_WATERCOLOR_SETTINGS } from "$routes/demo/design/chord-viz/watercolor.js";
+	import { romanRe } from "$utils/chordify";
 	import { createDelayedHoverTooltip } from "../../../routes/demo/shared/delayedHoverTooltip.svelte.js";
 	import { createClickAfterDragGuard } from "../../../routes/demo/shared/clickAfterDragGuard.js";
 	import {
@@ -496,6 +501,8 @@
 			[progression.chordProgression].flat()[0]
 		])
 	);
+
+	const TOOLTIP_CHORD_PALETTE = paletteById("journey-from-home");
 
 	const hexColors = $derived(HEX_THEME_COLORS[theme]);
 
@@ -2278,10 +2285,15 @@
 		{@const { region } = hoveredHex}
 		{@const songCount = clusterSizeByHash.get(region.id) ?? 0}
 		{@const clickHint = hexClickHint?.(region.name)}
-		{@const chords = region.progressionNames
-			.map((name) => chordsByProgressionName.get(name))
-			.filter((chord) => chord !== undefined)
-			.join(" · ")}
+		<!-- Named progressions map to their chords; unnamed ones (and names that
+		     are themselves roman numerals) show their numerals directly. -->
+		{@const chords = (
+			region.progressionNames.length > 0
+				? region.progressionNames
+				: region.name.split(" · ")
+		)
+			.map((name) => chordsByProgressionName.get(name) ?? name)
+			.filter((chord) => chord.split("-").every((r) => romanRe.test(r.trim())))}
 		<div class="tooltip" style={hoverCardStyle(hoveredHex.anchor, width)}>
 			<div class="hex-tooltip-title">
 				<span
@@ -2291,8 +2303,19 @@
 				></span>
 				{region.name}
 			</div>
-			{#if chords}
-				<div class="hex-tooltip-chords">{chords}</div>
+			{#if chords.length > 0}
+				<div class="hex-tooltip-chords">
+					{#each chords as progression (progression)}
+						<div class="hex-tooltip-progression">
+							<WatercolorProgressionChords
+								tokens={progressionTokensOf(progression)}
+								tonality="major"
+								settings={DEFAULT_WATERCOLOR_SETTINGS}
+								palette={TOOLTIP_CHORD_PALETTE}
+							/>
+						</div>
+					{/each}
+				</div>
 			{/if}
 			<div class="hex-tooltip-meta">
 				{songCount}
@@ -2421,15 +2444,26 @@
 	.hex-tooltip-title {
 		display: flex;
 		align-items: center;
-		gap: 0.375rem;
+		gap: 0.5rem;
+		font-size: 1rem;
 		font-weight: 600;
-		margin-bottom: 0.125rem;
+		margin-bottom: 0.25rem;
 	}
 
 	.hex-tooltip-chords {
-		color: #d4d4d8;
-		font-size: 0.7rem;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.75rem;
 		margin-bottom: 0.25rem;
+	}
+
+	/* The chords render at full size; shrink the whole row, trim and all. */
+	.hex-tooltip-progression {
+		zoom: 0.55;
+	}
+
+	.hex-tooltip-progression :global(.chord) {
+		mix-blend-mode: normal;
 	}
 
 	.hex-tooltip-meta {
@@ -2444,9 +2478,9 @@
 	}
 
 	.hex-tooltip-swatch {
-		width: 0.5rem;
-		height: 0.5rem;
-		border-radius: 0.125rem;
+		width: 0.75rem;
+		height: 0.75rem;
+		border-radius: 0.1875rem;
 		flex-shrink: 0;
 	}
 </style>
