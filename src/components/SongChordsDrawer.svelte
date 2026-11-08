@@ -20,7 +20,7 @@
 		computeSongHomogeneity,
 		formatEffectiveProgressionCount
 	} from "$routes/demo/shared/progressionHomogeneity.js";
-	import SongChordsDisplay from "$routes/demo/define-chord-progression/components/SongChordsDisplay.svelte";
+	import SongChords from "$components/SongChordsDrawer.Chords.svelte";
 	import ProgressionShareBar from "$components/hexmap/components/ProgressionShareBar.svelte";
 
 	type Props = {
@@ -207,7 +207,7 @@
 				{/if}
 			</p>
 			<div class="chords">
-				<SongChordsDisplay {song} annotations={result.annotations} />
+				<SongChords {song} annotations={result.annotations} />
 			</div>
 		{/if}
 
