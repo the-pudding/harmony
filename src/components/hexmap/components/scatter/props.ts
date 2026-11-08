@@ -181,4 +181,11 @@ export type EmbeddingScatterProps = {
 	onSongChordsToggle?: ((songId: string) => void) | null;
 	// Called with each progression's map color whenever they change.
 	onProgressionColors?: ((colors: ReadonlyMap<string, string>) => void) | null;
+	// Called with each song's dot color at full zoom whenever they change.
+	onSongColors?: ((colorOf: (songKey: string) => string) => void) | null;
+	// A song hovered somewhere else (e.g. a chart beside the map), shown
+	// here as if the pointer were on it: ringed, with its tooltip.
+	linkedSongKey?: string | null;
+	// Called with the hovered song (or null) whenever it changes.
+	onSongHover?: ((songKey: string | null) => void) | null;
 };

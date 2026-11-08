@@ -89,6 +89,11 @@
 		onSongChordsToggle?: (songId: string) => void;
 		// The song whose chords are open, which gets the selected look.
 		openSongId?: string | null;
+		// A song hovered outside the map (e.g. in a beeswarm), shown as if
+		// hovered here.
+		linkedSongKey?: string | null;
+		// Called with the song hovered on the map (or null) as it changes.
+		onSongHover?: (songKey: string | null) => void;
 		// (UMAP's minDist and
 		// the cluster settings are baked into the snapshot; see
 		// HEX_MAP_UMAP_MIN_DIST and hexMapClusters.ts.)
@@ -116,6 +121,8 @@
 		onUserMove = undefined,
 		onSongChordsToggle = undefined,
 		openSongId = null,
+		linkedSongKey = null,
+		onSongHover = undefined,
 		purityLayout = true,
 		pureThreshold = 0.9
 	}: Props = $props();
@@ -340,6 +347,9 @@
 				onClusterClick={explorable ? onClusterClick : null}
 				onUserMove={explorable ? onUserMove : null}
 				onProgressionColors={(colors) => (mapColors.byProgression = colors)}
+				onSongColors={(colorOf) => (mapColors.bySong = colorOf)}
+				{linkedSongKey}
+				onSongHover={onSongHover ?? null}
 			/>
 
 			{#if width > 0 && height > 0}

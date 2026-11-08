@@ -7,6 +7,7 @@
 	import Slide from "$components/helpers/Slider.Slide.svelte";
 	import Video from "$components/Video.svelte";
 	import Player from "$components/Player.svelte";
+	import ClusterBeeswarm from "$components/ClusterBeeswarm.svelte";
 	import SongChordsDrawer from "$components/SongChordsDrawer.svelte";
 	import UltimateGuitar from "$components/UltimateGuitar.svelte";
 	import RomanNumerals from "$components/RomanNumerals.svelte";
@@ -158,6 +159,10 @@
 	let chordsSongId = $state();
 	// a song picked in ExploreControls' search, which the map zooms to
 	let searchedSong = $state();
+	// a song hovered in the explore panel's beeswarm, hovered on the map too
+	let beeswarmHoverSong = $state(null);
+	// a song hovered on the map, ringed in the explore panel's beeswarm
+	let mapHoverSong = $state(null);
 	let activeCluster = $derived(mapProps?.focusCluster ?? exploredCluster);
 	let showClusterPanel = $derived(activeCluster !== undefined);
 
@@ -279,6 +284,8 @@
 		onClusterClick={exploreCluster}
 		onUserMove={stopExploring}
 		openSongId={chordsSongId ?? null}
+		linkedSongKey={beeswarmHoverSong}
+		onSongHover={(songKey) => (mapHoverSong = songKey)}
 		onSongChordsToggle={onExploreSlide
 			? (songId) => {
 					chordsSongId = chordsSongId === songId ? undefined : songId;
@@ -345,8 +352,20 @@
 		</div>
 
 		{#if showClusterPanel}
-			<div class="panel" in:fade={{ duration: 300, delay: 800 }}>
+			<div
+				class="panel"
+				class:explore={onExploreSlide}
+				in:fade={{ duration: 300, delay: 800 }}
+			>
 				<Player cluster={activeCluster} bind:playingSongKey={playingSongId} />
+				{#if onExploreSlide}
+					<ClusterBeeswarm
+						cluster={activeCluster}
+						playingSongKey={playingSongId ?? null}
+						mapHoveredSongKey={mapHoverSong}
+						onHoverSong={(songKey) => (beeswarmHoverSong = songKey)}
+					/>
+				{/if}
 			</div>
 		{/if}
 	</div>
@@ -455,6 +474,13 @@
 		flex: none;
 		height: 30svh;
 		pointer-events: auto;
+	}
+
+	/* the beeswarm below the chords sets the explore panel's height */
+	.panel.explore {
+		height: auto;
+		min-height: 30svh;
+		padding-bottom: 1rem;
 	}
 
 	.overlay {

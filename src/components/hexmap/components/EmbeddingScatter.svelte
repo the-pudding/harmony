@@ -35,6 +35,7 @@
 	} from "./scatter/types.js";
 	import { normalizePoints } from "./scatter/normalizePoints.js";
 	import HexRegionTooltip from "./scatter/HexRegionTooltip.svelte";
+	import { datedBeeswarmSongs } from "$components/charts/ClusterYearBeeswarm.svelte";
 	import RotatingLabels from "./scatter/RotatingLabels.svelte";
 	import ScatterSongTooltip from "./scatter/ScatterSongTooltip.svelte";
 	import { normalizeName } from "./scatter/clusterNames.js";
@@ -130,7 +131,10 @@
 		simpleSongTooltip = false,
 		hexHasPlayableSongs = null,
 		onSongChordsToggle = null,
-		onProgressionColors = null
+		onProgressionColors = null,
+		onSongColors = null,
+		linkedSongKey = null,
+		onSongHover = null
 	}: Props = $props();
 
 	const labelNameSet = $derived(
@@ -243,6 +247,10 @@
 		onProgressionColors?.(regionColorByProgressionName);
 	});
 
+	// A song's dot color at full zoom, as the beeswarms draw it.
+	const fullZoomSongFill = (songKey: string) =>
+		regionFills.songRegionFill(songKey, 1);
+
 	const regionFills = $derived(
 		createRegionFills({
 			colorByRegionName: regionColorByName,
@@ -254,15 +262,18 @@
 
 	// The hovered hex's cluster, as dated songs in their fully zoomed-in
 	// dot colors, for the tooltip's beeswarm.
-	const hoveredClusterSongs = $derived.by(() => {
-		if (!hoveredHex || !songSummaryByKey) return [];
-		const songKeys = clusterSongKeysByHash.get(hoveredHex.region.id) ?? [];
-		return songKeys.flatMap((songKey) => {
-			const year = songSummaryByKey.get(songKey)?.year;
-			return year
-				? [{ songKey, year, color: regionFills.songRegionFill(songKey, 1) }]
-				: [];
-		});
+	const hoveredClusterSongs = $derived(
+		hoveredHex && songSummaryByKey
+			? datedBeeswarmSongs(
+					clusterSongKeysByHash.get(hoveredHex.region.id) ?? [],
+					(songKey) => songSummaryByKey.get(songKey),
+					fullZoomSongFill
+				)
+			: []
+	);
+
+	$effect(() => {
+		onSongColors?.(fullZoomSongFill);
 	});
 
 	const isOutlined = (songKey: string): boolean =>
@@ -512,6 +523,25 @@
 		hoveredClusterHit = null;
 		hoveredLabelSongKey = null;
 	};
+
+	$effect(() => {
+		onSongHover?.(hoveredSongKey);
+	});
+
+	// A linked song hovers as if the pointer were on it, until it changes.
+	$effect(() => {
+		const songKey = linkedSongKey;
+		if (songKey === null) return;
+		untrack(() => {
+			hoveredSongKey = songKey;
+			delayedTooltip.setHover(songKey, songScreen(songKey));
+		});
+		return () => {
+			if (hoveredSongKey !== songKey) return;
+			hoveredSongKey = null;
+			delayedTooltip.clearHover();
+		};
+	});
 
 	const handleClick = (event: MouseEvent) => {
 		if (clickGuard.shouldSuppressClick() || !containerEl) return;

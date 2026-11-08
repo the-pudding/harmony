@@ -1,12 +1,44 @@
 <script module lang="ts">
-	// A song in the beeswarm: when it came out and its dot color on the map.
-	export type BeeswarmSong = { songKey: string; year: number; color: string };
+	// A song in the beeswarm: when it came out, its dot color on the map,
+	// and its title (shown when hovered).
+	export type BeeswarmSong = {
+		songKey: string;
+		year: number;
+		color: string;
+		title?: string;
+	};
+
+	// A song labeled above the dots, with a line down to its dot.
+	export type BeeswarmAnnotation = { songKey: string; label: string };
+
+	// The dated songs among songKeys, colored by colorOf.
+	export const datedBeeswarmSongs = (
+		songKeys: readonly string[],
+		summaryOf: (
+			songKey: string
+		) => { year?: number; title?: string } | undefined,
+		colorOf: (songKey: string) => string
+	): BeeswarmSong[] =>
+		songKeys.flatMap((songKey) => {
+			const summary = summaryOf(songKey);
+			return summary?.year
+				? [
+						{
+							songKey,
+							year: summary.year,
+							color: colorOf(songKey),
+							title: summary.title
+						}
+					]
+				: [];
+		});
 </script>
 
 <script lang="ts">
 	// A cluster's songs over time: one dot per song, stacked by release
-	// year (adapted from ArtistSongTimeline). Display only; the tooltip it
-	// sits in can't be hovered.
+	// year (adapted from ArtistSongTimeline). Optionally labels some songs,
+	// rings a highlighted one, and reports hovers (with onHoverSong set);
+	// otherwise it's display only, e.g. in a tooltip that can't be hovered.
 	import { scaleLinear } from "d3";
 	import {
 		beeswarmChartHeight,
@@ -14,6 +46,7 @@
 		tallestStackHeight,
 		type DodgedPoint
 	} from "$routes/demo/shared/charts/dodgeBeeswarm.js";
+	import { toCalendarYear } from "$data/songYear.js";
 
 	// Dots shrink through these radii until the tallest stack fits its cap.
 	const DOT_RADII = [3, 2.75, 2.5, 2.25, 2, 1.75, 1.5, 1.25, 1];
@@ -28,11 +61,25 @@
 	const AXIS_HEIGHT = 18;
 	const YEAR_PADDING = 0.5;
 	const TICK_COUNT = 6;
+	// Annotation labels sit in rows above the dots, as few as fit.
+	const LABEL_FONT_SIZE = 10;
+	const LABEL_ROW_HEIGHT = 13;
+	const LABEL_GAP = 8;
+	const LABEL_MAX_CHARS = 28;
+	// The hovered song's title, in a row reserved above everything.
+	const CAPTION_HEIGHT = 16;
+	// How far from a dot the pointer can be and still hover it.
+	const HOVER_PICK_RADIUS = 8;
+	const RING_GAP = 1.5;
 
 	let {
 		songs,
 		yearDomain,
-		maxSongCount
+		maxSongCount,
+		annotations = [],
+		highlightedSongKey = null,
+		linkedSongKey = null,
+		onHoverSong = null
 	}: {
 		songs: readonly BeeswarmSong[];
 		// Shared by every chart, so their timelines line up.
@@ -40,9 +87,19 @@
 		// The most songs any chart shown alongside this one has, which gets
 		// the full MAX_STACK_HEIGHT.
 		maxSongCount: number;
+		annotations?: readonly BeeswarmAnnotation[];
+		// Ringed, with its label emphasized and the other labels faded, e.g.
+		// the song playing.
+		highlightedSongKey?: string | null;
+		// Ringed, e.g. a song hovered on the map beside the chart.
+		linkedSongKey?: string | null;
+		// Turns on hovering; called with the hovered song, or null.
+		onHoverSong?: ((songKey: string | null) => void) | null;
 	} = $props();
 
 	let width = $state(0);
+	let containerEl = $state<HTMLDivElement | null>(null);
+	let hoveredSongKey = $state<string | null>(null);
 
 	const xScale = $derived(
 		scaleLinear()
@@ -79,16 +136,137 @@
 		return { radius, nodes };
 	});
 
+	const nodeBySongKey = $derived(
+		new Map(layout.nodes.map((node) => [node.item.songKey, node]))
+	);
+
+	const truncate = (text: string) =>
+		text.length > LABEL_MAX_CHARS
+			? `${text.slice(0, LABEL_MAX_CHARS - 1).trimEnd()}…`
+			: text;
+
+	// Label widths, measured in the chart's own font.
+	const measureContext =
+		typeof document === "undefined"
+			? null
+			: document.createElement("canvas").getContext("2d");
+	const labelWidth = (text: string): number => {
+		if (!measureContext || !containerEl) return text.length * 6;
+		const { fontFamily } = getComputedStyle(containerEl);
+		measureContext.font = `${LABEL_FONT_SIZE}px ${fontFamily}`;
+		return measureContext.measureText(text).width;
+	};
+
+	// Each annotation centered over its dot (kept inside the chart), in the
+	// first row where it doesn't run into the label before it.
+	const placedLabels = $derived.by(() => {
+		const rowEnds: number[] = [];
+		return annotations
+			.flatMap(({ songKey, label }) => {
+				const node = nodeBySongKey.get(songKey);
+				return node ? [{ songKey, text: truncate(label), node }] : [];
+			})
+			.sort((a, b) => a.node.x - b.node.x)
+			.map((label) => {
+				const textWidth = labelWidth(label.text);
+				const x = Math.min(
+					Math.max(label.node.x, textWidth / 2),
+					width - textWidth / 2
+				);
+				let row = rowEnds.findIndex(
+					(end) => end + LABEL_GAP <= x - textWidth / 2
+				);
+				if (row === -1) row = rowEnds.length;
+				rowEnds[row] = x + textWidth / 2;
+				return { ...label, x, row };
+			});
+	});
+
+	const labelRowCount = $derived(
+		placedLabels.length === 0
+			? 0
+			: Math.max(...placedLabels.map((label) => label.row)) + 1
+	);
+
+	const captionHeight = $derived(onHoverSong ? CAPTION_HEIGHT : 0);
+	const labelsTop = $derived(captionHeight + TOP_PADDING);
+	const labelsHeight = $derived(labelRowCount * LABEL_ROW_HEIGHT);
+
 	const chartHeight = $derived(
-		beeswarmChartHeight(layout.nodes, TOP_PADDING, layout.radius, AXIS_HEIGHT)
+		captionHeight +
+			labelsHeight +
+			beeswarmChartHeight(layout.nodes, TOP_PADDING, layout.radius, AXIS_HEIGHT)
 	);
 
 	const axisY = $derived(chartHeight - AXIS_HEIGHT);
+	const dotY = (node: DodgedPoint<BeeswarmSong>) =>
+		axisY - layout.radius - node.y;
+
+	const hoveredNode = $derived(
+		hoveredSongKey === null ? null : (nodeBySongKey.get(hoveredSongKey) ?? null)
+	);
+
+	const emphasizing = $derived(
+		highlightedSongKey !== null && nodeBySongKey.has(highlightedSongKey)
+	);
+
+	const ringedNodes = $derived(
+		[...new Set([highlightedSongKey, hoveredSongKey, linkedSongKey])].flatMap(
+			(songKey) => {
+				const node = songKey === null ? undefined : nodeBySongKey.get(songKey);
+				return node ? [node] : [];
+			}
+		)
+	);
+
+	const setHovered = (songKey: string | null) => {
+		if (songKey === hoveredSongKey) return;
+		hoveredSongKey = songKey;
+		onHoverSong?.(songKey);
+	};
+
+	const handlePointerMove = (event: PointerEvent) => {
+		const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
+		const x = event.clientX - rect.left;
+		const y = event.clientY - rect.top;
+		let nearest: string | null = null;
+		let nearestDistance = (HOVER_PICK_RADIUS + layout.radius) ** 2;
+		for (const node of layout.nodes) {
+			const distance = (node.x - x) ** 2 + (dotY(node) - y) ** 2;
+			if (distance < nearestDistance) {
+				nearest = node.item.songKey;
+				nearestDistance = distance;
+			}
+		}
+		setHovered(nearest);
+	};
+
+	$effect(() => () => {
+		if (hoveredSongKey !== null) onHoverSong?.(null);
+	});
 </script>
 
-<div class="beeswarm" bind:clientWidth={width}>
+<div class="beeswarm" bind:clientWidth={width} bind:this={containerEl}>
 	{#if width > 0}
-		<svg {width} height={chartHeight} aria-hidden="true">
+		<!-- hovering only mirrors the song on the map; nothing to activate -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<svg
+			{width}
+			height={chartHeight}
+			aria-hidden="true"
+			class:hoverable={onHoverSong !== null}
+			class:emphasizing
+			onpointermove={onHoverSong ? handlePointerMove : undefined}
+			onpointerleave={onHoverSong ? () => setHovered(null) : undefined}
+		>
+			{#if hoveredNode}
+				<text x={PADDING_X} y={CAPTION_HEIGHT - 4} class="caption">
+					{hoveredNode.item.title ?? ""}
+					<tspan class="caption-year">
+						{toCalendarYear(hoveredNode.item.year)}
+					</tspan>
+				</text>
+			{/if}
 			<line
 				x1={PADDING_X}
 				x2={width - PADDING_X}
@@ -108,12 +286,43 @@
 					{tick.year}
 				</text>
 			{/each}
+			{#each placedLabels as label (label.songKey)}
+				{@const labelY = labelsTop + label.row * LABEL_ROW_HEIGHT}
+				<line
+					x1={label.node.x}
+					x2={label.node.x}
+					y1={labelY + LABEL_FONT_SIZE + 2}
+					y2={dotY(label.node) - layout.radius - RING_GAP}
+					class="leader"
+					class:highlighted={label.songKey === highlightedSongKey}
+				/>
+				<text
+					x={label.x}
+					y={labelY + LABEL_FONT_SIZE}
+					text-anchor="middle"
+					class="label"
+					class:highlighted={label.songKey === highlightedSongKey}
+					style:font-size="{LABEL_FONT_SIZE}px"
+				>
+					{label.text}
+				</text>
+			{/each}
 			{#each layout.nodes as node (node.item.songKey)}
 				<circle
 					cx={node.x}
-					cy={axisY - layout.radius - node.y}
+					cy={dotY(node)}
 					r={layout.radius}
 					fill={node.item.color}
+					class="dot"
+					class:highlighted={node.item.songKey === highlightedSongKey}
+				/>
+			{/each}
+			{#each ringedNodes as node (node.item.songKey)}
+				<circle
+					cx={node.x}
+					cy={dotY(node)}
+					r={layout.radius + RING_GAP}
+					class="ring"
 				/>
 			{/each}
 		</svg>
@@ -131,6 +340,10 @@
 		overflow: visible;
 	}
 
+	svg.hoverable {
+		cursor: crosshair;
+	}
+
 	.axis-line {
 		stroke: rgba(255, 255, 255, 0.15);
 		stroke-width: 1;
@@ -143,6 +356,59 @@
 
 	.tick-label {
 		font-size: 0.55rem;
-		fill: rgba(161, 161, 170, 0.7);
+		fill: rgba(212, 212, 216, 0.85);
+	}
+
+	.leader,
+	.label {
+		transition:
+			opacity 200ms ease,
+			stroke-width 200ms ease;
+	}
+
+	.leader {
+		stroke: rgba(255, 255, 255, 0.35);
+		stroke-width: 1;
+	}
+
+	/* Atlas Typewriter only comes in medium; Atlas Grotesk has a regular. */
+	.label {
+		font-family: var(--font-sans);
+		font-weight: 400;
+		fill: rgba(244, 244, 245, 0.75);
+	}
+
+	.label.highlighted {
+		fill: #fff;
+		font-weight: 700;
+	}
+
+	/* While a song is highlighted, everything else steps back. */
+	.emphasizing .leader:not(.highlighted) {
+		stroke-width: 0.5;
+		opacity: 0.4;
+	}
+
+	.emphasizing .label:not(.highlighted) {
+		opacity: 0.5;
+	}
+
+	.emphasizing .leader.highlighted {
+		stroke: rgba(255, 255, 255, 0.8);
+	}
+
+	.ring {
+		fill: none;
+		stroke: #fff;
+		stroke-width: 1.5;
+	}
+
+	.caption {
+		font-size: 0.7rem;
+		fill: #f4f4f5;
+	}
+
+	.caption-year {
+		fill: rgba(161, 161, 170, 0.8);
 	}
 </style>
