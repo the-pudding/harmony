@@ -150,15 +150,14 @@
 	);
 	// On explorable maps, a clicked cluster with featured songs (in
 	// reference.csv) gets the player too, until the user clicks elsewhere,
-	// pans or zooms.
+	// pans or zooms. On the explore slide, any clicked cluster gets the
+	// panel (without arrows when nothing's playable), and only panning or
+	// zooming dismisses it.
 	let exploredCluster = $state();
 	// the song whose full chords are open in the side drawer
 	let chordsSongId = $state();
 	// a song picked in ExploreControls' search, which the map zooms to
 	let searchedSong = $state();
-	// a cluster without featured songs picked in ExploreControls' search,
-	// which the map zooms to without opening the player
-	let searchedCluster = $state();
 	let activeCluster = $derived(mapProps?.focusCluster ?? exploredCluster);
 	let showClusterPanel = $derived(activeCluster !== undefined);
 
@@ -172,22 +171,23 @@
 		);
 
 	const exploreCluster = (clusterName, songKey) => {
+		// a background or gray-hex click leaves the explore slide's panel up
+		if (onExploreSlide && clusterName === null && songKey === null) return;
 		searchedSong = undefined;
-		searchedCluster = undefined;
-		const cluster =
+		const featured =
 			clusterBySongKey.get(songKey) ?? featuredClusterNamed(clusterName);
-		exploredCluster = cluster;
+		exploredCluster =
+			featured ?? (onExploreSlide ? (clusterName ?? undefined) : undefined);
 		playingSongId =
-			cluster === undefined
+			featured === undefined
 				? undefined
-				: clusterBySongKey.get(songKey) === cluster
+				: clusterBySongKey.get(songKey) === featured
 					? songKey
-					: songsByCluster[cluster][0].songKey;
+					: songsByCluster[featured][0].songKey;
 	};
 
 	const stopExploring = () => {
 		searchedSong = undefined;
-		searchedCluster = undefined;
 		if (exploredCluster === undefined) return;
 		exploredCluster = undefined;
 		playingSongId = undefined;
@@ -197,20 +197,13 @@
 	const pickSong = (songKey) => {
 		audio.muted = false;
 		searchedSong = songKey;
-		searchedCluster = undefined;
 		exploredCluster = clusterBySongKey.get(songKey);
 		playingSongId = exploredCluster === undefined ? undefined : songKey;
 	};
 
-	// zooms to any cluster; featured ones also open the player
-	const pickCluster = (clusterName) => {
-		if (featuredClusterNamed(clusterName) !== undefined) {
-			exploreCluster(clusterName, null);
-			return;
-		}
-		exploreCluster(null, null);
-		searchedCluster = clusterName;
-	};
+	// zooms to any cluster and opens its panel (only on the explore slide,
+	// where the search lives)
+	const pickCluster = (clusterName) => exploreCluster(clusterName, null);
 
 	setContext("explore", { pickSong, pickCluster });
 
@@ -281,7 +274,7 @@
 			playingSongId = songKey ?? undefined;
 			if (songKey) audio.muted = false;
 		}}
-		selectedCluster={exploredCluster ?? searchedCluster ?? null}
+		selectedCluster={exploredCluster ?? null}
 		selectedSong={searchedSong ?? null}
 		onClusterClick={exploreCluster}
 		onUserMove={stopExploring}
