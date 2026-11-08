@@ -136,7 +136,7 @@
 	// The spotlit song (playingSongKey, else zoomSongKey) gets a bigger
 	// marker with a wider glow, and every other song (and outlined songs'
 	// labels) fades back to this alpha.
-	const PLAYING_POINT_RADIUS = 18;
+	const PLAYING_POINT_RADIUS = 14;
 	const PLAYING_GLOW_BLUR = 28;
 	const NOT_PLAYING_ALPHA = 0.3;
 	// How long the playing marker takes to grow (and the last one to shrink).
@@ -861,6 +861,15 @@
 
 	// Marked songs, most emphasized last, so the spotlit song (and one
 	// shrinking back) draws on top.
+	// Labels are laid out from each marker's resting size and in a fixed
+	// order, so they stay put as songs are played and stopped.
+	const restingRadiusFor = (songKey: string): number =>
+		isOutlined(songKey) ? OUTLINED_POINT_RADIUS : POINT_RADIUS;
+
+	const outlinedInLabelOrder = (): string[] => [
+		...new Set([...(outlinedSongKeys ?? []), ...playingEmphasis.keys()])
+	];
+
 	const outlinedInDrawOrder = (): string[] =>
 		[...new Set([...(outlinedSongKeys ?? []), ...playingEmphasis.keys()])].sort(
 			(a, b) => emphasisFor(a) - emphasisFor(b)
@@ -1137,7 +1146,8 @@
 				context.lineWidth = 4;
 				context.lineCap = "butt";
 				arc(0, 1, "rgba(0, 0, 0, 0.35)");
-				if (playingChordColorSegments.length === 0) arc(0, playingClipProgressFraction, "white");
+				if (playingChordColorSegments.length === 0)
+					arc(0, playingClipProgressFraction, "white");
 				for (const {
 					startFraction,
 					endFraction,
@@ -1208,25 +1218,23 @@
 	const drawOutlinedSongLabels = (context: CanvasRenderingContext2D) => {
 		outlinedLabelHitAreas = new Map();
 		if (!outlinedSongKeys || !songSummaryByKey) return;
-		const songs = outlinedInDrawOrder()
-			.reverse()
-			.flatMap((songKey) => {
-				const summary = songSummaryByKey.get(songKey);
-				const position = displayedPositions.get(songKey);
-				if (!summary || !position) return [];
-				const screen = toScreen(position);
-				const radius = radiusFor(songKey);
-				const title =
-					outlinedTitlePrefix && isOutlined(songKey)
-						? `${outlinedTitlePrefix} ${summary.title}`
-						: summary.title;
-				const lines = songLabelLines({
-					title,
-					year: summary.year,
-					artists: summary.artists
-				});
-				return [{ songKey, screen, radius, lines }];
+		const songs = outlinedInLabelOrder().flatMap((songKey) => {
+			const summary = songSummaryByKey.get(songKey);
+			const position = displayedPositions.get(songKey);
+			if (!summary || !position) return [];
+			const screen = toScreen(position);
+			const radius = restingRadiusFor(songKey);
+			const title =
+				outlinedTitlePrefix && isOutlined(songKey)
+					? `${outlinedTitlePrefix} ${summary.title}`
+					: summary.title;
+			const lines = songLabelLines({
+				title,
+				year: summary.year,
+				artists: summary.artists
 			});
+			return [{ songKey, screen, radius, lines }];
+		});
 		const markers: Box[] = songs.map(({ screen, radius }) => ({
 			left: screen.x - radius,
 			right: screen.x + radius,
@@ -1242,8 +1250,7 @@
 		);
 
 		const placed: Box[] = [];
-		const labels: { songKey: string; lines: SongLabelLine[]; box: Box }[] =
-			[];
+		const labels: { songKey: string; lines: SongLabelLine[]; box: Box }[] = [];
 		for (const { songKey, screen, radius, lines } of onScreen) {
 			const textWidth = Math.max(
 				...lines.map((line) =>
@@ -1864,7 +1871,12 @@
 		// only be clicked then.
 		const outlinedSongKey = hexFrame ? null : findOutlinedSongAtAnchor(anchor);
 		onOutlinedSongClick?.(outlinedSongKey);
-		if (hexMode && !hexFrame && onSongChordsToggle && outlinedSongKey === null) {
+		if (
+			hexMode &&
+			!hexFrame &&
+			onSongChordsToggle &&
+			outlinedSongKey === null
+		) {
 			const plainSongKey = findPointAtAnchor(anchor);
 			if (plainSongKey !== null) {
 				onSongChordsToggle(plainSongKey);
@@ -2463,10 +2475,10 @@
 						: playingSongKey !== null
 							? "👆 Click to stop the clip"
 							: isOutlined(delayedTooltip.tooltipSongKey ?? "")
-							? "👆 Click to hear a clip"
-							: delayedTooltip.tooltipSongKey === openSongId
-								? "👆 Click to hide the full chords"
-								: "👆 Click to show the full chords"}
+								? "👆 Click to hear a clip"
+								: delayedTooltip.tooltipSongKey === openSongId
+									? "👆 Click to hide the full chords"
+									: "👆 Click to show the full chords"}
 				/>
 			</div>
 		{:else if tooltipSong}
