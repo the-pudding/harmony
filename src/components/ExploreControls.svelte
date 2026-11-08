@@ -193,7 +193,6 @@
 			>{:else}{segment.text}{/if}{/each}{/snippet}
 
 <div class="controls">
-	<h2>Explore</h2>
 	<div class="search">
 		<input
 			type="search"
@@ -256,7 +255,7 @@
 
 <style>
 	.search {
-		margin-top: 0.75rem;
+		margin: 0;
 	}
 
 	input {
