@@ -361,6 +361,13 @@
 		// One of outlinedSongKeys to call out above the rest (e.g. the song
 		// playing): drawn bigger and on top, with the others faded.
 		playingSongKey?: string | null;
+		// 0 to 1 through the playing song's clip; draws a ring and pause icon.
+		playingClipProgressFraction?: number;
+		playingChordColorSegments?: {
+			startFraction: number;
+			endFraction: number;
+			chordColor: string;
+		}[];
 		// "hex" groups songs into hexagons whose size follows the zoom: big
 		// when zoomed out, smaller as you zoom in, plain dots near max zoom.
 		// Each hex takes the color of its main progression, faded when the
@@ -466,6 +473,8 @@
 		outlinedSongKeys = null,
 		outlinedTitlePrefix = null,
 		playingSongKey = null,
+		playingClipProgressFraction = 0,
+		playingChordColorSegments = [],
 		renderMode = "dots",
 		progressionSharesBySongKey = null,
 		clusterRegionBySongKey = null,
@@ -1103,6 +1112,54 @@
 				? songRegionFill(songKey, gradientStrength)
 				: OUTLINE_COLOR;
 			context.fill();
+
+			if (songKey === playingSongKey && emphasis > 0) {
+				context.save();
+				context.globalAlpha = emphasis;
+				// On the dot's edge, colored by the chord playing in each stretch.
+				const ringRadius = radius - 2;
+				const start = -Math.PI / 2;
+				const arc = (from: number, to: number, color: string) => {
+					context.strokeStyle = color;
+					context.beginPath();
+					context.arc(
+						screen.x,
+						screen.y,
+						ringRadius,
+						start + Math.PI * 2 * from,
+						start + Math.PI * 2 * to
+					);
+					context.stroke();
+				};
+				context.lineWidth = 4;
+				context.lineCap = "butt";
+				arc(0, 1, "rgba(0, 0, 0, 0.35)");
+				if (playingChordColorSegments.length === 0) arc(0, playingClipProgressFraction, "white");
+				for (const {
+					startFraction,
+					endFraction,
+					chordColor
+				} of playingChordColorSegments) {
+					if (startFraction >= playingClipProgressFraction) break;
+					arc(
+						startFraction,
+						Math.min(endFraction, playingClipProgressFraction),
+						chordColor
+					);
+				}
+				context.fillStyle = "white";
+				const barWidth = radius * 0.2;
+				const barHeight = radius * 0.7;
+				for (const dx of [-barWidth * 1.1, barWidth * 1.1]) {
+					context.fillRect(
+						screen.x + dx - barWidth / 2,
+						screen.y - barHeight / 2,
+						barWidth,
+						barHeight
+					);
+				}
+				context.restore();
+			}
 		}
 	};
 
@@ -2143,6 +2200,8 @@
 		void labelNameSet;
 		void outlinedSongKeys;
 		void songSummaryByKey;
+		void playingClipProgressFraction;
+		void playingChordColorSegments;
 		draw();
 	});
 

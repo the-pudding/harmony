@@ -4,7 +4,10 @@
 		committedSyncedSongs,
 		featuredSyncedSongs as reference
 	} from "$data/syncedSongs";
-	import { attachAudio } from "$runes/audio.svelte";
+	import { attachAudio, audio } from "$runes/audio.svelte";
+	import progressionsData from "$data/charts/top-progressions.csv";
+	import { appearanceFor } from "$routes/demo/design/chord-viz/chordAppearanceLookup.js";
+	import { paletteById } from "$routes/demo/design/chord-viz/chordPalettes.js";
 
 	let { cluster, playingSongKey = $bindable() } = $props();
 
@@ -18,6 +21,30 @@
 	const currentSong = $derived(songs.find((d) => d.songKey === playingSongKey));
 	const currentTimeData = $derived(currentSong?.data?.chords);
 	const songKeySignature = $derived(currentSong?.data?.key);
+
+	// The clip split by which chord is playing, colored as in Chord.svelte.
+	const segments = $derived.by(() => {
+		const song = currentSong;
+		const chords = song?.data?.chords;
+		if (!song || !chords?.length) return [];
+		const tonality =
+			progressionsData.find((d) => d.name === cluster)?.scale ?? "major";
+		const palette = paletteById("journey-from-home");
+		const span = song.endSeconds - song.startSeconds;
+		const fraction = (seconds) =>
+			Math.min(1, Math.max(0, (seconds - song.startSeconds) / span));
+		return chords.flatMap(({ seconds, roman }, i) => {
+			const startFraction = fraction(seconds);
+			const endFraction = fraction(chords[i + 1]?.seconds ?? song.endSeconds);
+			if (endFraction <= startFraction) return [];
+			const chordColor = appearanceFor(tonality, roman, palette).colors.fill;
+			return [{ startFraction, endFraction, chordColor }];
+		});
+	});
+
+	$effect(() => {
+		audio.chordColorSegments = segments;
+	});
 
 	const playFromStart = (song) => {
 		const audioEl = audioEls[song.songKey];
@@ -63,10 +90,23 @@
 
 	$effect(() => {
 		const audioEl = audioEls[playingSongKey];
-		if (!audioEl) return;
+		if (!audioEl) {
+			audio.clipProgressFraction = 0;
+			return;
+		}
 		let frame;
 		const tick = () => {
 			currentTime = audioEl.currentTime;
+			audio.clipProgressFraction = currentSong
+				? Math.min(
+						1,
+						Math.max(
+							0,
+							(currentTime - currentSong.startSeconds) /
+								(currentSong.endSeconds - currentSong.startSeconds)
+						)
+					)
+				: 0;
 			frame = requestAnimationFrame(tick);
 		};
 		frame = requestAnimationFrame(tick);

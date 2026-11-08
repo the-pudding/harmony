@@ -22,6 +22,7 @@
 		type ProgressionCoverage
 	} from "$routes/demo/shared/progressionHomogeneity.js";
 	import { featuredSyncedSongs } from "$data/syncedSongs.js";
+	import type { ChordColorSegment } from "$runes/audio.svelte.js";
 	import { mapColors } from "$runes/mapColors.svelte.js";
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
@@ -61,6 +62,11 @@
 		onSongClick?: (songKey: string | null) => void;
 		// The synced song playing, drawn bigger with the others faded.
 		playingSongKey?: string | null;
+		// How far through the playing song's clip it is, 0 to 1; draws a
+		// progress ring and pause icon on its dot.
+		playingClipProgressFraction?: number;
+		// Colors the progress ring in stretches, e.g. by chord.
+		playingChordColorSegments?: ChordColorSegment[];
 		// While movable and no focusCluster is set: a cluster the user picked,
 		// by name, which the view fits (in focusFrame) without locking it.
 		selectedCluster?: string | null;
@@ -102,6 +108,8 @@
 		theme = "dark",
 		onSongClick = undefined,
 		playingSongKey = null,
+		playingClipProgressFraction = 0,
+		playingChordColorSegments = [],
 		selectedCluster = null,
 		selectedSong = null,
 		onClusterClick = undefined,
@@ -309,6 +317,8 @@
 				outlinedSongKeys={SYNCED_SONG_KEYS}
 				outlinedTitlePrefix="🎧"
 				{playingSongKey}
+				{playingClipProgressFraction}
+				{playingChordColorSegments}
 				movable={explorable}
 				{hoverable}
 				showLabels={labelsVisible && !rotateLabels}

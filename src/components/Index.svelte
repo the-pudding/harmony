@@ -261,8 +261,11 @@
 		{focusFrame}
 		theme="dark"
 		playingSongKey={playingSongId}
+		playingClipProgressFraction={audio.clipProgressFraction}
+		playingChordColorSegments={audio.chordColorSegments}
 		onSongClick={(songKey) => {
-			playingSongId = songKey ?? undefined;
+			// Clicking the playing song stops and resets it.
+			playingSongId = songKey && songKey !== playingSongId ? songKey : undefined;
 			if (songKey) audio.muted = false;
 		}}
 		selectedCluster={exploredCluster ?? searchedCluster ?? null}
