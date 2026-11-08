@@ -10,24 +10,11 @@
 	} from "d3";
 	import type { GroupedSong } from "../../../data/songBrowser.js";
 	import coreProgressions from "../../../data/core-progressions.js";
-	import { type DensityCluster } from "../embedding/clustering/densityClusters.js";
-	import {
-		clusterEllipseBoundingRadius,
-		fitClusterEllipse2D,
-		pointInsideClusterEllipse2D,
-		type ClusterEllipse2D
-	} from "../embedding/clustering/clusterBounds.js";
+	import { pointInsideClusterEllipse2D } from "../embedding/clustering/clusterBounds.js";
 	import { fillStyleForGroupShares } from "./groupColorBlend.js";
-	import { clusterAnnotationAlpha } from "./clusterAnnotationStyle.js";
 	import SongTooltip from "../../../routes/demo/shared/SongTooltip.svelte";
 	import HexSongTooltip from "./HexSongTooltip.svelte";
 	import SongLabel from "./SongLabel.svelte";
-	import {
-		SONG_LABEL_STYLE,
-		canvasFontFor,
-		songLabelLines,
-		type SongLabelLine
-	} from "./songLabelText.js";
 	import WatercolorProgressionChords from "$routes/demo/design/chord-viz/WatercolorProgressionChords.svelte";
 	import { progressionTokensOf } from "$routes/demo/design/chord-viz/topProgressions.js";
 	import { paletteById } from "$routes/demo/design/chord-viz/chordPalettes.js";
@@ -41,28 +28,14 @@
 		type HoverCardAnchor
 	} from "../../../routes/demo/shared/hoverCardPosition.js";
 	import type { ScatterPoint } from "./scatterPoint.js";
-	import { scatterPointAlpha } from "./scatterPoint.js";
 	import {
-		averageProgressionShare,
 		axialForPoint,
-		dominantClusterRegion,
-		binIntoHexes,
-		findHexRegions,
 		gradientStrengthForZoom,
 		hexKey,
 		hexZoomLevel,
-		type ClusterRegion,
-		type HexBin,
-		type HexRegion
+		type ClusterRegion
 	} from "../embedding/layout/hexBins.js";
 	import {
-		paintWatercolor,
-		WATERCOLOR_REACH,
-		type WatercolorCell
-	} from "../embedding/layout/watercolorWash.js";
-	import { paintHexWatercolor } from "../embedding/layout/hexWatercolorWash.js";
-	import {
-		PLOT_MARGIN,
 		MIN_ZOOM,
 		MAX_ZOOM,
 		HEX_ZOOM,
@@ -76,48 +49,15 @@
 		HEX_CLICK_ZOOM_MS,
 		TWEEN_DURATION_MS,
 		POINT_RADIUS,
-		SELECTED_POINT_RADIUS,
 		HOVER_PICK_RADIUS,
-		RING_WIDTH,
 		STAR_FILL_COLOR,
 		OUTLINE_COLOR,
 		OUTLINED_POINT_RADIUS,
-		OUTLINE_WIDTH,
-		OUTLINE_GLOW_BLUR,
-		PLAYING_POINT_RADIUS,
-		PLAYING_GLOW_BLUR,
-		NOT_PLAYING_ALPHA,
 		PLAYING_TWEEN_MS,
-		OUTLINED_LABEL_GAP,
 		OUTLINED_LABEL_LINE_HEIGHT,
-		OUTLINED_LABEL_PADDING,
-		AXIS_LABEL_COLOR,
-		AXIS_LABEL_FONT,
 		CLUSTERABLE_METHODS,
-		CLUSTER_RADIUS_PADDING,
-		CLUSTER_STROKE_COLOR,
-		CLUSTER_STROKE_WIDTH,
-		CLUSTER_UNNAMED_STROKE_ALPHA,
-		CLUSTER_DASH_PATTERN,
-		FAMILY_INVOLVEMENT_THRESHOLD,
-		CLUSTER_DEEMPHASIZED_STROKE_ALPHA,
-		CLUSTER_LABEL_COLOR,
-		CLUSTER_LABEL_FONT,
-		CLUSTER_NAME_FONT,
-		CLUSTER_NAME_COLOR,
-		CLUSTER_LABEL_GAP,
 		HEX_THEME_COLORS,
-		MIN_CLUSTER_SHARE_OF_HEX,
-		HEX_OVERLAP_PX,
-		HOVERED_CLUSTER_STROKE_COLOR,
-		HOVERED_CLUSTER_STROKE_WIDTH,
 		HEX_LABEL_FONT,
-		HEX_LABEL_MIN_HEXES,
-		HEX_LABEL_PADDING_X,
-		HEX_LABEL_PADDING_Y,
-		HEX_LABEL_EXTRA_PADDING_ZOOMED_OUT,
-		HEX_LABEL_EXTRA_PADDING_UNTIL_ZOOM,
-		HEX_LABEL_REPEAT_DISTANCE_PX,
 		ROTATING_LABEL_COUNT,
 		ROTATING_LABEL_HOLD_MS,
 		ROTATING_LABEL_HOLD_JITTER_MS,
@@ -126,8 +66,34 @@
 		ROTATING_LABEL_FADE_MS
 	} from "./scatter/constants.js";
 	import type { EmbeddingScatterProps as Props } from "./scatter/props.js";
-	import type { NormalizedPoint, Point2D, Position } from "./scatter/types.js";
+	import type {
+		ClusterHit,
+		LabelSpot,
+		NormalizedPoint,
+		Point2D,
+		Position
+	} from "./scatter/types.js";
 	import { normalizePoints } from "./scatter/normalizePoints.js";
+	import { createPointStyle, lerp } from "./scatter/pointStyle.js";
+	import { prepareCanvas, type Scene } from "./scatter/paint/scene.js";
+	import { drawAxisLabels } from "./scatter/paint/axes.js";
+	import { drawClusterOutlines } from "./scatter/paint/clusters.js";
+	import {
+		createDotFill,
+		drawDots,
+		drawSelectionRings
+	} from "./scatter/paint/dots.js";
+	import { drawMarkedSongs } from "./scatter/paint/markedSongs.js";
+	import {
+		drawOutlinedSongLabels,
+		type OutlinedLabelHitArea
+	} from "./scatter/paint/outlinedLabels.js";
+	import {
+		createHexLayoutCache,
+		type HexLayout
+	} from "./scatter/paint/hexLayout.js";
+	import { drawHexes, type HexPaintMode } from "./scatter/paint/hexes.js";
+	import { drawHexRegionLabels } from "./scatter/paint/hexLabels.js";
 	import * as view from "./scatter/viewport.js";
 	import {
 		colorsByProgressionName,
@@ -238,9 +204,6 @@
 	const clickGuard = createClickAfterDragGuard();
 	onDestroy(() => delayedTooltip.dispose());
 
-	type ClusterGeometry = ClusterEllipse2D;
-	type ClusterHit = { cluster: DensityCluster; geometry: ClusterGeometry };
-
 	let hoveredClusterHit = $state<ClusterHit | null>(null);
 
 	// The colored hex under the pointer in hex mode and the cluster it
@@ -251,11 +214,7 @@
 		anchor: HoverCardAnchor;
 		region: ClusterRegion;
 	} | null>(null);
-	let hexFrame: {
-		radius: number;
-		bins: Map<string, HexBin>;
-		regionByKey: Map<string, ClusterRegion | null>;
-	} | null = null;
+	let hexFrame: HexLayout | null = null;
 
 	const clusterSizeByHash = $derived(
 		new Map(clusters.map((cluster) => [cluster.hash, cluster.songKeys.length]))
@@ -264,7 +223,6 @@
 	// Labels that fit on the current hex frame without overlapping, placed
 	// like song positions (0–1 across the plot). Rotating labels are picked
 	// from these.
-	type LabelSpot = { text: string; nx: number; ny: number };
 	let labelSpots = $state<LabelSpot[]>([]);
 	let rotatingLabels = $state<(LabelSpot & { id: number })[]>([]);
 
@@ -272,10 +230,9 @@
 		clusterNames ?? new Map<string, string>()
 	);
 
-	// Live geometry (centroid + radius) per drawn cluster, recomputed once per
-	// draw() call from that frame's tween positions — cached here so hover and
-	// click hit-testing don't redo an O(cluster size) reduce on every mousemove.
-	let clusterGeometryCache: ClusterHit[] = [];
+	// Each cluster outline from the last dot frame, so hover and click
+	// hit-testing don't refit them on every mousemove.
+	let clusterHits: ClusterHit[] = [];
 
 	let displayedPositions = new Map<string, Position>();
 	let tweenFrame = 0;
@@ -299,9 +256,8 @@
 	const hexMode = $derived(
 		renderMode !== "dots" && progressionSharesBySongKey !== null
 	);
-	const watercolorMode = $derived(hexMode && renderMode === "watercolor");
-	const hexWatercolorMode = $derived(
-		hexMode && renderMode === "hex-watercolor"
+	const hexPaintMode = $derived<HexPaintMode>(
+		renderMode === "dots" ? "hex" : renderMode
 	);
 
 	const regionColorByName = $derived(
@@ -366,389 +322,9 @@
 		playingSongKey ?? openSongId ?? zoomSongKey
 	);
 
-	const emphasisFor = (songKey: string): number =>
-		playingEmphasis.get(songKey) ?? 0;
-
-	// Drawn as a ringed, glowing marker: outlined songs, plus a spotlit (or
-	// fading-out) song that isn't outlined.
-	const isMarked = (songKey: string): boolean =>
-		isOutlined(songKey) || emphasisFor(songKey) > 0;
-
-	// How much a song fades while another is spotlit.
-	const spotlightFadeFor = (songKey: string): number =>
-		lerp(1, NOT_PLAYING_ALPHA, playingFade * (1 - emphasisFor(songKey)));
-
-	const lerp = (from: number, to: number, t: number): number =>
-		from + (to - from) * t;
-
-	const radiusFor = (songKey: string): number => {
-		if (isMarked(songKey)) {
-			return lerp(
-				isOutlined(songKey) ? OUTLINED_POINT_RADIUS : POINT_RADIUS,
-				PLAYING_POINT_RADIUS,
-				emphasisFor(songKey)
-			);
-		}
-		if (songKey === selectedSongKey) return SELECTED_POINT_RADIUS;
-		return POINT_RADIUS;
-	};
-
-	const alphaFor = (songKey: string): number =>
-		scatterPointAlpha({
-			songKey,
-			hoveredSongKey,
-			selectedSongKey,
-			coClusterSongKeys,
-			emphasizedSongKeys,
-			inYearSongKeys
-		});
-
-	// alphaFor, faded further when another song is spotlit.
-	const outlinedAlphaFor = (songKey: string): number =>
-		alphaFor(songKey) * spotlightFadeFor(songKey);
-
-	// Marked songs, most emphasized last, so the spotlit song (and one
-	// shrinking back) draws on top.
-	// Labels are laid out from each marker's resting size and in a fixed
-	// order, so they stay put as songs are played and stopped.
-	const restingRadiusFor = (songKey: string): number =>
-		isOutlined(songKey) ? OUTLINED_POINT_RADIUS : POINT_RADIUS;
-
-	const outlinedInLabelOrder = (): string[] => [
-		...new Set([...(outlinedSongKeys ?? []), ...playingEmphasis.keys()])
-	];
-
-	const outlinedInDrawOrder = (): string[] =>
-		[...new Set([...(outlinedSongKeys ?? []), ...playingEmphasis.keys()])].sort(
-			(a, b) => emphasisFor(a) - emphasisFor(b)
-		);
-
-	const drawAxisLabels = (context: CanvasRenderingContext2D) => {
-		if (!axisLabels) return;
-		context.globalAlpha = 1;
-		context.fillStyle = AXIS_LABEL_COLOR;
-		context.font = AXIS_LABEL_FONT;
-		context.textAlign = "center";
-		context.fillText(axisLabels.x, width / 2, height - PLOT_MARGIN / 3);
-		context.save();
-		context.translate(PLOT_MARGIN / 2, height / 2);
-		context.rotate(-Math.PI / 2);
-		context.fillText(axisLabels.y, 0, 0);
-		context.restore();
-	};
-
-	const drawClusters = (context: CanvasRenderingContext2D) => {
-		clusterGeometryCache = [];
-		if (!showClusterOutlines) return;
-
-		for (const cluster of clusters) {
-			const screenPositions = cluster.songKeys
-				.map((songKey) => displayedPositions.get(songKey))
-				.filter((position): position is Position => position !== undefined)
-				.map((position) => toScreen(position));
-			if (screenPositions.length === 0) continue;
-
-			const ellipse = fitClusterEllipse2D(
-				screenPositions,
-				CLUSTER_RADIUS_PADDING
-			);
-			if (!ellipse) continue;
-
-			const boundingRadius = clusterEllipseBoundingRadius(ellipse);
-
-			clusterGeometryCache.push({
-				cluster,
-				geometry: ellipse
-			});
-
-			const heavilyInvolvesFamily =
-				!familyEmphasisSongKeys ||
-				cluster.songKeys.filter((songKey) =>
-					familyEmphasisSongKeys.has(songKey)
-				).length /
-					cluster.songKeys.length >=
-					FAMILY_INVOLVEMENT_THRESHOLD;
-
-			const name = heavilyInvolvesFamily
-				? resolvedClusterNames.get(cluster.hash)
-				: undefined;
-			const strokeAlpha = !heavilyInvolvesFamily
-				? CLUSTER_DEEMPHASIZED_STROKE_ALPHA
-				: clusterAnnotationAlpha(
-						emphasizedClusterHashes,
-						cluster.hash,
-						name !== undefined,
-						CLUSTER_UNNAMED_STROKE_ALPHA
-					);
-
-			context.globalAlpha = strokeAlpha;
-			context.setLineDash(CLUSTER_DASH_PATTERN);
-			context.strokeStyle = CLUSTER_STROKE_COLOR;
-			context.lineWidth = CLUSTER_STROKE_WIDTH;
-			context.beginPath();
-			context.ellipse(
-				ellipse.centroid.x,
-				ellipse.centroid.y,
-				ellipse.semiAxisX,
-				ellipse.semiAxisY,
-				ellipse.rotationRadians,
-				0,
-				Math.PI * 2
-			);
-			context.stroke();
-			context.setLineDash([]);
-			context.globalAlpha = 1;
-
-			if (name && showClusterNames) {
-				context.globalAlpha = strokeAlpha;
-				context.fillStyle = CLUSTER_NAME_COLOR;
-				context.font = CLUSTER_NAME_FONT;
-				context.textAlign = "center";
-				context.textBaseline = "alphabetic";
-				context.fillText(
-					name,
-					ellipse.centroid.x,
-					ellipse.centroid.y - boundingRadius - CLUSTER_LABEL_GAP
-				);
-			}
-
-			// song count under the hovered cluster; hex maps already show it in
-			// the hex tooltip, so it'd just be a stray number when zoomed in
-			if (
-				renderMode !== "hex" &&
-				hoveredClusterHit?.cluster.hash === cluster.hash
-			) {
-				context.globalAlpha = strokeAlpha;
-				context.fillStyle = CLUSTER_LABEL_COLOR;
-				context.font = CLUSTER_LABEL_FONT;
-				context.textAlign = "center";
-				context.textBaseline = "top";
-				context.fillText(
-					`${screenPositions.length}`,
-					ellipse.centroid.x,
-					ellipse.centroid.y + boundingRadius + CLUSTER_LABEL_GAP
-				);
-				context.textBaseline = "alphabetic";
-			}
-		}
-	};
-
-	const draw = () => {
-		const canvas = canvasEl;
-		const context = canvas?.getContext("2d");
-		if (!canvas || !context || width === 0 || height === 0) return;
-
-		const pixelRatio = pixelRatioOverride ?? (window.devicePixelRatio || 1);
-		const pixelWidth = Math.round(width * pixelRatio);
-		const pixelHeight = Math.round(height * pixelRatio);
-		if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
-		if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
-		context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-		context.clearRect(0, 0, width, height);
-
-		drawAxisLabels(context);
-
-		const zoomLevel = hexMode ? hexZoomLevel(transform.k, HEX_ZOOM) : null;
-		if (zoomLevel?.kind === "hex") {
-			drawHexes(context, zoomLevel.radius);
-			context.globalAlpha = 1;
-			return;
-		}
-		hexFrame = null;
-		if (untrack(() => labelSpots.length) > 0) labelSpots = [];
-		const dotGradient = hexMode
-			? gradientStrengthForZoom(transform.k, HEX_ZOOM)
-			: 0;
-
-		drawClusters(context);
-
-		for (const point of pointsInDrawOrder) {
-			if (isMarked(point.songKey)) continue;
-			const position = displayedPositions.get(point.songKey);
-			if (!position) continue;
-			const screen = toScreen(position);
-			const reach = SELECTED_POINT_RADIUS + RING_WIDTH * 3;
-			if (
-				screen.x < -reach ||
-				screen.y < -reach ||
-				screen.x > width + reach ||
-				screen.y > height + reach
-			) {
-				continue;
-			}
-			context.globalAlpha =
-				alphaFor(point.songKey) * spotlightFadeFor(point.songKey);
-			context.fillStyle =
-				emphasisFillColor && emphasizedSongKeys?.has(point.songKey)
-					? emphasisFillColor
-					: hexMode
-						? regionFills.songRegionFill(point.songKey, dotGradient)
-						: accentFillColor && isAccented(point.songKey)
-							? accentFillColor
-							: baseFillFor(context, screen, point);
-			context.beginPath();
-			context.arc(screen.x, screen.y, radiusFor(point.songKey), 0, Math.PI * 2);
-			context.fill();
-		}
-
-		drawOutlinedSongs(context, dotGradient);
-		// Only at dot zoom levels, not over hexes.
-		drawOutlinedSongLabels(context);
-
-		const emphasized = [selectedSongKey, hoveredSongKey].filter(
-			(songKey): songKey is string =>
-				songKey !== null && pointBySongKey.has(songKey)
-		);
-		for (const songKey of emphasized) {
-			const position = displayedPositions.get(songKey);
-			if (!position) continue;
-			const screen = toScreen(position);
-			context.globalAlpha = 1;
-			context.strokeStyle = "#f4f4f5";
-			context.lineWidth = RING_WIDTH;
-			context.beginPath();
-			context.arc(
-				screen.x,
-				screen.y,
-				radiusFor(songKey) + RING_WIDTH * 2,
-				0,
-				Math.PI * 2
-			);
-			context.stroke();
-		}
-
-		context.globalAlpha = 1;
-	};
-
-	// Marked songs: a white glow, then the song's region color inside a
-	// white ring, so they stand out from the dots around them. A song that
-	// isn't outlined grows its ring and glow in with its emphasis.
-	const drawOutlinedSongs = (
-		context: CanvasRenderingContext2D,
-		gradientStrength: number
-	) => {
-		for (const songKey of outlinedInDrawOrder()) {
-			const position = displayedPositions.get(songKey);
-			if (!position) continue;
-			const screen = toScreen(position);
-			const radius = radiusFor(songKey);
-			const emphasis = emphasisFor(songKey);
-			const outlined = isOutlined(songKey);
-			const glowBlur = lerp(
-				outlined ? OUTLINE_GLOW_BLUR : 0,
-				PLAYING_GLOW_BLUR,
-				emphasis
-			);
-			const outlineWidth = outlined ? OUTLINE_WIDTH : OUTLINE_WIDTH * emphasis;
-			const reach = radius + glowBlur;
-			if (
-				screen.x < -reach ||
-				screen.y < -reach ||
-				screen.x > width + reach ||
-				screen.y > height + reach
-			) {
-				continue;
-			}
-			context.save();
-			context.globalAlpha = outlinedAlphaFor(songKey);
-			context.beginPath();
-			context.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
-			context.shadowColor = OUTLINE_COLOR;
-			context.shadowBlur = glowBlur;
-			context.fillStyle = OUTLINE_COLOR;
-			context.fill();
-			context.restore();
-
-			context.globalAlpha = outlinedAlphaFor(songKey);
-			context.beginPath();
-			context.arc(
-				screen.x,
-				screen.y,
-				Math.max(0, radius - outlineWidth),
-				0,
-				Math.PI * 2
-			);
-			context.fillStyle = hexMode
-				? regionFills.songRegionFill(songKey, gradientStrength)
-				: OUTLINE_COLOR;
-			context.fill();
-
-			if (
-				outlined &&
-				songKey === hoveredSongKey &&
-				songKey !== playingSongKey
-			) {
-				const size = radius * 0.6;
-				context.save();
-				context.fillStyle = "white";
-				context.beginPath();
-				context.moveTo(screen.x - size * 0.35, screen.y - size * 0.55);
-				context.lineTo(screen.x - size * 0.35, screen.y + size * 0.55);
-				context.lineTo(screen.x + size * 0.7, screen.y);
-				context.closePath();
-				context.fill();
-				context.restore();
-			}
-
-			if (songKey === playingSongKey && emphasis > 0) {
-				context.save();
-				context.globalAlpha = emphasis;
-				// On the dot's edge, colored by the chord playing in each stretch.
-				const ringRadius = radius - 2;
-				const start = -Math.PI / 2;
-				const arc = (from: number, to: number, color: string) => {
-					context.strokeStyle = color;
-					context.beginPath();
-					context.arc(
-						screen.x,
-						screen.y,
-						ringRadius,
-						start + Math.PI * 2 * from,
-						start + Math.PI * 2 * to
-					);
-					context.stroke();
-				};
-				context.lineWidth = 4;
-				context.lineCap = "butt";
-				arc(0, 1, "rgba(0, 0, 0, 0.35)");
-				if (playingChordColorSegments.length === 0)
-					arc(0, playingClipProgressFraction, "white");
-				for (const {
-					startFraction,
-					endFraction,
-					chordColor
-				} of playingChordColorSegments) {
-					if (startFraction >= playingClipProgressFraction) break;
-					arc(
-						startFraction,
-						Math.min(endFraction, playingClipProgressFraction),
-						chordColor
-					);
-				}
-				context.fillStyle = "white";
-				const barWidth = radius * 0.2;
-				const barHeight = radius * 0.7;
-				for (const dx of [-barWidth * 1.1, barWidth * 1.1]) {
-					context.fillRect(
-						screen.x + dx - barWidth / 2,
-						screen.y - barHeight / 2,
-						barWidth,
-						barHeight
-					);
-				}
-				context.restore();
-			}
-		}
-	};
-
-	type Box = { left: number; right: number; top: number; bottom: number };
-
 	// Where each outlined song's label was last drawn. Not reactive, since
 	// drawing fills it.
-	let outlinedLabelHitAreas = new Map<
-		string,
-		{ box: Box; hintRight: number }
-	>();
+	let outlinedLabelHitAreas = new Map<string, OutlinedLabelHitArea>();
 	let hoveredLabelSongKey = $state<string | null>(null);
 
 	const labelSongKeyAt = (anchor: HoverCardAnchor): string | null => {
@@ -772,511 +348,157 @@
 		return null;
 	};
 
-	const boxesOverlap = (a: Box, b: Box): boolean =>
-		a.left < b.right &&
-		a.right > b.left &&
-		a.top < b.bottom &&
-		a.bottom > b.top;
-
-	// Each on-screen outlinedSongKeys song's title, with its artists under it,
-	// beside its marker: to the right if that's free, else left, above, or
-	// below. Placed fresh each draw, so they never cover each other or a
-	// marker at any zoom or canvas size; a song with no free spot goes
-	// unlabeled. Drawn after every marker so none covers a label.
-	const drawOutlinedSongLabels = (context: CanvasRenderingContext2D) => {
-		outlinedLabelHitAreas = new Map();
-		if (!outlinedSongKeys || !songSummaryByKey) return;
-		const songs = outlinedInLabelOrder().flatMap((songKey) => {
-			const summary = songSummaryByKey.get(songKey);
-			const position = displayedPositions.get(songKey);
-			if (!summary || !position) return [];
-			const screen = toScreen(position);
-			const radius = restingRadiusFor(songKey);
-			const title =
-				outlinedTitlePrefix && isOutlined(songKey)
-					? `${outlinedTitlePrefix} ${summary.title}`
-					: summary.title;
-			const lines = songLabelLines({
-				title,
-				year: summary.year,
-				artists: summary.artists
-			});
-			return [{ songKey, screen, radius, lines }];
-		});
-		const markers: Box[] = songs.map(({ screen, radius }) => ({
-			left: screen.x - radius,
-			right: screen.x + radius,
-			top: screen.y - radius,
-			bottom: screen.y + radius
-		}));
-		const onScreen = songs.filter(
-			({ screen }) =>
-				screen.x >= 0 &&
-				screen.y >= 0 &&
-				screen.x <= width &&
-				screen.y <= height
-		);
-
-		const placed: Box[] = [];
-		const labels: { songKey: string; lines: SongLabelLine[]; box: Box }[] = [];
-		for (const { songKey, screen, radius, lines } of onScreen) {
-			const textWidth = Math.max(
-				...lines.map((line) =>
-					line.reduce((lineWidth, { role, text }) => {
-						context.font = canvasFontFor(role);
-						return lineWidth + context.measureText(text).width;
-					}, 0)
-				)
-			);
-			const textHeight = lines.length * OUTLINED_LABEL_LINE_HEIGHT;
-			const reach = radius + OUTLINED_LABEL_GAP;
-			const candidates: [number, number][] = [
-				[screen.x + reach, screen.y - textHeight / 2],
-				[screen.x - reach - textWidth, screen.y - textHeight / 2],
-				[screen.x - textWidth / 2, screen.y - reach - textHeight],
-				[screen.x - textWidth / 2, screen.y + reach]
-			];
-			const free = candidates
-				.map(
-					([left, top]): Box => ({
-						left: left - OUTLINED_LABEL_PADDING,
-						right: left + textWidth + OUTLINED_LABEL_PADDING,
-						top: top - OUTLINED_LABEL_PADDING,
-						bottom: top + textHeight + OUTLINED_LABEL_PADDING
-					})
-				)
-				.filter(
-					(box) =>
-						!placed.some((other) => boxesOverlap(box, other)) &&
-						!markers.some((other) => boxesOverlap(box, other))
-				);
-			// Prefer a spot fully on the canvas, but one hanging off an edge
-			// still counts as free.
-			const box =
-				free.find(
-					(box) =>
-						box.left >= 0 &&
-						box.top >= 0 &&
-						box.right <= width &&
-						box.bottom <= height
-				) ?? free[0];
-			if (!box) continue;
-			placed.push(box);
-			labels.push({ songKey, lines, box });
-		}
-
-		context.textAlign = "left";
-		context.textBaseline = "middle";
-		context.lineJoin = "round";
-		context.lineWidth = 3;
-		context.strokeStyle = hexColors.labelHalo;
-		context.fillStyle = hexColors.labelText;
-		for (const { songKey, lines, box } of labels) {
-			const songAlpha = outlinedAlphaFor(songKey);
-			lines.forEach((line, index) => {
-				const y =
-					box.top +
-					OUTLINED_LABEL_PADDING +
-					(index + 0.5) * OUTLINED_LABEL_LINE_HEIGHT;
-				let x = box.left + OUTLINED_LABEL_PADDING;
-				for (const { role, text } of line) {
-					context.globalAlpha = songAlpha * SONG_LABEL_STYLE[role].opacity;
-					context.font = canvasFontFor(role);
-					context.strokeText(text, x, y);
-					context.fillText(text, x, y);
-					x += context.measureText(text).width;
-				}
-			});
-
-			// A third row, shown on hover, below the label's own rows.
-			const hint = `👆 ${songKey === openSongId ? "hide" : "show"} chords`;
-			const hintX = box.left + OUTLINED_LABEL_PADDING;
-			const hintY =
-				box.top +
-				OUTLINED_LABEL_PADDING +
-				(lines.length + 0.5) * OUTLINED_LABEL_LINE_HEIGHT;
-			context.font = canvasFontFor("title");
-			outlinedLabelHitAreas.set(songKey, {
-				box,
-				hintRight: hintX + context.measureText(hint).width
-			});
-			if (songKey === hoveredLabelSongKey) {
-				context.globalAlpha = songAlpha;
-				context.strokeText(hint, hintX, hintY);
-				context.fillText(hint, hintX, hintY);
-			}
-		}
-	};
-
-	const traceHex = (
-		context: CanvasRenderingContext2D,
-		centerX: number,
-		centerY: number,
-		radius: number
-	) => {
-		context.beginPath();
-		for (let corner = 0; corner < 6; corner++) {
-			const angle = (Math.PI / 180) * (60 * corner - 30);
-			const x = centerX + radius * Math.cos(angle);
-			const y = centerY + radius * Math.sin(angle);
-			if (corner === 0) context.moveTo(x, y);
-			else context.lineTo(x, y);
-		}
-		context.closePath();
-	};
-
-	type BinCell = WatercolorCell & { songKeys: readonly string[] };
-
 	let watercolorCanvas: HTMLCanvasElement | null = null;
 	const watercolorLayer = (): HTMLCanvasElement => {
 		watercolorCanvas ??= document.createElement("canvas");
 		return watercolorCanvas;
 	};
 
-	const paintHexCells = (
-		context: CanvasRenderingContext2D,
-		cells: readonly BinCell[],
-		screenRadius: number
-	) => {
-		for (const cell of cells) {
-			traceHex(context, cell.x, cell.y, screenRadius + HEX_OVERLAP_PX);
-			context.fillStyle = cell.fill;
-			context.fill();
-		}
-	};
+	const hexLayoutFor = createHexLayoutCache();
 
-	const traceBinOutline = (
-		context: CanvasRenderingContext2D,
-		cell: BinCell,
-		screenRadius: number
-	) => {
-		if (watercolorMode) {
-			context.beginPath();
-			context.arc(cell.x, cell.y, screenRadius, 0, Math.PI * 2);
-			return;
-		}
-		traceHex(context, cell.x, cell.y, screenRadius + HEX_OVERLAP_PX);
-	};
-
-	const drawBinOutlines = (
-		context: CanvasRenderingContext2D,
-		cells: readonly BinCell[],
-		screenRadius: number
-	) => {
-		if (selectedSongKey === null) return;
-		for (const cell of cells) {
-			if (!cell.songKeys.includes(selectedSongKey)) continue;
-			traceBinOutline(context, cell, screenRadius);
-			context.strokeStyle = "#f4f4f5";
-			context.lineWidth = 2;
-			context.stroke();
-		}
-	};
-
-	// Neighbor across each hex edge, in traceHex's corner order: edge i runs
-	// from corner i to corner i + 1 and faces 60·i degrees (y down).
-	const EDGE_NEIGHBOR_OFFSETS: readonly [number, number][] = [
-		[1, 0],
-		[0, 1],
-		[-1, 1],
-		[-1, 0],
-		[0, -1],
-		[1, -1]
-	];
-
-	// Strokes the outer edge of every hex in the hovered cluster: only the
-	// edges whose neighbor is in a different cluster (or empty), so the
-	// cluster reads as one shape, including each of its separate patches.
-	const drawHoveredClusterOutline = (
-		context: CanvasRenderingContext2D,
-		bins: Map<string, HexBin>,
-		regionByKey: Map<string, ClusterRegion | null>,
-		screenRadius: number
-	) => {
-		const clusterId = hoveredHex?.region.id;
-		if (clusterId === undefined) return;
-		const radius = screenRadius + HEX_OVERLAP_PX;
-		const corner = (x: number, y: number, index: number) => {
-			const angle = (Math.PI / 180) * (60 * index - 30);
-			return [x + radius * Math.cos(angle), y + radius * Math.sin(angle)];
-		};
-		context.beginPath();
-		for (const [key, bin] of bins) {
-			if (regionByKey.get(key)?.id !== clusterId) continue;
-			const x = transform.applyX(bin.x);
-			const y = transform.applyY(bin.y);
-			EDGE_NEIGHBOR_OFFSETS.forEach(([dq, dr], edge) => {
-				const neighborKey = hexKey(bin.q + dq, bin.r + dr);
-				if (regionByKey.get(neighborKey)?.id === clusterId) return;
-				const [startX, startY] = corner(x, y, edge);
-				const [endX, endY] = corner(x, y, edge + 1);
-				context.moveTo(startX, startY);
-				context.lineTo(endX, endY);
-			});
-		}
-		context.globalAlpha = 1;
-		context.strokeStyle = HOVERED_CLUSTER_STROKE_COLOR;
-		context.lineWidth = HOVERED_CLUSTER_STROKE_WIDTH;
-		context.lineCap = "round";
-		context.stroke();
-		context.lineCap = "butt";
-	};
-
-	// The hex grid for one set of positions, plot size and hex radius, in
-	// base (unzoomed) pixels. Panning and zooming within one hex size reuse
-	// it, so a frame only transforms, culls and paints.
-	type HexLayout = {
-		inputs: readonly unknown[];
-		bins: Map<string, HexBin>;
-		regionByKey: Map<string, ClusterRegion | null>;
-		// Gray first, so colored hexes sit cleanly on top of the merged gray;
-		// share is how much of the bin is its region's progression.
-		orderedBins: {
-			key: string;
-			bin: HexBin;
-			region: ClusterRegion | null;
-			share: number;
-		}[];
-		// Connected same-cluster patches, largest first, for labels.
-		labelRegions: HexRegion[];
-		nameByRegionId: Map<string, string>;
-	};
-	let hexLayoutCache: HexLayout | null = null;
-
-	const hexLayoutFor = (radius: number): HexLayout => {
-		const inputs = [
-			radius,
-			displayedPositions,
-			plot.width,
-			plot.height,
-			drawablePoints,
-			clusterRegionBySongKey,
-			progressionSharesBySongKey
-		];
-		if (
-			hexLayoutCache &&
-			inputs.every((input, index) => input === hexLayoutCache!.inputs[index])
-		) {
-			return hexLayoutCache;
-		}
-		const basePoints = drawablePoints.flatMap((point) => {
-			const position = displayedPositions.get(point.songKey);
-			if (!position) return [];
-			return [{ songKey: point.songKey, ...toBasePixel(position) }];
-		});
-		const bins = binIntoHexes(basePoints, radius);
-		const regionByKey = new Map(
-			[...bins].map(([key, bin]) => [
-				key,
-				clusterRegionBySongKey === null
-					? null
-					: dominantClusterRegion(
-							bin.songKeys,
-							clusterRegionBySongKey,
-							MIN_CLUSTER_SHARE_OF_HEX
-						)
-			])
-		);
-		const orderedBins = [...bins]
-			.map(([key, bin]) => {
-				const region = regionByKey.get(key) ?? null;
-				return {
-					key,
-					bin,
-					region,
-					share:
-						region === null
-							? 0
-							: averageProgressionShare(
-									bin.songKeys,
-									region.progressionNames,
-									progressionSharesBySongKey ?? new Map()
-								)
-				};
-			})
-			.sort(
-				(first, second) =>
-					Number(first.region !== null) - Number(second.region !== null)
-			);
-		// Regions are connected hexes of the same cluster, so two clusters on
-		// the same progression get separate labels. Gray hexes never do.
-		const labelRegions = findHexRegions(
-			bins,
-			new Map(
-				[...regionByKey].map(([key, region]) => [
-					key,
-					{ dominantName: region?.id ?? null }
-				])
-			),
-			HEX_LABEL_MIN_HEXES
-		);
-		// Only regions that may be labeled.
-		const nameByRegionId = new Map(
-			[...regionByKey.values()].flatMap((region) =>
-				region === null || !region.showLabel
-					? []
-					: [[region.id, region.name] as const]
-			)
-		);
-		hexLayoutCache = {
-			inputs,
-			bins,
-			regionByKey,
-			orderedBins,
-			labelRegions,
-			nameByRegionId
-		};
-		return hexLayoutCache;
-	};
-
-	const drawHexes = (context: CanvasRenderingContext2D, radius: number) => {
-		const { bins, regionByKey, orderedBins, labelRegions, nameByRegionId } =
-			hexLayoutFor(radius);
-		hexFrame = { radius, bins, regionByKey };
-
-		const screenRadius = radius * transform.k;
-		const gradient = gradientStrengthForZoom(transform.k, HEX_ZOOM);
-		const cullMargin = screenRadius * (watercolorMode ? WATERCOLOR_REACH : 1);
-		context.globalAlpha = 1;
-
-		const cells: BinCell[] = [];
-		for (const { key, bin, region, share } of orderedBins) {
-			const x = transform.applyX(bin.x);
-			const y = transform.applyY(bin.y);
-			if (
-				x < -cullMargin ||
-				y < -cullMargin ||
-				x > width + cullMargin ||
-				y > height + cullMargin
-			) {
-				continue;
-			}
-			cells.push({
-				key,
-				songKeys: bin.songKeys,
-				x,
-				y,
-				fill:
-					region === null
-						? hexColors.ambiguous
-						: regionFills.regionFill(region.name, share, gradient)
-			});
-		}
-
-		if (watercolorMode) {
-			paintWatercolor(context, watercolorLayer(), cells, screenRadius);
-		} else if (hexWatercolorMode) {
-			paintHexWatercolor(
-				context,
-				watercolorLayer(),
-				cells,
-				screenRadius,
-				(ctx, x, y) => traceHex(ctx, x, y, screenRadius + HEX_OVERLAP_PX)
-			);
-		} else {
-			paintHexCells(context, cells, screenRadius);
-		}
-		drawBinOutlines(context, cells, screenRadius);
-		drawHoveredClusterOutline(context, bins, regionByKey, screenRadius);
-
-		// One label per connected region, biggest first, skipping any that
-		// would collide with a label already placed or fall off screen, or
-		// that labelNames leaves out.
-		if (!showLabels && !showRotatingLabels) {
-			if (untrack(() => labelSpots.length) > 0) labelSpots = [];
-			return;
-		}
-		const spots: LabelSpot[] = [];
-		context.font = HEX_LABEL_FONT;
-		context.textAlign = "center";
-		context.textBaseline = "middle";
-		context.lineJoin = "round";
-		const placed: {
-			left: number;
-			right: number;
-			top: number;
-			bottom: number;
-			text: string;
-			x: number;
-			y: number;
-		}[] = [];
-		// A cluster can break into several patches; only its biggest is a
-		// label candidate (regions come largest first). If that one doesn't
-		// fit, the cluster goes unlabeled rather than labeling a stray patch.
-		const consideredRegionIds = new Set<string>();
-		const extraPadding =
-			HEX_LABEL_EXTRA_PADDING_ZOOMED_OUT *
-			Math.max(
-				0,
-				1 -
-					(transform.k - MIN_ZOOM) /
-						(HEX_LABEL_EXTRA_PADDING_UNTIL_ZOOM - MIN_ZOOM)
-			);
-		const paddingX = HEX_LABEL_PADDING_X + extraPadding;
-		const paddingY = HEX_LABEL_PADDING_Y + extraPadding;
-		for (const region of labelRegions) {
-			if (consideredRegionIds.has(region.name)) continue;
-			consideredRegionIds.add(region.name);
-			const labelText = nameByRegionId.get(region.name);
-			if (labelText === undefined) continue;
-			if (labelNameSet && !labelNameSet.has(normalizeName(labelText))) {
-				continue;
-			}
-			const x = transform.applyX(region.x);
-			const y = transform.applyY(region.y);
-			if (
-				placed.some(
-					(other) =>
-						other.text === labelText &&
-						Math.hypot(other.x - x, other.y - y) < HEX_LABEL_REPEAT_DISTANCE_PX
-				)
-			) {
-				continue;
-			}
-			const textWidth = context.measureText(labelText).width;
-			const box = {
-				left: x - textWidth / 2 - paddingX,
-				right: x + textWidth / 2 + paddingX,
-				top: y - paddingY,
-				bottom: y + paddingY,
-				text: labelText,
-				x,
-				y
-			};
-			if (
-				box.left < 0 ||
-				box.right > width ||
-				box.top < 0 ||
-				box.bottom > height
-			) {
-				continue;
-			}
-			if (
-				placed.some(
-					(other) =>
-						box.left < other.right &&
-						box.right > other.left &&
-						box.top < other.bottom &&
-						box.bottom > other.top
-				)
-			) {
-				continue;
-			}
-			placed.push(box);
-			// Stored like song positions (0–1 across the plot), so a label
-			// already showing stays put on the map when the plot resizes.
-			spots.push({
-				text: labelText,
-				...view.fromBasePixel(viewSize, region)
-			});
-			if (!showLabels) continue;
-			context.strokeStyle = hexColors.labelHalo;
-			context.lineWidth = 3;
-			context.strokeText(labelText, x, y);
-			context.fillStyle = hexColors.labelText;
-			context.fillText(labelText, x, y);
-		}
+	// Drawing runs inside an effect, so this skips needless writes.
+	const setLabelSpots = (spots: LabelSpot[]) => {
+		if (spots.length === 0 && untrack(() => labelSpots.length) === 0) return;
 		labelSpots = spots;
+	};
+
+	// Repaints the whole canvas from the current state. The effect below
+	// re-runs it whenever anything it reads changes; the position and
+	// spotlight tweens also run it on each of their frames.
+	const draw = () => {
+		const context =
+			canvasEl &&
+			prepareCanvas(
+				canvasEl,
+				width,
+				height,
+				pixelRatioOverride ?? (window.devicePixelRatio || 1)
+			);
+		if (!context) return;
+		const scene: Scene = {
+			context,
+			viewport,
+			positions: displayedPositions,
+			themeColors: hexColors
+		};
+		drawAxisLabels(scene, axisLabels);
+		const zoomLevel = hexMode ? hexZoomLevel(transform.k, HEX_ZOOM) : null;
+		if (zoomLevel?.kind === "hex") drawHexFrame(scene, zoomLevel.radius);
+		else drawDotFrame(scene);
+		context.globalAlpha = 1;
+	};
+
+	// Zoomed out in hex mode: the binned map and its region labels.
+	const drawHexFrame = (scene: Scene, radius: number) => {
+		const layout = hexLayoutFor({
+			radius,
+			size: viewSize,
+			positions: displayedPositions,
+			songKeys: drawablePoints,
+			regionBySongKey: clusterRegionBySongKey,
+			sharesBySongKey: progressionSharesBySongKey
+		});
+		hexFrame = layout;
+		drawHexes(scene, {
+			layout,
+			mode: hexPaintMode,
+			regionFill: regionFills.regionFill,
+			selectedSongKey,
+			hoveredRegionId: hoveredHex?.region.id ?? null,
+			watercolorLayer
+		});
+		setLabelSpots(
+			showLabels || showRotatingLabels
+				? drawHexRegionLabels(scene, {
+						layout,
+						draw: showLabels,
+						isAllowed: (name) =>
+							labelNameSet === null || labelNameSet.has(normalizeName(name))
+					})
+				: []
+		);
+	};
+
+	// Dots mode, or hex mode zoomed in to dots: cluster outlines, dots,
+	// marked songs and their labels, then rings around the selected and
+	// hovered songs.
+	const drawDotFrame = (scene: Scene) => {
+		hexFrame = null;
+		setLabelSpots([]);
+		const gradient = hexMode
+			? gradientStrengthForZoom(transform.k, HEX_ZOOM)
+			: 0;
+		const songRegionFill = hexMode
+			? (songKey: string) => regionFills.songRegionFill(songKey, gradient)
+			: null;
+		const style = createPointStyle({
+			spotlight: { emphasis: playingEmphasis, fade: playingFade },
+			outlinedSongKeys,
+			hoveredSongKey,
+			selectedSongKey,
+			coClusterSongKeys,
+			emphasizedSongKeys,
+			inYearSongKeys
+		});
+
+		clusterHits = showClusterOutlines
+			? drawClusterOutlines(scene, {
+					clusters,
+					names: resolvedClusterNames,
+					emphasizedClusterHashes,
+					familyEmphasisSongKeys,
+					showNames: showClusterNames,
+					// Hex maps already show the count in the hex tooltip.
+					countClusterHash:
+						renderMode === "hex"
+							? null
+							: (hoveredClusterHit?.cluster.hash ?? null)
+				})
+			: [];
+
+		drawDots(scene, {
+			points: pointsInDrawOrder,
+			style,
+			fill: createDotFill({
+				colorMode,
+				emphasisFillColor,
+				emphasizedSongKeys,
+				regionFill: songRegionFill,
+				accentFillColor,
+				isAccented
+			})
+		});
+
+		drawMarkedSongs(scene, {
+			style,
+			innerFill: songRegionFill ?? (() => OUTLINE_COLOR),
+			hoveredSongKey,
+			playingSongKey,
+			playback: {
+				progressFraction: playingClipProgressFraction,
+				chordSegments: playingChordColorSegments
+			}
+		});
+
+		outlinedLabelHitAreas =
+			outlinedSongKeys && songSummaryByKey
+				? drawOutlinedSongLabels(scene, {
+						style,
+						summaries: songSummaryByKey,
+						titlePrefix: outlinedTitlePrefix,
+						openSongId,
+						hoveredLabelSongKey
+					})
+				: new Map();
+
+		drawSelectionRings(
+			scene,
+			[selectedSongKey, hoveredSongKey].filter(
+				(songKey): songKey is string =>
+					songKey !== null && pointBySongKey.has(songKey)
+			),
+			style
+		);
 	};
 
 	const hexKeyAtAnchor = (anchor: HoverCardAnchor): string | null => {
@@ -1338,11 +560,11 @@
 		step();
 	};
 
-	const clusterHitArea = (geometry: ClusterGeometry): number =>
+	const clusterHitArea = (geometry: ClusterHit["geometry"]): number =>
 		geometry.semiAxisX * geometry.semiAxisY;
 
 	const findClusterAt = (anchor: HoverCardAnchor): ClusterHit | null =>
-		clusterGeometryCache.reduce<ClusterHit | null>((best, hit) => {
+		clusterHits.reduce<ClusterHit | null>((best, hit) => {
 			if (!pointInsideClusterEllipse2D(anchor, hit.geometry)) return best;
 			return !best ||
 				clusterHitArea(hit.geometry) < clusterHitArea(best.geometry)
@@ -1763,46 +985,8 @@
 		untrack(() => flyToSongIfOffScreen(songKey));
 	});
 
-	$effect(() => {
-		// Tracked so the canvas repaints on resize, zoom and selection changes.
-		void width;
-		void height;
-		void transform;
-		void hoveredSongKey;
-		void selectedSongKey;
-		void coClusterSongKeys;
-		void drawablePoints;
-		void clusters;
-		void emphasizedClusterHashes;
-		void resolvedClusterNames;
-		void hoveredClusterHit;
-		void emphasizedSongKeys;
-		void inYearSongKeys;
-		void colorMode;
-		void showClusterOutlines;
-		void showClusterNames;
-		void familyEmphasisSongKeys;
-		void emphasisFillColor;
-		void pointsInDrawOrder;
-		void accentFillColor;
-		void hexMode;
-		void watercolorMode;
-		void hexWatercolorMode;
-		void regionColorByName;
-		void hoveredHex;
-		void clusterRegionBySongKey;
-		void hexColors;
-		void showLabels;
-		void showRotatingLabels;
-		void labelNameSet;
-		void outlinedSongKeys;
-		void songSummaryByKey;
-		void playingClipProgressFraction;
-		void hoveredLabelSongKey;
-		void openSongId;
-		void playingChordColorSegments;
-		draw();
-	});
+	// Repaints whenever anything draw() reads changes.
+	$effect(draw);
 
 	// Runs ROTATING_LABEL_COUNT independent slots (see the constants above).
 	// Spots are read when each timer fires, so this only restarts when the
