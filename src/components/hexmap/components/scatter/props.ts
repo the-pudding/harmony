@@ -157,10 +157,10 @@ export type EmbeddingScatterProps = {
 	// Called on every click on the map with the outlinedSongKeys song
 	// under the pointer, or null when the click missed them all.
 	onOutlinedSongClick?: ((songKey: string | null) => void) | null;
-	// Hex mode: called on every click, after onOutlinedSongClick, with the
-	// name of the cluster clicked (the hex's, or at dot zoom the nearest
-	// song's), or null for a gray hex or empty space, and the
-	// outlinedSongKeys song clicked, if any.
+	// Hex mode: called when a cluster is picked, with its name and the song
+	// clicked, if any: on a hex click (after onOutlinedSongClick), a dot's
+	// click (its cluster, or null if it has none), or a click on a cluster's
+	// title at dot zoom (with no song). Null for a gray hex or empty space.
 	onClusterClick?:
 		| ((clusterName: string | null, songKey: string | null) => void)
 		| null;
@@ -176,8 +176,8 @@ export type EmbeddingScatterProps = {
 	// then shows outlinedTitlePrefix before the name.
 	hexHasPlayableSongs?: ((regionName: string) => boolean) | null;
 	// Hex mode, at dot zoom: called to open or close a song's full chords
-	// when a song that isn't outlined is clicked (which then doesn't reach
-	// onClusterClick), or when an outlined song's label is clicked.
+	// when a song that isn't outlined is clicked (right after its cluster
+	// goes to onClusterClick), or when an outlined song's label is clicked.
 	onSongChordsToggle?: ((songId: string) => void) | null;
 	// Called with each progression's map color whenever they change.
 	onProgressionColors?: ((colors: ReadonlyMap<string, string>) => void) | null;
@@ -186,7 +186,8 @@ export type EmbeddingScatterProps = {
 	// A song hovered somewhere else (e.g. a chart beside the map), shown
 	// here as if the pointer were on it: ringed, with its tooltip.
 	linkedSongKey?: string | null;
-	// Called with the hovered song (or null) whenever it changes.
+	// Called with the song under the pointer (or null) whenever it
+	// changes; a linkedSongKey hover isn't reported back.
 	onSongHover?: ((songKey: string | null) => void) | null;
 	// In hex mode at dot zoom, the cluster (by name) whose title is drawn
 	// elsewhere, full size, e.g. by its player; its title is left out here

@@ -36,7 +36,10 @@
 	} from "./scatter/types.js";
 	import { normalizePoints } from "./scatter/normalizePoints.js";
 	import HexRegionTooltip from "./scatter/HexRegionTooltip.svelte";
-	import { datedBeeswarmSongs } from "$components/charts/ClusterYearBeeswarm.svelte";
+	import {
+		datedBeeswarmSongs,
+		yearDomainOf
+	} from "$components/charts/beeswarmSongs.js";
 	import RotatingLabels from "./scatter/RotatingLabels.svelte";
 	import ClusterTitles from "./scatter/ClusterTitles.svelte";
 	import {
@@ -191,16 +194,11 @@
 
 	// Every dated song's release years, so each cluster's beeswarm shares
 	// one time axis.
-	const yearDomain = $derived.by(() => {
-		let min = Infinity;
-		let max = -Infinity;
-		for (const summary of songSummaryByKey?.values() ?? []) {
-			if (!summary.year) continue;
-			min = Math.min(min, summary.year);
-			max = Math.max(max, summary.year);
-		}
-		return min <= max ? { min, max } : null;
-	});
+	const yearDomain = $derived(
+		yearDomainOf(
+			[...(songSummaryByKey?.values() ?? [])].map((summary) => summary.year)
+		)
+	);
 
 	// Labels that fit on the current hex frame without overlapping, placed
 	// like song positions (0–1 across the plot). Rotating labels are picked
@@ -227,16 +225,20 @@
 		})
 	);
 
-	// Where the merged cluster's player goes, in viewport pixels.
+	// Where the merged cluster's player goes, in viewport pixels, reported
+	// only when it moves (titles are re-placed on every frame drawn).
+	let lastAnchor: { x: number; y: number } | null = null;
 	$effect(() => {
 		const { merged } = placedTitles;
 		if (!onMergedTitleAnchor) return;
-		if (!merged || !containerEl) {
-			onMergedTitleAnchor(null);
-			return;
-		}
-		const rect = containerEl.getBoundingClientRect();
-		onMergedTitleAnchor({ x: rect.left + merged.x, y: rect.top + merged.y });
+		const rect = merged && containerEl?.getBoundingClientRect();
+		const anchor =
+			merged && rect
+				? { x: rect.left + merged.x, y: rect.top + merged.y }
+				: null;
+		if (anchor?.x === lastAnchor?.x && anchor?.y === lastAnchor?.y) return;
+		lastAnchor = anchor;
+		onMergedTitleAnchor(anchor);
 	});
 
 	// Canvas labels use web fonts, which may arrive after the first paint.
@@ -556,7 +558,7 @@
 				key === null ? null : (hexFrame.regionByKey.get(key) ?? null);
 			hoveredHex =
 				key === null || region === null ? null : { key, anchor, region };
-			hoveredSongKey = null;
+			setPointerHover(null);
 			delayedTooltip.clearHover();
 			hoveredClusterHit = null;
 			hoveredLabelSongKey = null;
@@ -565,23 +567,29 @@
 		hoveredHex = null;
 		hoveredLabelSongKey = onSongChordsToggle ? findLabelAt(anchor) : null;
 		const songKey = findSongAt(anchor);
-		hoveredSongKey = songKey;
+		setPointerHover(songKey);
 		delayedTooltip.setHover(songKey, songKey === null ? null : anchor);
 		hoveredClusterHit =
 			songKey === null ? clusterAt(anchor, clusterHits) : null;
 	};
 
+	// The song under the pointer, reported out only when it changes (a
+	// linkedSongKey hover isn't reported back).
+	let pointerSongKey: string | null = null;
+	const setPointerHover = (songKey: string | null) => {
+		hoveredSongKey = songKey;
+		if (songKey === pointerSongKey) return;
+		pointerSongKey = songKey;
+		onSongHover?.(songKey);
+	};
+
 	const handlePointerLeave = () => {
 		hoveredHex = null;
-		hoveredSongKey = null;
+		setPointerHover(null);
 		delayedTooltip.clearHover();
 		hoveredClusterHit = null;
 		hoveredLabelSongKey = null;
 	};
-
-	$effect(() => {
-		onSongHover?.(hoveredSongKey);
-	});
 
 	// A linked song hovers as if the pointer were on it, until it changes.
 	$effect(() => {

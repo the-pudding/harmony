@@ -21,7 +21,10 @@
 		computeSongHomogeneity,
 		type ProgressionCoverage
 	} from "$routes/demo/shared/progressionHomogeneity.js";
-	import { featuredSyncedSongs } from "$data/syncedSongs.js";
+	import {
+		featuredSongKeys,
+		hasFeaturedSongs
+	} from "$data/featuredClusters.js";
 	import type { ChordColorSegment } from "$runes/audio.svelte.js";
 	import { mapColors } from "$runes/mapColors.svelte.js";
 	import { onMount } from "svelte";
@@ -57,48 +60,47 @@
 		// "dark" draws on a near-black background; "light" has no background
 		// of its own and uses lighter grays between colored hexes.
 		theme?: "dark" | "light";
-		// Called when the map is clicked, with the synced song clicked on, or
-		// null when the click missed them.
-		onSongClick?: (songKey: string | null) => void;
-		// The synced song playing, drawn bigger with the others faded.
+		// Called when a sample's dot is clicked (to play it), or with null
+		// when a click should stop what's playing.
+		onSampleClick?: (songKey: string | null) => void;
+		// The sample playing, drawn bigger with the others faded.
 		playingSongKey?: string | null;
 		// How far through the playing song's clip it is, 0 to 1; draws a
 		// progress ring and pause icon on its dot.
 		playingClipProgressFraction?: number;
 		// Colors the progress ring in stretches, e.g. by chord.
 		playingChordColorSegments?: ChordColorSegment[];
-		// While movable and no focusCluster is set: a cluster the user picked,
-		// by name, which the view fits (in focusFrame) without locking it.
-		selectedCluster?: string | null;
-		// While movable and no focusCluster is set: a song the user picked,
-		// which the view centers and zooms in on (in focusFrame) without
-		// locking it. Takes priority over selectedCluster for moving the view.
-		selectedSong?: string | null;
-		// While movable and no focusCluster is set, called on every click
-		// with the cluster clicked (or null for a gray hex or empty space)
-		// and the synced song clicked, if any.
-		onClusterClick?: (
+
+		// The rest only apply while the map is explorable (movable, with no
+		// focusCluster).
+		// The cluster the user picked, by name: the view fits it (in
+		// focusFrame) without locking it, and at dot zoom its title is left
+		// to its player (see onExploredTitleAnchor).
+		exploredClusterName?: string | null;
+		// A song picked in search, which the view zooms in on instead.
+		searchedSongKey?: string | null;
+		// Called when the user picks a cluster: its hex, its title, or a dot
+		// in it (with that song), or null for a stray click.
+		onClusterPick?: (
 			clusterName: string | null,
 			songKey: string | null
 		) => void;
-		// While movable and no focusCluster is set, called whenever the user
-		// pans or zooms.
+		// Called whenever the user pans or zooms.
 		onUserMove?: () => void;
-		// While movable and no focusCluster is set, called with a song's key
-		// when the user clicks a song at dot zoom, to open its full chords.
-		onSongChordsToggle?: (songId: string) => void;
+		// Called with a plain song's key when it's clicked at dot zoom, to
+		// open or close its full chords.
+		onSongChordsToggle?: (songKey: string) => void;
 		// The song whose chords are open, which gets the selected look.
-		openSongId?: string | null;
+		chordsSongKey?: string | null;
 		// A song hovered outside the map (e.g. in a beeswarm), shown as if
 		// hovered here.
 		linkedSongKey?: string | null;
-		// Called with the song hovered on the map (or null) as it changes.
+		// Called with the song the pointer hovers on the map, or null.
 		onSongHover?: (songKey: string | null) => void;
-		// At dot zoom, the cluster whose title is drawn elsewhere (full size,
-		// by its player), and a callback with where that title goes, in
-		// viewport pixels (or null when it's not on screen).
-		mergedTitleClusterName?: string | null;
-		onMergedTitleAnchor?: (anchor: { x: number; y: number } | null) => void;
+		// Called with where the explored cluster's title goes at dot zoom
+		// (its top center, in viewport pixels), or null when it isn't titled
+		// on screen.
+		onExploredTitleAnchor?: (anchor: { x: number; y: number } | null) => void;
 		// (UMAP's minDist and
 		// the cluster settings are baked into the snapshot; see
 		// HEX_MAP_UMAP_MIN_DIST and hexMapClusters.ts.)
@@ -116,20 +118,19 @@
 		showLabels = undefined,
 		rotateLabels = false,
 		theme = "dark",
-		onSongClick = undefined,
+		onSampleClick = undefined,
 		playingSongKey = null,
 		playingClipProgressFraction = 0,
 		playingChordColorSegments = [],
-		selectedCluster = null,
-		selectedSong = null,
-		onClusterClick = undefined,
+		exploredClusterName = null,
+		searchedSongKey = null,
+		onClusterPick = undefined,
 		onUserMove = undefined,
 		onSongChordsToggle = undefined,
-		openSongId = null,
+		chordsSongKey = null,
 		linkedSongKey = null,
 		onSongHover = undefined,
-		mergedTitleClusterName = null,
-		onMergedTitleAnchor = undefined,
+		onExploredTitleAnchor = undefined,
 		purityLayout = true,
 		pureThreshold = 0.9
 	}: Props = $props();
@@ -155,19 +156,6 @@
 
 	const NO_SONG_KEYS = new Set<string>();
 	const NO_SONGS = new Map();
-
-	// Featured synced songs: rows in reference.csv checked as visible.
-	const SYNCED_SONG_KEYS = new Set(
-		featuredSyncedSongs.map((row) => row.songKey)
-	);
-
-	// Clusters (lowercased name) with featured songs, for the hex tooltip.
-	const playableClusterNames = new Set(
-		featuredSyncedSongs.map(({ cluster }) => cluster.toLowerCase())
-	);
-
-	const clusterHasPlayableSongs = (regionName: string): boolean =>
-		playableClusterNames.has(regionName.toLowerCase());
 
 	let snapshot = $state.raw<HexMapSnapshot | null>(null);
 
@@ -323,7 +311,7 @@
 				{progressionSharesBySongKey}
 				{clusterRegionBySongKey}
 				{clusterNames}
-				outlinedSongKeys={SYNCED_SONG_KEYS}
+				outlinedSongKeys={featuredSongKeys}
 				outlinedTitlePrefix="🎧"
 				{playingSongKey}
 				{playingClipProgressFraction}
@@ -335,30 +323,28 @@
 				labelNames={showLabels ?? null}
 				showClusterNames={labelsVisible}
 				{focusClusterName}
-				selectedClusterName={explorable && !selectedSong
-					? selectedCluster
-					: null}
-				zoomSongKey={explorable ? selectedSong : null}
+				selectedClusterName={explorable ? exploredClusterName : null}
+				zoomSongKey={explorable ? searchedSongKey : null}
 				{focusFrame}
 				offsetY={centered || focusCluster !== undefined
 					? 0
 					: UNCENTERED_OFFSET_Y}
 				{theme}
 				simpleSongTooltip
-				hexHasPlayableSongs={explorable ? clusterHasPlayableSongs : null}
+				hexHasPlayableSongs={explorable ? hasFeaturedSongs : null}
 				onSongChordsToggle={explorable ? onSongChordsToggle : null}
-				openSongId={explorable ? openSongId : null}
+				openSongId={explorable ? chordsSongKey : null}
 				onSelect={() => {}}
 				onTransformChange={(transform) => (viewTransform = transform)}
-				onOutlinedSongClick={onSongClick}
-				onClusterClick={explorable ? onClusterClick : null}
+				onOutlinedSongClick={onSampleClick}
+				onClusterClick={explorable ? onClusterPick : null}
 				onUserMove={explorable ? onUserMove : null}
 				onProgressionColors={(colors) => (mapColors.byProgression = colors)}
 				onSongColors={(colorOf) => (mapColors.bySong = colorOf)}
 				{linkedSongKey}
 				onSongHover={onSongHover ?? null}
-				{mergedTitleClusterName}
-				onMergedTitleAnchor={onMergedTitleAnchor ?? null}
+				mergedTitleClusterName={explorable ? exploredClusterName : null}
+				onMergedTitleAnchor={onExploredTitleAnchor ?? null}
 			/>
 
 			{#if width > 0 && height > 0}

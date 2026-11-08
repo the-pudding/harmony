@@ -1,8 +1,9 @@
 import type { DensityCluster } from "../../embedding/clustering/densityClusters.js";
 
-// Names compare trimmed and case-insensitively.
-export const normalizeName = (name: string): string =>
-	name.trim().toLowerCase();
+import { normalizeClusterName } from "$data/clusterName.js";
+
+// Names compare trimmed and case-insensitively (see clusterName.ts).
+export const normalizeName = normalizeClusterName;
 
 // The biggest cluster with this name, or undefined if there's none.
 export const findNamedCluster = (

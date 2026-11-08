@@ -3,11 +3,14 @@
 	// on the map, with its playable songs labeled. Hovering a dot hovers
 	// that song on the map.
 	import { onMount } from "svelte";
-	import ClusterYearBeeswarm, {
-		datedBeeswarmSongs
-	} from "$components/charts/ClusterYearBeeswarm.svelte";
+	import ClusterYearBeeswarm from "$components/charts/ClusterYearBeeswarm.svelte";
+	import {
+		datedBeeswarmSongs,
+		yearDomainOf
+	} from "$components/charts/beeswarmSongs.js";
 	import { loadHexMapSnapshot } from "$data/hexMapSnapshot.js";
-	import { featuredSyncedSongs as reference } from "$data/syncedSongs";
+	import { sameClusterName } from "$data/clusterName.js";
+	import { featuredSongsOf } from "$data/featuredClusters.js";
 	import { mapColors } from "$runes/mapColors.svelte.js";
 
 	let {
@@ -39,23 +42,18 @@
 		)
 	);
 
-	const yearDomain = $derived.by(() => {
-		const years = (snapshot?.years ?? []).filter(Boolean);
-		return years.length > 0
-			? { min: Math.min(...years), max: Math.max(...years) }
-			: null;
-	});
+	const yearDomain = $derived(yearDomainOf(snapshot?.years ?? []));
 
 	const maxSongCount = $derived(
 		Math.max(0, ...(snapshot?.clusters ?? []).map((c) => c.songIndexes.length))
 	);
 
-	// Map clusters can repeat a name; the first (largest) is the one the
-	// map zooms to.
+	// Map clusters can repeat a name; the biggest is the one the map zooms
+	// to (see findNamedCluster).
 	const mapCluster = $derived(
-		snapshot?.clusters.find(
-			(c) => c.name.toLowerCase() === cluster?.trim().toLowerCase()
-		)
+		(snapshot?.clusters ?? [])
+			.filter((c) => sameClusterName(c.name, cluster))
+			.sort((a, b) => b.songIndexes.length - a.songIndexes.length)[0]
 	);
 
 	const songs = $derived(
@@ -69,12 +67,10 @@
 	);
 
 	const annotations = $derived(
-		reference
-			.filter((d) => d.cluster.toLowerCase() === cluster?.trim().toLowerCase())
-			.flatMap(({ songKey }) => {
-				const title = summaryBySongKey.get(songKey)?.title;
-				return title ? [{ songKey, label: title }] : [];
-			})
+		featuredSongsOf(cluster).flatMap(({ songKey }) => {
+			const title = summaryBySongKey.get(songKey)?.title;
+			return title ? [{ songKey, label: title }] : [];
+		})
 	);
 </script>
 

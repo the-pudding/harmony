@@ -23,10 +23,9 @@
 	import CMS from "$components/helpers/CMS.svelte";
 	import { fade } from "svelte/transition";
 	import copy from "$data/copy.json";
-	import _ from "lodash";
 	import { chordify } from "$utils/chordify";
-	import { setContext, untrack } from "svelte";
-	import { featuredSyncedSongs as reference } from "$data/syncedSongs";
+	import { setContext } from "svelte";
+	import { createExplore } from "$runes/explore.svelte";
 	import { spanStyle } from "$routes/demo/record/timelineStyles";
 	import { audio, stopAllAudio } from "$runes/audio.svelte";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (1/3): ?slide=N URL persistence. See
@@ -74,7 +73,6 @@
 	if (initialMuted !== undefined) audio.muted = initialMuted;
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (muted 3/3): delete the next line entirely.
 	$effect(() => writeMutedParam(audio.muted));
-	let playingSongId = $state();
 	let { text, stage, overlay, map } = $derived(allSlides[slideI]);
 	let { component: stageComponentName, ...stageProps } = $derived(stage ?? {});
 	let { component: overlayComponentName, ...overlayProps } = $derived(
@@ -95,7 +93,7 @@
 			return slideI;
 		},
 		set slideI(value) {
-			slideI = value;
+			goToSlide(value);
 		}
 	});
 
@@ -149,85 +147,43 @@
 			? { top: clusterFrameEl.offsetTop, height: clusterFrameHeight }
 			: null
 	);
-	// On explorable maps, a clicked cluster with featured songs (in
-	// reference.csv) gets the player too, until the user clicks elsewhere,
-	// pans or zooms. On the explore slide, any clicked cluster gets the
-	// panel (without arrows when nothing's playable), and only panning or
-	// zooming dismisses it.
-	let exploredCluster = $state();
-	// the song whose full chords are open in the side drawer
-	let chordsSongId = $state();
-	// a song picked in ExploreControls' search, which the map zooms to
-	let searchedSong = $state();
-	// a song hovered in the explore panel's beeswarm, hovered on the map too
-	let beeswarmHoverSong = $state(null);
-	// a song hovered on the map, ringed in the explore panel's beeswarm
-	let mapHoverSong = $state(null);
-	// where the explored cluster's title sits under it on the map at dot
-	// zoom; the player draws its header there instead of in the panel
-	let playerAnchor = $state(null);
-	let playerHeight = $state(0);
-	let activeCluster = $derived(mapProps?.focusCluster ?? exploredCluster);
+	// What's explored, playing and open (see explore.svelte.ts). On the
+	// explore slide any clicked cluster opens the panel and only panning or
+	// zooming closes it; elsewhere only clusters with samples open it.
+	const explore = createExplore({
+		get exploreSlide() {
+			return onExploreSlide;
+		}
+	});
+	let activeCluster = $derived(mapProps?.focusCluster ?? explore.clusterName);
 	let showClusterPanel = $derived(activeCluster !== undefined);
 
-	const clusterBySongKey = new Map(
-		reference.map((d) => [d.songKey, d.cluster])
+	// Hover links the explore panel's beeswarm and the map, both ways.
+	let hoveredInBeeswarm = $state(null);
+	let hoveredOnMap = $state(null);
+
+	// Where the explored cluster's title sits under it on the map at dot
+	// zoom: the player draws its header there instead of in the panel, and
+	// its slot in the panel keeps the room.
+	let titleAnchor = $state(null);
+	let playerHeight = $state(0);
+	let playerAnchor = $derived(
+		explore.clusterName !== undefined ? titleAnchor : null
 	);
-	const songsByCluster = _.groupBy(reference, "cluster");
-	const featuredClusterNamed = (name) =>
-		Object.keys(songsByCluster).find(
-			(cluster) => cluster.toLowerCase() === name?.trim().toLowerCase()
-		);
 
-	const exploreCluster = (clusterName, songKey) => {
-		const featuredSong = clusterBySongKey.has(songKey);
-		// a click on the background, a gray hex or an unclustered dot leaves
-		// the explore slide's panel up
-		if (onExploreSlide && clusterName === null && !featuredSong) return;
-		searchedSong = undefined;
-		const featured =
-			clusterBySongKey.get(songKey) ?? featuredClusterNamed(clusterName);
-		exploredCluster =
-			featured ?? (onExploreSlide ? (clusterName ?? undefined) : undefined);
-		// a plain dot opens its own chords, so its cluster's samples wait
-		playingSongId =
-			featured === undefined || (songKey && !featuredSong)
-				? undefined
-				: featuredSong
-					? songKey
-					: songsByCluster[featured][0].songKey;
-	};
-
-	const stopExploring = () => {
-		searchedSong = undefined;
-		if (exploredCluster === undefined) return;
-		exploredCluster = undefined;
-		playingSongId = undefined;
-	};
-
-	// zooms to any song; featured ones also open their cluster's player
-	const pickSong = (songKey) => {
-		audio.muted = false;
-		searchedSong = songKey;
-		exploredCluster = clusterBySongKey.get(songKey);
-		playingSongId = exploredCluster === undefined ? undefined : songKey;
-	};
-
-	// zooms to any cluster and opens its panel (only on the explore slide,
-	// where the search lives)
-	const pickCluster = (clusterName) => exploreCluster(clusterName, null);
-
-	setContext("explore", { pickSong, pickCluster });
-
-	// a new slide starts with nothing explored or playing, on its own
-	// focusCluster
-	$effect(() => {
-		slideI;
-		textFocusCluster = undefined;
-		chordsSongId = undefined;
-		untrack(stopExploring);
-		playingSongId = undefined;
+	setContext("explore", {
+		pickSong: explore.searchSong,
+		pickCluster: (clusterName) => explore.pickCluster(clusterName)
 	});
+
+	// A new slide starts with nothing explored, playing or open, on its own
+	// focusCluster.
+	const goToSlide = (i) => {
+		if (i === slideI) return;
+		slideI = i;
+		textFocusCluster = undefined;
+		explore.reset();
+	};
 
 	const INTERACTIVE =
 		'a, button, input, label, select, textarea, audio, video, [tabindex]:not([tabindex="-1"]), [data-chords-drawer]';
@@ -241,14 +197,14 @@
 		if (event.composedPath().some((el) => el.matches?.(INTERACTIVE))) return;
 		stopAllAudio();
 		// the map clears its own song on background clicks
-		if (articleEl?.contains(event.target)) playingSongId = undefined;
+		if (articleEl?.contains(event.target)) explore.stopPlaying();
 	};
 
 	const onTap = (dir) => {
 		if (dir === "right" && slideI < allSlides.length - 1) {
-			slideI += 1;
+			goToSlide(slideI + 1);
 		} else if (dir === "left" && slideI > 0) {
-			slideI -= 1;
+			goToSlide(slideI - 1);
 		}
 	};
 </script>
@@ -257,7 +213,7 @@
 	ontap={onTap}
 	size="64px"
 	showArrows
-	disable={chordsSongId
+	disable={explore.chordsSongKey
 		? ["left", "right"]
 		: [
 				...(slideI === 0 ? ["left"] : []),
@@ -277,30 +233,19 @@
 		{...mapProps ?? {}}
 		{focusFrame}
 		theme="dark"
-		playingSongKey={playingSongId}
+		playingSongKey={explore.playingSongKey ?? null}
 		playingClipProgressFraction={audio.clipProgressFraction}
 		playingChordColorSegments={audio.chordColorSegments}
-		onSongClick={(songKey) => {
-			// Playing, stopping or deselecting a song closes the chords drawer.
-			chordsSongId = undefined;
-			playingSongId = songKey ?? undefined;
-			if (songKey) audio.muted = false;
-		}}
-		selectedCluster={exploredCluster ?? null}
-		selectedSong={searchedSong ?? null}
-		onClusterClick={exploreCluster}
-		onUserMove={stopExploring}
-		openSongId={chordsSongId ?? null}
-		linkedSongKey={beeswarmHoverSong}
-		onSongHover={(songKey) => (mapHoverSong = songKey)}
-		mergedTitleClusterName={exploredCluster ?? null}
-		onMergedTitleAnchor={(anchor) => (playerAnchor = anchor)}
-		onSongChordsToggle={onExploreSlide
-			? (songId) => {
-					chordsSongId = chordsSongId === songId ? undefined : songId;
-					audio.muted = false;
-				}
-			: undefined}
+		onSampleClick={explore.playSong}
+		exploredClusterName={explore.clusterName ?? null}
+		searchedSongKey={explore.searchedSongKey ?? null}
+		onClusterPick={explore.pickCluster}
+		onUserMove={explore.userMoved}
+		chordsSongKey={explore.chordsSongKey ?? null}
+		onSongChordsToggle={onExploreSlide ? explore.toggleChords : undefined}
+		linkedSongKey={hoveredInBeeswarm}
+		onSongHover={(songKey) => (hoveredOnMap = songKey)}
+		onExploredTitleAnchor={(anchor) => (titleAnchor = anchor)}
 	/>
 </div>
 
@@ -310,7 +255,7 @@
 	<Chapters
 		activeSlide={slideI}
 		sections={sections.slice(1)}
-		onselect={(i) => (slideI = i)}
+		onselect={goToSlide}
 	/>
 
 	<div
@@ -369,23 +314,21 @@
 				<!-- keeps the player's room while it's drawn under its cluster -->
 				<div
 					class="player-slot"
-					style:min-height={playerAnchor && exploredCluster !== undefined
-						? `${playerHeight}px`
-						: null}
+					style:min-height={playerAnchor ? `${playerHeight}px` : null}
 				>
 					<Player
 						cluster={activeCluster}
-						bind:playingSongKey={playingSongId}
+						bind:playingSongKey={explore.playingSongKey}
 						bind:height={playerHeight}
-						anchor={exploredCluster !== undefined ? playerAnchor : null}
+						anchor={playerAnchor}
 					/>
 				</div>
 				{#if onExploreSlide}
 					<ClusterBeeswarm
 						cluster={activeCluster}
-						playingSongKey={playingSongId ?? null}
-						mapHoveredSongKey={mapHoverSong}
-						onHoverSong={(songKey) => (beeswarmHoverSong = songKey)}
+						playingSongKey={explore.playingSongKey ?? null}
+						mapHoveredSongKey={hoveredOnMap}
+						onHoverSong={(songKey) => (hoveredInBeeswarm = songKey)}
 					/>
 				{/if}
 			</div>
@@ -393,13 +336,13 @@
 	</div>
 </article>
 
-{#if chordsSongId}
+{#if explore.chordsSongKey}
 	<SongChordsDrawer
-		songId={chordsSongId}
-		onClose={() => (chordsSongId = undefined)}
+		songId={explore.chordsSongKey}
+		onClose={() => explore.openChords(undefined)}
 		onPickSong={(songId) => {
-			chordsSongId = songId;
-			pickSong(songId);
+			explore.openChords(songId);
+			explore.searchSong(songId);
 		}}
 	/>
 {/if}

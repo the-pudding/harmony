@@ -108,6 +108,9 @@ export const CLUSTER_LABEL_FONT =
 export const CLUSTER_NAME_FONT =
 	'700 14px "Gooper SemiCondensed", Georgia, serif';
 export const CLUSTER_NAME_COLOR = "#f4f4f5";
+// At dot zoom, each cluster's title is the player's title (ClusterTitle)
+// scaled down by this much.
+export const SMALL_TITLE_ZOOM = 0.45;
 // Space between a cluster's outline and its label.
 export const CLUSTER_LABEL_GAP = 6;
 

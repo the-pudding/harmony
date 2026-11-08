@@ -1,11 +1,9 @@
 <script>
 	import ClusterTitle from "$components/ClusterTitle.svelte";
-	import {
-		committedSyncedSongs,
-		featuredSyncedSongs as reference
-	} from "$data/syncedSongs";
+	import { committedSyncedSongs } from "$data/syncedSongs";
+	import { featuredSongsOf } from "$data/featuredClusters.js";
+	import { progressionFor } from "$data/clusterProgression.js";
 	import { attachAudio, audio } from "$runes/audio.svelte";
-	import progressionsData from "$data/charts/top-progressions.csv";
 	import { appearanceFor } from "$routes/demo/design/chord-viz/chordAppearanceLookup.js";
 	import { paletteById } from "$routes/demo/design/chord-viz/chordPalettes.js";
 
@@ -22,21 +20,20 @@
 	let audioEls = $state({});
 	let currentTime = $state(0);
 	const songs = $derived(
-		reference
-			.filter((d) => d.cluster === cluster)
-			.map((d) => ({ ...d, data: committedSyncedSongs[d.songKey] }))
+		featuredSongsOf(cluster).map((d) => ({
+			...d,
+			data: committedSyncedSongs[d.songKey]
+		}))
 	);
 	const currentSong = $derived(songs.find((d) => d.songKey === playingSongKey));
 	const currentTimeData = $derived(currentSong?.data?.chords);
-	const songKeySignature = $derived(currentSong?.data?.key);
 
 	// The clip split by which chord is playing, colored as in Chord.svelte.
 	const segments = $derived.by(() => {
 		const song = currentSong;
 		const chords = song?.data?.chords;
 		if (!song || !chords?.length) return [];
-		const tonality =
-			progressionsData.find((d) => d.name === cluster)?.scale ?? "major";
+		const tonality = progressionFor(cluster)?.tonality ?? "major";
 		const palette = paletteById("journey-from-home");
 		const span = song.endSeconds - song.startSeconds;
 		const fraction = (seconds) =>

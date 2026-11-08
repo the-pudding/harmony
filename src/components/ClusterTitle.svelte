@@ -1,5 +1,6 @@
 <script>
 	import SyncedChords from "$components/SyncedChords.svelte";
+	import { SMALL_TITLE_ZOOM } from "$components/hexmap/components/scatter/constants.js";
 
 	// A cluster's name over its progression's chords: the player's header
 	// at full size (with arrows, given onPrev/onNext), and every cluster's
@@ -15,7 +16,11 @@
 	} = $props();
 </script>
 
-<div class="cluster-title" class:small={size === "small"}>
+<div
+	class="cluster-title"
+	class:small={size === "small"}
+	style:zoom={size === "small" ? SMALL_TITLE_ZOOM : null}
+>
 	<div class="header">
 		{#if onPrev}
 			<button aria-label="Previous song" onclick={onPrev}>&larr;</button>
@@ -35,9 +40,8 @@
 		align-items: center;
 	}
 
-	/* The same layout, scaled down whole. */
+	/* The same layout, scaled down whole (by SMALL_TITLE_ZOOM). */
 	.cluster-title.small {
-		zoom: 0.45;
 		pointer-events: none;
 	}
 

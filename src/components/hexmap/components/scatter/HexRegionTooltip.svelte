@@ -19,9 +19,8 @@
 	import { romanRe } from "$utils/chordify";
 	import type { ClusterRegion } from "../../embedding/layout/hexBins.js";
 	import TooltipCard from "./TooltipCard.svelte";
-	import ClusterYearBeeswarm, {
-		type BeeswarmSong
-	} from "$components/charts/ClusterYearBeeswarm.svelte";
+	import ClusterYearBeeswarm from "$components/charts/ClusterYearBeeswarm.svelte";
+	import type { BeeswarmSong } from "$components/charts/beeswarmSongs.js";
 
 	// The hovered hex's cluster: its color and name, its progressions'
 	// chords, and how many songs it holds.

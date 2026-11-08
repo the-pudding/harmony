@@ -1,39 +1,3 @@
-<script module lang="ts">
-	// A song in the beeswarm: when it came out, its dot color on the map,
-	// and its title (shown when hovered).
-	export type BeeswarmSong = {
-		songKey: string;
-		year: number;
-		color: string;
-		title?: string;
-	};
-
-	// A song labeled above the dots, with a line down to its dot.
-	export type BeeswarmAnnotation = { songKey: string; label: string };
-
-	// The dated songs among songKeys, colored by colorOf.
-	export const datedBeeswarmSongs = (
-		songKeys: readonly string[],
-		summaryOf: (
-			songKey: string
-		) => { year?: number; title?: string } | undefined,
-		colorOf: (songKey: string) => string
-	): BeeswarmSong[] =>
-		songKeys.flatMap((songKey) => {
-			const summary = summaryOf(songKey);
-			return summary?.year
-				? [
-						{
-							songKey,
-							year: summary.year,
-							color: colorOf(songKey),
-							title: summary.title
-						}
-					]
-				: [];
-		});
-</script>
-
 <script lang="ts">
 	// A cluster's songs over time: one dot per song, stacked by release
 	// year (adapted from ArtistSongTimeline). Optionally labels some songs,
@@ -47,6 +11,11 @@
 		type DodgedPoint
 	} from "$routes/demo/shared/charts/dodgeBeeswarm.js";
 	import { toCalendarYear } from "$data/songYear.js";
+	import type {
+		BeeswarmAnnotation,
+		BeeswarmSong,
+		YearDomain
+	} from "./beeswarmSongs.js";
 
 	// Dots shrink through these radii until the tallest stack fits its cap.
 	const DOT_RADII = [3, 2.75, 2.5, 2.25, 2, 1.75, 1.5, 1.25, 1];
@@ -83,7 +52,7 @@
 	}: {
 		songs: readonly BeeswarmSong[];
 		// Shared by every chart, so their timelines line up.
-		yearDomain: { min: number; max: number };
+		yearDomain: YearDomain;
 		// The most songs any chart shown alongside this one has, which gets
 		// the full MAX_STACK_HEIGHT.
 		maxSongCount: number;

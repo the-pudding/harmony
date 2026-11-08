@@ -165,11 +165,13 @@ export const createCamera = (input: CameraInput) => {
 	});
 
 	// Fits selectedClusterName, again whenever the frame or size changes
-	// (e.g. a panel opening below the map shrinks the frame).
+	// (e.g. a panel opening below the map shrinks the frame). A zoomSongKey
+	// takes priority (see below).
 	$effect(() => {
 		const clusterName = input.selectedClusterName;
 		const canvas = input.canvas;
 		void input.focusFrame;
+		if (input.zoomSongKey) return;
 		if (!clusterName || !canvas || !zoomBehavior) return;
 		if (input.width === 0 || input.height === 0) return;
 		untrack(() => {
