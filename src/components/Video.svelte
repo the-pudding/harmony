@@ -1,7 +1,7 @@
 <script>
 	import PlayButton from "$components/PlayButton.svelte";
 	import { getContext } from "svelte";
-	import { audio, onStopAll, setAudioVolume } from "$runes/audio.svelte";
+	import { attachAudio, onStopAll } from "$runes/audio.svelte";
 	import SyncedChords from "$components/SyncedChords.svelte";
 	import { committedSyncedVideos, syncedVideos } from "$data/syncedSongs";
 
@@ -96,11 +96,10 @@
 <figure>
 	<div class="video-wrapper">
 		<video
-			{@attach setAudioVolume}
+			{@attach attachAudio}
 			bind:this={videoEl}
 			src="assets/video/{videoId}.mp4"
 			playsinline
-			muted={audio.muted}
 			bind:paused
 			onclick={() => (paused = !paused)}
 		>

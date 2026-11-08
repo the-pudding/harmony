@@ -1,7 +1,7 @@
 <script>
 	import { base } from "$app/paths";
 	import { getContext, untrack } from "svelte";
-	import { audio, onStopAll, setAudioVolume } from "$runes/audio.svelte";
+	import { audio, createAudio, onStopAll } from "$runes/audio.svelte";
 	import { flip } from "svelte/animate";
 	import { fade } from "svelte/transition";
 	import { cubicInOut } from "svelte/easing";
@@ -51,9 +51,7 @@
 		const src = `${base}/assets/audio/progression/${key}_${progression.join("-")}.mp3`;
 		let el = audioByKey.get(src);
 		if (!el) {
-			el = new Audio(src);
-			setAudioVolume(el);
-			el.muted = audio.muted;
+			el = createAudio(src);
 			el.onended = () => {
 				if (playingKey === key) playingKey = null;
 			};

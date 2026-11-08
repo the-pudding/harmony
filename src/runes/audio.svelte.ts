@@ -4,9 +4,19 @@ export const audio = $state({ muted: true, stops: 0 });
 
 export const AUDIO_VOLUME = 0.3;
 
-// a Svelte attachment for <audio>/<video>: {@attach setAudioVolume}
-export const setAudioVolume = (el: HTMLMediaElement) => {
+// a Svelte attachment for <audio>/<video>: {@attach attachAudio}. Applies the
+// app's volume and keeps the element following the global mute toggle.
+export const attachAudio = (el: HTMLMediaElement) => {
 	el.volume = AUDIO_VOLUME;
+	el.muted = audio.muted;
+};
+
+// for audio created in script rather than markup; the caller keeps its own
+// `muted` in sync (see RomanNumerals)
+export const createAudio = (src: string) => {
+	const el = new Audio(src);
+	attachAudio(el);
+	return el;
 };
 
 // a click into blank space on the article stops and resets anything playing

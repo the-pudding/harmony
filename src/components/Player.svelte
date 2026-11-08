@@ -4,7 +4,7 @@
 		committedSyncedSongs,
 		featuredSyncedSongs as reference
 	} from "$data/syncedSongs";
-	import { audio, setAudioVolume } from "$runes/audio.svelte";
+	import { attachAudio } from "$runes/audio.svelte";
 
 	let { cluster, playingSongKey = $bindable() } = $props();
 
@@ -88,10 +88,9 @@
 
 	{#each songs as song (song.songKey)}
 		<audio
-			{@attach setAudioVolume}
+			{@attach attachAudio}
 			bind:this={audioEls[song.songKey]}
 			src={`assets/audio/synced-songs/${song.songKey}.mp3`}
-			muted={audio.muted}
 			ontimeupdate={() => stopAtEnd(song)}
 			onended={playNext}
 		></audio>
