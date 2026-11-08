@@ -185,6 +185,15 @@
 		explore.reset();
 	};
 
+	// The panel sits over the map, so a wheel there would never zoom it;
+	// hand it to the map's canvas instead.
+	let mapLayerEl = $state();
+	const forwardWheelToMap = (event) => {
+		const canvas = mapLayerEl?.querySelector("canvas");
+		if (!canvas) return;
+		canvas.dispatchEvent(new WheelEvent("wheel", event));
+	};
+
 	const INTERACTIVE =
 		'a, button, input, label, select, textarea, audio, video, [tabindex]:not([tabindex="-1"]), [data-chords-drawer]';
 	let articleEl = $state();
@@ -225,6 +234,7 @@
 
 <div
 	class="map-layer"
+	bind:this={mapLayerEl}
 	class:visible={mapProps !== null}
 	class:faded={overlay}
 	aria-hidden={mapProps === null}
@@ -309,6 +319,7 @@
 			<div
 				class="panel"
 				class:explore={onExploreSlide}
+				onwheel={forwardWheelToMap}
 				in:fade={{ duration: 300, delay: 800 }}
 			>
 				<!-- keeps the player's room while it's drawn under its cluster -->
