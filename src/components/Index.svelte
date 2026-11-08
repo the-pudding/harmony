@@ -8,7 +8,7 @@
 	import Video from "$components/Video.svelte";
 	import Player from "$components/Player.svelte";
 	import ClusterBeeswarm from "$components/ClusterBeeswarm.svelte";
-	import SongChordsDrawer from "$components/SongChordsDrawer.svelte";
+	import SongChordsDrawer from "$components/song-chords-drawer/SongChordsDrawer.svelte";
 	import UltimateGuitar from "$components/UltimateGuitar.svelte";
 	import RomanNumerals from "$components/RomanNumerals.svelte";
 	import EffectiveBar from "$components/EffectiveBar.svelte";

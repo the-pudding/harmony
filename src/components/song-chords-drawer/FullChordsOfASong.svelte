@@ -6,7 +6,7 @@
 	import Chord from "$components/Chord.svelte";
 	import type { GroupedSong } from "$data/songBrowser.js";
 	import { mapColors } from "$runes/mapColors.svelte.js";
-	import { formatRomanTokenFromParsed } from "../chord-processing/romanNumerals.js";
+	import { formatRomanTokenFromParsed } from "../../chord-processing/romanNumerals.js";
 	import {
 		buildColoredHighlightSegments,
 		type ChordAnnotation
