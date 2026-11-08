@@ -2,6 +2,13 @@ import { untrack } from "svelte";
 
 export const audio = $state({ muted: true, stops: 0 });
 
+export const AUDIO_VOLUME = 0.3;
+
+// a Svelte attachment for <audio>/<video>: {@attach setAudioVolume}
+export const setAudioVolume = (el: HTMLMediaElement) => {
+	el.volume = AUDIO_VOLUME;
+};
+
 // a click into blank space on the article stops and resets anything playing
 export const stopAllAudio = () => audio.stops++;
 

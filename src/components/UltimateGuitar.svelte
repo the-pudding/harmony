@@ -2,7 +2,7 @@
 	import { base } from "$app/paths";
 	import PlayButton from "$components/PlayButton.svelte";
 	import { committedSyncedSongs } from "$data/syncedSongs";
-	import { audio, onStopAll } from "$runes/audio.svelte";
+	import { audio, onStopAll, setAudioVolume } from "$runes/audio.svelte";
 
 	let { songs = 3 } = $props();
 
@@ -361,6 +361,7 @@
 	</div>
 
 	<audio
+		{@attach setAudioVolume}
 		bind:this={audioEl}
 		bind:paused
 		preload="none"
