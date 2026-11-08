@@ -12,6 +12,9 @@
 //        - change `$state(readSlideParam(allSlides.length))` to `$state(0)`
 //        - delete the `$effect(() => writeSlideParam(slideI));` line
 //
+// Also remove the sibling dev-only feature in src/utils/mutedParam.js (see its
+// header; its 3 spots in Index.svelte are labeled "muted").
+//
 // What it does: mirrors the current slide in the URL as ?slide=N so a reload
 // resumes on the same slide.
 // =============================================================================

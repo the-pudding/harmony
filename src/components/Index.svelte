@@ -31,6 +31,10 @@
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (1/3): ?slide=N URL persistence. See
 	// src/utils/slideParam.js for full removal instructions. Delete this import.
 	import { readSlideParam, writeSlideParam } from "$utils/slideParam";
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (muted 1/3): ?muted=true|false URL
+	// persistence. See src/utils/mutedParam.js for removal instructions. Delete
+	// this import.
+	import { readMutedParam, writeMutedParam } from "$utils/mutedParam";
 	import mutedSvg from "$svg/muted.svg";
 	import unmutedSvg from "$svg/unmuted.svg";
 
@@ -64,6 +68,11 @@
 	let slideI = $state(readSlideParam(allSlides.length));
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (3/3): delete the next line entirely.
 	$effect(() => writeSlideParam(slideI));
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (muted 2/3): delete these two lines.
+	const initialMuted = readMutedParam();
+	if (initialMuted !== undefined) audio.muted = initialMuted;
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (muted 3/3): delete the next line entirely.
+	$effect(() => writeMutedParam(audio.muted));
 	let playingSongId = $state();
 	let { text, stage, overlay, map } = $derived(allSlides[slideI]);
 	let { component: stageComponentName, ...stageProps } = $derived(stage ?? {});
