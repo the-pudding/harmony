@@ -10,7 +10,6 @@
 	} from "d3";
 	import type { GroupedSong } from "../../../data/songBrowser.js";
 	import coreProgressions from "../../../data/core-progressions.js";
-	import { pointInsideClusterEllipse2D } from "../embedding/clustering/clusterBounds.js";
 	import { fillStyleForGroupShares } from "./groupColorBlend.js";
 	import SongTooltip from "../../../routes/demo/shared/SongTooltip.svelte";
 	import HexSongTooltip from "./HexSongTooltip.svelte";
@@ -29,9 +28,7 @@
 	} from "../../../routes/demo/shared/hoverCardPosition.js";
 	import type { ScatterPoint } from "./scatterPoint.js";
 	import {
-		axialForPoint,
 		gradientStrengthForZoom,
-		hexKey,
 		hexZoomLevel,
 		type ClusterRegion
 	} from "../embedding/layout/hexBins.js";
@@ -54,7 +51,6 @@
 		OUTLINE_COLOR,
 		OUTLINED_POINT_RADIUS,
 		PLAYING_TWEEN_MS,
-		OUTLINED_LABEL_LINE_HEIGHT,
 		CLUSTERABLE_METHODS,
 		HEX_THEME_COLORS,
 		HEX_LABEL_FONT,
@@ -74,6 +70,13 @@
 		Position
 	} from "./scatter/types.js";
 	import { normalizePoints } from "./scatter/normalizePoints.js";
+	import {
+		clusterAt,
+		hexKeyAt,
+		labelSongKeyAt,
+		nearestSongAt
+	} from "./scatter/hitTesting.js";
+	import { resolveClick, type ClickAction } from "./scatter/clickIntent.js";
 	import { createPointStyle, lerp } from "./scatter/pointStyle.js";
 	import { prepareCanvas, type Scene } from "./scatter/paint/scene.js";
 	import { drawAxisLabels } from "./scatter/paint/axes.js";
@@ -246,6 +249,10 @@
 			: normalizedPoints.filter((point) => visibleSongKeys.has(point.songKey))
 	);
 
+	const drawableSongKeys = $derived(
+		drawablePoints.map((point) => point.songKey)
+	);
+
 	const pointBySongKey = $derived(
 		new Map(drawablePoints.map((point) => [point.songKey, point]))
 	);
@@ -326,27 +333,6 @@
 	// drawing fills it.
 	let outlinedLabelHitAreas = new Map<string, OutlinedLabelHitArea>();
 	let hoveredLabelSongKey = $state<string | null>(null);
-
-	const labelSongKeyAt = (anchor: HoverCardAnchor): string | null => {
-		for (const [songKey, { box, hintRight }] of outlinedLabelHitAreas) {
-			if (playingSongKey !== null && songKey !== playingSongKey) continue;
-			// The hint row shown on hover counts as part of the label.
-			const hovered = songKey === hoveredLabelSongKey;
-			const right = hovered ? Math.max(box.right, hintRight) : box.right;
-			const bottom = hovered
-				? box.bottom + OUTLINED_LABEL_LINE_HEIGHT
-				: box.bottom;
-			if (
-				anchor.x >= box.left &&
-				anchor.x <= right &&
-				anchor.y >= box.top &&
-				anchor.y <= bottom
-			) {
-				return songKey;
-			}
-		}
-		return null;
-	};
 
 	let watercolorCanvas: HTMLCanvasElement | null = null;
 	const watercolorLayer = (): HTMLCanvasElement => {
@@ -501,14 +487,6 @@
 		);
 	};
 
-	const hexKeyAtAnchor = (anchor: HoverCardAnchor): string | null => {
-		if (!hexFrame) return null;
-		const [baseX, baseY] = transform.invert([anchor.x, anchor.y]);
-		const { q, r } = axialForPoint(baseX, baseY, hexFrame.radius);
-		const key = hexKey(q, r);
-		return hexFrame.bins.has(key) ? key : null;
-	};
-
 	const tweenTo = (targets: NormalizedPoint[]) => {
 		cancelAnimationFrame(tweenFrame);
 
@@ -560,63 +538,34 @@
 		step();
 	};
 
-	const clusterHitArea = (geometry: ClusterHit["geometry"]): number =>
-		geometry.semiAxisX * geometry.semiAxisY;
-
-	const findClusterAt = (anchor: HoverCardAnchor): ClusterHit | null =>
-		clusterHits.reduce<ClusterHit | null>((best, hit) => {
-			if (!pointInsideClusterEllipse2D(anchor, hit.geometry)) return best;
-			return !best ||
-				clusterHitArea(hit.geometry) < clusterHitArea(best.geometry)
-				? hit
-				: best;
-		}, null);
-
-	// The nearest outlinedSongKeys song whose marker is under the anchor, give
-	// or take the same slack plain dots get. Checked before plain dots, since
-	// the markers sit on top of them.
-	const findOutlinedSongAtAnchor = (anchor: HoverCardAnchor): string | null => {
-		if (!outlinedSongKeys) return null;
-		let hit: string | null = null;
-		let hitDistance = OUTLINED_POINT_RADIUS + HOVER_PICK_RADIUS - POINT_RADIUS;
-		for (const songKey of outlinedSongKeys) {
-			const position = displayedPositions.get(songKey);
-			if (!position) continue;
-			const screen = toScreen(position);
-			const distance = Math.hypot(screen.x - anchor.x, screen.y - anchor.y);
-			if (distance < hitDistance) {
-				hit = songKey;
-				hitDistance = distance;
-			}
-		}
-		return hit;
+	// Hit-testing against the last frame drawn.
+	const songScreen = (songKey: string): Point2D | null => {
+		const position = displayedPositions.get(songKey);
+		return position ? toScreen(position) : null;
 	};
 
-	const findPointAtAnchor = (anchor: HoverCardAnchor): string | null => {
-		const outlined = findOutlinedSongAtAnchor(anchor);
-		if (outlined !== null) return outlined;
-		const hit = drawablePoints.reduce<{
-			songKey: string | null;
-			distance: number;
-		}>(
-			(best, point) => {
-				const position = displayedPositions.get(point.songKey);
-				if (!position) return best;
-				const screen = toScreen(position);
-				const distance = Math.hypot(screen.x - anchor.x, screen.y - anchor.y);
-				return distance < best.distance
-					? { songKey: point.songKey, distance }
-					: best;
-			},
-			{ songKey: null, distance: HOVER_PICK_RADIUS }
-		);
-		return hit.songKey;
-	};
+	// The outlinedSongKeys song whose marker is under the anchor, give or
+	// take the same slack plain dots get.
+	const findOutlinedSongAt = (anchor: Point2D): string | null =>
+		outlinedSongKeys
+			? nearestSongAt(
+					anchor,
+					outlinedSongKeys,
+					songScreen,
+					OUTLINED_POINT_RADIUS + HOVER_PICK_RADIUS - POINT_RADIUS
+				)
+			: null;
 
-	const findPointAt = (event: MouseEvent): string | null => {
-		if (!containerEl) return null;
-		return findPointAtAnchor(anchorFromMouseEvent(event, containerEl));
-	};
+	// The song under the anchor; markers first, since they sit on top.
+	const findSongAt = (anchor: Point2D): string | null =>
+		findOutlinedSongAt(anchor) ??
+		nearestSongAt(anchor, drawableSongKeys, songScreen, HOVER_PICK_RADIUS);
+
+	const findLabelAt = (anchor: Point2D): string | null =>
+		labelSongKeyAt(anchor, outlinedLabelHitAreas, {
+			playingSongKey,
+			hoveredLabelSongKey
+		});
 
 	const handlePointerMove = (event: MouseEvent) => {
 		if (!containerEl) return;
@@ -624,7 +573,7 @@
 		if (!hoverable) return;
 		const anchor = anchorFromMouseEvent(event, containerEl);
 		if (hexFrame) {
-			const key = hexKeyAtAnchor(anchor);
+			const key = hexKeyAt(anchor, transform, hexFrame);
 			const region =
 				key === null ? null : (hexFrame.regionByKey.get(key) ?? null);
 			hoveredHex =
@@ -636,11 +585,12 @@
 			return;
 		}
 		hoveredHex = null;
-		hoveredLabelSongKey = onSongChordsToggle ? labelSongKeyAt(anchor) : null;
-		const songKey = findPointAtAnchor(anchor);
+		hoveredLabelSongKey = onSongChordsToggle ? findLabelAt(anchor) : null;
+		const songKey = findSongAt(anchor);
 		hoveredSongKey = songKey;
 		delayedTooltip.setHover(songKey, songKey === null ? null : anchor);
-		hoveredClusterHit = songKey === null ? findClusterAt(anchor) : null;
+		hoveredClusterHit =
+			songKey === null ? clusterAt(anchor, clusterHits) : null;
 	};
 
 	const handlePointerLeave = () => {
@@ -652,74 +602,64 @@
 	};
 
 	const handleClick = (event: MouseEvent) => {
-		if (clickGuard.shouldSuppressClick()) return;
-		if (!containerEl) return;
+		if (clickGuard.shouldSuppressClick() || !containerEl) return;
 		const anchor = anchorFromMouseEvent(event, containerEl);
-		const clickedLabelSongKey =
-			onSongChordsToggle && !hexFrame ? labelSongKeyAt(anchor) : null;
-		if (clickedLabelSongKey !== null) {
-			onSongChordsToggle?.(clickedLabelSongKey);
-			return;
-		}
-		// Outlined songs are only drawn once zoomed in to dots, so they can
+		// Songs (and their labels) are only drawn at dot zoom, so they can
 		// only be clicked then.
-		const outlinedSongKey = hexFrame ? null : findOutlinedSongAtAnchor(anchor);
-		const clickedSongKey = hexFrame
-			? null
-			: (outlinedSongKey ?? findPointAtAnchor(anchor));
-		const songIsActive = playingSongKey !== null || openSongId !== null;
-		if (hexMode && !hexFrame && songIsActive) {
-			if (clickedSongKey === null || clickedSongKey === playingSongKey) {
-				// Off any dot, or on the playing one: just deselect.
-				onOutlinedSongClick?.(null);
-				return;
-			}
+		const clickedHexKey = hexFrame
+			? hexKeyAt(anchor, transform, hexFrame)
+			: null;
+		const outlinedSongKey = hexFrame ? null : findOutlinedSongAt(anchor);
+		const songKey = hexFrame ? null : findSongAt(anchor);
+		const region = hexFrame
+			? clickedHexKey === null
+				? null
+				: hexFrame.regionByKey.get(clickedHexKey)
+			: songKey === null
+				? null
+				: clusterRegionBySongKey?.get(songKey);
+		const actions = resolveClick({
+			atHexZoom: hexFrame !== null,
+			hexMode,
+			labelSongKey:
+				onSongChordsToggle && !hexFrame ? findLabelAt(anchor) : null,
+			outlinedSongKey,
+			songKey,
+			regionName: region?.name ?? null,
+			onHex: clickedHexKey !== null,
+			playingSongKey,
+			openSongId,
+			selectedSongKey,
+			canToggleChords: onSongChordsToggle !== null,
+			movable,
+			hoverable
+		});
+		for (const action of actions) runClickAction(action, anchor);
+	};
+
+	const runClickAction = (action: ClickAction, anchor: Point2D) => {
+		switch (action.kind) {
+			case "toggleChords":
+				onSongChordsToggle?.(action.songKey);
+				break;
+			case "outlinedSongClick":
+				onOutlinedSongClick?.(action.songKey);
+				break;
+			case "clusterClick":
+				onClusterClick?.(action.name, action.songKey);
+				break;
+			case "zoomToHex":
+				if (canvasEl && zoomBehavior) {
+					select(canvasEl)
+						.transition()
+						.duration(HEX_CLICK_ZOOM_MS)
+						.call(zoomBehavior.scaleTo, HEX_FOCUS_SCALE, [anchor.x, anchor.y]);
+				}
+				break;
+			case "select":
+				onSelect(action.songKey);
+				break;
 		}
-		if (outlinedSongKey !== null || clickedSongKey === null) {
-			onOutlinedSongClick?.(outlinedSongKey);
-		}
-		if (
-			hexMode &&
-			!hexFrame &&
-			onSongChordsToggle &&
-			outlinedSongKey === null &&
-			clickedSongKey !== null
-		) {
-			// A plain song replaces whatever was playing, and opens its chords.
-			if (playingSongKey !== null) onOutlinedSongClick?.(null);
-			onSongChordsToggle(clickedSongKey);
-			return;
-		}
-		if (hexMode) {
-			const hexKey = hexFrame ? hexKeyAtAnchor(anchor) : null;
-			const songKey = hexFrame ? null : findPointAtAnchor(anchor);
-			const region = hexFrame
-				? hexKey === null
-					? null
-					: (hexFrame.regionByKey.get(hexKey) ?? null)
-				: songKey === null
-					? null
-					: (clusterRegionBySongKey?.get(songKey) ?? null);
-			onClusterClick?.(region?.name ?? null, outlinedSongKey);
-		}
-		if (hexFrame) {
-			// Clicking a hex zooms in on it just far enough to show dots.
-			if (
-				movable &&
-				canvasEl &&
-				zoomBehavior &&
-				hexKeyAtAnchor(anchor) !== null
-			) {
-				select(canvasEl)
-					.transition()
-					.duration(HEX_CLICK_ZOOM_MS)
-					.call(zoomBehavior.scaleTo, HEX_FOCUS_SCALE, [anchor.x, anchor.y]);
-			}
-			return;
-		}
-		if (!hoverable) return;
-		const songKey = findPointAt(event);
-		onSelect(songKey === selectedSongKey ? null : songKey);
 	};
 
 	$effect(() => {
