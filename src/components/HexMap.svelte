@@ -86,7 +86,7 @@
 		onUserMove?: () => void;
 		// While movable and no focusCluster is set, called with a song's key
 		// when the user clicks a song at dot zoom, to open its full chords.
-		onSongOpen?: (songId: string) => void;
+		onSongChordsToggle?: (songId: string) => void;
 		// The song whose chords are open, which gets the selected look.
 		openSongId?: string | null;
 		// (UMAP's minDist and
@@ -114,7 +114,7 @@
 		selectedSong = null,
 		onClusterClick = undefined,
 		onUserMove = undefined,
-		onSongOpen = undefined,
+		onSongChordsToggle = undefined,
 		openSongId = null,
 		purityLayout = true,
 		pureThreshold = 0.9
@@ -341,7 +341,7 @@
 				{theme}
 				simpleSongTooltip
 				hexClickHint={explorable ? hexClickHint : null}
-				onSongOpen={explorable ? onSongOpen : null}
+				onSongChordsToggle={explorable ? onSongChordsToggle : null}
 				openSongId={explorable ? openSongId : null}
 				onSelect={() => {}}
 				onTransformChange={(transform) => (viewTransform = transform)}

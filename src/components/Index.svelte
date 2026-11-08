@@ -70,6 +70,9 @@
 	let { component: overlayComponentName, ...overlayProps } = $derived(
 		overlay ?? {}
 	);
+	let onExploreSlide = $derived(
+		text?.some((block) => block.type === "ExploreControls") ?? false
+	);
 	let StageComponent = $derived(
 		stageComponentName ? (components[stageComponentName] ?? null) : null
 	);
@@ -264,8 +267,12 @@
 		playingClipProgressFraction={audio.clipProgressFraction}
 		playingChordColorSegments={audio.chordColorSegments}
 		onSongClick={(songKey) => {
-			// Clicking the playing song stops and resets it.
-			playingSongId = songKey && songKey !== playingSongId ? songKey : undefined;
+			// While a song plays, the map reports any click other than on that
+			// song's label as null: it stops the song and closes the drawer.
+			if (songKey === null && playingSongId !== undefined) {
+				chordsSongId = undefined;
+			}
+			playingSongId = songKey ?? undefined;
 			if (songKey) audio.muted = false;
 		}}
 		selectedCluster={exploredCluster ?? searchedCluster ?? null}
@@ -273,10 +280,12 @@
 		onClusterClick={exploreCluster}
 		onUserMove={stopExploring}
 		openSongId={chordsSongId ?? null}
-		onSongOpen={(songId) => {
-			chordsSongId = songId;
-			audio.muted = false;
-		}}
+		onSongChordsToggle={onExploreSlide
+			? (songId) => {
+					chordsSongId = chordsSongId === songId ? undefined : songId;
+					audio.muted = false;
+				}
+			: undefined}
 	/>
 </div>
 

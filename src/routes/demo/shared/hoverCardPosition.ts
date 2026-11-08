@@ -7,13 +7,19 @@ export const HOVER_CARD_MAX_HEIGHT = `calc(100dvh - ${HOVER_CARD_VIEWPORT_MARGIN
 
 export type HoverCardAnchor = { x: number; y: number };
 
+const hoverCardFlipsLeft = (
+	anchor: HoverCardAnchor,
+	containerWidth: number,
+	cardWidth: number
+): boolean => anchor.x + HOVER_CARD_OFFSET + cardWidth > containerWidth;
+
 export const hoverCardStyle = (
 	anchor: HoverCardAnchor | null,
 	containerWidth: number,
 	cardWidth: number = HOVER_CARD_WIDTH
 ): string => {
 	if (!anchor) return "";
-	const flipLeft = anchor.x + HOVER_CARD_OFFSET + cardWidth > containerWidth;
+	const flipLeft = hoverCardFlipsLeft(anchor, containerWidth, cardWidth);
 	const left = flipLeft
 		? anchor.x - HOVER_CARD_OFFSET - cardWidth
 		: anchor.x + HOVER_CARD_OFFSET;

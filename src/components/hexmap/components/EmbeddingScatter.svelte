@@ -433,11 +433,10 @@
 		// region's name. Null or omitted shows only the song count (plus
 		// "click to zoom in" when movable).
 		hexClickHint?: ((regionName: string) => string | null) | null;
-		// Hex mode, at dot zoom: called to open a song's full chords when any
-		// song is clicked (after onOutlinedSongClick, so an outlined song also
-		// plays). A click on a song that isn't outlined then doesn't reach
-		// onClusterClick. A double-click over a song doesn't zoom.
-		onSongOpen?: ((songId: string) => void) | null;
+		// Hex mode, at dot zoom: called to open or close a song's full chords
+		// when a song that isn't outlined is clicked (which then doesn't reach
+		// onClusterClick), or when an outlined song's label is clicked.
+		onSongChordsToggle?: ((songId: string) => void) | null;
 		// Called with each progression's map color whenever they change.
 		onProgressionColors?:
 			| ((colors: ReadonlyMap<string, string>) => void)
@@ -496,7 +495,7 @@
 		pixelRatio: pixelRatioOverride = null,
 		simpleSongTooltip = false,
 		hexClickHint = null,
-		onSongOpen = null,
+		onSongChordsToggle = null,
 		onProgressionColors = null
 	}: Props = $props();
 
@@ -1169,6 +1168,32 @@
 
 	type Box = { left: number; right: number; top: number; bottom: number };
 
+	// Where each outlined song's label was last drawn. Not reactive, since
+	// drawing fills it.
+	let outlinedLabelHitAreas = new Map<
+		string,
+		{ box: Box; titleEndX: number; titleY: number }
+	>();
+	let hoveredLabelSongKey = $state<string | null>(null);
+	// Room to the right of a label for its open icon, which counts as part
+	// of the label for hovering and clicking.
+	const LABEL_ICON_SPACE = 16;
+
+	const labelSongKeyAt = (anchor: HoverCardAnchor): string | null => {
+		for (const [songKey, { box }] of outlinedLabelHitAreas) {
+			if (playingSongKey !== null && songKey !== playingSongKey) continue;
+			if (
+				anchor.x >= box.left &&
+				anchor.x <= box.right + LABEL_ICON_SPACE &&
+				anchor.y >= box.top &&
+				anchor.y <= box.bottom
+			) {
+				return songKey;
+			}
+		}
+		return null;
+	};
+
 	const boxesOverlap = (a: Box, b: Box): boolean =>
 		a.left < b.right &&
 		a.right > b.left &&
@@ -1181,6 +1206,7 @@
 	// marker at any zoom or canvas size; a song with no free spot goes
 	// unlabeled. Drawn after every marker so none covers a label.
 	const drawOutlinedSongLabels = (context: CanvasRenderingContext2D) => {
+		outlinedLabelHitAreas = new Map();
 		if (!outlinedSongKeys || !songSummaryByKey) return;
 		const songs = outlinedInDrawOrder()
 			.reverse()
@@ -1284,6 +1310,14 @@
 					context.strokeText(text, x, y);
 					context.fillText(text, x, y);
 					x += context.measureText(text).width;
+				}
+				if (index !== 0) return;
+				outlinedLabelHitAreas.set(songKey, { box, titleEndX: x, titleY: y });
+				if (songKey === hoveredLabelSongKey) {
+					context.globalAlpha = songAlpha;
+					context.font = canvasFontFor("title");
+					context.strokeText("↗", x + 4, y);
+					context.fillText("↗", x + 4, y);
 				}
 			});
 		}
@@ -1792,9 +1826,11 @@
 			hoveredSongKey = null;
 			delayedTooltip.clearHover();
 			hoveredClusterHit = null;
+			hoveredLabelSongKey = null;
 			return;
 		}
 		hoveredHex = null;
+		hoveredLabelSongKey = onSongChordsToggle ? labelSongKeyAt(anchor) : null;
 		const songKey = findPointAtAnchor(anchor);
 		hoveredSongKey = songKey;
 		delayedTooltip.setHover(songKey, songKey === null ? null : anchor);
@@ -1806,22 +1842,33 @@
 		hoveredSongKey = null;
 		delayedTooltip.clearHover();
 		hoveredClusterHit = null;
+		hoveredLabelSongKey = null;
 	};
 
 	const handleClick = (event: MouseEvent) => {
 		if (clickGuard.shouldSuppressClick()) return;
 		if (!containerEl) return;
 		const anchor = anchorFromMouseEvent(event, containerEl);
+		const clickedLabelSongKey =
+			onSongChordsToggle && !hexFrame ? labelSongKeyAt(anchor) : null;
+		if (clickedLabelSongKey !== null) {
+			onSongChordsToggle?.(clickedLabelSongKey);
+			return;
+		}
+		// While a song plays, anything but its label just stops it.
+		if (hexMode && !hexFrame && playingSongKey !== null) {
+			onOutlinedSongClick?.(null);
+			return;
+		}
 		// Outlined songs are only drawn once zoomed in to dots, so they can
 		// only be clicked then.
 		const outlinedSongKey = hexFrame ? null : findOutlinedSongAtAnchor(anchor);
 		onOutlinedSongClick?.(outlinedSongKey);
-		if (hexMode && !hexFrame && onSongOpen) {
-			const clickedSongId = outlinedSongKey ?? findPointAtAnchor(anchor);
-			if (clickedSongId !== null) {
-				onSongOpen(clickedSongId);
-				// A plain song has no cluster player to open.
-				if (outlinedSongKey === null) return;
+		if (hexMode && !hexFrame && onSongChordsToggle && outlinedSongKey === null) {
+			const plainSongKey = findPointAtAnchor(anchor);
+			if (plainSongKey !== null) {
+				onSongChordsToggle(plainSongKey);
+				return;
 			}
 		}
 		if (hexMode) {
@@ -1854,11 +1901,6 @@
 		if (!hoverable) return;
 		const songKey = findPointAt(event);
 		onSelect(songKey === selectedSongKey ? null : songKey);
-	};
-
-	const songAtDoubleClick = (event: MouseEvent): string | null => {
-		if (!onSongOpen || !hexMode || hexFrame || !containerEl) return null;
-		return findPointAtAnchor(anchorFromMouseEvent(event, containerEl));
 	};
 
 	$effect(() => {
@@ -1929,10 +1971,6 @@
 			.filter((event) => {
 				if (!canMove) return false;
 				if (event.ctrlKey && event.type !== "wheel") return false;
-				// A double-click on a song opens its chords, not a zoom.
-				if (event.type === "dblclick" && songAtDoubleClick(event) !== null) {
-					return false;
-				}
 				return !event.button;
 			})
 			.on("start", () => {
@@ -2212,6 +2250,7 @@
 		void outlinedSongKeys;
 		void songSummaryByKey;
 		void playingClipProgressFraction;
+		void hoveredLabelSongKey;
 		void playingChordColorSegments;
 		draw();
 	});
@@ -2346,7 +2385,8 @@
 		bind:this={canvasEl}
 		class:inert={!interactive}
 		class:grabbable={movable && !hoverable}
-		class:clickable={hoveredSongKey !== null && isOutlined(hoveredSongKey)}
+		class:clickable={hoveredLabelSongKey !== null ||
+			(hoveredSongKey !== null && isOutlined(hoveredSongKey))}
 		style:width="{width}px"
 		style:height="{height}px"
 	></canvas>
@@ -2418,11 +2458,15 @@
 				<HexSongTooltip
 					song={tooltipSong}
 					colorForProgression={(name) => regionColorByProgressionName.get(name)}
-					hint={!onSongOpen
+					hint={!onSongChordsToggle
 						? ""
-						: isOutlined(delayedTooltip.tooltipSongKey ?? "")
-							? "👆 Click to hear a clip and see the full chords"
-							: "👆 Click to pull up the full chords"}
+						: playingSongKey !== null
+							? "👆 Click to stop the clip"
+							: isOutlined(delayedTooltip.tooltipSongKey ?? "")
+							? "👆 Click to hear a clip"
+							: delayedTooltip.tooltipSongKey === openSongId
+								? "👆 Click to hide the full chords"
+								: "👆 Click to show the full chords"}
 				/>
 			</div>
 		{:else if tooltipSong}
