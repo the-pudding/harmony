@@ -3,7 +3,6 @@
 	import { fade } from "svelte/transition";
 	import {
 		easeCubicInOut,
-		interpolateLab,
 		select,
 		zoom,
 		zoomIdentity,
@@ -44,7 +43,6 @@
 	import type { ScatterPoint } from "./scatterPoint.js";
 	import { scatterPointAlpha } from "./scatterPoint.js";
 	import {
-		assignRegionColors,
 		averageProgressionShare,
 		axialForPoint,
 		dominantClusterRegion,
@@ -67,15 +65,10 @@
 		PLOT_MARGIN,
 		MIN_ZOOM,
 		MAX_ZOOM,
-		PAN_EDGE_PADDING,
-		JITTER_AMPLITUDE,
 		HEX_ZOOM,
 		DEFAULT_FOCUS_SCALE,
 		FOCUS_TRANSITION_MS,
 		SCRIPTED_FOCUS_TRANSITION_MS,
-		CLUSTER_FOCUS_PADDING,
-		MAX_CLUSTER_FOCUS_SCALE,
-		FRAME_FOCUS_FILL,
 		HEX_FOCUS_SCALE,
 		ZOOM_SONG_HEX_FACTOR,
 		FLY_TO_ZOOM_OUT_FACTOR,
@@ -113,11 +106,7 @@
 		CLUSTER_NAME_FONT,
 		CLUSTER_NAME_COLOR,
 		CLUSTER_LABEL_GAP,
-		REGION_PALETTE,
-		PINNED_REGION_COLORS,
-		CONFUSABLE_REGION_PAIRS,
 		HEX_THEME_COLORS,
-		MIN_REGION_TINT,
 		MIN_CLUSTER_SHARE_OF_HEX,
 		HEX_OVERLAP_PX,
 		HOVERED_CLUSTER_STROKE_COLOR,
@@ -137,6 +126,14 @@
 		ROTATING_LABEL_FADE_MS
 	} from "./scatter/constants.js";
 	import type { EmbeddingScatterProps as Props } from "./scatter/props.js";
+	import type { NormalizedPoint, Point2D, Position } from "./scatter/types.js";
+	import { normalizePoints } from "./scatter/normalizePoints.js";
+	import * as view from "./scatter/viewport.js";
+	import {
+		colorsByProgressionName,
+		createRegionFills,
+		regionColorsByName
+	} from "./scatter/regionColors.js";
 
 	const {
 		points,
@@ -230,9 +227,6 @@
 		return STAR_FILL_COLOR;
 	};
 
-	type NormalizedPoint = ScatterPoint & { nx: number; ny: number };
-	type Position = { nx: number; ny: number };
-
 	let containerEl = $state<HTMLDivElement | null>(null);
 	let canvasEl = $state<HTMLCanvasElement | null>(null);
 	let width = $state(0);
@@ -286,47 +280,7 @@
 	let displayedPositions = new Map<string, Position>();
 	let tweenFrame = 0;
 
-	// Stable per-song offset so songs sharing an identical vector stay pickable.
-	const jitterFor = (songKey: string): Position => {
-		const hash = [...songKey].reduce(
-			(accumulator, character) =>
-				(accumulator * 31 + character.charCodeAt(0)) % 100003,
-			7
-		);
-		return {
-			nx: ((hash % 101) / 100 - 0.5) * JITTER_AMPLITUDE * 2,
-			ny: (((hash / 101) % 101) / 100 - 0.5) * JITTER_AMPLITUDE * 2
-		};
-	};
-
-	const normalize = (value: number, min: number, max: number): number =>
-		max === min ? 0.5 : (value - min) / (max - min);
-
-	const normalizedPoints = $derived.by((): NormalizedPoint[] => {
-		if (points.length === 0) return [];
-		const bounds = points.reduce(
-			(extent, point) => ({
-				minX: Math.min(extent.minX, point.x),
-				maxX: Math.max(extent.maxX, point.x),
-				minY: Math.min(extent.minY, point.y),
-				maxY: Math.max(extent.maxY, point.y)
-			}),
-			{
-				minX: Infinity,
-				maxX: -Infinity,
-				minY: Infinity,
-				maxY: -Infinity
-			}
-		);
-		return points.map((point) => {
-			const jitter = jitterFor(point.songKey);
-			return {
-				...point,
-				nx: normalize(point.x, bounds.minX, bounds.maxX) + jitter.nx,
-				ny: normalize(point.y, bounds.minY, bounds.maxY) + jitter.ny
-			};
-		});
-	});
+	const normalizedPoints = $derived(normalizePoints(points));
 
 	// Bounds stay based on every point so filtering never rescales the map.
 	const drawablePoints = $derived(
@@ -350,97 +304,28 @@
 		hexMode && renderMode === "hex-watercolor"
 	);
 
-	// One color per cluster progression, from where its clusters sit on the
-	// map, so nearby regions never share a color or use a confusable pair.
-	// Clusters built on the same progression share its color.
-	const regionColorByName = $derived.by((): Map<string, string> => {
-		if (!hexMode || clusterRegionBySongKey === null) return new Map();
-		const totals = new Map<string, { x: number; y: number; weight: number }>();
-		for (const point of normalizedPoints) {
-			const dominant = clusterRegionBySongKey.get(point.songKey);
-			if (!dominant) continue;
-			const total = totals.get(dominant.name) ?? { x: 0, y: 0, weight: 0 };
-			total.x += point.nx;
-			total.y += point.ny;
-			total.weight += 1;
-			totals.set(dominant.name, total);
-		}
-		return assignRegionColors(
-			[...totals].map(([name, total]) => ({
-				name,
-				x: total.x / total.weight,
-				y: total.y / total.weight,
-				weight: total.weight
-			})),
-			REGION_PALETTE,
-			CONFUSABLE_REGION_PAIRS,
-			undefined,
-			PINNED_REGION_COLORS
-		);
-	});
-
-	// share 1 → the progression's full color; lower shares fade toward
-	// the theme's faded color. gradientStrength scales how much fading is applied,
-	// so zoomed-out hexes read as solid regions.
-	// Lab, not HCL: blending toward a near-gray in HCL rotates the hue
-	// (red drifts to magenta), which makes one cluster look multicolored.
-	const regionInterpolatorByName = $derived(
-		new Map(
-			[...regionColorByName].map(([name, color]) => [
-				name,
-				interpolateLab(hexColors.faded, color)
-			])
-		)
+	const regionColorByName = $derived(
+		!hexMode || clusterRegionBySongKey === null
+			? new Map<string, string>()
+			: regionColorsByName(normalizedPoints, clusterRegionBySongKey)
 	);
 
-	// A progression's map color: the color of a region built on it.
-	const regionColorByProgressionName = $derived.by(() => {
-		const colors = new Map<string, string>();
-		for (const region of new Set(clusterRegionBySongKey?.values() ?? [])) {
-			const color = regionColorByName.get(region.name);
-			if (color === undefined) continue;
-			for (const name of region.progressionNames) {
-				if (!colors.has(name)) colors.set(name, color);
-			}
-		}
-		return colors;
-	});
+	const regionColorByProgressionName = $derived(
+		colorsByProgressionName(clusterRegionBySongKey, regionColorByName)
+	);
 
 	$effect(() => {
 		onProgressionColors?.(regionColorByProgressionName);
 	});
 
-	const regionFill = (
-		name: string | null,
-		share: number,
-		gradientStrength: number
-	): string => {
-		const interpolate =
-			name === null ? undefined : regionInterpolatorByName.get(name);
-		if (!interpolate) return hexColors.unmatched;
-		const strength =
-			1 - gradientStrength * (1 - Math.min(1, Math.max(0, share)));
-		return interpolate(MIN_REGION_TINT + (1 - MIN_REGION_TINT) * strength);
-	};
-
-	// A song's color at dot zoom: its cluster's color, faded by how much of
-	// the song is that cluster's progression; gray outside clear clusters.
-	const songRegionFill = (
-		songKey: string,
-		gradientStrength: number
-	): string => {
-		const region = clusterRegionBySongKey?.get(songKey);
-		if (!region) return hexColors.ambiguous;
-		return regionFill(
-			region.name,
-			averageProgressionShare(
-				[songKey],
-				region.progressionNames,
-				progressionSharesBySongKey ?? new Map()
-			),
-			gradientStrength
-		);
-	};
+	const regionFills = $derived(
+		createRegionFills({
+			colorByRegionName: regionColorByName,
+			themeColors: hexColors,
+			regionBySongKey: clusterRegionBySongKey,
+			sharesBySongKey: progressionSharesBySongKey
+		})
+	);
 
 	const isOutlined = (songKey: string): boolean =>
 		outlinedSongKeys?.has(songKey) ?? false;
@@ -456,51 +341,19 @@
 
 	const clustersAvailable = $derived(CLUSTERABLE_METHODS.has(method));
 
-	// Membership only — geometry is drawn from each frame's live tween
-	// positions in drawClusters(), so circles animate along with their dots.
-	const plotWidth = $derived(Math.max(0, width - PLOT_MARGIN * 2));
-	const plotHeight = $derived(Math.max(0, height - PLOT_MARGIN * 2));
+	const viewSize = $derived({ width, height, offsetY });
+	const viewport = $derived({ ...viewSize, transform });
+	const plot = $derived(view.plotSize(viewSize));
 
-	const toBasePixel = (position: Position): { x: number; y: number } => ({
-		x: PLOT_MARGIN + position.nx * plotWidth,
-		y: PLOT_MARGIN + (1 - position.ny) * plotHeight
-	});
-
-	const toScreen = (position: Position): { x: number; y: number } => {
-		const base = toBasePixel(position);
-		return { x: transform.applyX(base.x), y: transform.applyY(base.y) };
-	};
-
-	const isOnScreen = (screen: { x: number; y: number }): boolean =>
-		screen.x >= 0 && screen.x <= width && screen.y >= 0 && screen.y <= height;
-
-	const transformCenteredOn = (
-		base: { x: number; y: number },
-		scale: number
-	): ZoomTransform =>
-		zoomIdentity
-			.scale(scale)
-			.translate(
-				width / (2 * scale) - base.x,
-				(height / 2 + offsetY) / scale - base.y
-			);
-
-	// Keeps the plot (its full unzoomed frame, margins included) from being
-	// panned off screen: each edge can come at most PAN_EDGE_PADDING past the
-	// matching viewport edge, and the top edge is measured from offsetY down
-	// (below any text over the map). The padding lets clusters near the edge
-	// get roughly centered. Used for user gestures and scripted targets alike.
-	const constrainTransform = (t: ZoomTransform): ZoomTransform => {
-		const clamp = (value: number, a: number, b: number) =>
-			Math.min(Math.max(value, Math.min(a, b)), Math.max(a, b));
-		const pad = PAN_EDGE_PADDING;
-		const x = clamp(t.x, width - t.k * width - pad, pad);
-		const y = clamp(t.y, height - t.k * height - pad, offsetY + pad);
-		return x === t.x && y === t.y ? t : zoomIdentity.translate(x, y).scale(t.k);
-	};
-
-	// The full, unzoomed view, shifted down by offsetY.
-	const homeTransform = $derived(zoomIdentity.translate(0, offsetY));
+	const toBasePixel = (position: Position) =>
+		view.toBasePixel(viewSize, position);
+	const toScreen = (position: Position) => view.toScreen(viewport, position);
+	const isOnScreen = (screen: Point2D) => view.isOnScreen(viewSize, screen);
+	const transformCenteredOn = (base: Point2D, scale: number) =>
+		view.transformCenteredOn(viewSize, base, scale);
+	const constrainTransform = (t: ZoomTransform) =>
+		view.constrainTransform(viewSize, t);
+	const homeTransform = $derived(view.homeTransform(offsetY));
 
 	// Each song's eased spotlight emphasis, from 0 to 1 (spotlit), and how
 	// far the rest are faded, from 0 (nothing spotlit) to 1. Tweened toward
@@ -729,7 +582,7 @@
 				emphasisFillColor && emphasizedSongKeys?.has(point.songKey)
 					? emphasisFillColor
 					: hexMode
-						? songRegionFill(point.songKey, dotGradient)
+						? regionFills.songRegionFill(point.songKey, dotGradient)
 						: accentFillColor && isAccented(point.songKey)
 							? accentFillColor
 							: baseFillFor(context, screen, point);
@@ -816,7 +669,7 @@
 				Math.PI * 2
 			);
 			context.fillStyle = hexMode
-				? songRegionFill(songKey, gradientStrength)
+				? regionFills.songRegionFill(songKey, gradientStrength)
 				: OUTLINE_COLOR;
 			context.fill();
 
@@ -1194,8 +1047,8 @@
 		const inputs = [
 			radius,
 			displayedPositions,
-			plotWidth,
-			plotHeight,
+			plot.width,
+			plot.height,
 			drawablePoints,
 			clusterRegionBySongKey,
 			progressionSharesBySongKey
@@ -1306,7 +1159,7 @@
 				fill:
 					region === null
 						? hexColors.ambiguous
-						: regionFill(region.name, share, gradient)
+						: regionFills.regionFill(region.name, share, gradient)
 			});
 		}
 
@@ -1414,8 +1267,7 @@
 			// already showing stays put on the map when the plot resizes.
 			spots.push({
 				text: labelText,
-				nx: (region.x - PLOT_MARGIN) / Math.max(plotWidth, 1),
-				ny: 1 - (region.y - PLOT_MARGIN) / Math.max(plotHeight, 1)
+				...view.fromBasePixel(viewSize, region)
 			});
 			if (!showLabels) continue;
 			context.strokeStyle = hexColors.labelHalo;
@@ -1737,64 +1589,20 @@
 		};
 	});
 
-	// Fits a cluster's current member bounds to the viewport (with padding),
-	// for focusClusterName below. Returns null if none of its songs have a
-	// known position yet.
+	// Fits a cluster's current member bounds to the view, for
+	// focusClusterName and selectedClusterName. Null if none of its songs
+	// have a known position yet.
 	const clusterFocusTransform = (
 		clusterSongKeys: readonly string[]
-	): ZoomTransform | null => {
-		let minX = Infinity;
-		let maxX = -Infinity;
-		let minY = Infinity;
-		let maxY = -Infinity;
-		for (const songKey of clusterSongKeys) {
-			const point = pointBySongKey.get(songKey);
-			if (!point) continue;
-			const { x: rawX, y: rawY } = toBasePixel(point);
-			minX = Math.min(minX, rawX);
-			maxX = Math.max(maxX, rawX);
-			minY = Math.min(minY, rawY);
-			maxY = Math.max(maxY, rawY);
-		}
-		if (!isFinite(minX)) return null;
-
-		const boxWidth = Math.max(maxX - minX, 1);
-		const boxHeight = Math.max(maxY - minY, 1);
-		if (hexMode && focusFrame && focusFrame.height > 0) {
-			// Capped by width too, so a wide cluster doesn't spill off the sides.
-			// Never below dot zoom, so a big cluster still shows as dots even if
-			// it then overflows the frame.
-			const frameScale = Math.min(
-				Math.max(
-					Math.min(
-						(focusFrame.height * FRAME_FOCUS_FILL) / boxHeight,
-						(width * FRAME_FOCUS_FILL) / boxWidth
-					),
-					HEX_FOCUS_SCALE
-				),
-				MAX_ZOOM
-			);
-			const centerX = (minX + maxX) / 2;
-			const centerY = (minY + maxY) / 2;
-			return zoomIdentity
-				.translate(
-					width / 2 - centerX * frameScale,
-					focusFrame.top + focusFrame.height / 2 - centerY * frameScale
-				)
-				.scale(frameScale);
-		}
-		const fitScale = Math.min(
-			(width * CLUSTER_FOCUS_PADDING) / boxWidth,
-			(height * CLUSTER_FOCUS_PADDING) / boxHeight
+	): ZoomTransform | null =>
+		view.clusterFocusTransform(
+			viewSize,
+			clusterSongKeys.flatMap((songKey) => {
+				const point = pointBySongKey.get(songKey);
+				return point ? [toBasePixel(point)] : [];
+			}),
+			{ hexMode, focusFrame }
 		);
-		const scale = hexMode
-			? HEX_FOCUS_SCALE
-			: Math.min(Math.max(fitScale, MIN_ZOOM), MAX_CLUSTER_FOCUS_SCALE);
-		return transformCenteredOn(
-			{ x: (minX + maxX) / 2, y: (minY + maxY) / 2 },
-			scale
-		);
-	};
 
 	// clusterFocusTransform for the biggest cluster with this name
 	// (case-insensitive), or null if there's none.
@@ -1898,12 +1706,7 @@
 				: focusScale;
 			const target =
 				focusFrame && focusFrame.height > 0
-					? zoomIdentity
-							.translate(
-								width / 2 - base.x * scale,
-								focusFrame.top + focusFrame.height / 2 - base.y * scale
-							)
-							.scale(scale)
+					? view.transformCenteredInFrame(width, focusFrame, base, scale)
 					: transformCenteredOn(base, scale);
 			select(canvas)
 				.transition()
