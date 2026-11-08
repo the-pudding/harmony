@@ -15,6 +15,7 @@
 	} from "../embedding/layout/hexBins.js";
 	import {
 		HEX_ZOOM,
+		HEX_MIN_SHARE_FADE,
 		DEFAULT_FOCUS_SCALE,
 		HEX_FOCUS_SCALE,
 		HEX_CLICK_ZOOM_MS,
@@ -340,7 +341,7 @@
 		hexFrame = null;
 		setLabelSpots([]);
 		const gradient = hexMode
-			? gradientStrengthForZoom(transform.k, HEX_ZOOM)
+			? gradientStrengthForZoom(transform.k, HEX_ZOOM, HEX_MIN_SHARE_FADE)
 			: 0;
 		const songRegionFill = hexMode
 			? (songKey: string) => regionFills.songRegionFill(songKey, gradient)

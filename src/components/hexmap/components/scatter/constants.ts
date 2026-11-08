@@ -165,6 +165,9 @@ export const HEX_THEME_COLORS = {
 } as const;
 // Faintest a hex can get, so even a mixed hex keeps a hint of its hue.
 export const MIN_REGION_TINT = 0.2;
+// How much hexes fade by progression share when fully zoomed out (0 = solid
+// cluster color, 1 = full fade); it grows to 1 by HEX_ZOOM.dotsAtZoom.
+export const HEX_MIN_SHARE_FADE = 0.3;
 // A hex takes a cluster's color only when that cluster holds at least
 // this share of its songs; otherwise it's unclustered or split, and gray.
 export const MIN_CLUSTER_SHARE_OF_HEX = 0.5;

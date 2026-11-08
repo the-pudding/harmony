@@ -1,46 +1,57 @@
 import { interpolateLab } from "d3";
 import {
-	assignRegionColors,
 	averageProgressionShare,
 	type ClusterRegion,
 	type ProgressionShare
 } from "../../embedding/layout/hexBins.js";
 import {
-	CONFUSABLE_REGION_PAIRS,
-	MIN_REGION_TINT,
-	PINNED_REGION_COLORS,
-	REGION_PALETTE
-} from "./constants.js";
+	CLUSTER_COLOR_STRATEGY,
+	type ClusterColorInput,
+	type ClusterColorStrategy
+} from "../../clusterColors/index.js";
+import { MIN_REGION_TINT } from "./constants.js";
 import type { HexThemeColors, NormalizedPoint } from "./types.js";
 
-// One color per cluster progression, from where its clusters sit on the
-// map, so nearby regions never share a color or use a confusable pair.
+// One color per cluster name, chosen by `strategy` (see clusterColors/).
 // Clusters built on the same progression share its color.
 export const regionColorsByName = (
 	points: readonly NormalizedPoint[],
-	regionBySongKey: ReadonlyMap<string, ClusterRegion>
+	regionBySongKey: ReadonlyMap<string, ClusterRegion>,
+	strategy: ClusterColorStrategy = CLUSTER_COLOR_STRATEGY
 ): Map<string, string> => {
-	const totals = new Map<string, { x: number; y: number; weight: number }>();
+	const totals = new Map<
+		string,
+		{
+			x: number;
+			y: number;
+			weight: number;
+			progressionNames: readonly string[];
+		}
+	>();
 	for (const point of points) {
 		const region = regionBySongKey.get(point.songKey);
 		if (!region) continue;
-		const total = totals.get(region.name) ?? { x: 0, y: 0, weight: 0 };
+		const total = totals.get(region.name) ?? {
+			x: 0,
+			y: 0,
+			weight: 0,
+			progressionNames: region.progressionNames
+		};
 		total.x += point.nx;
 		total.y += point.ny;
 		total.weight += 1;
 		totals.set(region.name, total);
 	}
-	return assignRegionColors(
-		[...totals].map(([name, total]) => ({
-			name,
-			x: total.x / total.weight,
-			y: total.y / total.weight,
-			weight: total.weight
-		})),
-		REGION_PALETTE,
-		CONFUSABLE_REGION_PAIRS,
-		undefined,
-		PINNED_REGION_COLORS
+	return strategy(
+		[...totals].map(
+			([name, total]): ClusterColorInput => ({
+				name,
+				progressionNames: total.progressionNames,
+				x: total.x / total.weight,
+				y: total.y / total.weight,
+				weight: total.weight
+			})
+		)
 	);
 };
 

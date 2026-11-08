@@ -9,6 +9,7 @@ import {
 } from "../../../embedding/layout/watercolorWash.js";
 import { paintHexWatercolor } from "../../../embedding/layout/hexWatercolorWash.js";
 import {
+	HEX_MIN_SHARE_FADE,
 	HEX_OVERLAP_PX,
 	HEX_ZOOM,
 	HOVERED_CLUSTER_STROKE_COLOR,
@@ -50,7 +51,11 @@ export const drawHexes = (
 	const { context, viewport, themeColors } = scene;
 	const { transform } = viewport;
 	const screenRadius = layout.radius * transform.k;
-	const gradient = gradientStrengthForZoom(transform.k, HEX_ZOOM);
+	const gradient = gradientStrengthForZoom(
+		transform.k,
+		HEX_ZOOM,
+		HEX_MIN_SHARE_FADE
+	);
 	const cullMargin =
 		screenRadius * (mode === "watercolor" ? WATERCOLOR_REACH : 1);
 	const traceCell = (ctx: CanvasRenderingContext2D, x: number, y: number) =>
