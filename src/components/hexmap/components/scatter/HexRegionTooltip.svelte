@@ -19,6 +19,9 @@
 	import { romanRe } from "$utils/chordify";
 	import type { ClusterRegion } from "../../embedding/layout/hexBins.js";
 	import TooltipCard from "./TooltipCard.svelte";
+	import ClusterYearBeeswarm, {
+		type BeeswarmSong
+	} from "./ClusterYearBeeswarm.svelte";
 
 	// The hovered hex's cluster: its color and name, its progressions'
 	// chords, and how many songs it holds.
@@ -27,7 +30,9 @@
 		style,
 		color,
 		songCount,
-		titlePrefix
+		titlePrefix,
+		songs = [],
+		yearDomain = null
 	}: {
 		region: ClusterRegion;
 		style: string;
@@ -35,6 +40,10 @@
 		songCount: number;
 		// Put before the name, e.g. to mark a cluster with playable songs.
 		titlePrefix: string | null;
+		// The cluster's dated songs, drawn as a beeswarm over time when
+		// yearDomain is set.
+		songs?: readonly BeeswarmSong[];
+		yearDomain?: { min: number; max: number } | null;
 	} = $props();
 
 	// Named progressions map to their chords; unnamed ones (and names that
@@ -75,6 +84,9 @@
 		{songCount}
 		{songCount === 1 ? "song" : "songs"}
 	</div>
+	{#if yearDomain && songs.length > 0}
+		<ClusterYearBeeswarm {songs} {yearDomain} />
+	{/if}
 </TooltipCard>
 
 <style>

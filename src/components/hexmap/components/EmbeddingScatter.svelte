@@ -168,6 +168,23 @@
 		new Map(clusters.map((cluster) => [cluster.hash, cluster.songKeys.length]))
 	);
 
+	const clusterSongKeysByHash = $derived(
+		new Map(clusters.map((cluster) => [cluster.hash, cluster.songKeys]))
+	);
+
+	// Every dated song's release years, so each cluster's beeswarm shares
+	// one time axis.
+	const yearDomain = $derived.by(() => {
+		let min = Infinity;
+		let max = -Infinity;
+		for (const summary of songSummaryByKey?.values() ?? []) {
+			if (!summary.year) continue;
+			min = Math.min(min, summary.year);
+			max = Math.max(max, summary.year);
+		}
+		return min <= max ? { min, max } : null;
+	});
+
 	// Labels that fit on the current hex frame without overlapping, placed
 	// like song positions (0–1 across the plot). Rotating labels are picked
 	// from these.
@@ -230,6 +247,19 @@
 			sharesBySongKey: progressionSharesBySongKey
 		})
 	);
+
+	// The hovered hex's cluster, as dated songs in their fully zoomed-in
+	// dot colors, for the tooltip's beeswarm.
+	const hoveredClusterSongs = $derived.by(() => {
+		if (!hoveredHex || !songSummaryByKey) return [];
+		const songKeys = clusterSongKeysByHash.get(hoveredHex.region.id) ?? [];
+		return songKeys.flatMap((songKey) => {
+			const year = songSummaryByKey.get(songKey)?.year;
+			return year
+				? [{ songKey, year, color: regionFills.songRegionFill(songKey, 1) }]
+				: [];
+		});
+	});
 
 	const isOutlined = (songKey: string): boolean =>
 		outlinedSongKeys?.has(songKey) ?? false;
@@ -718,6 +748,8 @@
 			style={hoverCardStyle(hoveredHex.anchor, width)}
 			color={regionColorByName.get(region.name) ?? hexColors.unmatched}
 			songCount={clusterSizeByHash.get(region.id) ?? 0}
+			{yearDomain}
+			songs={hoveredClusterSongs}
 			titlePrefix={outlinedTitlePrefix && hexHasPlayableSongs?.(region.name)
 				? outlinedTitlePrefix
 				: null}
