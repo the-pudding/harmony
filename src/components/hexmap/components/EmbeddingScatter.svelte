@@ -27,6 +27,14 @@
 	import { clusterAnnotationAlpha } from "./clusterAnnotationStyle.js";
 	import SongTooltip from "../../../routes/demo/shared/SongTooltip.svelte";
 	import HexSongTooltip from "./HexSongTooltip.svelte";
+	import SongLabel from "./SongLabel.svelte";
+	import {
+		SONG_LABEL_LINE_HEIGHT_PX,
+		SONG_LABEL_STYLE,
+		canvasFontFor,
+		songLabelLines,
+		type SongLabelLine
+	} from "./songLabelText.js";
 	import WatercolorProgressionChords from "$routes/demo/design/chord-viz/WatercolorProgressionChords.svelte";
 	import { progressionTokensOf } from "$routes/demo/design/chord-viz/topProgressions.js";
 	import { paletteById } from "$routes/demo/design/chord-viz/chordPalettes.js";
@@ -133,16 +141,9 @@
 	const NOT_PLAYING_ALPHA = 0.3;
 	// How long the playing marker takes to grow (and the last one to shrink).
 	const PLAYING_TWEEN_MS = 400;
-	const OUTLINED_LABEL_TITLE_FONT =
-		"700 11px 'JetBrains Mono', ui-monospace, monospace";
-	const OUTLINED_LABEL_ARTIST_FONT =
-		"500 10px 'JetBrains Mono', ui-monospace, monospace";
-	const OUTLINED_LABEL_YEAR_FONT =
-		"400 11px 'JetBrains Mono', ui-monospace, monospace";
-	const OUTLINED_LABEL_YEAR_ALPHA = 0.6;
 	// Space between a marker's edge and its label.
 	const OUTLINED_LABEL_GAP = 6;
-	const OUTLINED_LABEL_LINE_HEIGHT = 13;
+	const OUTLINED_LABEL_LINE_HEIGHT = SONG_LABEL_LINE_HEIGHT_PX;
 	// Empty space kept around each label so it doesn't touch its neighbors.
 	const OUTLINED_LABEL_PADDING = 3;
 
@@ -1166,12 +1167,6 @@
 		}
 	};
 
-	type LabelSegment = { font: string; text: string; alpha: number };
-	type LabelLine = LabelSegment[];
-
-	const yearLabel = (year: number | undefined): string | null =>
-		year ? String(year) : null;
-
 	type Box = { left: number; right: number; top: number; bottom: number };
 
 	const boxesOverlap = (a: Box, b: Box): boolean =>
@@ -1199,27 +1194,11 @@
 					outlinedTitlePrefix && isOutlined(songKey)
 						? `${outlinedTitlePrefix} ${summary.title}`
 						: summary.title;
-				const titleLine: LabelLine = [
-					{ font: OUTLINED_LABEL_TITLE_FONT, text: title, alpha: 1 }
-				];
-				const yearText = yearLabel(summary.year);
-				if (yearText) {
-					titleLine.push({
-						font: OUTLINED_LABEL_YEAR_FONT,
-						text: ` ${yearText}`,
-						alpha: OUTLINED_LABEL_YEAR_ALPHA
-					});
-				}
-				const lines: LabelLine[] = [titleLine];
-				if (summary.artists.length > 0) {
-					lines.push([
-						{
-							font: OUTLINED_LABEL_ARTIST_FONT,
-							text: summary.artists.join(", "),
-							alpha: 1
-						}
-					]);
-				}
+				const lines = songLabelLines({
+					title,
+					year: summary.year,
+					artists: summary.artists
+				});
 				return [{ songKey, screen, radius, lines }];
 			});
 		const markers: Box[] = songs.map(({ screen, radius }) => ({
@@ -1237,13 +1216,13 @@
 		);
 
 		const placed: Box[] = [];
-		const labels: { songKey: string; lines: LabelLine[]; box: Box }[] =
+		const labels: { songKey: string; lines: SongLabelLine[]; box: Box }[] =
 			[];
 		for (const { songKey, screen, radius, lines } of onScreen) {
 			const textWidth = Math.max(
 				...lines.map((line) =>
-					line.reduce((lineWidth, { font, text }) => {
-						context.font = font;
+					line.reduce((lineWidth, { role, text }) => {
+						context.font = canvasFontFor(role);
 						return lineWidth + context.measureText(text).width;
 					}, 0)
 				)
@@ -1299,9 +1278,9 @@
 					OUTLINED_LABEL_PADDING +
 					(index + 0.5) * OUTLINED_LABEL_LINE_HEIGHT;
 				let x = box.left + OUTLINED_LABEL_PADDING;
-				for (const { font, text, alpha } of line) {
-					context.globalAlpha = songAlpha * alpha;
-					context.font = font;
+				for (const { role, text } of line) {
+					context.globalAlpha = songAlpha * SONG_LABEL_STYLE[role].opacity;
+					context.font = canvasFontFor(role);
 					context.strokeText(text, x, y);
 					context.fillText(text, x, y);
 					x += context.measureText(text).width;
@@ -2452,13 +2431,19 @@
 			</div>
 		{:else if simpleSongTooltip && tooltipSummary}
 			<div class="tooltip" style={tooltipStyle}>
-				<div class="hex-tooltip-title">{tooltipSummary.title}</div>
-				<div class="hex-tooltip-meta">{tooltipSummary.artists.join(", ")}</div>
+				<SongLabel
+					title={tooltipSummary.title}
+					year={tooltipSummary.year}
+					artists={tooltipSummary.artists}
+				/>
 			</div>
 		{:else if tooltipSummary}
 			<div class="tooltip" style={tooltipStyle}>
-				<div class="hex-tooltip-title">{tooltipSummary.title}</div>
-				<div class="hex-tooltip-meta">{tooltipSummary.artists.join(", ")}</div>
+				<SongLabel
+					title={tooltipSummary.title}
+					year={tooltipSummary.year}
+					artists={tooltipSummary.artists}
+				/>
 				<div class="hex-tooltip-meta">loading chords…</div>
 			</div>
 		{/if}

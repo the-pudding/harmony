@@ -12,6 +12,7 @@
 		computeSongHomogeneity,
 		formatEffectiveProgressionCount
 	} from "../../../routes/demo/shared/progressionHomogeneity.js";
+	import SongLabel from "./SongLabel.svelte";
 	import ProgressionShareBar from "./ProgressionShareBar.svelte";
 
 	type Props = {
@@ -47,13 +48,7 @@
 </script>
 
 <div class="hex-song-tooltip">
-	<div class="title-row">
-		<span class="title">{song.title}</span>
-		{#if calendarYear !== undefined}
-			<span class="muted">({calendarYear})</span>
-		{/if}
-		<span class="muted">— {song.artists.join(", ")}</span>
-	</div>
+	<SongLabel title={song.title} year={calendarYear} artists={song.artists} />
 
 	<ProgressionShareBar {segments} />
 
@@ -78,22 +73,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
-	}
-
-	.title-row {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: 0.25rem;
-	}
-
-	.title {
-		font-weight: 600;
-		color: #f4f4f5;
-	}
-
-	.muted {
-		color: #71717a;
 	}
 
 	.summary {
