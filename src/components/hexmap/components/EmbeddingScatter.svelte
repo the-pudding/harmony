@@ -1,16 +1,6 @@
 <script lang="ts">
 	import { onDestroy, untrack } from "svelte";
-	import { fade } from "svelte/transition";
-	import { select, zoom, zoomIdentity, type ZoomTransform } from "d3";
-	import coreProgressions from "../../../data/core-progressions.js";
-	import SongTooltip from "../../../routes/demo/shared/SongTooltip.svelte";
-	import HexSongTooltip from "./HexSongTooltip.svelte";
-	import SongLabel from "./SongLabel.svelte";
-	import WatercolorProgressionChords from "$routes/demo/design/chord-viz/WatercolorProgressionChords.svelte";
-	import { progressionTokensOf } from "$routes/demo/design/chord-viz/topProgressions.js";
-	import { paletteById } from "$routes/demo/design/chord-viz/chordPalettes.js";
-	import { DEFAULT_WATERCOLOR_SETTINGS } from "$routes/demo/design/chord-viz/watercolor.js";
-	import { romanRe } from "$utils/chordify";
+	import { zoomIdentity, type ZoomTransform } from "d3";
 	import { createDelayedHoverTooltip } from "../../../routes/demo/shared/delayedHoverTooltip.svelte.js";
 	import { createClickAfterDragGuard } from "../../../routes/demo/shared/clickAfterDragGuard.js";
 	import {
@@ -33,9 +23,7 @@
 		OUTLINE_COLOR,
 		OUTLINED_POINT_RADIUS,
 		CLUSTERABLE_METHODS,
-		HEX_THEME_COLORS,
-		HEX_LABEL_FONT,
-		ROTATING_LABEL_FADE_MS
+		HEX_THEME_COLORS
 	} from "./scatter/constants.js";
 	import type { EmbeddingScatterProps as Props } from "./scatter/props.js";
 	import type {
@@ -45,6 +33,9 @@
 		Position
 	} from "./scatter/types.js";
 	import { normalizePoints } from "./scatter/normalizePoints.js";
+	import HexRegionTooltip from "./scatter/HexRegionTooltip.svelte";
+	import RotatingLabels from "./scatter/RotatingLabels.svelte";
+	import ScatterSongTooltip from "./scatter/ScatterSongTooltip.svelte";
 	import { normalizeName } from "./scatter/clusterNames.js";
 	import { createPositionTween } from "./scatter/positionTween.svelte.js";
 	import { createSpotlightTween } from "./scatter/spotlightTween.svelte.js";
@@ -146,15 +137,6 @@
 	);
 
 	const interactive = $derived(movable || hoverable);
-
-	const chordsByProgressionName = new Map(
-		coreProgressions.map((progression) => [
-			progression.name,
-			[progression.chordProgression].flat()[0]
-		])
-	);
-
-	const TOOLTIP_CHORD_PALETTE = paletteById("journey-from-home");
 
 	const hexColors = $derived(HEX_THEME_COLORS[theme]);
 
@@ -674,6 +656,15 @@
 		hoverCardStyle(delayedTooltip.tooltipAnchor, width)
 	);
 
+	// What clicking the hovered song does, for the simple tooltip.
+	const songTooltipHint = $derived.by(() => {
+		const songKey = delayedTooltip.tooltipSongKey;
+		if (!onSongChordsToggle || isOutlined(songKey ?? "")) return "";
+		return songKey === openSongId
+			? "👆 Click to hide the full chords"
+			: "👆 Click to show the full chords";
+	});
+
 	const tooltipVisible = $derived(
 		delayedTooltip.tooltipSongKey !== null &&
 			pointBySongKey.has(delayedTooltip.tooltipSongKey)
@@ -721,98 +712,33 @@
 
 	{#if hoveredHex}
 		{@const { region } = hoveredHex}
-		{@const songCount = clusterSizeByHash.get(region.id) ?? 0}
-		<!-- Named progressions map to their chords; unnamed ones (and names that
-		     are themselves roman numerals) show their numerals directly. -->
-		{@const chords = (
-			region.progressionNames.length > 0
-				? region.progressionNames
-				: region.name.split(" · ")
-		)
-			.map((name) => chordsByProgressionName.get(name) ?? name)
-			.filter((chord) => chord.split("-").every((r) => romanRe.test(r.trim())))}
-		<div class="tooltip" style={hoverCardStyle(hoveredHex.anchor, width)}>
-			<div class="hex-tooltip-title">
-				<span
-					class="hex-tooltip-swatch"
-					style:background={regionColorByName.get(region.name) ??
-						hexColors.unmatched}
-				></span>
-				{#if outlinedTitlePrefix && hexHasPlayableSongs?.(region.name)}
-					{outlinedTitlePrefix}
-				{/if}
-				{region.name}
-			</div>
-			{#if chords.length > 0}
-				<div class="hex-tooltip-chords">
-					{#each chords as progression (progression)}
-						<div class="hex-tooltip-progression">
-							<WatercolorProgressionChords
-								tokens={progressionTokensOf(progression)}
-								tonality="major"
-								settings={DEFAULT_WATERCOLOR_SETTINGS}
-								palette={TOOLTIP_CHORD_PALETTE}
-							/>
-						</div>
-					{/each}
-				</div>
-			{/if}
-			<div class="hex-tooltip-meta">
-				{songCount}
-				{songCount === 1 ? "song" : "songs"}
-			</div>
-		</div>
+		<HexRegionTooltip
+			{region}
+			style={hoverCardStyle(hoveredHex.anchor, width)}
+			color={regionColorByName.get(region.name) ?? hexColors.unmatched}
+			songCount={clusterSizeByHash.get(region.id) ?? 0}
+			titlePrefix={outlinedTitlePrefix && hexHasPlayableSongs?.(region.name)
+				? outlinedTitlePrefix
+				: null}
+		/>
 	{/if}
 
-	{#each rotating.labels as label (label.id)}
-		<span
-			class="rotating-label"
-			style:left="{toScreen(label).x}px"
-			style:top="{toScreen(label).y}px"
-			style:--label-text={hexColors.labelText}
-			style:--label-halo={hexColors.labelHalo}
-			transition:fade={{ duration: ROTATING_LABEL_FADE_MS }}
-		>
-			{label.text}
-		</span>
-	{/each}
+	<RotatingLabels
+		labels={rotating.labels}
+		screenOf={toScreen}
+		textColor={hexColors.labelText}
+		haloColor={hexColors.labelHalo}
+	/>
 
 	{#if tooltipVisible && delayedTooltip.tooltipAnchor}
-		{#if simpleSongTooltip && tooltip.song}
-			<div class="tooltip" style={tooltipStyle}>
-				<HexSongTooltip
-					song={tooltip.song}
-					colorForProgression={(name) => regionColorByProgressionName.get(name)}
-					hint={!onSongChordsToggle ||
-					isOutlined(delayedTooltip.tooltipSongKey ?? "")
-						? ""
-						: delayedTooltip.tooltipSongKey === openSongId
-							? "👆 Click to hide the full chords"
-							: "👆 Click to show the full chords"}
-				/>
-			</div>
-		{:else if tooltip.song}
-			<div class="tooltip" style={tooltipStyle}>
-				<SongTooltip song={tooltip.song} />
-			</div>
-		{:else if simpleSongTooltip && tooltip.summary}
-			<div class="tooltip" style={tooltipStyle}>
-				<SongLabel
-					title={tooltip.summary.title}
-					year={tooltip.summary.year}
-					artists={tooltip.summary.artists}
-				/>
-			</div>
-		{:else if tooltip.summary}
-			<div class="tooltip" style={tooltipStyle}>
-				<SongLabel
-					title={tooltip.summary.title}
-					year={tooltip.summary.year}
-					artists={tooltip.summary.artists}
-				/>
-				<div class="hex-tooltip-meta">loading chords…</div>
-			</div>
-		{/if}
+		<ScatterSongTooltip
+			style={tooltipStyle}
+			song={tooltip.song}
+			summary={tooltip.summary}
+			simple={simpleSongTooltip}
+			hint={songTooltipHint}
+			colorForProgression={(name) => regionColorByProgressionName.get(name)}
+		/>
 	{/if}
 </div>
 
@@ -824,7 +750,7 @@
 		overflow: hidden;
 	}
 
-	.scatter:has(.tooltip) {
+	.scatter:has(:global(.scatter-tooltip)) {
 		overflow: visible;
 	}
 
@@ -848,79 +774,5 @@
 	canvas.inert {
 		cursor: default;
 		pointer-events: none;
-	}
-
-	.tooltip {
-		position: absolute;
-		pointer-events: none;
-		background: rgba(9, 9, 11, 0.96);
-		border: 1px solid rgba(63, 63, 70, 0.8);
-		border-radius: 0.5rem;
-		padding: 0.875rem 1rem;
-		z-index: 10;
-		backdrop-filter: blur(8px);
-		overflow-y: auto;
-		font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
-		font-size: 0.75rem;
-		color: #f4f4f5;
-	}
-
-	/* Matches HEX_LABEL_FONT and the canvas labels' halo. */
-	.rotating-label {
-		position: absolute;
-		transform: translate(-50%, -50%);
-		pointer-events: none;
-		white-space: nowrap;
-		font:
-			500 10px "JetBrains Mono",
-			ui-monospace,
-			monospace;
-		color: var(--label-text);
-		text-shadow:
-			-1.5px 0 var(--label-halo),
-			1.5px 0 var(--label-halo),
-			0 -1.5px var(--label-halo),
-			0 1.5px var(--label-halo),
-			-1px -1px var(--label-halo),
-			1px 1px var(--label-halo),
-			-1px 1px var(--label-halo),
-			1px -1px var(--label-halo);
-	}
-
-	.hex-tooltip-title {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 1rem;
-		font-weight: 600;
-		margin-bottom: 0.25rem;
-	}
-
-	.hex-tooltip-chords {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.25rem 0.75rem;
-		margin-bottom: 0.25rem;
-	}
-
-	/* The chords render at full size; shrink the whole row, trim and all. */
-	.hex-tooltip-progression {
-		zoom: 0.55;
-	}
-
-	.hex-tooltip-progression :global(.chord) {
-		mix-blend-mode: normal;
-	}
-
-	.hex-tooltip-meta {
-		color: #a1a1aa;
-		font-size: 0.65rem;
-	}
-
-	.hex-tooltip-swatch {
-		width: 0.75rem;
-		height: 0.75rem;
-		border-radius: 0.1875rem;
-		flex-shrink: 0;
 	}
 </style>
