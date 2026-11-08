@@ -21,7 +21,7 @@
 	import TooltipCard from "./TooltipCard.svelte";
 	import ClusterYearBeeswarm, {
 		type BeeswarmSong
-	} from "./ClusterYearBeeswarm.svelte";
+	} from "$components/charts/ClusterYearBeeswarm.svelte";
 
 	// The hovered hex's cluster: its color and name, its progressions'
 	// chords, and how many songs it holds.
@@ -32,7 +32,8 @@
 		songCount,
 		titlePrefix,
 		songs = [],
-		yearDomain = null
+		yearDomain = null,
+		maxClusterSongCount = 0
 	}: {
 		region: ClusterRegion;
 		style: string;
@@ -44,6 +45,8 @@
 		// yearDomain is set.
 		songs?: readonly BeeswarmSong[];
 		yearDomain?: { min: number; max: number } | null;
+		// The biggest cluster's song count, which gets the tallest beeswarm.
+		maxClusterSongCount?: number;
 	} = $props();
 
 	// Named progressions map to their chords; unnamed ones (and names that
@@ -85,7 +88,11 @@
 		{songCount === 1 ? "song" : "songs"}
 	</div>
 	{#if yearDomain && songs.length > 0}
-		<ClusterYearBeeswarm {songs} {yearDomain} />
+		<ClusterYearBeeswarm
+			{songs}
+			{yearDomain}
+			maxSongCount={maxClusterSongCount}
+		/>
 	{/if}
 </TooltipCard>
 

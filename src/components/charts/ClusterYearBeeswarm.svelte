@@ -4,9 +4,9 @@
 </script>
 
 <script lang="ts">
-	// A hovered cluster's songs over time: one dot per song, stacked by
-	// release year (adapted from ArtistSongTimeline). Display only; the
-	// tooltip it sits in can't be hovered.
+	// A cluster's songs over time: one dot per song, stacked by release
+	// year (adapted from ArtistSongTimeline). Display only; the tooltip it
+	// sits in can't be hovered.
 	import { scaleLinear } from "d3";
 	import {
 		beeswarmChartHeight,
@@ -15,8 +15,12 @@
 		type DodgedPoint
 	} from "$routes/demo/shared/charts/dodgeBeeswarm.js";
 
-	// Dots shrink through these radii until the tallest stack fits.
-	const DOT_RADII = [3, 2.5, 2, 1.5, 1.25, 1];
+	// Dots shrink through these radii until the tallest stack fits its cap.
+	const DOT_RADII = [3, 2.75, 2.5, 2.25, 2, 1.75, 1.5, 1.25, 1];
+	// The cap grows with the song count (by square root) from MIN for an
+	// empty chart to MAX for one with maxSongCount songs, so small clusters
+	// read as short charts and big ones as tall, even as dots shrink to fit.
+	const MIN_STACK_HEIGHT = 16;
 	const MAX_STACK_HEIGHT = 90;
 	const DOT_SPACING = 0.5;
 	const PADDING_X = 4;
@@ -27,11 +31,15 @@
 
 	let {
 		songs,
-		yearDomain
+		yearDomain,
+		maxSongCount
 	}: {
 		songs: readonly BeeswarmSong[];
-		// Shared by every cluster, so their timelines line up.
+		// Shared by every chart, so their timelines line up.
 		yearDomain: { min: number; max: number };
+		// The most songs any chart shown alongside this one has, which gets
+		// the full MAX_STACK_HEIGHT.
+		maxSongCount: number;
 	} = $props();
 
 	let width = $state(0);
@@ -49,6 +57,12 @@
 			.map((tick) => ({ year: tick, x: xScale(tick) }))
 	);
 
+	const stackHeightCap = $derived(
+		MIN_STACK_HEIGHT +
+			(MAX_STACK_HEIGHT - MIN_STACK_HEIGHT) *
+				Math.sqrt(Math.min(1, songs.length / Math.max(1, maxSongCount)))
+	);
+
 	const layout = $derived.by(() => {
 		let radius = DOT_RADII[0];
 		let nodes: DodgedPoint<BeeswarmSong>[] = [];
@@ -60,7 +74,7 @@
 				radius,
 				DOT_SPACING
 			);
-			if (tallestStackHeight(nodes) + radius * 2 <= MAX_STACK_HEIGHT) break;
+			if (tallestStackHeight(nodes) + radius * 2 <= stackHeightCap) break;
 		}
 		return { radius, nodes };
 	});

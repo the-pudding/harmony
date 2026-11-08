@@ -168,6 +168,10 @@
 		new Map(clusters.map((cluster) => [cluster.hash, cluster.songKeys.length]))
 	);
 
+	const maxClusterSongCount = $derived(
+		Math.max(0, ...clusters.map((cluster) => cluster.songKeys.length))
+	);
+
 	const clusterSongKeysByHash = $derived(
 		new Map(clusters.map((cluster) => [cluster.hash, cluster.songKeys]))
 	);
@@ -749,6 +753,7 @@
 			color={regionColorByName.get(region.name) ?? hexColors.unmatched}
 			songCount={clusterSizeByHash.get(region.id) ?? 0}
 			{yearDomain}
+			{maxClusterSongCount}
 			songs={hoveredClusterSongs}
 			titlePrefix={outlinedTitlePrefix && hexHasPlayableSongs?.(region.name)
 				? outlinedTitlePrefix
