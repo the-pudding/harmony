@@ -147,22 +147,13 @@
 		featuredSyncedSongs.map((row) => row.songKey)
 	);
 
-	// Featured songs per cluster (lowercased name), for the hex tooltip.
-	const featuredCountByCluster = new Map<string, number>();
-	for (const { cluster } of featuredSyncedSongs) {
-		const name = cluster.toLowerCase();
-		featuredCountByCluster.set(
-			name,
-			(featuredCountByCluster.get(name) ?? 0) + 1
-		);
-	}
+	// Clusters (lowercased name) with featured songs, for the hex tooltip.
+	const playableClusterNames = new Set(
+		featuredSyncedSongs.map(({ cluster }) => cluster.toLowerCase())
+	);
 
-	const hexClickHint = (regionName: string): string => {
-		const count = featuredCountByCluster.get(regionName.toLowerCase()) ?? 0;
-		return count === 0
-			? "Click to zoom in (no playable songs available)"
-			: `Click to start an audio tour of ${count} ${count === 1 ? "song" : "songs"} in this cluster`;
-	};
+	const clusterHasPlayableSongs = (regionName: string): boolean =>
+		playableClusterNames.has(regionName.toLowerCase());
 
 	let snapshot = $state.raw<HexMapSnapshot | null>(null);
 
@@ -340,7 +331,7 @@
 					: UNCENTERED_OFFSET_Y}
 				{theme}
 				simpleSongTooltip
-				hexClickHint={explorable ? hexClickHint : null}
+				hexHasPlayableSongs={explorable ? clusterHasPlayableSongs : null}
 				onSongChordsToggle={explorable ? onSongChordsToggle : null}
 				openSongId={explorable ? openSongId : null}
 				onSelect={() => {}}

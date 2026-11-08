@@ -429,10 +429,9 @@
 		pixelRatio?: number | null;
 		// Hex mode: a simpler song tooltip (see HexSongTooltip).
 		simpleSongTooltip?: boolean;
-		// Hex mode: what clicking a hex does, for its tooltip, given the
-		// region's name. Null or omitted shows only the song count (plus
-		// "click to zoom in" when movable).
-		hexClickHint?: ((regionName: string) => string | null) | null;
+		// Hex mode: whether a region, by name, has playable songs; its tooltip
+		// then shows outlinedTitlePrefix before the name.
+		hexHasPlayableSongs?: ((regionName: string) => boolean) | null;
 		// Hex mode, at dot zoom: called to open or close a song's full chords
 		// when a song that isn't outlined is clicked (which then doesn't reach
 		// onClusterClick), or when an outlined song's label is clicked.
@@ -494,7 +493,7 @@
 		onUserMove = null,
 		pixelRatio: pixelRatioOverride = null,
 		simpleSongTooltip = false,
-		hexClickHint = null,
+		hexHasPlayableSongs = null,
 		onSongChordsToggle = null,
 		onProgressionColors = null
 	}: Props = $props();
@@ -1125,6 +1124,23 @@
 				: OUTLINE_COLOR;
 			context.fill();
 
+			if (
+				outlined &&
+				songKey === hoveredSongKey &&
+				songKey !== playingSongKey
+			) {
+				const size = radius * 0.6;
+				context.save();
+				context.fillStyle = "white";
+				context.beginPath();
+				context.moveTo(screen.x - size * 0.35, screen.y - size * 0.55);
+				context.lineTo(screen.x - size * 0.35, screen.y + size * 0.55);
+				context.lineTo(screen.x + size * 0.7, screen.y);
+				context.closePath();
+				context.fill();
+				context.restore();
+			}
+
 			if (songKey === playingSongKey && emphasis > 0) {
 				context.save();
 				context.globalAlpha = emphasis;
@@ -1182,21 +1198,24 @@
 	// drawing fills it.
 	let outlinedLabelHitAreas = new Map<
 		string,
-		{ box: Box; titleEndX: number; titleY: number }
+		{ box: Box; hintRight: number }
 	>();
 	let hoveredLabelSongKey = $state<string | null>(null);
-	// Room to the right of a label for its open icon, which counts as part
-	// of the label for hovering and clicking.
-	const LABEL_ICON_SPACE = 16;
 
 	const labelSongKeyAt = (anchor: HoverCardAnchor): string | null => {
-		for (const [songKey, { box }] of outlinedLabelHitAreas) {
+		for (const [songKey, { box, hintRight }] of outlinedLabelHitAreas) {
 			if (playingSongKey !== null && songKey !== playingSongKey) continue;
+			// The hint row shown on hover counts as part of the label.
+			const hovered = songKey === hoveredLabelSongKey;
+			const right = hovered ? Math.max(box.right, hintRight) : box.right;
+			const bottom = hovered
+				? box.bottom + OUTLINED_LABEL_LINE_HEIGHT
+				: box.bottom;
 			if (
 				anchor.x >= box.left &&
-				anchor.x <= box.right + LABEL_ICON_SPACE &&
+				anchor.x <= right &&
 				anchor.y >= box.top &&
-				anchor.y <= box.bottom
+				anchor.y <= bottom
 			) {
 				return songKey;
 			}
@@ -1318,15 +1337,25 @@
 					context.fillText(text, x, y);
 					x += context.measureText(text).width;
 				}
-				if (index !== 0) return;
-				outlinedLabelHitAreas.set(songKey, { box, titleEndX: x, titleY: y });
-				if (songKey === hoveredLabelSongKey) {
-					context.globalAlpha = songAlpha;
-					context.font = canvasFontFor("title");
-					context.strokeText("↗", x + 4, y);
-					context.fillText("↗", x + 4, y);
-				}
 			});
+
+			// A third row, shown on hover, below the label's own rows.
+			const hint = `👆 ${songKey === openSongId ? "hide" : "show"} chords`;
+			const hintX = box.left + OUTLINED_LABEL_PADDING;
+			const hintY =
+				box.top +
+				OUTLINED_LABEL_PADDING +
+				(lines.length + 0.5) * OUTLINED_LABEL_LINE_HEIGHT;
+			context.font = canvasFontFor("title");
+			outlinedLabelHitAreas.set(songKey, {
+				box,
+				hintRight: hintX + context.measureText(hint).width
+			});
+			if (songKey === hoveredLabelSongKey) {
+				context.globalAlpha = songAlpha;
+				context.strokeText(hint, hintX, hintY);
+				context.fillText(hint, hintX, hintY);
+			}
 		}
 	};
 
@@ -2271,6 +2300,7 @@
 		void songSummaryByKey;
 		void playingClipProgressFraction;
 		void hoveredLabelSongKey;
+		void openSongId;
 		void playingChordColorSegments;
 		draw();
 	});
@@ -2404,8 +2434,9 @@
 	<canvas
 		bind:this={canvasEl}
 		class:inert={!interactive}
-		class:grabbable={movable && !hoverable}
-		class:clickable={hoveredLabelSongKey !== null ||
+		class:grabbable={movable}
+		class:clickable={hoveredHex !== null ||
+			hoveredLabelSongKey !== null ||
 			(hoveredSongKey !== null && isOutlined(hoveredSongKey))}
 		style:width="{width}px"
 		style:height="{height}px"
@@ -2414,7 +2445,6 @@
 	{#if hoveredHex}
 		{@const { region } = hoveredHex}
 		{@const songCount = clusterSizeByHash.get(region.id) ?? 0}
-		{@const clickHint = hexClickHint?.(region.name)}
 		<!-- Named progressions map to their chords; unnamed ones (and names that
 		     are themselves roman numerals) show their numerals directly. -->
 		{@const chords = (
@@ -2431,6 +2461,9 @@
 					style:background={regionColorByName.get(region.name) ??
 						hexColors.unmatched}
 				></span>
+				{#if outlinedTitlePrefix && hexHasPlayableSongs?.(region.name)}
+					{outlinedTitlePrefix}
+				{/if}
 				{region.name}
 			</div>
 			{#if chords.length > 0}
@@ -2451,11 +2484,6 @@
 				{songCount}
 				{songCount === 1 ? "song" : "songs"}
 			</div>
-			{#if clickHint ?? (movable && !hexClickHint ? "Click to zoom in" : null)}
-				<div class="hex-tooltip-hint">
-					👆 {clickHint ?? "Click to zoom in"}
-				</div>
-			{/if}
 		</div>
 	{/if}
 
@@ -2478,15 +2506,12 @@
 				<HexSongTooltip
 					song={tooltipSong}
 					colorForProgression={(name) => regionColorByProgressionName.get(name)}
-					hint={!onSongChordsToggle
+					hint={!onSongChordsToggle ||
+					isOutlined(delayedTooltip.tooltipSongKey ?? "")
 						? ""
-						: playingSongKey !== null
-							? "👆 Click to stop the clip"
-							: isOutlined(delayedTooltip.tooltipSongKey ?? "")
-								? "👆 Click to hear a clip"
-								: delayedTooltip.tooltipSongKey === openSongId
-									? "👆 Click to hide the full chords"
-									: "👆 Click to show the full chords"}
+						: delayedTooltip.tooltipSongKey === openSongId
+							? "👆 Click to hide the full chords"
+							: "👆 Click to show the full chords"}
 				/>
 			</div>
 		{:else if tooltipSong}
@@ -2528,7 +2553,7 @@
 
 	canvas {
 		display: block;
-		cursor: crosshair;
+		cursor: default;
 	}
 
 	canvas.grabbable {
@@ -2537,6 +2562,10 @@
 
 	canvas.clickable {
 		cursor: pointer;
+	}
+
+	canvas.grabbable:active {
+		cursor: grabbing;
 	}
 
 	canvas.inert {
@@ -2608,12 +2637,6 @@
 
 	.hex-tooltip-meta {
 		color: #a1a1aa;
-		font-size: 0.65rem;
-	}
-
-	.hex-tooltip-hint {
-		margin-top: 0.25rem;
-		color: #d4d4d8;
 		font-size: 0.65rem;
 	}
 
