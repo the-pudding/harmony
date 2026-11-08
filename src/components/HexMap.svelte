@@ -218,7 +218,11 @@
 		new Map(
 			(snapshot?.songKeys ?? []).map((songKey, index) => [
 				songKey,
-				{ title: snapshot!.titles[index], artists: snapshot!.artists[index] }
+				{
+					title: snapshot!.titles[index],
+					artists: snapshot!.artists[index],
+					year: snapshot!.years?.[index] || undefined
+				}
 			])
 		)
 	);

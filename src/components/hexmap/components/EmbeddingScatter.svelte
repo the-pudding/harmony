@@ -137,6 +137,9 @@
 		"700 11px 'JetBrains Mono', ui-monospace, monospace";
 	const OUTLINED_LABEL_ARTIST_FONT =
 		"500 10px 'JetBrains Mono', ui-monospace, monospace";
+	const OUTLINED_LABEL_YEAR_FONT =
+		"400 11px 'JetBrains Mono', ui-monospace, monospace";
+	const OUTLINED_LABEL_YEAR_ALPHA = 0.6;
 	// Space between a marker's edge and its label.
 	const OUTLINED_LABEL_GAP = 6;
 	const OUTLINED_LABEL_LINE_HEIGHT = 13;
@@ -270,7 +273,7 @@
 		loadSong?: ((songKey: string) => Promise<GroupedSong | null>) | null;
 		songSummaryByKey?: ReadonlyMap<
 			string,
-			{ title: string; artists: readonly string[] }
+			{ title: string; artists: readonly string[]; year?: number }
 		> | null;
 		selectedSongKey: string | null;
 		coClusterSongKeys: Set<string>;
@@ -1163,6 +1166,12 @@
 		}
 	};
 
+	type LabelSegment = { font: string; text: string; alpha: number };
+	type LabelLine = LabelSegment[];
+
+	const yearLabel = (year: number | undefined): string | null =>
+		year ? String(year) : null;
+
 	type Box = { left: number; right: number; top: number; bottom: number };
 
 	const boxesOverlap = (a: Box, b: Box): boolean =>
@@ -1190,9 +1199,26 @@
 					outlinedTitlePrefix && isOutlined(songKey)
 						? `${outlinedTitlePrefix} ${summary.title}`
 						: summary.title;
-				const lines: [string, string][] = [[OUTLINED_LABEL_TITLE_FONT, title]];
+				const titleLine: LabelLine = [
+					{ font: OUTLINED_LABEL_TITLE_FONT, text: title, alpha: 1 }
+				];
+				const yearText = yearLabel(summary.year);
+				if (yearText) {
+					titleLine.push({
+						font: OUTLINED_LABEL_YEAR_FONT,
+						text: ` ${yearText}`,
+						alpha: OUTLINED_LABEL_YEAR_ALPHA
+					});
+				}
+				const lines: LabelLine[] = [titleLine];
 				if (summary.artists.length > 0) {
-					lines.push([OUTLINED_LABEL_ARTIST_FONT, summary.artists.join(", ")]);
+					lines.push([
+						{
+							font: OUTLINED_LABEL_ARTIST_FONT,
+							text: summary.artists.join(", "),
+							alpha: 1
+						}
+					]);
 				}
 				return [{ songKey, screen, radius, lines }];
 			});
@@ -1211,14 +1237,16 @@
 		);
 
 		const placed: Box[] = [];
-		const labels: { songKey: string; lines: [string, string][]; box: Box }[] =
+		const labels: { songKey: string; lines: LabelLine[]; box: Box }[] =
 			[];
 		for (const { songKey, screen, radius, lines } of onScreen) {
 			const textWidth = Math.max(
-				...lines.map(([font, text]) => {
-					context.font = font;
-					return context.measureText(text).width;
-				})
+				...lines.map((line) =>
+					line.reduce((lineWidth, { font, text }) => {
+						context.font = font;
+						return lineWidth + context.measureText(text).width;
+					}, 0)
+				)
 			);
 			const textHeight = lines.length * OUTLINED_LABEL_LINE_HEIGHT;
 			const reach = radius + OUTLINED_LABEL_GAP;
@@ -1264,16 +1292,20 @@
 		context.strokeStyle = hexColors.labelHalo;
 		context.fillStyle = hexColors.labelText;
 		for (const { songKey, lines, box } of labels) {
-			context.globalAlpha = outlinedAlphaFor(songKey);
-			const x = box.left + OUTLINED_LABEL_PADDING;
-			lines.forEach(([font, text], index) => {
+			const songAlpha = outlinedAlphaFor(songKey);
+			lines.forEach((line, index) => {
 				const y =
 					box.top +
 					OUTLINED_LABEL_PADDING +
 					(index + 0.5) * OUTLINED_LABEL_LINE_HEIGHT;
-				context.font = font;
-				context.strokeText(text, x, y);
-				context.fillText(text, x, y);
+				let x = box.left + OUTLINED_LABEL_PADDING;
+				for (const { font, text, alpha } of line) {
+					context.globalAlpha = songAlpha * alpha;
+					context.font = font;
+					context.strokeText(text, x, y);
+					context.fillText(text, x, y);
+					x += context.measureText(text).width;
+				}
 			});
 		}
 	};
