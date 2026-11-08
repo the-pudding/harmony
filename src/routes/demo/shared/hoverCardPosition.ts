@@ -5,6 +5,8 @@ export const HOVER_CARD_MIN_TOP = 8;
 export const HOVER_CARD_VIEWPORT_MARGIN_REM = 1;
 export const HOVER_CARD_MAX_HEIGHT = `calc(100dvh - ${HOVER_CARD_VIEWPORT_MARGIN_REM * 2}rem)`;
 
+export const HOVER_CARD_VIEWPORT_MARGIN = HOVER_CARD_VIEWPORT_MARGIN_REM * 16;
+
 export type HoverCardAnchor = { x: number; y: number };
 
 const hoverCardFlipsLeft = (
@@ -33,4 +35,17 @@ export const anchorFromMouseEvent = (
 ): HoverCardAnchor => {
 	const rect = container.getBoundingClientRect();
 	return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+};
+
+// How far to move a card vertically so it sits inside the window. Up when the
+// bottom would spill, but never past the top margin (tall cards pin to the top
+// and scroll).
+export const hoverCardVerticalShift = (
+	top: number,
+	height: number,
+	viewportHeight: number,
+	margin: number = HOVER_CARD_VIEWPORT_MARGIN
+): number => {
+	const up = Math.max(0, top + height - (viewportHeight - margin));
+	return Math.max(0 - up, margin - top);
 };
