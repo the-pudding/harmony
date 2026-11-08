@@ -267,11 +267,8 @@
 		playingClipProgressFraction={audio.clipProgressFraction}
 		playingChordColorSegments={audio.chordColorSegments}
 		onSongClick={(songKey) => {
-			// While a song plays, the map reports any click other than on that
-			// song's label as null: it stops the song and closes the drawer.
-			if (songKey === null && playingSongId !== undefined) {
-				chordsSongId = undefined;
-			}
+			// Playing, stopping or deselecting a song closes the chords drawer.
+			chordsSongId = undefined;
 			playingSongId = songKey ?? undefined;
 			if (songKey) audio.muted = false;
 		}}

@@ -1862,26 +1862,34 @@
 			onSongChordsToggle?.(clickedLabelSongKey);
 			return;
 		}
-		// While a song plays, anything but its label just stops it.
-		if (hexMode && !hexFrame && playingSongKey !== null) {
-			onOutlinedSongClick?.(null);
-			return;
-		}
 		// Outlined songs are only drawn once zoomed in to dots, so they can
 		// only be clicked then.
 		const outlinedSongKey = hexFrame ? null : findOutlinedSongAtAnchor(anchor);
-		onOutlinedSongClick?.(outlinedSongKey);
+		const clickedSongKey = hexFrame
+			? null
+			: (outlinedSongKey ?? findPointAtAnchor(anchor));
+		const songIsActive = playingSongKey !== null || openSongId !== null;
+		if (hexMode && !hexFrame && songIsActive) {
+			if (clickedSongKey === null || clickedSongKey === playingSongKey) {
+				// Off any dot, or on the playing one: just deselect.
+				onOutlinedSongClick?.(null);
+				return;
+			}
+		}
+		if (outlinedSongKey !== null || clickedSongKey === null) {
+			onOutlinedSongClick?.(outlinedSongKey);
+		}
 		if (
 			hexMode &&
 			!hexFrame &&
 			onSongChordsToggle &&
-			outlinedSongKey === null
+			outlinedSongKey === null &&
+			clickedSongKey !== null
 		) {
-			const plainSongKey = findPointAtAnchor(anchor);
-			if (plainSongKey !== null) {
-				onSongChordsToggle(plainSongKey);
-				return;
-			}
+			// A plain song replaces whatever was playing, and opens its chords.
+			if (playingSongKey !== null) onOutlinedSongClick?.(null);
+			onSongChordsToggle(clickedSongKey);
+			return;
 		}
 		if (hexMode) {
 			const hexKey = hexFrame ? hexKeyAtAnchor(anchor) : null;
