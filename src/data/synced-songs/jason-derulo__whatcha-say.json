@@ -1,0 +1,24 @@
+{
+	"songKey": "jason-derulo__whatcha-say",
+	"audioFile": "jason-derulo__whatcha-say.mp3",
+	"key": { "tonic": "B", "scale": "major" },
+	"region": { "startSeconds": 44.896, "endSeconds": 72.215 },
+	"chords": [
+		{ "seconds": 45.531, "chord": "E", "roman": "IV" },
+		{ "seconds": 47.176, "chord": "B", "roman": "I" },
+		{ "seconds": 48.869, "chord": "Abm", "roman": "vi" },
+		{ "seconds": 50.511, "chord": "F#", "roman": "V" },
+		{ "seconds": 52.224, "chord": "E", "roman": "IV" },
+		{ "seconds": 53.87, "chord": "B", "roman": "I" },
+		{ "seconds": 55.524, "chord": "Abm", "roman": "vi" },
+		{ "seconds": 57.168, "chord": "F#", "roman": "V" },
+		{ "seconds": 58.868, "chord": "E", "roman": "IV" },
+		{ "seconds": 60.516, "chord": "B", "roman": "I" },
+		{ "seconds": 62.196, "chord": "Abm", "roman": "vi" },
+		{ "seconds": 63.825, "chord": "F#", "roman": "V" },
+		{ "seconds": 65.517, "chord": "E", "roman": "IV" },
+		{ "seconds": 67.185, "chord": "B", "roman": "I" },
+		{ "seconds": 68.843, "chord": "Abm", "roman": "vi" },
+		{ "seconds": 70.489, "chord": "F#", "roman": "V" }
+	]
+}

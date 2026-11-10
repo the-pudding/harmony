@@ -1,0 +1,16 @@
+{
+	"songKey": "disney-s-friends-for-change__send-it-on",
+	"audioFile": "disney-s-friends-for-change__send-it-on.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 34.568, "endSeconds": 49.136 },
+	"chords": [
+		{ "seconds": 35.472, "chord": "D", "roman": "IV" },
+		{ "seconds": 37.194, "chord": "A", "roman": "I" },
+		{ "seconds": 38.878, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 40.653, "chord": "E", "roman": "V" },
+		{ "seconds": 42.376, "chord": "D", "roman": "IV" },
+		{ "seconds": 44.154, "chord": "A", "roman": "I" },
+		{ "seconds": 45.853, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 47.592, "chord": "E", "roman": "V" }
+	]
+}

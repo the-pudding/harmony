@@ -1,0 +1,24 @@
+{
+	"songKey": "tracy-chapman__fast-car",
+	"audioFile": "tracy-chapman__fast-car.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 21.795, "endSeconds": 40.792 },
+	"chords": [
+		{ "seconds": 22.117, "chord": "D", "roman": "IV" },
+		{ "seconds": 23.059, "chord": "A", "roman": "I" },
+		{ "seconds": 24.507, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 25.42, "chord": "E", "roman": "V" },
+		{ "seconds": 26.858, "chord": "D", "roman": "IV" },
+		{ "seconds": 27.739, "chord": "A", "roman": "I" },
+		{ "seconds": 29.127, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 30.04, "chord": "E", "roman": "V" },
+		{ "seconds": 31.504, "chord": "D", "roman": "IV" },
+		{ "seconds": 32.39, "chord": "A", "roman": "I" },
+		{ "seconds": 33.799, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 34.69, "chord": "E", "roman": "V" },
+		{ "seconds": 36.128, "chord": "D", "roman": "IV" },
+		{ "seconds": 36.99, "chord": "A", "roman": "I" },
+		{ "seconds": 38.41, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 39.283, "chord": "E", "roman": "V" }
+	]
+}

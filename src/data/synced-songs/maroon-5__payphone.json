@@ -1,0 +1,24 @@
+{
+	"songKey": "maroon-5__payphone",
+	"audioFile": "maroon-5__payphone.mp3",
+	"key": { "tonic": "B", "scale": "major" },
+	"region": { "startSeconds": 91.756, "endSeconds": 127.973 },
+	"chords": [
+		{ "seconds": 93.005, "chord": "E", "roman": "IV" },
+		{ "seconds": 95.188, "chord": "B", "roman": "I" },
+		{ "seconds": 97.345, "chord": "Abm", "roman": "vi" },
+		{ "seconds": 99.521, "chord": "F#", "roman": "V" },
+		{ "seconds": 101.736, "chord": "E", "roman": "IV" },
+		{ "seconds": 103.905, "chord": "B", "roman": "I" },
+		{ "seconds": 106.101, "chord": "Abm", "roman": "vi" },
+		{ "seconds": 108.271, "chord": "F#", "roman": "V" },
+		{ "seconds": 110.451, "chord": "E", "roman": "IV" },
+		{ "seconds": 112.63, "chord": "B", "roman": "I" },
+		{ "seconds": 114.812, "chord": "Abm", "roman": "vi" },
+		{ "seconds": 116.996, "chord": "F#", "roman": "V" },
+		{ "seconds": 119.163, "chord": "E", "roman": "IV" },
+		{ "seconds": 121.354, "chord": "B", "roman": "I" },
+		{ "seconds": 123.535, "chord": "Abm", "roman": "vi" },
+		{ "seconds": 125.724, "chord": "F#", "roman": "V" }
+	]
+}
