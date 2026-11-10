@@ -1,0 +1,24 @@
+{
+	"songKey": "fine-young-cannibals__she-drives-me-crazy",
+	"audioFile": "fine-young-cannibals__she-drives-me-crazy.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 57.921, "endSeconds": 75.948 },
+	"chords": [
+		{ "seconds": 58.333, "chord": "D", "roman": "I" },
+		{ "seconds": 59.455, "chord": "G", "roman": "IV" },
+		{ "seconds": 60.536, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 61.386, "chord": "A", "roman": "V" },
+		{ "seconds": 62.756, "chord": "D", "roman": "I" },
+		{ "seconds": 63.868, "chord": "G", "roman": "IV" },
+		{ "seconds": 64.974, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 65.806, "chord": "A", "roman": "V" },
+		{ "seconds": 67.163, "chord": "D", "roman": "I" },
+		{ "seconds": 68.29, "chord": "G", "roman": "IV" },
+		{ "seconds": 69.356, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 70.226, "chord": "A", "roman": "V" },
+		{ "seconds": 71.577, "chord": "D", "roman": "I" },
+		{ "seconds": 72.683, "chord": "G", "roman": "IV" },
+		{ "seconds": 73.781, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 74.637, "chord": "A", "roman": "V" }
+	]
+}

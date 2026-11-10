@@ -1,0 +1,24 @@
+{
+	"songKey": "the-killers__mr-brightside",
+	"audioFile": "the-killers__mr-brightside.mp3",
+	"key": { "tonic": "Db", "scale": "major" },
+	"region": { "startSeconds": 62.035, "endSeconds": 88.19 },
+	"chords": [
+		{ "seconds": 62.217, "chord": "C#", "roman": "I" },
+		{ "seconds": 63.88, "chord": "F#", "roman": "IV" },
+		{ "seconds": 65.482, "chord": "Bbm", "roman": "vi" },
+		{ "seconds": 67.108, "chord": "Ab", "roman": "V" },
+		{ "seconds": 68.716, "chord": "C#", "roman": "I" },
+		{ "seconds": 70.347, "chord": "F#", "roman": "IV" },
+		{ "seconds": 71.932, "chord": "Bbm", "roman": "vi" },
+		{ "seconds": 73.568, "chord": "Ab", "roman": "V" },
+		{ "seconds": 75.204, "chord": "C#", "roman": "I" },
+		{ "seconds": 76.788, "chord": "F#", "roman": "IV" },
+		{ "seconds": 78.421, "chord": "Bbm", "roman": "vi" },
+		{ "seconds": 80.05, "chord": "Ab", "roman": "V" },
+		{ "seconds": 81.665, "chord": "C#", "roman": "I" },
+		{ "seconds": 83.308, "chord": "F#", "roman": "IV" },
+		{ "seconds": 84.918, "chord": "Bbm", "roman": "vi" },
+		{ "seconds": 86.548, "chord": "Ab", "roman": "V" }
+	]
+}

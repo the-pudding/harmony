@@ -1,0 +1,24 @@
+{
+	"songKey": "walk-the-moon__shut-up-and-dance",
+	"audioFile": "walk-the-moon__shut-up-and-dance.mp3",
+	"key": { "tonic": "C#", "scale": "major" },
+	"region": { "startSeconds": 66.103, "endSeconds": 81.871 },
+	"chords": [
+		{ "seconds": 66.784, "chord": "C#", "roman": "I" },
+		{ "seconds": 67.519, "chord": "F#", "roman": "IV" },
+		{ "seconds": 68.679, "chord": "Bbm", "roman": "vi" },
+		{ "seconds": 69.62, "chord": "Ab", "roman": "V" },
+		{ "seconds": 70.572, "chord": "C#", "roman": "I" },
+		{ "seconds": 71.287, "chord": "F#", "roman": "IV" },
+		{ "seconds": 72.463, "chord": "Bbm", "roman": "vi" },
+		{ "seconds": 73.386, "chord": "Ab", "roman": "V" },
+		{ "seconds": 74.313, "chord": "C#", "roman": "I" },
+		{ "seconds": 75.014, "chord": "F#", "roman": "IV" },
+		{ "seconds": 76.189, "chord": "Bbm", "roman": "vi" },
+		{ "seconds": 77.105, "chord": "Ab", "roman": "V" },
+		{ "seconds": 78.039, "chord": "C#", "roman": "I" },
+		{ "seconds": 78.784, "chord": "F#", "roman": "IV" },
+		{ "seconds": 79.928, "chord": "Bbm", "roman": "vi" },
+		{ "seconds": 80.856, "chord": "Ab", "roman": "V" }
+	]
+}

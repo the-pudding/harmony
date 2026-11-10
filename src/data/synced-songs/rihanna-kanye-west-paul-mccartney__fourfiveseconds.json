@@ -1,0 +1,17 @@
+{
+	"songKey": "rihanna-kanye-west-paul-mccartney__fourfiveseconds",
+	"audioFile": "rihanna-kanye-west-paul-mccartney__fourfiveseconds.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 9.333, "endSeconds": 27.896 },
+	"chords": [
+		{ "seconds": 9.436, "chord": "D", "roman": "I" },
+		{ "seconds": 11.481, "chord": "G", "roman": "IV" },
+		{ "seconds": 14.093, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 15.302, "chord": "A", "roman": "V" },
+		{ "seconds": 16.199, "chord": "D", "roman": "I" },
+		{ "seconds": 18.76, "chord": "D", "roman": "I" },
+		{ "seconds": 20.822, "chord": "G", "roman": "IV" },
+		{ "seconds": 23.386, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 25.755, "chord": "A", "roman": "V" }
+	]
+}

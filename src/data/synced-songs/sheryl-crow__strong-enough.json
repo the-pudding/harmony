@@ -1,0 +1,32 @@
+{
+	"songKey": "sheryl-crow__strong-enough",
+	"audioFile": "sheryl-crow__strong-enough.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 3.779, "endSeconds": 32.19 },
+	"chords": [
+		{ "seconds": 4.307, "chord": "D", "roman": "I" },
+		{ "seconds": 5.747, "chord": "G", "roman": "IV" },
+		{ "seconds": 6.536, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 8.106, "chord": "A", "roman": "V" },
+		{ "seconds": 8.843, "chord": "D", "roman": "I" },
+		{ "seconds": 10.391, "chord": "G", "roman": "IV" },
+		{ "seconds": 11.16, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 12.732, "chord": "A", "roman": "V" },
+		{ "seconds": 13.517, "chord": "D", "roman": "I" },
+		{ "seconds": 15.031, "chord": "G", "roman": "IV" },
+		{ "seconds": 15.831, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 17.365, "chord": "A", "roman": "V" },
+		{ "seconds": 18.122, "chord": "D", "roman": "I" },
+		{ "seconds": 19.719, "chord": "G", "roman": "IV" },
+		{ "seconds": 20.523, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 22.046, "chord": "A", "roman": "V" },
+		{ "seconds": 22.823, "chord": "D", "roman": "I" },
+		{ "seconds": 24.335, "chord": "G", "roman": "IV" },
+		{ "seconds": 25.125, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 26.714, "chord": "A", "roman": "V" },
+		{ "seconds": 27.504, "chord": "D", "roman": "I" },
+		{ "seconds": 29.019, "chord": "G", "roman": "IV" },
+		{ "seconds": 29.8, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 31.332, "chord": "A", "roman": "V" }
+	]
+}
