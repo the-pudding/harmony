@@ -1,0 +1,24 @@
+{
+	"songKey": "beyonce__if-i-were-a-boy",
+	"audioFile": "beyonce__if-i-were-a-boy.mp3",
+	"key": { "tonic": "F#", "scale": "major" },
+	"region": { "startSeconds": 48.364, "endSeconds": 71.366 },
+	"chords": [
+		{ "seconds": 50.045, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 51.391, "chord": "B", "roman": "IV" },
+		{ "seconds": 52.711, "chord": "F#", "roman": "I" },
+		{ "seconds": 54.084, "chord": "C#", "roman": "V" },
+		{ "seconds": 55.405, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 56.718, "chord": "B", "roman": "IV" },
+		{ "seconds": 58.059, "chord": "F#", "roman": "I" },
+		{ "seconds": 59.361, "chord": "C#", "roman": "V" },
+		{ "seconds": 60.731, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 62.1, "chord": "B", "roman": "IV" },
+		{ "seconds": 63.4, "chord": "F#", "roman": "I" },
+		{ "seconds": 64.694, "chord": "C#", "roman": "V" },
+		{ "seconds": 66.03, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 67.394, "chord": "B", "roman": "IV" },
+		{ "seconds": 68.711, "chord": "F#", "roman": "I" },
+		{ "seconds": 70.029, "chord": "C#", "roman": "V" }
+	]
+}

@@ -1,0 +1,16 @@
+{
+	"songKey": "chappell-roan__good-luck-babe",
+	"audioFile": "chappell-roan__good-luck-babe.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 36.959, "endSeconds": 53.76 },
+	"chords": [
+		{ "seconds": 37.278, "chord": "G", "roman": "IV" },
+		{ "seconds": 39.335, "chord": "A", "roman": "V" },
+		{ "seconds": 41.41, "chord": "D", "roman": "I" },
+		{ "seconds": 43.468, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 45.554, "chord": "G", "roman": "IV" },
+		{ "seconds": 47.59, "chord": "A", "roman": "V" },
+		{ "seconds": 49.685, "chord": "D", "roman": "I" },
+		{ "seconds": 51.741, "chord": "Bm", "roman": "vi" }
+	]
+}

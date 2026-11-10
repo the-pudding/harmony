@@ -1,0 +1,16 @@
+{
+	"songKey": "ed-sheeran__shivers",
+	"audioFile": "ed-sheeran__shivers.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 63.544, "endSeconds": 90.978 },
+	"chords": [
+		{ "seconds": 64.048, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 67.46, "chord": "G", "roman": "IV" },
+		{ "seconds": 70.838, "chord": "D", "roman": "I" },
+		{ "seconds": 74.225, "chord": "A", "roman": "V" },
+		{ "seconds": 77.658, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 81.06, "chord": "G", "roman": "IV" },
+		{ "seconds": 84.459, "chord": "D", "roman": "I" },
+		{ "seconds": 87.851, "chord": "A", "roman": "V" }
+	]
+}

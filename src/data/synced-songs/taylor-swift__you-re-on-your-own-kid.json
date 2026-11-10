@@ -1,0 +1,24 @@
+{
+	"songKey": "taylor-swift__you-re-on-your-own-kid",
+	"audioFile": "taylor-swift__you-re-on-your-own-kid.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 125.113, "endSeconds": 157.167 },
+	"chords": [
+		{ "seconds": 125.251, "chord": "G", "roman": "IV" },
+		{ "seconds": 127.237, "chord": "A", "roman": "V" },
+		{ "seconds": 129.245, "chord": "D", "roman": "I" },
+		{ "seconds": 131.248, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 133.251, "chord": "G", "roman": "IV" },
+		{ "seconds": 135.234, "chord": "A", "roman": "V" },
+		{ "seconds": 137.261, "chord": "D", "roman": "I" },
+		{ "seconds": 139.274, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 141.273, "chord": "G", "roman": "IV" },
+		{ "seconds": 143.274, "chord": "A", "roman": "V" },
+		{ "seconds": 145.263, "chord": "D", "roman": "I" },
+		{ "seconds": 147.238, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 149.223, "chord": "G", "roman": "IV" },
+		{ "seconds": 151.232, "chord": "A", "roman": "V" },
+		{ "seconds": 153.267, "chord": "D", "roman": "I" },
+		{ "seconds": 155.263, "chord": "Bm", "roman": "vi" }
+	]
+}

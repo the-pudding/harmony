@@ -1,0 +1,20 @@
+{
+	"songKey": "coldplay__viva-la-vida",
+	"audioFile": "coldplay__viva-la-vida.mp3",
+	"key": { "tonic": "Ab", "scale": "major" },
+	"region": { "startSeconds": 13.592, "endSeconds": 35.583 },
+	"chords": [
+		{ "seconds": 14.887, "chord": "C#", "roman": "IV" },
+		{ "seconds": 16.387, "chord": "Eb", "roman": "V" },
+		{ "seconds": 18.361, "chord": "Ab", "roman": "I" },
+		{ "seconds": 19.877, "chord": "Fm", "roman": "vi" },
+		{ "seconds": 21.794, "chord": "C#", "roman": "IV" },
+		{ "seconds": 23.327, "chord": "Eb", "roman": "V" },
+		{ "seconds": 25.265, "chord": "Ab", "roman": "I" },
+		{ "seconds": 26.833, "chord": "Fm", "roman": "vi" },
+		{ "seconds": 28.76, "chord": "C#", "roman": "IV" },
+		{ "seconds": 30.3, "chord": "Eb", "roman": "V" },
+		{ "seconds": 32.248, "chord": "Ab", "roman": "I" },
+		{ "seconds": 33.779, "chord": "Fm", "roman": "vi" }
+	]
+}

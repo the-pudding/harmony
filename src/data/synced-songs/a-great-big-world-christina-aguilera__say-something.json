@@ -1,0 +1,20 @@
+{
+	"songKey": "a-great-big-world-christina-aguilera__say-something",
+	"audioFile": "a-great-big-world-christina-aguilera__say-something.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 97.702, "endSeconds": 128.115 },
+	"chords": [
+		{ "seconds": 97.78, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 100.306, "chord": "G", "roman": "IV" },
+		{ "seconds": 102.766, "chord": "D", "roman": "I" },
+		{ "seconds": 105.446, "chord": "A", "roman": "V" },
+		{ "seconds": 107.88, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 110.485, "chord": "G", "roman": "IV" },
+		{ "seconds": 113.02, "chord": "D", "roman": "I" },
+		{ "seconds": 115.6, "chord": "A", "roman": "V" },
+		{ "seconds": 118.153, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 120.668, "chord": "G", "roman": "IV" },
+		{ "seconds": 123.236, "chord": "D", "roman": "I" },
+		{ "seconds": 125.871, "chord": "A", "roman": "V" }
+	]
+}

@@ -1,0 +1,20 @@
+{
+	"songKey": "toto__africa",
+	"audioFile": "toto__africa.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 69.539, "endSeconds": 84.826 },
+	"chords": [
+		{ "seconds": 69.545, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 70.89, "chord": "D", "roman": "IV" },
+		{ "seconds": 72.161, "chord": "A", "roman": "I" },
+		{ "seconds": 73.387, "chord": "E", "roman": "V" },
+		{ "seconds": 74.694, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 76.022, "chord": "D", "roman": "IV" },
+		{ "seconds": 77.337, "chord": "A", "roman": "I" },
+		{ "seconds": 78.614, "chord": "E", "roman": "V" },
+		{ "seconds": 79.932, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 81.213, "chord": "D", "roman": "IV" },
+		{ "seconds": 82.481, "chord": "A", "roman": "I" },
+		{ "seconds": 83.793, "chord": "E", "roman": "V" }
+	]
+}

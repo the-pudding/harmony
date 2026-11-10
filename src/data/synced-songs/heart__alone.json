@@ -1,0 +1,20 @@
+{
+	"songKey": "heart__alone",
+	"audioFile": "heart__alone.mp3",
+	"key": { "tonic": "F#", "scale": "major" },
+	"region": { "startSeconds": 49.022, "endSeconds": 65.929 },
+	"chords": [
+		{ "seconds": 49.664, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 50.759, "chord": "B", "roman": "IV" },
+		{ "seconds": 52.432, "chord": "F#", "roman": "I" },
+		{ "seconds": 53.454, "chord": "C#", "roman": "V" },
+		{ "seconds": 55.114, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 56.161, "chord": "B", "roman": "IV" },
+		{ "seconds": 57.869, "chord": "F#", "roman": "I" },
+		{ "seconds": 58.886, "chord": "C#", "roman": "V" },
+		{ "seconds": 60.574, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 61.657, "chord": "B", "roman": "IV" },
+		{ "seconds": 63.299, "chord": "F#", "roman": "I" },
+		{ "seconds": 64.321, "chord": "C#", "roman": "V" }
+	]
+}

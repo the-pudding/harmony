@@ -1,0 +1,20 @@
+{
+	"songKey": "julia-michaels__issues",
+	"audioFile": "julia-michaels__issues.mp3",
+	"key": { "tonic": "Ab", "scale": "major" },
+	"region": { "startSeconds": 30.387, "endSeconds": 56.031 },
+	"chords": [
+		{ "seconds": 30.867, "chord": "C#", "roman": "IV" },
+		{ "seconds": 33.037, "chord": "Eb", "roman": "V" },
+		{ "seconds": 35.068, "chord": "Ab", "roman": "I" },
+		{ "seconds": 37.133, "chord": "Fm", "roman": "vi" },
+		{ "seconds": 39.242, "chord": "C#", "roman": "IV" },
+		{ "seconds": 41.365, "chord": "Eb", "roman": "V" },
+		{ "seconds": 43.469, "chord": "Ab", "roman": "I" },
+		{ "seconds": 45.589, "chord": "Fm", "roman": "vi" },
+		{ "seconds": 47.705, "chord": "C#", "roman": "IV" },
+		{ "seconds": 49.818, "chord": "Eb", "roman": "V" },
+		{ "seconds": 51.85, "chord": "Ab", "roman": "I" },
+		{ "seconds": 54.012, "chord": "Fm", "roman": "vi" }
+	]
+}
