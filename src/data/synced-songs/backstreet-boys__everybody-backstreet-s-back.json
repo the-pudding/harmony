@@ -1,0 +1,20 @@
+{
+	"songKey": "backstreet-boys__everybody-backstreet-s-back",
+	"audioFile": "backstreet-boys__everybody-backstreet-s-back.mp3",
+	"key": { "tonic": "Bb", "scale": "minor" },
+	"region": { "startSeconds": 159.311, "endSeconds": 177.926 },
+	"chords": [
+		{ "seconds": 160.125, "chord": "Bbm", "roman": "i" },
+		{ "seconds": 162.335, "chord": "F#", "roman": "VI" },
+		{ "seconds": 163.171, "chord": "F", "roman": "V" },
+		{ "seconds": 164.539, "chord": "Bbm", "roman": "i" },
+		{ "seconds": 166.752, "chord": "F#", "roman": "VI" },
+		{ "seconds": 167.602, "chord": "F", "roman": "V" },
+		{ "seconds": 168.995, "chord": "Bbm", "roman": "i" },
+		{ "seconds": 171.2, "chord": "F#", "roman": "VI" },
+		{ "seconds": 172.323, "chord": "F", "roman": "V" },
+		{ "seconds": 173.441, "chord": "Bbm", "roman": "i" },
+		{ "seconds": 175.648, "chord": "F#", "roman": "VI" },
+		{ "seconds": 176.756, "chord": "F", "roman": "V" }
+	]
+}

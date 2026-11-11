@@ -1,0 +1,20 @@
+{
+	"songKey": "eurythmics__sweet-dreams---are-made-of-this",
+	"audioFile": "eurythmics__sweet-dreams---are-made-of-this.mp3",
+	"key": { "tonic": "C", "scale": "harmonicMinor" },
+	"region": { "startSeconds": 49.919, "endSeconds": 65.553 },
+	"chords": [
+		{ "seconds": 49.929, "chord": "Cm", "roman": "i" },
+		{ "seconds": 51.86, "chord": "Ab", "roman": "VI" },
+		{ "seconds": 52.799, "chord": "G", "roman": "V" },
+		{ "seconds": 53.748, "chord": "Cm", "roman": "i" },
+		{ "seconds": 55.63, "chord": "Ab", "roman": "VI" },
+		{ "seconds": 56.628, "chord": "G", "roman": "V" },
+		{ "seconds": 57.569, "chord": "Cm", "roman": "i" },
+		{ "seconds": 59.474, "chord": "Ab", "roman": "VI" },
+		{ "seconds": 60.425, "chord": "G", "roman": "V" },
+		{ "seconds": 61.385, "chord": "Cm", "roman": "i" },
+		{ "seconds": 63.289, "chord": "Ab", "roman": "VI" },
+		{ "seconds": 64.288, "chord": "G", "roman": "V" }
+	]
+}

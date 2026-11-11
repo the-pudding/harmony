@@ -1,0 +1,17 @@
+{
+	"songKey": "imagine-dragons__believer",
+	"audioFile": "imagine-dragons__believer.mp3",
+	"key": { "tonic": "Bb", "scale": "harmonicMinor" },
+	"region": { "startSeconds": 77.473, "endSeconds": 99.959 },
+	"chords": [
+		{ "seconds": 77.838, "chord": "Bbm", "roman": "i" },
+		{ "seconds": 80.656, "chord": "F#", "roman": "VI" },
+		{ "seconds": 82.599, "chord": "F", "roman": "V" },
+		{ "seconds": 84.479, "chord": "Bbm", "roman": "i" },
+		{ "seconds": 88.34, "chord": "F#", "roman": "VI" },
+		{ "seconds": 90.261, "chord": "F", "roman": "V" },
+		{ "seconds": 92.19, "chord": "Bbm", "roman": "i" },
+		{ "seconds": 96.01, "chord": "F#", "roman": "VI" },
+		{ "seconds": 97.948, "chord": "F", "roman": "V" }
+	]
+}

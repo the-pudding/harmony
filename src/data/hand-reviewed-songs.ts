@@ -95,6 +95,11 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "billie-eilish__therefore-i-am",
 		chordProgressionIssues:
 			"should be i-V, not I-V. Our own hand correction in hand-corrected-songs.ts writes every section as I-V7 in D minor; the tonic should be lowercase i"
+	},
+	{
+		id: "destiny-s-child__survivor",
+		chordProgressionIssues:
+			"is not a broody walk down. Data has every section as i-VI-V in E minor, which lands it in that cluster"
 	}
 ];
 
