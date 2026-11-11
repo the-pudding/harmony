@@ -90,6 +90,11 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "we-five__you-were-on-my-mind",
 		chordProgressionIssues:
 			"Chords are correct for the part in the key of E major, but then it modulates to F major when in the song it's actually F# major (so chords are wrong starting about halfway through the song)."
+	},
+	{
+		id: "billie-eilish__therefore-i-am",
+		chordProgressionIssues:
+			"should be i-V, not I-V. Our own hand correction in hand-corrected-songs.ts writes every section as I-V7 in D minor; the tonic should be lowercase i"
 	}
 ];
 

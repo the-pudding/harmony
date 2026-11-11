@@ -27,6 +27,19 @@ describe("chordOfNotes", () => {
 		expect(nameOf([45, 52])).toBe("A");
 	});
 
+	it("uses the quality picked for a lone bass note's degree", () => {
+		const A_MINOR = { tonic: "A", scale: "minor" } as const;
+		const majorFive = { 5: "maj" } as const;
+		// E2 = 40: v in A minor by default, V when picked major.
+		expect(formatChordName(chordOfNotes([40], A_MINOR)!)).toBe("Em");
+		expect(formatChordName(chordOfNotes([40], A_MINOR, majorFive)!)).toBe("E");
+		// Other degrees and full chords keep their own quality.
+		expect(formatChordName(chordOfNotes([50], A_MINOR, majorFive)!)).toBe("Dm");
+		expect(
+			formatChordName(chordOfNotes([40, 55, 59], A_MINOR, majorFive)!)
+		).toBe("Em");
+	});
+
 	it("is null with nothing held", () => {
 		expect(chordOfNotes([], A_MAJOR)).toBeNull();
 	});

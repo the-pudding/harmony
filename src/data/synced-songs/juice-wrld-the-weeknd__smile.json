@@ -1,0 +1,16 @@
+{
+	"songKey": "juice-wrld-the-weeknd__smile",
+	"audioFile": "juice-wrld-the-weeknd__smile.mp3",
+	"key": { "tonic": "F#", "scale": "minor" },
+	"region": { "startSeconds": 11.667, "endSeconds": 36.822 },
+	"chords": [
+		{ "seconds": 12.379, "chord": "F#m", "roman": "i" },
+		{ "seconds": 15.385, "chord": "E", "roman": "VII" },
+		{ "seconds": 18.429, "chord": "D", "roman": "VI" },
+		{ "seconds": 21.431, "chord": "C#", "roman": "V" },
+		{ "seconds": 24.487, "chord": "F#m", "roman": "i" },
+		{ "seconds": 27.473, "chord": "E", "roman": "VII" },
+		{ "seconds": 30.524, "chord": "D", "roman": "VI" },
+		{ "seconds": 33.539, "chord": "C#", "roman": "V" }
+	]
+}

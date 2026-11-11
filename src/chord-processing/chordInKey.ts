@@ -73,16 +73,33 @@ const SUFFIX_BY_QUALITY: Record<string, string> = {
 	aug: "augmented"
 };
 
+export type BassChordQuality = "maj" | "min" | "dim";
+
+// Chosen qualities for chords on scale degrees (1-7), in place of the
+// key's own, e.g. { 5: "maj" } for a major V in a minor key.
+export type BassChordQualities = Partial<Record<number, BassChordQuality>>;
+
 // The chord that belongs on this bass note in the key, e.g. F# in A major
-// is F#m. A note outside the key is taken as a major chord.
+// is F#m, unless `qualities` picks another for its degree. A note outside
+// the key is taken as a major chord.
 export const diatonicChordOnBass = (
 	bassPitchClass: number,
-	key: MusicalKey
+	key: MusicalKey,
+	qualities: BassChordQualities = {}
 ): StructuredChord => {
 	const { degree, flat, sharp } = scaleDegreeOf(bassPitchClass, key);
 	const quality =
-		flat || sharp ? "maj" : diatonicQualityForDegree(key.scale, degree);
+		flat || sharp
+			? "maj"
+			: (qualities[degree] ?? diatonicQualityForDegree(key.scale, degree));
 	return { rootPitchClass: bassPitchClass, suffix: SUFFIX_BY_QUALITY[quality] };
 };
+
+// The pitch class of each scale degree in the key, degree 1 first.
+export const scaleDegreePitchClasses = (key: MusicalKey): number[] =>
+	SCALE_INTERVALS[key.scale].map(
+		(interval) =>
+			(noteNameToPitchClass(key.tonic) + interval) % NOTES_PER_OCTAVE
+	);
 
 export const KEY_TONICS: string[] = NOTE_NAMES;

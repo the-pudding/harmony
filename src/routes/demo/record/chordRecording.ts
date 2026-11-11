@@ -2,6 +2,7 @@ import { createChordClassifier } from "../../../chord-processing/chord-classifie
 import { pitchClass } from "../../../chord-processing/chord-classifier/notes.js";
 import {
 	diatonicChordOnBass,
+	type BassChordQualities,
 	type MusicalKey
 } from "../../../chord-processing/chordInKey.js";
 import type { StructuredChord } from "../../../chord-processing/types.js";
@@ -14,10 +15,12 @@ const classifier = createChordClassifier();
 
 // The chord the held notes spell, with the lowest note as its bass. A lone
 // bass note (or anything that isn't a full chord) is taken as the chord
-// that belongs on that note in the key.
+// that belongs on that note in the key, or the quality picked for its
+// degree in `bassQualities`.
 export const chordOfNotes = (
 	midis: number[],
-	key: MusicalKey
+	key: MusicalKey,
+	bassQualities: BassChordQualities = {}
 ): StructuredChord | null => {
 	if (midis.length === 0) return null;
 	const sorted = [...midis].sort((a, b) => a - b);
@@ -25,7 +28,10 @@ export const chordOfNotes = (
 		bassMidi: sorted[0],
 		trebleMidis: sorted
 	});
-	return classification ?? diatonicChordOnBass(pitchClass(sorted[0]), key);
+	return (
+		classification ??
+		diatonicChordOnBass(pitchClass(sorted[0]), key, bassQualities)
+	);
 };
 
 export const joinsChordChange = (

@@ -1,11 +1,15 @@
 import type { SyncedSongRegion } from "$data/syncedSongs.js";
-import type { MusicalKey } from "../../../chord-processing/chordInKey.js";
+import type {
+	BassChordQualities,
+	MusicalKey
+} from "../../../chord-processing/chordInKey.js";
 import type { StructuredChord } from "../../../chord-processing/types.js";
 import { chordOfNotes, joinsChordChange } from "./chordRecording.js";
 import { isWithinRegion, type RecordedChord } from "./syncedTimings.js";
 
 type ChordRecorderOptions = {
 	getKey: () => MusicalKey;
+	getBassQualities: () => BassChordQualities;
 	getRegion: () => SyncedSongRegion;
 	isPlaying: () => boolean;
 	readPlaybackSeconds: () => number;
@@ -19,6 +23,7 @@ type ChordRecorderOptions = {
 // pass replaces whatever chords the playhead moves over.
 export const createChordRecorder = ({
 	getKey,
+	getBassQualities,
 	getRegion,
 	isPlaying,
 	readPlaybackSeconds,
@@ -52,7 +57,7 @@ export const createChordRecorder = ({
 		const joins = joinsChordChange(changeStartSeconds, seconds);
 		changeNotes = joins ? [...changeNotes, midi] : [midi];
 		if (!joins) changeStartSeconds = seconds;
-		lastChord = chordOfNotes(changeNotes, getKey());
+		lastChord = chordOfNotes(changeNotes, getKey(), getBassQualities());
 
 		if (!recording || !isPlaying() || !lastChord) return;
 		ignoredOutsideRegion = !isWithinRegion(getRegion(), changeStartSeconds!);

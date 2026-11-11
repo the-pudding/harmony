@@ -1,0 +1,20 @@
+{
+	"songKey": "carrie-underwood__before-he-cheats",
+	"audioFile": "carrie-underwood__before-he-cheats.mp3",
+	"key": { "tonic": "F#", "scale": "minor" },
+	"region": { "startSeconds": 14.388, "endSeconds": 34.034 },
+	"chords": [
+		{ "seconds": 14.57, "chord": "F#m", "roman": "i" },
+		{ "seconds": 16.258, "chord": "E", "roman": "VII" },
+		{ "seconds": 17.875, "chord": "D", "roman": "VI" },
+		{ "seconds": 19.457, "chord": "C#", "roman": "V" },
+		{ "seconds": 21.109, "chord": "F#m", "roman": "i" },
+		{ "seconds": 22.696, "chord": "E", "roman": "VII" },
+		{ "seconds": 24.36, "chord": "D", "roman": "VI" },
+		{ "seconds": 25.976, "chord": "C#", "roman": "V" },
+		{ "seconds": 27.56, "chord": "F#m", "roman": "i" },
+		{ "seconds": 29.163, "chord": "E", "roman": "VII" },
+		{ "seconds": 30.881, "chord": "D", "roman": "VI" },
+		{ "seconds": 32.416, "chord": "C#", "roman": "V" }
+	]
+}

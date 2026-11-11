@@ -1,0 +1,24 @@
+{
+	"songKey": "christina-aguilera__genie-in-a-bottle",
+	"audioFile": "christina-aguilera__genie-in-a-bottle.mp3",
+	"key": { "tonic": "F", "scale": "minor" },
+	"region": { "startSeconds": 46.53, "endSeconds": 68.544 },
+	"chords": [
+		{ "seconds": 46.636, "chord": "Fm", "roman": "i" },
+		{ "seconds": 47.959, "chord": "Eb", "roman": "VII" },
+		{ "seconds": 49.334, "chord": "C#", "roman": "VI" },
+		{ "seconds": 50.697, "chord": "C", "roman": "V" },
+		{ "seconds": 52.049, "chord": "Fm", "roman": "i" },
+		{ "seconds": 53.446, "chord": "Eb", "roman": "VII" },
+		{ "seconds": 54.808, "chord": "C#", "roman": "VI" },
+		{ "seconds": 56.152, "chord": "C", "roman": "V" },
+		{ "seconds": 57.501, "chord": "Fm", "roman": "i" },
+		{ "seconds": 58.89, "chord": "Eb", "roman": "VII" },
+		{ "seconds": 60.225, "chord": "C#", "roman": "VI" },
+		{ "seconds": 61.629, "chord": "C", "roman": "V" },
+		{ "seconds": 62.978, "chord": "Fm", "roman": "i" },
+		{ "seconds": 64.346, "chord": "Eb", "roman": "VII" },
+		{ "seconds": 65.719, "chord": "C#", "roman": "VI" },
+		{ "seconds": 67.066, "chord": "C", "roman": "V" }
+	]
+}

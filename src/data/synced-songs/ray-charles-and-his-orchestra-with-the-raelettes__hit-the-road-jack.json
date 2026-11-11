@@ -1,0 +1,32 @@
+{
+	"songKey": "ray-charles-and-his-orchestra-with-the-raelettes__hit-the-road-jack",
+	"audioFile": "ray-charles-and-his-orchestra-with-the-raelettes__hit-the-road-jack.mp3",
+	"key": { "tonic": "Ab", "scale": "minor" },
+	"region": { "startSeconds": 0, "endSeconds": 17.026 },
+	"chords": [
+		{ "seconds": 0.344, "chord": "Abm", "roman": "i" },
+		{ "seconds": 1.119, "chord": "F#", "roman": "VII" },
+		{ "seconds": 1.842, "chord": "E", "roman": "VI" },
+		{ "seconds": 2.508, "chord": "Eb", "roman": "V" },
+		{ "seconds": 3.202, "chord": "Abm", "roman": "i" },
+		{ "seconds": 3.883, "chord": "F#", "roman": "VII" },
+		{ "seconds": 4.573, "chord": "E", "roman": "VI" },
+		{ "seconds": 5.294, "chord": "Eb", "roman": "V" },
+		{ "seconds": 6.002, "chord": "Abm", "roman": "i" },
+		{ "seconds": 6.709, "chord": "F#", "roman": "VII" },
+		{ "seconds": 7.391, "chord": "E", "roman": "VI" },
+		{ "seconds": 8.086, "chord": "Eb", "roman": "V" },
+		{ "seconds": 8.781, "chord": "Abm", "roman": "i" },
+		{ "seconds": 9.467, "chord": "F#", "roman": "VII" },
+		{ "seconds": 10.161, "chord": "E", "roman": "VI" },
+		{ "seconds": 10.858, "chord": "Eb", "roman": "V" },
+		{ "seconds": 11.529, "chord": "Abm", "roman": "i" },
+		{ "seconds": 12.199, "chord": "F#", "roman": "VII" },
+		{ "seconds": 12.883, "chord": "E", "roman": "VI" },
+		{ "seconds": 13.578, "chord": "Eb", "roman": "V" },
+		{ "seconds": 14.25, "chord": "Abm", "roman": "i" },
+		{ "seconds": 14.951, "chord": "F#", "roman": "VII" },
+		{ "seconds": 15.652, "chord": "E", "roman": "VI" },
+		{ "seconds": 16.311, "chord": "Eb", "roman": "V" }
+	]
+}

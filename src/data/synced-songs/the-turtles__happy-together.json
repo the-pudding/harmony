@@ -1,0 +1,16 @@
+{
+	"songKey": "the-turtles__happy-together",
+	"audioFile": "the-turtles__happy-together.mp3",
+	"key": { "tonic": "F#", "scale": "minor" },
+	"region": { "startSeconds": 7.517, "endSeconds": 39.836 },
+	"chords": [
+		{ "seconds": 8.295, "chord": "F#m", "roman": "i" },
+		{ "seconds": 12.32, "chord": "E", "roman": "VII" },
+		{ "seconds": 16.294, "chord": "D", "roman": "VI" },
+		{ "seconds": 20.228, "chord": "C#", "roman": "V" },
+		{ "seconds": 24.108, "chord": "F#m", "roman": "i" },
+		{ "seconds": 28.087, "chord": "E", "roman": "VII" },
+		{ "seconds": 32.055, "chord": "D", "roman": "VI" },
+		{ "seconds": 35.992, "chord": "C#", "roman": "V" }
+	]
+}

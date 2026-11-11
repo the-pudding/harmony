@@ -3,9 +3,14 @@
 	import { onMount, untrack } from "svelte";
 	import MidiConnectStatus from "../../../chord-search-demo/MidiConnectStatus.svelte";
 	import {
+		diatonicChordOnBass,
 		romanTokenForChord,
+		scaleDegreePitchClasses,
+		type BassChordQualities,
+		type BassChordQuality,
 		type MusicalKey
 	} from "../../../chord-processing/chordInKey.js";
+	import { diatonicQualityForDegree } from "../../../chord-processing/diatonicQuality.js";
 	import { formatChordName } from "../../../chord-processing/formatChordDisplay.js";
 	import { createMidiNoteInput } from "../shared/midiNoteInput.svelte.js";
 	import { createChordRecorder } from "./chordRecorder.svelte.js";
@@ -35,8 +40,48 @@
 		onPassEnd
 	}: Props = $props();
 
+	// Qualities picked for chords on a lone bass note, by scale degree (a
+	// major V in a minor key, say), so you can keep playing just bass notes.
+	let bassQualities = $state.raw<BassChordQualities>({});
+
+	const QUALITY_CYCLE: BassChordQuality[] = ["maj", "min", "dim"];
+
+	const defaultQualityOf = (degree: number): BassChordQuality => {
+		const quality = diatonicQualityForDegree(musicalKey.scale, degree);
+		return QUALITY_CYCLE.includes(quality as BassChordQuality)
+			? (quality as BassChordQuality)
+			: "maj";
+	};
+
+	const bassDegrees = $derived(
+		scaleDegreePitchClasses(musicalKey).map((pitchClass, i) => {
+			const degree = i + 1;
+			const chord = diatonicChordOnBass(pitchClass, musicalKey, bassQualities);
+			return {
+				degree,
+				changed: bassQualities[degree] !== undefined,
+				roman: romanTokenForChord(chord, musicalKey),
+				name: formatChordName(chord)
+			};
+		})
+	);
+
+	// major → minor → diminished → major; landing back on the key's own
+	// quality clears the pick.
+	const cycleBassQuality = (degree: number) => {
+		const current = bassQualities[degree] ?? defaultQualityOf(degree);
+		const next =
+			QUALITY_CYCLE[
+				(QUALITY_CYCLE.indexOf(current) + 1) % QUALITY_CYCLE.length
+			];
+		const { [degree]: _, ...rest } = bassQualities;
+		bassQualities =
+			next === defaultQualityOf(degree) ? rest : { ...rest, [degree]: next };
+	};
+
 	const recorder = createChordRecorder({
 		getKey: () => musicalKey,
+		getBassQualities: () => bassQualities,
 		getRegion: () => region,
 		isPlaying: () => !paused,
 		readPlaybackSeconds: () => readPlaybackSeconds(),
@@ -91,6 +136,27 @@
 		<span class="last-chord" title="Last chord played">{lastChordLabel}</span>
 	{/if}
 	<span class="status" aria-live="polite">{status}</span>
+	<div class="bass-chords">
+		<span
+			class="heading"
+			title="The chord a lone bass note on each degree records as. Click one to switch it between major, minor and diminished."
+			>Bass notes play</span
+		>
+		{#each bassDegrees as { degree, changed, roman, name } (degree)}
+			<button
+				type="button"
+				class="bass-chord"
+				class:changed
+				title={`${name}: click to switch major / minor / diminished`}
+				onclick={() => cycleBassQuality(degree)}>{roman}</button
+			>
+		{/each}
+		{#if Object.keys(bassQualities).length > 0}
+			<button type="button" class="reset" onclick={() => (bassQualities = {})}
+				>reset to key</button
+			>
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -146,5 +212,43 @@
 
 	.status {
 		color: #d4d4d8;
+	}
+
+	.bass-chords {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.25rem;
+		flex-basis: 100%;
+	}
+
+	.bass-chords .heading {
+		margin-right: 0.25rem;
+	}
+
+	.bass-chord,
+	.reset {
+		min-width: 2rem;
+		padding: 0.125rem 0.375rem;
+		border: 1px solid rgba(63, 63, 70, 0.9);
+		border-radius: 0.375rem;
+		background: #18181b;
+		color: #d4d4d8;
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.bass-chord.changed {
+		border-color: #fbbf24;
+		background: rgba(251, 191, 36, 0.15);
+		color: #fde68a;
+		font-weight: 600;
+	}
+
+	.reset {
+		border-color: transparent;
+		background: none;
+		color: #a1a1aa;
+		text-decoration: underline;
 	}
 </style>
