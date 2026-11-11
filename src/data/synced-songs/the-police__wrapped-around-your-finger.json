@@ -1,0 +1,20 @@
+{
+	"songKey": "the-police__wrapped-around-your-finger",
+	"audioFile": "the-police__wrapped-around-your-finger.mp3",
+	"key": { "tonic": "A", "scale": "minor" },
+	"region": { "startSeconds": 39.775, "endSeconds": 62.625 },
+	"chords": [
+		{ "seconds": 39.969, "chord": "Am", "roman": "i" },
+		{ "seconds": 42.803, "chord": "Em", "roman": "v" },
+		{ "seconds": 43.802, "chord": "Am", "roman": "i" },
+		{ "seconds": 46.608, "chord": "Em", "roman": "v" },
+		{ "seconds": 47.608, "chord": "Am", "roman": "i" },
+		{ "seconds": 50.441, "chord": "Em", "roman": "v" },
+		{ "seconds": 51.388, "chord": "Am", "roman": "i" },
+		{ "seconds": 54.182, "chord": "Em", "roman": "v" },
+		{ "seconds": 55.181, "chord": "Am", "roman": "i" },
+		{ "seconds": 58.035, "chord": "Em", "roman": "v" },
+		{ "seconds": 58.978, "chord": "Am", "roman": "i" },
+		{ "seconds": 61.781, "chord": "Em", "roman": "v" }
+	]
+}

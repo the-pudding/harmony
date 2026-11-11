@@ -1,0 +1,12 @@
+{
+	"songKey": "brandy-monica__the-boy-is-mine",
+	"audioFile": "brandy-monica__the-boy-is-mine.mp3",
+	"key": { "tonic": "F#", "scale": "minor" },
+	"region": { "startSeconds": 21.67, "endSeconds": 42.586 },
+	"chords": [
+		{ "seconds": 21.837, "chord": "F#m", "roman": "i" },
+		{ "seconds": 26.992, "chord": "C#m", "roman": "v" },
+		{ "seconds": 32.14, "chord": "F#m", "roman": "i" },
+		{ "seconds": 37.311, "chord": "C#m", "roman": "v" }
+	]
+}

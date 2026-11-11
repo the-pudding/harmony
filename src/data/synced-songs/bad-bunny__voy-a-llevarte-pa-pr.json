@@ -1,0 +1,16 @@
+{
+	"songKey": "bad-bunny__voy-a-llevarte-pa-pr",
+	"audioFile": "bad-bunny__voy-a-llevarte-pa-pr.mp3",
+	"key": { "tonic": "A", "scale": "minor" },
+	"region": { "startSeconds": 11.35, "endSeconds": 31.337 },
+	"chords": [
+		{ "seconds": 12.129, "chord": "Am", "roman": "i" },
+		{ "seconds": 14.541, "chord": "Em", "roman": "v" },
+		{ "seconds": 16.925, "chord": "Am", "roman": "i" },
+		{ "seconds": 19.42, "chord": "Em", "roman": "v" },
+		{ "seconds": 21.721, "chord": "Am", "roman": "i" },
+		{ "seconds": 24.077, "chord": "Em", "roman": "v" },
+		{ "seconds": 26.509, "chord": "Am", "roman": "i" },
+		{ "seconds": 28.896, "chord": "Em", "roman": "v" }
+	]
+}

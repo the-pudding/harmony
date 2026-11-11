@@ -1,0 +1,16 @@
+{
+	"songKey": "laura-branigan__self-control",
+	"audioFile": "laura-branigan__self-control.mp3",
+	"key": { "tonic": "F#", "scale": "minor" },
+	"region": { "startSeconds": 24.039, "endSeconds": 41.852 },
+	"chords": [
+		{ "seconds": 24.077, "chord": "F#m", "roman": "i" },
+		{ "seconds": 26.262, "chord": "C#m", "roman": "v" },
+		{ "seconds": 28.508, "chord": "F#m", "roman": "i" },
+		{ "seconds": 30.739, "chord": "C#m", "roman": "v" },
+		{ "seconds": 32.986, "chord": "F#m", "roman": "i" },
+		{ "seconds": 35.233, "chord": "C#m", "roman": "v" },
+		{ "seconds": 37.479, "chord": "F#m", "roman": "i" },
+		{ "seconds": 39.72, "chord": "C#m", "roman": "v" }
+	]
+}

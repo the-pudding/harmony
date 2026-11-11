@@ -1,0 +1,16 @@
+{
+	"songKey": "dr-dre__dre-day",
+	"audioFile": "dr-dre__dre-day.mp3",
+	"key": { "tonic": "A", "scale": "minor" },
+	"region": { "startSeconds": 20.761, "endSeconds": 41.594 },
+	"chords": [
+		{ "seconds": 20.993, "chord": "Am", "roman": "i" },
+		{ "seconds": 23.561, "chord": "Em", "roman": "v" },
+		{ "seconds": 26.047, "chord": "Am", "roman": "i" },
+		{ "seconds": 28.607, "chord": "Em", "roman": "v" },
+		{ "seconds": 31.203, "chord": "Am", "roman": "i" },
+		{ "seconds": 33.764, "chord": "Em", "roman": "v" },
+		{ "seconds": 36.308, "chord": "Am", "roman": "i" },
+		{ "seconds": 38.907, "chord": "Em", "roman": "v" }
+	]
+}
