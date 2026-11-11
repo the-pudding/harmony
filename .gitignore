@@ -9,3 +9,5 @@ functions
 /static/data/popular-songs.json
 /static/data/popular-ug.json/static/data/hexmap.json
 /static/data/song-shards/
+# over GitHub's 50 MB warning size; only /demo uses it
+/docs/data/songs.json
