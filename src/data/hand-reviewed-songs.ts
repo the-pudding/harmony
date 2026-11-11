@@ -100,6 +100,15 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "destiny-s-child__survivor",
 		chordProgressionIssues:
 			"is not a broody walk down. Data has every section as i-VI-V in E minor, which lands it in that cluster"
+	},
+	{
+		id: "aaliyah__miss-you",
+		chordProgressionIssues: "should be IV V I"
+	},
+	{
+		id: "david-guetta__titanium-feat-sia",
+		chordProgressionIssues:
+			"minor or major key? putting it minor means it doesn't match to royal road"
 	}
 ];
 

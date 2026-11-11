@@ -82,6 +82,7 @@
 	import { drawHexes, type HexPaintMode } from "./scatter/paint/hexes.js";
 	import { drawHexRegionLabels } from "./scatter/paint/hexLabels.js";
 	import * as view from "./scatter/viewport.js";
+	import { songLinks } from "$data/songLinks.js";
 	import {
 		colorsByProgressionName,
 		createRegionFills,
@@ -616,6 +617,10 @@
 			: null;
 		const outlinedSongKey = hexFrame ? null : findOutlinedSongAt(anchor);
 		const songKey = hexFrame ? null : findSongAt(anchor);
+		// Opens in a new tab, and the click still does what it normally does
+		// (opening the song's chords), so they're there when you come back.
+		const songLink = songKey === null ? undefined : songLinks[songKey];
+		if (songLink) window.open(songLink, "_blank", "noopener");
 		const region = hexFrame
 			? clickedHexKey === null
 				? null
