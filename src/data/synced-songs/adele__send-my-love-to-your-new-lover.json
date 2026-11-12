@@ -1,0 +1,12 @@
+{
+	"songKey": "adele__send-my-love-to-your-new-lover",
+	"audioFile": "adele__send-my-love-to-your-new-lover.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 113.357, "endSeconds": 137.064 },
+	"chords": [
+		{ "seconds": 113.529, "chord": "D", "roman": "I" },
+		{ "seconds": 119.434, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 125.297, "chord": "D", "roman": "I" },
+		{ "seconds": 131.126, "chord": "Bm", "roman": "vi" }
+	]
+}

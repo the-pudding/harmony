@@ -1,0 +1,16 @@
+{
+	"songKey": "morgan-wallen__more-than-my-hometown",
+	"audioFile": "morgan-wallen__more-than-my-hometown.mp3",
+	"key": { "tonic": "F#", "scale": "major" },
+	"region": { "startSeconds": 49.453, "endSeconds": 80.97 },
+	"chords": [
+		{ "seconds": 50.443, "chord": "F#", "roman": "I" },
+		{ "seconds": 54.253, "chord": "Abm", "roman": "ii" },
+		{ "seconds": 58.071, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 61.846, "chord": "B", "roman": "IV" },
+		{ "seconds": 65.669, "chord": "F#", "roman": "I" },
+		{ "seconds": 69.474, "chord": "Abm", "roman": "ii" },
+		{ "seconds": 73.276, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 77.119, "chord": "B", "roman": "IV" }
+	]
+}

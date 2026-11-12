@@ -47,7 +47,7 @@ rank,name,chordProgression,scale,group,avgCoveragePercent,songCount,songSharePer
 46,dorian build up,ii-I-V,major,Minor-y progressions,0.17,101,1.391
 47,attention,i-VII-v-VI,minor,Minor-y progressions,0.169,24,0.331
 48,V i vamp,V-i-V-i,minor,Minor-y progressions,0.158,42,0.579
-49,i want you to stay,I-ii-vi-IV,major,"Happy, major-y progressions",0.136,20,0.275
+49,halo,I-ii-vi-IV,major,"Happy, major-y progressions",0.136,20,0.275
 50,royal road,IV-V-iii-vi,major,Minor-y progressions,0.124,46,0.634
 51,hey there delilah (verse),I-iii-I-iii,major,Minor-y progressions,0.12,39,0.537
 52,scars to your beautiful (vamp),VI-i-VI-i,minor,Minor-y progressions,0.11,43,0.592

@@ -109,6 +109,11 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "david-guetta__titanium-feat-sia",
 		chordProgressionIssues:
 			"minor or major key? putting it minor means it doesn't match to royal road"
+	},
+	{
+		id: "deon-jackson__love-makes-the-world-go-round",
+		chordProgressionIssues:
+			"wrong and missing sections. Data has just one section (a repeated verse with piano solo), I-vi-I-vi in Ab major"
 	}
 ];
 

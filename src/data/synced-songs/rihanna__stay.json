@@ -1,0 +1,16 @@
+{
+	"songKey": "rihanna__stay",
+	"audioFile": "rihanna__stay.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 68.554, "endSeconds": 85.93 },
+	"chords": [
+		{ "seconds": 68.714, "chord": "C", "roman": "I" },
+		{ "seconds": 70.843, "chord": "Dm", "roman": "ii" },
+		{ "seconds": 72.968, "chord": "Am", "roman": "vi" },
+		{ "seconds": 75.114, "chord": "F", "roman": "IV" },
+		{ "seconds": 77.257, "chord": "C", "roman": "I" },
+		{ "seconds": 79.382, "chord": "Dm", "roman": "ii" },
+		{ "seconds": 81.533, "chord": "Am", "roman": "vi" },
+		{ "seconds": 83.699, "chord": "F", "roman": "IV" }
+	]
+}

@@ -1,0 +1,16 @@
+{
+	"songKey": "plain-white-t-s__hey-there-delilah",
+	"audioFile": "plain-white-t-s__hey-there-delilah.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 46.768, "endSeconds": 65.434 },
+	"chords": [
+		{ "seconds": 46.956, "chord": "D", "roman": "I" },
+		{ "seconds": 49.401, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 51.664, "chord": "D", "roman": "I" },
+		{ "seconds": 54.011, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 56.26, "chord": "D", "roman": "I" },
+		{ "seconds": 58.61, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 60.888, "chord": "D", "roman": "I" },
+		{ "seconds": 63.188, "chord": "Bm", "roman": "vi" }
+	]
+}

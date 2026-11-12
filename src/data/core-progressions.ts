@@ -162,7 +162,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 				"starts with an optimistic IV-V lift, then sort of has this melancholy I-vi dip"
 		},
 		{
-			name: "i want you to stay",
+			name: "halo",
 			chordProgression: "I-ii-vi-IV",
 			scale: "major",
 			description:

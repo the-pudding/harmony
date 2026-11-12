@@ -1,0 +1,16 @@
+{
+	"songKey": "the-human-beinz__nobody-but-me",
+	"audioFile": "the-human-beinz__nobody-but-me.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 20.75, "endSeconds": 34.765 },
+	"chords": [
+		{ "seconds": 22.066, "chord": "D", "roman": "I" },
+		{ "seconds": 23.628, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 25.231, "chord": "D", "roman": "I" },
+		{ "seconds": 26.828, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 28.412, "chord": "D", "roman": "I" },
+		{ "seconds": 29.991, "chord": "Bm", "roman": "vi" },
+		{ "seconds": 31.555, "chord": "D", "roman": "I" },
+		{ "seconds": 33.15, "chord": "Bm", "roman": "vi" }
+	]
+}

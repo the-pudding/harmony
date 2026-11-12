@@ -1,0 +1,16 @@
+{
+	"songKey": "chappell-roan__pink-pony-club",
+	"audioFile": "chappell-roan__pink-pony-club.mp3",
+	"key": { "tonic": "F#", "scale": "major" },
+	"region": { "startSeconds": 77.627, "endSeconds": 95.817 },
+	"chords": [
+		{ "seconds": 77.85, "chord": "F#", "roman": "I" },
+		{ "seconds": 80.079, "chord": "Abm", "roman": "ii" },
+		{ "seconds": 82.312, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 84.556, "chord": "B", "roman": "IV" },
+		{ "seconds": 86.766, "chord": "F#", "roman": "I" },
+		{ "seconds": 89.011, "chord": "Abm", "roman": "ii" },
+		{ "seconds": 91.26, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 93.511, "chord": "B", "roman": "IV" }
+	]
+}

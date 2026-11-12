@@ -1,0 +1,24 @@
+{
+	"songKey": "taylor-swift__my-tears-ricochet",
+	"audioFile": "taylor-swift__my-tears-ricochet.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 52.464, "endSeconds": 82.397 },
+	"chords": [
+		{ "seconds": 52.65, "chord": "C", "roman": "I" },
+		{ "seconds": 54.491, "chord": "Dm", "roman": "ii" },
+		{ "seconds": 56.186, "chord": "Am", "roman": "vi" },
+		{ "seconds": 58.039, "chord": "F", "roman": "IV" },
+		{ "seconds": 59.909, "chord": "C", "roman": "I" },
+		{ "seconds": 61.783, "chord": "Dm", "roman": "ii" },
+		{ "seconds": 63.572, "chord": "Am", "roman": "vi" },
+		{ "seconds": 65.474, "chord": "F", "roman": "IV" },
+		{ "seconds": 67.353, "chord": "C", "roman": "I" },
+		{ "seconds": 69.134, "chord": "Dm", "roman": "ii" },
+		{ "seconds": 70.887, "chord": "Am", "roman": "vi" },
+		{ "seconds": 72.814, "chord": "F", "roman": "IV" },
+		{ "seconds": 74.736, "chord": "C", "roman": "I" },
+		{ "seconds": 76.54, "chord": "Dm", "roman": "ii" },
+		{ "seconds": 78.316, "chord": "Am", "roman": "vi" },
+		{ "seconds": 80.177, "chord": "F", "roman": "IV" }
+	]
+}

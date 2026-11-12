@@ -1,0 +1,16 @@
+{
+	"songKey": "beyonce__halo",
+	"audioFile": "beyonce__halo.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 12.423, "endSeconds": 37.481 },
+	"chords": [
+		{ "seconds": 12.902, "chord": "A", "roman": "I" },
+		{ "seconds": 15.936, "chord": "Bm", "roman": "ii" },
+		{ "seconds": 18.93, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 21.919, "chord": "D", "roman": "IV" },
+		{ "seconds": 24.945, "chord": "A", "roman": "I" },
+		{ "seconds": 28.009, "chord": "Bm", "roman": "ii" },
+		{ "seconds": 30.918, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 33.97, "chord": "D", "roman": "IV" }
+	]
+}
