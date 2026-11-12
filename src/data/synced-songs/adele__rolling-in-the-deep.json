@@ -1,0 +1,16 @@
+{
+	"songKey": "adele__rolling-in-the-deep",
+	"audioFile": "adele__rolling-in-the-deep.mp3",
+	"key": { "tonic": "C", "scale": "minor" },
+	"region": { "startSeconds": 58.289, "endSeconds": 78.098 },
+	"chords": [
+		{ "seconds": 59.742, "chord": "Cm", "roman": "i" },
+		{ "seconds": 62.033, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 64.34, "chord": "Ab", "roman": "VI" },
+		{ "seconds": 67.754, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 68.883, "chord": "Cm", "roman": "i" },
+		{ "seconds": 71.202, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 73.443, "chord": "Ab", "roman": "VI" },
+		{ "seconds": 76.892, "chord": "Bb", "roman": "VII" }
+	]
+}

@@ -1,0 +1,16 @@
+{
+	"songKey": "phil-collins__in-the-air-tonight",
+	"audioFile": "phil-collins__in-the-air-tonight.mp3",
+	"key": { "tonic": "D", "scale": "minor" },
+	"region": { "startSeconds": 118.882, "endSeconds": 139.213 },
+	"chords": [
+		{ "seconds": 118.904, "chord": "Dm", "roman": "i" },
+		{ "seconds": 121.434, "chord": "C", "roman": "VII" },
+		{ "seconds": 123.926, "chord": "Bb", "roman": "VI" },
+		{ "seconds": 126.483, "chord": "C", "roman": "VII" },
+		{ "seconds": 129.02, "chord": "Dm", "roman": "i" },
+		{ "seconds": 131.572, "chord": "C", "roman": "VII" },
+		{ "seconds": 134.118, "chord": "Bb", "roman": "VI" },
+		{ "seconds": 136.596, "chord": "C", "roman": "VII" }
+	]
+}

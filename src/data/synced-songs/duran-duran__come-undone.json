@@ -1,0 +1,16 @@
+{
+	"songKey": "duran-duran__come-undone",
+	"audioFile": "duran-duran__come-undone.mp3",
+	"key": { "tonic": "C", "scale": "minor" },
+	"region": { "startSeconds": 39.163, "endSeconds": 61.33 },
+	"chords": [
+		{ "seconds": 39.245, "chord": "Cm", "roman": "i" },
+		{ "seconds": 42.01, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 44.772, "chord": "Ab", "roman": "VI" },
+		{ "seconds": 47.496, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 50.266, "chord": "Cm", "roman": "i" },
+		{ "seconds": 53.025, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 55.791, "chord": "Ab", "roman": "VI" },
+		{ "seconds": 58.566, "chord": "Bb", "roman": "VII" }
+	]
+}

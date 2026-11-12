@@ -1,0 +1,24 @@
+{
+	"songKey": "usher-and-alicia-keys__my-boo",
+	"audioFile": "usher-and-alicia-keys__my-boo.mp3",
+	"key": { "tonic": "D", "scale": "minor" },
+	"region": { "startSeconds": 107.564, "endSeconds": 130.505 },
+	"chords": [
+		{ "seconds": 108.132, "chord": "Dm", "roman": "i" },
+		{ "seconds": 109.523, "chord": "C", "roman": "VII" },
+		{ "seconds": 110.897, "chord": "Bb", "roman": "VI" },
+		{ "seconds": 112.288, "chord": "C", "roman": "VII" },
+		{ "seconds": 113.685, "chord": "Dm", "roman": "i" },
+		{ "seconds": 115.052, "chord": "C", "roman": "VII" },
+		{ "seconds": 116.448, "chord": "Bb", "roman": "VI" },
+		{ "seconds": 117.844, "chord": "C", "roman": "VII" },
+		{ "seconds": 119.228, "chord": "Dm", "roman": "i" },
+		{ "seconds": 120.604, "chord": "C", "roman": "VII" },
+		{ "seconds": 121.987, "chord": "Bb", "roman": "VI" },
+		{ "seconds": 123.393, "chord": "C", "roman": "VII" },
+		{ "seconds": 124.767, "chord": "Dm", "roman": "i" },
+		{ "seconds": 126.127, "chord": "C", "roman": "VII" },
+		{ "seconds": 127.528, "chord": "Bb", "roman": "VI" },
+		{ "seconds": 128.918, "chord": "C", "roman": "VII" }
+	]
+}

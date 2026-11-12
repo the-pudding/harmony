@@ -1,0 +1,24 @@
+{
+	"songKey": "the-jimi-hendrix-experience__all-along-the-watchtower",
+	"audioFile": "the-jimi-hendrix-experience__all-along-the-watchtower.mp3",
+	"key": { "tonic": "C", "scale": "minor" },
+	"region": { "startSeconds": 18.816, "endSeconds": 36.282 },
+	"chords": [
+		{ "seconds": 18.991, "chord": "Cm", "roman": "i" },
+		{ "seconds": 20.068, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 21.122, "chord": "Ab", "roman": "VI" },
+		{ "seconds": 22.492, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 23.322, "chord": "Cm", "roman": "i" },
+		{ "seconds": 24.424, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 25.468, "chord": "Ab", "roman": "VI" },
+		{ "seconds": 26.809, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 27.65, "chord": "Cm", "roman": "i" },
+		{ "seconds": 28.719, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 29.785, "chord": "Ab", "roman": "VI" },
+		{ "seconds": 31.162, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 31.957, "chord": "Cm", "roman": "i" },
+		{ "seconds": 33.035, "chord": "Bb", "roman": "VII" },
+		{ "seconds": 34.112, "chord": "Ab", "roman": "VI" },
+		{ "seconds": 35.398, "chord": "Bb", "roman": "VII" }
+	]
+}
