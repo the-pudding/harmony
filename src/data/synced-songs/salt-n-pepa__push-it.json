@@ -1,0 +1,16 @@
+{
+	"songKey": "salt-n-pepa__push-it",
+	"audioFile": "salt-n-pepa__push-it.mp3",
+	"key": { "tonic": "A", "scale": "minor" },
+	"region": { "startSeconds": 51.309, "endSeconds": 66.937 },
+	"chords": [
+		{ "seconds": 52.066, "chord": "Am", "roman": "i" },
+		{ "seconds": 53.697, "chord": "G", "roman": "VII" },
+		{ "seconds": 55.748, "chord": "Am", "roman": "i" },
+		{ "seconds": 57.379, "chord": "G", "roman": "VII" },
+		{ "seconds": 59.458, "chord": "Am", "roman": "i" },
+		{ "seconds": 61.093, "chord": "G", "roman": "VII" },
+		{ "seconds": 63.159, "chord": "Am", "roman": "i" },
+		{ "seconds": 64.792, "chord": "G", "roman": "VII" }
+	]
+}

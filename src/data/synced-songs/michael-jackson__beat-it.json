@@ -1,0 +1,16 @@
+{
+	"songKey": "michael-jackson__beat-it",
+	"audioFile": "michael-jackson__beat-it.mp3",
+	"key": { "tonic": "Eb", "scale": "minor" },
+	"region": { "startSeconds": 100.768, "endSeconds": 114.856 },
+	"chords": [
+		{ "seconds": 101.321, "chord": "Ebm", "roman": "i" },
+		{ "seconds": 102.881, "chord": "C#", "roman": "VII" },
+		{ "seconds": 104.771, "chord": "Ebm", "roman": "i" },
+		{ "seconds": 106.314, "chord": "C#", "roman": "VII" },
+		{ "seconds": 108.436, "chord": "Ebm", "roman": "i" },
+		{ "seconds": 109.817, "chord": "C#", "roman": "VII" },
+		{ "seconds": 111.962, "chord": "Ebm", "roman": "i" },
+		{ "seconds": 113.257, "chord": "C#", "roman": "VII" }
+	]
+}

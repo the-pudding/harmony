@@ -133,6 +133,11 @@ export const keyTonalityIssues: KeyTonalityIssue[] = [
 		id: "the-honeydrippers__sea-of-love",
 		keyTonalityIssues:
 			"Song-level review wrongly chose F# mixolydian. Break-4 and chorus-5 corrected to G major via section ledger. Intro/verse sections still carry the wrong song-level label."
+	},
+	{
+		id: "ella-langley__be-her",
+		keyTonalityIssues:
+			"I think it's actually in a major key (G major), so ii-I instead of i-VII. Data has every section as Am-G in A minor."
 	}
 ];
 

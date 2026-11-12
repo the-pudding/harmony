@@ -1,0 +1,14 @@
+{
+	"songKey": "r-e-m__bang-and-blame",
+	"audioFile": "r-e-m__bang-and-blame.mp3",
+	"key": { "tonic": "A", "scale": "minor" },
+	"region": { "startSeconds": 8.883, "endSeconds": 33.006 },
+	"chords": [
+		{ "seconds": 9.049, "chord": "Am", "roman": "i" },
+		{ "seconds": 13.015, "chord": "G", "roman": "VII" },
+		{ "seconds": 16.974, "chord": "Am", "roman": "i" },
+		{ "seconds": 20.922, "chord": "G", "roman": "VII" },
+		{ "seconds": 24.953, "chord": "Am", "roman": "i" },
+		{ "seconds": 28.911, "chord": "G", "roman": "VII" }
+	]
+}
