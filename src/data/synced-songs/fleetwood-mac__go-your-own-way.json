@@ -1,0 +1,17 @@
+{
+	"songKey": "fleetwood-mac__go-your-own-way",
+	"audioFile": "fleetwood-mac__go-your-own-way.mp3",
+	"key": { "tonic": "F", "scale": "major" },
+	"region": { "startSeconds": 31.86, "endSeconds": 53.143 },
+	"chords": [
+		{ "seconds": 31.936, "chord": "Dm", "roman": "vi" },
+		{ "seconds": 33.516, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 35.47, "chord": "C", "roman": "V" },
+		{ "seconds": 38.991, "chord": "Dm", "roman": "vi" },
+		{ "seconds": 40.529, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 42.509, "chord": "C", "roman": "V" },
+		{ "seconds": 46.021, "chord": "Dm", "roman": "vi" },
+		{ "seconds": 47.823, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 49.562, "chord": "C", "roman": "V" }
+	]
+}

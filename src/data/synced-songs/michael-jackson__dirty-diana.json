@@ -1,0 +1,20 @@
+{
+	"songKey": "michael-jackson__dirty-diana",
+	"audioFile": "michael-jackson__dirty-diana.mp3",
+	"key": { "tonic": "Bb", "scale": "major" },
+	"region": { "startSeconds": 32.579, "endSeconds": 48.029 },
+	"chords": [
+		{ "seconds": 33.352, "chord": "Gm", "roman": "vi" },
+		{ "seconds": 35.191, "chord": "Eb", "roman": "IV" },
+		{ "seconds": 36.093, "chord": "F", "roman": "V" },
+		{ "seconds": 37.041, "chord": "Gm", "roman": "vi" },
+		{ "seconds": 38.844, "chord": "Eb", "roman": "IV" },
+		{ "seconds": 39.744, "chord": "F", "roman": "V" },
+		{ "seconds": 40.664, "chord": "Gm", "roman": "vi" },
+		{ "seconds": 42.48, "chord": "Eb", "roman": "IV" },
+		{ "seconds": 43.413, "chord": "F", "roman": "V" },
+		{ "seconds": 44.324, "chord": "Gm", "roman": "vi" },
+		{ "seconds": 46.15, "chord": "Eb", "roman": "IV" },
+		{ "seconds": 47.021, "chord": "F", "roman": "V" }
+	]
+}
