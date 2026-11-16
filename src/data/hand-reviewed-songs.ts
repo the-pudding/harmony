@@ -114,6 +114,16 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "deon-jackson__love-makes-the-world-go-round",
 		chordProgressionIssues:
 			"wrong and missing sections. Data has just one section (a repeated verse with piano solo), I-vi-I-vi in Ab major"
+	},
+	{
+		id: "the-notorious-b-i-g__hypnotize",
+		chordProgressionIssues:
+			"doesn't seem to deviate from just the i, it's a one-chord vamp. Data has the chorus as i-III-VII-VI repeating in E minor"
+	},
+	{
+		id: "maroon-5-featuring-christina-aguilera__moves-like-jagger",
+		chordProgressionIssues:
+			"chorus just goes between Bm and Em. Data has every section (verse, chorus, bridge) as i-III-VII-VI (Em-G-D-C) in E minor"
 	}
 ];
 

@@ -1,0 +1,24 @@
+{
+	"songKey": "flo-rida__good-feeling",
+	"audioFile": "flo-rida__good-feeling.mp3",
+	"key": { "tonic": "C#", "scale": "minor" },
+	"region": { "startSeconds": 22.32, "endSeconds": 37.537 },
+	"chords": [
+		{ "seconds": 22.572, "chord": "C#m", "roman": "i" },
+		{ "seconds": 23.552, "chord": "E", "roman": "III" },
+		{ "seconds": 24.473, "chord": "B", "roman": "VII" },
+		{ "seconds": 25.404, "chord": "A", "roman": "VI" },
+		{ "seconds": 26.367, "chord": "C#m", "roman": "i" },
+		{ "seconds": 27.269, "chord": "E", "roman": "III" },
+		{ "seconds": 28.165, "chord": "B", "roman": "VII" },
+		{ "seconds": 29.132, "chord": "A", "roman": "VI" },
+		{ "seconds": 30.075, "chord": "C#m", "roman": "i" },
+		{ "seconds": 31.026, "chord": "E", "roman": "III" },
+		{ "seconds": 31.952, "chord": "B", "roman": "VII" },
+		{ "seconds": 32.888, "chord": "A", "roman": "VI" },
+		{ "seconds": 33.821, "chord": "C#m", "roman": "i" },
+		{ "seconds": 34.761, "chord": "E", "roman": "III" },
+		{ "seconds": 35.709, "chord": "B", "roman": "VII" },
+		{ "seconds": 36.642, "chord": "A", "roman": "VI" }
+	]
+}

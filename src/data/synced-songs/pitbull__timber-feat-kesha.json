@@ -1,0 +1,20 @@
+{
+	"songKey": "pitbull__timber-feat-kesha",
+	"audioFile": "pitbull__timber-feat-kesha.mp3",
+	"key": { "tonic": "Ab", "scale": "minor" },
+	"region": { "startSeconds": 82.324, "endSeconds": 105.191 },
+	"chords": [
+		{ "seconds": 83.07, "chord": "Abm", "roman": "i" },
+		{ "seconds": 84.893, "chord": "B", "roman": "III" },
+		{ "seconds": 86.782, "chord": "F#", "roman": "VII" },
+		{ "seconds": 88.622, "chord": "E", "roman": "VI" },
+		{ "seconds": 90.458, "chord": "Abm", "roman": "i" },
+		{ "seconds": 92.305, "chord": "B", "roman": "III" },
+		{ "seconds": 94.157, "chord": "F#", "roman": "VII" },
+		{ "seconds": 95.987, "chord": "E", "roman": "VI" },
+		{ "seconds": 97.813, "chord": "Abm", "roman": "i" },
+		{ "seconds": 99.675, "chord": "B", "roman": "III" },
+		{ "seconds": 101.522, "chord": "F#", "roman": "VII" },
+		{ "seconds": 103.389, "chord": "E", "roman": "VI" }
+	]
+}

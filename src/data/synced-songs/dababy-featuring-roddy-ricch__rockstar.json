@@ -1,0 +1,20 @@
+{
+	"songKey": "dababy-featuring-roddy-ricch__rockstar",
+	"audioFile": "dababy-featuring-roddy-ricch__rockstar.mp3",
+	"key": { "tonic": "Ab", "scale": "minor" },
+	"region": { "startSeconds": 0.09, "endSeconds": 16.329 },
+	"chords": [
+		{ "seconds": 0.185, "chord": "Abm", "roman": "i" },
+		{ "seconds": 1.323, "chord": "B", "roman": "III" },
+		{ "seconds": 2.804, "chord": "F#", "roman": "VII" },
+		{ "seconds": 3.969, "chord": "E", "roman": "VI" },
+		{ "seconds": 5.714, "chord": "Abm", "roman": "i" },
+		{ "seconds": 6.547, "chord": "B", "roman": "III" },
+		{ "seconds": 8.265, "chord": "F#", "roman": "VII" },
+		{ "seconds": 9.285, "chord": "E", "roman": "VI" },
+		{ "seconds": 11.052, "chord": "Abm", "roman": "i" },
+		{ "seconds": 11.925, "chord": "B", "roman": "III" },
+		{ "seconds": 13.587, "chord": "F#", "roman": "VII" },
+		{ "seconds": 14.65, "chord": "E", "roman": "VI" }
+	]
+}
