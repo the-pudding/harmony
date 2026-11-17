@@ -2,7 +2,6 @@
 	import {
 		committedSyncedSongClusters,
 		committedSyncedSongs,
-		syncedSongClusters,
 		SYNCED_SONG_AUDIO_DIRECTORY,
 		SYNCED_SONG_DATA_DIRECTORY,
 		type SyncedSongAudio,
@@ -16,9 +15,11 @@
 
 	type Props = {
 		audioOptions: SyncedSongAudio[];
+		// The clusters the map draws, biggest first.
+		clusterNames: string[];
 	};
 
-	let { audioOptions }: Props = $props();
+	let { audioOptions, clusterNames }: Props = $props();
 
 	const selection = createSongSelection(() => audioOptions);
 	// Saved this session, before the data module reloads with them.
@@ -39,10 +40,9 @@
 		)
 	);
 
-	const clusterOptions = syncedSongClusters.map((name) => ({
-		value: name,
-		label: name
-	}));
+	const clusterOptions = $derived(
+		clusterNames.map((name) => ({ value: name, label: name }))
+	);
 	// Cluster rows in reference.csv by song key, including ones saved since
 	// the page loaded, and clusters picked but not saved yet, per song so
 	// switching songs shows that song's own.
@@ -55,9 +55,7 @@
 		selectedSongKey ? (savedClusters[selectedSongKey] ?? "") : ""
 	);
 	const cluster = $derived(
-		selectedSongKey
-			? (pickedClusters[selectedSongKey] ?? savedCluster)
-			: ""
+		selectedSongKey ? (pickedClusters[selectedSongKey] ?? savedCluster) : ""
 	);
 
 	function pickCluster(name: string) {

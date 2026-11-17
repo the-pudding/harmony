@@ -3,13 +3,19 @@
 	import {
 		committedSyncedSongs,
 		SYNCED_SONG_REFERENCE_FILE,
-		syncedSongClusters,
 		syncedSongReferenceRows,
 		type SyncedSongReferenceRow
 	} from "$data/syncedSongs.js";
 	import type { FeaturedSongSetting } from "$data/syncedSongReference.js";
 	import { humanizeScale } from "$data/songBrowser.js";
 	import { audioSrcOf, songKeyLabel } from "./recordSongs.js";
+
+	type Props = {
+		// The clusters the map draws, biggest first.
+		clusterNames: string[];
+	};
+
+	let { clusterNames }: Props = $props();
 
 	const SAVE_URL = `${base}/demo/record/api`;
 
@@ -18,11 +24,11 @@
 	);
 
 	const clusterRank = (cluster: string): number => {
-		const rank = syncedSongClusters.indexOf(cluster);
+		const rank = clusterNames.indexOf(cluster);
 		return rank === -1 ? Infinity : rank;
 	};
 
-	// Clusters with synced songs, in top-progression rank order.
+	// Clusters with synced songs, biggest on the map first.
 	const clusters = [
 		...new Set(syncedSongReferenceRows.map((row) => row.cluster))
 	].sort((a, b) => clusterRank(a) - clusterRank(b));
@@ -33,10 +39,14 @@
 			.map(({ songKey, visible }) => ({ songKey, visible }));
 
 	let lists = $state(
-		Object.fromEntries(clusters.map((cluster) => [cluster, settingsFor(cluster)]))
+		Object.fromEntries(
+			clusters.map((cluster) => [cluster, settingsFor(cluster)])
+		)
 	);
 	let savedLists = $state.raw(
-		Object.fromEntries(clusters.map((cluster) => [cluster, settingsFor(cluster)]))
+		Object.fromEntries(
+			clusters.map((cluster) => [cluster, settingsFor(cluster)])
+		)
 	);
 	let saving = $state<string | null>(null);
 	let errors = $state<Record<string, string>>({});
@@ -117,7 +127,11 @@
 	}
 
 	function stopAtRegionEnd() {
-		if (previewEl && previewing && previewEl.currentTime >= previewing.endSeconds) {
+		if (
+			previewEl &&
+			previewing &&
+			previewEl.currentTime >= previewing.endSeconds
+		) {
 			previewEl.pause();
 			previewing = null;
 		}
@@ -139,13 +153,15 @@
 <div class="featured">
 	<p class="intro">
 		Synced songs by cluster, from <code>{SYNCED_SONG_REFERENCE_FILE}</code>.
-		Check the ones to show on the map, and drag to set the order
-		they play in. Save writes the cluster's rows back to the file; it only works
-		under <code>npm run dev</code>.
+		Check the ones to show on the map, and drag to set the order they play in.
+		Save writes the cluster's rows back to the file; it only works under
+		<code>npm run dev</code>.
 	</p>
 
 	{#if clusters.length === 0}
-		<p class="message">No synced songs yet. Record one in the Record audio tab.</p>
+		<p class="message">
+			No synced songs yet. Record one in the Record audio tab.
+		</p>
 	{/if}
 
 	{#each clusters as cluster (cluster)}
@@ -158,8 +174,10 @@
 					>{list.filter((song) => song.visible).length} of {list.length} visible</span
 				>
 				<div class="actions">
-					<button type="button" disabled={!dirty} onclick={() => revert(cluster)}
-						>Revert</button
+					<button
+						type="button"
+						disabled={!dirty}
+						onclick={() => revert(cluster)}>Revert</button
 					>
 					<button
 						type="button"

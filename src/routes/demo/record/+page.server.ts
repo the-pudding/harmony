@@ -6,6 +6,7 @@ import {
 	type SyncedSongAudio
 } from "$data/syncedSongs.js";
 import { loadClusterIdeas } from "./loadClusterIdeas.server.js";
+import { loadMapClusterNames } from "./mapClusters.server.js";
 import type { PageServerLoad } from "./$types.js";
 
 const AUDIO_DIRECTORY = path.join(
@@ -32,5 +33,7 @@ const listSyncedSongAudio = (): SyncedSongAudio[] => {
 
 export const load: PageServerLoad = () => ({
 	syncedSongAudio: listSyncedSongAudio(),
+	// The clusters the map draws, biggest first: what a synced song can join.
+	clusterNames: loadMapClusterNames(),
 	clusterIdeas: loadClusterIdeas()
 });

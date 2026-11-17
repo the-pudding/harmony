@@ -1,0 +1,24 @@
+{
+	"songKey": "katy-perry__wide-awake",
+	"audioFile": "katy-perry__wide-awake.mp3",
+	"key": { "tonic": "F", "scale": "major" },
+	"region": { "startSeconds": 12.086, "endSeconds": 36.849 },
+	"chords": [
+		{ "seconds": 12.782, "chord": "Gm", "roman": "ii" },
+		{ "seconds": 14.29, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 15.8, "chord": "F", "roman": "I" },
+		{ "seconds": 17.286, "chord": "C", "roman": "V" },
+		{ "seconds": 18.774, "chord": "Gm", "roman": "ii" },
+		{ "seconds": 20.234, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 21.799, "chord": "F", "roman": "I" },
+		{ "seconds": 23.262, "chord": "C", "roman": "V" },
+		{ "seconds": 24.773, "chord": "Gm", "roman": "ii" },
+		{ "seconds": 26.275, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 27.785, "chord": "F", "roman": "I" },
+		{ "seconds": 29.255, "chord": "C", "roman": "V" },
+		{ "seconds": 30.782, "chord": "Gm", "roman": "ii" },
+		{ "seconds": 32.289, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 33.803, "chord": "F", "roman": "I" },
+		{ "seconds": 35.288, "chord": "C", "roman": "V" }
+	]
+}

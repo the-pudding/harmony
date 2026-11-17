@@ -77,7 +77,8 @@
 		// focusFrame) without locking it, and at dot zoom its title is left
 		// to its player (see onExploredTitleAnchor).
 		exploredClusterName?: string | null;
-		// A song picked in search, which the view zooms in on instead.
+		// A song picked in search: spotlit, and when no cluster is explored
+		// (it's in none), the view zooms in on it instead.
 		searchedSongKey?: string | null;
 		// Called when the user picks a cluster: its hex, its title, or a dot
 		// in it (with that song), or null for a stray click.
@@ -324,7 +325,10 @@
 				showClusterNames={labelsVisible}
 				{focusClusterName}
 				selectedClusterName={explorable ? exploredClusterName : null}
-				zoomSongKey={explorable ? searchedSongKey : null}
+				zoomSongKey={explorable && exploredClusterName === null
+					? searchedSongKey
+					: null}
+				spotlitSongKey={explorable ? searchedSongKey : null}
 				{focusFrame}
 				offsetY={centered || focusCluster !== undefined
 					? 0

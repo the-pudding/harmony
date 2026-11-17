@@ -172,8 +172,12 @@
 	);
 
 	setContext("explore", {
-		pickSong: explore.searchSong,
-		pickCluster: (clusterName) => explore.pickCluster(clusterName)
+		pickSong: (songKey, clusterName) =>
+			explore.searchSong(songKey, clusterName),
+		pickCluster: (clusterName) => explore.pickCluster(clusterName),
+		get searchedSongKey() {
+			return explore.searchedSongKey;
+		}
 	});
 
 	// A new slide starts with nothing explored, playing or open, on its own

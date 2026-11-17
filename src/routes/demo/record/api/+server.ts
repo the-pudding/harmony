@@ -8,7 +8,6 @@ import {
 	SYNCED_SONG_DATA_DIRECTORY,
 	SYNCED_VIDEO_DATA_DIRECTORY,
 	SYNCED_SONG_REFERENCE_FILE,
-	syncedSongClusters,
 	type SyncedSongReferenceRow
 } from "$data/syncedSongs.js";
 import {
@@ -19,6 +18,7 @@ import {
 	type FeaturedSongSetting
 } from "$data/syncedSongReference.js";
 import { formatJsonLikeRepo } from "../formatJsonLikeRepo.js";
+import { loadMapClusterNames } from "../mapClusters.server.js";
 import type { RequestHandler } from "./$types.js";
 
 // Dev-only: writes src/data/synced-songs/{songKey}.json, and the song's
@@ -41,10 +41,7 @@ const readReferenceRows = (): SyncedSongReferenceRow[] =>
 		: [];
 
 const writeReferenceRows = (rows: SyncedSongReferenceRow[]) =>
-	fs.writeFileSync(
-		REFERENCE_PATH,
-		`${csvFormat(rows, REFERENCE_COLUMNS)}\n`
-	);
+	fs.writeFileSync(REFERENCE_PATH, `${csvFormat(rows, REFERENCE_COLUMNS)}\n`);
 
 export const POST: RequestHandler = async ({ request }) => {
 	const body: unknown = await request.json();
@@ -65,7 +62,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		fs.writeFileSync(videoFilePath, await formatJsonLikeRepo(file));
 		return json({ path: path.relative(process.cwd(), videoFilePath) });
 	}
-	if (typeof cluster !== "string" || !syncedSongClusters.includes(cluster)) {
+	if (typeof cluster !== "string" || !loadMapClusterNames().includes(cluster)) {
 		return json({ error: "unknown cluster" }, { status: 400 });
 	}
 

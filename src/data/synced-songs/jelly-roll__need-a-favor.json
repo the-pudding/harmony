@@ -1,0 +1,24 @@
+{
+	"songKey": "jelly-roll__need-a-favor",
+	"audioFile": "jelly-roll__need-a-favor.mp3",
+	"key": { "tonic": "F#", "scale": "major" },
+	"region": { "startSeconds": 49.109, "endSeconds": 73.598 },
+	"chords": [
+		{ "seconds": 49.299, "chord": "Abm", "roman": "ii" },
+		{ "seconds": 51.184, "chord": "B", "roman": "IV" },
+		{ "seconds": 52.326, "chord": "F#", "roman": "I" },
+		{ "seconds": 54.221, "chord": "C#", "roman": "V" },
+		{ "seconds": 55.316, "chord": "Abm", "roman": "ii" },
+		{ "seconds": 57.247, "chord": "B", "roman": "IV" },
+		{ "seconds": 58.387, "chord": "F#", "roman": "I" },
+		{ "seconds": 60.279, "chord": "C#", "roman": "V" },
+		{ "seconds": 61.443, "chord": "Abm", "roman": "ii" },
+		{ "seconds": 63.338, "chord": "B", "roman": "IV" },
+		{ "seconds": 64.473, "chord": "F#", "roman": "I" },
+		{ "seconds": 66.358, "chord": "C#", "roman": "V" },
+		{ "seconds": 67.474, "chord": "Abm", "roman": "ii" },
+		{ "seconds": 69.408, "chord": "B", "roman": "IV" },
+		{ "seconds": 70.54, "chord": "F#", "roman": "I" },
+		{ "seconds": 72.415, "chord": "C#", "roman": "V" }
+	]
+}

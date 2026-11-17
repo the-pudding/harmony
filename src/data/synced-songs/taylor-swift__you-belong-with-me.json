@@ -1,0 +1,16 @@
+{
+	"songKey": "taylor-swift__you-belong-with-me",
+	"audioFile": "taylor-swift__you-belong-with-me.mp3",
+	"key": { "tonic": "F#", "scale": "major" },
+	"region": { "startSeconds": 157.305, "endSeconds": 175.615 },
+	"chords": [
+		{ "seconds": 159.466, "chord": "Abm", "roman": "ii" },
+		{ "seconds": 161.319, "chord": "B", "roman": "IV" },
+		{ "seconds": 163.157, "chord": "F#", "roman": "I" },
+		{ "seconds": 165.008, "chord": "C#", "roman": "V" },
+		{ "seconds": 166.839, "chord": "Abm", "roman": "ii" },
+		{ "seconds": 168.683, "chord": "B", "roman": "IV" },
+		{ "seconds": 170.531, "chord": "F#", "roman": "I" },
+		{ "seconds": 172.407, "chord": "C#", "roman": "V" }
+	]
+}

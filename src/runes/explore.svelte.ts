@@ -13,7 +13,8 @@ export const createExplore = (options: { readonly exploreSlide: boolean }) => {
 		playingSongKey: undefined as string | undefined,
 		// The song whose full chords are open in the side drawer.
 		chordsSongKey: undefined as string | undefined,
-		// A song picked in search, which the map zooms to.
+		// A song picked in search, which the map spotlights, until a pick
+		// on the map, playing another song or opening other chords.
 		searchedSongKey: undefined as string | undefined
 	});
 
@@ -53,6 +54,7 @@ export const createExplore = (options: { readonly exploreSlide: boolean }) => {
 
 		// A sample's dot clicked on the map (or null to stop): plays it.
 		playSong(songKey: string | null) {
+			if (songKey !== state.searchedSongKey) state.searchedSongKey = undefined;
 			state.chordsSongKey = undefined;
 			state.playingSongKey = songKey ?? undefined;
 			if (songKey) audio.muted = false;
@@ -63,6 +65,7 @@ export const createExplore = (options: { readonly exploreSlide: boolean }) => {
 		},
 
 		toggleChords(songKey: string) {
+			if (songKey !== state.searchedSongKey) state.searchedSongKey = undefined;
 			state.chordsSongKey =
 				state.chordsSongKey === songKey ? undefined : songKey;
 			audio.muted = false;
@@ -72,14 +75,21 @@ export const createExplore = (options: { readonly exploreSlide: boolean }) => {
 			state.chordsSongKey = songKey;
 		},
 
-		// A song picked in search: the map zooms to it, and a sample also
-		// opens its cluster's player.
-		searchSong(songKey: string) {
+		// A song picked in search: its cluster opens in the panel as if its
+		// dot were clicked (a sample also plays), and the map frames that
+		// cluster (or the song, when it's in none).
+		searchSong(songKey: string, clusterName: string | null = null) {
 			audio.muted = false;
-			state.searchedSongKey = songKey;
-			state.clusterName = featuredClusterOf(songKey);
+			const result = resolveClusterPick({
+				clusterName,
+				songKey,
+				exploreSlide: options.exploreSlide
+			});
+			state.clusterName =
+				result.kind === "set" ? result.clusterName : featuredClusterOf(songKey);
 			state.playingSongKey =
-				state.clusterName === undefined ? undefined : songKey;
+				result.kind === "set" ? result.playingSongKey : undefined;
+			state.searchedSongKey = songKey;
 		},
 
 		// The user panned or zoomed away.

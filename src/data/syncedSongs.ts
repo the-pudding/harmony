@@ -6,7 +6,6 @@
 // chord lasts until region.endSeconds.
 import { SCALE_INTERVALS } from "../chord-processing/scale-intervals.js";
 import type { MusicalKey } from "../chord-processing/chordInKey.js";
-import topProgressions from "./charts/top-progressions.csv";
 import syncedSongReference from "./synced-songs/reference.csv";
 import {
 	parseReferenceRows,
@@ -143,7 +142,7 @@ export const committedSyncedVideos: Record<string, SyncedSongFile> =
 			])
 	);
 
-// Which top-progression cluster each synced song belongs to, one row per
+// Which map cluster each synced song belongs to, one row per
 // song key at src/data/synced-songs/reference.csv, with the song's trimmed
 // region (seconds into the audio) and whether it's shown. Saving a song in
 // the Record audio tab adds or updates its row; the Featured songs tab sets
@@ -157,11 +156,6 @@ export const syncedSongReferenceRows: SyncedSongReferenceRow[] =
 // cluster.
 export const featuredSyncedSongs: SyncedSongReferenceRow[] =
 	syncedSongReferenceRows.filter((row) => row.visible);
-
-// Every top-progression name, in rank order: the clusters a song can join.
-export const syncedSongClusters: string[] = topProgressions.map(
-	(row) => row.name
-);
 
 export const committedSyncedSongClusters: Record<string, string> =
 	Object.fromEntries(

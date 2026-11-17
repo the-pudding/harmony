@@ -110,6 +110,7 @@
 		selectedClusterName = null,
 		zoomSongKey = null,
 		openSongId = null,
+		spotlitSongKey = null,
 		focusFrame = null,
 		offsetY = 0,
 		emphasizedSongKeys = null,
@@ -367,7 +368,7 @@
 	const homeTransform = $derived(view.homeTransform(offsetY));
 
 	const spotlightSongKey = $derived(
-		playingSongKey ?? openSongId ?? zoomSongKey
+		playingSongKey ?? openSongId ?? zoomSongKey ?? spotlitSongKey
 	);
 
 	// Where each outlined song's label was last drawn. Not reactive, since
@@ -609,18 +610,17 @@
 		hoveredLabelSongKey = null;
 	};
 
-	// A linked song hovers as if the pointer were on it, until it changes.
+	// A linked song highlights as if the pointer were on it, until it
+	// changes, but without a tooltip: whatever's linked to it shows its own.
 	$effect(() => {
 		const songKey = linkedSongKey;
 		if (songKey === null) return;
 		untrack(() => {
 			hoveredSongKey = songKey;
-			delayedTooltip.setHover(songKey, songScreen(songKey));
 		});
 		return () => {
 			if (hoveredSongKey !== songKey) return;
 			hoveredSongKey = null;
-			delayedTooltip.clearHover();
 		};
 	});
 

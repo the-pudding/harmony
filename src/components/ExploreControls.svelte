@@ -9,10 +9,10 @@
 	} from "$data/progressionQuery.js";
 	import { highlightSegments } from "$data/searchHighlight.js";
 
-	const MAX_RESULTS = 12;
 	const FEATURED_EMOJI = "🎧";
 
-	const { pickSong, pickCluster } = getContext("explore");
+	const explore = getContext("explore");
+	const { pickSong, pickCluster } = explore;
 	const featuredSongKeys = new Set(reference.map((d) => d.songKey));
 
 	const normalize = (text) =>
@@ -34,6 +34,12 @@
 	onMount(() => {
 		loadHexMapSnapshot().then(
 			({ songKeys, titles, artists, popularity, clusters: mapClusters }) => {
+				const clusterNameByIndex = new Map();
+				for (const cluster of mapClusters) {
+					for (const i of cluster.songIndexes) {
+						clusterNameByIndex.set(i, cluster.name);
+					}
+				}
 				songs = songKeys.map((songKey, i) => {
 					const artist = artists[i].join(", ");
 					return {
@@ -41,6 +47,7 @@
 						title: titles[i],
 						artist,
 						popularity: popularity[i],
+						clusterName: clusterNameByIndex.get(i) ?? null,
 						featured: featuredSongKeys.has(songKey),
 						searchTitle: normalize(titles[i]),
 						searchArtist: normalize(artist),
@@ -89,8 +96,14 @@
 				].some((text) => text.startsWith(q));
 				return [{ song, rank: startsWith ? 0 : 1 }];
 			})
-			.sort((a, b) => a.rank - b.rank || b.song.popularity - a.song.popularity)
-			.slice(0, MAX_RESULTS)
+			// Featured songs (the ones with clips) first within a rank: a big
+			// artist's chart hits would otherwise crowd them out of the list.
+			.sort(
+				(a, b) =>
+					a.rank - b.rank ||
+					b.song.featured - a.song.featured ||
+					b.song.popularity - a.song.popularity
+			)
 			.map(({ song }) => ({
 				type: "song",
 				key: song.songKey,
@@ -113,7 +126,6 @@
 				return best ? [{ cluster, rank: best.rank, match: best }] : [];
 			})
 			.sort((a, b) => a.rank - b.rank || b.cluster.songCount - a.cluster.songCount)
-			.slice(0, MAX_RESULTS)
 			.map(({ cluster, match }) => ({
 				type: "cluster",
 				key: cluster.name,
@@ -151,7 +163,7 @@
 		if (parsed.kind !== "text") return clusterResults(parsed.codes);
 		const q = normalize(query);
 		if (!q) return [];
-		return [...clusterNameResults(q), ...songResults(q)].slice(0, MAX_RESULTS);
+		return [...clusterNameResults(q), ...songResults(q)];
 	});
 
 	$effect(() => {
@@ -159,14 +171,27 @@
 		activeIndex = 0;
 	});
 
+	// The song last picked here, while its text is still in the box: once
+	// the map lets go of it (a click elsewhere, a pan, another dot), the
+	// box clears.
+	let pickedSongKey = $state(null);
+	$effect(() => {
+		if (pickedSongKey === null) return;
+		if (explore.searchedSongKey === pickedSongKey) return;
+		pickedSongKey = null;
+		query = "";
+	});
+
 	const choose = (result) => {
 		open = false;
 		if (result.type === "cluster") {
+			pickedSongKey = null;
 			query = result.cluster.name;
 			pickCluster(result.cluster.name);
 		} else {
 			query = `${result.song.title} — ${result.song.artist}`;
-			pickSong(result.song.songKey);
+			pickSong(result.song.songKey, result.song.clusterName);
+			pickedSongKey = result.song.songKey;
 		}
 	};
 
@@ -181,6 +206,9 @@
 			open = true;
 			const step = event.key === "ArrowDown" ? 1 : -1;
 			activeIndex = (activeIndex + step + results.length) % results.length;
+			document
+				.getElementById(`${listId}-${activeIndex}`)
+				?.scrollIntoView({ block: "nearest" });
 		} else if (event.key === "Enter" && open) {
 			event.preventDefault();
 			choose(results[activeIndex]);
@@ -206,7 +234,10 @@
 				? `${listId}-${activeIndex}`
 				: undefined}
 			bind:value={query}
-			oninput={() => (open = true)}
+			oninput={() => {
+				open = true;
+				pickedSongKey = null;
+			}}
 			onfocus={() => (open = true)}
 			onblur={() => (open = false)}
 			onkeydown={onKeyDown}

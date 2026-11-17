@@ -1,16 +1,15 @@
 import fs from "fs";
 import path from "path";
 import { applyHandReviewedCorrections } from "$data/applyHandReviewedCorrections.js";
-import { syncedSongClusters } from "$data/syncedSongs.js";
 import { resolveSongKey } from "../../../chord-processing/songIdentity.js";
 import type { SongInput } from "../../../chord-processing/types.js";
-import type { HexMapSnapshot } from "$data/hexMapSnapshot.js";
 import {
 	buildClusterKeyIdeas,
 	type ClusterIdeaCandidate,
 	type ClusterIdeasByMode,
 	type ClusterKeyIdea
 } from "./clusterIdeas.js";
+import { loadMapClusters, readHexMap } from "./mapClusters.server.js";
 
 const DATA_DIRECTORY = path.join(process.cwd(), "static", "data");
 
@@ -51,14 +50,24 @@ const readSongFacts = (): Map<string, SongFacts> => {
 };
 
 const buildAllClusterIdeas = (): ClusterIdeasByMode => {
-	const hexMap = JSON.parse(
-		fs.readFileSync(path.join(DATA_DIRECTORY, "hexmap.json"), "utf8")
-	) as HexMapSnapshot;
+	const hexMap = readHexMap();
 	const facts = readSongFacts();
+	const mapClusters = loadMapClusters();
 
 	const candidatesByCluster = new Map<string, ClusterIdeaCandidate[]>(
-		syncedSongClusters.map((cluster) => [cluster, []])
+		mapClusters.map((cluster) => [cluster.name, []])
 	);
+	// A song is a candidate for every map cluster named for a progression
+	// it has, at its biggest share of any of them.
+	const clusterNamesByProgression = new Map<string, string[]>();
+	for (const cluster of mapClusters) {
+		for (const progressionName of cluster.progressionNames) {
+			clusterNamesByProgression.set(progressionName, [
+				...(clusterNamesByProgression.get(progressionName) ?? []),
+				cluster.name
+			]);
+		}
+	}
 	hexMap.songKeys.forEach((songKey, songIndex) => {
 		const song = facts.get(songKey);
 		// Songs whose sections disagree on the key can't anchor a same-key
@@ -68,14 +77,25 @@ const buildAllClusterIdeas = (): ClusterIdeasByMode => {
 		}
 		const [keyLabel] = song.keyLabels;
 		const coverage = hexMap.progressions[songIndex];
+		const shareByCluster = new Map<string, number>();
 		for (let index = 0; index < coverage.length; index += 2) {
-			const cluster = hexMap.progressionNames[coverage[index]];
+			const progressionName = hexMap.progressionNames[coverage[index]];
+			const sharePercent = coverage[index + 1];
+			for (const cluster of clusterNamesByProgression.get(progressionName) ??
+				[]) {
+				shareByCluster.set(
+					cluster,
+					Math.max(shareByCluster.get(cluster) ?? 0, sharePercent)
+				);
+			}
+		}
+		for (const [cluster, sharePercent] of shareByCluster) {
 			candidatesByCluster.get(cluster)?.push({
 				songKey,
 				title: hexMap.titles[songIndex],
 				artists: hexMap.artists[songIndex],
 				year: song.year,
-				sharePercent: coverage[index + 1],
+				sharePercent,
 				popularity: song.popularity,
 				keyLabel
 			});

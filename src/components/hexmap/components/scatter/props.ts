@@ -52,6 +52,9 @@ export type EmbeddingScatterProps = {
 	// The song whose details the page has open: spotlit like
 	// playingSongKey (which wins), but the view doesn't move.
 	openSongId?: string | null;
+	// A song to spotlight (when nothing above is) without moving the view
+	// or changing what clicks do, e.g. one picked in search.
+	spotlitSongKey?: string | null;
 	// The part of the canvas a focused cluster should fill, in screen
 	// pixels from its top (e.g. the space below text over the map). In
 	// hex mode the cluster is scaled to almost fill its height and

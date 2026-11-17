@@ -70,7 +70,10 @@
 		>
 			{#if tab === RECORD_TAB_AUDIO}
 				<DemoSection title="Record audio sync">
-					<SyncedSongRecorder audioOptions={data.syncedSongAudio} />
+					<SyncedSongRecorder
+						audioOptions={data.syncedSongAudio}
+						clusterNames={data.clusterNames}
+					/>
 				</DemoSection>
 			{:else if tab === RECORD_TAB_VIDEO}
 				<DemoSection title="Record video sync">
@@ -78,12 +81,13 @@
 				</DemoSection>
 			{:else if tab === RECORD_TAB_FEATURED}
 				<DemoSection title="Featured songs">
-					<FeaturedSongs />
+					<FeaturedSongs clusterNames={data.clusterNames} />
 				</DemoSection>
 			{:else if tab === RECORD_TAB_IDEAS}
 				<DemoSection title="Ideas by cluster">
 					<ClusterIdeas
 						ideas={data.clusterIdeas}
+						clusterNames={data.clusterNames}
 						audioSongKeys={data.syncedSongAudio.map((audio) => audio.songKey)}
 					/>
 				</DemoSection>

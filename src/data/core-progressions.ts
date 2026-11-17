@@ -210,6 +210,12 @@ const happyMajoryProgressions: ProgressionGroup = {
 			scale: "major",
 			description:
 				"the bIII lift out of the I before landing on the IV — a blues-rock staple"
+		},
+		{
+			name: "paradise",
+			chordProgression: "ii-IV-I-V",
+			scale: "major",
+			description: ""
 		}
 	]
 };

@@ -1,0 +1,16 @@
+{
+	"songKey": "coldplay__paradise",
+	"audioFile": "coldplay__paradise.mp3",
+	"key": { "tonic": "F", "scale": "major" },
+	"region": { "startSeconds": 119.713, "endSeconds": 134.041 },
+	"chords": [
+		{ "seconds": 120.412, "chord": "Gm", "roman": "ii" },
+		{ "seconds": 121.709, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 123.846, "chord": "F", "roman": "I" },
+		{ "seconds": 125.123, "chord": "C", "roman": "V" },
+		{ "seconds": 127.267, "chord": "Gm", "roman": "ii" },
+		{ "seconds": 128.56, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 130.726, "chord": "F", "roman": "I" },
+		{ "seconds": 131.972, "chord": "C", "roman": "V" }
+	]
+}

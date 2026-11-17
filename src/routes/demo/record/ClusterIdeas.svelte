@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { committedSyncedSongs, syncedSongClusters } from "$data/syncedSongs.js";
+	import { untrack } from "svelte";
+	import { committedSyncedSongs } from "$data/syncedSongs.js";
 	import ToggleSwitch from "../../../chord-search-demo/ToggleSwitch.svelte";
 	import { currentSearchParams } from "../shared/currentSearchParams.js";
 	import LabeledSelect from "./LabeledSelect.svelte";
@@ -15,11 +16,13 @@
 
 	type Props = {
 		ideas: ClusterIdeasByMode;
+		// The clusters the map draws, biggest first.
+		clusterNames: string[];
 		// Songs with audio in static/, ready to record.
 		audioSongKeys: string[];
 	};
 
-	let { ideas, audioSongKeys }: Props = $props();
+	let { ideas, clusterNames, audioSongKeys }: Props = $props();
 
 	const DEFAULT_CLUSTER = "doo wop";
 
@@ -29,19 +32,22 @@
 	);
 
 	const clusterOptions = $derived(
-		syncedSongClusters.map((name) => ({
+		clusterNames.map((name) => ({
 			value: name,
 			label: `${name}${ideasByCluster[name]?.length ? "" : " · no groups"}`
 		}))
 	);
 
 	const initialCluster = readRecordCluster(currentSearchParams());
+	// Picked once from the URL; the cluster list doesn't change after load.
 	let cluster = $state(
-		initialCluster && syncedSongClusters.includes(initialCluster)
-			? initialCluster
-			: syncedSongClusters.includes(DEFAULT_CLUSTER)
-				? DEFAULT_CLUSTER
-				: syncedSongClusters[0]
+		untrack(() =>
+			initialCluster && clusterNames.includes(initialCluster)
+				? initialCluster
+				: clusterNames.includes(DEFAULT_CLUSTER)
+					? DEFAULT_CLUSTER
+					: clusterNames[0]
+		)
 	);
 	const keyIdeas = $derived(ideasByCluster[cluster] ?? []);
 	const hasAudio = $derived(new Set(audioSongKeys));
@@ -81,9 +87,9 @@
 
 <div class="ideas">
 	<p class="intro">
-		Groups of {MIN_GROUP_SIZE}–{MAX_GROUP_SIZE} songs in the same key where the
-		cluster's progression covers at least {MIN_SHARE_PERCENT}% of the chords.
-		Strength is coverage weighted by popularity.
+		Groups of {MIN_GROUP_SIZE}–{MAX_GROUP_SIZE} songs in the same key where the cluster's
+		progression covers at least {MIN_SHARE_PERCENT}% of the chords. Strength is
+		coverage weighted by popularity.
 		{#if spreadAcrossYears}
 			Each group takes the strongest song from as many decades as it can, and
 			keys are ranked by decades covered, then strength.
@@ -120,8 +126,7 @@
 						<span class="rank">#{rank + 1}</span>
 						<span class="key">{idea.keyLabel}</span>
 						<span class="meta"
-							>{idea.decadeCount} decades · {idea.candidateCount} songs in this
-							key</span
+							>{idea.decadeCount} decades · {idea.candidateCount} songs in this key</span
 						>
 					</div>
 					<div class="songs-scroll">
@@ -133,7 +138,8 @@
 								{#if idea.otherSongs.length > 0}
 									<tr class="divider">
 										<td colspan="4">
-											{idea.otherSongs.length} more in {idea.keyLabel}, strongest first
+											{idea.otherSongs.length} more in {idea.keyLabel},
+											strongest first
 										</td>
 									</tr>
 									{#each idea.otherSongs as song (song.songKey)}
