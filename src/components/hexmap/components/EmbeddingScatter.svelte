@@ -86,7 +86,8 @@
 	import {
 		colorsByProgressionName,
 		createRegionFills,
-		regionColorsByName
+		regionColorsByName,
+		strayRegionsBySongKey
 	} from "./scatter/regionColors.js";
 
 	const {
@@ -301,11 +302,27 @@
 	const fullZoomSongFill = (songKey: string) =>
 		regionFills.songRegionFill(songKey, 1);
 
+	// Unclustered songs inside a cluster's outline, colored with it.
+	const strayRegionBySongKey = $derived(
+		!hexMode ||
+			clusterRegionBySongKey === null ||
+			progressionSharesBySongKey === null ||
+			width === 0
+			? null
+			: strayRegionsBySongKey(
+					normalizedPoints,
+					clusterRegionBySongKey,
+					progressionSharesBySongKey,
+					(point) => view.toBasePixel({ width, height }, point)
+				)
+	);
+
 	const regionFills = $derived(
 		createRegionFills({
 			colorByRegionName: regionColorByName,
 			themeColors: hexColors,
 			regionBySongKey: clusterRegionBySongKey,
+			strayRegionBySongKey,
 			sharesBySongKey: progressionSharesBySongKey
 		})
 	);

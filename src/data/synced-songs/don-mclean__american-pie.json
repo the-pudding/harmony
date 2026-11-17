@@ -1,0 +1,20 @@
+{
+	"songKey": "don-mclean__american-pie",
+	"audioFile": "don-mclean__american-pie.mp3",
+	"key": { "tonic": "G", "scale": "major" },
+	"region": { "startSeconds": 221.289, "endSeconds": 232.134 },
+	"chords": [
+		{ "seconds": 221.637, "chord": "G", "roman": "I" },
+		{ "seconds": 222.501, "chord": "C", "roman": "IV" },
+		{ "seconds": 223.407, "chord": "G", "roman": "I" },
+		{ "seconds": 224.27, "chord": "D", "roman": "V" },
+		{ "seconds": 225.148, "chord": "G", "roman": "I" },
+		{ "seconds": 226.01, "chord": "C", "roman": "IV" },
+		{ "seconds": 226.906, "chord": "G", "roman": "I" },
+		{ "seconds": 227.771, "chord": "D", "roman": "V" },
+		{ "seconds": 228.663, "chord": "G", "roman": "I" },
+		{ "seconds": 229.507, "chord": "C", "roman": "IV" },
+		{ "seconds": 230.383, "chord": "G", "roman": "I" },
+		{ "seconds": 231.217, "chord": "D", "roman": "V" }
+	]
+}

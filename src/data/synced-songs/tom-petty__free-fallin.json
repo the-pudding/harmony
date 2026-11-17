@@ -1,0 +1,24 @@
+{
+	"songKey": "tom-petty__free-fallin",
+	"audioFile": "tom-petty__free-fallin.mp3",
+	"key": { "tonic": "F", "scale": "major" },
+	"region": { "startSeconds": 3.088, "endSeconds": 25.98 },
+	"chords": [
+		{ "seconds": 3.542, "chord": "F", "roman": "I" },
+		{ "seconds": 4.492, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 6.304, "chord": "F", "roman": "I" },
+		{ "seconds": 7.383, "chord": "C", "roman": "V" },
+		{ "seconds": 9.19, "chord": "F", "roman": "I" },
+		{ "seconds": 10.237, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 12.031, "chord": "F", "roman": "I" },
+		{ "seconds": 13.047, "chord": "C", "roman": "V" },
+		{ "seconds": 14.841, "chord": "F", "roman": "I" },
+		{ "seconds": 15.91, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 17.703, "chord": "F", "roman": "I" },
+		{ "seconds": 18.734, "chord": "C", "roman": "V" },
+		{ "seconds": 20.575, "chord": "F", "roman": "I" },
+		{ "seconds": 21.596, "chord": "Bb", "roman": "IV" },
+		{ "seconds": 23.393, "chord": "F", "roman": "I" },
+		{ "seconds": 24.41, "chord": "C", "roman": "V" }
+	]
+}

@@ -58,10 +58,24 @@
 			.sort((a, b) => b.songIndexes.length - a.songIndexes.length)[0]
 	);
 
+	const featuredSongKeys = $derived(
+		featuredSongsOf(cluster).map(({ songKey }) => songKey)
+	);
+
+	// The cluster's songs, plus its featured songs that density clustering
+	// left out (e.g. a stray dot inside the cluster's outline), so every
+	// labeled song has a dot.
+	const songKeys = $derived([
+		...new Set([
+			...(mapCluster?.songIndexes ?? []).map((i) => snapshot.songKeys[i]),
+			...featuredSongKeys
+		])
+	]);
+
 	const songs = $derived(
-		mapCluster && mapColors.bySong
+		snapshot && mapColors.bySong
 			? datedBeeswarmSongs(
-					mapCluster.songIndexes.map((i) => snapshot.songKeys[i]),
+					songKeys,
 					(songKey) => summaryBySongKey.get(songKey),
 					mapColors.bySong
 				)
@@ -69,7 +83,7 @@
 	);
 
 	const annotations = $derived(
-		featuredSongsOf(cluster).flatMap(({ songKey }) => {
+		featuredSongKeys.flatMap((songKey) => {
 			const title = summaryBySongKey.get(songKey)?.title;
 			return title ? [{ songKey, label: title }] : [];
 		})

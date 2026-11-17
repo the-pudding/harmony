@@ -1,0 +1,20 @@
+{
+	"songKey": "van-morrison__brown-eyed-girl",
+	"audioFile": "van-morrison__brown-eyed-girl.mp3",
+	"key": { "tonic": "G", "scale": "major" },
+	"region": { "startSeconds": 14.092, "endSeconds": 33.386 },
+	"chords": [
+		{ "seconds": 14.15, "chord": "G", "roman": "I" },
+		{ "seconds": 15.772, "chord": "C", "roman": "IV" },
+		{ "seconds": 17.402, "chord": "G", "roman": "I" },
+		{ "seconds": 19.036, "chord": "D", "roman": "V" },
+		{ "seconds": 20.664, "chord": "G", "roman": "I" },
+		{ "seconds": 22.262, "chord": "C", "roman": "IV" },
+		{ "seconds": 23.852, "chord": "G", "roman": "I" },
+		{ "seconds": 25.427, "chord": "D", "roman": "V" },
+		{ "seconds": 27.047, "chord": "G", "roman": "I" },
+		{ "seconds": 28.642, "chord": "C", "roman": "IV" },
+		{ "seconds": 30.277, "chord": "G", "roman": "I" },
+		{ "seconds": 31.869, "chord": "D", "roman": "V" }
+	]
+}
