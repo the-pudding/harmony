@@ -61,6 +61,23 @@ const mainProgressionShares = (
 		.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 };
 
+// Each progression's average share across the songs, biggest first (ties
+// alphabetical).
+const averageShares = (
+	songKeys: readonly string[],
+	songShares: ReadonlyMap<string, ReadonlyMap<string, number>>
+): [string, number][] => {
+	const sums = new Map<string, number>();
+	for (const songKey of songKeys) {
+		for (const [name, share] of songShares.get(songKey) ?? []) {
+			sums.set(name, (sums.get(name) ?? 0) + share);
+		}
+	}
+	return [...sums]
+		.map(([name, sum]): [string, number] => [name, sum / songKeys.length])
+		.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+};
+
 const nameOf = (progressionNames: readonly string[]): string =>
 	progressionNames[0];
 
@@ -153,13 +170,16 @@ export const nameProgressionClusters = (
 	positionBySongKey: ReadonlyMap<string, Position>,
 	// The share a cluster's top progression needs, or a function giving it
 	// per progression (e.g. stricter for unnamed ones).
-	minProgressionShare: number | ((progressionName: string) => number)
+	minProgressionShare: number | ((progressionName: string) => number),
+	// When given (each song's share, 0–1, of each progression), a cluster's
+	// progressions are ranked by their average share across its songs
+	// instead of by how many songs have each as their main one.
+	songShares?: ReadonlyMap<string, ReadonlyMap<string, number>>
 ): NamedProgressionCluster[] => {
 	const drafts = clusters.flatMap((cluster): Draft[] => {
-		const [top, runnerUp] = mainProgressionShares(
-			cluster.songKeys,
-			mainProgressionBySongKey
-		);
+		const [top, runnerUp] = songShares
+			? averageShares(cluster.songKeys, songShares)
+			: mainProgressionShares(cluster.songKeys, mainProgressionBySongKey);
 		if (!top) return [];
 		const minShare =
 			typeof minProgressionShare === "number"

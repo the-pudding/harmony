@@ -5,6 +5,7 @@ import coreProgressions from "./core-progressions.js";
 import { normalizeClusterName } from "./clusterName.js";
 import { buildClusterInputPoints } from "../components/hexmap/embedding/clustering/clusterInputPoints.js";
 import {
+	estimateEps,
 	findDensityClusters,
 	hashSongKeys,
 	type DensityCluster
@@ -68,8 +69,70 @@ export const decodeSnapshotCoverage = (
 	return entries;
 };
 
+// How a cluster's progression is scored: "vote" counts songs whose main
+// progression it is; "share" averages how much of each song it covers.
+export type ClusterPurity = "vote" | "share";
+
+export type HexMapClusterOptions = {
+	purity: ClusterPurity;
+	minProgressionShareFor: (progressionName: string) => number;
+	// A gray song joins a cluster named for its main progression when it's
+	// within this many clustering radii of one of its songs (repeating, so
+	// a trail of such songs can join). 0 turns this off.
+	attachRadiusEps: number;
+};
+
+export const HEX_MAP_CLUSTER_OPTIONS: HexMapClusterOptions = {
+	purity: "vote",
+	minProgressionShareFor,
+	attachRadiusEps: 2
+};
+
+// Gray songs join the nearest same-name cluster within `radius`, over and
+// over until none can (each joined song lets the ones near it join next).
+const attachGraySongs = (
+	clusters: { name: string; songKeys: string[] }[],
+	mainProgressionBySongKey: ReadonlyMap<string, string>,
+	positionBySongKey: ReadonlyMap<string, { x: number; y: number }>,
+	radius: number
+) => {
+	const clustered = new Set(clusters.flatMap((cluster) => cluster.songKeys));
+	let gray = [...positionBySongKey.keys()].filter(
+		(songKey) =>
+			!clustered.has(songKey) && mainProgressionBySongKey.has(songKey)
+	);
+	for (let joined = true; joined; ) {
+		joined = false;
+		const stillGray: string[] = [];
+		for (const songKey of gray) {
+			const main = normalizeClusterName(mainProgressionBySongKey.get(songKey)!);
+			const at = positionBySongKey.get(songKey)!;
+			let best: {
+				cluster: (typeof clusters)[number];
+				distance: number;
+			} | null = null;
+			for (const cluster of clusters) {
+				if (normalizeClusterName(cluster.name) !== main) continue;
+				for (const member of cluster.songKeys) {
+					const point = positionBySongKey.get(member)!;
+					const distance = Math.hypot(point.x - at.x, point.y - at.y);
+					if (distance <= radius && (!best || distance < best.distance)) {
+						best = { cluster, distance };
+					}
+				}
+			}
+			if (best) {
+				best.cluster.songKeys.push(songKey);
+				joined = true;
+			} else stillGray.push(songKey);
+		}
+		gray = stillGray;
+	}
+};
+
 export const computeHexMapClusters = (
-	snapshot: ClusterSource
+	snapshot: ClusterSource,
+	options: HexMapClusterOptions = HEX_MAP_CLUSTER_OPTIONS
 ): SnapshotCluster[] => {
 	const clusterPoints = buildClusterInputPoints(
 		snapshot.songKeys.map((songKey, index) => ({
@@ -94,20 +157,47 @@ export const computeHexMapClusters = (
 	const indexBySongKey = new Map(
 		snapshot.songKeys.map((songKey, index) => [songKey, index])
 	);
-	return nameProgressionClusters(
+	const songShares =
+		options.purity === "share"
+			? new Map(
+					snapshot.songKeys.map((songKey, index) => [
+						songKey,
+						new Map(
+							decodeSnapshotCoverage(snapshot, index).map(
+								({ name, coveragePercent }) => [name, coveragePercent / 100]
+							)
+						)
+					])
+				)
+			: undefined;
+	const positionBySongKey = new Map(
+		clusterPoints.map((point) => [point.songKey, point])
+	);
+	const named = nameProgressionClusters(
 		findDensityClusters(
 			clusterPoints,
 			HEX_MAP_CLUSTER_MIN_POINTS,
 			HEX_MAP_CLUSTER_MAX_POINTS
 		),
 		mainProgressionBySongKey,
-		new Map(clusterPoints.map((point) => [point.songKey, point])),
-		minProgressionShareFor
-	).map(({ cluster, name, progressionNames, showLabel }) => ({
+		positionBySongKey,
+		options.minProgressionShareFor,
+		songShares
+	).map((entry) => ({ ...entry, songKeys: [...entry.cluster.songKeys] }));
+	if (options.attachRadiusEps > 0) {
+		attachGraySongs(
+			named,
+			mainProgressionBySongKey,
+			positionBySongKey,
+			options.attachRadiusEps *
+				estimateEps(clusterPoints, HEX_MAP_CLUSTER_MIN_POINTS)
+		);
+	}
+	return named.map(({ name, progressionNames, showLabel, songKeys }) => ({
 		name,
 		progressionNames,
 		showLabel,
-		songIndexes: cluster.songKeys.map((songKey) => indexBySongKey.get(songKey)!)
+		songIndexes: songKeys.map((songKey) => indexBySongKey.get(songKey)!)
 	}));
 };
 

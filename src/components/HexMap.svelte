@@ -209,6 +209,43 @@
 		return coverages;
 	});
 
+	// A song needs at least this much of the explored cluster's progression
+	// to be lit up when it sits outside the cluster's outline.
+	const OUTSIDE_HUB_MIN_COVERAGE_PERCENT = 40;
+
+	// The explored cluster's songs that the outline misses: ones with a lot
+	// of its progression that sit elsewhere on the map (e.g. a loose patch
+	// next to the hub), lit in the cluster's color so "where does this
+	// progression live?" isn't only answered by the outline.
+	const outsideHub = $derived.by(() => {
+		if (!explorable || exploredClusterName === null) return null;
+		const explored = clusters.filter(({ name }) =>
+			sameClusterName(name, exploredClusterName)
+		);
+		if (explored.length === 0) return null;
+		const progressionNames = new Set(
+			explored[0].progressionNames.map((name) => name.toLowerCase())
+		);
+		const members = new Set(
+			explored.flatMap(({ cluster }) => cluster.songKeys)
+		);
+		const songKeys = new Set<string>();
+		for (const [songKey, coverage] of coverageBySongKey) {
+			if (members.has(songKey)) continue;
+			const percent = coverage
+				.filter(({ name }) => progressionNames.has(name.toLowerCase()))
+				.reduce((sum, { coveragePercent }) => sum + coveragePercent, 0);
+			if (percent >= OUTSIDE_HUB_MIN_COVERAGE_PERCENT) songKeys.add(songKey);
+		}
+		if (songKeys.size === 0) return null;
+		return {
+			songKeys,
+			color:
+				mapColors.byProgression.get(explored[0].progressionNames[0]) ??
+				"#ffffff"
+		};
+	});
+
 	const songSummaryByKey = $derived(
 		new Map(
 			(snapshot?.songKeys ?? []).map((songKey, index) => [
@@ -341,6 +378,8 @@
 				selectedClusterName={explorable ? exploredClusterName : null}
 				zoomSongKey={explorable ? searchZoomSongKey : null}
 				spotlitSongKey={explorable ? searchedSongKey : null}
+				accentSongKeys={outsideHub?.songKeys ?? null}
+				accentFillColor={outsideHub?.color ?? null}
 				{focusFrame}
 				offsetY={centered || focusCluster !== undefined
 					? 0

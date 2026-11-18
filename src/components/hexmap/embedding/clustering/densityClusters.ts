@@ -139,7 +139,7 @@ const boundsOf = (
 	};
 };
 
-const estimateEps = (
+export const estimateEps = (
 	points: readonly ClusterPoint[],
 	minPoints: number
 ): number => {

@@ -20,6 +20,7 @@
 	import ExploreControls from "$components/ExploreControls.svelte";
 	import List from "$components/List.svelte";
 	import Footer from "$components/Footer.svelte";
+	import Methods from "$components/Methods.svelte";
 	import CMS from "$components/helpers/CMS.svelte";
 	import { fade } from "svelte/transition";
 	import copy from "$data/copy.json";
@@ -51,6 +52,7 @@
 		RomanNumerals,
 		EffectiveProgressions,
 		ExploreControls,
+		Methods,
 		Footer
 	};
 
@@ -189,14 +191,38 @@
 		explore.reset();
 	};
 
-	// The panel sits over the map, so a wheel there would never zoom it;
-	// hand it to the map's canvas instead.
+	// The map zooms on wheels and pinches over its canvas. Anything drawn
+	// over it (cluster titles, labels, the panel and its player) would catch
+	// them instead, and a pinch (a ctrl-wheel) would zoom the whole page.
+	// So: a pinch never zooms the page, and goes to the map; a plain wheel
+	// over the map's overlays or the panel does too.
 	let mapLayerEl = $state();
-	const forwardWheelToMap = (event) => {
+	const onWindowWheel = (event) => {
 		const canvas = mapLayerEl?.querySelector("canvas");
-		if (!canvas) return;
+		const pinch = event.ctrlKey;
+		if (pinch) event.preventDefault();
+		if (!canvas || event.target === canvas || mapProps === null) return;
+		const overMap =
+			mapLayerEl.contains(event.target) ||
+			event.target.closest?.("[data-wheel-to-map]");
+		if (!pinch && !overMap) return;
+		event.preventDefault();
 		canvas.dispatchEvent(new WheelEvent("wheel", event));
 	};
+	// Safari's trackpad pinch also sends its own gesture events, which zoom
+	// the page unless cancelled.
+	const preventPageZoom = (event) => event.preventDefault();
+	$effect(() => {
+		// not passive, or preventDefault can't stop the page zooming
+		window.addEventListener("wheel", onWindowWheel, { passive: false });
+		window.addEventListener("gesturestart", preventPageZoom);
+		window.addEventListener("gesturechange", preventPageZoom);
+		return () => {
+			window.removeEventListener("wheel", onWindowWheel);
+			window.removeEventListener("gesturestart", preventPageZoom);
+			window.removeEventListener("gesturechange", preventPageZoom);
+		};
+	});
 
 	const INTERACTIVE =
 		'a, button, input, label, select, textarea, audio, video, [tabindex]:not([tabindex="-1"]), [data-chords-drawer]';
@@ -323,7 +349,7 @@
 			<div
 				class="panel"
 				class:explore={onExploreSlide}
-				onwheel={forwardWheelToMap}
+				data-wheel-to-map
 				in:fade={{ duration: 300, delay: 800 }}
 			>
 				<!-- keeps the player's room while it's drawn under its cluster -->

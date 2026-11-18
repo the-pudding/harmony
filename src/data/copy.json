@@ -662,12 +662,10 @@
           }
         },
         {
-          "text": [
-            {
-              "type": "text",
-              "value": "Methods methods methods"
-            }
-          ]
+          "text": [],
+          "stage": {
+            "component": "Methods"
+          }
         },
         {
           "text": [],
