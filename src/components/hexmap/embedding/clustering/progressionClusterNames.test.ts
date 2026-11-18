@@ -54,12 +54,38 @@ describe("nameProgressionClusters", () => {
 		).toEqual([]);
 	});
 
-	it("names a near-tie after both progressions, top first", () => {
-		const [named] = name([
-			{ id: 0, at: [0.5, 0.5], mains: { "doo wop": 15, "V-I-vi-IV": 14 } }
+	it("can hold some progressions to a stricter share", () => {
+		const { clusters, main, position } = build([
+			{
+				id: 0,
+				at: [0.1, 0.1],
+				mains: { named: 7, a: 3, b: 3, c: 3, d: 3, e: 3, f: 3 }
+			},
+			{
+				id: 1,
+				at: [0.9, 0.9],
+				mains: { "V-vi-V": 7, a: 3, b: 3, c: 3, d: 3, e: 3, f: 3 }
+			}
 		]);
-		expect(named.name).toBe("doo wop · V-I-vi-IV");
-		expect(named.progressionNames).toEqual(["doo wop", "V-I-vi-IV"]);
+		const named = nameProgressionClusters(clusters, main, position, (name) =>
+			name === "named" ? 0.25 : 0.3
+		);
+		expect(named.map((n) => n.name)).toEqual(["named"]);
+	});
+
+	it("drops a near-tie between two progressions", () => {
+		expect(
+			name([
+				{ id: 0, at: [0.5, 0.5], mains: { "doo wop": 15, "V-I-vi-IV": 14 } }
+			])
+		).toEqual([]);
+	});
+
+	it("keeps a clear leader over the runner-up", () => {
+		const [named] = name([
+			{ id: 0, at: [0.5, 0.5], mains: { "doo wop": 15, "V-I-vi-IV": 9 } }
+		]);
+		expect(named.progressionNames).toEqual(["doo wop"]);
 	});
 
 	it("merges nearby clusters with the same name", () => {
@@ -81,19 +107,10 @@ describe("nameProgressionClusters", () => {
 		).toHaveLength(2);
 	});
 
-	it("renames a far-away repeat after what sets it apart", () => {
+	it("leaves a far-away repeat unlabeled, under the same name", () => {
 		const named = name([
 			{ id: 0, at: [0.1, 0.1], mains: { "doo wop": 40 } },
 			{ id: 1, at: [0.9, 0.9], mains: { "doo wop": 20, axis: 8 } }
-		]);
-		expect(named.map((n) => n.name)).toEqual(["doo wop", "doo wop · axis"]);
-		expect(named.every((n) => n.showLabel)).toBe(true);
-	});
-
-	it("leaves a far-away repeat unlabeled when nothing sets it apart", () => {
-		const named = name([
-			{ id: 0, at: [0.1, 0.1], mains: { "doo wop": 40 } },
-			{ id: 1, at: [0.9, 0.9], mains: { "doo wop": 20, axis: 1 } }
 		]);
 		expect(named.map((n) => [n.name, n.showLabel])).toEqual([
 			["doo wop", true],

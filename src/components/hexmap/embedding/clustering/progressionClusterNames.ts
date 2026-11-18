@@ -2,27 +2,25 @@
 // for the story's HexMap.
 //
 // A cluster's songs each have a main progression; the cluster is named
-// after the most common one. Three adjustments keep names honest:
+// after the most common one. Clusters are hubs for a single progression, so:
 //
-// 1. Near-ties get both names. When the runner-up is almost as common as
-//    the top progression, the cluster is a real group of songs that mix the
-//    two, so it's named "top · runner-up" (and gets a color of its own).
+// 1. Near-ties are dropped. When the runner-up is almost as common as the
+//    top progression, the songs mix the two and no one progression leads.
 // 2. Nearby clusters with the same name merge. DBSCAN often splits one
 //    region into touching pieces; they're one thing on the map.
-// 3. Far-apart clusters with the same name are told apart. The largest
-//    keeps the plain name; each other one is named for the progression that
-//    sets it apart from the largest, or left unlabeled when none does.
+// 3. Far-apart clusters with the same name keep it, but only the largest is
+//    labeled; the others are still colored.
 
 import { hashSongKeys, type DensityCluster } from "./densityClusters.js";
 
 export type NamedProgressionCluster = {
 	cluster: DensityCluster;
-	// "doo wop", or "doo wop · V-I-vi-IV" for a near-tie.
+	// The main progression, e.g. "doo wop".
 	name: string;
-	// The progressions in the name, top first. Shading sums their shares.
+	// Just that progression (a list so shading and search can sum shares).
 	progressionNames: string[];
-	// False for a far-away repeat of a larger cluster's name that nothing
-	// sets apart: it's still colored, just not labeled.
+	// False for a far-away repeat of a larger cluster's name: it's still
+	// colored, just not labeled.
 	showLabel: boolean;
 };
 
@@ -30,22 +28,14 @@ export type NamedProgressionCluster = {
 // same main progression.
 export const MIN_MAIN_PROGRESSION_SHARE = 0.25;
 
-// A cluster names only its top progression when that progression is at
-// least this many times as common as the runner-up; otherwise it's a
-// near-tie and names both.
+// A cluster is kept only when its top progression is at least this many
+// times as common as the runner-up; otherwise it's a near-tie and dropped.
 export const NEAR_TIE_RATIO = 1.5;
 
 // Same-name clusters whose nearest songs are within this distance (on the
 // normalized [0,1] map) merge into one. Measured: split pieces of one region
 // sit 0.002–0.05 apart; genuinely separate same-name clusters 0.15+.
 export const SAME_NAME_MERGE_GAP = 0.06;
-
-// A far-away repeat is renamed after a progression only when that
-// progression is the main one for at least this share of its songs (and
-// more so than in the largest same-name cluster).
-export const DISTINCTIVE_MIN_SHARE = 0.15;
-
-export const PROGRESSION_NAME_SEPARATOR = " · ";
 
 type Position = { x: number; y: number };
 
@@ -72,7 +62,7 @@ const mainProgressionShares = (
 };
 
 const nameOf = (progressionNames: readonly string[]): string =>
-	progressionNames.join(PROGRESSION_NAME_SEPARATOR);
+	progressionNames[0];
 
 // Distance between the closest pair of songs, one from each cluster.
 const nearestGap = (
@@ -141,38 +131,8 @@ const mergeNearbySameName = (
 	});
 };
 
-// The progression that sets `cluster` apart from `reference`: the biggest
-// gain in main-progression share, if it's common enough to name.
-const distinctiveProgression = (
-	cluster: Draft,
-	reference: Draft,
-	mainProgressionBySongKey: ReadonlyMap<string, string>
-): string | null => {
-	const referenceShares = new Map(
-		mainProgressionShares(reference.cluster.songKeys, mainProgressionBySongKey)
-	);
-	const [best] = mainProgressionShares(
-		cluster.cluster.songKeys,
-		mainProgressionBySongKey
-	)
-		.filter(
-			([name, share]) =>
-				!cluster.progressionNames.includes(name) &&
-				share >= DISTINCTIVE_MIN_SHARE &&
-				share > (referenceShares.get(name) ?? 0)
-		)
-		.map(([name, share]): [string, number] => [
-			name,
-			share - (referenceShares.get(name) ?? 0)
-		])
-		.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-	return best?.[0] ?? null;
-};
-
-const distinguishFarRepeats = (
-	drafts: readonly Draft[],
-	mainProgressionBySongKey: ReadonlyMap<string, string>
-): Draft[] => {
+// Only the largest cluster with each name is labeled.
+const labelLargestOfEachName = (drafts: readonly Draft[]): Draft[] => {
 	const largestByName = new Map<string, Draft>();
 	for (const draft of [...drafts].sort(
 		(a, b) => b.cluster.songKeys.length - a.cluster.songKeys.length
@@ -180,52 +140,39 @@ const distinguishFarRepeats = (
 		const name = nameOf(draft.progressionNames);
 		if (!largestByName.has(name)) largestByName.set(name, draft);
 	}
-
-	const taken = new Set(largestByName.keys());
-	return drafts.map((draft) => {
-		const reference = largestByName.get(nameOf(draft.progressionNames))!;
-		if (reference === draft) return draft;
-		const distinctive = distinctiveProgression(
-			draft,
-			reference,
-			mainProgressionBySongKey
-		);
-		const renamed =
-			distinctive === null ? null : [...draft.progressionNames, distinctive];
-		if (renamed === null || taken.has(nameOf(renamed)))
-			return { ...draft, showLabel: false };
-		taken.add(nameOf(renamed));
-		return { ...draft, progressionNames: renamed };
-	});
+	return drafts.map((draft) =>
+		largestByName.get(nameOf(draft.progressionNames)) === draft
+			? draft
+			: { ...draft, showLabel: false }
+	);
 };
 
 export const nameProgressionClusters = (
 	clusters: readonly DensityCluster[],
 	mainProgressionBySongKey: ReadonlyMap<string, string>,
 	positionBySongKey: ReadonlyMap<string, Position>,
-	minProgressionShare: number
+	// The share a cluster's top progression needs, or a function giving it
+	// per progression (e.g. stricter for unnamed ones).
+	minProgressionShare: number | ((progressionName: string) => number)
 ): NamedProgressionCluster[] => {
 	const drafts = clusters.flatMap((cluster): Draft[] => {
 		const [top, runnerUp] = mainProgressionShares(
 			cluster.songKeys,
 			mainProgressionBySongKey
 		);
-		if (!top || top[1] < minProgressionShare) return [];
-		const isNearTie =
-			runnerUp !== undefined && top[1] < runnerUp[1] * NEAR_TIE_RATIO;
-		return [
-			{
-				cluster,
-				progressionNames: isNearTie ? [top[0], runnerUp[0]] : [top[0]],
-				showLabel: true
-			}
-		];
+		if (!top) return [];
+		const minShare =
+			typeof minProgressionShare === "number"
+				? minProgressionShare
+				: minProgressionShare(top[0]);
+		if (top[1] < minShare) return [];
+		if (runnerUp !== undefined && top[1] < runnerUp[1] * NEAR_TIE_RATIO) {
+			return [];
+		}
+		return [{ cluster, progressionNames: [top[0]], showLabel: true }];
 	});
 
-	return distinguishFarRepeats(
-		mergeNearbySameName(drafts, positionBySongKey),
-		mainProgressionBySongKey
-	)
+	return labelLargestOfEachName(mergeNearbySameName(drafts, positionBySongKey))
 		.map(({ cluster, progressionNames, showLabel }) => ({
 			cluster,
 			name: nameOf(progressionNames),

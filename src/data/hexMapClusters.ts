@@ -1,6 +1,8 @@
 // The hex map's progression clusters, computed once by tasks/build-hexmap.ts
 // from the snapshot's own (rounded) columns and stored in it, so HexMap and
 // the Explore search read the same clusters without recomputing them.
+import coreProgressions from "./core-progressions.js";
+import { normalizeClusterName } from "./clusterName.js";
 import { buildClusterInputPoints } from "../components/hexmap/embedding/clustering/clusterInputPoints.js";
 import {
 	findDensityClusters,
@@ -18,7 +20,21 @@ import {
 
 export const HEX_MAP_CLUSTER_MIN_POINTS = 15;
 export const HEX_MAP_CLUSTER_MAX_POINTS = 300;
+// The share of a cluster's songs that must have its top progression as
+// their main one: a named progression's hub, or a stricter bar for one
+// known only by its chords ("V-vi-V"), so those only show when they're
+// clear-cut.
 export const HEX_MAP_CLUSTER_MIN_PROGRESSION_SHARE = 0.25;
+export const HEX_MAP_CLUSTER_MIN_UNNAMED_PROGRESSION_SHARE = 0.3;
+
+const namedProgressions = new Set(
+	coreProgressions.map(({ name }) => normalizeClusterName(name))
+);
+
+export const minProgressionShareFor = (progressionName: string): number =>
+	namedProgressions.has(normalizeClusterName(progressionName))
+		? HEX_MAP_CLUSTER_MIN_PROGRESSION_SHARE
+		: HEX_MAP_CLUSTER_MIN_UNNAMED_PROGRESSION_SHARE;
 
 export type SnapshotCluster = {
 	name: string;
@@ -70,7 +86,10 @@ export const computeHexMapClusters = (
 			decodeSnapshotCoverage(snapshot, index)
 		);
 		if (homogeneity)
-			mainProgressionBySongKey.set(songKey, homogeneity.dominantProgressionName);
+			mainProgressionBySongKey.set(
+				songKey,
+				homogeneity.dominantProgressionName
+			);
 	});
 	const indexBySongKey = new Map(
 		snapshot.songKeys.map((songKey, index) => [songKey, index])
@@ -83,7 +102,7 @@ export const computeHexMapClusters = (
 		),
 		mainProgressionBySongKey,
 		new Map(clusterPoints.map((point) => [point.songKey, point])),
-		HEX_MAP_CLUSTER_MIN_PROGRESSION_SHARE
+		minProgressionShareFor
 	).map(({ cluster, name, progressionNames, showLabel }) => ({
 		name,
 		progressionNames,
@@ -97,8 +116,14 @@ export const namedClustersFromSnapshot = (snapshot: {
 	songKeys: string[];
 	clusters: SnapshotCluster[];
 }): NamedProgressionCluster[] =>
-	snapshot.clusters.map(({ name, progressionNames, showLabel, songIndexes }, id) => {
-		const songKeys = songIndexes.map((index) => snapshot.songKeys[index]);
-		const cluster: DensityCluster = { id, songKeys, hash: hashSongKeys(songKeys) };
-		return { cluster, name, progressionNames, showLabel };
-	});
+	snapshot.clusters.map(
+		({ name, progressionNames, showLabel, songIndexes }, id) => {
+			const songKeys = songIndexes.map((index) => snapshot.songKeys[index]);
+			const cluster: DensityCluster = {
+				id,
+				songKeys,
+				hash: hashSongKeys(songKeys)
+			};
+			return { cluster, name, progressionNames, showLabel };
+		}
+	);
