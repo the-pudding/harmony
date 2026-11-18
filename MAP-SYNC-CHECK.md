@@ -57,3 +57,7 @@ The renames in `core-progressions.ts` are kept; "my boo" and "paradise" still na
 
 - Never edit `hexmap.json` by hand. Change `core-progressions.ts` (or the corrections), run `npm run hexmap` on Node 26, and commit the rebuilt `hexmap.json` in the same commit.
 - `npm run test` catches a `hexmap.json` that is out of date or was edited by hand.
+
+## When you're done: delete this file
+
+This file is only for this one-time check. The lasting rules are in the pinned Node version, the build-time check, the test and `README.md` ("Story map data"). After you've reported back, delete `MAP-SYNC-CHECK.md`, then commit and push the deletion. Include any rebuilt `hexmap.json` in the same commit if step 5 produced one.
