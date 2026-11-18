@@ -56,7 +56,7 @@
 	},
 	"type": "module",
 	"engines": {
-		"node": ">= 22.22.0"
+		"node": "^26.0.0"
 	},
 	"browserslist": "> 0.5%, last 4 versions, not ie <= 11, not ie_mob <= 11",
 	"dependencies": {

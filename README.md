@@ -48,7 +48,9 @@ The map on the story pages (`/`, via `HexMap.svelte`) doesn't compute anything f
 - `static/data/hexmap.json`: each song's map position and progression coverage, plus its title and artists (~1.3 MB)
 - `static/data/song-shards/*.json`: the songs' chord data split into 256 small files, so a song's tooltip loads just the one it needs
 
-Both are gitignored, like `songs.json`. The `/demo/` pages still compute everything live and don't use them.
+`hexmap.json` is committed, so everyone sees the same map; the shards are gitignored, like `songs.json`. The `/demo/` pages still compute everything live and don't use them.
+
+**Never edit `hexmap.json` by hand**, not even to rename a cluster. Cluster names come from `core-progressions.ts`, so change them there and rebuild. A hand-patched file looks fine until someone rebuilds; then it no longer matches the code, and the rebuilt map can come out completely different. This matters most when a "rename" actually adds a progression: that changes which songs match, and UMAP is sensitive enough that a handful of changed songs moves every point and reshapes the clusters. Commit the rebuilt `hexmap.json` in the same commit as the change that caused it.
 
 `npm run songs` runs it for you. Run `npm run hexmap` on its own when the map's inputs change without the songs changing:
 
@@ -60,7 +62,7 @@ Both are gitignored, like `songs.json`. The `/demo/` pages still compute everyth
 
 You don't need to rerun it for HexMap props (focus, labels, interaction, clustering and layout settings), the theme, screen size, or drawing code; those all apply in the browser.
 
-`npm run test` catches most stale data: [`hexMapSnapshot.test.ts`](src/data/hexMapSnapshot.test.ts) fails when the baked songs or coverage no longer match what the code computes. It doesn't check map positions, so rerun `npm run hexmap` after layout-only changes.
+`npm run test` catches most stale data: [`hexMapSnapshot.test.ts`](src/data/hexMapSnapshot.test.ts) fails when the baked songs or coverage no longer match what the code computes, and when the core progressions, matching weights, song corrections or `songs.json` differ from what the snapshot was built from (the `inputsHash` written by the build; see [`hexMapInputsHash.ts`](src/data/hexMapInputsHash.ts)). Two people with the same commit, the same harmony-data commit **and the same Node major version** get a byte-identical `hexmap.json`. The layout depends on the Node version (identical inputs gave 76 clusters on Node 20, 79 on 22, 80 on 26), so the build refuses to run on a major other than the one in `.node-version` (also in `.nvmrc`, for nvm: run `nvm use`). If the test fails on one machine and not the other, compare `git -C ../harmony-data rev-parse HEAD` and rebuild `songs.json`. It doesn't check map positions or matching code changes, so rerun `npm run hexmap` after those.
 
 ## Chart data (`npm run charts`)
 

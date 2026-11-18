@@ -30,6 +30,11 @@ export type HexMapSnapshot = {
 	years?: number[];
 	// The map's progression clusters, largest first (see hexMapClusters.ts).
 	clusters: SnapshotCluster[];
+	// Fingerprint of the inputs it was built from (see hexMapInputsHash.ts).
+	// Absent from snapshots built before this field existed.
+	inputsHash?: string;
+	// The Node version that built it; the layout differs across Node majors.
+	nodeVersion?: string;
 };
 
 // The full chord data for each song lives in small shards so a song tooltip

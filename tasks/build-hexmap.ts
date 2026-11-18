@@ -16,10 +16,33 @@ import {
 	type HexMapSnapshot
 } from "../src/data/hexMapSnapshot.js";
 import { computeHexMapClusters } from "../src/data/hexMapClusters.js";
+import { hexMapInputsHash } from "../src/data/hexMapInputsHash.js";
 import { computeSongCoverage } from "../src/routes/demo/define-chord-progression/compute-coverage-of-all-songs/computeSongCoverage.js";
 import { computeHexMapLayout } from "../src/components/hexmap/embedding/hexMapLayout.js";
 
 const ROOT = process.cwd();
+
+// UMAP's floating-point results differ across Node major versions (same code
+// and songs.json gave 76 clusters on Node 20, 79 on 22, 80 on 26), so
+// everyone must build the committed map on the version in .node-version.
+const pinnedNode = fs
+	.readFileSync(path.join(ROOT, ".node-version"), "utf8")
+	.trim()
+	.replace(/^v/, "");
+const major = (version: string) => version.replace(/^v/, "").split(".")[0];
+if (major(process.version) !== major(pinnedNode)) {
+	console.error(
+		`build-hexmap: running Node ${process.version}, but .node-version pins v${pinnedNode}. ` +
+			"The map layout depends on the Node version, so this build wouldn't match " +
+			"anyone else's. Run `nvm use` (or your version manager's equivalent) first."
+	);
+	process.exit(1);
+}
+if (process.version.replace(/^v/, "") !== pinnedNode) {
+	console.warn(
+		`build-hexmap: Node ${process.version} differs from pinned v${pinnedNode} (same major, so it should match).`
+	);
+}
 const SONGS_PATH = path.join(ROOT, "static/data/songs.json");
 const SNAPSHOT_PATH = path.join(ROOT, "static/data/hexmap.json");
 const SHARD_DIR = path.join(ROOT, "static/data/song-shards");
@@ -102,7 +125,9 @@ const columns = {
 // compute from the file.
 const snapshot: HexMapSnapshot = {
 	...columns,
-	clusters: time("clusters", () => computeHexMapClusters(columns))
+	clusters: time("clusters", () => computeHexMapClusters(columns)),
+	inputsHash: hexMapInputsHash(inputs),
+	nodeVersion: process.version
 };
 fs.writeFileSync(SNAPSHOT_PATH, JSON.stringify(snapshot));
 

@@ -3,6 +3,7 @@ import path from "path";
 import { describe, expect, it } from "vitest";
 import type { SongInput } from "../chord-processing/types.js";
 import { applyHandReviewedCorrections } from "./applyHandReviewedCorrections.js";
+import { hexMapInputsHash } from "./hexMapInputsHash.js";
 import { groupSongs } from "./songBrowser.js";
 import { sortAllSongs } from "./songBrowserData.js";
 import {
@@ -40,8 +41,20 @@ describe.skipIf(!haveData)("hex map snapshot matches songs.json", () => {
 		);
 		const step = Math.max(1, Math.floor(songs.length / SAMPLE_SIZE));
 		const sample = songs.filter((_, index) => index % step === 0);
-		return { songs, snapshot, sample };
+		return { inputs, songs, snapshot, sample };
 	};
+
+	// Catches a snapshot that's stale or was edited by hand (e.g. a progression
+	// renamed or added in core-progressions.ts and patched into hexmap.json
+	// without a rebuild). The coverage test below only samples songs, so it
+	// can miss changes that touch a few.
+	it("was built from the current core progressions, corrections and songs.json", () => {
+		const { inputs, snapshot } = load();
+		expect(
+			snapshot.inputsHash,
+			"hexmap.json is stale or hand-edited: run `npm run hexmap` and commit it"
+		).toBe(hexMapInputsHash(inputs));
+	}, 60_000);
 
 	it("has every song, with the coverage the live pipeline computes", () => {
 		const { songs, snapshot, sample } = load();
