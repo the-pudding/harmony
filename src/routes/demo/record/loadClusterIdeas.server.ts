@@ -114,8 +114,14 @@ const buildAllClusterIdeas = (): ClusterIdeasByMode => {
 	return { spread: ideasFor(true), strongest: ideasFor(false) };
 };
 
-// songs.json is ~50 MB, so build once per server process.
-let cachedIdeas: ClusterIdeasByMode | null = null;
+// songs.json is ~50 MB, so build once per map: again only when hexmap.json
+// changes (its clusters are what the ideas are grouped by).
+let cachedIdeas: { hexMap: object; ideas: ClusterIdeasByMode } | null = null;
 
-export const loadClusterIdeas = (): ClusterIdeasByMode =>
-	(cachedIdeas ??= buildAllClusterIdeas());
+export const loadClusterIdeas = (): ClusterIdeasByMode => {
+	const hexMap = readHexMap();
+	if (cachedIdeas?.hexMap !== hexMap) {
+		cachedIdeas = { hexMap, ideas: buildAllClusterIdeas() };
+	}
+	return cachedIdeas.ideas;
+};

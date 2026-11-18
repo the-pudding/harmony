@@ -12,23 +12,32 @@ export type MapCluster = {
 
 const HEX_MAP_PATH = path.join(process.cwd(), "static", "data", "hexmap.json");
 
-let cachedHexMap: HexMapSnapshot | null = null;
+let cachedHexMap: { mtimeMs: number; hexMap: HexMapSnapshot } | null = null;
 
-// static/data/hexmap.json, read once per server process.
-export const readHexMap = (): HexMapSnapshot =>
-	(cachedHexMap ??= JSON.parse(
-		fs.readFileSync(HEX_MAP_PATH, "utf8")
-	) as HexMapSnapshot);
+// static/data/hexmap.json, re-read only when the file changes (a rebuild
+// while the dev server runs), so renamed clusters show up on reload.
+export const readHexMap = (): HexMapSnapshot => {
+	const { mtimeMs } = fs.statSync(HEX_MAP_PATH);
+	if (cachedHexMap?.mtimeMs !== mtimeMs) {
+		cachedHexMap = {
+			mtimeMs,
+			hexMap: JSON.parse(fs.readFileSync(HEX_MAP_PATH, "utf8"))
+		};
+	}
+	return cachedHexMap.hexMap;
+};
 
-let cachedClusters: MapCluster[] | null = null;
+let cachedClusters: { hexMap: HexMapSnapshot; clusters: MapCluster[] } | null =
+	null;
 
 // The clusters the map draws, one per name (far-away repeats of a name are
 // one cluster to reference.csv, which matches by name), biggest first.
 // These are the clusters a synced song can join.
 export const loadMapClusters = (): MapCluster[] => {
-	if (cachedClusters) return cachedClusters;
+	const hexMap = readHexMap();
+	if (cachedClusters?.hexMap === hexMap) return cachedClusters.clusters;
 	const byName = new Map<string, MapCluster>();
-	for (const cluster of readHexMap().clusters) {
+	for (const cluster of hexMap.clusters) {
 		const key = normalizeClusterName(cluster.name);
 		const existing = byName.get(key);
 		if (existing) {
@@ -41,10 +50,11 @@ export const loadMapClusters = (): MapCluster[] => {
 			songCount: cluster.songIndexes.length
 		});
 	}
-	cachedClusters = [...byName.values()].sort(
+	const clusters = [...byName.values()].sort(
 		(a, b) => b.songCount - a.songCount
 	);
-	return cachedClusters;
+	cachedClusters = { hexMap, clusters };
+	return clusters;
 };
 
 export const loadMapClusterNames = (): string[] =>

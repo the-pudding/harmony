@@ -16,7 +16,7 @@ import {
 	type ProgressionCoverage
 } from "../routes/demo/shared/progressionHomogeneity.js";
 
-export const HEX_MAP_CLUSTER_MIN_POINTS = 20;
+export const HEX_MAP_CLUSTER_MIN_POINTS = 15;
 export const HEX_MAP_CLUSTER_MAX_POINTS = 300;
 export const HEX_MAP_CLUSTER_MIN_PROGRESSION_SHARE = 0.25;
 

@@ -25,6 +25,7 @@
 		featuredSongKeys,
 		hasFeaturedSongs
 	} from "$data/featuredClusters.js";
+	import { sameClusterName } from "$data/clusterName.js";
 	import type { ChordColorSegment } from "$runes/audio.svelte.js";
 	import { mapColors } from "$runes/mapColors.svelte.js";
 	import { onMount } from "svelte";
@@ -77,8 +78,8 @@
 		// focusFrame) without locking it, and at dot zoom its title is left
 		// to its player (see onExploredTitleAnchor).
 		exploredClusterName?: string | null;
-		// A song picked in search: spotlit, and when no cluster is explored
-		// (it's in none), the view zooms in on it instead.
+		// A song picked in search: spotlit, and when it isn't in the explored
+		// cluster (or none is explored), the view zooms in on it instead.
 		searchedSongKey?: string | null;
 		// Called when the user picks a cluster: its hex, its title, or a dot
 		// in it (with that song), or null for a stray click.
@@ -264,6 +265,19 @@
 		return regions;
 	});
 
+	// The view frames the explored cluster when the searched song is in it;
+	// otherwise (it's in no cluster, or featured under a name the map no
+	// longer has) it zooms to the song itself.
+	const searchZoomSongKey = $derived(
+		searchedSongKey !== null &&
+			!sameClusterName(
+				exploredClusterName,
+				clusterRegionBySongKey.get(searchedSongKey)?.name
+			)
+			? searchedSongKey
+			: null
+	);
+
 	const progressionSharesBySongKey = $derived(
 		new Map(
 			[...homogeneityBySongKey].map(([songKey, homogeneity]) => [
@@ -325,9 +339,7 @@
 				showClusterNames={labelsVisible}
 				{focusClusterName}
 				selectedClusterName={explorable ? exploredClusterName : null}
-				zoomSongKey={explorable && exploredClusterName === null
-					? searchedSongKey
-					: null}
+				zoomSongKey={explorable ? searchZoomSongKey : null}
 				spotlitSongKey={explorable ? searchedSongKey : null}
 				{focusFrame}
 				offsetY={centered || focusCluster !== undefined
