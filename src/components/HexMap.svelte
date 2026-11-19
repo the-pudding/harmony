@@ -23,6 +23,7 @@
 	} from "$routes/demo/shared/progressionHomogeneity.js";
 	import {
 		featuredSongKeys,
+		featuredSongsOf,
 		hasFeaturedSongs
 	} from "$data/featuredClusters.js";
 	import { sameClusterName } from "$data/clusterName.js";
@@ -51,6 +52,17 @@
 		rotateLabels?: boolean;
 		// Zoom in on and center this cluster, by name (e.g. "stay with me").
 		focusCluster?: string;
+		// While focusCluster is set: its featured songs are drawn like any
+		// other dot (no outline, enlarging or title), and dots can be hovered
+		// but not clicked. The page should skip its player for the cluster too
+		// (Index does). No effect without focusCluster.
+		hidePlayer?: boolean;
+		// Songs (by slug) drawn like featured songs, enlarged and labeled, but
+		// not playable and without the 🎧. They can still be hovered.
+		highlightSongs?: string[];
+		// Changes to focusCluster jump straight to the new view instead of
+		// animating (e.g. when the map is about to appear).
+		instantFocus?: boolean;
 		// The part of the map, in pixels from its top, that a focused cluster
 		// is zoomed to almost fill the height of and centered in.
 		focusFrame?: { top: number; height: number } | null;
@@ -112,6 +124,9 @@
 
 	const {
 		focusCluster = undefined,
+		hidePlayer = false,
+		highlightSongs = [],
+		instantFocus = false,
 		focusFrame = null,
 		centered = false,
 		movable = true,
@@ -149,6 +164,35 @@
 	// since defaults are only evaluated once and focusCluster changes over
 	// the life of the map.
 	const explorable = $derived(movable && focusCluster === undefined);
+
+	// A focused cluster drawn without its player: no featured songs, no clicks.
+	const playerHidden = $derived(hidePlayer && focusCluster !== undefined);
+
+	// The featured songs drawn enlarged and labeled: all of them, or only the
+	// focused cluster's (none with hidePlayer).
+	const playableSongKeys = $derived(
+		focusCluster === undefined
+			? featuredSongKeys
+			: playerHidden
+				? new Set<string>()
+				: new Set(featuredSongsOf(focusCluster).map(({ songKey }) => songKey))
+	);
+
+	const highlightedSongKeys = $derived(new Set(highlightSongs));
+
+	// highlightSongs are drawn the same, but aren't playable unless featured.
+	const outlinedSongKeys = $derived(
+		playableSongKeys.size + highlightedSongKeys.size === 0
+			? null
+			: new Set([...playableSongKeys, ...highlightedSongKeys])
+	);
+	const inertOutlinedSongKeys = $derived(
+		new Set(
+			[...highlightedSongKeys].filter(
+				(songKey) => !playableSongKeys.has(songKey)
+			)
+		)
+	);
 
 	// A focused cluster isn't labeled.
 	const labelsVisible = $derived(!hideLabels && focusCluster === undefined);
@@ -289,6 +333,18 @@
 
 	const densityClusters = $derived(clusters.map(({ cluster }) => cluster));
 
+	// While a cluster is focused, only its songs (in every cluster by that
+	// name) can be hovered.
+	const hoverableSongKeys = $derived(
+		focusCluster === undefined
+			? null
+			: new Set(
+					clusters
+						.filter(({ name }) => sameClusterName(name, focusCluster))
+						.flatMap(({ cluster }) => cluster.songKeys)
+				)
+	);
+
 	const clusterNames = $derived(
 		new Map(clusters.map(({ cluster, name }) => [cluster.hash, name]))
 	);
@@ -363,18 +419,22 @@
 				{progressionSharesBySongKey}
 				{clusterRegionBySongKey}
 				{clusterNames}
-				outlinedSongKeys={featuredSongKeys}
+				{outlinedSongKeys}
+				{inertOutlinedSongKeys}
+				{hoverableSongKeys}
 				outlinedTitlePrefix="🎧"
 				{playingSongKey}
 				{playingClipProgressFraction}
 				{playingChordColorSegments}
 				movable={explorable}
 				{hoverable}
+				clickable={!playerHidden}
 				showLabels={labelsVisible && !rotateLabels}
 				showRotatingLabels={labelsVisible && rotateLabels}
 				labelNames={showLabels ?? null}
 				showClusterNames={labelsVisible}
 				{focusClusterName}
+				{instantFocus}
 				selectedClusterName={explorable ? exploredClusterName : null}
 				zoomSongKey={explorable ? searchZoomSongKey : null}
 				spotlitSongKey={explorable ? searchedSongKey : null}

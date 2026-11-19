@@ -15,14 +15,14 @@ const happyMajoryProgressions: ProgressionGroup = {
 	description: "Progressions that are happy and major-y",
 	progressions: [
 		{
-			name: "I-IV vamp",
+			name: "imagine",
 			chordProgression: "I-IV-I-IV",
 			scale: "major",
 			description: ""
 		},
 		// Disabled: a shape that starts and ends on the same chord collapses poorly
 		// when repeated — I-V-I-I-V-I rewrites to I-V-I-V-I via adjacent-duplicate
-		// collapse. Coverage moved to "I-V vamp" / "I-IV vamp" instead.
+		// collapse. Coverage moved to "I-V vamp" / "imagine" instead.
 		{
 			name: "I-V vamp",
 			chordProgression: "I-V-I-V",

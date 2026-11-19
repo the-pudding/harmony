@@ -67,11 +67,11 @@ describe("signature chord strategy", () => {
 
 	it("colors a cluster by its most telling non-tonic chord", () => {
 		const colors = strategy([
-			cluster("I-IV vamp", ["I-IV vamp"]),
+			cluster("imagine", ["imagine"]),
 			cluster("I-V vamp", ["I-V vamp"]),
 			cluster("doo wop", ["doo wop"])
 		]);
-		expect(colors.get("I-IV vamp")).toBe(fill("major.IV"));
+		expect(colors.get("imagine")).toBe(fill("major.IV"));
 		expect(colors.get("I-V vamp")).toBe(fill("major.V"));
 		// IV and V are shared with the vamps; vi is doo wop's alone.
 		expect(colors.get("doo wop")).toBe(fill("major.vi"));
@@ -84,8 +84,8 @@ describe("signature chord strategy", () => {
 
 	it("blends a cluster built on several progressions", () => {
 		const colors = strategy([
-			cluster("mix", ["I-IV vamp", "I-V vamp"]),
-			cluster("I-IV vamp", ["I-IV vamp"]),
+			cluster("mix", ["imagine", "I-V vamp"]),
+			cluster("imagine", ["imagine"]),
 			cluster("I-V vamp", ["I-V vamp"])
 		]);
 		expect(colors.get("mix")).toBe(

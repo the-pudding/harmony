@@ -54,11 +54,7 @@
 	import { createCamera } from "./scatter/camera.svelte.js";
 	import { createRotatingLabels } from "./scatter/rotatingLabels.svelte.js";
 	import { createTooltipSong } from "./scatter/tooltipSong.svelte.js";
-	import {
-		clusterAt,
-		hexKeyAt,
-		nearestSongAt
-	} from "./scatter/hitTesting.js";
+	import { clusterAt, hexKeyAt, nearestSongAt } from "./scatter/hitTesting.js";
 	import { resolveClick, type ClickAction } from "./scatter/clickIntent.js";
 	import { createPointStyle } from "./scatter/pointStyle.js";
 	import { prepareCanvas, type Scene } from "./scatter/paint/scene.js";
@@ -70,9 +66,7 @@
 		drawSelectionRings
 	} from "./scatter/paint/dots.js";
 	import { drawMarkedSongs } from "./scatter/paint/markedSongs.js";
-	import {
-		drawOutlinedSongLabels
-	} from "./scatter/paint/outlinedLabels.js";
+	import { drawOutlinedSongLabels } from "./scatter/paint/outlinedLabels.js";
 	import {
 		createHexLayoutCache,
 		type HexLayout
@@ -105,6 +99,7 @@
 		focusSongKey = undefined,
 		focusScale = DEFAULT_FOCUS_SCALE,
 		focusClusterName = undefined,
+		instantFocus = false,
 		selectedClusterName = null,
 		zoomSongKey = null,
 		openSongId = null,
@@ -121,6 +116,7 @@
 		accentFillColor = null,
 		outlinedSongKeys = null,
 		outlinedTitlePrefix = null,
+		inertOutlinedSongKeys = null,
 		playingSongKey = null,
 		playingClipProgressFraction = 0,
 		playingChordColorSegments = [],
@@ -130,6 +126,8 @@
 		clusterNames = null,
 		movable = true,
 		hoverable = true,
+		clickable = true,
+		hoverableSongKeys = null,
 		showLabels = true,
 		showRotatingLabels = false,
 		labelNames = null,
@@ -345,6 +343,20 @@
 	const isOutlined = (songKey: string): boolean =>
 		outlinedSongKeys?.has(songKey) ?? false;
 
+	// Outlined and playable (not just drawn like it).
+	const isPlayableOutlined = (songKey: string): boolean =>
+		isOutlined(songKey) && !(inertOutlinedSongKeys?.has(songKey) ?? false);
+
+	const playableOutlinedSongKeys = $derived(
+		outlinedSongKeys && inertOutlinedSongKeys
+			? new Set(
+					[...outlinedSongKeys].filter(
+						(songKey) => !inertOutlinedSongKeys.has(songKey)
+					)
+				)
+			: outlinedSongKeys
+	);
+
 	const pointsInDrawOrder = $derived(
 		accentSongKeys === null || accentFillColor === null
 			? drawablePoints
@@ -501,7 +513,11 @@
 		drawMarkedSongs(scene, {
 			style,
 			innerFill: songRegionFill ?? (() => OUTLINE_COLOR),
-			hoveredSongKey,
+			// only playable songs get the play icon on hover
+			hoveredSongKey:
+				hoveredSongKey !== null && isPlayableOutlined(hoveredSongKey)
+					? hoveredSongKey
+					: null,
 			playingSongKey,
 			playback: {
 				progressFraction: playingClipProgressFraction,
@@ -513,7 +529,8 @@
 			drawOutlinedSongLabels(scene, {
 				style,
 				summaries: songSummaryByKey,
-				titlePrefix: outlinedTitlePrefix
+				titlePrefix: outlinedTitlePrefix,
+				isPrefixed: isPlayableOutlined
 			});
 		}
 
@@ -536,19 +553,34 @@
 	// The outlinedSongKeys song whose marker is under the anchor, give or
 	// take the same slack plain dots get.
 	const findOutlinedSongAt = (anchor: Point2D): string | null =>
-		outlinedSongKeys
+		playableOutlinedSongKeys
+			? nearestSongAt(
+					anchor,
+					playableOutlinedSongKeys,
+					songScreen,
+					OUTLINED_POINT_RADIUS + HOVER_PICK_RADIUS - POINT_RADIUS
+				)
+			: null;
+
+	const pickableSongKeys = $derived(
+		hoverableSongKeys
+			? drawableSongKeys.filter((songKey) => hoverableSongKeys.has(songKey))
+			: drawableSongKeys
+	);
+
+	// The song under the anchor; markers first, since they sit on top, and
+	// picked at their bigger size. Every outlined song can be hovered,
+	// playable or not (hoverableSongKeys only limits plain dots).
+	const findSongAt = (anchor: Point2D): string | null =>
+		(outlinedSongKeys
 			? nearestSongAt(
 					anchor,
 					outlinedSongKeys,
 					songScreen,
 					OUTLINED_POINT_RADIUS + HOVER_PICK_RADIUS - POINT_RADIUS
 				)
-			: null;
-
-	// The song under the anchor; markers first, since they sit on top.
-	const findSongAt = (anchor: Point2D): string | null =>
-		findOutlinedSongAt(anchor) ??
-		nearestSongAt(anchor, drawableSongKeys, songScreen, HOVER_PICK_RADIUS);
+			: null) ??
+		nearestSongAt(anchor, pickableSongKeys, songScreen, HOVER_PICK_RADIUS);
 
 	const handlePointerMove = (event: MouseEvent) => {
 		if (!containerEl) return;
@@ -606,7 +638,7 @@
 	});
 
 	const handleClick = (event: MouseEvent) => {
-		if (clickGuard.shouldSuppressClick() || !containerEl) return;
+		if (!clickable || clickGuard.shouldSuppressClick() || !containerEl) return;
 		const anchor = anchorFromMouseEvent(event, containerEl);
 		// Songs (and their labels) are only drawn at dot zoom, so they can
 		// only be clicked then.
@@ -720,6 +752,9 @@
 		get focusClusterName() {
 			return focusClusterName;
 		},
+		get instantFocus() {
+			return instantFocus;
+		},
 		get selectedClusterName() {
 			return selectedClusterName;
 		},
@@ -818,7 +853,7 @@
 	onkeydown={interactive
 		? (event) => {
 				if (event.key === "Enter" || event.key === " ") {
-					if (hoveredSongKey !== null) {
+					if (clickable && hoveredSongKey !== null) {
 						onSelect(
 							hoveredSongKey === selectedSongKey ? null : hoveredSongKey
 						);
@@ -832,8 +867,9 @@
 		bind:this={canvasEl}
 		class:inert={!interactive}
 		class:grabbable={movable}
-		class:clickable={hoveredHex !== null ||
-			(hoveredSongKey !== null && isOutlined(hoveredSongKey))}
+		class:clickable={clickable &&
+			(hoveredHex !== null ||
+				(hoveredSongKey !== null && isPlayableOutlined(hoveredSongKey)))}
 		style:width="{width}px"
 		style:height="{height}px"
 	></canvas>

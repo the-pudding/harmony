@@ -29,6 +29,8 @@ export type CameraInput = {
 	readonly focusScale: number;
 	readonly focusSongKey: string | null | undefined;
 	readonly focusClusterName: string | null | undefined;
+	// Scripted focus changes jump instead of animating.
+	readonly instantFocus: boolean;
 	readonly selectedClusterName: string | null;
 	readonly zoomSongKey: string | null;
 	readonly selectedSongKey: string | null;
@@ -68,9 +70,11 @@ export const createCamera = (input: CameraInput) => {
 	// Moves the view instantly. d3 runs the zoom handlers synchronously here,
 	// and they read hover state, so it's untracked: otherwise the calling
 	// effect would re-run (and zoom back) whenever a song is hovered.
+	// Stops any move still animating first, or it would carry on past the jump.
 	const jumpTo = (canvas: HTMLCanvasElement, target: ZoomTransform) => {
 		untrack(() => {
-			if (zoomBehavior) select(canvas).call(zoomBehavior.transform, target);
+			if (!zoomBehavior) return;
+			select(canvas).interrupt().call(zoomBehavior.transform, target);
 		});
 	};
 
@@ -130,8 +134,15 @@ export const createCamera = (input: CameraInput) => {
 	// when both are set. For either: a string animates the view to center on
 	// it (fitting the whole cluster, for focusClusterName), null animates
 	// back out to the full view. A focus set from the start jumps straight
-	// there; once the map has been shown, focus changes animate.
+	// there; once the map has been shown, focus changes animate, unless
+	// instantFocus is on: then the first move to each focus jumps, and later
+	// re-targets for it (e.g. the frame settling) animate as usual.
 	let hasFocused = false;
+	const NOT_JUMPED = Symbol("not jumped");
+	let instantlyJumpedTo: string | null | typeof NOT_JUMPED = NOT_JUMPED;
+	$effect(() => {
+		if (!input.instantFocus) instantlyJumpedTo = NOT_JUMPED;
+	});
 	$effect(() => {
 		const canvas = input.canvas;
 		if (!canvas || !zoomBehavior || input.width === 0 || input.height === 0) {
@@ -156,8 +167,15 @@ export const createCamera = (input: CameraInput) => {
 		})();
 		if (!target) return;
 
-		if (!hasFocused) {
+		const focus =
+			focusClusterName !== undefined
+				? focusClusterName
+				: (focusSongKey ?? null);
+		const instant =
+			untrack(() => input.instantFocus) && instantlyJumpedTo !== focus;
+		if (!hasFocused || instant) {
 			hasFocused = true;
+			if (instant) instantlyJumpedTo = focus;
 			jumpTo(canvas, constrain(target));
 			return;
 		}

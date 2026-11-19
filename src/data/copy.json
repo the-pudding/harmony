@@ -77,7 +77,7 @@
           "text": [
             {
               "type": "text",
-              "value": "To find out, we gathered every Billboard top-20 hit since 1958, [7,300] songs, and scraped their chord progressions from popular online chord sites."
+              "value": "To find out, we gathered every Billboard top-20 hit since 1958, [7,300] songs, and found their chord progressions on popular online chord sites."
             },
             {
               "type": "text",
@@ -205,44 +205,28 @@
             },
             {
               "type": "text",
-              "value": "Here is every Billboard top-20 hit since 1958, arranged by the mix of progressions each one uses."
+              "value": "Each dot is a song, placed near songs that use a similar mix of chord progressions. When enough similar songs gather in one area, they form a cluster. This is the <strong class=progression>axis of awesome</strong> cluster."
             }
           ],
           "map": {
             "visible": "true",
-            "movable": "false",
-            "hoverable": "false",
-            "hideLabels": "true"
+            "focusCluster": "axis of awesome",
+            "hidePlayer": "true",
+            "highlightSongs": [
+              "journey__dont-stop-believin",
+              "justin-bieber-featuring-chance-the-rapper__holy"
+            ]
           }
         },
         {
           "text": [
-            {
-              "type": "text",
-              "value": "Here's how the map works. Zoom in on these islands, and you’ll see each dot as a song, placed near songs that use a similar mix of chord progressions. When enough similar songs gather in one area, they form a cluster. Songs in grey don't have enough close neighbors to belong to any cluster; their mix of progressions is too unusual."
-            },
-            {
-              "type": "text",
-              "value": "The purists, built mostly from one progression, are at the center of each cluster, and mixed songs spread out between them."
-            },
-            {
-              "type": "text",
-              "value": "<span class=small>Learn more about how we matched chord progressions and made the map in the <a href=#methods>methods</a>.</span>"
-            }
-          ],
-          "map": {
-            "visible": "true"
-          }
-        },
-        {
-          "text": [
-            {
-              "type": "text",
-              "value": "Here is the <strong class=progression>axis of awesome</strong> cluster."
-            },
             {
               "type": "text",
               "value": "They were onto something, lots of songs rely heavily on this progression, but this only makes up about [3%] of songs in the dataset."
+            },
+            {
+              "type": "text",
+              "value": "<span class=small>Hear some below by clicking on the dots! Only select songs labeled with 🎧 are playable."
             }
           ],
           "map": {
@@ -254,53 +238,61 @@
           "text": [
             {
               "type": "text",
-              "value": "So, what’s on the rest of the map?"
-            }
-          ],
-          "map": {
-            "visible": "true"
-          },
-          "overlay": {
-            "component": "List",
-            "highlight": "axis of awesome",
-            "obscure": "true"
-          }
-        },
-        {
-          "text": [
-            {
-              "type": "text",
-              "value": "These are the most common chord progressions in our dataset."
+              "value": "Let’s zoom out. Here are all [7,000] Billboard top-20 hits going back to 1958."
             },
             {
               "type": "text",
-              "value": "At the top is <strong class=progression>I-IV vamp</strong>, so just going back and forth between <span class=chord>I</span> and <span class=chord>IV</span>."
-            }
-          ],
-          "map": {
-            "visible": "true"
-          },
-          "overlay": {
-            "component": "List"
-          }
-        },
-        {
-          "text": [
-            {
-              "type": "text",
-              "value": "You can hear it in tunes like “Imagine” and “Walk on the Wild Side.”"
+              "value": "These colored clusters are concentrated similar songs, labeled by their main chord progression. Songs in grey don't have enough close neighbors to belong to any cluster; their mix of progressions is too unusual."
             }
           ],
           "map": {
             "visible": "true",
-            "focusCluster": "I-IV vamp"
+            "hoverable": "false",
+            "movable": "false"
           }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "Next is <strong class=progression>la bamba</strong>."
+              "value": "The map has no axes, so being at the top or on the left doesn't mean anything. What matters is what's nearby: songs that sit close together use similar progressions. Two clusters on opposite sides of the map aren't necessarily more different than two that are a little apart."
+            },
+            {
+              "type": "text",
+              "value": "<span class=small>Learn more about how we matched chord progressions and made the map in the <a href=#methods>methods</a>.</span>"
+            }
+          ],
+          "map": {
+            "visible": "true",
+            "hoverable": "false",
+            "movable": "false"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Let’s take a tour."
+            },
+            {
+              "type": "text",
+              "value": "[Down here], we find the <strong class=progression>imagine</strong> cluster, with lots of songs that use <span class=chords>I-IV-I-IV</span>, like “Imagine” or “Walk On The Wild Side.”"
+            }
+          ],
+          "map": {
+            "visible": "true",
+            "focusCluster": "imagine"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Over here is another large cluster, <strong class=progression>la bamba</strong>."
+            },
+            {
+              "type": "text",
+              "value": "This is a classic progression used across many genres, like rock, blues, and pop."
             }
           ],
           "map": {
@@ -312,19 +304,38 @@
           "text": [
             {
               "type": "text",
-              "value": "You’ll notice a lot of these top progressions exclusively involve <span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span>."
+              "value": "Here’s <strong class=progression>free fallin.</strong>"
+            },
+            {
+              "type": "text",
+              "value": "So far, visiting the biggest clusters, we’ve only seen the chords <span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span>."
+            }
+          ],
+          "map": {
+            "visible": "true",
+            "focusCluster": "free fallin"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "<span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span> are the most common in these hits, making up [52%] of all chords across all songs."
             },
             {
               "type": "text",
               "value": "If you’re gonna learn 3 chords, learn those."
+            },
+            {
+              "type": "ChordShares",
+              "value": {}
             }
           ],
           "map": {
-            "visible": "true"
-          },
-          "overlay": {
-            "component": "List",
-            "highlight": "I-IV vamp, la bamba, free fallin, I-V vamp, sweet home alabama, drops of jupiter, V-IV vamp, happy walk down, IV-V vamp, major-y, Cheerleader (chorus)"
+            "visible": "true",
+            "movable": "false",
+            "hoverable": "false",
+            "hideLabels": "true"
           }
         },
         {
@@ -348,26 +359,12 @@
             {
               "type": "text",
               "value": "Like in “You’re Still The One” by Shania Twain, where it ends on the <span class=chord>V</span>. My ear, at least, is waiting for it to finally return home to the <span class=chord>I</span>."
-            }
-          ],
-          "stage": {
-            "component": "Video",
-            "videoId": "shania"
-          }
-        },
-        {
-          "text": [
-            {
-              "type": "text",
-              "value": "<span class=chord>I</span>, <span class=chord>IV</span>, and <span class=chord>V</span> are the most common chords in these hits, making up [51%] of all chords across all songs."
             },
             {
-              "type": "text",
-              "value": "<span class=chord>vi</span>, the final chord in <strong class=progression>axis of awesome</strong> (<span class=chords>I-V-vi-IV</span>), is next most common at [7%]."
-            },
-            {
-              "type": "text",
-              "value": "You can tell a complete musical story with just 3 or 4 chords."
+              "type": "Video",
+              "value": {
+                "videoId": "shania"
+              }
             }
           ],
           "map": {
@@ -375,50 +372,45 @@
             "movable": "false",
             "hoverable": "false",
             "hideLabels": "true"
-          },
-          "overlay": {
-            "component": "ChordShares"
           }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "Maybe this list is a little less diverse than we thought."
+              "value": "<strong class=progression>axis of awesome</strong> throws the <span class=chord>vi</span> in there too, which shares two of its three notes with the <span class=chord>I</span>. So when the <span class=chord>V</span> sets you up to go home, you land somewhere that almost feels like home, and the loop continues."
             },
             {
               "type": "text",
-              "value": "In fact, several progressions here are actually very close cousins of the <strong class=progression>axis of awesome</strong> progression."
-            }
-          ],
-          "map": {
-            "visible": "true"
-          },
-          "overlay": {
-            "component": "List"
-          }
-        },
-        {
-          "text": [
-            {
-              "type": "text",
-              "value": "For example, <button><strong class=progression>never getting back together</strong></button> takes the same four chords (<span class=chords>I-V-vi-IV</span>) and shifts everything over one slot."
-            },
-            {
-              "type": "text",
-              "value": "Same with <button><strong class=progression>shivers</strong></button>. “Africa” by Toto is in the Axis of Awesome medley, but notice how they start <a href=https://youtu.be/5pidokakU4I?si=Ok_bLed7HrtG7njH&t=200 target=_blank>singing</a> it halfway through the 4-chord loop so that it lines up properly."
+              "value": "These four chords (<i>the</i> “four chords”) show up again and again on this map, just sometimes in a different order."
             }
           ],
           "map": {
             "visible": "true",
-            "focusCluster": "never getting back together"
+            "focusCluster": "axis of awesome"
           }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "<button><strong class=progression>doo wop</strong></button>, <button><strong class=progression>viva la vida</strong></button>, <button><strong class=progression>mr. brightside</strong></button>, and <button><strong class=progression>whatcha say</strong></button> all involve the same four chords (<span class=chords>I-V-vi-IV</span>), just rearranged slightly."
+              "value": "For example, <strong class=progression>shivers</strong> takes the four chords (<span class=chords>I-V-vi-IV</span>) and starts halfway through."
+            },
+            {
+              "type": "text",
+              "value": "Notice when “Africa” and “If I Were A Boy” enter in the <a href=https://youtu.be/5pidokakU4I?si=Ok_bLed7HrtG7njH&t=200 target=_blank>Axis of Awesome medley.</a> They start staggered from the other songs so that they line up properly."
+            }
+          ],
+          "map": {
+            "visible": "true",
+            "focusCluster": "shivers"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "<button><strong class=progression>whatcha say</strong></button>, <button><strong class=progression>viva la vida</strong></button>, <button><strong class=progression>mr. brightside</strong></button>, <button><strong class=progression>never getting back together</strong></button>, and <button><strong class=progression>doo wop</strong></button> all use the same four chords (<span class=chords>I-V-vi-IV</span>), just rearranged."
             }
           ],
           "map": {
@@ -430,7 +422,7 @@
           "text": [
             {
               "type": "text",
-              "value": "On its own, <span class=chords>I-V-vi-IV</span> appears in only [3%] of songs, but if we count these rotations and close cousins, and this family of progressions shows up in [20%] of hits."
+              "value": "On its own, <span class=chords>I-V-vi-IV</span> appears in only [3%] of songs, but if we count these rotations, this family of progressions shows up in [20%] of hits."
             }
           ],
           "map": {
@@ -441,15 +433,14 @@
           "text": [
             {
               "type": "text",
-              "value": "So, no, pop isn’t all <strong class=progression>axis of awesome</strong>. But a big chunk do work on very similar principles. The songs that stand out often break those rules, playing with what we’ve come to expect."
-            },
-            {
-              "type": "text",
-              "value": "<span class=small>Explore all the clusters and search for your favorite songs at the end in explore mode!</span>"
+              "value": "So, no, pop isn’t all <strong class=progression>axis of awesome</strong>. But a big chunk do work on very similar principles."
             }
           ],
           "map": {
-            "visible": "true"
+            "visible": "true",
+            "centered": "true",
+            "movable": "false",
+            "hoverable": "false"
           }
         }
       ]

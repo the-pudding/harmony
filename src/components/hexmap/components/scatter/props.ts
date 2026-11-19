@@ -39,6 +39,9 @@ export type EmbeddingScatterProps = {
 	// current member bounds to the viewport. Same undefined/null contract
 	// as focusSongKey; takes priority over it when both are set.
 	focusClusterName?: string | null;
+	// Scripted focus changes (focusClusterName, focusSongKey) jump straight
+	// to the new view instead of animating, e.g. while the map is hidden.
+	instantFocus?: boolean;
 	// A cluster the user picked (by name, like focusClusterName): the view
 	// animates to fit it when it's set, and again when focusFrame changes,
 	// but stays put when it's cleared, and the map stays movable.
@@ -108,6 +111,9 @@ export type EmbeddingScatterProps = {
 	// emoji marking them playable), so they stand apart from a spotlit
 	// song that isn't outlined.
 	outlinedTitlePrefix?: string | null;
+	// Of outlinedSongKeys, ones drawn the same but not playable: no
+	// outlinedTitlePrefix, and clicks treat them as plain dots.
+	inertOutlinedSongKeys?: Set<string> | null;
 	// One of outlinedSongKeys to call out above the rest (e.g. the song
 	// playing): drawn bigger and on top, with the others faded.
 	playingSongKey?: string | null;
@@ -142,6 +148,13 @@ export type EmbeddingScatterProps = {
 	// (focusSongKey / focusClusterName) still works with them off.
 	movable?: boolean;
 	hoverable?: boolean;
+	// Off: clicks on the map do nothing (no picking, playing, opening chords
+	// or song links), and the cursor never turns into a pointer. Hover still
+	// works. On by default.
+	clickable?: boolean;
+	// Only these songs can be hovered (and clicked) at dot zoom; the rest are
+	// drawn but ignore the pointer. Null (the default) for every song.
+	hoverableSongKeys?: ReadonlySet<string> | null;
 	// Hex-mode region labels drawn all at once on the map.
 	showLabels?: boolean;
 	// Hex-mode region labels that fade in one at a time at random spots,

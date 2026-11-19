@@ -27,6 +27,7 @@
 	import { chordify } from "$utils/chordify";
 	import { setContext } from "svelte";
 	import { createExplore } from "$runes/explore.svelte";
+	import { sameClusterName } from "$data/clusterName";
 	import { spanStyle } from "$routes/demo/record/timelineStyles";
 	import { audio, stopAllAudio } from "$runes/audio.svelte";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (1/3): ?slide=N URL persistence. See
@@ -115,7 +116,16 @@
 			hoverable: parseBoolean(map.hoverable),
 			hideLabels: parseBoolean(map.hideLabels),
 			rotateLabels: parseBoolean(map.rotateLabels),
-			centered: parseBoolean(map.centered)
+			centered: parseBoolean(map.centered),
+			hidePlayer: parseBoolean(map.hidePlayer),
+			// a list in the copy, or one comma-separated string
+			highlightSongs: map.highlightSongs
+				? [map.highlightSongs]
+						.flat()
+						.flatMap((value) => String(value).split(","))
+						.map((songKey) => songKey.trim())
+						.filter(Boolean)
+				: undefined
 		};
 		return Object.fromEntries(
 			Object.entries(props).filter(([, value]) => value !== undefined)
@@ -133,20 +143,52 @@
 			: { ...props, focusCluster: textFocusCluster };
 	});
 
+	// The text's cluster buttons (from the copy's HTML) show which one the
+	// map is on, in the selected style.
+	let textInnerEl = $state();
+	$effect(() => {
+		const focused = mapProps?.focusCluster;
+		void text;
+		if (!textInnerEl) return;
+		for (const button of textInnerEl.querySelectorAll("button")) {
+			const strong = button.querySelector(
+				"strong.progression, strong.progressions"
+			);
+			if (!strong) continue;
+			const selected =
+				focused !== undefined &&
+				sameClusterName(strong.textContent.trim(), focused);
+			button.classList.toggle("selected", selected);
+			button.setAttribute("aria-pressed", String(selected));
+		}
+	});
+
 	const onTextClick = (event) => {
 		const strong = event.target
 			.closest("button")
 			?.querySelector("strong.progression, strong.progressions");
 		const cluster = strong?.textContent.trim();
-		if (cluster) textFocusCluster = cluster;
+		if (!cluster) return;
+		enteredWithoutMap = false;
+		textFocusCluster = cluster;
 	};
 
 	let textHeight = $state();
+	// The text box as drawn, which lags textHeight while its height animates.
+	let textBoxHeight = $state(0);
 	let clusterFrameEl = $state();
 	let clusterFrameHeight = $state(0);
+	// Where the cluster frame ends up once the text box finishes resizing, so
+	// the map frames the cluster once instead of chasing the animation.
+	let textBoxGrowth = $derived(
+		text.length && textHeight && textBoxHeight ? textHeight - textBoxHeight : 0
+	);
 	let focusFrame = $derived(
-		clusterFrameEl && clusterFrameHeight > 0
-			? { top: clusterFrameEl.offsetTop, height: clusterFrameHeight }
+		clusterFrameEl && clusterFrameHeight - textBoxGrowth > 0
+			? {
+					top: clusterFrameEl.offsetTop + textBoxGrowth,
+					height: clusterFrameHeight - textBoxGrowth
+				}
 			: null
 	);
 	// What's explored, playing and open (see explore.svelte.ts). On the
@@ -159,6 +201,13 @@
 	});
 	let activeCluster = $derived(mapProps?.focusCluster ?? explore.clusterName);
 	let showClusterPanel = $derived(activeCluster !== undefined);
+	// hidePlayer drops the focused cluster's player (its name, arrows and
+	// chords) along with its featured songs on the map. The panel stays, empty,
+	// so the map frames the cluster the same as when the player shows, and
+	// the next slide's player doesn't shift everything.
+	let playerHidden = $derived(
+		mapProps?.hidePlayer === true && mapProps?.focusCluster !== undefined
+	);
 
 	// Hover links the explore panel's beeswarm and the map, both ways.
 	let hoveredInBeeswarm = $state(null);
@@ -184,8 +233,12 @@
 
 	// A new slide starts with nothing explored, playing or open, on its own
 	// focusCluster.
+	// Coming from a slide with no map, the map appears already on its
+	// focusCluster instead of zooming there; every other move animates.
+	let enteredWithoutMap = $state(false);
 	const goToSlide = (i) => {
 		if (i === slideI) return;
+		enteredWithoutMap = mapProps === null;
 		slideI = i;
 		textFocusCluster = undefined;
 		explore.reset();
@@ -272,6 +325,7 @@
 	<HexMap
 		{...mapProps ?? {}}
 		{focusFrame}
+		instantFocus={enteredWithoutMap}
 		theme="dark"
 		playingSongKey={explore.playingSongKey ?? null}
 		playingClipProgressFraction={audio.clipProgressFraction}
@@ -315,9 +369,14 @@
 			class="text frosted"
 			onclick={onTextClick}
 			style:height={textHeight ? `${textHeight}px` : null}
+			bind:clientHeight={textBoxHeight}
 			in:fade={{ duration: 250 }}
 		>
-			<div class="text-inner" bind:clientHeight={textHeight}>
+			<div
+				class="text-inner"
+				bind:this={textInnerEl}
+				bind:clientHeight={textHeight}
+			>
 				{#key text}
 					<div
 						in:fade={{ delay: 200, duration: 250 }}
@@ -349,24 +408,28 @@
 			<div
 				class="panel"
 				class:explore={onExploreSlide}
+				class:empty={playerHidden && !onExploreSlide}
 				data-wheel-to-map
 				in:fade={{ duration: 300, delay: 800 }}
 			>
 				<!-- keeps the player's room while it's drawn under its cluster -->
-				<div
-					class="player-slot"
-					style:min-height={playerAnchor ? `${playerHeight}px` : null}
-				>
-					<Player
-						cluster={activeCluster}
-						bind:playingSongKey={explore.playingSongKey}
-						bind:height={playerHeight}
-						anchor={playerAnchor}
-						chordsOpen={explore.chordsSongKey !== undefined &&
-							explore.chordsSongKey === explore.playingSongKey}
-						onToggleChords={onExploreSlide ? explore.toggleChords : null}
-					/>
-				</div>
+				{#if !playerHidden}
+					<div
+						class="player-slot"
+						style:min-height={playerAnchor ? `${playerHeight}px` : null}
+						in:fade={{ duration: 300 }}
+					>
+						<Player
+							cluster={activeCluster}
+							bind:playingSongKey={explore.playingSongKey}
+							bind:height={playerHeight}
+							anchor={playerAnchor}
+							chordsOpen={explore.chordsSongKey !== undefined &&
+								explore.chordsSongKey === explore.playingSongKey}
+							onToggleChords={onExploreSlide ? explore.toggleChords : null}
+						/>
+					</div>
+				{/if}
 				{#if onExploreSlide}
 					<ClusterBeeswarm
 						cluster={activeCluster}
@@ -494,6 +557,11 @@
 		pointer-events: auto;
 	}
 
+	/* holds the player's room without catching hovers meant for the map */
+	.panel.empty {
+		pointer-events: none;
+	}
+
 	/* the beeswarm below the chords sets the explore panel's height */
 	.panel.explore {
 		height: auto;
@@ -535,6 +603,21 @@
 
 	.text :global(button) {
 		font-family: var(--font-mono);
+	}
+
+	/* room for inline cluster buttons, on slides whose text has them. Set
+	   on each slide's own text, since the outgoing and incoming text briefly
+	   overlap while they fade. */
+	.text-inner > div:has(:global(button strong.progression)) {
+		line-height: 2.2;
+	}
+
+	/* the cluster the map is on */
+	.text :global(button.selected),
+	.text :global(button.selected:hover) {
+		background: var(--color-fg);
+		color: var(--color-bg);
+		border-color: var(--color-fg);
 	}
 
 	.text :global(ol) {

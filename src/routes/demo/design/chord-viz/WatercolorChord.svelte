@@ -56,17 +56,13 @@
 		mix-blend-mode: multiply;
 	}
 
+	/* hidden for now: it used to fade in on hover */
 	.pencil {
 		fill: none;
 		stroke: #18181b;
 		stroke-width: 1.25px;
 		stroke-linejoin: round;
 		opacity: 0;
-		transition: opacity 150ms ease;
-	}
-
-	.chord:hover .pencil {
-		opacity: 1;
 	}
 
 	.label {

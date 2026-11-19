@@ -52,7 +52,9 @@
 </script>
 
 <figure id="chord-shares">
-	<div class="chart-title">51% of all chords used are I, IV or V</div>
+	<div class="chart-title">
+		{Math.round(featuredPercent)}% of all chords used are I, IV or V
+	</div>
 
 	<div class="bar">
 		<ProgressionShareBar {segments} labelRowCount={1} labelAlign="start" />
@@ -62,7 +64,7 @@
 <style>
 	figure {
 		max-width: var(--col-width);
-		padding: 1rem 2rem;
+		padding-top: 1rem;
 		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
@@ -74,6 +76,8 @@
 		--label-size-px: 12px;
 		--track-color: transparent;
 		font-family: var(--font-mono);
+		/* the slide text's dark glow (.frosted) muddies the colored labels */
+		text-shadow: none;
 	}
 
 	/* The slivers fill the whole bar, so let them give up the room the gaps

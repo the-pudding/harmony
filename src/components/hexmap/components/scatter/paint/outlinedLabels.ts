@@ -30,12 +30,15 @@ export const drawOutlinedSongLabels = (
 	{
 		style,
 		summaries,
-		titlePrefix
+		titlePrefix,
+		isPrefixed = () => true
 	}: {
 		style: PointStyle;
 		summaries: ReadonlyMap<string, SongSummary>;
 		// Put before outlined songs' titles.
 		titlePrefix: string | null;
+		// Which outlined songs get titlePrefix (default: all of them).
+		isPrefixed?: (songKey: string) => boolean;
 	}
 ): void => {
 	const { context, viewport, themeColors } = scene;
@@ -44,7 +47,7 @@ export const drawOutlinedSongLabels = (
 		const screen = songScreen(scene, songKey);
 		if (!summary || !screen) return [];
 		const title =
-			titlePrefix && style.isOutlined(songKey)
+			titlePrefix && style.isOutlined(songKey) && isPrefixed(songKey)
 				? `${titlePrefix} ${summary.title}`
 				: summary.title;
 		const lines = songLabelLines({

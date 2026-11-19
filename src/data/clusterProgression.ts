@@ -1,6 +1,6 @@
 // The chord progression a cluster is named for, and its scale. Most map
 // clusters are top progressions; the rest are named by their progressions
-// ("I-IV vamp · Cheerleader (chorus)") or numerals ("V-I-IV"), so the first
+// ("imagine · Cheerleader (chorus)") or numerals ("V-I-IV"), so the first
 // one is used, as a core progression's chords or as numerals.
 import progressionsData from "$data/charts/top-progressions.csv";
 import coreProgressions from "$data/core-progressions.js";
