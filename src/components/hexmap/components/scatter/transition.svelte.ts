@@ -9,8 +9,8 @@ import {
 } from "./transitionMath.js";
 
 // Where every song should be, by song index: x and y (0–1 across the plot;
-// NaN = not placed, so it fades out where it is), alpha (0 = hidden), and
-// an optional stagger (0–1 per song; see STAGGER_SPAN).
+// NaN = not placed, so it fades out where it is), alpha (0 = hidden), mix
+// (0 = star white, 1 = region color) and an optional stagger (0–1 per song; see STAGGER_SPAN).
 export type TransitionTarget = Channels & { stagger?: Float32Array | null };
 
 // How songs move to a target: over durationMs, after holding still for
@@ -53,6 +53,10 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 	// (hex bins) can key on it.
 	let positionsVersion = 0;
 	let previousTarget: Target | null = null;
+	// How far through the latest transition the clock is, 0–1 (1 at rest).
+	// Songs with a stagger start later; this is the whole transition, for
+	// things that fade with it (guides).
+	let progress = 1;
 
 	const finish = () => {
 		positionsVersion++;
@@ -86,17 +90,20 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 		);
 		if (!changed) {
 			if (!settled) finish();
+			progress = 1;
 			return;
 		}
 		const timing = fresh ? null : input.timing(target, previous);
 		if (!timing || timing.instant) {
 			copyChannels(to, current);
+			progress = 1;
 			finish();
 			input.onFrame();
 			return;
 		}
 
 		settled = false;
+		progress = 0;
 		const durationMs = Math.max(1, timing.durationMs);
 		const startedAt = performance.now() + Math.max(0, timing.delayMs ?? 0);
 		const step = () => {
@@ -106,6 +113,7 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 				return;
 			}
 			const t = Math.min(1, elapsed / durationMs);
+			progress = t;
 			stepTransition(from, to, current, startAt, t, easeCubicInOut);
 			if (t >= 1) finish();
 			input.onFrame();
@@ -135,10 +143,17 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 		get alpha(): Float32Array {
 			return current.alpha;
 		},
+		// How much each song's color is its region color (the rest is star).
+		get mix(): Float32Array {
+			return current.mix;
+		},
 		get settled(): boolean {
 			return settled;
 		},
 		// Not reactive: read it while drawing.
+		get progress(): number {
+			return progress;
+		},
 		get positionsVersion(): number {
 			return positionsVersion;
 		}

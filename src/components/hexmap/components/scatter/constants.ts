@@ -67,6 +67,12 @@ export const RING_WIDTH = 1.5;
 // Plain dots outside hex mode — a star-like white so a highlighted
 // song/family reads clearly against an otherwise uncolored field.
 export const STAR_FILL_COLOR = "#e4e4e7";
+export const STAR_FILL_RGB = [228, 228, 231] as const;
+// Stars are a little see-through, so dense patches of them build up.
+export const STAR_ALPHA = 0.85;
+// A song's fill moving between star and region colors (see colorMix.ts) is
+// quantized to this many steps, so dots still fall into few batches.
+export const COLOR_MIX_STEPS = 24;
 
 // ── Outlined (called-out) songs & their labels ────────────────────────
 export const OUTLINE_COLOR = "#ffffff";
@@ -90,6 +96,15 @@ export const OUTLINED_LABEL_PADDING = 3;
 // ── Axes ──────────────────────────────────────────────────────────────
 export const AXIS_LABEL_COLOR = "rgba(161, 161, 170, 0.7)";
 export const AXIS_LABEL_FONT = '10px "JetBrains Mono", ui-monospace, monospace';
+// A layout's guides fade out over this fraction of the start of a
+// transition into another layout, and the next layout's fade in over the
+// same fraction of its end.
+export const GUIDE_FADE_FRACTION = 0.3;
+// Distance from the bottom of the frame to a guide's text baseline.
+export const GUIDE_LABEL_GAP = 24;
+// A bottom-right label stops this far short of the frame's right edge, to
+// clear the page's fixed audio button.
+export const GUIDE_BOTTOM_RIGHT_CLEARANCE = 56;
 
 // ── Cluster outlines (dot mode) ───────────────────────────────────────
 // Density clustering is only meaningful over layouts UMAP actually produced

@@ -12,11 +12,13 @@ import {
 const channels = (
 	x: number[],
 	y: number[],
-	alpha: number[] = x.map(() => 1)
+	alpha: number[] = x.map(() => 1),
+	mix: number[] = x.map(() => 0)
 ): Channels => ({
 	x: Float32Array.from(x),
 	y: Float32Array.from(y),
-	alpha: Float32Array.from(alpha)
+	alpha: Float32Array.from(alpha),
+	mix: Float32Array.from(mix)
 });
 
 // A transition from current to target, ready to step.
@@ -87,6 +89,45 @@ describe("stepTransition", () => {
 		expect(second.from.x[0]).toBe(midway);
 		expect(second.at(0).x[0]).toBe(midway);
 		expect(second.at(1).x[0]).toBe(0);
+	});
+});
+
+describe("color mix", () => {
+	it("eases with each song's position, staggered like it", () => {
+		const current = channels([0, 0], [0, 0], [1, 1], [1, 1]);
+		const stagger = Float32Array.from([0, 1]);
+		const { at } = setUp(
+			current,
+			channels([1, 1], [0, 0], [1, 1], [0, 0]),
+			stagger
+		);
+		expect([...at(0).mix]).toEqual([1, 1]);
+		const early = at(STAGGER_SPAN * 0.9);
+		expect(early.mix[0]).toBeLessThan(1);
+		expect(early.mix[1]).toBe(1);
+		const mid = at(0.5);
+		expect(mid.mix[0]).toBeCloseTo(1 - mid.x[0], 5);
+		expect([...at(1).mix]).toEqual([0, 0]);
+	});
+
+	it("counts as a change, and retargets from the color drawn now", () => {
+		const current = channels([0.2], [0.3], [1], [1]);
+		expect(setUp(current, channels([0.2], [0.3], [1], [1])).changed).toBe(
+			false
+		);
+		const first = setUp(current, channels([0.2], [0.3], [1], [0]));
+		expect(first.changed).toBe(true);
+		const midway = first.at(0.5).mix[0];
+		expect(midway).toBeGreaterThan(0);
+		expect(midway).toBeLessThan(1);
+		const second = setUp(current, channels([0.2], [0.3], [1], [1]));
+		expect(second.from.mix[0]).toBe(midway);
+	});
+
+	it("takes a song with no position yet straight to its target color", () => {
+		const current = channels([NaN], [NaN], [0], [0]);
+		const { from } = setUp(current, channels([0.6], [0.4], [1], [1]));
+		expect(from.mix[0]).toBe(1);
 	});
 });
 

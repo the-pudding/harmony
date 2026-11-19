@@ -16,6 +16,14 @@
 //        - delete the `{#if perfMeter}<pre class="perf-overlay">` block and
 //          its `.perf-overlay` style
 //
+//   3. src/components/HexMap.svelte: delete the `readLayoutParam` import and
+//      the `devLayout` line (marked "dev layout"), and use `layout` directly.
+//      (readLayoutParam below goes away with this file.)
+//
+// What ?layout=<name> does: forces the main map's layout (e.g.
+// ?layout=timeline for the night sky) whatever the slide asks for, to look
+// at layouts before the copy uses them.
+//
 // What it does: with ?perf=1 in the URL, the main map shows a small overlay
 // (top-left) with how long each draw() takes (p50/p95 over the last 120
 // frames), frames per second over the last second, and the dots drawn. It
@@ -31,6 +39,12 @@ const TEXT_REFRESH_MS = 200;
 export const readPerfParam = () => {
 	if (typeof window === "undefined") return false;
 	return new URL(window.location.href).searchParams.get(KEY) === "1";
+};
+
+// ?layout=timeline (any registered layout name), or null.
+export const readLayoutParam = () => {
+	if (typeof window === "undefined") return null;
+	return new URL(window.location.href).searchParams.get("layout");
 };
 
 const percentile = (sorted, p) =>

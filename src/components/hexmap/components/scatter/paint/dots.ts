@@ -1,38 +1,50 @@
 import {
+	COLOR_MIX_STEPS,
 	RING_WIDTH,
-	SELECTED_POINT_RADIUS,
-	STAR_FILL_COLOR
+	SELECTED_POINT_RADIUS
 } from "../constants.js";
+import { mixStep, STAR_FILL } from "../colorMix.js";
 import type { PointStyle } from "../pointStyle.js";
 import { screenX, screenY } from "../viewport.js";
 import { songScreen, type Scene } from "./scene.js";
 
-export type DotFill = (songKey: string) => string;
+export type DotFill = (songKey: string, index: number) => string;
 
 // A plain dot's fill, in priority order: the emphasis color for an
-// emphasized song, its region color in hex mode, the accent color for an
-// accented song, then a plain star white.
+// emphasized song, its color between star white and its region color (mix
+// by song index, 0 to 1: region once settled in a hex layout, star white in
+// the sky, and in between while it moves), the accent color for an accented
+// song, then star white.
 export const createDotFill = ({
 	emphasisFillColor,
 	emphasizedSongKeys,
+	mix,
 	regionFill,
+	mixFill,
 	accentFillColor,
 	isAccented
 }: {
 	emphasisFillColor: string | null;
 	emphasizedSongKeys: Set<string> | null;
-	// Set in hex mode: the song's region color at the current zoom.
-	regionFill: ((songKey: string) => string) | null;
+	mix: Float32Array;
+	// A song's region color, once its mix is 1 (in hex mode, at the current
+	// zoom).
+	regionFill: (songKey: string) => string;
+	// A song's color at a step between star and region, 1 to
+	// COLOR_MIX_STEPS − 1.
+	mixFill: (songKey: string, step: number) => string;
 	accentFillColor: string | null;
 	isAccented: (songKey: string) => boolean;
 }): DotFill => {
-	return (songKey) => {
+	return (songKey, index) => {
 		if (emphasisFillColor && emphasizedSongKeys?.has(songKey)) {
 			return emphasisFillColor;
 		}
-		if (regionFill) return regionFill(songKey);
+		const step = mixStep(mix[index]);
+		if (step === COLOR_MIX_STEPS) return regionFill(songKey);
+		if (step > 0) return mixFill(songKey, step);
 		if (accentFillColor && isAccented(songKey)) return accentFillColor;
-		return STAR_FILL_COLOR;
+		return STAR_FILL;
 	};
 };
 
@@ -88,7 +100,7 @@ export const drawDots = (
 			if (sx < -reach || sy < -reach || sx > right || sy > bottom) continue;
 			const dotAlpha = style.alphaFor(songKey) * songAlpha;
 			const radius = style.radiusFor(songKey);
-			const dotFill = fill(songKey);
+			const dotFill = fill(songKey, index);
 			const key =
 				Math.round(radius * RADIUS_KEY_STEPS) * (ALPHA_STEPS + 1) +
 				Math.round(dotAlpha * ALPHA_STEPS);

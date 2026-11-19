@@ -68,6 +68,16 @@ Notes on the numbers:
   batching should matter more on phones, where each fill() costs more;
   that needs the phone rows.
 
+- Commit 8 (timeline sky), desktop, `?perf=1&slide=34`, draw p50 / p95 in ms:
+  - Sky at rest, all ~7,100 stars on screen, dragged in the page like the
+    probe above (`?layout=timeline`): 2.7 / 2.9, two runs (UMAP's 1× hex
+    view is 1.1 / 1.2 on the same probe, since it paints hexes, not dots).
+  - UMAP ↔ sky transitions (a temporary toggle, not committed), reading
+    the overlay 1.2s after each of four flips: 3.7–4.1 / 5.5–7.7. That's
+    the per-song position, alpha and color mix, the 24-step color cache
+    and ~7,100 dots in a handful of batches, every frame for 700ms; frames
+    stayed at ~16.7ms (one run's first flip read 53 fps with its p95 at 7.7).
+    Phone rows still need a real device.
 - From commit 4 on, the overlay's "dots" counts the plain dots actually
   painted (on screen, not hidden, not markers) rather than every song.
 - A CPU profile of that drag puts the biggest single draw cost in

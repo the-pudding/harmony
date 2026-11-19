@@ -33,7 +33,10 @@
 		HEX_FADE_OUT_MS
 	} from "./scatter/constants.js";
 	import type { EmbeddingScatterProps as Props } from "./scatter/props.js";
-	import type { LayoutResult } from "$components/storymap/layouts/types.js";
+	import type {
+		Guide,
+		LayoutResult
+	} from "$components/storymap/layouts/types.js";
 	import type {
 		ClusterHit,
 		LabelSpot,
@@ -78,7 +81,13 @@
 		prepareCanvas,
 		type Scene
 	} from "./scatter/paint/scene.js";
-	import { drawAxisLabels } from "./scatter/paint/axes.js";
+	import {
+		drawAxisLabels,
+		drawGuides,
+		guideOpacities,
+		type GuideSet
+	} from "./scatter/paint/guides.js";
+	import { createMixFill } from "./scatter/colorMix.js";
 	import { drawClusterOutlines } from "./scatter/paint/clusters.js";
 	import {
 		createDotFill,
@@ -311,6 +320,12 @@
 		return alpha;
 	});
 
+	// Every song's color goal: its region color in a layout that colors by
+	// region, star white in one that doesn't.
+	const targetMix = $derived(
+		new Float32Array(songs.count).fill(layout.color === "region" ? 1 : 0)
+	);
+
 	// Where every song is headed: where the layout puts it, across the
 	// plot (a framed layout's 0–1 is converted from the frame rect), and
 	// how visible, plus what it was placed for, so the transition can tell
@@ -327,6 +342,7 @@
 	const transitionTarget = $derived.by((): PlacedTarget => {
 		const placed = {
 			alpha: targetAlpha,
+			mix: targetMix,
 			stagger: layout.stagger ?? null,
 			layoutName: layout.name
 		};
@@ -572,6 +588,7 @@
 			themeColors: hexColors
 		});
 		drawAxisLabels(scene, axisLabels);
+		drawGuides(scene, guideSets(), mapFrame);
 		// At hex zoom, hexes cover the dots by hexOpacity: none while songs
 		// move, all once they've settled in a hex layout, and crossfading
 		// with the dots in between.
@@ -604,6 +621,33 @@
 			const text = perfMeter.record(performance.now() - perfStart, drawnDots);
 			if (text !== null) perfEl.textContent = text;
 		}
+	};
+
+	// The layout's guides (axis labels...) and those of the layout before it,
+	// which fade out as the songs start to move while the new ones fade in
+	// as they arrive (see guideOpacities). Guides only change with the
+	// layout's name, so a new frame size just updates them.
+	const NO_GUIDES: readonly Guide[] = [];
+	const guideSetList: GuideSet[] = [
+		{ guides: NO_GUIDES, opacity: 0 },
+		{ guides: NO_GUIDES, opacity: 0 }
+	];
+	let guideLayoutName: string | null = null;
+	let guidesBefore = NO_GUIDES;
+	let outgoingGuides = NO_GUIDES;
+	const guideSets = (): readonly GuideSet[] => {
+		if (guideLayoutName !== layout.name) {
+			outgoingGuides = guidesBefore;
+			guideLayoutName = layout.name;
+		}
+		guidesBefore = layout.guides;
+		const { outgoing, incoming } = guideOpacities(transition.progress);
+		if (outgoing === 0) outgoingGuides = NO_GUIDES;
+		guideSetList[0].guides = outgoingGuides;
+		guideSetList[0].opacity = outgoing;
+		guideSetList[1].guides = layout.guides;
+		guideSetList[1].opacity = incoming;
+		return guideSetList;
 	};
 
 	// The same scene with every song's alpha scaled by opacity, in a buffer
@@ -682,6 +726,12 @@
 		}
 	};
 
+	// Colors between star white and each song's region color, for dots
+	// moving between layouts that color differently.
+	const mixFill = $derived(
+		createMixFill((songKey) => regionFills.songRegionFill(songKey, 1))
+	);
+
 	// Each song's region fill at one gradient strength, kept across frames
 	// while the fills and gradient hold (at dot zoom the gradient is
 	// constant), so dots don't re-interpolate their colors every frame.
@@ -720,6 +770,7 @@
 			: 0;
 		const songRegionFill = hexMode ? songRegionFillAt(gradient) : null;
 		const style = createPointStyle({
+			pointRadius: layout.pointRadius,
 			spotlight: spotlight.current,
 			outlinedSongKeys,
 			hoveredSongKey,
@@ -757,7 +808,12 @@
 			fill: createDotFill({
 				emphasisFillColor,
 				emphasizedSongKeys,
-				regionFill: songRegionFill,
+				mix: transition.mix,
+				// Settled in a hex layout, or on the way to one (hexMode), dots
+				// take region colors at the zoom's gradient, and otherwise at
+				// full strength.
+				regionFill: songRegionFill ?? songRegionFillAt(1),
+				mixFill,
 				accentFillColor,
 				isAccented
 			})

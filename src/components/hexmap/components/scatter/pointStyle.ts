@@ -27,10 +27,13 @@ export type PointStyle = ReturnType<typeof createPointStyle>;
 export const createPointStyle = ({
 	spotlight,
 	outlinedSongKeys,
+	pointRadius = POINT_RADIUS,
 	...alphaArgs
 }: Omit<ScatterPointAlphaArgs, "songKey"> & {
 	spotlight: Spotlight;
 	outlinedSongKeys: ReadonlySet<string> | null;
+	// A plain dot's radius, which the layout sets (stars are smaller).
+	pointRadius?: number;
 }) => {
 	const emphasisFor = (songKey: string): number =>
 		spotlight.emphasis.get(songKey) ?? 0;
@@ -46,7 +49,7 @@ export const createPointStyle = ({
 	// A marker's size when not spotlit. Labels are laid out from it so they
 	// stay put as songs are played and stopped.
 	const restingRadiusFor = (songKey: string): number =>
-		isOutlined(songKey) ? OUTLINED_POINT_RADIUS : POINT_RADIUS;
+		isOutlined(songKey) ? OUTLINED_POINT_RADIUS : pointRadius;
 
 	const radiusFor = (songKey: string): number => {
 		if (isMarked(songKey)) {
@@ -57,7 +60,7 @@ export const createPointStyle = ({
 			);
 		}
 		if (songKey === alphaArgs.selectedSongKey) return SELECTED_POINT_RADIUS;
-		return POINT_RADIUS;
+		return pointRadius;
 	};
 
 	// scatterPointAlpha, faded further while another song is spotlit.

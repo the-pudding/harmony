@@ -32,8 +32,17 @@
 		NO_MAP_FRAME
 	} from "$components/hexmap/components/scatter/viewport.js";
 	import type { MapFrame } from "$components/hexmap/components/scatter/types.js";
+	import { DEFAULT_TIMELINE_PARAMS } from "$components/storymap/layouts/timeline.js";
+	import type { LayoutName } from "$components/storymap/layouts/index.js";
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (dev layout): see src/utils/perfParam.js.
+	import { readLayoutParam } from "$utils/perfParam";
 
 	type Props = {
+		// How the songs are arranged: the hex map, or the timeline "sky".
+		layout?: LayoutName;
+		// The timeline's label at the bottom right (default "time →"), or
+		// null for none.
+		axisLabel?: string | null;
 		// Drag, wheel, pinch and double-click zoom, and click-to-zoom on hexes.
 		// Always off while focusCluster is set.
 		movable?: boolean;
@@ -125,6 +134,8 @@
 	};
 
 	const {
+		layout = "umap",
+		axisLabel = DEFAULT_TIMELINE_PARAMS.axisLabel,
 		focusCluster = undefined,
 		hidePlayer = false,
 		highlightSongs = [],
@@ -359,6 +370,29 @@
 		return { width: rect.width, height: rect.height };
 	});
 
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (dev layout)
+	const devLayout = readLayoutParam();
+	const layoutName = $derived(
+		devLayout === "umap" || devLayout === "timeline" ? devLayout : layout
+	);
+
+	// The main map's arrangement (the inset below always stays UMAP).
+	const mainResult = $derived(
+		songs
+			? layoutName === "timeline"
+				? computeLayout(
+						"timeline",
+						{ axisLabel },
+						{ songs, frame: layoutFrame }
+					)
+				: computeLayout(
+						"umap",
+						{ purityLayout, pureThreshold },
+						{ songs, frame: layoutFrame }
+					)
+			: null
+	);
+
 	const umapResult = $derived(
 		songs
 			? computeLayout(
@@ -376,11 +410,11 @@
 	bind:clientWidth={width}
 	bind:clientHeight={height}
 >
-	{#if songs && umapResult && songs.count > 0}
+	{#if songs && umapResult && mainResult && songs.count > 0}
 		<div class="fade-wrap" in:fade={{ duration: 500 }}>
 			<EmbeddingScatter
 				{songs}
-				layout={umapResult}
+				layout={mainResult}
 				songByKey={NO_SONGS}
 				{songSummaryByKey}
 				loadSong={loadShardedSong}

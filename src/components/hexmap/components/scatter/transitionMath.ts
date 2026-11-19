@@ -2,11 +2,14 @@
 // every song's x, y and alpha move from where they were to where they're
 // going, as typed arrays mutated in place, so a frame allocates nothing.
 
-// One value per song, by song index, for each animated channel.
+// One value per song, by song index, for each animated channel. mix is how
+// far the song's color is from star white (0) to its region color (1); it
+// eases with the song's position, so colors drain or fill in as dots fly.
 export type Channels = {
 	x: Float32Array;
 	y: Float32Array;
 	alpha: Float32Array;
+	mix: Float32Array;
 };
 
 export type Easing = (t: number) => number;
@@ -18,13 +21,15 @@ export const STAGGER_SPAN = 0.4;
 export const createChannels = (count: number): Channels => ({
 	x: new Float32Array(count),
 	y: new Float32Array(count),
-	alpha: new Float32Array(count)
+	alpha: new Float32Array(count),
+	mix: new Float32Array(count)
 });
 
 export const copyChannels = (source: Channels, into: Channels): void => {
 	into.x.set(source.x);
 	into.y.set(source.y);
 	into.alpha.set(source.alpha);
+	into.mix.set(source.mix);
 };
 
 // Sets up a transition from what's drawn now (current) to target, writing
@@ -51,11 +56,14 @@ export const beginTransition = (
 		from.x[i] = hasPosition ? current.x[i] : to.x[i];
 		from.y[i] = hasPosition ? current.y[i] : to.y[i];
 		from.alpha[i] = current.alpha[i];
+		to.mix[i] = target.mix[i];
+		from.mix[i] = hasPosition ? current.mix[i] : to.mix[i];
 		startAt[i] = stagger ? clamp01(stagger[i]) * STAGGER_SPAN : 0;
 		if (
 			from.x[i] !== to.x[i] ||
 			from.y[i] !== to.y[i] ||
-			from.alpha[i] !== to.alpha[i]
+			from.alpha[i] !== to.alpha[i] ||
+			from.mix[i] !== to.mix[i]
 		) {
 			changed = true;
 		}
@@ -86,6 +94,7 @@ export const stepTransition = (
 		current.x[i] = from.x[i] + (to.x[i] - from.x[i]) * eased;
 		current.y[i] = from.y[i] + (to.y[i] - from.y[i]) * eased;
 		current.alpha[i] = from.alpha[i] + (to.alpha[i] - from.alpha[i]) * eased;
+		current.mix[i] = from.mix[i] + (to.mix[i] - from.mix[i]) * eased;
 	}
 };
 
