@@ -14,7 +14,12 @@
 		// viewport pixels (top center), e.g. under the cluster on the map
 		anchor = null,
 		// the player's height, so its slot can keep the space while anchored
-		height = $bindable(0)
+		height = $bindable(0),
+		// whether the playing song's full chords are open
+		chordsOpen = false,
+		// with this, a button under the chords opens the playing song's
+		// full chords (and hides while they're open)
+		onToggleChords = null
 	} = $props();
 
 	let audioEls = $state({});
@@ -134,6 +139,21 @@
 		onNext={songs.length > 1 ? playNext : null}
 	/>
 
+	{#if onToggleChords}
+		<!-- always takes its space, so nothing shifts when a song starts or
+		     its chords open -->
+		{@const shown = currentSong && !chordsOpen}
+		<button
+			class="full-chords"
+			class:hidden={!shown}
+			aria-hidden={!shown}
+			tabindex={shown ? 0 : -1}
+			onclick={() => shown && onToggleChords(currentSong.songKey)}
+		>
+			show full chords
+		</button>
+	{/if}
+
 	{#each songs as song (song.songKey)}
 		<audio
 			{@attach attachAudio}
@@ -162,5 +182,36 @@
 
 	.player.anchored :global(button) {
 		pointer-events: auto;
+	}
+
+	.full-chords {
+		margin-top: 1.5rem;
+		padding: 0.25rem 0.625rem;
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		color: rgba(255, 255, 255, 0.4);
+		background: rgba(9, 9, 11, 0.6);
+		border: 1px solid rgba(255, 255, 255, 0.25);
+		border-radius: var(--radius-md);
+		cursor: pointer;
+		transition:
+			color 150ms ease,
+			background 150ms ease,
+			border-color 150ms ease;
+	}
+
+	.full-chords.hidden {
+		visibility: hidden;
+	}
+
+	.full-chords:hover {
+		color: rgba(255, 255, 255, 0.8);
+		background: rgba(39, 39, 42, 0.85);
+		border-color: rgba(255, 255, 255, 0.5);
+	}
+
+	.full-chords:focus-visible {
+		outline: 2px solid #fff;
+		outline-offset: 2px;
 	}
 </style>

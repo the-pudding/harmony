@@ -54,7 +54,9 @@
 <div
 	class="song-chords"
 	class:compact
-	style="--section-label-chord-gap: {SECTION_LABEL_CHORD_GAP_PX}px; --section-label-right-padding: {SECTION_LABEL_RIGHT_PADDING_PX}px; --dimmed-highlight-opacity: {DIMMED_HIGHLIGHT_OPACITY}; {compact ? `--compact-chords-font: ${COMPACT_CHORDS_FONT_SIZE}; --compact-chord-padding: ${COMPACT_CHORD_PADDING}; --compact-match-group-padding: ${COMPACT_MATCH_GROUP_PADDING}; --compact-match-group-radius: ${COMPACT_MATCH_GROUP_BORDER_RADIUS}; --compact-section-label-font: ${COMPACT_SECTION_LABEL_FONT_SIZE}; --compact-row-gap: ${COMPACT_ROW_GAP}; --compact-chord-gap: ${COMPACT_CHORD_GAP};` : ''}"
+	style="--section-label-chord-gap: {SECTION_LABEL_CHORD_GAP_PX}px; --section-label-right-padding: {SECTION_LABEL_RIGHT_PADDING_PX}px; --dimmed-highlight-opacity: {DIMMED_HIGHLIGHT_OPACITY}; {compact
+		? `--compact-chords-font: ${COMPACT_CHORDS_FONT_SIZE}; --compact-chord-padding: ${COMPACT_CHORD_PADDING}; --compact-match-group-padding: ${COMPACT_MATCH_GROUP_PADDING}; --compact-match-group-radius: ${COMPACT_MATCH_GROUP_BORDER_RADIUS}; --compact-section-label-font: ${COMPACT_SECTION_LABEL_FONT_SIZE}; --compact-row-gap: ${COMPACT_ROW_GAP}; --compact-chord-gap: ${COMPACT_CHORD_GAP};`
+		: ''}"
 >
 	<div class="sections">
 		{#each song.sections as section, sectionIndex (sectionIndex)}
@@ -146,7 +148,7 @@
 		font-weight: 500;
 		text-transform: lowercase;
 		letter-spacing: 0.02em;
-		color: #52525b;
+		color: var(--color-gray-500);
 		white-space: nowrap;
 		text-align: right;
 		padding-right: var(--section-label-right-padding);

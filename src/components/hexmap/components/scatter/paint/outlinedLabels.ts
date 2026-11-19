@@ -11,7 +11,6 @@ import {
 } from "../constants.js";
 import { boxAround, placeMarkerLabels } from "../labelPlacement.js";
 import type { PointStyle } from "../pointStyle.js";
-import type { Box } from "../types.js";
 import { isOnScreen } from "../viewport.js";
 import { songScreen, type Scene } from "./scene.js";
 
@@ -21,32 +20,24 @@ export type SongSummary = {
 	year?: number;
 };
 
-// Where a label was drawn, and how far right its hover hint row reaches.
-export type OutlinedLabelHitArea = { box: Box; hintRight: number };
-
 // Each on-screen marked song's title, with its artists under it, beside
 // its marker (see placeMarkerLabels). Placed fresh each draw from each
 // marker's resting size, so labels never cover each other or a marker and
 // stay put as songs are played and stopped. Drawn after every marker so
-// none covers a label. The hovered label gets a hint row under it.
-// Returns where each label was drawn, for hovering and clicking.
+// none covers a label.
 export const drawOutlinedSongLabels = (
 	scene: Scene,
 	{
 		style,
 		summaries,
-		titlePrefix,
-		openSongId,
-		hoveredLabelSongKey
+		titlePrefix
 	}: {
 		style: PointStyle;
 		summaries: ReadonlyMap<string, SongSummary>;
 		// Put before outlined songs' titles.
 		titlePrefix: string | null;
-		openSongId: string | null;
-		hoveredLabelSongKey: string | null;
 	}
-): Map<string, OutlinedLabelHitArea> => {
+): void => {
 	const { context, viewport, themeColors } = scene;
 	const songs = style.markedInLabelOrder().flatMap((songKey) => {
 		const summary = summaries.get(songKey);
@@ -85,7 +76,6 @@ export const drawOutlinedSongLabels = (
 		}
 	);
 
-	const hitAreas = new Map<string, OutlinedLabelHitArea>();
 	context.textAlign = "left";
 	context.textBaseline = "middle";
 	context.lineJoin = "round";
@@ -112,21 +102,7 @@ export const drawOutlinedSongLabels = (
 				x += context.measureText(text).width;
 			}
 		});
-
-		// A row shown on hover, below the label's own rows.
-		const hint = `👆 ${songKey === openSongId ? "hide" : "show"} chords`;
-		context.font = canvasFontFor("title");
-		hitAreas.set(songKey, {
-			box,
-			hintRight: left + context.measureText(hint).width
-		});
-		if (songKey === hoveredLabelSongKey) {
-			context.globalAlpha = songAlpha;
-			context.strokeText(hint, left, rowY(lines.length));
-			context.fillText(hint, left, rowY(lines.length));
-		}
 	}
-	return hitAreas;
 };
 
 // The widest line's width, each segment in its role's font.

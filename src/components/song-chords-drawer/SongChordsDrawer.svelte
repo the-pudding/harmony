@@ -84,6 +84,10 @@
 		};
 	});
 
+	// The progression hovered in the share bar or the chords, highlighted
+	// in both.
+	let hoveredProgression = $state<string | null>(null);
+
 	const result = $derived(
 		song ? matchSongV2(song, coreProgressionsData, DEFAULT_WEIGHTS) : null
 	);
@@ -195,7 +199,11 @@
 		{:else if !song || !result}
 			<p class="muted">Loading chords…</p>
 		{:else}
-			<ProgressionShareBar {segments} />
+			<ProgressionShareBar
+				{segments}
+				highlightedName={hoveredProgression}
+				onHoverName={(name) => (hoveredProgression = name)}
+			/>
 			<p class="summary">
 				<strong>{result.explainedPercent}%</strong> of song matched
 				{#if homogeneity}
@@ -207,7 +215,12 @@
 				{/if}
 			</p>
 			<div class="chords">
-				<FullChordsOfASong {song} annotations={result.annotations} />
+				<FullChordsOfASong
+					{song}
+					annotations={result.annotations}
+					highlightedName={hoveredProgression}
+					onHoverName={(name) => (hoveredProgression = name)}
+				/>
 			</div>
 		{/if}
 

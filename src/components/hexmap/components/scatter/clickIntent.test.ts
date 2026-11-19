@@ -1,14 +1,12 @@
 import { zoomIdentity } from "d3";
 import { describe, expect, it } from "vitest";
-import { OUTLINED_LABEL_LINE_HEIGHT } from "./constants.js";
 import { resolveClick, type ClickInput } from "./clickIntent.js";
-import { hexKeyAt, labelSongKeyAt, nearestSongAt } from "./hitTesting.js";
+import { hexKeyAt, nearestSongAt } from "./hitTesting.js";
 import { binIntoHexes } from "../../embedding/layout/hexBins.js";
 
 const dotsClick: ClickInput = {
 	atHexZoom: false,
 	hexMode: false,
-	labelSongKey: null,
 	outlinedSongKey: null,
 	songKey: null,
 	regionName: null,
@@ -52,12 +50,6 @@ describe("resolveClick", () => {
 		expect(
 			resolveClick({ ...dotsClick, songKey: "a", hoverable: false })
 		).toEqual([]);
-	});
-
-	it("toggles chords from a label, and does nothing else", () => {
-		expect(
-			resolveClick({ ...hexDotsClick, labelSongKey: "a", songKey: "b" })
-		).toEqual([{ kind: "toggleChords", songKey: "a" }]);
 	});
 
 	it("only deselects when clicking off the dots while a song is active", () => {
@@ -151,27 +143,5 @@ describe("hit-testing", () => {
 		expect(hexKeyAt({ x: 0, y: 0 }, transform, { radius: 10, bins })).toBe(
 			null
 		);
-	});
-
-	it("counts a hovered label's hint row, and only the playing label", () => {
-		const hitAreas = new Map([
-			["a", { box: { left: 0, right: 50, top: 0, bottom: 20 }, hintRight: 80 }],
-			[
-				"b",
-				{ box: { left: 100, right: 150, top: 0, bottom: 20 }, hintRight: 160 }
-			]
-		]);
-		const below = { x: 70, y: 20 + OUTLINED_LABEL_LINE_HEIGHT / 2 };
-		const options = { playingSongKey: null, hoveredLabelSongKey: null };
-		expect(labelSongKeyAt(below, hitAreas, options)).toBe(null);
-		expect(
-			labelSongKeyAt(below, hitAreas, { ...options, hoveredLabelSongKey: "a" })
-		).toBe("a");
-		expect(
-			labelSongKeyAt({ x: 120, y: 10 }, hitAreas, {
-				...options,
-				playingSongKey: "a"
-			})
-		).toBe(null);
 	});
 });

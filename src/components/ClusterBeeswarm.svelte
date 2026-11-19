@@ -1,7 +1,8 @@
 <script>
 	// The explore panel's beeswarm: a cluster's songs over time, colored as
 	// on the map, with its playable songs labeled. Hovering a dot hovers
-	// that song on the map.
+	// that song on the map; clicking one plays it (a featured song) or
+	// opens its chords, as clicking its dot on the map does.
 	import { onMount } from "svelte";
 	import ClusterYearBeeswarm from "$components/charts/ClusterYearBeeswarm.svelte";
 	import {
@@ -20,7 +21,11 @@
 		mapHoveredSongKey = null,
 		// the song whose chords are open (one without a sample), ringed
 		selectedSongKey = null,
-		onHoverSong = null
+		onHoverSong = null,
+		// a featured song's dot clicked
+		onPlaySong = null,
+		// any other song's dot clicked
+		onOpenChords = null
 	} = $props();
 
 	let snapshot = $state.raw(null);
@@ -101,6 +106,12 @@
 			linkedSongKey={mapHoveredSongKey}
 			{selectedSongKey}
 			{onHoverSong}
+			onSelectSong={onPlaySong || onOpenChords
+				? (songKey) =>
+						featuredSongKeys.includes(songKey)
+							? onPlaySong?.(songKey)
+							: onOpenChords?.(songKey)
+				: null}
 		/>
 	</div>
 {/if}

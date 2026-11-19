@@ -5,9 +5,6 @@ export type ClickInput = {
 	// Zoomed out far enough in hex mode that hexes, not dots, are drawn.
 	atHexZoom: boolean;
 	hexMode: boolean;
-	// The outlined song label under the pointer, when chords can be toggled
-	// and dots are drawn.
-	labelSongKey: string | null;
 	// The outlined song under the pointer (dot zoom only).
 	outlinedSongKey: string | null;
 	// The song under the pointer, outlined ones first (dot zoom only).
@@ -35,16 +32,10 @@ export const resolveClick = (input: ClickInput): ClickAction[] => {
 	const {
 		atHexZoom,
 		hexMode,
-		labelSongKey,
 		outlinedSongKey,
 		songKey,
 		playingSongKey
 	} = input;
-
-	// An outlined song's label opens or closes its chords, and nothing else.
-	if (labelSongKey !== null) {
-		return [{ kind: "toggleChords", songKey: labelSongKey }];
-	}
 
 	const atHexDots = hexMode && !atHexZoom;
 	const songIsActive = playingSongKey !== null || input.openSongId !== null;

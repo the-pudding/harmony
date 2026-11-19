@@ -290,6 +290,9 @@ export type ChordAnnotation = {
 	palette: ChordHighlightPalette;
 	isStrictSubset?: boolean;
 	chordProgression?: string;
+	// The progression's name as the match results and the map's colors key
+	// it (its core name, else its chords).
+	name?: string;
 	highlightPositionsBySection: number[][];
 };
 
@@ -297,6 +300,7 @@ export type ColoredHighlightSegment = {
 	palette: ChordHighlightPalette | null;
 	isStrictSubset: boolean;
 	chordProgression: string | null;
+	name: string | null;
 	indices: number[];
 };
 
@@ -432,6 +436,7 @@ export const buildColoredHighlightSegments = (
 				palette: annotation?.palette ?? null,
 				isStrictSubset: annotation?.isStrictSubset ?? false,
 				chordProgression: annotation?.chordProgression ?? null,
+				name: annotation?.name ?? annotation?.chordProgression ?? null,
 				indices: [displayIndex]
 			});
 		}

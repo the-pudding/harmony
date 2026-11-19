@@ -194,6 +194,7 @@ export const matchSongV2 = (
 			parsedProgression: unified.spans[0].tile.tile.unit,
 			palette: unified.highlightPalette,
 			chordProgression: unified.romanString,
+			name: unified.coreName ?? unified.romanString,
 			highlightPositionsBySection: buildHighlightPositionsBySection(
 				unified.spans,
 				song.sections.length

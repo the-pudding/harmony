@@ -1,4 +1,7 @@
 <script module lang="ts">
+	// Slivers without a color of their own, e.g. progressions not on the map.
+	export const UNCOLORED_PROGRESSION_COLOR = "#71717a";
+
 	// One bar splitting a song by matched progression, with percent + name
 	// labels under the colored slivers. Shared by the hex map tooltip and the
 	// story's EffectiveProgressions.
@@ -29,12 +32,23 @@
 		labelRowCount?: number;
 		// Labels centered under their sliver, or starting at its left edge.
 		labelAlign?: "center" | "start";
+		// The progression highlighted (others fade), e.g. hovered here or in
+		// chords drawn beside the bar.
+		highlightedName?: string | null;
+		// Turns on hovering slivers and labels; called with the name, or null.
+		onHoverName?: ((name: string | null) => void) | null;
 	};
 
-	const { segments, labelRowCount = 2, labelAlign = "center" }: Props =
-		$props();
+	const {
+		segments,
+		labelRowCount = 2,
+		labelAlign = "center",
+		highlightedName = null,
+		onHoverName = null
+	}: Props = $props();
 
-	const UNCOLORED_PROGRESSION_COLOR = "#71717a";
+	const fadedName = (name: string) =>
+		highlightedName !== null && name !== highlightedName;
 	// A monospace character's width as a fraction of the font size, and the
 	// space kept between labels.
 	const LABEL_CHAR_WIDTH_EM = 0.6;
@@ -120,8 +134,12 @@
 >
 	<div class="bar">
 		{#each segments as segment (segment.name)}
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<div
 				class="segment"
+				class:faded={fadedName(segment.name)}
+				onpointerenter={onHoverName ? () => onHoverName(segment.name) : undefined}
+				onpointerleave={onHoverName ? () => onHoverName(null) : undefined}
 				style:width="{segment.percent}%"
 				style:background={segment.color ?? UNCOLORED_PROGRESSION_COLOR}
 				style:color={segment.barLabelColor}
@@ -135,8 +153,13 @@
 	{#if usedRowCount > 0}
 		<div class="labels" style:--row-count={usedRowCount}>
 			{#each labels as label (label.name)}
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<span
 					class="label"
+					class:hoverable={onHoverName !== null}
+					class:faded={fadedName(label.name)}
+					onpointerenter={onHoverName ? () => onHoverName(label.name) : undefined}
+					onpointerleave={onHoverName ? () => onHoverName(null) : undefined}
 					style:left="{label.left}px"
 					style:--row={label.row}
 					style:color={label.color}>{label.text}</span
@@ -166,6 +189,7 @@
 	}
 
 	.segment {
+		transition: opacity 150ms ease;
 		flex-shrink: 0;
 		display: flex;
 		align-items: center;
@@ -191,5 +215,15 @@
 		font-size: var(--label-size-px);
 		line-height: var(--label-line);
 		white-space: nowrap;
+		transition: opacity 150ms ease;
+	}
+
+	.label.hoverable {
+		cursor: default;
+	}
+
+	.segment.faded,
+	.label.faded {
+		opacity: 0.25;
 	}
 </style>

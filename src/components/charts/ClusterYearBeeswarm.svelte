@@ -49,7 +49,8 @@
 		highlightedSongKey = null,
 		linkedSongKey = null,
 		selectedSongKey = null,
-		onHoverSong = null
+		onHoverSong = null,
+		onSelectSong = null
 	}: {
 		songs: readonly BeeswarmSong[];
 		// Shared by every chart, so their timelines line up.
@@ -68,6 +69,8 @@
 		selectedSongKey?: string | null;
 		// Turns on hovering; called with the hovered song, or null.
 		onHoverSong?: ((songKey: string | null) => void) | null;
+		// Turns on clicking a dot; called with its song.
+		onSelectSong?: ((songKey: string) => void) | null;
 	} = $props();
 
 	let width = $state(0);
@@ -203,7 +206,8 @@
 		onHoverSong?.(songKey);
 	};
 
-	const handlePointerMove = (event: PointerEvent) => {
+	// The song whose dot is nearest the pointer, if one is close enough.
+	const songKeyAt = (event: MouseEvent): string | null => {
 		const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
 		const x = event.clientX - rect.left;
 		const y = event.clientY - rect.top;
@@ -216,7 +220,19 @@
 				nearestDistance = distance;
 			}
 		}
-		setHovered(nearest);
+		return nearest;
+	};
+
+	const handlePointerMove = (event: PointerEvent) => {
+		setHovered(songKeyAt(event));
+	};
+
+	const handleClick = (event: MouseEvent) => {
+		const songKey = songKeyAt(event);
+		if (songKey === null) return;
+		// the page would treat it as a background click
+		event.stopPropagation();
+		onSelectSong?.(songKey);
 	};
 
 	$effect(() => () => {
@@ -226,16 +242,19 @@
 
 <div class="beeswarm" bind:clientWidth={width} bind:this={containerEl}>
 	{#if width > 0}
-		<!-- hovering only mirrors the song on the map; nothing to activate -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<!-- hovering mirrors the song on the map; clicking a dot does what
+		     clicking it on the map does, which the map offers by keyboard -->
+		<!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 		<svg
 			{width}
 			height={chartHeight}
 			aria-hidden="true"
 			class:hoverable={onHoverSong !== null}
+			class:clickable={onSelectSong !== null && hoveredSongKey !== null}
 			class:emphasizing
 			onpointermove={onHoverSong ? handlePointerMove : undefined}
 			onpointerleave={onHoverSong ? () => setHovered(null) : undefined}
+			onclick={onSelectSong ? handleClick : undefined}
 		>
 			{#if hoveredNode}
 				<text x={PADDING_X} y={CAPTION_HEIGHT - 4} class="caption">
@@ -320,6 +339,10 @@
 
 	svg.hoverable {
 		cursor: crosshair;
+	}
+
+	svg.clickable {
+		cursor: pointer;
 	}
 
 	.axis-line {

@@ -1,11 +1,14 @@
 <script lang="ts">
 	// A song's chords, section by section, drawn as watercolor <Chord>s. Runs of
 	// chords that match a progression are boxed, bordered in that progression's
-	// map color (as in the drawer's share bar); dashed when the match is only
-	// part of the progression.
+	// map color (as in the drawer's share bar, gray when it's not on the map);
+	// dashed when the match is only part of the progression. Many
+	// progressions share a map color, so hovering a box (or its sliver in the
+	// share bar) highlights that progression's boxes and fades the rest.
 	import Chord from "$components/Chord.svelte";
 	import type { GroupedSong } from "$data/songBrowser.js";
 	import { mapColors } from "$runes/mapColors.svelte.js";
+	import { UNCOLORED_PROGRESSION_COLOR } from "$components/hexmap/components/ProgressionShareBar.svelte";
 	import { formatRomanTokenFromParsed } from "../../chord-processing/romanNumerals.js";
 	import {
 		buildColoredHighlightSegments,
@@ -17,9 +20,18 @@
 	type Props = {
 		song: GroupedSong;
 		annotations: ChordAnnotation[];
+		// The progression highlighted (other boxes fade).
+		highlightedName?: string | null;
+		// Turns on hovering boxes; called with the progression's name, or null.
+		onHoverName?: ((name: string | null) => void) | null;
 	};
 
-	const { song, annotations }: Props = $props();
+	const {
+		song,
+		annotations,
+		highlightedName = null,
+		onHoverName = null
+	}: Props = $props();
 
 	// Per-section key labels only appear when the key varies across sections.
 	const showPerSectionKeys = $derived(
@@ -39,12 +51,12 @@
 	const tonalityOf = (section: Section) =>
 		section.scale === "minor" ? "minor" : "major";
 
+	// Keyed by name, as the share bar's slivers are.
 	const borderColorOf = (
 		segment: ReturnType<typeof buildColoredHighlightSegments>[number]
 	) =>
-		(segment.chordProgression &&
-			mapColors.byProgression.get(segment.chordProgression)) ??
-		segment.palette?.border;
+		(segment.name !== null && mapColors.byProgression.get(segment.name)) ||
+		UNCOLORED_PROGRESSION_COLOR;
 </script>
 
 <div class="sections">
@@ -64,11 +76,22 @@
 		<div class="chords">
 			{#each segments as segment, segmentIndex (segmentIndex)}
 				{#if segment.palette !== null}
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<span
 						class="group"
 						class:dashed={segment.isStrictSubset}
+						class:highlighted={highlightedName !== null &&
+							segment.name === highlightedName}
+						class:faded={highlightedName !== null &&
+							segment.name !== highlightedName}
 						style:--group-color={borderColorOf(segment)}
-						title={segment.chordProgression}
+						title={segment.name === segment.chordProgression
+							? segment.chordProgression
+							: `${segment.name} (${segment.chordProgression})`}
+						onpointerenter={onHoverName
+							? () => onHoverName(segment.name)
+							: undefined}
+						onpointerleave={onHoverName ? () => onHoverName(null) : undefined}
 					>
 						{#each segment.indices as position (position)}
 							<span class="chord">
@@ -78,7 +101,7 @@
 					</span>
 				{:else}
 					{#each segment.indices as position (position)}
-						<span class="chord unmatched">
+						<span class="chord unmatched" class:faded={highlightedName !== null}>
 							<Chord chord={romanAt(section, position)} {tonality} />
 						</span>
 					{/each}
@@ -129,6 +152,18 @@
 		border: 1.5px solid var(--group-color);
 		border-radius: 0.5rem;
 		padding: 0.125rem 0.25rem;
+		transition:
+			opacity 150ms ease,
+			background 150ms ease;
+	}
+
+	.group.highlighted {
+		background: color-mix(in srgb, var(--group-color) 18%, transparent);
+	}
+
+	.group.faded,
+	.chord.faded {
+		opacity: 0.3;
 	}
 
 	.group.dashed {
@@ -137,6 +172,7 @@
 
 	.chord {
 		display: inline-flex;
+		transition: opacity 150ms ease;
 	}
 
 	/* overlap neighbours slightly, like the story's inline chord runs */

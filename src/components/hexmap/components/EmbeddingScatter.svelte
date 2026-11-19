@@ -57,7 +57,6 @@
 	import {
 		clusterAt,
 		hexKeyAt,
-		labelSongKeyAt,
 		nearestSongAt
 	} from "./scatter/hitTesting.js";
 	import { resolveClick, type ClickAction } from "./scatter/clickIntent.js";
@@ -72,8 +71,7 @@
 	} from "./scatter/paint/dots.js";
 	import { drawMarkedSongs } from "./scatter/paint/markedSongs.js";
 	import {
-		drawOutlinedSongLabels,
-		type OutlinedLabelHitArea
+		drawOutlinedSongLabels
 	} from "./scatter/paint/outlinedLabels.js";
 	import {
 		createHexLayoutCache,
@@ -371,11 +369,6 @@
 		playingSongKey ?? openSongId ?? zoomSongKey ?? spotlitSongKey
 	);
 
-	// Where each outlined song's label was last drawn. Not reactive, since
-	// drawing fills it.
-	let outlinedLabelHitAreas = new Map<string, OutlinedLabelHitArea>();
-	let hoveredLabelSongKey = $state<string | null>(null);
-
 	let watercolorCanvas: HTMLCanvasElement | null = null;
 	const watercolorLayer = (): HTMLCanvasElement => {
 		watercolorCanvas ??= document.createElement("canvas");
@@ -516,16 +509,13 @@
 			}
 		});
 
-		outlinedLabelHitAreas =
-			outlinedSongKeys && songSummaryByKey
-				? drawOutlinedSongLabels(scene, {
-						style,
-						summaries: songSummaryByKey,
-						titlePrefix: outlinedTitlePrefix,
-						openSongId,
-						hoveredLabelSongKey
-					})
-				: new Map();
+		if (outlinedSongKeys && songSummaryByKey) {
+			drawOutlinedSongLabels(scene, {
+				style,
+				summaries: songSummaryByKey,
+				titlePrefix: outlinedTitlePrefix
+			});
+		}
 
 		drawSelectionRings(
 			scene,
@@ -560,12 +550,6 @@
 		findOutlinedSongAt(anchor) ??
 		nearestSongAt(anchor, drawableSongKeys, songScreen, HOVER_PICK_RADIUS);
 
-	const findLabelAt = (anchor: Point2D): string | null =>
-		labelSongKeyAt(anchor, outlinedLabelHitAreas, {
-			playingSongKey,
-			hoveredLabelSongKey
-		});
-
 	const handlePointerMove = (event: MouseEvent) => {
 		if (!containerEl) return;
 		clickGuard.onPointerMove(event);
@@ -580,11 +564,9 @@
 			setPointerHover(null);
 			delayedTooltip.clearHover();
 			hoveredClusterHit = null;
-			hoveredLabelSongKey = null;
 			return;
 		}
 		hoveredHex = null;
-		hoveredLabelSongKey = onSongChordsToggle ? findLabelAt(anchor) : null;
 		const songKey = findSongAt(anchor);
 		setPointerHover(songKey);
 		delayedTooltip.setHover(songKey, songKey === null ? null : anchor);
@@ -607,7 +589,6 @@
 		setPointerHover(null);
 		delayedTooltip.clearHover();
 		hoveredClusterHit = null;
-		hoveredLabelSongKey = null;
 	};
 
 	// A linked song highlights as if the pointer were on it, until it
@@ -648,8 +629,6 @@
 		const actions = resolveClick({
 			atHexZoom: hexFrame !== null,
 			hexMode,
-			labelSongKey:
-				onSongChordsToggle && !hexFrame ? findLabelAt(anchor) : null,
 			outlinedSongKey,
 			songKey,
 			regionName: region?.name ?? null,
@@ -854,7 +833,6 @@
 		class:inert={!interactive}
 		class:grabbable={movable}
 		class:clickable={hoveredHex !== null ||
-			hoveredLabelSongKey !== null ||
 			(hoveredSongKey !== null && isOutlined(hoveredSongKey))}
 		style:width="{width}px"
 		style:height="{height}px"
@@ -911,10 +889,6 @@
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
-	}
-
-	.scatter:has(:global(.scatter-tooltip)) {
-		overflow: visible;
 	}
 
 	canvas {

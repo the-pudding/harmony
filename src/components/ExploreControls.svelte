@@ -175,6 +175,9 @@
 	// the map lets go of it (a click elsewhere, a pan, another dot), the
 	// box clears.
 	let pickedSongKey = $state(null);
+	// Whether the box holds a pick (song or cluster) rather than half-typed
+	// text; half-typed text clears as soon as focus leaves the box.
+	let committed = $state(false);
 	$effect(() => {
 		if (pickedSongKey === null) return;
 		if (explore.searchedSongKey === pickedSongKey) return;
@@ -184,6 +187,7 @@
 
 	const choose = (result) => {
 		open = false;
+		committed = true;
 		if (result.type === "cluster") {
 			pickedSongKey = null;
 			query = result.cluster.name;
@@ -237,9 +241,13 @@
 			oninput={() => {
 				open = true;
 				pickedSongKey = null;
+				committed = false;
 			}}
 			onfocus={() => (open = true)}
-			onblur={() => (open = false)}
+			onblur={() => {
+				open = false;
+				if (!committed) query = "";
+			}}
 			onkeydown={onKeyDown}
 		/>
 		{#if open && query.trim()}

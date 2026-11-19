@@ -8,11 +8,7 @@
 		computeSongHomogeneity,
 		formatEffectiveProgressionCount
 	} from "$routes/demo/shared/progressionHomogeneity";
-	import {
-		highlightPaletteFromColor,
-		UNGROUPED_PROGRESSION_PALETTE
-	} from "$routes/demo/define-chord-progression/components/progressionColors";
-	import SongChordsDisplay from "$routes/demo/define-chord-progression/components/SongChordsDisplay.svelte";
+	import FullChordsOfASong from "$components/song-chords-drawer/FullChordsOfASong.svelte";
 	import ProgressionShareBar from "$components/hexmap/components/ProgressionShareBar.svelte";
 	import { mapColors } from "$runes/mapColors.svelte";
 
@@ -24,6 +20,9 @@
 
 	let loaded = $state({});
 	let expanded = $state({});
+	// Per song, the progression hovered in its bar or its chords,
+	// highlighted in both.
+	let hovered = $state({});
 
 	$effect(() => {
 		let active = true;
@@ -63,17 +62,6 @@
 			labeled: name === labeledName
 		}));
 	};
-
-	const annotationsFor = ({ result }) =>
-		result.annotations.map((annotation, i) => {
-			const color = colorByName.get(result.matches[i]?.name);
-			return {
-				...annotation,
-				palette: color
-					? highlightPaletteFromColor(color)
-					: UNGROUPED_PROGRESSION_PALETTE
-			};
-		});
 </script>
 
 <figure id="effective-progressions">
@@ -106,7 +94,11 @@
 				</header>
 
 				<div class="bar">
-					<ProgressionShareBar segments={segmentsFor(analysis)} />
+					<ProgressionShareBar
+						segments={segmentsFor(analysis)}
+						highlightedName={hovered[songKey] ?? null}
+						onHoverName={(name) => (hovered[songKey] = name)}
+					/>
 				</div>
 
 				<button
@@ -119,10 +111,11 @@
 
 				{#if expanded[songKey]}
 					<div class="chords">
-						<SongChordsDisplay
+						<FullChordsOfASong
 							{song}
-							annotations={annotationsFor(analysis)}
-							compact
+							annotations={analysis.result.annotations}
+							highlightedName={hovered[songKey] ?? null}
+							onHoverName={(name) => (hovered[songKey] = name)}
 						/>
 					</div>
 				{/if}
@@ -136,7 +129,7 @@
 		height: 100%;
 		max-width: var(--col-width);
 		margin: 0 auto;
-		padding: 3rem 1rem 1rem;
+		padding: 2rem 1rem 1rem;
 		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;

@@ -362,6 +362,9 @@
 						bind:playingSongKey={explore.playingSongKey}
 						bind:height={playerHeight}
 						anchor={playerAnchor}
+						chordsOpen={explore.chordsSongKey !== undefined &&
+							explore.chordsSongKey === explore.playingSongKey}
+						onToggleChords={onExploreSlide ? explore.toggleChords : null}
 					/>
 				</div>
 				{#if onExploreSlide}
@@ -371,6 +374,14 @@
 						mapHoveredSongKey={hoveredOnMap}
 						selectedSongKey={explore.chordsSongKey ?? null}
 						onHoverSong={(songKey) => (hoveredInBeeswarm = songKey)}
+						onPlaySong={(songKey) =>
+							explore.playSong(
+								songKey === explore.playingSongKey ? null : songKey
+							)}
+						onOpenChords={(songKey) => {
+							explore.stopPlaying();
+							explore.toggleChords(songKey);
+						}}
 					/>
 				{/if}
 			</div>
