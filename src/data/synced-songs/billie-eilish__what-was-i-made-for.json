@@ -1,0 +1,20 @@
+{
+	"songKey": "billie-eilish__what-was-i-made-for",
+	"audioFile": "billie-eilish__what-was-i-made-for.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 0, "endSeconds": 25.137 },
+	"chords": [
+		{ "seconds": 0.17, "chord": "C", "roman": "I" },
+		{ "seconds": 1.926, "chord": "Em", "roman": "iii" },
+		{ "seconds": 3.472, "chord": "F", "roman": "IV" },
+		{ "seconds": 6.601, "chord": "C", "roman": "I" },
+		{ "seconds": 8.101, "chord": "Em", "roman": "iii" },
+		{ "seconds": 9.626, "chord": "F", "roman": "IV" },
+		{ "seconds": 12.812, "chord": "C", "roman": "I" },
+		{ "seconds": 14.235, "chord": "Em", "roman": "iii" },
+		{ "seconds": 15.858, "chord": "F", "roman": "IV" },
+		{ "seconds": 18.898, "chord": "C", "roman": "I" },
+		{ "seconds": 20.369, "chord": "Em", "roman": "iii" },
+		{ "seconds": 21.983, "chord": "F", "roman": "IV" }
+	]
+}

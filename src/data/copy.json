@@ -300,12 +300,12 @@
           "text": [
             {
               "type": "text",
-              "value": "Next is <strong class=progression>happy walk up</strong>."
+              "value": "Next is <strong class=progression>la bamba</strong>."
             }
           ],
           "map": {
             "visible": "true",
-            "focusCluster": "happy walk up"
+            "focusCluster": "la bamba"
           }
         },
         {
@@ -324,7 +324,7 @@
           },
           "overlay": {
             "component": "List",
-            "highlight": "I-IV vamp, happy walk up, beer never broke my <3, I-V vamp, sweet home alabama, drops of jupiter, V-IV vamp, happy walk down, IV-V vamp, major-y, Cheerleader (chorus)"
+            "highlight": "I-IV vamp, la bamba, free fallin, I-V vamp, sweet home alabama, drops of jupiter, V-IV vamp, happy walk down, IV-V vamp, major-y, Cheerleader (chorus)"
           }
         },
         {
@@ -406,7 +406,7 @@
             },
             {
               "type": "text",
-              "value": "Same with <button><strong class=progression>say something</strong></button>. “Africa” by Toto is in the Axis of Awesome medley, but notice how they start <a href=https://youtu.be/5pidokakU4I?si=Ok_bLed7HrtG7njH&t=200 target=_blank>singing</a> it halfway through the 4-chord loop so that it lines up properly."
+              "value": "Same with <button><strong class=progression>shivers</strong></button>. “Africa” by Toto is in the Axis of Awesome medley, but notice how they start <a href=https://youtu.be/5pidokakU4I?si=Ok_bLed7HrtG7njH&t=200 target=_blank>singing</a> it halfway through the 4-chord loop so that it lines up properly."
             }
           ],
           "map": {

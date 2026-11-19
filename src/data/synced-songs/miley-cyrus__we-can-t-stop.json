@@ -1,0 +1,16 @@
+{
+	"songKey": "miley-cyrus__we-can-t-stop",
+	"audioFile": "miley-cyrus__we-can-t-stop.mp3",
+	"key": { "tonic": "E", "scale": "major" },
+	"region": { "startSeconds": 109.856, "endSeconds": 134.175 },
+	"chords": [
+		{ "seconds": 110.151, "chord": "E", "roman": "I" },
+		{ "seconds": 113.156, "chord": "Abm", "roman": "iii" },
+		{ "seconds": 116.162, "chord": "C#m", "roman": "vi" },
+		{ "seconds": 119.174, "chord": "A", "roman": "IV" },
+		{ "seconds": 122.147, "chord": "E", "roman": "I" },
+		{ "seconds": 125.126, "chord": "Abm", "roman": "iii" },
+		{ "seconds": 128.154, "chord": "C#m", "roman": "vi" },
+		{ "seconds": 131.157, "chord": "A", "roman": "IV" }
+	]
+}

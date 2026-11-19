@@ -1,0 +1,14 @@
+{
+	"songKey": "al-green__sha-la-la-make-me-happy",
+	"audioFile": "al-green__sha-la-la-make-me-happy.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 18.153, "endSeconds": 35.884 },
+	"chords": [
+		{ "seconds": 18.405, "chord": "C", "roman": "I" },
+		{ "seconds": 20.606, "chord": "Em", "roman": "iii" },
+		{ "seconds": 22.788, "chord": "F", "roman": "IV" },
+		{ "seconds": 27.156, "chord": "C", "roman": "I" },
+		{ "seconds": 29.331, "chord": "Em", "roman": "iii" },
+		{ "seconds": 31.53, "chord": "F", "roman": "IV" }
+	]
+}

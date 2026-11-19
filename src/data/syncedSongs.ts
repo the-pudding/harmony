@@ -119,7 +119,7 @@ export const syncedVideos: SyncedVideo[] = [
 	{
 		videoId: "shania",
 		songKey: "shania-twain__you-re-still-the-one",
-		cluster: "happy walk up"
+		cluster: "la bamba"
 	}
 ];
 

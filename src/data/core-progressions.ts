@@ -55,7 +55,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
-			name: "happy walk up", // found as a "potential core progression" cuz it gets matched a lot by our algorithm
+			name: "la bamba", // found as a "potential core progression" cuz it gets matched a lot by our algorithm
 			chordProgression: "I-IV-V",
 			scale: "major",
 			description: ""
@@ -73,7 +73,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
-			name: "beer never broke my <3",
+			name: "free fallin",
 			chordProgression: "I-IV-I-V",
 			scale: "major",
 			description: ""
@@ -121,7 +121,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: "swaps out the V for an angsty iii"
 		},
 		{
-			name: "say something",
+			name: "shivers",
 			chordProgression: "vi-IV-I-V",
 			scale: "major",
 			description: "repeats starting on vi instead of I"
@@ -353,7 +353,7 @@ const minoryProgressions: ProgressionGroup = {
 			description: "the adore you cycle, rotated to land on the i"
 		},
 		{
-			name: "burnin up with you",
+			name: "timber",
 			chordProgression: "i-III-VII-VI",
 			scale: "minor",
 			description: ""
@@ -366,7 +366,7 @@ const minoryProgressions: ProgressionGroup = {
 				"experimental: game up in Good 4 U prominently, it's sort of a spin on ii-V-I, but doesn't require the jazzy extensions to sound fresh..."
 		},
 		{
-			name: "flamenco walk down",
+			name: "hit the road jack",
 			chordProgression: "i-VII-VI-V",
 			scale: "minor",
 			description: ""
@@ -378,7 +378,7 @@ const minoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
-			name: "beat it vamp",
+			name: "beat it",
 			chordProgression: "i-VII-i-VII",
 			scale: "minor",
 			description: ""
@@ -391,7 +391,7 @@ const minoryProgressions: ProgressionGroup = {
 		},
 
 		{
-			name: "broody walk down",
+			name: "sweet dreams",
 			chordProgression: "i-VI-V",
 			scale: "minor",
 			description: "Similar to i-VII-VI-V, but jumps to the VI"
@@ -439,7 +439,7 @@ const minoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
-			name: "i v vamp",
+			name: "the boy is mine",
 			chordProgression: "i-v-i-v",
 			scale: "minor",
 			description: ""

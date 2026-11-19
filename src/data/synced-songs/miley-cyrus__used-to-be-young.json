@@ -1,0 +1,16 @@
+{
+	"songKey": "miley-cyrus__used-to-be-young",
+	"audioFile": "miley-cyrus__used-to-be-young.mp3",
+	"key": { "tonic": "E", "scale": "major" },
+	"region": { "startSeconds": 76.749, "endSeconds": 103.278 },
+	"chords": [
+		{ "seconds": 77.082, "chord": "E", "roman": "I" },
+		{ "seconds": 80.402, "chord": "Abm", "roman": "iii" },
+		{ "seconds": 83.653, "chord": "C#m", "roman": "vi" },
+		{ "seconds": 86.926, "chord": "A", "roman": "IV" },
+		{ "seconds": 90.161, "chord": "E", "roman": "I" },
+		{ "seconds": 93.487, "chord": "Abm", "roman": "iii" },
+		{ "seconds": 96.704, "chord": "C#m", "roman": "vi" },
+		{ "seconds": 99.992, "chord": "A", "roman": "IV" }
+	]
+}

@@ -1,0 +1,14 @@
+{
+	"songKey": "wings__silly-love-songs",
+	"audioFile": "wings__silly-love-songs.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 61.894, "endSeconds": 77.52 },
+	"chords": [
+		{ "seconds": 61.996, "chord": "C", "roman": "I" },
+		{ "seconds": 63.922, "chord": "Em", "roman": "iii" },
+		{ "seconds": 65.886, "chord": "F", "roman": "IV" },
+		{ "seconds": 69.769, "chord": "C", "roman": "I" },
+		{ "seconds": 71.681, "chord": "Em", "roman": "iii" },
+		{ "seconds": 73.632, "chord": "F", "roman": "IV" }
+	]
+}

@@ -99,7 +99,7 @@ export const problematicSongs: ProblematicSong[] = [
 	{
 		id: "destiny-s-child__survivor",
 		chordProgressionIssues:
-			"is not a broody walk down. Data has every section as i-VI-V in E minor, which lands it in that cluster"
+			"is not a \"sweet dreams\". Data has every section as i-VI-V in E minor, which lands it in that cluster"
 	},
 	{
 		id: "aaliyah__miss-you",
@@ -129,6 +129,36 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "stevie-wonder__you-haven-t-done-nothin",
 		chordProgressionIssues:
 			"sections are out of order, and the chords in them are potentially off"
+	},
+	{
+		id: "drake-featuring-quavo-travis-scott__portland",
+		chordProgressionIssues:
+			"sounds more like an i-v vamp. Data has every section as i-iv-v (Abm-C#m-Ebm) in Ab minor"
+	},
+	{
+		id: "big-sean__bounce-back",
+		chordProgressionIssues:
+			"sounds like just the i chord. Data has the hooks and verses as i-iv-v (Cm-Fm-Gm) in C minor (only the outro is just Cm), with some major IV-V (F-G) in the verses"
+	},
+	{
+		id: "elvin-bishop__fooled-around-and-fell-in-love",
+		chordProgressionIssues:
+			"actually appears to be I-iii-bVII-IV (F-Am-Eb-Bb). Data has the chorus as I-iii-IV (F-Am-Bb) and the verse as that twice, in F major"
+	},
+	{
+		id: "kelly-clarkson__since-u-been-gone",
+		chordProgressionIssues:
+			"the chorus should really start with iii. Data has each chorus starting on I (G-Bm-C-G-Em-C…, I-iii-IV-I-vi-IV…) in G major"
+	},
+	{
+		id: "chris-brown-featuring-lil-wayne-busta-rhymes__look-at-me-now",
+		chordProgressionIssues:
+			"I don't think it's axis of angsty. Data has every section as I-iii-vi-IV (C-Em-Am-F) in C major, which lands it in that cluster"
+	},
+	{
+		id: "omarion__ice-box",
+		chordProgressionIssues:
+			"looks like I-II-iii-vi? (C-D-Em-Am). Data has the verses and choruses as I-iii-vi-IV (C-Em-Am-F) and the bridges as vi-V-I-III (Am-G-C-E) in C major"
 	}
 ];
 

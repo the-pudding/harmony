@@ -81,7 +81,7 @@ describe("matchRank", () => {
 	});
 
 	it("matches core progressions by name", () => {
-		expect(matchRank(codesOf("I IV V"), "happy walk up")).toBe(MATCH_STARTS_WITH);
+		expect(matchRank(codesOf("I IV V"), "la bamba")).toBe(MATCH_STARTS_WITH);
 	});
 
 	it("reads data tokens with extensions and annotations", () => {
@@ -94,7 +94,7 @@ describe("matchRank", () => {
 
 describe("progressionSpelling", () => {
 	it("spells core progressions by their roman numerals", () => {
-		expect(progressionSpelling("happy walk up")).toBe("I–IV–V");
+		expect(progressionSpelling("la bamba")).toBe("I–IV–V");
 		expect(progressionSpelling("V-I-bII-I")).toBe("V–I–bII–I");
 	});
 });
@@ -118,6 +118,6 @@ describe("matchProgression", () => {
 	});
 
 	it("marks the spelling of the matching core variant", () => {
-		expect(marked("I IV", "happy walk up")).toBe("[I]-[IV]-V");
+		expect(marked("I IV", "la bamba")).toBe("[I]-[IV]-V");
 	});
 });

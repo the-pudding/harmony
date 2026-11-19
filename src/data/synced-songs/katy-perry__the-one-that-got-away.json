@@ -1,0 +1,16 @@
+{
+	"songKey": "katy-perry__the-one-that-got-away",
+	"audioFile": "katy-perry__the-one-that-got-away.mp3",
+	"key": { "tonic": "E", "scale": "major" },
+	"region": { "startSeconds": 47.903, "endSeconds": 78.369 },
+	"chords": [
+		{ "seconds": 49.683, "chord": "E", "roman": "I" },
+		{ "seconds": 53.276, "chord": "Abm", "roman": "iii" },
+		{ "seconds": 56.842, "chord": "C#m", "roman": "vi" },
+		{ "seconds": 60.448, "chord": "A", "roman": "IV" },
+		{ "seconds": 63.996, "chord": "E", "roman": "I" },
+		{ "seconds": 67.576, "chord": "Abm", "roman": "iii" },
+		{ "seconds": 71.173, "chord": "C#m", "roman": "vi" },
+		{ "seconds": 74.769, "chord": "A", "roman": "IV" }
+	]
+}
