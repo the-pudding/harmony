@@ -3,6 +3,7 @@ import { pointInsideClusterEllipse2D } from "../../embedding/clustering/clusterB
 import { axialForPoint, hexKey } from "../../embedding/layout/hexBins.js";
 import type { HexLayout } from "./paint/hexLayout.js";
 import type { ClusterHit, Point2D } from "./types.js";
+import { screenX, screenY, type ScreenProjection } from "./viewport.js";
 
 // The song nearest the anchor among these, if any is closer than
 // maxDistance pixels.
@@ -20,6 +21,42 @@ export const nearestSongAt = (
 		const distance = Math.hypot(screen.x - anchor.x, screen.y - anchor.y);
 		if (distance < hitDistance) {
 			hit = songKey;
+			hitDistance = distance;
+		}
+	}
+	return hit;
+};
+
+// nearestSongAt over songs by index, for scans over every song: the index
+// among these nearest the anchor, if any drawn one (alpha above 0) is
+// closer than maxDistance pixels, else -1.
+export const nearestIndexAt = (
+	anchor: Point2D,
+	indexes: ArrayLike<number>,
+	{
+		x,
+		y,
+		alpha,
+		projection
+	}: {
+		x: Float32Array;
+		y: Float32Array;
+		alpha: Float32Array;
+		projection: ScreenProjection;
+	},
+	maxDistance: number
+): number => {
+	let hit = -1;
+	let hitDistance = maxDistance;
+	for (let n = 0; n < indexes.length; n++) {
+		const index = indexes[n];
+		if (!(alpha[index] > 0)) continue;
+		const distance = Math.hypot(
+			screenX(projection, x[index]) - anchor.x,
+			screenY(projection, y[index]) - anchor.y
+		);
+		if (distance < hitDistance) {
+			hit = index;
 			hitDistance = distance;
 		}
 	}

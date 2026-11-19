@@ -48,15 +48,17 @@ export const FLY_TO_TRANSITION_MS = 1300;
 export const HEX_CLICK_ZOOM_MS = 450;
 // Points animating between layouts.
 export const TWEEN_DURATION_MS = 700;
+// The canvas's pixel ratio is capped here: a 3× phone canvas has 2.25× the
+// pixels of a 2× one for no visible gain on 3px dots.
+export const MAX_PIXEL_RATIO = 2;
 
 // ── Points ────────────────────────────────────────────────────────────
 export const POINT_RADIUS = 3;
 export const SELECTED_POINT_RADIUS = 6;
 export const HOVER_PICK_RADIUS = 12;
 export const RING_WIDTH = 1.5;
-// Used when colorMode is "off" — a plain, star-like white so a
-// highlighted song/family reads clearly against an otherwise uncolored
-// field.
+// Plain dots outside hex mode — a star-like white so a highlighted
+// song/family reads clearly against an otherwise uncolored field.
 export const STAR_FILL_COLOR = "#e4e4e7";
 
 // ── Outlined (called-out) songs & their labels ────────────────────────

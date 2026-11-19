@@ -2,15 +2,19 @@ import type { ZoomTransform } from "d3";
 import type { GroupedSong } from "../../../../data/songBrowser.js";
 import type { DensityCluster } from "../../embedding/clustering/densityClusters.js";
 import type { EmbeddingMethod } from "../../embedding/reducers/types.js";
-import type { MapColorMode } from "../../colorMode.js";
-import type { ScatterAxisLabels, ScatterPoint } from "../scatterPoint.js";
+import type { ScatterAxisLabels } from "../scatterPoint.js";
+import type { LayoutResult } from "../../../storymap/layouts/types.js";
+import type { SongTable } from "../../../storymap/songTable.js";
 import type {
 	ClusterRegion,
 	ProgressionShare
 } from "../../embedding/layout/hexBins.js";
 
 export type EmbeddingScatterProps = {
-	points: ScatterPoint[];
+	// Every song, by index, and where the layout puts each one (0–1 across
+	// the plot, by the same index). Changing the layout animates the dots.
+	songs: SongTable;
+	layout: LayoutResult;
 	songByKey: Map<string, GroupedSong>;
 	// For songs missing from songByKey: loadSong fetches one on hover for
 	// its tooltip, and songSummaryByKey names it while that loads.
@@ -21,6 +25,8 @@ export type EmbeddingScatterProps = {
 	> | null;
 	selectedSongKey: string | null;
 	coClusterSongKeys: Set<string>;
+	// Only these songs are drawn (and hovered); the rest fade out where they
+	// are. Null (the default) for every song.
 	visibleSongKeys?: Set<string> | null;
 	inYearSongKeys?: Set<string> | null;
 	axisLabels?: ScatterAxisLabels | null;
@@ -73,10 +79,6 @@ export type EmbeddingScatterProps = {
 	// coClusterSongKeys, so it works with no specific song selected at
 	// all. Omit (or null) for no effect.
 	emphasizedSongKeys?: Set<string> | null;
-	// "groups" colors dots by their progression-family blend (the
-	// default), "homogeneity" by each point's homogeneityColor, and "off"
-	// leaves a plain starfield so a highlighted song/family stands out.
-	colorMode?: MapColorMode;
 	// Draw the dashed cluster outlines + names. Defaults to true (existing
 	// behavior); /story defaults this off per beat.
 	showClusterOutlines?: boolean;
@@ -91,11 +93,11 @@ export type EmbeddingScatterProps = {
 	// with outlines on doesn't also mute every other cluster's outline.
 	// Omit (or null) for normal treatment of every cluster.
 	familyEmphasisSongKeys?: Set<string> | null;
-	// Fill color for a song in emphasizedSongKeys, overriding the group
-	// color / STAR_FILL_COLOR so those dots stand out regardless of
-	// colorMode. Opt-in per caller (e.g. an artist
-	// mode) — omit (or null) to leave emphasized dots colored normally,
-	// distinguished only by alpha (e.g. /story's family highlights).
+	// Fill color for a song in emphasizedSongKeys, overriding its region
+	// color / STAR_FILL_COLOR so those dots stand out. Opt-in per caller
+	// (e.g. an artist mode) — omit (or null) to leave emphasized dots
+	// colored normally, distinguished only by alpha (e.g. /story's family
+	// highlights).
 	emphasisFillColor?: string | null;
 	// Fill color for songs in accentSongKeys. Unlike emphasizedSongKeys it
 	// dims nothing, so the rest of the map keeps its structure. Accented

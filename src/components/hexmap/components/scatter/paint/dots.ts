@@ -1,34 +1,24 @@
-import type { MapColorMode } from "../../../colorMode.js";
-import { fillStyleForGroupShares } from "../../groupColorBlend.js";
-import type { ScatterPoint } from "../../scatterPoint.js";
 import {
 	RING_WIDTH,
 	SELECTED_POINT_RADIUS,
 	STAR_FILL_COLOR
 } from "../constants.js";
 import type { PointStyle } from "../pointStyle.js";
-import type { Point2D } from "../types.js";
-import { isOnScreen } from "../viewport.js";
+import { screenX, screenY } from "../viewport.js";
 import { songScreen, type Scene } from "./scene.js";
 
-export type DotFill = (
-	context: CanvasRenderingContext2D,
-	point: ScatterPoint,
-	screen: Point2D
-) => string | CanvasGradient;
+export type DotFill = (songKey: string) => string;
 
 // A plain dot's fill, in priority order: the emphasis color for an
 // emphasized song, its region color in hex mode, the accent color for an
-// accented song, then the colorMode's fill.
+// accented song, then a plain star white.
 export const createDotFill = ({
-	colorMode,
 	emphasisFillColor,
 	emphasizedSongKeys,
 	regionFill,
 	accentFillColor,
 	isAccented
 }: {
-	colorMode: MapColorMode;
 	emphasisFillColor: string | null;
 	emphasizedSongKeys: Set<string> | null;
 	// Set in hex mode: the song's region color at the current zoom.
@@ -36,55 +26,53 @@ export const createDotFill = ({
 	accentFillColor: string | null;
 	isAccented: (songKey: string) => boolean;
 }): DotFill => {
-	const baseFill: DotFill = (context, point, screen) => {
-		if (colorMode === "groups") {
-			return fillStyleForGroupShares(
-				context,
-				screen.x,
-				screen.y,
-				point.groupShares
-			);
-		}
-		if (colorMode === "homogeneity") return point.homogeneityColor;
-		return STAR_FILL_COLOR;
-	};
-	return (context, point, screen) => {
-		if (emphasisFillColor && emphasizedSongKeys?.has(point.songKey)) {
+	return (songKey) => {
+		if (emphasisFillColor && emphasizedSongKeys?.has(songKey)) {
 			return emphasisFillColor;
 		}
-		if (regionFill) return regionFill(point.songKey);
-		if (accentFillColor && isAccented(point.songKey)) return accentFillColor;
-		return baseFill(context, point, screen);
+		if (regionFill) return regionFill(songKey);
+		if (accentFillColor && isAccented(songKey)) return accentFillColor;
+		return STAR_FILL_COLOR;
 	};
 };
 
-// Every on-screen song that isn't drawn as a marker.
+// Every drawn, on-screen song that isn't drawn as a marker, in order (song
+// indexes). Returns how many dots it drew.
 export const drawDots = (
 	scene: Scene,
 	{
-		points,
+		order,
+		songKeys,
 		style,
 		fill
-	}: { points: readonly ScatterPoint[]; style: PointStyle; fill: DotFill }
-) => {
-	const { context, viewport } = scene;
-	const reach = SELECTED_POINT_RADIUS + RING_WIDTH * 3;
-	for (const point of points) {
-		if (style.isMarked(point.songKey)) continue;
-		const screen = songScreen(scene, point.songKey);
-		if (!screen || !isOnScreen(viewport, screen, reach)) continue;
-		context.globalAlpha = style.alphaFor(point.songKey);
-		context.fillStyle = fill(context, point, screen);
-		context.beginPath();
-		context.arc(
-			screen.x,
-			screen.y,
-			style.radiusFor(point.songKey),
-			0,
-			Math.PI * 2
-		);
-		context.fill();
+	}: {
+		order: Int32Array;
+		songKeys: readonly string[];
+		style: PointStyle;
+		fill: DotFill;
 	}
+): number => {
+	const { context, viewport, projection, x, y, alpha } = scene;
+	const reach = SELECTED_POINT_RADIUS + RING_WIDTH * 3;
+	const right = viewport.width + reach;
+	const bottom = viewport.height + reach;
+	let drawn = 0;
+	for (const index of order) {
+		const songAlpha = alpha[index];
+		if (!(songAlpha > 0)) continue;
+		const songKey = songKeys[index];
+		if (style.isMarked(songKey)) continue;
+		const sx = screenX(projection, x[index]);
+		const sy = screenY(projection, y[index]);
+		if (sx < -reach || sy < -reach || sx > right || sy > bottom) continue;
+		context.globalAlpha = style.alphaFor(songKey) * songAlpha;
+		context.fillStyle = fill(songKey);
+		context.beginPath();
+		context.arc(sx, sy, style.radiusFor(songKey), 0, Math.PI * 2);
+		context.fill();
+		drawn++;
+	}
+	return drawn;
 };
 
 // A thin ring around each of these songs (the selected and hovered ones).

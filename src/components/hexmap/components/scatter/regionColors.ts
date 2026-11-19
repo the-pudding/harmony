@@ -15,7 +15,7 @@ import {
 	type ClusterEllipse2D
 } from "../../embedding/clustering/clusterBounds.js";
 import { MIN_REGION_TINT } from "./constants.js";
-import type { HexThemeColors, NormalizedPoint, Point2D } from "./types.js";
+import type { HexThemeColors, Point2D, SongPosition } from "./types.js";
 
 // Songs density clustering left out that still sit inside a cluster's
 // outline, by the cluster built on their main progression (the first of
@@ -23,10 +23,10 @@ import type { HexThemeColors, NormalizedPoint, Point2D } from "./types.js";
 // the cluster's progression isn't gray. toPixel is where a song is drawn
 // at rest; outlines are fitted the way the map draws them, minus padding.
 export const strayRegionsBySongKey = (
-	points: readonly NormalizedPoint[],
+	points: readonly SongPosition[],
 	regionBySongKey: ReadonlyMap<string, ClusterRegion>,
 	sharesBySongKey: ReadonlyMap<string, readonly ProgressionShare[]>,
-	toPixel: (point: NormalizedPoint) => Point2D
+	toPixel: (point: SongPosition) => Point2D
 ): Map<string, ClusterRegion> => {
 	const memberPixelsByRegion = new Map<ClusterRegion, Point2D[]>();
 	for (const point of points) {
@@ -61,7 +61,7 @@ export const strayRegionsBySongKey = (
 // One color per cluster name, chosen by `strategy` (see clusterColors/).
 // Clusters built on the same progression share its color.
 export const regionColorsByName = (
-	points: readonly NormalizedPoint[],
+	points: readonly SongPosition[],
 	regionBySongKey: ReadonlyMap<string, ClusterRegion>,
 	strategy: ClusterColorStrategy = CLUSTER_COLOR_STRATEGY
 ): Map<string, string> => {

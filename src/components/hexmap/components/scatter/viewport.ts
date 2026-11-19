@@ -58,6 +58,37 @@ export const toScreen = (viewport: Viewport, position: Position): Point2D => {
 	};
 };
 
+// toScreen as plain numbers, for loops over every song: a position's
+// screen pixel is screenX(projection, nx), screenY(projection, ny), with
+// the same arithmetic as toScreen and nothing allocated.
+export type ScreenProjection = {
+	margin: number;
+	plotWidth: number;
+	plotHeight: number;
+	k: number;
+	x: number;
+	y: number;
+};
+
+export const screenProjection = (viewport: Viewport): ScreenProjection => {
+	const plot = plotSize(viewport);
+	const { k, x, y } = viewport.transform;
+	return {
+		margin: PLOT_MARGIN,
+		plotWidth: plot.width,
+		plotHeight: plot.height,
+		k,
+		x,
+		y
+	};
+};
+
+export const screenX = (p: ScreenProjection, nx: number): number =>
+	(p.margin + nx * p.plotWidth) * p.k + p.x;
+
+export const screenY = (p: ScreenProjection, ny: number): number =>
+	(p.margin + (1 - ny) * p.plotHeight) * p.k + p.y;
+
 // Whether a screen point is on the canvas, or within margin pixels of it.
 export const isOnScreen = (
 	{ width, height }: Pick<ViewSize, "width" | "height">,

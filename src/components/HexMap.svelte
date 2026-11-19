@@ -13,7 +13,6 @@
 	import { namedClustersFromSnapshot } from "$data/hexMapClusters.js";
 	import type { ClusterRegion } from "$components/hexmap/embedding/layout/hexBins.js";
 	import type { ProgressionCoverage } from "$routes/demo/shared/progressionHomogeneity.js";
-	import { homogeneityColorFor } from "$components/hexmap/homogeneityColors.js";
 	import {
 		featuredSongKeys,
 		featuredSongsOf,
@@ -26,8 +25,6 @@
 	import { fade } from "svelte/transition";
 	import { zoomIdentity, type ZoomTransform } from "d3";
 	import EmbeddingScatter from "$components/hexmap/components/EmbeddingScatter.svelte";
-	import type { ScatterPoint } from "$components/hexmap/components/scatterPoint.js";
-	import { jitterFor } from "$components/hexmap/components/scatter/normalizePoints.js";
 	import { buildSongTable } from "$components/storymap/songTable.js";
 	import { computeLayout } from "$components/storymap/layouts/cache.js";
 
@@ -358,28 +355,6 @@
 				)
 			: null
 	);
-
-	// TEMPORARY SHIM (removed when EmbeddingScatter takes a LayoutResult):
-	// today's scatter still takes `points` and normalizes them itself, adding
-	// each song's jitter. The layout result is already normalized and
-	// jittered, so undo the jitter; the scatter's own normalization is then
-	// the identity (its bounds are exactly 0 and 1), and it adds the jitter
-	// back. groupShares only colors plain-dot mode, which HexMap never uses.
-	const displayPoints = $derived.by((): ScatterPoint[] => {
-		if (!songs || !umapResult) return [];
-		return songs.keys.map((songKey, index) => {
-			const jitter = jitterFor(songKey);
-			return {
-				songKey,
-				x: umapResult.x[index] - jitter.nx,
-				y: umapResult.y[index] - jitter.ny,
-				groupShares: [],
-				homogeneityColor: homogeneityColorFor(
-					songs.homogeneity[index]?.effectiveProgressionCount ?? null
-				)
-			};
-		});
-	});
 </script>
 
 <div
@@ -388,10 +363,11 @@
 	bind:clientWidth={width}
 	bind:clientHeight={height}
 >
-	{#if displayPoints.length > 0}
+	{#if songs && umapResult && songs.count > 0}
 		<div class="fade-wrap" in:fade={{ duration: 500 }}>
 			<EmbeddingScatter
-				points={displayPoints}
+				{songs}
+				layout={umapResult}
 				songByKey={NO_SONGS}
 				{songSummaryByKey}
 				loadSong={loadShardedSong}
@@ -461,8 +437,10 @@
 						style:height="{height}px"
 						style:transform="scale({insetScale})"
 					>
+						<!-- Always the UMAP layout, so other layouts never redraw it. -->
 						<EmbeddingScatter
-							points={displayPoints}
+							{songs}
+							layout={umapResult}
 							songByKey={NO_SONGS}
 							selectedSongKey={null}
 							coClusterSongKeys={NO_SONG_KEYS}

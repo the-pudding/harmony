@@ -12,6 +12,9 @@ import {
 	fromBasePixel,
 	isOnScreen,
 	plotSize,
+	screenProjection,
+	screenX,
+	screenY,
 	toBasePixel,
 	toScreen,
 	transformCenteredInFrame,
@@ -19,6 +22,26 @@ import {
 } from "./viewport.js";
 
 const size = { width: 800, height: 600, offsetY: 0 };
+
+describe("screenProjection", () => {
+	it("projects exactly like toScreen", () => {
+		const viewport = {
+			...size,
+			transform: zoomIdentity.translate(-123.4, 56.7).scale(4.04)
+		};
+		const projection = screenProjection(viewport);
+		for (const position of [
+			{ nx: 0, ny: 0 },
+			{ nx: 0.3141, ny: 0.2718 },
+			{ nx: 1, ny: 1 }
+		]) {
+			expect({
+				x: screenX(projection, position.nx),
+				y: screenY(projection, position.ny)
+			}).toEqual(toScreen(viewport, position));
+		}
+	});
+});
 
 describe("plot coordinates", () => {
 	it("maps the plot corners inside the margins, y up", () => {

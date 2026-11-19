@@ -12,7 +12,7 @@ import {
 import { boxAround, placeMarkerLabels } from "../labelPlacement.js";
 import type { PointStyle } from "../pointStyle.js";
 import { isOnScreen } from "../viewport.js";
-import { songScreen, type Scene } from "./scene.js";
+import { drawnIndexOf, screenOfIndex, type Scene } from "./scene.js";
 
 export type SongSummary = {
 	title: string;
@@ -44,8 +44,9 @@ export const drawOutlinedSongLabels = (
 	const { context, viewport, themeColors } = scene;
 	const songs = style.markedInLabelOrder().flatMap((songKey) => {
 		const summary = summaries.get(songKey);
-		const screen = songScreen(scene, songKey);
-		if (!summary || !screen) return [];
+		const index = drawnIndexOf(scene, songKey);
+		if (!summary || index === -1) return [];
+		const screen = screenOfIndex(scene, index);
 		const title =
 			titlePrefix && style.isOutlined(songKey) && isPrefixed(songKey)
 				? `${titlePrefix} ${summary.title}`
@@ -56,7 +57,13 @@ export const drawOutlinedSongLabels = (
 			artists: summary.artists
 		});
 		return [
-			{ songKey, screen, radius: style.restingRadiusFor(songKey), lines }
+			{
+				songKey,
+				screen,
+				alpha: scene.alpha[index],
+				radius: style.restingRadiusFor(songKey),
+				lines
+			}
 		];
 	});
 
@@ -86,10 +93,10 @@ export const drawOutlinedSongLabels = (
 	context.strokeStyle = themeColors.labelHalo;
 	context.fillStyle = themeColors.labelText;
 	for (const {
-		item: { songKey, lines },
+		item: { songKey, alpha, lines },
 		box
 	} of labels) {
-		const songAlpha = style.alphaFor(songKey);
+		const songAlpha = style.alphaFor(songKey) * alpha;
 		const rowY = (row: number) =>
 			box.top +
 			OUTLINED_LABEL_PADDING +

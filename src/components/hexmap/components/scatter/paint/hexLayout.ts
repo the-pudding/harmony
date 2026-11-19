@@ -9,7 +9,6 @@ import {
 	type ProgressionShare
 } from "../../../embedding/layout/hexBins.js";
 import { HEX_LABEL_MIN_HEXES, MIN_CLUSTER_SHARE_OF_HEX } from "../constants.js";
-import type { Position } from "../types.js";
 import { plotSize, toBasePixel } from "../viewport.js";
 
 // The hex grid for one set of positions, plot size and hex radius, in
@@ -37,8 +36,16 @@ export type HexLayout = {
 export type HexLayoutInput = {
 	radius: number;
 	size: { width: number; height: number };
-	positions: ReadonlyMap<string, Position>;
-	songKeys: readonly { songKey: string }[];
+	// Every song's key and position (0–1 across the plot), by index.
+	songKeys: readonly string[];
+	x: Float32Array;
+	y: Float32Array;
+	// Bumped whenever songs come to rest somewhere new (see createTransition):
+	// the cache keys on it instead of the arrays, which change in place, so
+	// frames mid-transition reuse the last bins.
+	positionsVersion: number;
+	// Which songs are binned, by index (above 0 = binned).
+	visible: Float32Array;
 	regionBySongKey: ReadonlyMap<string, ClusterRegion> | null;
 	sharesBySongKey: ReadonlyMap<string, readonly ProgressionShare[]> | null;
 };
@@ -46,16 +53,21 @@ export type HexLayoutInput = {
 export const buildHexLayout = ({
 	radius,
 	size,
-	positions,
 	songKeys,
+	x,
+	y,
+	visible,
 	regionBySongKey,
 	sharesBySongKey
 }: HexLayoutInput): HexLayout => {
-	const basePoints = songKeys.flatMap(({ songKey }) => {
-		const position = positions.get(songKey);
-		if (!position) return [];
-		return [{ songKey, ...toBasePixel(size, position) }];
-	});
+	const basePoints: { songKey: string; x: number; y: number }[] = [];
+	for (let index = 0; index < songKeys.length; index++) {
+		if (!(visible[index] > 0) || Number.isNaN(x[index])) continue;
+		basePoints.push({
+			songKey: songKeys[index],
+			...toBasePixel(size, { nx: x[index], ny: y[index] })
+		});
+	}
 	const bins = binIntoHexes(basePoints, radius);
 	const regionByKey = new Map(
 		[...bins].map(([key, bin]) => [
@@ -120,7 +132,7 @@ export const buildHexLayout = ({
 };
 
 // buildHexLayout, reused while its inputs are unchanged (by identity, and
-// by value for the radius and plot size).
+// by value for the radius, plot size and positionsVersion).
 export const createHexLayoutCache = () => {
 	let cached: { key: readonly unknown[]; layout: HexLayout } | null = null;
 	return (input: HexLayoutInput): HexLayout => {
@@ -129,8 +141,9 @@ export const createHexLayoutCache = () => {
 			input.radius,
 			plot.width,
 			plot.height,
-			input.positions,
+			input.positionsVersion,
 			input.songKeys,
+			input.visible,
 			input.regionBySongKey,
 			input.sharesBySongKey
 		];

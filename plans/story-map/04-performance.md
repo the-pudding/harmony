@@ -15,13 +15,17 @@ low-risk precautions below as part of the refactor, and keep anything bigger
 
 _Fill in during commit 2, then after commits 4, 5 and 8._
 
-| When           | Device  | Slide / action              | draw p50 | draw p95 | fps   |
-| -------------- | ------- | --------------------------- | -------- | -------- | ----- |
-| before (main)  | desktop | Section 2 cluster → cluster | 2.0–2.3  | 3.8–8.2  | 69–85 |
-| before (main)  | phone   | Section 2 cluster → cluster |          |          |       |
-| after commit 4 | phone   | same                        |          |          |       |
-| after commit 5 | phone   | same                        |          |          |       |
-| after commit 8 | phone   | UMAP ↔ sky                  |          |          |       |
+| When                    | Device  | Slide / action              | draw p50 | draw p95  | fps   |
+| ----------------------- | ------- | --------------------------- | -------- | --------- | ----- |
+| before (main)           | desktop | Section 2 cluster → cluster | 2.0–2.3  | 3.8–8.2   | 69–85 |
+| before (main)           | phone   | Section 2 cluster → cluster |          |           |       |
+| before commit 4 (rerun) | desktop | Section 2 cluster → cluster | 1.8–3.6  | 2.3–8.5   | 59–61 |
+| before commit 4         | desktop | Explore, dot zoom, dragging | 3.4–4.8  | 17.4–17.7 |       |
+| after commit 4          | desktop | Section 2 cluster → cluster | 1.8–3.3  | 2.6–7.4   | 60–61 |
+| after commit 4          | desktop | Explore, dot zoom, dragging | 4.0–4.2  | 17.5–18.2 |       |
+| after commit 4          | phone   | Section 2 cluster → cluster |          |           |       |
+| after commit 5          | phone   | Section 2 cluster → cluster |          |           |       |
+| after commit 8          | phone   | UMAP ↔ sky                  |          |           |       |
 
 Notes on the numbers:
 
@@ -32,6 +36,25 @@ Notes on the numbers:
   `draw()` only (the canvas paint), not d3-zoom, Svelte or compositing.
 - "fps" is draws per second, not displayed frames: a prop change can trigger
   both the `$effect(draw)` and a tween frame, so it can read above 60.
+- Commit 4 and later desktop rows are also headless Chrome (1280×800), three
+  to five runs each, ranges across runs and slides; run-to-run noise on one
+  machine is about ±1ms at p50, so treat small differences as equal. Section
+  2 never changes layout, so these draws are camera moves (and the first
+  layout) only; the transition engine itself is only exercised from commit
+  8 on.
+- "Explore, dot zoom, dragging": `?perf=1&slide=34`, wheel-zoom just past
+  dot zoom (6 × 200px wheel steps at 700,420) over the dense center, then
+  drag in circles for ~2s and read the overlay. About 2,000 dots are on
+  screen. The drag also hovers songs (tooltips, rings), so its p95 includes
+  those frames; its frame intervals and fps are paced by the test's mouse
+  events and say nothing about the map.
+- From commit 4 on, the overlay's "dots" counts the plain dots actually
+  painted (on screen, not hidden, not markers) rather than every song.
+- A CPU profile of that drag puts the biggest single draw cost in
+  `fitClusterEllipse2D` (its `percentile` sorts), which refits every
+  cluster outline from screen positions on every dot-zoom frame. Batching
+  dots (commit 5) doesn't touch that; caching outlines in base pixels and
+  transforming them per frame would, if numbers ever call for it.
 - The phone row needs a real device: open the dev server on the phone with
   `?perf=1&slide=<n>` and step through the clusters.
 

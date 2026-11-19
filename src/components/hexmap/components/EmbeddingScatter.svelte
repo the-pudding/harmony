@@ -25,7 +25,9 @@
 		OUTLINE_COLOR,
 		OUTLINED_POINT_RADIUS,
 		CLUSTERABLE_METHODS,
-		HEX_THEME_COLORS
+		HEX_THEME_COLORS,
+		MAX_PIXEL_RATIO,
+		TWEEN_DURATION_MS
 	} from "./scatter/constants.js";
 	import type { EmbeddingScatterProps as Props } from "./scatter/props.js";
 	import type {
@@ -34,7 +36,6 @@
 		Point2D,
 		Position
 	} from "./scatter/types.js";
-	import { normalizePoints } from "./scatter/normalizePoints.js";
 	import HexRegionTooltip from "./scatter/HexRegionTooltip.svelte";
 	import {
 		datedBeeswarmSongs,
@@ -49,15 +50,27 @@
 	} from "./scatter/clusterTitles.js";
 	import ScatterSongTooltip from "./scatter/ScatterSongTooltip.svelte";
 	import { normalizeName } from "./scatter/clusterNames.js";
-	import { createPositionTween } from "./scatter/positionTween.svelte.js";
+	import {
+		createTransition,
+		type TransitionTarget
+	} from "./scatter/transition.svelte.js";
 	import { createSpotlightTween } from "./scatter/spotlightTween.svelte.js";
 	import { createCamera } from "./scatter/camera.svelte.js";
 	import { createRotatingLabels } from "./scatter/rotatingLabels.svelte.js";
 	import { createTooltipSong } from "./scatter/tooltipSong.svelte.js";
-	import { clusterAt, hexKeyAt, nearestSongAt } from "./scatter/hitTesting.js";
+	import {
+		clusterAt,
+		hexKeyAt,
+		nearestIndexAt,
+		nearestSongAt
+	} from "./scatter/hitTesting.js";
 	import { resolveClick, type ClickAction } from "./scatter/clickIntent.js";
 	import { createPointStyle } from "./scatter/pointStyle.js";
-	import { prepareCanvas, type Scene } from "./scatter/paint/scene.js";
+	import {
+		createScene,
+		prepareCanvas,
+		type Scene
+	} from "./scatter/paint/scene.js";
 	import { drawAxisLabels } from "./scatter/paint/axes.js";
 	import { drawClusterOutlines } from "./scatter/paint/clusters.js";
 	import {
@@ -85,7 +98,8 @@
 	} from "./scatter/regionColors.js";
 
 	const {
-		points,
+		songs,
+		layout,
 		songByKey,
 		loadSong = null,
 		songSummaryByKey = null,
@@ -109,7 +123,6 @@
 		focusFrame = null,
 		offsetY = 0,
 		emphasizedSongKeys = null,
-		colorMode = "groups",
 		showClusterOutlines = true,
 		showClusterNames = true,
 		familyEmphasisSongKeys = null,
@@ -256,22 +269,43 @@
 	// hit-testing don't refit them on every mousemove.
 	let clusterHits: ClusterHit[] = [];
 
-	const normalizedPoints = $derived(normalizePoints(points));
-
-	// Bounds stay based on every point so filtering never rescales the map.
-	const drawablePoints = $derived(
-		visibleSongKeys === null
-			? normalizedPoints
-			: normalizedPoints.filter((point) => visibleSongKeys.has(point.songKey))
+	// Where the layout puts each song it places, by song key, for the
+	// region colors (worked out once per layout, not per frame).
+	const restingPoints = $derived(
+		songs.keys.flatMap((songKey, index) =>
+			Number.isNaN(layout.x[index]) || Number.isNaN(layout.y[index])
+				? []
+				: [{ songKey, nx: layout.x[index], ny: layout.y[index] }]
+		)
 	);
 
-	const drawableSongKeys = $derived(
-		drawablePoints.map((point) => point.songKey)
-	);
+	// 1 for every song that should be drawn, 0 for the ones visibleSongKeys
+	// leaves out; the transition fades between them.
+	const targetAlpha = $derived.by(() => {
+		const alpha = new Float32Array(songs.count);
+		for (let index = 0; index < songs.count; index++) {
+			alpha[index] =
+				visibleSongKeys === null || visibleSongKeys.has(songs.keys[index])
+					? 1
+					: 0;
+		}
+		return alpha;
+	});
 
-	const pointBySongKey = $derived(
-		new Map(drawablePoints.map((point) => [point.songKey, point]))
-	);
+	// A song the layout places and visibleSongKeys keeps, by index.
+	const isDrawnIndex = (index: number | undefined): index is number =>
+		index !== undefined &&
+		targetAlpha[index] > 0 &&
+		!Number.isNaN(layout.x[index]);
+
+	const isDrawn = (songKey: string): boolean =>
+		isDrawnIndex(songs.indexOf.get(songKey));
+
+	// Where a song rests in this layout, in base pixels, or null.
+	const restingBasePixel = (index: number | undefined): Point2D | null =>
+		index === undefined || Number.isNaN(layout.x[index])
+			? null
+			: toBasePixel({ nx: layout.x[index], ny: layout.y[index] });
 
 	const isAccented = (songKey: string): boolean =>
 		accentFillColor !== null && (accentSongKeys?.has(songKey) ?? false);
@@ -286,7 +320,7 @@
 	const regionColorByName = $derived(
 		!hexMode || clusterRegionBySongKey === null
 			? new Map<string, string>()
-			: regionColorsByName(normalizedPoints, clusterRegionBySongKey)
+			: regionColorsByName(restingPoints, clusterRegionBySongKey)
 	);
 
 	const regionColorByProgressionName = $derived(
@@ -309,7 +343,7 @@
 			width === 0
 			? null
 			: strayRegionsBySongKey(
-					normalizedPoints,
+					restingPoints,
 					clusterRegionBySongKey,
 					progressionSharesBySongKey,
 					(point) => view.toBasePixel({ width, height }, point)
@@ -359,13 +393,29 @@
 			: outlinedSongKeys
 	);
 
-	const pointsInDrawOrder = $derived(
-		accentSongKeys === null || accentFillColor === null
-			? drawablePoints
-			: [
-					...drawablePoints.filter((point) => !isAccented(point.songKey)),
-					...drawablePoints.filter((point) => isAccented(point.songKey))
-				]
+	// Song indexes in the order dots are drawn: accented songs last, so
+	// they sit on top of the dots around them.
+	const drawOrder = $derived.by(() => {
+		const order = new Int32Array(songs.count);
+		let next = 0;
+		for (const accentedPass of [false, true]) {
+			for (let index = 0; index < songs.count; index++) {
+				if (isAccented(songs.keys[index]) === accentedPass) {
+					order[next++] = index;
+				}
+			}
+		}
+		return order;
+	});
+
+	// Each cluster's songs by index, for drawing outlines every frame.
+	const clusterMemberIndexes = $derived(
+		clusters.map((cluster) =>
+			cluster.songKeys.flatMap((songKey) => {
+				const index = songs.indexOf.get(songKey);
+				return index === undefined ? [] : [index];
+			})
+		)
 	);
 
 	const clustersAvailable = $derived(CLUSTERABLE_METHODS.has(method));
@@ -398,8 +448,8 @@
 	};
 
 	// Repaints the whole canvas from the current state. The effect below
-	// re-runs it whenever anything it reads changes; the position and
-	// spotlight tweens also run it on each of their frames.
+	// re-runs it whenever anything it reads changes; the transition and the
+	// spotlight tween also run it on each of their frames.
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (perf meter): the main map only, not the inset.
 	const perfMeter = $derived(
 		pixelRatioOverride === null && readPerfParam() ? createPerfMeter() : null
@@ -415,24 +465,27 @@
 				canvasEl,
 				width,
 				height,
-				pixelRatioOverride ?? (window.devicePixelRatio || 1)
+				pixelRatioOverride ??
+					Math.min(MAX_PIXEL_RATIO, window.devicePixelRatio || 1)
 			);
 		if (!context) return;
 		void fontsLoaded;
-		const scene: Scene = {
+		const scene = createScene({
 			context,
 			viewport,
-			positions: positionTween.positions,
+			x: transition.x,
+			y: transition.y,
+			alpha: transition.alpha,
+			indexOf: songs.indexOf,
 			themeColors: hexColors
-		};
+		});
 		drawAxisLabels(scene, axisLabels);
 		const zoomLevel = hexMode ? hexZoomLevel(transform.k, HEX_ZOOM) : null;
 		if (zoomLevel?.kind === "hex") {
 			drawnDots = 0; // perf meter
 			drawHexFrame(scene, zoomLevel.radius);
 		} else {
-			drawnDots = pointsInDrawOrder.length; // perf meter
-			drawDotFrame(scene);
+			drawnDots = drawDotFrame(scene); // perf meter
 		}
 		context.globalAlpha = 1;
 		// perf meter
@@ -447,8 +500,11 @@
 		const layout = hexLayoutFor({
 			radius,
 			size: viewSize,
-			positions: positionTween.positions,
-			songKeys: drawablePoints,
+			songKeys: songs.keys,
+			x: transition.x,
+			y: transition.y,
+			positionsVersion: transition.positionsVersion,
+			visible: targetAlpha,
 			regionBySongKey: clusterRegionBySongKey,
 			sharesBySongKey: progressionSharesBySongKey
 		});
@@ -476,8 +532,8 @@
 
 	// Dots mode, or hex mode zoomed in to dots: cluster outlines, dots,
 	// marked songs and their labels, then rings around the selected and
-	// hovered songs.
-	const drawDotFrame = (scene: Scene) => {
+	// hovered songs. Returns how many plain dots it drew.
+	const drawDotFrame = (scene: Scene): number => {
 		hexFrame = null;
 		setLabelSpots([]);
 		const gradient = hexMode
@@ -499,6 +555,7 @@
 		clusterHits = showClusterOutlines
 			? drawClusterOutlines(scene, {
 					clusters,
+					memberIndexes: clusterMemberIndexes,
 					names: resolvedClusterNames,
 					emphasizedClusterHashes,
 					familyEmphasisSongKeys,
@@ -517,11 +574,11 @@
 				: []
 		);
 
-		drawDots(scene, {
-			points: pointsInDrawOrder,
+		const drawnDotCount = drawDots(scene, {
+			order: drawOrder,
+			songKeys: songs.keys,
 			style,
 			fill: createDotFill({
-				colorMode,
 				emphasisFillColor,
 				emphasizedSongKeys,
 				regionFill: songRegionFill,
@@ -557,17 +614,18 @@
 		drawSelectionRings(
 			scene,
 			[selectedSongKey, hoveredSongKey].filter(
-				(songKey): songKey is string =>
-					songKey !== null && pointBySongKey.has(songKey)
+				(songKey): songKey is string => songKey !== null && isDrawn(songKey)
 			),
 			style
 		);
+		return drawnDotCount;
 	};
 
 	// Hit-testing against the last frame drawn.
 	const songScreen = (songKey: string): Point2D | null => {
-		const position = positionTween.positions.get(songKey);
-		return position ? toScreen(position) : null;
+		const index = songs.indexOf.get(songKey);
+		if (index === undefined || !(transition.alpha[index] > 0)) return null;
+		return toScreen({ nx: transition.x[index], ny: transition.y[index] });
 	};
 
 	// The outlinedSongKeys song whose marker is under the anchor, give or
@@ -582,11 +640,34 @@
 				)
 			: null;
 
-	const pickableSongKeys = $derived(
-		hoverableSongKeys
-			? drawableSongKeys.filter((songKey) => hoverableSongKeys.has(songKey))
-			: drawableSongKeys
-	);
+	// Plain dots that can be hovered, by index.
+	const pickableIndexes = $derived.by(() => {
+		const indexes: number[] = [];
+		for (let index = 0; index < songs.count; index++) {
+			if (
+				isDrawnIndex(index) &&
+				(hoverableSongKeys?.has(songs.keys[index]) ?? true)
+			) {
+				indexes.push(index);
+			}
+		}
+		return Int32Array.from(indexes);
+	});
+
+	const nearestPickableSongAt = (anchor: Point2D): string | null => {
+		const index = nearestIndexAt(
+			anchor,
+			pickableIndexes,
+			{
+				x: transition.x,
+				y: transition.y,
+				alpha: transition.alpha,
+				projection: view.screenProjection(viewport)
+			},
+			HOVER_PICK_RADIUS
+		);
+		return index === -1 ? null : songs.keys[index];
+	};
 
 	// The song under the anchor; markers first, since they sit on top, and
 	// picked at their bigger size. Every outlined song can be hovered,
@@ -599,8 +680,7 @@
 					songScreen,
 					OUTLINED_POINT_RADIUS + HOVER_PICK_RADIUS - POINT_RADIUS
 				)
-			: null) ??
-		nearestSongAt(anchor, pickableSongKeys, songScreen, HOVER_PICK_RADIUS);
+			: null) ?? nearestPickableSongAt(anchor);
 
 	const handlePointerMove = (event: MouseEvent) => {
 		if (!containerEl) return;
@@ -721,10 +801,18 @@
 		}
 	});
 
-	const positionTween = createPositionTween({
-		get targets() {
-			return normalizedPoints;
+	const transitionTarget = $derived<TransitionTarget>({
+		x: layout.x,
+		y: layout.y,
+		alpha: targetAlpha,
+		stagger: layout.stagger ?? null
+	});
+
+	const transition = createTransition({
+		get target() {
+			return transitionTarget;
 		},
+		durationMs: TWEEN_DURATION_MS,
 		onFrame: () => draw()
 	});
 
@@ -791,13 +879,10 @@
 			return resolvedClusterNames;
 		},
 		basePixelOf: (songKey) => {
-			const point = pointBySongKey.get(songKey);
-			return point ? toBasePixel(point) : null;
+			const index = songs.indexOf.get(songKey);
+			return isDrawnIndex(index) ? restingBasePixel(index) : null;
 		},
-		anyBasePixelOf: (songKey) => {
-			const point = normalizedPoints.find((p) => p.songKey === songKey);
-			return point ? toBasePixel(point) : null;
-		},
+		anyBasePixelOf: (songKey) => restingBasePixel(songs.indexOf.get(songKey)),
 		onZoom: (next, byUser) => {
 			transform = next;
 			onTransformChange?.(next);
@@ -851,7 +936,7 @@
 
 	const tooltipVisible = $derived(
 		delayedTooltip.tooltipSongKey !== null &&
-			pointBySongKey.has(delayedTooltip.tooltipSongKey)
+			isDrawn(delayedTooltip.tooltipSongKey)
 	);
 </script>
 

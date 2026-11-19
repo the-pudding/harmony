@@ -19,10 +19,12 @@ import {
 	FAMILY_INVOLVEMENT_THRESHOLD
 } from "../constants.js";
 import type { ClusterHit, Point2D } from "../types.js";
-import { songScreen, type Scene } from "./scene.js";
+import { screenOfIndex, type Scene } from "./scene.js";
 
 export type ClusterOutlineOptions = {
 	clusters: readonly DensityCluster[];
+	// Each cluster's songs by index, parallel to clusters.
+	memberIndexes: readonly (readonly number[])[];
 	names: ReadonlyMap<string, string>;
 	emphasizedClusterHashes: Set<string> | null;
 	// A cluster mostly outside this set draws faintly, unnamed.
@@ -39,6 +41,7 @@ export const drawClusterOutlines = (
 	scene: Scene,
 	{
 		clusters,
+		memberIndexes,
 		names,
 		emphasizedClusterHashes,
 		familyEmphasisSongKeys,
@@ -48,10 +51,14 @@ export const drawClusterOutlines = (
 ): ClusterHit[] => {
 	const { context } = scene;
 	const hits: ClusterHit[] = [];
-	for (const cluster of clusters) {
-		const screenPositions = cluster.songKeys
-			.map((songKey) => songScreen(scene, songKey))
-			.filter((screen): screen is Point2D => screen !== null);
+	for (let clusterIndex = 0; clusterIndex < clusters.length; clusterIndex++) {
+		const cluster = clusters[clusterIndex];
+		const screenPositions: Point2D[] = [];
+		for (const index of memberIndexes[clusterIndex]) {
+			if (scene.alpha[index] > 0) {
+				screenPositions.push(screenOfIndex(scene, index));
+			}
+		}
 		if (screenPositions.length === 0) continue;
 
 		const ellipse = fitClusterEllipse2D(

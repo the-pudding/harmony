@@ -7,7 +7,7 @@ import {
 import { lerp, type PointStyle } from "../pointStyle.js";
 import type { Point2D } from "../types.js";
 import { isOnScreen } from "../viewport.js";
-import { songScreen, type Scene } from "./scene.js";
+import { drawnIndexOf, screenOfIndex, type Scene } from "./scene.js";
 
 export type ChordColorSegment = {
 	startFraction: number;
@@ -43,8 +43,9 @@ export const drawMarkedSongs = (
 ) => {
 	const { context, viewport } = scene;
 	for (const songKey of style.markedInDrawOrder()) {
-		const screen = songScreen(scene, songKey);
-		if (!screen) continue;
+		const index = drawnIndexOf(scene, songKey);
+		if (index === -1) continue;
+		const screen = screenOfIndex(scene, index);
 		const radius = style.radiusFor(songKey);
 		const emphasis = style.emphasisFor(songKey);
 		const outlined = style.isOutlined(songKey);
@@ -55,7 +56,7 @@ export const drawMarkedSongs = (
 		);
 		const outlineWidth = outlined ? OUTLINE_WIDTH : OUTLINE_WIDTH * emphasis;
 		if (!isOnScreen(viewport, screen, radius + glowBlur)) continue;
-		const alpha = style.alphaFor(songKey);
+		const alpha = style.alphaFor(songKey) * scene.alpha[index];
 
 		context.save();
 		context.globalAlpha = alpha;

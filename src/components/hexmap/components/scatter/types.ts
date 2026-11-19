@@ -12,6 +12,9 @@ export type Point2D = { x: number; y: number };
 
 export type NormalizedPoint = ScatterPoint & Position;
 
+// A song at a position, e.g. where a layout puts it.
+export type SongPosition = Position & { songKey: string };
+
 export type Box = { left: number; right: number; top: number; bottom: number };
 
 // The canvas size and how far the resting view is shifted down.
