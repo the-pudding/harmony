@@ -124,6 +124,11 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "maroon-5-featuring-christina-aguilera__moves-like-jagger",
 		chordProgressionIssues:
 			"chorus just goes between Bm and Em. Data has every section (verse, chorus, bridge) as i-III-VII-VI (Em-G-D-C) in E minor"
+	},
+	{
+		id: "stevie-wonder__you-haven-t-done-nothin",
+		chordProgressionIssues:
+			"sections are out of order, and the chords in them are potentially off"
 	}
 ];
 
@@ -153,6 +158,30 @@ export const keyTonalityIssues: KeyTonalityIssue[] = [
 		id: "ella-langley__be-her",
 		keyTonalityIssues:
 			"I think it's actually in a major key (G major), so ii-I instead of i-VII. Data has every section as Am-G in A minor."
+	},
+	{
+		id: "michael-jackson__bad",
+		keyTonalityIssues: "needs a look over whether it's major or minor"
+	},
+	{
+		id: "john-mellencamp__pop-singer",
+		keyTonalityIssues:
+			"I think it's actually in a minor key (B minor), so i-IV instead of ii-V. Data has every section as Bm-E in A major."
+	}
+];
+
+// Flags for a whole map cluster (matched by cluster name, as in hexmap.json),
+// for when a whole group of songs needs the same review.
+export type ClusterKeyTonalityIssue = {
+	clusterName: string;
+	keyTonalityIssues: string;
+};
+
+export const clusterKeyTonalityIssues: ClusterKeyTonalityIssue[] = [
+	{
+		clusterName: "ii-V vamp",
+		keyTonalityIssues:
+			"Check every song in this cluster: a lot of them might be minor in disguise (i-IV labeled as ii-V in the relative major), like john-mellencamp__pop-singer. As of 2026-11-18, 30 of its 100 songs never land on I."
 	}
 ];
 
