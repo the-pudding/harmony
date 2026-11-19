@@ -27,9 +27,12 @@
 		CLUSTERABLE_METHODS,
 		HEX_THEME_COLORS,
 		MAX_PIXEL_RATIO,
-		TWEEN_DURATION_MS
+		TWEEN_DURATION_MS,
+		HEX_FADE_IN_MS,
+		HEX_FADE_OUT_MS
 	} from "./scatter/constants.js";
 	import type { EmbeddingScatterProps as Props } from "./scatter/props.js";
+	import type { LayoutResult } from "$components/storymap/layouts/types.js";
 	import type {
 		ClusterHit,
 		LabelSpot,
@@ -54,6 +57,7 @@
 		createTransition,
 		type TransitionTarget
 	} from "./scatter/transition.svelte.js";
+	import { createFade } from "./scatter/fade.svelte.js";
 	import { createSpotlightTween } from "./scatter/spotlightTween.svelte.js";
 	import { createCamera } from "./scatter/camera.svelte.js";
 	import { createRotatingLabels } from "./scatter/rotatingLabels.svelte.js";
@@ -84,7 +88,7 @@
 		createHexLayoutCache,
 		type HexLayout
 	} from "./scatter/paint/hexLayout.js";
-	import { drawHexes, type HexPaintMode } from "./scatter/paint/hexes.js";
+	import { drawHexes } from "./scatter/paint/hexes.js";
 	import { drawHexRegionLabels } from "./scatter/paint/hexLabels.js";
 	import * as view from "./scatter/viewport.js";
 	import { songLinks } from "$data/songLinks.js";
@@ -136,7 +140,7 @@
 		playingSongKey = null,
 		playingClipProgressFraction = 0,
 		playingChordColorSegments = [],
-		renderMode = "dots",
+		hexStyle = "hex",
 		progressionSharesBySongKey = null,
 		clusterRegionBySongKey = null,
 		clusterNames = null,
@@ -270,15 +274,25 @@
 	// hit-testing don't refit them on every mousemove.
 	let clusterHits: ClusterHit[] = [];
 
-	// Where the layout puts each song it places, by song key, for the
+	// The last layout that bins into hexes (or the first layout, before
+	// one has). Region colors come from it, so hexes keep their colors while
+	// they fade out for another layout, and come back the same.
+	let lastHexLayout: LayoutResult | null = null;
+	const regionLayout = $derived.by(() => {
+		if (layout.aggregate === "hex") lastHexLayout = layout;
+		return lastHexLayout ?? layout;
+	});
+
+	// Where that layout puts each song it places, by song key, for the
 	// region colors (worked out once per layout, not per frame).
-	const restingPoints = $derived(
-		songs.keys.flatMap((songKey, index) =>
-			Number.isNaN(layout.x[index]) || Number.isNaN(layout.y[index])
+	const restingPoints = $derived.by(() => {
+		const { x, y } = regionLayout;
+		return songs.keys.flatMap((songKey, index) =>
+			Number.isNaN(x[index]) || Number.isNaN(y[index])
 				? []
-				: [{ songKey, nx: layout.x[index], ny: layout.y[index] }]
-		)
-	);
+				: [{ songKey, nx: x[index], ny: y[index] }]
+		);
+	});
 
 	// 1 for every song that should be drawn, 0 for the ones visibleSongKeys
 	// leaves out; the transition fades between them.
@@ -311,15 +325,13 @@
 	const isAccented = (songKey: string): boolean =>
 		accentFillColor !== null && (accentSongKeys?.has(songKey) ?? false);
 
+	// The layout bins songs into hexes when zoomed out (UMAP does).
 	const hexMode = $derived(
-		renderMode !== "dots" && progressionSharesBySongKey !== null
-	);
-	const hexPaintMode = $derived<HexPaintMode>(
-		renderMode === "dots" ? "hex" : renderMode
+		layout.aggregate === "hex" && progressionSharesBySongKey !== null
 	);
 
 	const regionColorByName = $derived(
-		!hexMode || clusterRegionBySongKey === null
+		progressionSharesBySongKey === null || clusterRegionBySongKey === null
 			? new Map<string, string>()
 			: regionColorsByName(restingPoints, clusterRegionBySongKey)
 	);
@@ -338,8 +350,7 @@
 
 	// Unclustered songs inside a cluster's outline, colored with it.
 	const strayRegionBySongKey = $derived(
-		!hexMode ||
-			clusterRegionBySongKey === null ||
+		clusterRegionBySongKey === null ||
 			progressionSharesBySongKey === null ||
 			width === 0
 			? null
@@ -452,19 +463,16 @@
 		pixelRatioOverride === null && readPerfParam() ? createPerfMeter() : null
 	);
 	let perfEl = $state<HTMLPreElement | null>(null);
+	let rotatingLabelsEl = $state<HTMLDivElement | null>(null);
 	let drawnDots = 0;
 
 	const draw = () => {
 		const perfStart = perfMeter ? performance.now() : 0; // perf meter
+		const pixelRatio =
+			pixelRatioOverride ??
+			Math.min(MAX_PIXEL_RATIO, window.devicePixelRatio || 1);
 		const context =
-			canvasEl &&
-			prepareCanvas(
-				canvasEl,
-				width,
-				height,
-				pixelRatioOverride ??
-					Math.min(MAX_PIXEL_RATIO, window.devicePixelRatio || 1)
-			);
+			canvasEl && prepareCanvas(canvasEl, width, height, pixelRatio);
 		if (!context) return;
 		void fontsLoaded;
 		const scene = createScene({
@@ -477,14 +485,33 @@
 			themeColors: hexColors
 		});
 		drawAxisLabels(scene, axisLabels);
-		const zoomLevel = hexMode ? hexZoomLevel(transform.k, HEX_ZOOM) : null;
-		if (zoomLevel?.kind === "hex") {
-			drawnDots = 0; // perf meter
-			drawHexFrame(scene, zoomLevel.radius);
-		} else {
-			drawnDots = drawDotFrame(scene); // perf meter
+		// At hex zoom, hexes cover the dots by hexOpacity: none while songs
+		// move, all once they've settled in a hex layout, and crossfading
+		// with the dots in between.
+		const zoomLevel =
+			hexMode || hexFade.current > 0
+				? hexZoomLevel(transform.k, HEX_ZOOM)
+				: null;
+		const hexOpacity = zoomLevel?.kind === "hex" ? hexFade.current : 0;
+		if (hexOpacity === 0) {
+			hexFrame = null;
+			setLabelSpots([]);
+		}
+		drawnDots = // perf meter
+			hexOpacity < 1
+				? drawDotFrame(
+						hexOpacity === 0 ? scene : fadedScene(scene, 1 - hexOpacity),
+						hexOpacity === 0
+					)
+				: 0;
+		if (zoomLevel?.kind === "hex" && hexOpacity > 0) {
+			drawHexFrame(scene, zoomLevel.radius, hexOpacity, pixelRatio);
 		}
 		context.globalAlpha = 1;
+		const labelsOpacity = hexFade.current === 1 ? "" : String(hexFade.current);
+		if (rotatingLabelsEl && rotatingLabelsEl.style.opacity !== labelsOpacity) {
+			rotatingLabelsEl.style.opacity = labelsOpacity;
+		}
 		// perf meter
 		if (perfMeter && perfEl) {
 			const text = perfMeter.record(performance.now() - perfStart, drawnDots);
@@ -492,8 +519,45 @@
 		}
 	};
 
-	// Zoomed out in hex mode: the binned map and its region labels.
-	const drawHexFrame = (scene: Scene, radius: number) => {
+	// The same scene with every song's alpha scaled by opacity, in a buffer
+	// kept across frames.
+	let fadedAlpha = new Float32Array(0);
+	const fadedScene = (scene: Scene, opacity: number): Scene => {
+		const { alpha } = scene;
+		if (fadedAlpha.length !== alpha.length) {
+			fadedAlpha = new Float32Array(alpha.length);
+		}
+		for (let index = 0; index < alpha.length; index++) {
+			fadedAlpha[index] = alpha[index] * opacity;
+		}
+		return { ...scene, alpha: fadedAlpha };
+	};
+
+	// Hexes fading in or out are painted here at full strength, then laid
+	// over the canvas at their opacity, so overlapping hexes don't show
+	// seams.
+	let hexFadeCanvas: HTMLCanvasElement | null = null;
+
+	// Zoomed out in hex mode: the binned map and its region labels, at
+	// opacity over whatever's drawn below.
+	const drawHexFrame = (
+		mainScene: Scene,
+		radius: number,
+		opacity: number,
+		pixelRatio: number
+	) => {
+		const fadeContext =
+			opacity < 1
+				? prepareCanvas(
+						(hexFadeCanvas ??= document.createElement("canvas")),
+						width,
+						height,
+						pixelRatio
+					)
+				: null;
+		const scene = fadeContext
+			? { ...mainScene, context: fadeContext }
+			: mainScene;
 		const layout = hexLayoutFor({
 			radius,
 			size: viewSize,
@@ -509,7 +573,7 @@
 		setTitleSpots([]);
 		drawHexes(scene, {
 			layout,
-			mode: hexPaintMode,
+			mode: hexStyle,
 			regionFill: regionFills.regionFill,
 			selectedSongKey,
 			hoveredRegionId: hoveredHex?.region.id ?? null,
@@ -525,6 +589,10 @@
 					})
 				: []
 		);
+		if (fadeContext && hexFadeCanvas) {
+			mainScene.context.globalAlpha = opacity;
+			mainScene.context.drawImage(hexFadeCanvas, 0, 0, width, height);
+		}
 	};
 
 	// Each song's region fill at one gradient strength, kept across frames
@@ -551,12 +619,15 @@
 		};
 	};
 
-	// Dots mode, or hex mode zoomed in to dots: cluster outlines, dots,
-	// marked songs and their labels, then rings around the selected and
-	// hovered songs. Returns how many plain dots it drew.
-	const drawDotFrame = (scene: Scene): number => {
-		hexFrame = null;
-		setLabelSpots([]);
+	// Dots (at any zoom in other layouts, at dot zoom in hex ones): cluster
+	// outlines, dots, marked songs and their labels, then rings around the
+	// selected and hovered songs. Cluster outlines and titles belong to the
+	// hex map's dot zoom: they're left out in other layouts, under fading
+	// hexes (when the dots aren't alone) and while songs move. Returns how
+	// many plain dots it drew.
+	const drawDotFrame = (scene: Scene, alone: boolean): number => {
+		const outlined =
+			showClusterOutlines && hexMode && alone && transition.settled;
 		const gradient = hexMode
 			? gradientStrengthForZoom(transform.k, HEX_ZOOM, HEX_MIN_SHARE_FADE)
 			: 0;
@@ -571,7 +642,7 @@
 			inYearSongKeys
 		});
 
-		clusterHits = showClusterOutlines
+		clusterHits = outlined
 			? drawClusterOutlines(scene, {
 					clusters,
 					memberIndexes: clusterMemberIndexes,
@@ -581,14 +652,13 @@
 					// Hex maps title clusters in HTML instead (see titleSpots).
 					showNames: showClusterNames && !hexMode,
 					// Hex maps already show the count in the hex tooltip.
-					countClusterHash:
-						renderMode === "hex"
-							? null
-							: (hoveredClusterHit?.cluster.hash ?? null)
+					countClusterHash: hexMode
+						? null
+						: (hoveredClusterHit?.cluster.hash ?? null)
 				})
 			: [];
 		setTitleSpots(
-			hexMode && showClusterNames
+			hexMode && showClusterNames && outlined
 				? clusterTitleSpots(clusterHits, resolvedClusterNames)
 				: []
 		);
@@ -832,6 +902,24 @@
 			return transitionTarget;
 		},
 		durationMs: TWEEN_DURATION_MS,
+		// Hexes showing fade out (HEX_FADE_OUT_MS from fully shown) before
+		// songs move out from under them.
+		get delayMs() {
+			return hexZoomLevel(transform.k, HEX_ZOOM).kind === "hex"
+				? hexFade.current * HEX_FADE_OUT_MS
+				: 0;
+		},
+		onFrame: () => draw()
+	});
+
+	// How much hexes cover the dots: 1 while songs rest in a hex layout,
+	// fading out before they move and back in once they settle.
+	const hexFade = createFade({
+		get target() {
+			return hexMode && transition.settled ? 1 : 0;
+		},
+		riseMs: HEX_FADE_IN_MS,
+		fallMs: HEX_FADE_OUT_MS,
 		onFrame: () => draw()
 	});
 
@@ -1028,12 +1116,15 @@
 			: null}
 	/>
 
-	<RotatingLabels
-		labels={rotating.labels}
-		screenOf={toScreen}
-		textColor={hexColors.labelText}
-		haloColor={hexColors.labelHalo}
-	/>
+	<!-- faded with the hexes in draw() -->
+	<div class="rotating-labels" bind:this={rotatingLabelsEl}>
+		<RotatingLabels
+			labels={rotating.labels}
+			screenOf={toScreen}
+			textColor={hexColors.labelText}
+			haloColor={hexColors.labelHalo}
+		/>
+	</div>
 
 	{#if tooltipVisible && delayedTooltip.tooltipAnchor}
 		<ScatterSongTooltip
@@ -1069,6 +1160,12 @@
 		font:
 			11px/1.3 ui-monospace,
 			monospace;
+		pointer-events: none;
+	}
+
+	.rotating-labels {
+		position: absolute;
+		inset: 0;
 		pointer-events: none;
 	}
 

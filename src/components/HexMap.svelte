@@ -376,7 +376,6 @@
 				method="umap"
 				clusters={densityClusters}
 				emphasizedClusterHashes={null}
-				renderMode="hex"
 				{progressionSharesBySongKey}
 				{clusterRegionBySongKey}
 				{clusterNames}
@@ -447,7 +446,6 @@
 							method="umap"
 							clusters={densityClusters}
 							emphasizedClusterHashes={null}
-							renderMode="hex"
 							{progressionSharesBySongKey}
 							{clusterRegionBySongKey}
 							{clusterNames}

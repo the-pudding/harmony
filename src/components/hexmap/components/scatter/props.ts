@@ -126,13 +126,14 @@ export type EmbeddingScatterProps = {
 		endFraction: number;
 		chordColor: string;
 	}[];
-	// "hex" groups songs into hexagons whose size follows the zoom: big
-	// when zoomed out, smaller as you zoom in, plain dots near max zoom.
-	// Each hex takes the color of its main progression, faded when the
-	// hex is only partly that progression. Needs progressionSharesBySongKey.
-	// "watercolor" bins and colors the same way, but paints each bin as a
-	// soft blob so neighboring regions bleed into each other.
-	renderMode?: "dots" | "hex" | "watercolor" | "hex-watercolor";
+	// How bins are painted when the layout groups songs into hexagons
+	// (layout.aggregate "hex"; needs progressionSharesBySongKey). Their
+	// size follows the zoom: big when zoomed out, smaller as you zoom in,
+	// plain dots near max zoom. "hex" fills each hexagon with the color of
+	// its main progression, faded when the hex is only partly that
+	// progression. "watercolor" bins and colors the same way, but paints
+	// each bin as a soft blob so neighboring regions bleed into each other.
+	hexStyle?: "hex" | "watercolor" | "hex-watercolor";
 	// Each song's progressions with their share of its matched chords.
 	progressionSharesBySongKey?: ReadonlyMap<
 		string,

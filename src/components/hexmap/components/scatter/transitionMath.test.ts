@@ -4,6 +4,7 @@ import {
 	STAGGER_SPAN,
 	beginTransition,
 	createChannels,
+	stepFade,
 	stepTransition,
 	type Channels
 } from "./transitionMath.js";
@@ -111,5 +112,18 @@ describe("beginTransition", () => {
 		const midway = at(0.5);
 		expect(midway.x[0]).toBeCloseTo(0.6);
 		expect(midway.alpha[0]).toBeCloseTo(0.5);
+	});
+});
+
+describe("stepFade", () => {
+	it("rises and falls at their own rates", () => {
+		expect(stepFade(0, 1, 250, 500, 200)).toBe(0.5);
+		expect(stepFade(1, 0, 100, 500, 200)).toBe(0.5);
+	});
+
+	it("stops at the target", () => {
+		expect(stepFade(0.9, 1, 500, 500, 200)).toBe(1);
+		expect(stepFade(0.1, 0, 500, 500, 200)).toBe(0);
+		expect(stepFade(0.4, 0.4, 16, 500, 200)).toBe(0.4);
 	});
 });

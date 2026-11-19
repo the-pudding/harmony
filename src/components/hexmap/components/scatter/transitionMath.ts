@@ -91,3 +91,16 @@ export const stepTransition = (
 
 const clamp01 = (value: number): number =>
 	Number.isNaN(value) ? 0 : Math.min(1, Math.max(0, value));
+
+// A single value (e.g. an opacity) after elapsedMs moving straight toward
+// target: rising by 1 every riseMs, falling by 1 every fallMs.
+export const stepFade = (
+	current: number,
+	target: number,
+	elapsedMs: number,
+	riseMs: number,
+	fallMs: number
+): number =>
+	target > current
+		? Math.min(target, current + elapsedMs / Math.max(1, riseMs))
+		: Math.max(target, current - elapsedMs / Math.max(1, fallMs));
