@@ -75,6 +75,8 @@
 	import { drawHexRegionLabels } from "./scatter/paint/hexLabels.js";
 	import * as view from "./scatter/viewport.js";
 	import { songLinks } from "$data/songLinks.js";
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (perf meter): see src/utils/perfParam.js.
+	import { readPerfParam, createPerfMeter } from "$utils/perfParam";
 	import {
 		colorsByProgressionName,
 		createRegionFills,
@@ -398,7 +400,15 @@
 	// Repaints the whole canvas from the current state. The effect below
 	// re-runs it whenever anything it reads changes; the position and
 	// spotlight tweens also run it on each of their frames.
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (perf meter): the main map only, not the inset.
+	const perfMeter = $derived(
+		pixelRatioOverride === null && readPerfParam() ? createPerfMeter() : null
+	);
+	let perfEl = $state<HTMLPreElement | null>(null);
+	let drawnDots = 0;
+
 	const draw = () => {
+		const perfStart = perfMeter ? performance.now() : 0; // perf meter
 		const context =
 			canvasEl &&
 			prepareCanvas(
@@ -417,9 +427,19 @@
 		};
 		drawAxisLabels(scene, axisLabels);
 		const zoomLevel = hexMode ? hexZoomLevel(transform.k, HEX_ZOOM) : null;
-		if (zoomLevel?.kind === "hex") drawHexFrame(scene, zoomLevel.radius);
-		else drawDotFrame(scene);
+		if (zoomLevel?.kind === "hex") {
+			drawnDots = 0; // perf meter
+			drawHexFrame(scene, zoomLevel.radius);
+		} else {
+			drawnDots = pointsInDrawOrder.length; // perf meter
+			drawDotFrame(scene);
+		}
 		context.globalAlpha = 1;
+		// perf meter
+		if (perfMeter && perfEl) {
+			const text = perfMeter.record(performance.now() - perfStart, drawnDots);
+			if (text !== null) perfEl.textContent = text;
+		}
 	};
 
 	// Zoomed out in hex mode: the binned map and its region labels.
@@ -863,6 +883,10 @@
 			}
 		: undefined}
 >
+	<!-- DEV-ONLY-REMOVE-BEFORE-PUBLISH (perf meter) -->
+	{#if perfMeter}
+		<pre class="perf-overlay" bind:this={perfEl}></pre>
+	{/if}
 	<canvas
 		bind:this={canvasEl}
 		class:inert={!interactive}
@@ -925,6 +949,23 @@
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
+	}
+
+	/* DEV-ONLY-REMOVE-BEFORE-PUBLISH (perf meter) */
+	.perf-overlay {
+		position: fixed;
+		top: 4px;
+		left: 4px;
+		z-index: 1000;
+		margin: 0;
+		padding: 4px 6px;
+		border-radius: 4px;
+		background: rgba(0, 0, 0, 0.75);
+		color: #7cfc9a;
+		font:
+			11px/1.3 ui-monospace,
+			monospace;
+		pointer-events: none;
 	}
 
 	canvas {

@@ -15,13 +15,25 @@ low-risk precautions below as part of the refactor, and keep anything bigger
 
 _Fill in during commit 2, then after commits 4, 5 and 8._
 
-| When           | Device  | Slide / action              | draw p50 | draw p95 | fps |
-| -------------- | ------- | --------------------------- | -------- | -------- | --- |
-| before (main)  | desktop | Section 2 cluster → cluster |          |          |     |
-| before (main)  | phone   | Section 2 cluster → cluster |          |          |     |
-| after commit 4 | phone   | same                        |          |          |     |
-| after commit 5 | phone   | same                        |          |          |     |
-| after commit 8 | phone   | UMAP ↔ sky                  |          |          |     |
+| When           | Device  | Slide / action              | draw p50 | draw p95 | fps   |
+| -------------- | ------- | --------------------------- | -------- | -------- | ----- |
+| before (main)  | desktop | Section 2 cluster → cluster | 2.0–2.3  | 3.8–8.2  | 69–85 |
+| before (main)  | phone   | Section 2 cluster → cluster |          |          |       |
+| after commit 4 | phone   | same                        |          |          |       |
+| after commit 5 | phone   | same                        |          |          |       |
+| after commit 8 | phone   | UMAP ↔ sky                  |          |          |       |
+
+Notes on the numbers:
+
+- The desktop row is headless Chrome (1280×800, no throttling) on a dev
+  machine, from `?perf=1&slide=8` then stepping `ArrowRight` to slides 10–14
+  (Section 2 clusters) with 1.5s between steps; the range is the overlay's
+  reading about 1.5s after each step (the last 120 draws). Draw ms is
+  `draw()` only (the canvas paint), not d3-zoom, Svelte or compositing.
+- "fps" is draws per second, not displayed frames: a prop change can trigger
+  both the `$effect(draw)` and a tween frame, so it can read above 60.
+- The phone row needs a real device: open the dev server on the phone with
+  `?perf=1&slide=<n>` and step through the clusters.
 
 ## Where frame time goes today (from reading the code)
 
