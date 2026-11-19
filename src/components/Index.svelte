@@ -24,6 +24,10 @@
 	import CMS from "$components/helpers/CMS.svelte";
 	import { fade } from "svelte/transition";
 	import copy from "$data/copy.json";
+	import {
+		DEFAULT_MAP_SCENE,
+		parseMapScene
+	} from "$components/storymap/mapScene";
 	import { chordify } from "$utils/chordify";
 	import { setContext } from "svelte";
 	import { createExplore } from "$runes/explore.svelte";
@@ -100,54 +104,25 @@
 		}
 	});
 
-	const parseBoolean = (value) =>
-		value === undefined ? undefined : String(value).trim() === "true";
-
-	const mapPropsFromCopy = (map) => {
-		const props = {
-			focusCluster: map.focusCluster?.trim() || undefined,
-			showLabels: map.showLabels
-				? String(map.showLabels)
-						.split(",")
-						.map((name) => name.trim())
-						.filter(Boolean)
-				: undefined,
-			movable: parseBoolean(map.movable),
-			hoverable: parseBoolean(map.hoverable),
-			hideLabels: parseBoolean(map.hideLabels),
-			rotateLabels: parseBoolean(map.rotateLabels),
-			centered: parseBoolean(map.centered),
-			hidePlayer: parseBoolean(map.hidePlayer),
-			// a list in the copy, or one comma-separated string
-			highlightSongs: map.highlightSongs
-				? [map.highlightSongs]
-						.flat()
-						.flatMap((value) => String(value).split(","))
-						.map((songKey) => songKey.trim())
-						.filter(Boolean)
-				: undefined
-		};
-		return Object.fromEntries(
-			Object.entries(props).filter(([, value]) => value !== undefined)
-		);
-	};
-
 	// a <button><strong class=progression> in the text refocuses the map on
 	// that cluster; the slide's own focusCluster comes back on the next visit
 	let textFocusCluster = $state();
-	let mapProps = $derived.by(() => {
-		if (!parseBoolean(map?.visible)) return null;
-		const props = mapPropsFromCopy(map);
-		return textFocusCluster === undefined
-			? props
-			: { ...props, focusCluster: textFocusCluster };
+	let mapScene = $derived.by(() => {
+		const scene = parseMapScene(map);
+		return scene === null || textFocusCluster === undefined
+			? scene
+			: { ...scene, camera: { kind: "cluster", name: textFocusCluster } };
 	});
+	// The cluster the map is focused on, if any.
+	let focusedCluster = $derived(
+		mapScene?.camera.kind === "cluster" ? mapScene.camera.name : undefined
+	);
 
 	// The text's cluster buttons (from the copy's HTML) show which one the
 	// map is on, in the selected style.
 	let textInnerEl = $state();
 	$effect(() => {
-		const focused = mapProps?.focusCluster;
+		const focused = focusedCluster;
 		void text;
 		if (!textInnerEl) return;
 		for (const button of textInnerEl.querySelectorAll("button")) {
@@ -243,14 +218,14 @@
 			return onExploreSlide;
 		}
 	});
-	let activeCluster = $derived(mapProps?.focusCluster ?? explore.clusterName);
+	let activeCluster = $derived(focusedCluster ?? explore.clusterName);
 	let showClusterPanel = $derived(activeCluster !== undefined);
 	// hidePlayer drops the focused cluster's player (its name, arrows and
 	// chords) along with its featured songs on the map. The panel stays, empty,
 	// so the map frames the cluster the same as when the player shows, and
 	// the next slide's player doesn't shift everything.
 	let playerHidden = $derived(
-		mapProps?.hidePlayer === true && mapProps?.focusCluster !== undefined
+		mapScene?.player.hidden === true && focusedCluster !== undefined
 	);
 
 	// Hover links the explore panel's beeswarm and the map, both ways.
@@ -282,7 +257,7 @@
 	let enteredWithoutMap = $state(false);
 	const goToSlide = (i) => {
 		if (i === slideI) return;
-		enteredWithoutMap = mapProps === null;
+		enteredWithoutMap = mapScene === null;
 		slideI = i;
 		textFocusCluster = undefined;
 		explore.reset();
@@ -298,7 +273,7 @@
 		const canvas = mapLayerEl?.querySelector("canvas");
 		const pinch = event.ctrlKey;
 		if (pinch) event.preventDefault();
-		if (!canvas || event.target === canvas || mapProps === null) return;
+		if (!canvas || event.target === canvas || mapScene === null) return;
 		const overMap =
 			mapLayerEl.contains(event.target) ||
 			event.target.closest?.("[data-wheel-to-map]");
@@ -362,12 +337,12 @@
 <div
 	class="map-layer"
 	bind:this={mapLayerEl}
-	class:visible={mapProps !== null}
+	class:visible={mapScene !== null}
 	class:faded={overlay}
-	aria-hidden={mapProps === null}
+	aria-hidden={mapScene === null}
 >
 	<HexMap
-		{...mapProps ?? {}}
+		scene={mapScene ?? DEFAULT_MAP_SCENE}
 		{focusFrame}
 		{mapFrame}
 		instantFocus={enteredWithoutMap}

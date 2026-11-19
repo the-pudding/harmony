@@ -2,9 +2,9 @@
 	// The story's hex map: no settings bar, legend or
 	// inspector. Draws the prebuilt snapshot from `npm run hexmap` (positions
 	// progression coverage and clusters) and fills its parent; layout runs
-	// here, since it depends on the props below. Interaction can
-	// be turned off for decorative uses (e.g. a background), and focusCluster
-	// frames a single cluster.
+	// here, since it depends on the props below. What the slide wants (layout,
+	// camera, labels, interaction) is one `scene` (see storymap/mapScene.ts);
+	// the rest are what the reader is doing.
 	import {
 		loadHexMapSnapshot,
 		loadShardedSong,
@@ -33,41 +33,21 @@
 	} from "$components/hexmap/components/scatter/viewport.js";
 	import type { MapFrame } from "$components/hexmap/components/scatter/types.js";
 	import { DEFAULT_TIMELINE_PARAMS } from "$components/storymap/layouts/timeline.js";
-	import type { LayoutName } from "$components/storymap/layouts/index.js";
+	import {
+		DEFAULT_MAP_SCENE,
+		type MapScene
+	} from "$components/storymap/mapScene.js";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (dev layout): see src/utils/perfParam.js.
 	import { readLayoutParam } from "$utils/perfParam";
 
 	type Props = {
-		// How the songs are arranged: the hex map, or the timeline "sky".
-		layout?: LayoutName;
-		// The timeline's label at the bottom right (default "time →"), or
-		// null for none.
-		axisLabel?: string | null;
-		// Drag, wheel, pinch and double-click zoom, and click-to-zoom on hexes.
-		// Always off while focusCluster is set.
-		movable?: boolean;
-		// Hovering a colored hex outlines its cluster and names its
-		// progression; at dot zoom, hovering a song shows its tooltip.
-		hoverable?: boolean;
-		// Hide every region label. Always hidden while focusCluster is set.
-		hideLabels?: boolean;
-		// Only label these clusters, by name (e.g. ["stay with me"]). By
-		// default any cluster can be labeled, as space and zoom allow.
-		showLabels?: string[];
-		// Labels fade in and out a few at a time, a few seconds apart, instead
-		// of all showing at once.
-		rotateLabels?: boolean;
-		// Zoom in on and center this cluster, by name (e.g. "stay with me").
-		focusCluster?: string;
-		// While focusCluster is set: its featured songs are drawn like any
-		// other dot (no outline, enlarging or title), and dots can be hovered
-		// but not clicked. The page should skip its player for the cluster too
-		// (Index does). No effect without focusCluster.
-		hidePlayer?: boolean;
-		// Songs (by slug) drawn like featured songs, enlarged and labeled, but
-		// not playable and without the 🎧. They can still be hovered.
-		highlightSongs?: string[];
-		// Changes to focusCluster jump straight to the new view instead of
+		// What the slide wants the map to be, from the copy's `map` block. Its
+		// layout and camera (home, or a focused cluster; a focused song comes
+		// with the camera work), labels, interaction and highlighted songs are
+		// used here; the other song and media settings are read by later
+		// features.
+		scene?: MapScene;
+		// Changes to the focused cluster jump straight to the new view instead of
 		// animating (e.g. when the map is about to appear).
 		instantFocus?: boolean;
 		// The part of the map, in pixels from its top, that a focused cluster
@@ -77,10 +57,6 @@
 		// fill (clear of the text over the map and any docked media). UMAP
 		// isn't framed; it sits by centered instead.
 		mapFrame?: MapFrame;
-		// Center the map on the page. By default it sits a bit lower, to
-		// leave room for text above it (panning can still move it under).
-		// Always centered while focusCluster is set.
-		centered?: boolean;
 		// "dark" draws on a near-black background; "light" has no background
 		// of its own and uses lighter grays between colored hexes.
 		theme?: "dark" | "light";
@@ -134,20 +110,10 @@
 	};
 
 	const {
-		layout = "umap",
-		axisLabel = DEFAULT_TIMELINE_PARAMS.axisLabel,
-		focusCluster = undefined,
-		hidePlayer = false,
-		highlightSongs = [],
+		scene = DEFAULT_MAP_SCENE,
 		instantFocus = false,
 		focusFrame = null,
 		mapFrame = NO_MAP_FRAME,
-		centered = false,
-		movable = true,
-		hoverable = true,
-		hideLabels = false,
-		showLabels = undefined,
-		rotateLabels = false,
 		theme = "dark",
 		onSampleClick = undefined,
 		playingSongKey = null,
@@ -165,6 +131,21 @@
 		purityLayout = true,
 		pureThreshold = 0.9
 	}: Props = $props();
+
+	// The scene's settings, under the names the rest of this file uses.
+	const focusCluster = $derived(
+		scene.camera.kind === "cluster" ? scene.camera.name : undefined
+	);
+	const centered = $derived(
+		scene.camera.kind === "home" && scene.camera.centered
+	);
+	const movable = $derived(scene.interaction.movable);
+	const hoverable = $derived(scene.interaction.hoverable);
+	const hideLabels = $derived(scene.labels.hidden);
+	const showLabels = $derived(scene.labels.only ?? undefined);
+	const rotateLabels = $derived(scene.labels.rotate);
+	const hidePlayer = $derived(scene.player.hidden);
+	const highlightSongs = $derived(scene.songs.highlighted);
 
 	// Once a cluster has been focused, clearing focusCluster zooms back out
 	// (null) instead of leaving the scatter's scripted zoom off (undefined).
@@ -373,7 +354,14 @@
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (dev layout)
 	const devLayout = readLayoutParam();
 	const layoutName = $derived(
-		devLayout === "umap" || devLayout === "timeline" ? devLayout : layout
+		devLayout === "umap" || devLayout === "timeline"
+			? devLayout
+			: scene.layout.name
+	);
+	const timelineAxisLabel = $derived(
+		scene.layout.name === "timeline"
+			? scene.layout.axisLabel
+			: DEFAULT_TIMELINE_PARAMS.axisLabel
 	);
 
 	// The main map's arrangement (the inset below always stays UMAP).
@@ -382,7 +370,7 @@
 			? layoutName === "timeline"
 				? computeLayout(
 						"timeline",
-						{ axisLabel },
+						{ axisLabel: timelineAxisLabel },
 						{ songs, frame: layoutFrame }
 					)
 				: computeLayout(
