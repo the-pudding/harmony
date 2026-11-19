@@ -28,6 +28,7 @@
 		HEX_THEME_COLORS,
 		MAX_PIXEL_RATIO,
 		TWEEN_DURATION_MS,
+		FRAME_TWEEN_MS,
 		HEX_FADE_IN_MS,
 		HEX_FADE_OUT_MS
 	} from "./scatter/constants.js";
@@ -36,6 +37,7 @@
 	import type {
 		ClusterHit,
 		LabelSpot,
+		MapFrame,
 		Point2D,
 		Position
 	} from "./scatter/types.js";
@@ -55,7 +57,8 @@
 	import { normalizeName } from "./scatter/clusterNames.js";
 	import {
 		createTransition,
-		type TransitionTarget
+		type TransitionTarget,
+		type TransitionTiming
 	} from "./scatter/transition.svelte.js";
 	import { createFade } from "./scatter/fade.svelte.js";
 	import { createSpotlightTween } from "./scatter/spotlightTween.svelte.js";
@@ -127,6 +130,7 @@
 		spotlitSongKey = null,
 		focusFrame = null,
 		offsetY = 0,
+		mapFrame = view.NO_MAP_FRAME,
 		emphasizedSongKeys = null,
 		showClusterOutlines = true,
 		showClusterNames = true,
@@ -307,20 +311,98 @@
 		return alpha;
 	});
 
+	// Where every song is headed: where the layout puts it, across the
+	// plot (a framed layout's 0–1 is converted from the frame rect), and
+	// how visible, plus what it was placed for, so the transition can tell
+	// a window resize or a frame change from a new layout.
+	type PlacedTarget = TransitionTarget & {
+		layoutName: string;
+		// Framed layouts only (null and 0 for the rest, which don't move
+		// when these change).
+		frame: MapFrame | null;
+		width: number;
+		height: number;
+	};
+
+	const transitionTarget = $derived.by((): PlacedTarget => {
+		const placed = {
+			alpha: targetAlpha,
+			stagger: layout.stagger ?? null,
+			layoutName: layout.name
+		};
+		if (!layout.framed) {
+			return {
+				...placed,
+				x: layout.x,
+				y: layout.y,
+				frame: null,
+				width: 0,
+				height: 0
+			};
+		}
+		const size = { width, height };
+		const x = new Float32Array(songs.count);
+		const y = new Float32Array(songs.count);
+		for (let index = 0; index < songs.count; index++) {
+			const position = view.framedToPlot(size, mapFrame, {
+				nx: layout.x[index],
+				ny: layout.y[index]
+			});
+			x[index] = position.nx;
+			y[index] = position.ny;
+		}
+		return { ...placed, x, y, frame: mapFrame, width, height };
+	});
+
+	const sameFrame = (a: MapFrame | null, b: MapFrame | null): boolean =>
+		a === b ||
+		(a !== null &&
+			b !== null &&
+			a.top === b.top &&
+			a.right === b.right &&
+			a.bottom === b.bottom &&
+			a.left === b.left);
+
+	// A window resize jumps; a frame change within one layout moves songs
+	// quickly; anything else (a new layout, songs shown or hidden) at the
+	// usual pace. Hexes showing fade out (HEX_FADE_OUT_MS from fully shown)
+	// before songs move out from under them.
+	const transitionTiming = (
+		next: PlacedTarget,
+		previous: PlacedTarget | null
+	): TransitionTiming => {
+		const delayMs =
+			hexZoomLevel(transform.k, HEX_ZOOM).kind === "hex"
+				? hexFade.current * HEX_FADE_OUT_MS
+				: 0;
+		if (previous && next.layoutName === previous.layoutName) {
+			if (next.width !== previous.width || next.height !== previous.height) {
+				return { durationMs: 0, instant: true };
+			}
+			if (!sameFrame(next.frame, previous.frame)) {
+				return { durationMs: FRAME_TWEEN_MS, delayMs };
+			}
+		}
+		return { durationMs: TWEEN_DURATION_MS, delayMs };
+	};
+
 	// A song the layout places and visibleSongKeys keeps, by index.
 	const isDrawnIndex = (index: number | undefined): index is number =>
 		index !== undefined &&
 		targetAlpha[index] > 0 &&
-		!Number.isNaN(layout.x[index]);
+		!Number.isNaN(transitionTarget.x[index]);
 
 	const isDrawn = (songKey: string): boolean =>
 		isDrawnIndex(songs.indexOf.get(songKey));
 
 	// Where a song rests in this layout, in base pixels, or null.
 	const restingBasePixel = (index: number | undefined): Point2D | null =>
-		index === undefined || Number.isNaN(layout.x[index])
+		index === undefined || Number.isNaN(transitionTarget.x[index])
 			? null
-			: toBasePixel({ nx: layout.x[index], ny: layout.y[index] });
+			: toBasePixel({
+					nx: transitionTarget.x[index],
+					ny: transitionTarget.y[index]
+				});
 
 	const isAccented = (songKey: string): boolean =>
 		accentFillColor !== null && (accentSongKeys?.has(songKey) ?? false);
@@ -428,14 +510,19 @@
 
 	const clustersAvailable = $derived(CLUSTERABLE_METHODS.has(method));
 
-	const viewSize = $derived({ width, height, offsetY });
+	// Framed layouts keep clear of the text with mapFrame instead.
+	const viewSize = $derived({
+		width,
+		height,
+		offsetY: layout.framed ? 0 : offsetY
+	});
 	const viewport = $derived({ ...viewSize, transform });
 	const plot = $derived(view.plotSize(viewSize));
 
 	const toBasePixel = (position: Position) =>
 		view.toBasePixel(viewSize, position);
 	const toScreen = (position: Position) => view.toScreen(viewport, position);
-	const homeTransform = $derived(view.homeTransform(offsetY));
+	const homeTransform = $derived(view.homeTransform(viewSize.offsetY));
 
 	const spotlightSongKey = $derived(
 		playingSongKey ?? openSongId ?? zoomSongKey ?? spotlitSongKey
@@ -890,25 +977,11 @@
 		}
 	});
 
-	const transitionTarget = $derived<TransitionTarget>({
-		x: layout.x,
-		y: layout.y,
-		alpha: targetAlpha,
-		stagger: layout.stagger ?? null
-	});
-
 	const transition = createTransition({
 		get target() {
 			return transitionTarget;
 		},
-		durationMs: TWEEN_DURATION_MS,
-		// Hexes showing fade out (HEX_FADE_OUT_MS from fully shown) before
-		// songs move out from under them.
-		get delayMs() {
-			return hexZoomLevel(transform.k, HEX_ZOOM).kind === "hex"
-				? hexFade.current * HEX_FADE_OUT_MS
-				: 0;
-		},
+		timing: transitionTiming,
 		onFrame: () => draw()
 	});
 

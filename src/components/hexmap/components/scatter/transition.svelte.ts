@@ -13,6 +13,14 @@ import {
 // an optional stagger (0–1 per song; see STAGGER_SPAN).
 export type TransitionTarget = Channels & { stagger?: Float32Array | null };
 
+// How songs move to a target: over durationMs, after holding still for
+// delayMs (e.g. while hexes fade out), or at once when instant.
+export type TransitionTiming = {
+	durationMs: number;
+	instant?: boolean;
+	delayMs?: number;
+};
+
 // Animates every song's x, y and alpha from what's drawn to each new
 // target, calling onFrame after every step. Positions live in preallocated
 // typed arrays mutated in place, outside Svelte's graph; onFrame does the
@@ -20,17 +28,18 @@ export type TransitionTarget = Channels & { stagger?: Float32Array | null };
 // transition starts or ends.
 //
 // - The first target (and any target for a new number of songs) appears at
-//   once, as does any target while `instant` is true.
+//   once, as does any target timed `instant`.
 // - A new target mid-flight starts from where songs are drawn, so fast
 //   changes never jump.
-// - delayMs holds songs where they are for that long before they move
-//   (e.g. while hexes fade out); a new target during the delay restarts it.
-// - durationMs, instant and delayMs are read when a target arrives.
-export const createTransition = (input: {
-	readonly target: TransitionTarget | null;
-	readonly durationMs: number;
-	readonly instant?: boolean;
-	readonly delayMs?: number;
+// - timing(next, previous) is asked how to move each time a target arrives
+//   that changes what's drawn (not for the first target or a new song
+//   count), with the target before it (null at first), so callers can tell
+//   apart what changed (e.g. a window resize jumps). Its delayMs holds
+//   songs where they are before they move; a new target during the delay
+//   restarts it.
+export const createTransition = <Target extends TransitionTarget>(input: {
+	readonly target: Target | null;
+	timing: (next: Target, previous: Target | null) => TransitionTiming;
 	onFrame: () => void;
 }) => {
 	let current = createChannels(0);
@@ -43,6 +52,7 @@ export const createTransition = (input: {
 	// or an instant jump), never mid-flight, so caches of resting positions
 	// (hex bins) can key on it.
 	let positionsVersion = 0;
+	let previousTarget: Target | null = null;
 
 	const finish = () => {
 		positionsVersion++;
@@ -58,8 +68,10 @@ export const createTransition = (input: {
 		startAt = new Float32Array(count);
 	};
 
-	const retarget = (target: TransitionTarget) => {
+	const retarget = (target: Target) => {
 		cancelAnimationFrame(frame);
+		const previous = previousTarget;
+		previousTarget = target;
 		const count = target.x.length;
 		const fresh = current.x.length !== count;
 		if (fresh) resize(count);
@@ -76,7 +88,8 @@ export const createTransition = (input: {
 			if (!settled) finish();
 			return;
 		}
-		if (fresh || input.instant) {
+		const timing = fresh ? null : input.timing(target, previous);
+		if (!timing || timing.instant) {
 			copyChannels(to, current);
 			finish();
 			input.onFrame();
@@ -84,8 +97,8 @@ export const createTransition = (input: {
 		}
 
 		settled = false;
-		const durationMs = Math.max(1, input.durationMs);
-		const startedAt = performance.now() + Math.max(0, input.delayMs ?? 0);
+		const durationMs = Math.max(1, timing.durationMs);
+		const startedAt = performance.now() + Math.max(0, timing.delayMs ?? 0);
 		const step = () => {
 			const elapsed = performance.now() - startedAt;
 			if (elapsed < 0) {

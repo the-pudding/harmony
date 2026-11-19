@@ -27,6 +27,11 @@
 	import EmbeddingScatter from "$components/hexmap/components/EmbeddingScatter.svelte";
 	import { buildSongTable } from "$components/storymap/songTable.js";
 	import { computeLayout } from "$components/storymap/layouts/cache.js";
+	import {
+		frameRect,
+		NO_MAP_FRAME
+	} from "$components/hexmap/components/scatter/viewport.js";
+	import type { MapFrame } from "$components/hexmap/components/scatter/types.js";
 
 	type Props = {
 		// Drag, wheel, pinch and double-click zoom, and click-to-zoom on hexes.
@@ -59,6 +64,10 @@
 		// The part of the map, in pixels from its top, that a focused cluster
 		// is zoomed to almost fill the height of and centered in.
 		focusFrame?: { top: number; height: number } | null;
+		// Insets, in pixels from the map's edges, for the rect framed layouts
+		// fill (clear of the text over the map and any docked media). UMAP
+		// isn't framed; it sits by centered instead.
+		mapFrame?: MapFrame;
 		// Center the map on the page. By default it sits a bit lower, to
 		// leave room for text above it (panning can still move it under).
 		// Always centered while focusCluster is set.
@@ -121,6 +130,7 @@
 		highlightSongs = [],
 		instantFocus = false,
 		focusFrame = null,
+		mapFrame = NO_MAP_FRAME,
 		centered = false,
 		movable = true,
 		hoverable = true,
@@ -342,16 +352,19 @@
 		)
 	);
 
-	// UMAP isn't aware of the frame, so it gets a fixed one: resizing the
-	// window must not recompute it (frames arrive with a later commit).
-	const UMAP_FRAME = { width: 0, height: 0 };
+	// The size of the rect framed layouts fill. Only framed layouts are
+	// recomputed when it changes (see layouts/cache.ts).
+	const layoutFrame = $derived.by(() => {
+		const rect = frameRect({ width, height }, mapFrame);
+		return { width: rect.width, height: rect.height };
+	});
 
 	const umapResult = $derived(
 		songs
 			? computeLayout(
 					"umap",
 					{ purityLayout, pureThreshold },
-					{ songs, frame: UMAP_FRAME }
+					{ songs, frame: layoutFrame }
 				)
 			: null
 	);
@@ -401,6 +414,7 @@
 				accentSongKeys={outsideHub?.songKeys ?? null}
 				accentFillColor={outsideHub?.color ?? null}
 				{focusFrame}
+				{mapFrame}
 				offsetY={centered || focusCluster !== undefined
 					? 0
 					: UNCENTERED_OFFSET_Y}

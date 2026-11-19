@@ -11,6 +11,7 @@ import {
 } from "./constants.js";
 import type {
 	FocusFrame,
+	MapFrame,
 	Point2D,
 	Position,
 	ViewSize,
@@ -48,6 +49,44 @@ export const fromBasePixel = (
 		nx: (base.x - PLOT_MARGIN) / Math.max(plot.width, 1),
 		ny: 1 - (base.y - PLOT_MARGIN) / Math.max(plot.height, 1)
 	};
+};
+
+export const NO_MAP_FRAME: MapFrame = { top: 0, right: 0, bottom: 0, left: 0 };
+
+// The rect a framed layout fills, in base pixels: the canvas inset by the
+// frame, and by at least PLOT_MARGIN on every side (so no insets is the
+// plot itself).
+export const frameRect = (
+	{ width, height }: Pick<ViewSize, "width" | "height">,
+	frame: MapFrame
+): { x: number; y: number; width: number; height: number } => {
+	const top = Math.max(PLOT_MARGIN, frame.top);
+	const right = Math.max(PLOT_MARGIN, frame.right);
+	const bottom = Math.max(PLOT_MARGIN, frame.bottom);
+	const left = Math.max(PLOT_MARGIN, frame.left);
+	return {
+		x: left,
+		y: top,
+		width: Math.max(0, width - left - right),
+		height: Math.max(0, height - top - bottom)
+	};
+};
+
+// A framed layout's position (0–1 across the frame rect, y up) as a
+// position across the plot, which is what everything downstream draws.
+// Framed layouts are converted once when they're placed, so the camera,
+// painters and hit-testing keep working in plot positions, and songs
+// moving between a framed and an unframed layout never jump.
+export const framedToPlot = (
+	size: Pick<ViewSize, "width" | "height">,
+	frame: MapFrame,
+	position: Position
+): Position => {
+	const rect = frameRect(size, frame);
+	return fromBasePixel(size, {
+		x: rect.x + position.nx * rect.width,
+		y: rect.y + (1 - position.ny) * rect.height
+	});
 };
 
 export const toScreen = (viewport: Viewport, position: Position): Point2D => {

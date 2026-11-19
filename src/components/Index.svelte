@@ -223,6 +223,18 @@
 				}
 			: null
 	);
+	// The rect framed map layouts (e.g. the timeline) fill, as insets from
+	// the map's edges: a gap below the text box, and room at the bottom
+	// for an axis label. (The map never puts songs closer than its own
+	// margin to an edge either.)
+	const MAP_FRAME_GAP = 16;
+	const MAP_FRAME_BOTTOM = 48;
+	let mapFrame = $derived({
+		top: focusFrame ? focusFrame.top + MAP_FRAME_GAP : 0,
+		right: 0,
+		bottom: MAP_FRAME_BOTTOM,
+		left: 0
+	});
 	// What's explored, playing and open (see explore.svelte.ts). On the
 	// explore slide any clicked cluster opens the panel and only panning or
 	// zooming closes it; elsewhere only clusters with samples open it.
@@ -357,6 +369,7 @@
 	<HexMap
 		{...mapProps ?? {}}
 		{focusFrame}
+		{mapFrame}
 		instantFocus={enteredWithoutMap}
 		theme="dark"
 		playingSongKey={explore.playingSongKey ?? null}

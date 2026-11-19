@@ -21,6 +21,7 @@ export const DEFAULT_UMAP_PARAMS: UmapParams = {
 
 export const umapLayout: Layout<UmapParams> = {
 	name: "umap",
+	framed: false,
 	compute: ({ songs }, params) => {
 		const points: ScatterPoint[] = songs.keys.map((songKey, index) => ({
 			songKey,
@@ -52,8 +53,10 @@ export const umapLayout: Layout<UmapParams> = {
 			y[index] = point.ny;
 		});
 		return {
+			name: "umap",
 			x,
 			y,
+			framed: false,
 			aggregate: "hex",
 			color: "region",
 			pointRadius: POINT_RADIUS,

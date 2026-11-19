@@ -77,7 +77,7 @@ describe("umapLayout", () => {
 });
 
 describe("computeLayout", () => {
-	it("memoizes by name, params, frame size and song table", () => {
+	it("memoizes by name, params and song table", () => {
 		const a = computeLayout("umap", DEFAULT_UMAP_PARAMS, { songs, frame });
 		expect(
 			computeLayout(
@@ -93,12 +93,13 @@ describe("computeLayout", () => {
 				{ songs, frame }
 			)
 		).not.toBe(a);
+		// UMAP isn't framed, so the frame's size doesn't matter.
 		expect(
 			computeLayout("umap", DEFAULT_UMAP_PARAMS, {
 				songs,
 				frame: { width: 1, height: 1 }
 			})
-		).not.toBe(a);
+		).toBe(a);
 		expect(
 			computeLayout("umap", DEFAULT_UMAP_PARAMS, {
 				songs: buildSongTable(snapshot),

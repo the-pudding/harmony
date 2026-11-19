@@ -9,7 +9,10 @@ import {
 import {
 	clusterFocusTransform,
 	constrainTransform,
+	frameRect,
+	framedToPlot,
 	fromBasePixel,
+	NO_MAP_FRAME,
 	isOnScreen,
 	plotSize,
 	screenProjection,
@@ -82,6 +85,57 @@ describe("plot coordinates", () => {
 		expect(isOnScreen(size, { x: -5, y: 10 })).toBe(false);
 		expect(isOnScreen(size, { x: -5, y: 10 }, 5)).toBe(true);
 		expect(isOnScreen(size, { x: 800, y: 600 })).toBe(true);
+	});
+});
+
+describe("frames", () => {
+	const frame = { top: 200, right: 40, bottom: 60, left: 10 };
+
+	it("insets the canvas, by at least the plot margin", () => {
+		expect(frameRect(size, frame)).toEqual({
+			x: PLOT_MARGIN,
+			y: 200,
+			width: 800 - PLOT_MARGIN - 40,
+			height: 600 - 200 - 60
+		});
+		expect(frameRect(size, NO_MAP_FRAME)).toEqual({
+			x: PLOT_MARGIN,
+			y: PLOT_MARGIN,
+			...plotSize(size)
+		});
+	});
+
+	it("never reports a negative frame size", () => {
+		expect(
+			frameRect(size, { top: 500, right: 0, bottom: 500, left: 0 }).height
+		).toBe(0);
+	});
+
+	it("maps the frame's corners onto the frame rect, y up", () => {
+		const bottomLeft = toBasePixel(
+			size,
+			framedToPlot(size, frame, { nx: 0, ny: 0 })
+		);
+		const topRight = toBasePixel(
+			size,
+			framedToPlot(size, frame, { nx: 1, ny: 1 })
+		);
+		expect(bottomLeft.x).toBeCloseTo(PLOT_MARGIN);
+		expect(bottomLeft.y).toBeCloseTo(600 - 60);
+		expect(topRight.x).toBeCloseTo(800 - 40);
+		expect(topRight.y).toBeCloseTo(200);
+	});
+
+	it("leaves positions alone without insets", () => {
+		const position = framedToPlot(size, NO_MAP_FRAME, { nx: 0.3, ny: 0.8 });
+		expect(position.nx).toBeCloseTo(0.3);
+		expect(position.ny).toBeCloseTo(0.8);
+	});
+
+	it("keeps NaN (unplaced) positions NaN", () => {
+		const position = framedToPlot(size, frame, { nx: NaN, ny: NaN });
+		expect(position.nx).toBeNaN();
+		expect(position.ny).toBeNaN();
 	});
 });
 

@@ -5,6 +5,7 @@ import type { EmbeddingMethod } from "../../embedding/reducers/types.js";
 import type { ScatterAxisLabels } from "../scatterPoint.js";
 import type { LayoutResult } from "../../../storymap/layouts/types.js";
 import type { SongTable } from "../../../storymap/songTable.js";
+import type { MapFrame } from "./types.js";
 import type {
 	ClusterRegion,
 	ProgressionShare
@@ -71,8 +72,13 @@ export type EmbeddingScatterProps = {
 	focusFrame?: { top: number; height: number } | null;
 	// Shifts the resting view and focus targets down by this many screen
 	// pixels, e.g. to leave room for text over the top of the map.
-	// Changing it animates the view to the new resting position.
+	// Changing it animates the view to the new resting position. Unframed
+	// layouts (UMAP) only; framed ones keep clear of the text with mapFrame.
 	offsetY?: number;
+	// Insets from the canvas's edges for the rect framed layouts
+	// (layout.framed) fill, e.g. below the text and above docked media.
+	// Changing it moves their songs; unframed layouts ignore it.
+	mapFrame?: MapFrame;
 	// Optional blanket emphasis set (used by /story to highlight a whole
 	// progression family rather than one song's cluster). When set,
 	// everything NOT in it dims — independent of selectedSongKey /

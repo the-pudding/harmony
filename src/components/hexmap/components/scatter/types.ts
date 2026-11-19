@@ -27,6 +27,16 @@ export type Viewport = ViewSize & { transform: ZoomTransform };
 // pixels from its top.
 export type FocusFrame = { top: number; height: number };
 
+// Insets from the canvas's edges, in pixels, for the rect framed layouts
+// fill (e.g. below the text over the map). Never closer to an edge than
+// PLOT_MARGIN.
+export type MapFrame = {
+	top: number;
+	right: number;
+	bottom: number;
+	left: number;
+};
+
 // A label placed like song positions (0–1 across the plot).
 export type LabelSpot = Position & { text: string };
 

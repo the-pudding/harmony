@@ -48,6 +48,9 @@ export const FLY_TO_TRANSITION_MS = 1300;
 export const HEX_CLICK_ZOOM_MS = 450;
 // Points animating between layouts.
 export const TWEEN_DURATION_MS = 700;
+// Points moving because the map's frame changed (e.g. the text box above
+// it grew), within one layout.
+export const FRAME_TWEEN_MS = 400;
 // Hexes fade in this long after songs settle in a hex layout, and fade out
 // this fast (from fully shown) before songs move away.
 export const HEX_FADE_IN_MS = 500;
