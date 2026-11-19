@@ -10,17 +10,10 @@
 		loadShardedSong,
 		type HexMapSnapshot
 	} from "$data/hexMapSnapshot.js";
-	import {
-		decodeSnapshotCoverage,
-		namedClustersFromSnapshot
-	} from "$data/hexMapClusters.js";
-	import { applyPurityRadialLayout } from "$components/hexmap/embedding/layout/purityRadialLayout.js";
+	import { namedClustersFromSnapshot } from "$data/hexMapClusters.js";
 	import type { ClusterRegion } from "$components/hexmap/embedding/layout/hexBins.js";
+	import type { ProgressionCoverage } from "$routes/demo/shared/progressionHomogeneity.js";
 	import { homogeneityColorFor } from "$components/hexmap/homogeneityColors.js";
-	import {
-		computeSongHomogeneity,
-		type ProgressionCoverage
-	} from "$routes/demo/shared/progressionHomogeneity.js";
 	import {
 		featuredSongKeys,
 		featuredSongsOf,
@@ -34,6 +27,9 @@
 	import { zoomIdentity, type ZoomTransform } from "d3";
 	import EmbeddingScatter from "$components/hexmap/components/EmbeddingScatter.svelte";
 	import type { ScatterPoint } from "$components/hexmap/components/scatterPoint.js";
+	import { jitterFor } from "$components/hexmap/components/scatter/normalizePoints.js";
+	import { buildSongTable } from "$components/storymap/songTable.js";
+	import { computeLayout } from "$components/storymap/layouts/cache.js";
 
 	type Props = {
 		// Drag, wheel, pinch and double-click zoom, and click-to-zoom on hexes.
@@ -243,15 +239,13 @@
 		};
 	});
 
+	// Every song, once, by index (see storymap/songTable.ts).
+	const songs = $derived(snapshot ? buildSongTable(snapshot) : null);
+
 	// Each song's progression coverage, decoded from the snapshot's columns.
-	const coverageBySongKey = $derived.by(() => {
-		const coverages = new Map<string, ProgressionCoverage[]>();
-		if (!snapshot) return coverages;
-		snapshot.songKeys.forEach((songKey, index) => {
-			coverages.set(songKey, decodeSnapshotCoverage(snapshot!, index));
-		});
-		return coverages;
-	});
+	const coverageBySongKey = $derived(
+		songs?.coverageBySongKey ?? new Map<string, ProgressionCoverage[]>()
+	);
 
 	// A song needs at least this much of the explored cluster's progression
 	// to be lit up when it sits outside the cluster's outline.
@@ -290,39 +284,10 @@
 		};
 	});
 
-	const songSummaryByKey = $derived(
-		new Map(
-			(snapshot?.songKeys ?? []).map((songKey, index) => [
-				songKey,
-				{
-					title: snapshot!.titles[index],
-					artists: snapshot!.artists[index],
-					year: snapshot!.years?.[index] || undefined
-				}
-			])
-		)
-	);
+	const songSummaryByKey = $derived(songs?.songSummaryByKey ?? new Map());
 
 	const homogeneityBySongKey = $derived(
-		new Map(
-			[...coverageBySongKey].map(([songKey, coverage]) => [
-				songKey,
-				computeSongHomogeneity(coverage)
-			])
-		)
-	);
-
-	// groupShares only colors plain-dot mode, which HexMap never uses.
-	const points = $derived.by((): ScatterPoint[] =>
-		(snapshot?.songKeys ?? []).map((songKey, index) => ({
-			songKey,
-			x: snapshot!.x[index],
-			y: snapshot!.y[index],
-			groupShares: [],
-			homogeneityColor: homogeneityColorFor(
-				homogeneityBySongKey.get(songKey)?.effectiveProgressionCount ?? null
-			)
-		}))
+		songs?.homogeneityBySongKey ?? new Map()
 	);
 
 	// Clusters named by progression, precomputed by `npm run hexmap` (see
@@ -380,21 +345,41 @@
 		)
 	);
 
-	const displayPoints = $derived(
-		purityLayout
-			? applyPurityRadialLayout(
-					points,
-					densityClusters,
-					new Map(
-						[...homogeneityBySongKey].map(([songKey, homogeneity]) => [
-							songKey,
-							homogeneity?.dominantShare ?? 0
-						])
-					),
-					{ pureThreshold }
+	// UMAP isn't aware of the frame, so it gets a fixed one: resizing the
+	// window must not recompute it (frames arrive with a later commit).
+	const UMAP_FRAME = { width: 0, height: 0 };
+
+	const umapResult = $derived(
+		songs
+			? computeLayout(
+					"umap",
+					{ purityLayout, pureThreshold },
+					{ songs, frame: UMAP_FRAME }
 				)
-			: points
+			: null
 	);
+
+	// TEMPORARY SHIM (removed when EmbeddingScatter takes a LayoutResult):
+	// today's scatter still takes `points` and normalizes them itself, adding
+	// each song's jitter. The layout result is already normalized and
+	// jittered, so undo the jitter; the scatter's own normalization is then
+	// the identity (its bounds are exactly 0 and 1), and it adds the jitter
+	// back. groupShares only colors plain-dot mode, which HexMap never uses.
+	const displayPoints = $derived.by((): ScatterPoint[] => {
+		if (!songs || !umapResult) return [];
+		return songs.keys.map((songKey, index) => {
+			const jitter = jitterFor(songKey);
+			return {
+				songKey,
+				x: umapResult.x[index] - jitter.nx,
+				y: umapResult.y[index] - jitter.ny,
+				groupShares: [],
+				homogeneityColor: homogeneityColorFor(
+					songs.homogeneity[index]?.effectiveProgressionCount ?? null
+				)
+			};
+		});
+	});
 </script>
 
 <div
