@@ -24,6 +24,7 @@ _Fill in during commit 2, then after commits 4, 5 and 8._
 | after commit 4          | desktop | Section 2 cluster → cluster | 1.8–3.3  | 2.6–7.4   | 60–61 |
 | after commit 4          | desktop | Explore, dot zoom, dragging | 4.0–4.2  | 17.5–18.2 |       |
 | after commit 4          | phone   | Section 2 cluster → cluster |          |           |       |
+| after commit 5          | desktop | Section 2 cluster → cluster | 1.4–3.2  | 1.3–7.2   | 59–61 |
 | after commit 5          | phone   | Section 2 cluster → cluster |          |           |       |
 | after commit 8          | phone   | UMAP ↔ sky                  |          |           |       |
 
@@ -48,6 +49,25 @@ Notes on the numbers:
   screen. The drag also hovers songs (tooltips, rings), so its p95 includes
   those frames; its frame intervals and fps are paced by the test's mouse
   events and say nothing about the map.
+- "Explore, dot-zoom drag" below is a cleaner probe than the dragging rows
+  above: the same view, but the drag is dispatched in the page, one
+  mousemove per animation frame for 240 frames, so the last 120 draws are
+  all drag frames (~2,000 dots on screen); three runs each, draw p50 / p95
+  in ms:
+
+  | Version                  | dot zoom (6 wheel steps) | hex zoom (5 steps) |
+  | ------------------------ | ------------------------ | ------------------ |
+  | before commit 4          | 4.1 / 4.3–4.4            | 2.8 / 3.1          |
+  | after commit 4           | 3.6–3.7 / 3.8–4.4        | 2.8–3.1 / 3.1–3.4  |
+  | after commit 5 (batched) | 3.0–3.2 / 3.1–3.5        | 2.9–3.1 / 3.1–3.3  |
+
+  On desktop Chrome, profiles put the native arc/fill time well under
+  0.1ms a frame either way; most of commit 5's gain here is caching each
+  song's region fill string while the zoom's gradient holds (at dot zoom
+  it's constant), instead of interpolating 2,000 Lab colors per frame. The
+  batching should matter more on phones, where each fill() costs more;
+  that needs the phone rows.
+
 - From commit 4 on, the overlay's "dots" counts the plain dots actually
   painted (on screen, not hidden, not markers) rather than every song.
 - A CPU profile of that drag puts the biggest single draw cost in

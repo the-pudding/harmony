@@ -94,7 +94,8 @@
 		colorsByProgressionName,
 		createRegionFills,
 		regionColorsByName,
-		strayRegionsBySongKey
+		strayRegionsBySongKey,
+		type RegionFills
 	} from "./scatter/regionColors.js";
 
 	const {
@@ -393,19 +394,15 @@
 			: outlinedSongKeys
 	);
 
-	// Song indexes in the order dots are drawn: accented songs last, so
+	// Song indexes in the layers dots are drawn in: accented songs last, so
 	// they sit on top of the dots around them.
-	const drawOrder = $derived.by(() => {
-		const order = new Int32Array(songs.count);
-		let next = 0;
-		for (const accentedPass of [false, true]) {
-			for (let index = 0; index < songs.count; index++) {
-				if (isAccented(songs.keys[index]) === accentedPass) {
-					order[next++] = index;
-				}
-			}
+	const dotLayers = $derived.by(() => {
+		const plain: number[] = [];
+		const accented: number[] = [];
+		for (let index = 0; index < songs.count; index++) {
+			(isAccented(songs.keys[index]) ? accented : plain).push(index);
 		}
-		return order;
+		return [Int32Array.from(plain), Int32Array.from(accented)];
 	});
 
 	// Each cluster's songs by index, for drawing outlines every frame.
@@ -530,6 +527,30 @@
 		);
 	};
 
+	// Each song's region fill at one gradient strength, kept across frames
+	// while the fills and gradient hold (at dot zoom the gradient is
+	// constant), so dots don't re-interpolate their colors every frame.
+	let songFillCache: {
+		fills: RegionFills | null;
+		gradient: number;
+		bySongKey: Map<string, string>;
+	} = { fills: null, gradient: NaN, bySongKey: new Map() };
+	const songRegionFillAt = (gradient: number) => {
+		const fills = regionFills;
+		if (songFillCache.fills !== fills || songFillCache.gradient !== gradient) {
+			songFillCache = { fills, gradient, bySongKey: new Map() };
+		}
+		const { bySongKey } = songFillCache;
+		return (songKey: string): string => {
+			let fill = bySongKey.get(songKey);
+			if (fill === undefined) {
+				fill = fills.songRegionFill(songKey, gradient);
+				bySongKey.set(songKey, fill);
+			}
+			return fill;
+		};
+	};
+
 	// Dots mode, or hex mode zoomed in to dots: cluster outlines, dots,
 	// marked songs and their labels, then rings around the selected and
 	// hovered songs. Returns how many plain dots it drew.
@@ -539,9 +560,7 @@
 		const gradient = hexMode
 			? gradientStrengthForZoom(transform.k, HEX_ZOOM, HEX_MIN_SHARE_FADE)
 			: 0;
-		const songRegionFill = hexMode
-			? (songKey: string) => regionFills.songRegionFill(songKey, gradient)
-			: null;
+		const songRegionFill = hexMode ? songRegionFillAt(gradient) : null;
 		const style = createPointStyle({
 			spotlight: spotlight.current,
 			outlinedSongKeys,
@@ -575,7 +594,7 @@
 		);
 
 		const drawnDotCount = drawDots(scene, {
-			order: drawOrder,
+			layers: dotLayers,
 			songKeys: songs.keys,
 			style,
 			fill: createDotFill({
