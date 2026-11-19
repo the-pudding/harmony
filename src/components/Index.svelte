@@ -180,8 +180,40 @@
 	let clusterFrameHeight = $state(0);
 	// Where the cluster frame ends up once the text box finishes resizing, so
 	// the map frames the cluster once instead of chasing the animation.
+	// Consecutive slides showing the same stage component: the text box keeps
+	// the height of the longest of their texts, so the stage (the room left
+	// under the text) stays the same size while it steps through them.
+	let stageRun = $derived.by(() => {
+		const name = allSlides[slideI].stage?.component;
+		if (!name) return [];
+		let first = slideI;
+		let last = slideI;
+		while (first > 0 && allSlides[first - 1].stage?.component === name) first--;
+		while (
+			last < allSlides.length - 1 &&
+			allSlides[last + 1].stage?.component === name
+		)
+			last++;
+		return last > first ? allSlides.slice(first, last + 1) : [];
+	});
+	// Measured off screen; only plain text and lists, so components in the
+	// text aren't mounted twice.
+	const MEASURED_BLOCK_TYPES = ["text", "ol"];
+	let runTextHeights = $state([]);
+	let reservedTextHeight = $derived(
+		stageRun.length
+			? Math.max(0, ...runTextHeights.slice(0, stageRun.length).map(Number))
+			: 0
+	);
+	// The height the text box is heading to (it animates there).
+	let textBoxTarget = $derived(
+		Math.max(textHeight ?? 0, reservedTextHeight) || null
+	);
+
 	let textBoxGrowth = $derived(
-		text.length && textHeight && textBoxHeight ? textHeight - textBoxHeight : 0
+		text.length && textBoxTarget && textBoxHeight
+			? textBoxTarget - textBoxHeight
+			: 0
 	);
 	let focusFrame = $derived(
 		clusterFrameEl && clusterFrameHeight - textBoxGrowth > 0
@@ -368,7 +400,7 @@
 		<div
 			class="text frosted"
 			onclick={onTextClick}
-			style:height={textHeight ? `${textHeight}px` : null}
+			style:height={textBoxTarget ? `${textBoxTarget}px` : null}
 			bind:clientHeight={textBoxHeight}
 			in:fade={{ duration: 250 }}
 		>
@@ -387,6 +419,25 @@
 					</div>
 				{/key}
 			</div>
+		</div>
+	{/if}
+
+	{#if stageRun.length}
+		<!-- every text in the stage run, laid out like the real one but hidden,
+		     to find the tallest -->
+		<div class="text text-measure" aria-hidden="true">
+			{#each stageRun as slide, i (i)}
+				<div class="text-inner" bind:clientHeight={runTextHeights[i]}>
+					<div {@attach chordify}>
+						<CMS
+							content={(slide.text ?? []).filter((block) =>
+								MEASURED_BLOCK_TYPES.includes(block.type)
+							)}
+							{components}
+						/>
+					</div>
+				</div>
+			{/each}
 		</div>
 	{/if}
 
@@ -528,6 +579,15 @@
 		font-size: clamp(0.875rem, min(2.5svh, 4vw), 1.25rem);
 		flex: none;
 		transition: height 400ms ease;
+	}
+
+	.text-measure {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		visibility: hidden;
+		pointer-events: none;
 	}
 
 	.text-inner {

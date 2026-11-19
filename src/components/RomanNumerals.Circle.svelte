@@ -1,5 +1,8 @@
 <script>
 	import ChordCard from "$components/RomanNumerals.Chord.svelte";
+	import { Tween } from "svelte/motion";
+	import { cubicInOut } from "svelte/easing";
+	import { fade } from "svelte/transition";
 	import {
 		diatonicChordsOf,
 		tonalityOfScale
@@ -15,6 +18,8 @@
 		labelHome = true,
 		// every key turned the same way, with C at the top, instead of home
 		sameRotation = false,
+		// draw the arrows in the accent color
+		highlightShape = false,
 		scale = "major",
 		progression = ["I", "V", "vi", "IV"],
 		// seconds into the playing audio, null when not playing
@@ -49,9 +54,24 @@
 		return { letter: LETTERS[letterIndex], accidental };
 	};
 
+	// How many slots clockwise the circle is turned from home at the top:
+	// with sameRotation, the tonic's letter slot counted from C, taken the
+	// short way round (A is 2 back, not 5 on). Tweened so switching turns
+	// the circle.
+	const ROTATE_DURATION = 600;
+	const tonicLetterIndex = $derived(LETTERS.indexOf(key[0].toUpperCase()));
+	const rotation = Tween.of(
+		() =>
+			sameRotation
+				? tonicLetterIndex > 3
+					? tonicLetterIndex - 7
+					: tonicLetterIndex
+				: 0,
+		{ duration: ROTATE_DURATION, easing: cubicInOut }
+	);
+
 	const chords = $derived.by(() => {
 		const tonic = noteNameToPitchClass(key);
-		const tonicLetterIndex = LETTERS.indexOf(key[0].toUpperCase());
 		const intervals = SCALE_INTERVALS[scale];
 		return diatonicChordsOf(scale).map(({ degree, roman }, i) => {
 			const quality = diatonicQualityForDegree(scale, degree);
@@ -60,9 +80,9 @@
 				i,
 				(tonic + intervals[i]) % 12
 			);
-			// clockwise from the top: by scale degree (home first), or by letter
-			// from C when every key shares one rotation
-			const slot = sameRotation ? (tonicLetterIndex + i) % 7 : i;
+			// clockwise from the top: by scale degree (home first), turned by
+			// rotation (by letter from C when every key shares one rotation)
+			const slot = i + rotation.current;
 			const angle = (slot / intervals.length) * Math.PI * 2 - Math.PI / 2;
 			return {
 				degree,
@@ -165,6 +185,7 @@
 		<svg
 			viewBox="0 0 {SIZE} {SIZE}"
 			role="img"
+			class:highlight-shape={highlightShape}
 			aria-label="Diatonic chords of {key} {scale}: {chords
 				.map((d) => d.letter + d.marker)
 				.join(', ')}"
@@ -223,7 +244,10 @@
 				style:top="{(y / SIZE) * 100}%"
 			>
 				{#if labelHome && degree === 1}
-					<span class="home" aria-hidden="true"
+					<span
+						class="home"
+						aria-hidden="true"
+						transition:fade={{ duration: 300 }}
 						><span class="home-tag">home</span></span
 					>
 				{/if}
@@ -286,6 +310,14 @@
 	.arrow-head {
 		fill: currentColor;
 		opacity: 0.8;
+	}
+
+	.highlight-shape .arrow-line,
+	.highlight-shape .arrow-head {
+		/* the map's "axis of awesome" purple (PINNED_REGION_COLORS) */
+		color: var(--color-accent, #9085e9);
+		opacity: 1;
+		transition: color 0.3s ease;
 	}
 
 	/* sizes in cqw of .square so they scale like the svg did (24 of 400 units → 6cqw) */

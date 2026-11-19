@@ -18,7 +18,8 @@
 	let flipped = $state(false);
 	const showNumeral = $derived((symbols === "numerals") !== flipped);
 
-	// entering numerals from a chords slide waits a beat; everything else is immediate
+	// entering numerals from a chords slide flips the cards in turn; everything
+	// else is immediate
 	let prevSymbols = untrack(() => symbols);
 	let delayFlip = $state(false);
 	$effect.pre(() => {
@@ -28,8 +29,8 @@
 		prevSymbols = symbols;
 	});
 
-	// seconds; I flips first, then ii, iii… each a bit later
-	const FLIP_DELAY = 2;
+	// seconds; I flips first, right away, then ii, iii… each a bit later
+	const FLIP_DELAY = 0;
 	const FLIP_STAGGER = 0.3;
 
 	// watercolor filters are costly, so only mount them once they're first needed

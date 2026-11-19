@@ -22,6 +22,8 @@
 		labelHome = true,
 		// put C at the top of every circle instead of each key's home chord
 		sameRotation = false,
+		// draw the progression's arrows in the accent color
+		highlightShape = false,
 		progression = ["I", "V", "vi", "IV"]
 	} = $props();
 
@@ -29,6 +31,9 @@
 	const showHome = $derived(labelHome !== false && labelHome !== "false");
 	const rotateTogether = $derived(
 		sameRotation === true || sameRotation === "true"
+	);
+	const accentArrows = $derived(
+		highlightShape === true || highlightShape === "true"
 	);
 
 	const SUFFIX_LABELS = { [MAJOR]: "", [MINOR]: "m" };
@@ -71,6 +76,44 @@
 	};
 
 	const hasSongs = $derived(keys.some((key) => songFor(key) !== null));
+
+	// The column count that gives the biggest circles in the space there is
+	// (e.g. 3 keys in one row when it's wide, stacked when it's tall). Sizes
+	// mirror the CSS below: a 3rem gap, 1.5rem per label row, 1.5rem padding
+	// top and bottom, and circles at most 300px.
+	const MAX_CIRCLE_PX = 300;
+	// Room under the song title, as a share of the circle's size: the home
+	// chord's outline and "home" tag reach about 9% above the circle.
+	const SONG_GAP = 0.1;
+	let figureWidth = $state(0);
+	let figureHeight = $state(0);
+	const columns = $derived.by(() => {
+		const count = keys.length;
+		if (count <= 1 || figureWidth === 0 || figureHeight === 0) {
+			return Math.min(count, 2);
+		}
+		const rem =
+			typeof document === "undefined"
+				? 16
+				: parseFloat(getComputedStyle(document.documentElement).fontSize);
+		const gap = 3 * rem;
+		const labels = 1.5 * rem * (hasSongs ? 2 : 1);
+		const height = figureHeight - 3 * rem;
+		const sizeFor = (cols) => {
+			const rows = Math.ceil(count / cols);
+			return Math.min(
+				MAX_CIRCLE_PX,
+				(figureWidth - (cols - 1) * gap) / cols,
+				((height - (rows - 1) * gap) / rows - labels) /
+					(1 + (hasSongs ? SONG_GAP : 0))
+			);
+		};
+		let best = 1;
+		for (let cols = 2; cols <= count; cols++) {
+			if (sizeFor(cols) > sizeFor(best)) best = cols;
+		}
+		return best;
+	});
 
 	// chords in the recordings are evenly spaced; tweak to line up with the audio
 	const CHORD_DURATION = 1.48;
@@ -194,9 +237,12 @@
 
 <figure
 	id="roman-numerals"
-	style:--cols={Math.min(keys.length, 2)}
-	style:--rows={Math.ceil(keys.length / 2)}
+	bind:clientWidth={figureWidth}
+	bind:clientHeight={figureHeight}
+	style:--cols={columns}
+	style:--rows={Math.ceil(keys.length / columns)}
 	style:--label-rows={hasSongs ? 2 : 1}
+	style:--song-gap={hasSongs ? SONG_GAP : 0}
 >
 	<!-- keyed so a circle that stays between slides moves/scales to its new spot -->
 	{#each keys as key (key)}
@@ -235,6 +281,7 @@
 				{symbols}
 				labelHome={showHome}
 				sameRotation={rotateTogether}
+				highlightShape={accentArrows}
 				{progression}
 				playTime={playingKey === key || playingKey === songId(key)
 					? playTime
@@ -281,13 +328,18 @@
 
 	.circle-wrapper {
 		--size: min(
-			400px,
+			300px,
 			(100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols),
-			(100cqh - (var(--rows) - 1) * var(--gap)) / var(--rows) - var(--label) *
-				var(--label-rows)
+			(
+					(100cqh - (var(--rows) - 1) * var(--gap)) / var(--rows) -
+						var(--label) * var(--label-rows)
+				) /
+				(1 + var(--song-gap))
 		);
 		width: var(--size);
-		height: calc(var(--size) + var(--label) * var(--label-rows));
+		height: calc(
+			var(--size) * (1 + var(--song-gap)) + var(--label) * var(--label-rows)
+		);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -303,15 +355,17 @@
 	}
 
 	/* the key's song, above its circle */
+	/* the gap under keeps the home chord's outline and tag clear of it */
 	.song,
 	.song-spacer {
 		flex: none;
 		height: var(--label);
+		margin-bottom: calc(var(--size) * var(--song-gap));
 	}
 
 	.song {
 		display: inline-flex;
-		align-items: baseline;
+		align-items: center;
 		gap: 0.5em;
 		padding: 0 0.5rem;
 		border: none;
@@ -331,7 +385,6 @@
 	}
 
 	.song-title {
-		font-family: var(--font-serif);
 		font-weight: 600;
 	}
 

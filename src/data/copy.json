@@ -114,7 +114,7 @@
             },
             {
               "type": "text",
-              "value": "“Let It Be”, “Don’t Stop Believin’”, and “Wagon Wheel” all have different chords on paper. But to your ear, they move in the same way."
+              "value": "“Let It Be”, “Don’t Stop Believin’”, and “Wagon Wheel” all have different chords on paper."
             }
           ],
           "stage": {
@@ -133,7 +133,11 @@
           "text": [
             {
               "type": "text",
-              "value": "Rotate these circles, and you can see that these progressions all take the same shape."
+              "value": "But to your ear, they move in the same way."
+            },
+            {
+              "type": "text",
+              "value": "Rotate the circles, and you can see that these progressions all take the same shape."
             }
           ],
           "stage": {
@@ -144,14 +148,15 @@
               "A"
             ],
             "symbols": "chords",
-            "labelHome": "false"
+            "labelHome": "false",
+            "highlightShape": "true"
           }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "Every song has a key, a home base chord that it keeps returning to. If we name each chord instead by its distance from home, we can see that these songs actually share a chord progression."
+              "value": "Every song has a key, a home base chord that it keeps returning to. If we name each chord by its distance from home, we can see that these songs actually share a chord progression."
             },
             {
               "type": "text",
@@ -165,9 +170,11 @@
           "stage": {
             "component": "RomanNumerals",
             "keys": [
-              "E"
+              "C",
+              "E",
+              "A"
             ],
-            "symbols": "numerals"
+            "symbols": "chords"
           }
         },
         {
@@ -188,9 +195,9 @@
           "stage": {
             "component": "RomanNumerals",
             "keys": [
-              "B",
+              "C",
               "E",
-              "Eb"
+              "A"
             ],
             "symbols": "numerals"
           }

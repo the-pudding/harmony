@@ -149,15 +149,15 @@
 	});
 
 	const images = [
-		{ id: "im-yours", aspect: 622 / 794, rotate: -6, yOff: 0.04, z: 1 },
+		{ id: "let-it-be", aspect: IMAGE_W / IMAGE_H, rotate: -6, yOff: 0.04, z: 1 },
 		{
 			id: "dont-stop-believin",
-			aspect: 573 / 791,
+			aspect: IMAGE_W / IMAGE_H,
 			rotate: 0,
 			yOff: -0.03,
 			z: 3
 		},
-		{ id: "youre-beautiful", aspect: 581 / 788, rotate: 5, yOff: 0.05, z: 2 }
+		{ id: "wagon-wheel", aspect: IMAGE_W / IMAGE_H, rotate: 5, yOff: 0.05, z: 2 }
 	];
 	const FEATURED = "dont-stop-believin";
 	const PAD_Y = 24;
