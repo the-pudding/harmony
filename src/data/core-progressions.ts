@@ -37,7 +37,7 @@ const happyMajoryProgressions: ProgressionGroup = {
 			description: ""
 		},
 		{
-			name: "Cheerleader (verse)",
+			name: "drops of jupiter",
 			chordProgression: "I-V-IV",
 			scale: "major",
 			description: ""
