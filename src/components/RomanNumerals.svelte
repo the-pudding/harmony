@@ -6,6 +6,10 @@
 	import { fade } from "svelte/transition";
 	import { cubicInOut } from "svelte/easing";
 	import Circle from "$components/RomanNumerals.Circle.svelte";
+	import {
+		committedSyncedSongs,
+		SYNCED_SONG_AUDIO_DIRECTORY
+	} from "$data/syncedSongs";
 	import { romanTokensToProgressionInKey } from "../chord-processing/scales.js";
 	import {
 		MAJOR,
@@ -16,11 +20,16 @@
 		keys = ["C"],
 		symbols = "chords",
 		labelHome = true,
+		// put C at the top of every circle instead of each key's home chord
+		sameRotation = false,
 		progression = ["I", "V", "vi", "IV"]
 	} = $props();
 
 	// copy.json passes "false" as a string
 	const showHome = $derived(labelHome !== false && labelHome !== "false");
+	const rotateTogether = $derived(
+		sameRotation === true || sameRotation === "true"
+	);
 
 	const SUFFIX_LABELS = { [MAJOR]: "", [MINOR]: "m" };
 
@@ -35,25 +44,81 @@
 			)
 			.join("-");
 
+	// A song for each key, played from its synced clip (src/data/synced-songs)
+	// with the circle following its recorded chord changes.
+	const SONG_BY_KEY = {
+		C: {
+			songKey: "the-beatles__let-it-be",
+			title: "Let It Be",
+			artist: "The Beatles"
+		},
+		E: {
+			songKey: "journey__dont-stop-believin",
+			title: "Don't Stop Believin'",
+			artist: "Journey"
+		},
+		A: {
+			songKey: "darius-rucker__wagon-wheel",
+			title: "Wagon Wheel",
+			artist: "Darius Rucker"
+		}
+	};
+
+	const songFor = (key) => {
+		const song = SONG_BY_KEY[key];
+		const synced = song && committedSyncedSongs[song.songKey];
+		return synced ? { ...song, synced } : null;
+	};
+
+	const hasSongs = $derived(keys.some((key) => songFor(key) !== null));
+
 	// chords in the recordings are evenly spaced; tweak to line up with the audio
 	const CHORD_DURATION = 1.48;
 	// lead-in before the first chord
 	const CHORD_OFFSET = 0;
 
+	// What's playing: a key's progression (the key, e.g. "C") or its song
+	// ("song:C").
 	let playingKey = $state(null);
 	let playTime = $state(null);
+
+	const songId = (key) => `song:${key}`;
+
+	// Where a clip's audio is, where it starts and stops, and when each chord
+	// starts in playTime seconds (null for the evenly spaced progressions).
+	const clipFor = (id) => {
+		if (id.startsWith("song:")) {
+			const { synced } = songFor(id.slice("song:".length));
+			const { startSeconds, endSeconds } = synced.region;
+			return {
+				src: `${base}/${SYNCED_SONG_AUDIO_DIRECTORY}/${synced.audioFile}`,
+				startSeconds,
+				endSeconds,
+				chordTimes: [
+					...synced.chords.map(({ seconds }) => seconds - startSeconds),
+					endSeconds - startSeconds
+				]
+			};
+		}
+		return {
+			src: `${base}/assets/audio/progression/${id}_${progression.join("-")}.mp3`,
+			startSeconds: CHORD_OFFSET,
+			endSeconds: null,
+			chordTimes: null
+		};
+	};
 
 	// created on first play rather than in markup, so hydration/re-renders
 	// never reset src mid-play
 	const audioByKey = new Map();
 
-	const audioFor = (key) => {
-		const src = `${base}/assets/audio/progression/${key}_${progression.join("-")}.mp3`;
+	const audioFor = (id) => {
+		const { src } = clipFor(id);
 		let el = audioByKey.get(src);
 		if (!el) {
 			el = createAudio(src);
 			el.onended = () => {
-				if (playingKey === key) playingKey = null;
+				if (playingKey === id) playingKey = null;
 			};
 			audioByKey.set(src, el);
 		}
@@ -66,19 +131,19 @@
 			el.currentTime = 0;
 		});
 
-	// one progression at a time; clicking the playing one stops it
-	const toggle = (key) => {
+	// one clip at a time; clicking the playing one stops it
+	const toggle = (id) => {
 		stopAll();
-		if (playingKey === key) {
+		if (playingKey === id) {
 			playingKey = null;
 			return;
 		}
-		playingKey = key;
-		audioFor(key)
-			.play()
-			.catch(() => {
-				if (playingKey === key) playingKey = null;
-			});
+		playingKey = id;
+		const el = audioFor(id);
+		el.currentTime = id.startsWith("song:") ? clipFor(id).startSeconds : 0;
+		el.play().catch(() => {
+			if (playingKey === id) playingKey = null;
+		});
 	};
 
 	// follow the global mute toggle, including mid-play
@@ -87,13 +152,20 @@
 		audioByKey.forEach((el) => (el.muted = muted));
 	});
 
-	// track the playing audio's clock so its circle can animate in time
+	// track the playing audio's clock so its circle can animate in time, and
+	// stop a song at the end of its clip
 	$effect(() => {
 		if (!playingKey) return;
-		const el = audioFor(playingKey);
+		const id = playingKey;
+		const el = audioFor(id);
+		const { startSeconds, endSeconds } = clipFor(id);
 		let frame;
 		const tick = () => {
-			playTime = el.currentTime - CHORD_OFFSET;
+			if (endSeconds !== null && el.currentTime >= endSeconds) {
+				untrack(stop);
+				return;
+			}
+			playTime = el.currentTime - startSeconds;
 			frame = requestAnimationFrame(tick);
 		};
 		tick();
@@ -124,22 +196,53 @@
 	id="roman-numerals"
 	style:--cols={Math.min(keys.length, 2)}
 	style:--rows={Math.ceil(keys.length / 2)}
+	style:--label-rows={hasSongs ? 2 : 1}
 >
 	<!-- keyed so a circle that stays between slides moves/scales to its new spot -->
 	{#each keys as key (key)}
+		{@const song = songFor(key)}
 		<div
 			class="circle-wrapper"
 			animate:flip={{ duration: MOVE_DURATION, easing: cubicInOut }}
 			in:fade={{ duration: 300, delay: MOVE_DURATION / 2 }}
 			out:fade={{ duration: 200 }}
 		>
+			{#if song}
+				<button
+					class="song"
+					aria-pressed={playingKey === songId(key)}
+					aria-label="{playingKey === songId(key)
+						? 'Stop'
+						: 'Play'} {song.title} by {song.artist}"
+					onclick={() => toggle(songId(key))}
+				>
+					<svg class="icon" viewBox="0 0 10 10" aria-hidden="true">
+						{#if playingKey === songId(key)}
+							<rect x="1.5" y="1.5" width="7" height="7" />
+						{:else}
+							<path d="M2 1 L9 5 L2 9 Z" />
+						{/if}
+					</svg>
+					<span class="song-title">{song.title}</span>
+					<span class="song-artist">{song.artist}</span>
+				</button>
+			{:else if hasSongs}
+				<!-- keeps the circles lined up with their neighbors' -->
+				<span class="song-spacer" aria-hidden="true"></span>
+			{/if}
 			<Circle
 				{key}
 				{symbols}
 				labelHome={showHome}
+				sameRotation={rotateTogether}
 				{progression}
-				playTime={playingKey === key ? playTime : null}
+				playTime={playingKey === key || playingKey === songId(key)
+					? playTime
+					: null}
 				chordDuration={CHORD_DURATION}
+				chordTimes={playingKey === songId(key)
+					? clipFor(songId(key)).chordTimes
+					: null}
 			/>
 			<button
 				class="progression chords"
@@ -180,10 +283,11 @@
 		--size: min(
 			400px,
 			(100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols),
-			(100cqh - (var(--rows) - 1) * var(--gap)) / var(--rows) - var(--label)
+			(100cqh - (var(--rows) - 1) * var(--gap)) / var(--rows) - var(--label) *
+				var(--label-rows)
 		);
 		width: var(--size);
-		height: calc(var(--size) + var(--label));
+		height: calc(var(--size) + var(--label) * var(--label-rows));
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -198,8 +302,46 @@
 		padding: 0.375rem 0.5rem;
 	}
 
+	/* the key's song, above its circle */
+	.song,
+	.song-spacer {
+		flex: none;
+		height: var(--label);
+	}
+
+	.song {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 0.5em;
+		padding: 0 0.5rem;
+		border: none;
+		background: none;
+		color: var(--color-fg);
+		font-size: var(--14px, 0.875rem);
+		white-space: nowrap;
+	}
+
+	.song:hover {
+		background: none;
+		color: var(--color-fg);
+	}
+
+	.song .icon {
+		align-self: center;
+	}
+
+	.song-title {
+		font-family: var(--font-serif);
+		font-weight: 600;
+	}
+
+	.song-artist {
+		opacity: 0.6;
+	}
+
 	.icon {
 		width: 0.75em;
 		height: 0.75em;
 		fill: currentColor;
-	}</style>
+	}
+</style>

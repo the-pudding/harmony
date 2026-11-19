@@ -13,11 +13,17 @@
 		key,
 		symbols,
 		labelHome = true,
+		// every key turned the same way, with C at the top, instead of home
+		sameRotation = false,
 		scale = "major",
 		progression = ["I", "V", "vi", "IV"],
 		// seconds into the playing audio, null when not playing
 		playTime = null,
-		chordDuration = 1.5
+		chordDuration = 1.5,
+		// when each chord of the progression starts, in playTime seconds, then
+		// when the loop ends (one more than the chords). Defaults to evenly
+		// spaced chords, chordDuration apart from 0.
+		chordTimes = null
 	} = $props();
 
 	const uid = $props.id();
@@ -37,7 +43,8 @@
 	const spellDegree = (tonicLetterIndex, i, pitch) => {
 		const letterIndex = (tonicLetterIndex + i) % 7;
 		// signed semitone offset from the natural letter, in -6..5
-		const offset = ((((pitch - LETTER_PITCHES[letterIndex]) % 12) + 18) % 12) - 6;
+		const offset =
+			((((pitch - LETTER_PITCHES[letterIndex]) % 12) + 18) % 12) - 6;
 		const accidental = offset > 0 ? "#".repeat(offset) : "b".repeat(-offset);
 		return { letter: LETTERS[letterIndex], accidental };
 	};
@@ -53,7 +60,10 @@
 				i,
 				(tonic + intervals[i]) % 12
 			);
-			const angle = (i / intervals.length) * Math.PI * 2 - Math.PI / 2;
+			// clockwise from the top: by scale degree (home first), or by letter
+			// from C when every key shares one rotation
+			const slot = sameRotation ? (tonicLetterIndex + i) % 7 : i;
+			const angle = (slot / intervals.length) * Math.PI * 2 - Math.PI / 2;
 			return {
 				degree,
 				roman,
@@ -128,17 +138,25 @@
 	const easeInOut = (t) =>
 		t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
+	const times = $derived(
+		chordTimes ??
+			Array.from({ length: stops.length + 1 }, (_, i) => i * chordDuration)
+	);
+
 	// fully drawn when idle; while playing, each arrow snaps across at the end of its chord
 	const progressOf = (i) => {
 		if (playTime === null) return 1;
-		const start = (i + 1) * chordDuration - TRANSITION_DURATION;
-		const t = (playTime - start) / TRANSITION_DURATION;
+		const end = times[i + 1] ?? Infinity;
+		const t = (playTime - (end - TRANSITION_DURATION)) / TRANSITION_DURATION;
 		return easeInOut(Math.min(1, Math.max(0, t)));
 	};
 
+	// the chord playing: the last to have started, until the loop ends
 	const activeDegree = $derived.by(() => {
-		if (playTime === null || playTime < 0) return null;
-		return stops[Math.floor(playTime / chordDuration)]?.degree ?? null;
+		if (playTime === null) return null;
+		if (playTime < times[0] || playTime >= times[stops.length]) return null;
+		const i = times.findLastIndex((time) => time <= playTime);
+		return stops[i]?.degree ?? null;
 	});
 </script>
 

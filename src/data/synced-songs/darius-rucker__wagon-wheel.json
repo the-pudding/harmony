@@ -1,0 +1,12 @@
+{
+	"songKey": "darius-rucker__wagon-wheel",
+	"audioFile": "darius-rucker__wagon-wheel.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 64.307, "endSeconds": 71.185 },
+	"chords": [
+		{ "seconds": 65.072, "chord": "A", "roman": "I" },
+		{ "seconds": 66.667, "chord": "E", "roman": "V" },
+		{ "seconds": 68.304, "chord": "F#m", "roman": "vi" },
+		{ "seconds": 69.907, "chord": "D", "roman": "IV" }
+	]
+}

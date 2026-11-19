@@ -11,3 +11,6 @@ functions
 /static/data/song-shards/
 # over GitHub's 50 MB warning size; only /demo uses it
 /docs/data/songs.json
+
+# originals kept by npm run audio:cbr
+/.audio-backups/

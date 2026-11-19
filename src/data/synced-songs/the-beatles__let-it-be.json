@@ -1,0 +1,12 @@
+{
+	"songKey": "the-beatles__let-it-be",
+	"audioFile": "the-beatles__let-it-be.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 14.544, "endSeconds": 21.305 },
+	"chords": [
+		{ "seconds": 15.043, "chord": "C", "roman": "I" },
+		{ "seconds": 16.672, "chord": "G", "roman": "V" },
+		{ "seconds": 18.198, "chord": "Am", "roman": "vi" },
+		{ "seconds": 19.8, "chord": "F", "roman": "IV" }
+	]
+}

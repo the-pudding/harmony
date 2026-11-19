@@ -114,15 +114,34 @@
             },
             {
               "type": "text",
-              "value": "“I’m Yours”, “Don’t Stop Believin’”, and “You’re Beautiful” all have different chords on paper. But to your ear, they move in the same way."
+              "value": "“Let It Be”, “Don’t Stop Believin’”, and “Wagon Wheel” all have different chords on paper. But to your ear, they move in the same way."
             }
           ],
           "stage": {
             "component": "RomanNumerals",
             "keys": [
-              "B",
+              "C",
               "E",
-              "Eb"
+              "A"
+            ],
+            "symbols": "chords",
+            "labelHome": "false",
+            "sameRotation": "true"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Rotate these circles, and you can see that these progressions all take the same shape."
+            }
+          ],
+          "stage": {
+            "component": "RomanNumerals",
+            "keys": [
+              "C",
+              "E",
+              "A"
             ],
             "symbols": "chords",
             "labelHome": "false"
@@ -433,7 +452,7 @@
           "text": [
             {
               "type": "text",
-              "value": "So, no, pop isn’t all <strong class=progression>axis of awesome</strong>. But a big chunk do work on very similar principles."
+              "value": "So, no, pop isn’t all <strong class=progression>axis of awesome</strong>. But there are some dominant patterns that operate in the same way."
             }
           ],
           "map": {
