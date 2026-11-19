@@ -1,0 +1,20 @@
+{
+	"songKey": "enrique-iglesias__hero",
+	"audioFile": "enrique-iglesias__hero.mp3",
+	"key": { "tonic": "G", "scale": "major" },
+	"region": { "startSeconds": 62.844, "endSeconds": 88.577 },
+	"chords": [
+		{ "seconds": 63.352, "chord": "G", "roman": "I" },
+		{ "seconds": 64.925, "chord": "D", "roman": "V" },
+		{ "seconds": 66.461, "chord": "C", "roman": "IV" },
+		{ "seconds": 69.641, "chord": "G", "roman": "I" },
+		{ "seconds": 71.22, "chord": "D", "roman": "V" },
+		{ "seconds": 72.783, "chord": "C", "roman": "IV" },
+		{ "seconds": 75.962, "chord": "G", "roman": "I" },
+		{ "seconds": 77.514, "chord": "D", "roman": "V" },
+		{ "seconds": 79.112, "chord": "C", "roman": "IV" },
+		{ "seconds": 82.237, "chord": "G", "roman": "I" },
+		{ "seconds": 83.839, "chord": "D", "roman": "V" },
+		{ "seconds": 85.409, "chord": "C", "roman": "IV" }
+	]
+}

@@ -1,0 +1,14 @@
+{
+	"songKey": "train__drops-of-jupiter-tell-me",
+	"audioFile": "train__drops-of-jupiter-tell-me.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 11.693, "endSeconds": 36.276 },
+	"chords": [
+		{ "seconds": 12.245, "chord": "C", "roman": "I" },
+		{ "seconds": 15.177, "chord": "G", "roman": "V" },
+		{ "seconds": 18.194, "chord": "F", "roman": "IV" },
+		{ "seconds": 24.22, "chord": "C", "roman": "I" },
+		{ "seconds": 27.235, "chord": "G", "roman": "V" },
+		{ "seconds": 30.246, "chord": "F", "roman": "IV" }
+	]
+}

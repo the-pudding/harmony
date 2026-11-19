@@ -1,0 +1,20 @@
+{
+	"songKey": "saja-boys-andrew-choi-neckwav-danny-chung-kevin-woo-samuil-lee__soda-pop",
+	"audioFile": "saja-boys-andrew-choi-neckwav-danny-chung-kevin-woo-samuil-lee__soda-pop.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 25.101, "endSeconds": 40.449 },
+	"chords": [
+		{ "seconds": 25.139, "chord": "C", "roman": "I" },
+		{ "seconds": 27.004, "chord": "G", "roman": "V" },
+		{ "seconds": 27.952, "chord": "F", "roman": "IV" },
+		{ "seconds": 28.95, "chord": "C", "roman": "I" },
+		{ "seconds": 30.786, "chord": "G", "roman": "V" },
+		{ "seconds": 31.754, "chord": "F", "roman": "IV" },
+		{ "seconds": 32.748, "chord": "C", "roman": "I" },
+		{ "seconds": 34.606, "chord": "G", "roman": "V" },
+		{ "seconds": 35.599, "chord": "F", "roman": "IV" },
+		{ "seconds": 36.555, "chord": "C", "roman": "I" },
+		{ "seconds": 38.401, "chord": "G", "roman": "V" },
+		{ "seconds": 39.401, "chord": "F", "roman": "IV" }
+	]
+}

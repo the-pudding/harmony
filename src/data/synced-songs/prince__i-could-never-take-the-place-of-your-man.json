@@ -1,0 +1,17 @@
+{
+	"songKey": "prince__i-could-never-take-the-place-of-your-man",
+	"audioFile": "prince__i-could-never-take-the-place-of-your-man.mp3",
+	"key": { "tonic": "C", "scale": "major" },
+	"region": { "startSeconds": 34.871, "endSeconds": 52.418 },
+	"chords": [
+		{ "seconds": 34.966, "chord": "C", "roman": "I" },
+		{ "seconds": 36.432, "chord": "G", "roman": "V" },
+		{ "seconds": 37.886, "chord": "F", "roman": "IV" },
+		{ "seconds": 40.772, "chord": "C", "roman": "I" },
+		{ "seconds": 42.2, "chord": "G", "roman": "V" },
+		{ "seconds": 43.634, "chord": "F", "roman": "IV" },
+		{ "seconds": 46.536, "chord": "C", "roman": "I" },
+		{ "seconds": 48.014, "chord": "G", "roman": "V" },
+		{ "seconds": 49.429, "chord": "F", "roman": "IV" }
+	]
+}

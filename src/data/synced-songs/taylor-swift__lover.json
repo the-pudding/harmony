@@ -1,0 +1,17 @@
+{
+	"songKey": "taylor-swift__lover",
+	"audioFile": "taylor-swift__lover.mp3",
+	"key": { "tonic": "G", "scale": "major" },
+	"region": { "startSeconds": 43.669, "endSeconds": 64.803 },
+	"chords": [
+		{ "seconds": 43.785, "chord": "G", "roman": "I" },
+		{ "seconds": 45.53, "chord": "D", "roman": "V" },
+		{ "seconds": 47.293, "chord": "C", "roman": "IV" },
+		{ "seconds": 50.831, "chord": "G", "roman": "I" },
+		{ "seconds": 52.541, "chord": "D", "roman": "V" },
+		{ "seconds": 54.3, "chord": "C", "roman": "IV" },
+		{ "seconds": 57.797, "chord": "G", "roman": "I" },
+		{ "seconds": 59.52, "chord": "D", "roman": "V" },
+		{ "seconds": 61.308, "chord": "C", "roman": "IV" }
+	]
+}

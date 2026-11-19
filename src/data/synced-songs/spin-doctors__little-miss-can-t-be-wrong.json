@@ -1,0 +1,20 @@
+{
+	"songKey": "spin-doctors__little-miss-can-t-be-wrong",
+	"audioFile": "spin-doctors__little-miss-can-t-be-wrong.mp3",
+	"key": { "tonic": "G", "scale": "major" },
+	"region": { "startSeconds": 50.648, "endSeconds": 67.369 },
+	"chords": [
+		{ "seconds": 50.722, "chord": "G", "roman": "I" },
+		{ "seconds": 52.767, "chord": "D", "roman": "V" },
+		{ "seconds": 53.812, "chord": "C", "roman": "IV" },
+		{ "seconds": 54.822, "chord": "G", "roman": "I" },
+		{ "seconds": 56.924, "chord": "D", "roman": "V" },
+		{ "seconds": 57.991, "chord": "C", "roman": "IV" },
+		{ "seconds": 59.021, "chord": "G", "roman": "I" },
+		{ "seconds": 61.034, "chord": "D", "roman": "V" },
+		{ "seconds": 62.137, "chord": "C", "roman": "IV" },
+		{ "seconds": 63.172, "chord": "G", "roman": "I" },
+		{ "seconds": 65.217, "chord": "D", "roman": "V" },
+		{ "seconds": 66.315, "chord": "C", "roman": "IV" }
+	]
+}
