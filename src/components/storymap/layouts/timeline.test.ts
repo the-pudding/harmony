@@ -35,8 +35,8 @@ describe("timelineLayout", () => {
 			if (songs.year[index] === 0) continue;
 			expect(x[index]).toBeGreaterThanOrEqual(0);
 			expect(x[index]).toBeLessThan(1);
-			expect(y[index]).toBeGreaterThanOrEqual(0.04);
-			expect(y[index]).toBeLessThanOrEqual(0.96);
+			expect(y[index]).toBeGreaterThanOrEqual(0);
+			expect(y[index]).toBeLessThan(1);
 		}
 	});
 
@@ -91,18 +91,14 @@ describe("timelineLayout", () => {
 		expect(result.aggregate).toBe("none");
 		expect(result.color).toBe("star");
 		expect(result.pointRadius).toBe(STAR_RADIUS);
-		expect(result.guides).toEqual([
-			{ kind: "axisLabel", text: "time →", at: "bottom-right" }
-		]);
+		// no axis: the story's text says what the sky is
+		expect(result.guides).toEqual([]);
 	});
 
-	it("uses smaller stars on phones and takes the label from params", () => {
+	it("uses smaller stars on phones", () => {
 		expect(compute({ width: 390, height: 500 }).pointRadius).toBe(
 			PHONE_STAR_RADIUS
 		);
-		expect(
-			timelineLayout.compute({ songs, frame }, { axisLabel: null }).guides
-		).toEqual([]);
 	});
 
 	it("is cached per frame size", () => {

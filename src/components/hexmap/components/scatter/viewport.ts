@@ -51,19 +51,24 @@ export const fromBasePixel = (
 	};
 };
 
-export const NO_MAP_FRAME: MapFrame = { top: 0, right: 0, bottom: 0, left: 0 };
+// No insets asked for: the plot itself (the margin PLOT_MARGIN on each side).
+export const NO_MAP_FRAME: MapFrame = {
+	top: PLOT_MARGIN,
+	right: PLOT_MARGIN,
+	bottom: PLOT_MARGIN,
+	left: PLOT_MARGIN
+};
 
 // The rect a framed layout fills, in base pixels: the canvas inset by the
-// frame, and by at least PLOT_MARGIN on every side (so no insets is the
-// plot itself).
+// frame. (Not held to PLOT_MARGIN, so a frame can nearly fill the screen.)
 export const frameRect = (
 	{ width, height }: Pick<ViewSize, "width" | "height">,
 	frame: MapFrame
 ): { x: number; y: number; width: number; height: number } => {
-	const top = Math.max(PLOT_MARGIN, frame.top);
-	const right = Math.max(PLOT_MARGIN, frame.right);
-	const bottom = Math.max(PLOT_MARGIN, frame.bottom);
-	const left = Math.max(PLOT_MARGIN, frame.left);
+	const top = Math.max(0, frame.top);
+	const right = Math.max(0, frame.right);
+	const bottom = Math.max(0, frame.bottom);
+	const left = Math.max(0, frame.left);
 	return {
 		x: left,
 		y: top,

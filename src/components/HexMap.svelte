@@ -37,7 +37,6 @@
 		NO_MAP_FRAME
 	} from "$components/hexmap/components/scatter/viewport.js";
 	import type { MapFrame } from "$components/hexmap/components/scatter/types.js";
-	import { DEFAULT_TIMELINE_PARAMS } from "$components/storymap/layouts/timeline.js";
 	import {
 		DEFAULT_MAP_SCENE,
 		type MapScene
@@ -411,12 +410,6 @@
 			? devLayout
 			: scene.layout.name
 	);
-	const timelineAxisLabel = $derived(
-		scene.layout.name === "timeline"
-			? scene.layout.axisLabel
-			: DEFAULT_TIMELINE_PARAMS.axisLabel
-	);
-
 	// Only for finding your way around the UMAP map: not on other layouts
 	// (e.g. zoomed in on slide 0's lone star), nor on a map the reader
 	// can't move.
@@ -428,11 +421,7 @@
 	const mainResult = $derived(
 		songs
 			? layoutName === "timeline"
-				? computeLayout(
-						"timeline",
-						{ axisLabel: timelineAxisLabel },
-						{ songs, frame: layoutFrame }
-					)
+				? computeLayout("timeline", {}, { songs, frame: layoutFrame })
 				: computeLayout(
 						"umap",
 						{ purityLayout, pureThreshold },

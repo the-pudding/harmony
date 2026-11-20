@@ -68,7 +68,7 @@ const mapBlocks = slides.flatMap((slide) => (slide.map ? [slide.map] : []));
 // HexMap was given before scenes existed.
 const NEW_KEYS = [
 	"layout",
-	"axisLabel",
+	"frame",
 	"focusSong",
 	"onlySongs",
 	"playableSongs",
@@ -129,7 +129,8 @@ describe("parseMapScene on the real copy", () => {
 			(map) => parseMapScene(map)!
 		);
 		expect(dot).toMatchObject({
-			layout: { name: "timeline", axisLabel: null },
+			layout: { name: "timeline" },
+			frame: "text",
 			camera: { kind: "song", songKey: "journey__dont-stop-believin" },
 			songs: {
 				only: ["journey__dont-stop-believin"],
@@ -138,9 +139,11 @@ describe("parseMapScene on the real copy", () => {
 			interaction: { movable: false, hoverable: false }
 		});
 		expect(sky).toMatchObject({
-			layout: { name: "timeline", axisLabel: "time →" },
+			layout: { name: "timeline" },
+			frame: "full",
 			songs: { only: null, playable: [], dimmed: false }
 		});
+		expect(dimmed.frame).toBe("text");
 		for (const scene of [dot, sky, dimmed, follow, lit]) {
 			expect(scene.interaction.tooltip).toBe("basic");
 		}
@@ -178,20 +181,29 @@ describe("parseMapScene", () => {
 		expect(parse({})).toEqual(DEFAULT_MAP_SCENE);
 	});
 
-	it("reads layout and axisLabel", () => {
-		expect(parse({ layout: "timeline" }).layout).toEqual({
-			name: "timeline",
-			axisLabel: "time →"
-		});
-		expect(parse({ layout: "timeline", axisLabel: " years " }).layout).toEqual({
-			name: "timeline",
-			axisLabel: "years"
-		});
-		expect(parse({ layout: "timeline", axisLabel: " " }).layout).toEqual({
-			name: "timeline",
-			axisLabel: null
-		});
+	it("reads layout", () => {
+		expect(parse({ layout: "timeline" }).layout).toEqual({ name: "timeline" });
 		expect(parse({ layout: "umap" }).layout).toEqual({ name: "umap" });
+	});
+
+	it("reads frame: text by default, full on request", () => {
+		expect(parse({}).frame).toBe("text");
+		expect(parse({ frame: "text" }).frame).toBe("text");
+		expect(parse({ frame: " full " }).frame).toBe("full");
+	});
+
+	it("falls back to the text frame, with a warning, for an unknown frame", () => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		expect(parse({ frame: "huge" }).frame).toBe("text");
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining("frame"));
+		warn.mockRestore();
+	});
+
+	it("no longer knows axisLabel (an unknown key is a dev warning)", () => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		parseMapScene({ visible: "true", axisLabel: "time →" } as CopyMap);
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining("axisLabel"));
+		warn.mockRestore();
 	});
 
 	it("reads focusSong, and lets focusCluster win", () => {

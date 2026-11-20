@@ -5,13 +5,13 @@
 // to HexMap instead of loose props. The scene is static per slide; what the
 // reader is doing (exploring, playing, hovering) is passed alongside it.
 import type { CopyMap } from "$data/copy.json";
-import {
-	DEFAULT_TIMELINE_PARAMS,
-	type TimelineParams
-} from "./layouts/timeline.js";
 
 export type MapScene = {
-	layout: { name: "umap" } | ({ name: "timeline" } & TimelineParams);
+	layout: { name: "umap" } | { name: "timeline" };
+	// Where framed layouts (the timeline) sit: "text" is below the story
+	// text (and any video under it); "full" is the whole screen, stretching
+	// under the text. UMAP ignores it.
+	frame: "text" | "full";
 	camera: // The whole map (a bit low to leave room for text, unless centered).
 		| { kind: "home"; centered: boolean }
 		| { kind: "cluster"; name: string }
@@ -50,6 +50,7 @@ export type MapScene = {
 // mounted, just hidden).
 export const DEFAULT_MAP_SCENE: MapScene = {
 	layout: { name: "umap" },
+	frame: "text",
 	camera: { kind: "home", centered: false },
 	songs: { only: null, highlighted: [], playable: [], dimmed: false },
 	media: { followVideo: null, litVideoSongs: null },
@@ -61,7 +62,7 @@ export const DEFAULT_MAP_SCENE: MapScene = {
 const KNOWN_KEYS = new Set<string>([
 	"visible",
 	"layout",
-	"axisLabel",
+	"frame",
 	"focusCluster",
 	"focusSong",
 	"centered",
@@ -81,6 +82,7 @@ const KNOWN_KEYS = new Set<string>([
 ] satisfies (keyof CopyMap)[]);
 
 const LAYOUT_NAMES = ["umap", "timeline"] as const;
+const FRAME_NAMES = ["text", "full"] as const;
 const TOOLTIP_NAMES = ["full", "basic"] as const;
 
 // undefined stays undefined (not set), so defaults can apply.
@@ -121,17 +123,12 @@ export const parseMapScene = (
 	const layoutName = parseText(copyMap.layout) ?? "umap";
 	const knownLayout = (LAYOUT_NAMES as readonly string[]).includes(layoutName);
 	if (!knownLayout) warn(`unknown layout "${layoutName}" (using umap)`);
-	// axisLabel: absent = the layout's default text, blank = none.
-	const axisLabel =
-		copyMap.axisLabel === undefined
-			? DEFAULT_TIMELINE_PARAMS.axisLabel
-			: parseText(copyMap.axisLabel) === undefined
-				? null
-				: String(copyMap.axisLabel).trim();
 	const layout: MapScene["layout"] =
-		layoutName === "timeline"
-			? { name: "timeline", axisLabel }
-			: { name: "umap" };
+		layoutName === "timeline" ? { name: "timeline" } : { name: "umap" };
+
+	const frameName = parseText(copyMap.frame) ?? "text";
+	const frame = FRAME_NAMES.find((name) => name === frameName) ?? "text";
+	if (frame !== frameName) warn(`unknown frame "${frameName}" (using text)`);
 
 	const tooltipName = parseText(copyMap.tooltip) ?? "full";
 	const tooltip = TOOLTIP_NAMES.find((name) => name === tooltipName) ?? "full";
@@ -154,6 +151,7 @@ export const parseMapScene = (
 
 	return {
 		layout,
+		frame,
 		camera,
 		songs: {
 			only: parseList(copyMap.onlySongs),

@@ -15,24 +15,16 @@ export const STAR_RADIUS = 2.5;
 export const PHONE_STAR_RADIUS = 2.25;
 export const PHONE_MAX_FRAME_WIDTH = 600;
 
-// Stars use this much of the frame's height, centered, so none sit on its
-// edges.
-const SKY_TOP = 0.04;
-const SKY_SPAN = 0.92;
+// The timeline has no parameters (it draws no axis; the story's text says
+// what the sky is).
+export type TimelineParams = Record<string, never>;
 
-export type TimelineParams = {
-	// The text drawn at the bottom right, or null for none.
-	axisLabel: string | null;
-};
-
-export const DEFAULT_TIMELINE_PARAMS: TimelineParams = {
-	axisLabel: "time →"
-};
+export const DEFAULT_TIMELINE_PARAMS: TimelineParams = {};
 
 export const timelineLayout: Layout<TimelineParams> = {
 	name: "timeline",
 	framed: true,
-	compute: ({ songs, frame }, { axisLabel }) => {
+	compute: ({ songs, frame }) => {
 		const years = TIMELINE_LAST_YEAR - TIMELINE_FIRST_YEAR + 1;
 		const x = new Float32Array(songs.count);
 		const y = new Float32Array(songs.count);
@@ -50,7 +42,8 @@ export const timelineLayout: Layout<TimelineParams> = {
 			);
 			const key = songs.keys[index];
 			x[index] = (clamped - TIMELINE_FIRST_YEAR + hashUnit(key, "x")) / years;
-			y[index] = SKY_TOP + SKY_SPAN * hashUnit(key, "y");
+			// the frame's own insets keep stars off the screen's edges
+			y[index] = hashUnit(key, "y");
 		}
 		return {
 			name: "timeline",
@@ -63,10 +56,7 @@ export const timelineLayout: Layout<TimelineParams> = {
 				frame.width < PHONE_MAX_FRAME_WIDTH ? PHONE_STAR_RADIUS : STAR_RADIUS,
 			// Songs fill the sky oldest first, from the left.
 			stagger: yearStagger(songs),
-			guides:
-				axisLabel === null
-					? []
-					: [{ kind: "axisLabel", text: axisLabel, at: "bottom-right" }]
+			guides: []
 		};
 	}
 };

@@ -17,7 +17,6 @@
           "map": {
             "visible": "true",
             "layout": "timeline",
-            "axisLabel": "",
             "focusSong": "journey__dont-stop-believin",
             "onlySongs": [
               "journey__dont-stop-believin"
@@ -44,7 +43,7 @@
           "map": {
             "visible": "true",
             "layout": "timeline",
-            "axisLabel": "time →",
+            "frame": "full",
             "movable": "false",
             "tooltip": "basic"
           }
@@ -59,7 +58,6 @@
           "map": {
             "visible": "true",
             "layout": "timeline",
-            "axisLabel": "time →",
             "dimmed": "true",
             "movable": "false",
             "hoverable": "false",
@@ -80,7 +78,6 @@
           "map": {
             "visible": "true",
             "layout": "timeline",
-            "axisLabel": "time →",
             "followVideo": "examples",
             "movable": "false",
             "tooltip": "basic"
@@ -114,7 +111,6 @@
           "map": {
             "visible": "true",
             "layout": "timeline",
-            "axisLabel": "time →",
             "litVideoSongs": "examples",
             "movable": "false",
             "tooltip": "basic"

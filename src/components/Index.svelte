@@ -1,4 +1,5 @@
 <script>
+	import { MediaQuery } from "svelte/reactivity";
 	import Chapters from "$components/Chapters.svelte";
 	import Landing from "$components/Landing.svelte";
 	import HexMap from "$components/HexMap.svelte";
@@ -243,20 +244,23 @@
 		return height > 0 ? { top, height } : null;
 	});
 	// The rect framed map layouts (e.g. the timeline) fill, as insets from
-	// the map's edges: a gap below the text box, or below the stage video
-	// when there is one (it sits right under the text), and room at the
-	// bottom for an axis label.
-	const MAP_FRAME_GAP = 16;
-	const MAP_FRAME_BOTTOM = 48;
+	// the map's edges: a small margin on the sides and bottom (a bit less on
+	// phones), and a gap below the text box, or below the stage video when
+	// there is one (it sits right under the text). A "full" frame ignores
+	// the text and fills the screen, stretching under it.
+	const MAP_FRAME_GAP = 12;
+	const phone = new MediaQuery("(max-width: 600px)", false);
+	let mapEdge = $derived(phone.current ? 8 : 14);
 	let mapFrame = $derived({
-		top: focusFrame
-			? focusFrame.top +
-				(storyMedia.videoBottomOffset > 0 ? storyMedia.videoBottomOffset : 0) +
-				MAP_FRAME_GAP
-			: 0,
-		right: 0,
-		bottom: MAP_FRAME_BOTTOM,
-		left: 0
+		top:
+			mapScene?.frame === "full" || !focusFrame
+				? mapEdge
+				: focusFrame.top +
+					Math.max(0, storyMedia.videoBottomOffset) +
+					MAP_FRAME_GAP,
+		right: mapEdge,
+		bottom: mapEdge,
+		left: mapEdge
 	});
 	// What's explored, playing and open (see explore.svelte.ts). On the
 	// explore slide any clicked cluster opens the panel and only panning or

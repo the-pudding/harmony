@@ -12,8 +12,9 @@ declare module "$data/copy.json" {
 		visible?: string;
 		// The arrangement: "umap" (the default) or "timeline".
 		layout?: string;
-		// The timeline's label at the bottom right; blank hides it.
-		axisLabel?: string;
+		// Where a framed layout (the timeline) sits: "text" (the default) is
+		// below the story text; "full" fills the screen, under the text too.
+		frame?: string;
 		// Zoom in on this cluster (by name), or on this one song (by key).
 		focusCluster?: string;
 		focusSong?: string;

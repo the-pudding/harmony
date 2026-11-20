@@ -91,11 +91,11 @@ describe("plot coordinates", () => {
 describe("frames", () => {
 	const frame = { top: 200, right: 40, bottom: 60, left: 10 };
 
-	it("insets the canvas, by at least the plot margin", () => {
+	it("insets the canvas by the frame, even closer than the plot margin", () => {
 		expect(frameRect(size, frame)).toEqual({
-			x: PLOT_MARGIN,
+			x: 10,
 			y: 200,
-			width: 800 - PLOT_MARGIN - 40,
+			width: 800 - 10 - 40,
 			height: 600 - 200 - 60
 		});
 		expect(frameRect(size, NO_MAP_FRAME)).toEqual({
@@ -120,7 +120,7 @@ describe("frames", () => {
 			size,
 			framedToPlot(size, frame, { nx: 1, ny: 1 })
 		);
-		expect(bottomLeft.x).toBeCloseTo(PLOT_MARGIN);
+		expect(bottomLeft.x).toBeCloseTo(10);
 		expect(bottomLeft.y).toBeCloseTo(600 - 60);
 		expect(topRight.x).toBeCloseTo(800 - 40);
 		expect(topRight.y).toBeCloseTo(200);
