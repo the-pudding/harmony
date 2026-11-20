@@ -57,8 +57,10 @@ export type EmbeddingScatterProps = {
 	// as focusSongKey; takes priority over it when both are set.
 	focusClusterName?: string | null;
 	// Scripted focus changes (focusClusterName, focusSongKey) jump straight
-	// to the new view instead of animating; so do layout and visibility changes.
-	instantFocus?: boolean;
+	// to the new view instead of animating.
+	instantCamera?: boolean;
+	// Layout and visibility changes jump instead of animating.
+	instantLayout?: boolean;
 	// A cluster the user picked (by name, like focusClusterName): the view
 	// animates to fit it when it's set, and again when focusFrame changes,
 	// but stays put when it's cleared, and the map stays movable.

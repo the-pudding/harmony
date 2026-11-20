@@ -32,6 +32,8 @@ export type ClusterOutlineOptions = {
 	showNames: boolean;
 	// The cluster to show a song count under, if any.
 	countClusterHash: string | null;
+	// How much of each ellipse is drawn, 0 to 1, as it draws on.
+	drawnFraction: number;
 };
 
 // Dashed ellipses around each cluster, fit to its songs' current screen
@@ -46,7 +48,8 @@ export const drawClusterOutlines = (
 		emphasizedClusterHashes,
 		familyEmphasisSongKeys,
 		showNames,
-		countClusterHash
+		countClusterHash,
+		drawnFraction
 	}: ClusterOutlineOptions
 ): ClusterHit[] => {
 	const { context } = scene;
@@ -98,7 +101,7 @@ export const drawClusterOutlines = (
 			ellipse.semiAxisY,
 			ellipse.rotationRadians,
 			0,
-			Math.PI * 2
+			Math.PI * 2 * drawnFraction
 		);
 		context.stroke();
 		context.setLineDash([]);

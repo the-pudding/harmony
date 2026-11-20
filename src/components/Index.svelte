@@ -155,13 +155,13 @@
 		if (!followedCues || storyMedia.cueIndex <= 0) return [];
 		return songKeysOf(followedCues.slice(0, storyMedia.cueIndex));
 	});
-	// A slide with a staged map reveal holds its text and stage until it's in.
+	// A slide's stage waits for the map's staged reveal (revealClusters), and
+	// one that arrives going forward also for its songs' dots to reach it.
 	let mapRevealRunning = $state(false);
-	let contentAwaitsMap = $derived(
-		mapRevealRunning && (mapScene?.reveal.clusters.length ?? 0) > 0
+	let stageWaits = $derived(
+		(mapRevealRunning && (mapScene?.reveal.clusters.length ?? 0) > 0) ||
+			(movedForward && stageIsNew && !songDots.arrived)
 	);
-	// A stage that arrives going forward waits for its songs' dots to reach it.
-	let stageWaits = $derived(movedForward && stageIsNew && !songDots.arrived);
 	let focusedCluster = $derived(
 		mapScene?.camera.kind === "cluster" ? mapScene.camera.name : undefined
 	);
@@ -192,7 +192,7 @@
 			?.querySelector("strong.progression, strong.progressions");
 		const cluster = strong?.textContent.trim();
 		if (!cluster) return;
-		enteredWithoutMap = false;
+		cameraJumps = false;
 		textFocusCluster = cluster;
 	};
 
@@ -311,11 +311,14 @@
 	// A new slide starts with nothing explored, playing or open, on its own
 	// focusCluster.
 	// Coming from a slide with no map, the map appears already on its
-	// focusCluster instead of zooming there; every other move animates.
-	let enteredWithoutMap = $state(false);
+	// focusCluster instead of zooming there; every other move animates. Its
+	// songs move there too, unless the map wasn't showing at all.
+	let cameraJumps = $state(false);
+	let layoutJumps = $state(false);
 	const goToSlide = (i) => {
 		if (i === slideI) return;
-		enteredWithoutMap = mapScene === null;
+		cameraJumps = mapScene === null;
+		layoutJumps = !mapShown;
 		previousSlideI = slideI;
 		slideI = i;
 		textFocusCluster = undefined;
@@ -408,7 +411,8 @@
 		scene={mapScene ?? STAGE_SCENE}
 		{focusFrame}
 		{mapFrame}
-		instantFocus={enteredWithoutMap}
+		instantCamera={cameraJumps}
+		instantLayout={layoutJumps}
 		theme="dark"
 		playingSongKey={explore.playingSongKey ?? null}
 		playingClipProgressFraction={audio.clipProgressFraction}
@@ -459,7 +463,6 @@
 		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 		<div
 			class="text frosted"
-			class:awaiting-map={contentAwaitsMap}
 			bind:this={textBoxEl}
 			onclick={onTextClick}
 			style:height={textBoxTarget ? `${textBoxTarget}px` : null}
@@ -510,7 +513,6 @@
 	<div class="stage">
 		<div
 			class="main"
-			class:awaiting-map={contentAwaitsMap}
 			bind:this={clusterFrameEl}
 			bind:clientHeight={clusterFrameHeight}
 		>
@@ -662,16 +664,6 @@
 			opacity 400ms ease;
 	}
 
-	/* hidden at once, then faded in when the map's reveal is done */
-	.text.awaiting-map {
-		transition: height 400ms ease;
-	}
-
-	.awaiting-map {
-		opacity: 0;
-		visibility: hidden;
-	}
-
 	.text-measure {
 		position: absolute;
 		top: 0;
@@ -703,7 +695,6 @@
 		min-height: 0;
 		display: grid;
 		grid-template: minmax(0, 1fr) / minmax(0, 1fr);
-		transition: opacity 400ms ease;
 	}
 
 	.stage-slot {
@@ -712,8 +703,10 @@
 		transition: opacity 400ms ease;
 	}
 
-	.main.awaiting-map,
+	/* hidden at once, then faded in once the map and dots are there */
 	.stage-slot.awaiting-map {
+		opacity: 0;
+		visibility: hidden;
 		transition: none;
 	}
 

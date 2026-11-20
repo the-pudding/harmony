@@ -29,6 +29,14 @@ export type PinLook = {
 	haloColor: string;
 };
 
+// A song's mark on the map: where it's drawn now (null when it isn't),
+// where it's heading, and whether it's there.
+export type MapMark = {
+	now: PinPose | null;
+	resting: PinPose;
+	atRest: boolean;
+};
+
 type PinnedSong = {
 	pin: Pin;
 	// What it's heading to: an anchor, or (null) its place on the map.
@@ -51,12 +59,12 @@ type PinFrame = {
 // repaints only when something drawn changed.
 export const createSongPins = ({
 	canvas,
-	mapPoseOf,
+	mapMarkOf,
 	lookOf
 }: {
 	readonly canvas: HTMLCanvasElement | null;
-	// Where the song's mark is on the map now, or null when it isn't drawn.
-	mapPoseOf: (songKey: string) => PinPose | null;
+	// Null when the map doesn't draw the song.
+	mapMarkOf: (songKey: string) => MapMark | null;
 	lookOf: (songKey: string) => PinLook;
 }) => {
 	const pinned = new Map<string, PinnedSong>();
@@ -87,6 +95,7 @@ export const createSongPins = ({
 		const anchor = songDots.anchors.get(songKey) ?? null;
 		const look = lookOf(songKey);
 		const rect = anchor?.el.getBoundingClientRect() ?? null;
+		const mapMark = mapMarkOf(songKey);
 		const target =
 			anchor && rect
 				? anchorPose(rect, anchor, {
@@ -96,7 +105,7 @@ export const createSongPins = ({
 								? measureSongLabel(context, look.lines, anchor.labelPx)
 								: 0
 					})
-				: mapPoseOf(songKey);
+				: (mapMark?.resting ?? null);
 		if (!target) {
 			pinned.delete(songKey);
 			return null;
@@ -104,7 +113,7 @@ export const createSongPins = ({
 
 		let song = pinned.get(songKey);
 		if (!song) {
-			const from = placeAtOnce ? null : mapPoseOf(songKey);
+			const from = placeAtOnce ? null : (mapMark?.now ?? null);
 			song = {
 				pin: createPin(from ?? target, nowMs, from ? travelMs() : 0),
 				anchor,
@@ -120,7 +129,8 @@ export const createSongPins = ({
 		const pose = poseAt(song.pin, nowMs, target);
 		song.pin.current = pose;
 		if (landed(song.pin, nowMs)) {
-			if (!anchor) {
+			// Back on the map, it's let go once its dot there arrives too.
+			if (!anchor && mapMark?.atRest) {
 				pinned.delete(songKey);
 				return null;
 			}

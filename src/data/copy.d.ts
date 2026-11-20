@@ -38,8 +38,10 @@ declare module "$data/copy.json" {
 		// "full" (default), or "basic" (title, year and artist only).
 		tooltip?: string;
 		hidePlayer?: string;
-		// Cluster names (exact): arriving from another layout, each one's
-		// songs move in turn, in this order, then everyone else.
+		// Cluster names (exact): arriving from another layout (or from a
+		// slide without a map), each one's songs move in turn, in this
+		// order, then everyone else; the slide's stage waits until they're in.
+		// Not when going back.
 		revealClusters?: CopyList;
 	};
 
@@ -59,6 +61,7 @@ declare module "$data/copy.json" {
 
 	export type CopySlide = {
 		text: CopyTextBlock[];
+		// Without one, the map keeps only the songs its stage anchors.
 		map?: CopyMap;
 		stage?: CopyStage;
 		overlay?: CopyStage;

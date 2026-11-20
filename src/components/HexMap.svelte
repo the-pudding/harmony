@@ -46,8 +46,10 @@
 	type Props = {
 		// Media settings are converted to spotlitSongKey and litSongKeys by Index.
 		scene?: MapScene;
-		// Skip animating changes to camera, layout and shown songs.
-		instantFocus?: boolean;
+		// Skip animating camera moves.
+		instantCamera?: boolean;
+		// Skip animating changes to layout and shown songs.
+		instantLayout?: boolean;
 		// The part of the map, in pixels from its top, that a focused cluster
 		// is zoomed to almost fill the height of and centered in.
 		focusFrame?: { top: number; height: number } | null;
@@ -116,7 +118,8 @@
 
 	const {
 		scene = DEFAULT_MAP_SCENE,
-		instantFocus = false,
+		instantCamera = false,
+		instantLayout = false,
 		focusFrame = null,
 		mapFrame = NO_MAP_FRAME,
 		theme = "dark",
@@ -497,7 +500,8 @@
 				focusScale={focusSongKey === undefined
 					? DEFAULT_FOCUS_SCALE
 					: SONG_FOCUS_SCALE}
-				{instantFocus}
+				{instantCamera}
+				{instantLayout}
 				{visibleSongKeys}
 				{dimExceptSongKeys}
 				revealStagger={reveal?.stagger ?? null}

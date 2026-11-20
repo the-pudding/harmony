@@ -309,6 +309,9 @@
             "highlightSongs": [
               "journey__dont-stop-believin",
               "justin-bieber-featuring-chance-the-rapper__holy"
+            ],
+            "revealClusters": [
+              "axis of awesome"
             ]
           }
         },

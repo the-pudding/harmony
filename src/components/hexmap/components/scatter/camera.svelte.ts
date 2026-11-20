@@ -31,8 +31,8 @@ export type CameraInput = {
 	readonly focusScale: number;
 	readonly focusSongKey: string | null | undefined;
 	readonly focusClusterName: string | null | undefined;
-	// Scripted focus changes jump instead of animating.
-	readonly instantFocus: boolean;
+	// Scripted focus moves jump instead of animating.
+	readonly instantCamera: boolean;
 	readonly selectedClusterName: string | null;
 	readonly zoomSongKey: string | null;
 	readonly selectedSongKey: string | null;
@@ -150,14 +150,9 @@ export const createCamera = (input: CameraInput) => {
 	// it (fitting the whole cluster, for focusClusterName), null animates
 	// back out to the full view. A focus set from the start jumps straight
 	// there; once the map has been shown, focus changes animate, unless
-	// instantFocus is on: then the first move to each focus jumps, and later
-	// re-targets for it (e.g. the frame settling) animate as usual.
+	// instantCamera is on: then every move jumps, re-targets too (e.g. the
+	// frame settling as the slide's text and panel take their room).
 	let hasFocused = false;
-	const NOT_JUMPED = Symbol("not jumped");
-	let instantlyJumpedTo: string | null | typeof NOT_JUMPED = NOT_JUMPED;
-	$effect(() => {
-		if (!input.instantFocus) instantlyJumpedTo = NOT_JUMPED;
-	});
 	$effect(() => {
 		const canvas = input.canvas;
 		if (!canvas || !zoomBehavior || input.width === 0 || input.height === 0) {
@@ -186,12 +181,17 @@ export const createCamera = (input: CameraInput) => {
 			focusClusterName !== undefined
 				? focusClusterName
 				: (focusSongKey ?? null);
-		const instant =
-			untrack(() => input.instantFocus) && instantlyJumpedTo !== focus;
-		if (!hasFocused || instant) {
+		if (!hasFocused || untrack(() => input.instantCamera)) {
 			hasFocused = true;
-			if (instant) instantlyJumpedTo = focus;
-			jumpTo(canvas, constrain(target));
+			const constrained = constrain(target);
+			const transform = untrack(() => input.transform);
+			if (
+				constrained.k !== transform.k ||
+				constrained.x !== transform.x ||
+				constrained.y !== transform.y
+			) {
+				jumpTo(canvas, constrained);
+			}
 			return;
 		}
 		animateTo(

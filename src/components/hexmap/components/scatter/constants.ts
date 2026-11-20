@@ -76,6 +76,8 @@ export const DIMMED_SONG_ALPHA = 0.35;
 export const HEX_FADE_IN_MS = 500;
 export const HEX_FADE_OUT_MS = 200;
 export const HEX_LABEL_FADE_IN_MS = 400;
+// A cluster's dashed outline draws on once its songs have settled.
+export const CLUSTER_OUTLINE_DRAW_MS = 600;
 // Pixel ratio cap: no visible gain beyond 2x on 3px dots.
 export const MAX_PIXEL_RATIO = 2;
 

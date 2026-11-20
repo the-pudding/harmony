@@ -22,7 +22,7 @@ dev. Song keys are the dataset's (e.g. `journey__dont-stop-believin`), and
 `followVideo` / `litVideoSongs` take a video id from `src/data/videoCues.ts`.
 Booleans are the strings `true` / `false`.
 `revealClusters` stages the arrival from another layout: each listed cluster
-flies in alone, then everyone else, then the hexes, then the slide's text and stage.
+flies in alone, then everyone else, then the hexes, then the slide's stage.
 
 ```
 {.map}

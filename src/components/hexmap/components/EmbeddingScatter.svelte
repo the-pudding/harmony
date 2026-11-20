@@ -44,6 +44,7 @@
 		HEX_FADE_IN_MS,
 		HEX_FADE_OUT_MS,
 		HEX_LABEL_FADE_IN_MS,
+		CLUSTER_OUTLINE_DRAW_MS,
 		OUTLINED_LABEL_GAP
 	} from "./scatter/constants.js";
 	import type { EmbeddingScatterProps as Props } from "./scatter/props.js";
@@ -130,6 +131,7 @@
 	} from "./songLabelText.js";
 	import { createSongPins } from "./scatter/songPins.svelte.js";
 	import { labelMetrics, type PinPose } from "./scatter/songPinMath.js";
+	import type { MapMark } from "./scatter/songPins.svelte.js";
 	import { songDots } from "$runes/songDots.svelte.js";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (perf meter): see src/utils/perfParam.js.
 	import { readPerfParam, createPerfMeter } from "$utils/perfParam";
@@ -164,7 +166,8 @@
 		focusSongKey = undefined,
 		focusScale = DEFAULT_FOCUS_SCALE,
 		focusClusterName = undefined,
-		instantFocus = false,
+		instantCamera = false,
+		instantLayout = false,
 		selectedClusterName = null,
 		zoomSongKey = null,
 		openSongId = null,
@@ -439,7 +442,7 @@
 	): TransitionTiming => {
 		const inFlight = layoutFlight && !transition.settled;
 		layoutFlight = false;
-		if (instantFocus) return { durationMs: 0, instant: true };
+		if (instantLayout) return { durationMs: 0, instant: true };
 		const delayMs =
 			hexZoomLevel(transform.k, HEX_ZOOM).kind === "hex"
 				? hexFade.current * HEX_FADE_OUT_MS
@@ -911,7 +914,8 @@
 					// Hex maps already show the count in the hex tooltip.
 					countClusterHash: hexMode
 						? null
-						: (hoveredClusterHit?.cluster.hash ?? null)
+						: (hoveredClusterHit?.cluster.hash ?? null),
+					drawnFraction: outlineDraw.current
 				})
 			: [];
 		setTitleSpots(
@@ -1158,19 +1162,19 @@
 		}
 	});
 
-	// Where a song's mark is on the map now, for a pin travelling to or
-	// from it: its dot's screen position and resting size, and its label as
-	// placed (hidden when the map doesn't label it).
-	const mapPoseOf = (songKey: string): PinPose | null => {
-		const index = songs.indexOf.get(songKey);
-		if (index === undefined || !(transition.alpha[index] > 0)) return null;
-		const { x, y } = toScreen({
-			nx: transition.x[index],
-			ny: transition.y[index]
-		});
+	// A song's mark on the map at a plot position, for a pin travelling to
+	// or from it: its dot's screen position and resting size, and its label
+	// as placed (hidden when the map doesn't label it). Until the map
+	// places it (while its dot flies in), the label goes beside the dot.
+	const mapPoseAt = (songKey: string, nx: number, ny: number): PinPose => {
+		const { x, y } = toScreen({ nx, ny });
 		const labelPx = SONG_LABEL_STYLE.title.fontSizePx;
 		const placed = placedMarks.get(songKey);
 		const r = placed?.r ?? drawnRadius;
+		const labeled =
+			(placed?.label ?? null) !== null ||
+			((outlinedSongKeys?.has(songKey) ?? false) &&
+				!(smallOutlinedSongKeys?.has(songKey) ?? false));
 		return {
 			x,
 			y,
@@ -1180,7 +1184,30 @@
 				labelDy: -labelMetrics(labelPx).lineHeight
 			}),
 			labelPx,
-			labelAlpha: placed?.label ? 1 : 0
+			labelAlpha: labeled ? 1 : 0
+		};
+	};
+
+	// Closer than this to where it's heading, a song's mark has arrived.
+	const AT_REST_PX = 0.5;
+	const mapMarkOf = (songKey: string): MapMark | null => {
+		const index = songs.indexOf.get(songKey);
+		if (!isDrawnIndex(index)) return null;
+		const resting = mapPoseAt(
+			songKey,
+			transitionTarget.x[index],
+			transitionTarget.y[index]
+		);
+		const now =
+			transition.alpha[index] > 0
+				? mapPoseAt(songKey, transition.x[index], transition.y[index])
+				: null;
+		return {
+			now,
+			resting,
+			atRest:
+				now !== null &&
+				Math.hypot(now.x - resting.x, now.y - resting.y) < AT_REST_PX
 		};
 	};
 
@@ -1188,7 +1215,7 @@
 		get canvas() {
 			return pinCanvas;
 		},
-		mapPoseOf,
+		mapMarkOf,
 		lookOf: (songKey) => {
 			const summary = songSummaryByKey?.get(songKey);
 			return {
@@ -1235,6 +1262,16 @@
 			draw();
 			endStagedRevealOnceShown();
 		}
+	});
+	const outlineDraw = createFade({
+		get target() {
+			return transition.settled ? 1 : 0;
+		},
+		get riseMs() {
+			return prefersReducedMotion.current ? 0 : CLUSTER_OUTLINE_DRAW_MS;
+		},
+		fallMs: 0,
+		onFrame: draw
 	});
 	const hexLabelFade = createFade({
 		get target() {
@@ -1307,8 +1344,8 @@
 		get focusClusterName() {
 			return focusClusterName;
 		},
-		get instantFocus() {
-			return instantFocus;
+		get instantCamera() {
+			return instantCamera;
 		},
 		get selectedClusterName() {
 			return selectedClusterName;
