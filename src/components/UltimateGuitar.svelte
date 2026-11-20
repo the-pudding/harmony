@@ -91,7 +91,7 @@
 			"loadedmetadata",
 			() => {
 				audioEl.currentTime = time;
-				if (wasPlaying) audioEl.play();
+				if (wasPlaying) audioEl.play().catch(() => {});
 			},
 			{ once: true }
 		);

@@ -77,7 +77,8 @@
 		const audioEl = audioEls[song.songKey];
 		audioEl.currentTime = song.startSeconds;
 		currentTime = song.startSeconds;
-		audioEl.play();
+		// a browser may refuse to play before the reader has interacted
+		audioEl.play().catch(() => {});
 	};
 
 	const playCurrentSong = () => {

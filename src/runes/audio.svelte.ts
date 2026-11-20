@@ -7,7 +7,7 @@ export type ChordColorSegment = {
 };
 
 export const audio = $state({
-	muted: true,
+	muted: false,
 	stops: 0,
 	clipProgressFraction: 0,
 	chordColorSegments: [] as ChordColorSegment[]

@@ -13,7 +13,7 @@
 //        - delete the `$effect(() => writeMutedParam(audio.muted));` line
 //
 // What it does: mirrors the mute toggle in the URL as ?muted=true|false so a
-// reload keeps the setting. With no param, the default (muted) applies.
+// reload keeps the setting. With no param, the default (unmuted) applies.
 // =============================================================================
 import { replaceState } from "$app/navigation";
 
