@@ -3,11 +3,14 @@
 import type { CopyMap } from "$data/copy.json";
 
 export type MapScene = {
-	layout: { name: "umap" } | { name: "timeline" };
+	// offstage is only for STAGE_SCENE; no `{.map}` block can ask for it.
+	layout: { name: "umap" } | { name: "timeline" } | { name: "offstage" };
 	// Where framed layouts sit: below the story text, or the whole screen.
 	frame: "text" | "full";
 	camera:
 		| { kind: "home"; centered: boolean }
+		// Unscripted: the view stays wherever it is.
+		| { kind: "stay" }
 		| { kind: "cluster"; name: string }
 		| { kind: "song"; songKey: string };
 	songs: {
@@ -50,6 +53,20 @@ export const DEFAULT_MAP_SCENE: MapScene = {
 	labels: { hidden: false, only: null, rotate: false },
 	interaction: { movable: true, hoverable: true, tooltip: "full" },
 	player: { hidden: false },
+	reveal: { clusters: [] }
+};
+
+// Behind a slide with no `{.map}` block: the map is hidden, and every song
+// waits off stage until a slide that shows the map brings it back.
+export const STAGE_SCENE: MapScene = {
+	layout: { name: "offstage" },
+	frame: "text",
+	camera: { kind: "stay" },
+	songs: { only: null, highlighted: [], playable: [], dimmed: false },
+	media: { followVideo: null, litVideoSongs: null },
+	labels: { hidden: true, only: null, rotate: false },
+	interaction: { movable: false, hoverable: false, tooltip: "full" },
+	player: { hidden: true },
 	reveal: { clusters: [] }
 };
 

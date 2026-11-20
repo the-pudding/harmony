@@ -26,10 +26,7 @@
 	import CMS from "$components/helpers/CMS.svelte";
 	import { fade } from "svelte/transition";
 	import copy from "$data/copy.json";
-	import {
-		DEFAULT_MAP_SCENE,
-		parseMapScene
-	} from "$components/storymap/mapScene";
+	import { parseMapScene, STAGE_SCENE } from "$components/storymap/mapScene";
 	import { chordify } from "$utils/chordify";
 	import { onMount, setContext } from "svelte";
 	import { storyMedia } from "$runes/storyMedia.svelte";
@@ -385,7 +382,7 @@
 	aria-hidden={mapScene === null}
 >
 	<HexMap
-		scene={mapScene ?? DEFAULT_MAP_SCENE}
+		scene={mapScene ?? STAGE_SCENE}
 		{focusFrame}
 		{mapFrame}
 		instantFocus={enteredWithoutMap}

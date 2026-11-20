@@ -166,7 +166,9 @@
 		if (focusCluster !== undefined || focusSongKey !== undefined) {
 			hasEverFocused = true;
 		}
-		if (focusSongKey !== undefined) return undefined;
+		if (focusSongKey !== undefined || scene.camera.kind === "stay") {
+			return undefined;
+		}
 		return focusCluster ?? (hasEverFocused ? null : undefined);
 	});
 
@@ -399,7 +401,7 @@
 			? layoutName === "timeline"
 				? computeLayout("timeline", {}, { songs, frame: layoutFrame })
 				: computeLayout(
-						"umap",
+						layoutName === "offstage" ? "offstage" : "umap",
 						{ purityLayout, pureThreshold },
 						{ songs, frame: layoutFrame }
 					)

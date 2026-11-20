@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import copy from "$data/copy.json";
 import type { CopyMap } from "$data/copy.json";
-import { DEFAULT_MAP_SCENE, parseMapScene, type MapScene } from "./mapScene.js";
+import {
+	DEFAULT_MAP_SCENE,
+	parseMapScene,
+	STAGE_SCENE,
+	type MapScene
+} from "./mapScene.js";
 
 // Index's old mapPropsFromCopy.
 const parseBoolean = (value: unknown) =>
@@ -315,5 +320,20 @@ describe("parseMapScene warnings", () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 		parseMapScene({ visible: "true", movable: "false", dimmed: "true" });
 		expect(warn).not.toHaveBeenCalled();
+	});
+});
+
+describe("STAGE_SCENE", () => {
+	it("empties the map and leaves the view alone", () => {
+		expect(STAGE_SCENE.layout).toEqual({ name: "offstage" });
+		expect(STAGE_SCENE.camera).toEqual({ kind: "stay" });
+		expect(STAGE_SCENE.interaction.movable).toBe(false);
+		expect(STAGE_SCENE.interaction.hoverable).toBe(false);
+	});
+
+	it("is not what a block with no layout key parses to", () => {
+		expect(
+			parseMapScene({ visible: "true", layout: "offstage" })!.layout
+		).toEqual({ name: "umap" });
 	});
 });
