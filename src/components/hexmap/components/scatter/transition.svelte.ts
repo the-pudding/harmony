@@ -4,9 +4,12 @@ import {
 	beginTransition,
 	copyChannels,
 	createChannels,
+	lastStageStart,
 	stepCrossfade,
 	stepTransition,
-	type Channels
+	writeStageWindows,
+	type Channels,
+	type StagePlan
 } from "./transitionMath.js";
 
 // Per-song targets by song index: x, y (0–1 across the plot; NaN = not
@@ -18,13 +21,15 @@ export type TransitionTarget = Channels & {
 };
 
 // delayMs holds songs still before moving; crossfade (reduced motion) fades
-// instead of flying; staggered false ignores the target's stagger.
+// instead of flying; staggered false ignores the target's stagger; stages
+// move songs in turn (durationMs should be their stagedDurationMs).
 export type TransitionTiming = {
 	durationMs: number;
 	instant?: boolean;
 	delayMs?: number;
 	staggered?: boolean;
 	crossfade?: boolean;
+	stages?: StagePlan | null;
 };
 
 // Animates songs to each new target, calling onFrame per step. Channels are
@@ -41,14 +46,15 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 	let from = createChannels(0);
 	let to = createChannels(0);
 	let startAt = new Float32Array(0);
+	let endAt = new Float32Array(0);
 	let frame = 0;
 	let settled = $state(true);
 	// Bumped when songs come to rest at new positions, never mid-flight.
 	let positionsVersion = 0;
 	let previousTarget: Target | null = null;
-	// Whole-transition progress, 0–1 (1 at rest), ignoring per-song stagger.
+	// 0–1 (1 at rest), ignoring per-song windows: through the whole
+	// transition, or through its last stage when staged.
 	let progress = 1;
-	let window: number | null = null;
 
 	const finish = () => {
 		positionsVersion++;
@@ -62,6 +68,7 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 		from = createChannels(count);
 		to = createChannels(count);
 		startAt = new Float32Array(count);
+		endAt = new Float32Array(count);
 	};
 
 	const retarget = (target: Target) => {
@@ -72,7 +79,6 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 		const fresh = current.x.length !== count;
 		if (fresh) resize(count);
 
-		window = target.stagger ? (target.staggerWindow ?? null) : null;
 		const changed = beginTransition(
 			current,
 			target,
@@ -80,7 +86,8 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 			from,
 			to,
 			startAt,
-			window
+			endAt,
+			target.stagger ? (target.staggerWindow ?? null) : null
 		);
 		if (!changed) {
 			if (!settled) finish();
@@ -97,10 +104,14 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 		}
 
 		const crossfade = timing.crossfade === true;
-		if (timing.staggered === false || crossfade) {
+		const stages = crossfade ? null : (timing.stages ?? null);
+		if (stages) {
+			writeStageWindows(stages, target.stagger ?? null, startAt, endAt);
+		} else if (timing.staggered === false || crossfade) {
 			startAt.fill(0);
-			window = null;
+			endAt.fill(1);
 		}
+		const progressStart = stages ? lastStageStart(stages) : 0;
 		settled = false;
 		progress = 0;
 		const durationMs = Math.max(1, timing.durationMs);
@@ -112,11 +123,10 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 				return;
 			}
 			const t = Math.min(1, elapsed / durationMs);
-			progress = t;
+			progress =
+				t >= 1 ? 1 : Math.max(0, (t - progressStart) / (1 - progressStart));
 			if (crossfade) stepCrossfade(from, to, current, t);
-			else {
-				stepTransition(from, to, current, startAt, t, easeCubicInOut, window);
-			}
+			else stepTransition(from, to, current, startAt, endAt, t, easeCubicInOut);
 			if (t >= 1) finish();
 			input.onFrame();
 			if (t < 1) frame = requestAnimationFrame(step);

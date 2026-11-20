@@ -32,9 +32,10 @@ export const copyChannels = (source: Channels, into: Channels): void => {
 	into.mix.set(source.mix);
 };
 
-// Writes endpoints into from/to and each song's start fraction into startAt.
-// A song the target doesn't place (NaN) fades out in place; a song with no
-// position yet fades in at its target. Returns whether anything will move.
+// Writes endpoints into from/to and each song's [start, end] fraction of the
+// transition into startAt/endAt. A song the target doesn't place (NaN) fades
+// out in place; a song with no position yet fades in at its target. Returns
+// whether anything will move.
 export const beginTransition = (
 	current: Channels,
 	target: Channels,
@@ -42,6 +43,7 @@ export const beginTransition = (
 	from: Channels,
 	to: Channels,
 	startAt: Float32Array,
+	endAt: Float32Array,
 	window: number | null = null
 ): boolean => {
 	let changed = false;
@@ -57,6 +59,7 @@ export const beginTransition = (
 		to.mix[i] = target.mix[i];
 		from.mix[i] = hasPosition ? current.mix[i] : to.mix[i];
 		startAt[i] = stagger ? staggerStart(clamp01(stagger[i]), window) : 0;
+		endAt[i] = window === null || !stagger ? 1 : startAt[i] + window;
 		if (
 			from.x[i] !== to.x[i] ||
 			from.y[i] !== to.y[i] ||
@@ -69,15 +72,62 @@ export const beginTransition = (
 	return changed;
 };
 
-// Writes each song's value at t (0–1) into current.
+// Songs move in stages, one after another and pauseMs apart. A stage's songs
+// move together, except in the last, where their stagger spreads their starts.
+export type StagePlan = {
+	// Per song, the stage (0 first) it moves in; beyond the last means the last.
+	stageOf: Uint8Array;
+	stageMs: readonly number[];
+	pauseMs: number;
+};
+
+export const stagedDurationMs = ({ stageMs, pauseMs }: StagePlan): number =>
+	stageMs.reduce((total, ms) => total + ms, 0) +
+	pauseMs * Math.max(0, stageMs.length - 1);
+
+const stageStartMs = ({ stageMs, pauseMs }: StagePlan, stage: number): number =>
+	stageMs.slice(0, stage).reduce((total, ms) => total + ms + pauseMs, 0);
+
+// As a fraction of the whole staged transition.
+export const lastStageStart = (plan: StagePlan): number =>
+	stageStartMs(plan, plan.stageMs.length - 1) /
+	Math.max(1, stagedDurationMs(plan));
+
+// Writes each song's [start, end] fraction of the staged transition.
+export const writeStageWindows = (
+	plan: StagePlan,
+	stagger: Float32Array | null,
+	startAt: Float32Array,
+	endAt: Float32Array
+): void => {
+	const total = Math.max(1, stagedDurationMs(plan));
+	const last = plan.stageMs.length - 1;
+	const starts = plan.stageMs.map(
+		(_, stage) => stageStartMs(plan, stage) / total
+	);
+	const ends = plan.stageMs.map((ms, stage) => starts[stage] + ms / total);
+	for (let i = 0; i < startAt.length; i++) {
+		const stage = Math.min(plan.stageOf[i], last);
+		const start = starts[stage];
+		const spread =
+			stage === last && stagger
+				? staggerStart(clamp01(stagger[i]), null) * (ends[stage] - start)
+				: 0;
+		startAt[i] = start + spread;
+		endAt[i] = ends[stage];
+	}
+};
+
+// Writes each song's value at t (0–1) into current; a song holds its from
+// values until its start and reaches its to values at its end.
 export const stepTransition = (
 	from: Channels,
 	to: Channels,
 	current: Channels,
 	startAt: Float32Array,
+	endAt: Float32Array,
 	t: number,
-	easing: Easing,
-	window: number | null = null
+	easing: Easing
 ): void => {
 	const count = current.x.length;
 	if (t >= 1) {
@@ -86,12 +136,8 @@ export const stepTransition = (
 	}
 	for (let i = 0; i < count; i++) {
 		const start = startAt[i];
-		const local =
-			window !== null
-				? (t - start) / window
-				: start === 0
-					? t
-					: (t - start) / (1 - start);
+		const span = endAt[i] - start;
+		const local = span > 0 ? (t - start) / span : t < start ? 0 : 1;
 		const eased = local <= 0 ? 0 : local >= 1 ? 1 : easing(local);
 		current.x[i] = from.x[i] + (to.x[i] - from.x[i]) * eased;
 		current.y[i] = from.y[i] + (to.y[i] - from.y[i]) * eased;

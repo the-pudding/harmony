@@ -4,10 +4,14 @@ import {
 	STAGGER_SPAN,
 	beginTransition,
 	createChannels,
+	lastStageStart,
+	stagedDurationMs,
 	stepCrossfade,
 	stepFade,
 	stepTransition,
-	type Channels
+	writeStageWindows,
+	type Channels,
+	type StagePlan
 } from "./transitionMath.js";
 
 const channels = (
@@ -31,12 +35,21 @@ const setUp = (
 	const from = createChannels(count);
 	const to = createChannels(count);
 	const startAt = new Float32Array(count);
-	const changed = beginTransition(current, target, stagger, from, to, startAt);
+	const endAt = new Float32Array(count);
+	const changed = beginTransition(
+		current,
+		target,
+		stagger,
+		from,
+		to,
+		startAt,
+		endAt
+	);
 	const at = (t: number) => {
-		stepTransition(from, to, current, startAt, t, easeCubicInOut);
+		stepTransition(from, to, current, startAt, endAt, t, easeCubicInOut);
 		return current;
 	};
-	return { from, to, startAt, changed, at };
+	return { from, to, startAt, endAt, changed, at };
 };
 
 describe("stepTransition", () => {
@@ -164,6 +177,7 @@ describe("a stagger window", () => {
 		const from = createChannels(count);
 		const to = createChannels(count);
 		const startAt = new Float32Array(count);
+		const endAt = new Float32Array(count);
 		beginTransition(
 			current,
 			target,
@@ -171,17 +185,65 @@ describe("a stagger window", () => {
 			from,
 			to,
 			startAt,
+			endAt,
 			0.25
 		);
 		expect(startAt[0]).toBe(0);
 		expect(startAt[1]).toBeCloseTo(0.75);
+		expect(endAt[0]).toBeCloseTo(0.25);
+		expect(endAt[1]).toBeCloseTo(1);
 		const at = (t: number) => {
-			stepTransition(from, to, current, startAt, t, (x) => x, 0.25);
+			stepTransition(from, to, current, startAt, endAt, t, (x) => x);
 			return [...current.alpha];
 		};
 		expect(at(0.125)[0]).toBeCloseTo(0.5);
 		expect(at(0.3)).toEqual([1, 0]);
 		expect(at(0.875)[1]).toBeCloseTo(0.5);
+	});
+});
+
+describe("staged transitions", () => {
+	// Stages of 100, 100 and 200 ms, 50 ms apart: 500 ms in all.
+	const plan = (stageOf: number[]): StagePlan => ({
+		stageOf: Uint8Array.from(stageOf),
+		stageMs: [100, 100, 200],
+		pauseMs: 50
+	});
+
+	it("adds up the stages and the pauses between them", () => {
+		expect(stagedDurationMs(plan([]))).toBe(500);
+		expect(lastStageStart(plan([]))).toBeCloseTo(0.6);
+	});
+
+	it("gives each song its stage's window, and spreads only the last by stagger", () => {
+		const startAt = new Float32Array(4);
+		const endAt = new Float32Array(4);
+		const stagger = Float32Array.from([1, 1, 0, 1]);
+		writeStageWindows(plan([0, 1, 2, 9]), stagger, startAt, endAt);
+		expect([startAt[0], endAt[0]]).toEqual([0, expect.closeTo(0.2)]);
+		expect(startAt[1]).toBeCloseTo(0.3);
+		expect(endAt[1]).toBeCloseTo(0.5);
+		expect(startAt[2]).toBeCloseTo(0.6);
+		expect(startAt[3]).toBeCloseTo(0.6 + STAGGER_SPAN * 0.4);
+		expect(endAt[2]).toBe(1);
+		expect(endAt[3]).toBe(1);
+	});
+
+	it("holds a song exactly as it was until its stage, then eases it there", () => {
+		const current = channels([0, 0], [0, 0], [0.85, 0.85], [0, 0]);
+		const target = channels([1, 1], [1, 1], [1, 1], [1, 1]);
+		const { startAt, endAt, at } = setUp(current, target);
+		writeStageWindows(plan([0, 2]), null, startAt, endAt);
+		const firstStageDone = at(0.25);
+		expect([firstStageDone.x[0], firstStageDone.mix[0]]).toEqual([1, 1]);
+		expect(firstStageDone.x[1]).toBe(0);
+		expect(firstStageDone.alpha[1]).toBeCloseTo(0.85);
+		expect(firstStageDone.mix[1]).toBe(0);
+		const lastStage = at(0.8);
+		expect(lastStage.x[1]).toBeGreaterThan(0);
+		expect(lastStage.x[1]).toBeLessThan(1);
+		expect(lastStage.mix[1]).toBeCloseTo(lastStage.x[1], 5);
+		expect([...at(1).x]).toEqual([1, 1]);
 	});
 });
 
