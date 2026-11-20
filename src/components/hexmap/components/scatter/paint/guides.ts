@@ -1,4 +1,4 @@
-import type { Guide } from "$components/storymap/layouts/types.js";
+import type { Guide, GuideLayer } from "$components/storymap/layouts/types.js";
 import type { ScatterAxisLabels } from "../../scatterPoint.js";
 import {
 	AXIS_LABEL_COLOR,
@@ -6,6 +6,8 @@ import {
 	CHART_BOX_COLOR,
 	CHART_BOX_WIDTH,
 	CHART_LABEL_COLOR,
+	CHART_LABEL_HALO,
+	CHART_LABEL_HALO_WIDTH,
 	CHART_LABEL_SIZE_PX,
 	GUIDE_BOTTOM_RIGHT_CLEARANCE,
 	GUIDE_FADE_FRACTION,
@@ -34,11 +36,13 @@ export const guideOpacities = (
 export type GuideSet = { guides: readonly Guide[]; opacity: number };
 
 // Frame coordinates (0–1 across the framed rect, y up), fixed on screen so
-// axis labels stay put while the camera zooms.
+// axis labels stay put while the camera zooms. Draws the guides in one
+// layer: call it under the songs, then over them.
 export const drawGuides = (
 	{ context, viewport: { width, height } }: Scene,
 	sets: readonly GuideSet[],
-	frame: MapFrame
+	frame: MapFrame,
+	layer: GuideLayer = "under"
 ) => {
 	const rect = frameRect({ width, height }, frame);
 	const left = rect.x;
@@ -52,6 +56,11 @@ export const drawGuides = (
 		if (!(opacity > 0)) continue;
 		context.globalAlpha = opacity;
 		for (const guide of guides) {
+			const guideLayer =
+				guide.kind === "label" || guide.kind === "box"
+					? (guide.layer ?? "under")
+					: "under";
+			if (guideLayer !== layer) continue;
 			switch (guide.kind) {
 				case "axisLabel":
 					if (guide.at === "bottom-right") {
@@ -77,20 +86,25 @@ export const drawGuides = (
 						bottom + GUIDE_LABEL_GAP
 					);
 					break;
-				case "label":
+				case "label": {
+					const x = left + guide.x * rect.width;
+					const y = top + (1 - guide.y) * rect.height;
 					context.fillStyle = guide.color ?? CHART_LABEL_COLOR;
-					context.font = `${guide.weight === "bold" ? 600 : 400} ${CHART_LABEL_SIZE_PX}px ${SONG_LABEL_FONT_FAMILY}`;
+					context.font = `${guide.weight === "bold" ? 600 : 400} ${CHART_LABEL_SIZE_PX[guide.size ?? "regular"]}px ${SONG_LABEL_FONT_FAMILY}`;
 					context.textAlign = guide.align;
 					context.textBaseline = "middle";
-					context.fillText(
-						guide.text,
-						left + guide.x * rect.width,
-						top + (1 - guide.y) * rect.height
-					);
+					if (layer === "over") {
+						context.strokeStyle = CHART_LABEL_HALO;
+						context.lineWidth = CHART_LABEL_HALO_WIDTH;
+						context.lineJoin = "round";
+						context.strokeText(guide.text, x, y);
+					}
+					context.fillText(guide.text, x, y);
 					context.fillStyle = AXIS_LABEL_COLOR;
 					context.font = AXIS_LABEL_FONT;
 					context.textBaseline = "alphabetic";
 					break;
+				}
 				case "box":
 					context.strokeStyle = CHART_BOX_COLOR;
 					context.lineWidth = CHART_BOX_WIDTH;

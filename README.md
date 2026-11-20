@@ -71,14 +71,13 @@ The story's charts read small CSVs from [`src/data/charts/`](src/data/charts) (i
 [`tasks/build-charts.ts`](tasks/build-charts.ts) rebuilds all of them in one go. It computes coverage for every song in `songs.json` once, then writes:
 
 - `top-progressions.csv`: core progressions ranked by average coverage, with song counts and shares
-- `effective-progressions.csv`: how many songs fall into each effective-progression bucket (≈1, ≈2, ≈3, 4–5, 6+)
-- `effective-progressions-by-decade.csv`: the same buckets per decade; `sharePercent` is within each decade
+
+Section 3's effective-progression charts aren't among them: they're drawn by the map from `hexmap.json` (see [`effectiveProgressions.ts`](src/components/storymap/layouts/effectiveProgressions.ts)), so changing the bucket boundaries in [`progressionHomogeneity.ts`](src/routes/demo/shared/progressionHomogeneity.ts) shows up there without a rebuild.
 
 `npm run songs` runs it for you. Run `npm run charts` on its own when the charts' inputs change without the songs changing:
 
 - core progressions (`src/data/core-progressions.ts`) or song corrections (`hand-corrected-songs.ts`, `reviewed-corrections.json`)
 - the matching algorithm (e.g. `matchSongV2` or its weights)
-- the bucket boundaries in [`progressionHomogeneity.ts`](src/routes/demo/shared/progressionHomogeneity.ts)
 
 To add a chart, write a function in `tasks/build-charts.ts` that returns an array of rows, and add `{ file, build }` to its `charts` array.
 

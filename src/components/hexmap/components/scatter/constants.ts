@@ -126,9 +126,11 @@ export const GUIDE_LABEL_GAP = 24;
 export const GUIDE_BOTTOM_RIGHT_CLEARANCE = 56;
 // Chart labels, in the story's sans.
 export const CHART_LABEL_COLOR = "rgba(212, 212, 216, 0.75)";
-export const CHART_LABEL_SIZE_PX = 12;
+export const CHART_LABEL_SIZE_PX = { regular: 12, medium: 14, large: 18 };
+export const CHART_LABEL_HALO = "rgba(9, 9, 11, 0.9)";
+export const CHART_LABEL_HALO_WIDTH = 4;
 export const CHART_BOX_COLOR = "#f4f4f5";
-export const CHART_BOX_WIDTH = 1.5;
+export const CHART_BOX_WIDTH = 3;
 
 // ── Cluster outlines (dot mode) ───────────────────────────────────────
 // Density clustering is only meaningful over layouts UMAP actually produced

@@ -70,6 +70,13 @@ export const retarget = (
 	delayMs = 0
 ): Pin => ({ ...pin, from: pin.current, startMs: nowMs, durationMs, delayMs });
 
+// The pose with its label just right of the dot, title on the dot's line:
+// where a label goes before the map has placed it.
+export const besideLabel = (pose: PinPose): PinPose => {
+	const { lineHeight, gap } = labelMetrics(pose.labelPx);
+	return { ...pose, labelDx: pose.r + gap, labelDy: -lineHeight };
+};
+
 // The label's line height and its gap from the dot, at a title size.
 export const labelMetrics = (labelPx: number) => {
 	const scale = labelPx / SONG_LABEL_STYLE.title.fontSizePx;

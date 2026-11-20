@@ -138,7 +138,7 @@
 		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
-		gap: 2rem;
+		gap: 3.5rem;
 		overflow-y: auto;
 		/* the article is pointer-events: none; let the chords scroll */
 		pointer-events: auto;

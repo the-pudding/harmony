@@ -577,8 +577,8 @@
           "stage": {
             "component": "EffectiveProgressions",
             "songs": [
-              "olivia-rodrigo__drop-dead",
-              "olivia-rodrigo__drivers-license"
+              "olivia-rodrigo__drivers-license",
+              "olivia-rodrigo__drop-dead"
             ]
           }
         },
@@ -592,14 +592,8 @@
           "map": {
             "visible": "true",
             "layout": "effectiveProgressions",
-            "highlightSongs": [
-              "olivia-rodrigo__drop-dead",
-              "olivia-rodrigo__drivers-license"
-            ],
-            "revealSongs": [
-              "olivia-rodrigo__drop-dead",
-              "olivia-rodrigo__drivers-license"
-            ],
+            "highlightSongs": "olivia-rodrigo__drop-dead, olivia-rodrigo__drivers-license",
+            "revealSongs": "olivia-rodrigo__drop-dead, olivia-rodrigo__drivers-license",
             "movable": "false",
             "tooltip": "basic"
           }
@@ -622,10 +616,7 @@
           "map": {
             "visible": "true",
             "layout": "effectiveProgressionsByDecade",
-            "highlightSongs": [
-              "olivia-rodrigo__drop-dead",
-              "olivia-rodrigo__drivers-license"
-            ],
+            "highlightSongs": "olivia-rodrigo__drop-dead, olivia-rodrigo__drivers-license",
             "movable": "false",
             "tooltip": "basic"
           }

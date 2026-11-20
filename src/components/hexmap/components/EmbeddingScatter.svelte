@@ -44,8 +44,7 @@
 		HEX_FADE_IN_MS,
 		HEX_FADE_OUT_MS,
 		HEX_LABEL_FADE_IN_MS,
-		CLUSTER_OUTLINE_DRAW_MS,
-		OUTLINED_LABEL_GAP
+		CLUSTER_OUTLINE_DRAW_MS
 	} from "./scatter/constants.js";
 	import type { EmbeddingScatterProps as Props } from "./scatter/props.js";
 	import type {
@@ -133,7 +132,7 @@
 		songLabelLines
 	} from "./songLabelText.js";
 	import { createSongPins } from "./scatter/songPins.svelte.js";
-	import { labelMetrics, type PinPose } from "./scatter/songPinMath.js";
+	import { besideLabel, type PinPose } from "./scatter/songPinMath.js";
 	import type { MapMark } from "./scatter/songPins.svelte.js";
 	import { songDots } from "$runes/songDots.svelte.js";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (perf meter): see src/utils/perfParam.js.
@@ -716,7 +715,8 @@
 			themeColors: hexColors
 		});
 		drawAxisLabels(scene, axisLabels);
-		drawGuides(scene, guideSets(), frame);
+		const guides = guideSets();
+		drawGuides(scene, guides, frame, "under");
 		const zoomLevel =
 			hexMode || hexFade.current > 0
 				? hexZoomLevel(transform.k, HEX_ZOOM)
@@ -739,6 +739,7 @@
 		if (zoomLevel?.kind === "hex" && hexOpacity > 0) {
 			drawHexFrame(scene, zoomLevel.radius, hexOpacity, pixelRatio);
 		}
+		drawGuides(scene, guides, frame, "over");
 		context.globalAlpha = 1;
 		const labelsOpacity =
 			hexLabelFade.current === 1 ? "" : String(hexLabelFade.current);
@@ -985,7 +986,8 @@
 					titlePrefix: outlinedTitlePrefix,
 					isPrefixed: isPlayableOutlined,
 					isLabeled: (songKey) =>
-						!(smallOutlinedSongKeys?.has(songKey) ?? false)
+						!(smallOutlinedSongKeys?.has(songKey) ?? false),
+					restingScreenOf
 				})
 			: null;
 		for (const songKey of style.markedInLabelOrder()) {
@@ -1198,17 +1200,20 @@
 			(placed?.label ?? null) !== null ||
 			((outlinedSongKeys?.has(songKey) ?? false) &&
 				!(smallOutlinedSongKeys?.has(songKey) ?? false));
-		return {
-			x,
-			y,
-			r,
-			...(placed?.label ?? {
-				labelDx: r + OUTLINED_LABEL_GAP,
-				labelDy: -labelMetrics(labelPx).lineHeight
-			}),
-			labelPx,
-			labelAlpha: labeled ? 1 : 0
-		};
+		const pose = { x, y, r, labelPx, labelAlpha: labeled ? 1 : 0 };
+		return placed?.label
+			? { ...pose, ...placed.label }
+			: besideLabel({ ...pose, labelDx: 0, labelDy: 0 });
+	};
+
+	// Where a song's dot will come to rest on screen, or null if unplaced.
+	const restingScreenOf = (songKey: string): Point2D | null => {
+		const index = songs.indexOf.get(songKey);
+		if (!isDrawnIndex(index)) return null;
+		return toScreen({
+			nx: transitionTarget.x[index],
+			ny: transitionTarget.y[index]
+		});
 	};
 
 	// Closer than this to where it's heading, a song's mark has arrived.

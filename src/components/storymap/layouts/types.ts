@@ -5,6 +5,11 @@ export type LayoutFrame = { width: number; height: number };
 
 export type LayoutContext = { songs: SongTable; frame: LayoutFrame };
 
+// Under the songs (the default), or over them; text over them is haloed so
+// it reads against the dots. Guides are painted, so they never catch the
+// pointer.
+export type GuideLayer = "under" | "over";
+
 // Axis labels, ticks, labels and boxes drawn with a layout. Positions are
 // 0–1 across the frame, y up.
 export type Guide =
@@ -23,9 +28,18 @@ export type Guide =
 			align: "left" | "center" | "right";
 			color?: string;
 			weight?: "regular" | "bold";
+			size?: "regular" | "medium" | "large";
+			layer?: GuideLayer;
 	  }
 	// An outline; (x, y) is its bottom-left corner.
-	| { kind: "box"; x: number; y: number; width: number; height: number };
+	| {
+			kind: "box";
+			x: number;
+			y: number;
+			width: number;
+			height: number;
+			layer?: GuideLayer;
+	  };
 
 export type LayoutResult = {
 	name: string;

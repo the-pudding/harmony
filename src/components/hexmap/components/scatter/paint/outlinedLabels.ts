@@ -6,6 +6,7 @@ import {
 } from "../constants.js";
 import { boxAround, placeMarkerLabels } from "../labelPlacement.js";
 import type { PointStyle } from "../pointStyle.js";
+import type { Point2D } from "../types.js";
 import { isOnScreen } from "../viewport.js";
 import { drawnIndexOf, screenOfIndex, type Scene } from "./scene.js";
 import { drawSongLabel, measureSongLabel } from "./songMark.js";
@@ -19,8 +20,10 @@ export type SongSummary = {
 // Title and artists beside each on-screen marked song (only those isLabeled
 // picks). Placed from each marker's resting size so labels stay put as songs
 // are played and stopped; drawn after every marker so none covers a label.
-// Pinned songs' labels are placed but not drawn. Returns each placed
-// label's top-left from its song's dot.
+// Pinned songs' labels are placed but not drawn, where their dots will rest
+// (restingScreenOf), so a mark travelling back to the map heads straight for
+// its label's spot there. Returns each placed label's top-left from its
+// song's dot.
 export const drawOutlinedSongLabels = (
 	scene: Scene,
 	{
@@ -28,7 +31,8 @@ export const drawOutlinedSongLabels = (
 		summaries,
 		titlePrefix,
 		isPrefixed = () => true,
-		isLabeled = () => true
+		isLabeled = () => true,
+		restingScreenOf = () => null
 	}: {
 		style: PointStyle;
 		summaries: ReadonlyMap<string, SongSummary>;
@@ -38,6 +42,8 @@ export const drawOutlinedSongLabels = (
 		isPrefixed?: (songKey: string) => boolean;
 		// Unlabeled songs still keep other labels clear of their markers.
 		isLabeled?: (songKey: string) => boolean;
+		// Where a song's dot will come to rest, or null if it isn't placed.
+		restingScreenOf?: (songKey: string) => Point2D | null;
 	}
 ): Map<string, { labelDx: number; labelDy: number }> => {
 	const { context, viewport, themeColors } = scene;
@@ -45,7 +51,9 @@ export const drawOutlinedSongLabels = (
 		const summary = summaries.get(songKey);
 		const index = drawnIndexOf(scene, songKey);
 		if (!summary || index === -1) return [];
-		const screen = screenOfIndex(scene, index);
+		const screen =
+			(style.isPinned(songKey) ? restingScreenOf(songKey) : null) ??
+			screenOfIndex(scene, index);
 		const title =
 			titlePrefix && style.isOutlined(songKey) && isPrefixed(songKey)
 				? `${titlePrefix} ${summary.title}`

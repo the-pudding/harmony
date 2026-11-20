@@ -20,16 +20,11 @@ import {
 import { computeSongCoverage } from "../src/routes/demo/define-chord-progression/compute-coverage-of-all-songs/computeSongCoverage.js";
 import { computeDecadeHistory } from "../src/routes/demo/history/decadeSignatures.js";
 import { computeTopProgressions } from "../src/routes/demo/history/topProgressions.js";
-import {
-	buildHomogeneityBandShares,
-	effectiveProgressionCountFor
-} from "../src/routes/demo/shared/progressionHomogeneity.js";
 
 const ROOT = process.cwd();
 const SONGS_PATH = path.join(ROOT, "static/data/songs.json");
 const OUTPUT_DIR = path.join(ROOT, "src/data/charts");
 const PERCENT_DECIMALS = 3;
-const DECADE_YEARS = 10;
 // 1950s and 1960s are charted as the pooled "1950s-60s" entry instead (the
 // corpus only starts in 1958), so they're skipped on their own.
 const POOLED_EARLY_DECADES = [1950, 1960];
@@ -49,30 +44,6 @@ const inputs: SongInput[] = applyHandReviewedCorrections(
 const songs = sortAllSongs(groupSongs(inputs));
 const coverages = songs.map(computeSongCoverage);
 
-// Songs with no matched progressions have no effective count and are left out
-// of the effective-progression charts.
-const songsWithEffectiveCount = songs.flatMap((song, i) => {
-	const effectiveProgressionCount = effectiveProgressionCountFor(
-		coverages[i].progressionCounts
-	);
-	return effectiveProgressionCount === null
-		? []
-		: [{ year: song.year, effectiveProgressionCount }];
-});
-
-const toBandRows = (effectiveProgressionCounts: readonly number[]) =>
-	buildHomogeneityBandShares(effectiveProgressionCounts).map(
-		({ band, songCount, sharePercent }) => ({
-			band: band.shortLabel,
-			label: band.label,
-			songCount,
-			sharePercent: round(sharePercent)
-		})
-	);
-
-const decadeOf = (year: number): number =>
-	Math.floor(toCalendarYear(year) / DECADE_YEARS) * DECADE_YEARS;
-
 const buildTopProgressions = () =>
 	// Unlimited, like the history page.
 	computeTopProgressions(coverages, Number.POSITIVE_INFINITY).map((row, i) => ({
@@ -85,26 +56,6 @@ const buildTopProgressions = () =>
 		songCount: row.songCount,
 		songSharePercent: round(row.songSharePercent)
 	}));
-
-const buildEffectiveProgressions = () =>
-	toBandRows(
-		songsWithEffectiveCount.map((song) => song.effectiveProgressionCount)
-	);
-
-// Long format: one row per decade × band; sharePercent is within the decade.
-const buildEffectiveProgressionsByDecade = () => {
-	const countsByDecade = Map.groupBy(
-		songsWithEffectiveCount.filter((song) => song.year !== undefined),
-		(song) => decadeOf(song.year!)
-	);
-	return [...countsByDecade]
-		.sort(([a], [b]) => a - b)
-		.flatMap(([decade, decadeSongs]) =>
-			toBandRows(decadeSongs.map((song) => song.effectiveProgressionCount)).map(
-				(row) => ({ decade, ...row, decadeSongCount: decadeSongs.length })
-			)
-		);
-};
 
 // One row per calendar year: the share of that year's songs containing the
 // named core progression at least once. Songs without a year are left out.
@@ -179,12 +130,7 @@ const signatureCharts = decadeHistory
 
 const charts: { file: string; build: () => object[] }[] = [
 	{ file: "top-progressions.csv", build: buildTopProgressions },
-	{ file: "effective-progressions.csv", build: buildEffectiveProgressions },
 	{ file: "chord-shares.csv", build: buildChordShares },
-	{
-		file: "effective-progressions-by-decade.csv",
-		build: buildEffectiveProgressionsByDecade
-	},
 	{
 		file: byYearFile("axis of awesome"),
 		build: buildProgressionShareByYear("axis of awesome")
@@ -202,9 +148,7 @@ fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 for (const file of fs.readdirSync(OUTPUT_DIR)) {
 	if (isDecadeByYearFile(file)) fs.rmSync(path.join(OUTPUT_DIR, file));
 }
-console.log(
-	`${songs.length} songs (${songsWithEffectiveCount.length} with matched progressions)`
-);
+console.log(`${songs.length} songs`);
 charts.forEach(({ file, build }) => {
 	const rows = build();
 	const outputPath = path.join(OUTPUT_DIR, file);

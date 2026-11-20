@@ -22,14 +22,14 @@ import type { Guide, Layout, LayoutFrame, LayoutResult } from "./types.js";
 export type EffectiveProgressionsParams = TimelineParams;
 
 // The band every chart draws attention to: songs that are about one loop.
-export const LOOP_BAND = HOMOGENEITY_BANDS[0];
+const LOOP_BAND = HOMOGENEITY_BANDS[0];
 
 // Room in px, inside the frame, for the band labels on the left and the
 // labels under the bars; the right side stays clear of the mute button.
-const GUTTER_PX = { phone: 40, wide: 88 };
+const GUTTER_PX = { phone: 80, wide: 96 };
 const RIGHT_PX = GUIDE_BOTTOM_RIGHT_CLEARANCE;
 const SINGLE_BAR_FOOTER_PX = 20;
-const DECADE_FOOTER_PX = 40;
+const DECADE_FOOTER_PX = 24;
 // Between stacked bands, and between decade bars.
 const BAND_GAP_PX = 3;
 const DECADE_GAP_PX = { phone: 4, wide: 14 };
@@ -37,7 +37,7 @@ const DECADE_GAP_PX = { phone: 4, wide: 14 };
 const RADIUS_PER_SPACING = 0.36;
 const MIN_RADIUS = 1;
 const LABEL_GAP_PX = 8;
-const LINE_PX = 14;
+const LINE_HEIGHT_PX = { regular: 14, medium: 16, large: 20 };
 
 type Rect = { x: number; y: number; width: number; height: number };
 
@@ -128,21 +128,70 @@ const packBar = (
 
 const percent = (share: number) => `${Math.round(share * 100)}%`;
 
-// The center of a rect's left edge, as a label in the gutter beside it.
+type GutterLine = {
+	text: string;
+	color?: string;
+	weight?: "regular" | "bold";
+	size?: "regular" | "medium" | "large";
+};
+
+// Lines in the gutter beside a rect, centered on its middle.
 const gutterLabel = (
 	frame: LayoutFrame,
 	rect: Rect,
-	text: string,
-	options: { color?: string; weight?: "regular" | "bold"; dy?: number } = {}
-): Guide => ({
-	kind: "label",
-	text,
-	x: (rect.x - LABEL_GAP_PX) / frame.width,
-	y: (rect.y + rect.height / 2 + (options.dy ?? 0)) / frame.height,
-	align: "right",
-	color: options.color,
-	weight: options.weight
-});
+	lines: readonly GutterLine[]
+): Guide[] => {
+	const heights = lines.map(({ size }) => LINE_HEIGHT_PX[size ?? "regular"]);
+	let top =
+		rect.y +
+		rect.height / 2 +
+		heights.reduce((total, height) => total + height, 0) / 2;
+	return lines.map((line, index) => {
+		const center = top - heights[index] / 2;
+		top -= heights[index];
+		return {
+			kind: "label",
+			...line,
+			x: (rect.x - LABEL_GAP_PX) / frame.width,
+			y: center / frame.height,
+			align: "right"
+		};
+	});
+};
+
+// A band's name in the gutter. Readers start at the top, so the top band's
+// also says what the names count, and its share (if given) what it's of.
+const bandLabel = (
+	frame: LayoutFrame,
+	{ band, share, rect }: PackedBar["segments"][number],
+	{ explained, withShare }: { explained: boolean; withShare: boolean }
+): Guide[] =>
+	gutterLabel(frame, rect, [
+		{ text: band.shortLabel, color: band.color, weight: "bold", size: "large" },
+		...(explained
+			? [
+					{ text: "effective", color: band.color },
+					{ text: "progressions", color: band.color }
+				]
+			: []),
+		...(withShare ? [{ text: percent(share), size: "medium" as const }] : []),
+		...(withShare && explained ? [{ text: "of all songs" }] : [])
+	]);
+
+// Labels for a bar's non-empty bands, the top one explained.
+const bandLabels = (
+	frame: LayoutFrame,
+	{ segments }: PackedBar,
+	withShare: boolean
+): Guide[] => {
+	const shown = segments.filter(({ share }) => share > 0);
+	return shown.flatMap((segment, index) =>
+		bandLabel(frame, segment, {
+			explained: index === shown.length - 1,
+			withShare
+		})
+	);
+};
 
 // Lays out the bars, converts px to 0–1 across the frame and leaves songs
 // that aren't in any bar unplaced.
@@ -200,21 +249,8 @@ export const effectiveProgressionsLayout: Layout<EffectiveProgressionsParams> =
 				songs,
 				frame,
 				(placed) => [{ songs: placed, rect }],
-				([{ segments }]) => [
-					...segments.flatMap(({ band, share, rect: segment }) =>
-						share === 0
-							? []
-							: [
-									gutterLabel(frame, segment, band.shortLabel, {
-										color: band.color,
-										weight: "bold",
-										dy: LINE_PX / 2
-									}),
-									gutterLabel(frame, segment, percent(share), {
-										dy: -LINE_PX / 2
-									})
-								]
-					),
+				([bar]) => [
+					...bandLabels(frame, bar, true),
 					{
 						kind: "label",
 						text: "← older",
@@ -274,42 +310,40 @@ export const effectiveProgressionsByDecadeLayout: Layout<EffectiveProgressionsPa
 				},
 				(packed, bars) => [
 					// Bands are named beside the first decade's bar.
-					...packed[0].segments.flatMap(({ band, share, rect }) =>
-						share === 0
-							? []
-							: [
-									gutterLabel(frame, rect, band.shortLabel, {
-										color: band.color,
-										weight: "bold"
-									})
-								]
-					),
+					...bandLabels(frame, packed[0], false),
+					// Each decade's ≈1 band is boxed, its share on the box's top
+					// edge, over the songs.
 					...packed.flatMap(({ segments: [loop] }, column) => {
 						const { rect } = bars[column];
 						const centerX = (rect.x + rect.width / 2) / frame.width;
 						const outset = BAND_GAP_PX / 2;
+						const boxTop = loop.rect.y + loop.rect.height + outset;
 						return [
 							{
 								kind: "box",
 								x: (loop.rect.x - outset) / frame.width,
 								y: (loop.rect.y - outset) / frame.height,
 								width: (loop.rect.width + outset * 2) / frame.width,
-								height: (loop.rect.height + outset * 2) / frame.height
+								height: (loop.rect.height + outset * 2) / frame.height,
+								layer: "over"
 							},
 							{
 								kind: "label",
 								text: percent(loop.share),
 								x: centerX,
-								y: (DECADE_FOOTER_PX - LINE_PX / 2 - 2) / frame.height,
+								y: boxTop / frame.height,
 								align: "center",
 								color: LOOP_BAND.color,
-								weight: "bold"
+								weight: "bold",
+								// Wider than a phone's bars at the large size.
+								size: phone ? "regular" : "large",
+								layer: "over"
 							},
 							{
 								kind: "label",
 								text: bars[column].label ?? "",
 								x: centerX,
-								y: (DECADE_FOOTER_PX - LINE_PX * 1.5 - 4) / frame.height,
+								y: DECADE_FOOTER_PX / 2 / frame.height,
 								align: "center"
 							}
 						] satisfies Guide[];
