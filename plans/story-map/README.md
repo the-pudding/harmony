@@ -1,6 +1,6 @@
 # Story map: the map drives the piece
 
-**Status:** plan, nothing built yet · **Written:** 2026-11-19
+**Status:** intro built (commits 1–16 on main; phone perf rows still to measure; Sections 3–4 not started) · **Written:** 2026-11-19
 
 The hex map (`HexMap.svelte` → `EmbeddingScatter.svelte`) becomes the main
 visual of the whole piece. It stops being only "the UMAP hex map" and

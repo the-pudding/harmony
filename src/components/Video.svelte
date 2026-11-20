@@ -270,6 +270,13 @@
 			max-height: 20svh;
 			margin: 0 auto;
 		}
+
+		/* clear of the mute toggle fixed over the card's bottom-right corner
+		   (2.5rem wide, 1rem from the edge), on both sides so it stays
+		   centered */
+		figure.docked .cue-list {
+			padding-inline: 3.5rem;
+		}
 	}
 
 	.shania-player {

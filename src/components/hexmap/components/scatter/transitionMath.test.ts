@@ -4,6 +4,7 @@ import {
 	STAGGER_SPAN,
 	beginTransition,
 	createChannels,
+	stepCrossfade,
 	stepFade,
 	stepTransition,
 	type Channels
@@ -153,6 +154,60 @@ describe("beginTransition", () => {
 		const midway = at(0.5);
 		expect(midway.x[0]).toBeCloseTo(0.6);
 		expect(midway.alpha[0]).toBeCloseTo(0.5);
+	});
+});
+
+describe("a stagger window", () => {
+	it("runs each song over the window from its own start", () => {
+		const current = channels([0, 0], [0, 0], [0, 0]);
+		const target = channels([0, 0], [0, 0], [1, 1]);
+		const count = 2;
+		const from = createChannels(count);
+		const to = createChannels(count);
+		const startAt = new Float32Array(count);
+		beginTransition(
+			current,
+			target,
+			Float32Array.from([0, 1]),
+			from,
+			to,
+			startAt,
+			0.25
+		);
+		expect(startAt[0]).toBe(0);
+		expect(startAt[1]).toBeCloseTo(0.75);
+		const at = (t: number) => {
+			stepTransition(from, to, current, startAt, t, (x) => x, 0.25);
+			return [...current.alpha];
+		};
+		expect(at(0.125)[0]).toBeCloseTo(0.5);
+		expect(at(0.3)).toEqual([1, 0]);
+		expect(at(0.875)[1]).toBeCloseTo(0.5);
+	});
+});
+
+describe("stepCrossfade", () => {
+	it("fades a moving song out where it was, then in where it's going", () => {
+		const current = channels([0.2], [0.2], [1], [0]);
+		const { from, to } = setUp(current, channels([0.8], [0.6], [1], [1]));
+		stepCrossfade(from, to, current, 0.25);
+		expect(current.x[0]).toBeCloseTo(0.2);
+		expect(current.alpha[0]).toBeCloseTo(0.5);
+		expect(current.mix[0]).toBe(0);
+		stepCrossfade(from, to, current, 0.75);
+		expect(current.x[0]).toBeCloseTo(0.8);
+		expect(current.y[0]).toBeCloseTo(0.6);
+		expect(current.alpha[0]).toBeCloseTo(0.5);
+		expect(current.mix[0]).toBe(1);
+		stepCrossfade(from, to, current, 1);
+		expect(current.alpha[0]).toBe(1);
+	});
+
+	it("fades a song that stays put straight to its new alpha", () => {
+		const current = channels([0.2], [0.2], [1]);
+		const { from, to } = setUp(current, channels([0.2], [0.2], [0.35]));
+		stepCrossfade(from, to, current, 0.5);
+		expect(current.alpha[0]).toBeCloseTo(0.675);
 	});
 });
 

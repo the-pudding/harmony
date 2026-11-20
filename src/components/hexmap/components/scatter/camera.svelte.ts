@@ -1,5 +1,6 @@
 import { untrack } from "svelte";
 import { select, zoom, type ZoomTransform } from "d3";
+import { prefersReducedMotion } from "svelte/motion";
 import type { DensityCluster } from "../../embedding/clustering/densityClusters.js";
 import { findNamedCluster } from "./clusterNames.js";
 import {
@@ -55,12 +56,18 @@ export const createCamera = (input: CameraInput) => {
 	const constrain = (t: ZoomTransform) =>
 		view.constrainTransform(input.viewSize, t);
 
+	// With prefers-reduced-motion, every camera move jumps (the songs
+	// crossfade instead; see the scatter's transition timing).
 	const animateTo = (
 		canvas: HTMLCanvasElement,
 		target: ZoomTransform,
 		durationMs: number
 	) => {
 		if (!zoomBehavior) return;
+		if (untrack(() => prefersReducedMotion.current)) {
+			jumpTo(canvas, target);
+			return;
+		}
 		select(canvas)
 			.transition()
 			.duration(durationMs)

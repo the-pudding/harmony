@@ -49,6 +49,7 @@ This is one pop hit, represented with a dot.
 {.map}
 visible: true
 layout: timeline
+axisLabel:
 focusSong: journey__dont-stop-believin
 [.onlySongs]
 *journey__dont-stop-believin

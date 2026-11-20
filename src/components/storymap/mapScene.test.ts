@@ -129,7 +129,7 @@ describe("parseMapScene on the real copy", () => {
 			(map) => parseMapScene(map)!
 		);
 		expect(dot).toMatchObject({
-			layout: { name: "timeline" },
+			layout: { name: "timeline", axisLabel: null },
 			camera: { kind: "song", songKey: "journey__dont-stop-believin" },
 			songs: {
 				only: ["journey__dont-stop-believin"],

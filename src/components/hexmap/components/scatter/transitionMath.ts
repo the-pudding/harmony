@@ -18,6 +18,13 @@ export type Easing = (t: number) => number;
 // transition at most (stagger[i] = 1), then runs over the rest of it.
 export const STAGGER_SPAN = 0.4;
 
+// A stagger can instead give every song the same window (a fraction of the
+// transition) to run over: song i starts at stagger[i] × (1 − window) and
+// is done by stagger[i] × (1 − window) + window, so a front sweeps across
+// the songs (a ripple) instead of them all landing together.
+export const staggerStart = (stagger: number, window: number | null): number =>
+	stagger * (window === null ? STAGGER_SPAN : 1 - window);
+
 export const createChannels = (count: number): Channels => ({
 	x: new Float32Array(count),
 	y: new Float32Array(count),
@@ -44,7 +51,8 @@ export const beginTransition = (
 	stagger: Float32Array | null,
 	from: Channels,
 	to: Channels,
-	startAt: Float32Array
+	startAt: Float32Array,
+	window: number | null = null
 ): boolean => {
 	let changed = false;
 	for (let i = 0; i < current.x.length; i++) {
@@ -58,7 +66,7 @@ export const beginTransition = (
 		from.alpha[i] = current.alpha[i];
 		to.mix[i] = target.mix[i];
 		from.mix[i] = hasPosition ? current.mix[i] : to.mix[i];
-		startAt[i] = stagger ? clamp01(stagger[i]) * STAGGER_SPAN : 0;
+		startAt[i] = stagger ? staggerStart(clamp01(stagger[i]), window) : 0;
 		if (
 			from.x[i] !== to.x[i] ||
 			from.y[i] !== to.y[i] ||
@@ -73,14 +81,15 @@ export const beginTransition = (
 
 // Writes every song's value at t (0–1 through the transition) into
 // current: song i holds still until startAt[i], then eases to its target
-// by t = 1.
+// by t = 1, or within window of its start when there's one.
 export const stepTransition = (
 	from: Channels,
 	to: Channels,
 	current: Channels,
 	startAt: Float32Array,
 	t: number,
-	easing: Easing
+	easing: Easing,
+	window: number | null = null
 ): void => {
 	const count = current.x.length;
 	if (t >= 1) {
@@ -89,12 +98,49 @@ export const stepTransition = (
 	}
 	for (let i = 0; i < count; i++) {
 		const start = startAt[i];
-		const local = start === 0 ? t : (t - start) / (1 - start);
-		const eased = local <= 0 ? 0 : easing(local);
+		const local =
+			window !== null
+				? (t - start) / window
+				: start === 0
+					? t
+					: (t - start) / (1 - start);
+		const eased = local <= 0 ? 0 : local >= 1 ? 1 : easing(local);
 		current.x[i] = from.x[i] + (to.x[i] - from.x[i]) * eased;
 		current.y[i] = from.y[i] + (to.y[i] - from.y[i]) * eased;
 		current.alpha[i] = from.alpha[i] + (to.alpha[i] - from.alpha[i]) * eased;
 		current.mix[i] = from.mix[i] + (to.mix[i] - from.mix[i]) * eased;
+	}
+};
+
+// The reduced-motion version of stepTransition: nothing flies. A song that
+// moves fades out where it was over the first half, then fades in where
+// it's going over the second (taking its new color with it); a song that
+// stays put fades straight to its new alpha. Linear, with no stagger.
+export const stepCrossfade = (
+	from: Channels,
+	to: Channels,
+	current: Channels,
+	t: number
+): void => {
+	if (t >= 1) {
+		copyChannels(to, current);
+		return;
+	}
+	const count = current.x.length;
+	for (let i = 0; i < count; i++) {
+		if (from.x[i] === to.x[i] && from.y[i] === to.y[i]) {
+			current.x[i] = to.x[i];
+			current.y[i] = to.y[i];
+			current.alpha[i] = from.alpha[i] + (to.alpha[i] - from.alpha[i]) * t;
+			current.mix[i] = from.mix[i] + (to.mix[i] - from.mix[i]) * t;
+			continue;
+		}
+		const leaving = t < 0.5;
+		const side = leaving ? from : to;
+		current.x[i] = side.x[i];
+		current.y[i] = side.y[i];
+		current.mix[i] = side.mix[i];
+		current.alpha[i] = side.alpha[i] * Math.abs(1 - 2 * t);
 	}
 };
 

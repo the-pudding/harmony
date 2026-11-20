@@ -7,10 +7,13 @@
 // `grep -rn "DEV-ONLY-REMOVE-BEFORE-PUBLISH" src` that nothing is left:
 //
 //   1. Delete this file (src/utils/slideParam.js).
-//   2. src/components/Index.svelte (3 marked spots):
+//   2. src/components/Index.svelte (4 marked spots):
 //        - delete the `import { readSlideParam, writeSlideParam }` line
 //        - change `$state(readSlideParam(allSlides.length))` to `$state(0)`
 //        - delete the `$effect(() => writeSlideParam(slideI));` line
+//        - delete `textRemount` and its onMount, and unwrap the
+//          `{#key textRemount}` block around the slide text (keep the
+//          `{#key text}` inside it); `onMount` may then be unused
 //
 // Also remove the sibling dev-only feature in src/utils/mutedParam.js (see its
 // header; its 3 spots in Index.svelte are labeled "muted").
@@ -24,7 +27,10 @@ const KEY = "slide";
 
 export const readSlideParam = (slideCount) => {
 	if (typeof window === "undefined") return 0;
-	const n = Number.parseInt(new URL(window.location.href).searchParams.get(KEY), 10);
+	const n = Number.parseInt(
+		new URL(window.location.href).searchParams.get(KEY),
+		10
+	);
 	return Number.isInteger(n) && n >= 0 && n < slideCount ? n : 0;
 };
 

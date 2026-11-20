@@ -49,8 +49,18 @@ export const FLY_TO_ZOOM_OUT_FACTOR = 0.75;
 export const FLY_TO_TRANSITION_MS = 1300;
 // Clicking a hex zooms in, around the click, to HEX_FOCUS_SCALE.
 export const HEX_CLICK_ZOOM_MS = 450;
+// In a reveal (revealStagger), each song fades in or out over this
+// fraction of the transition, starting at its stagger, so a front ripples
+// out from the origin rather than every song finishing together.
+export const REVEAL_STAGGER_WINDOW = 0.35;
 // Points animating between layouts.
 export const TWEEN_DURATION_MS = 700;
+// Points flying to a different layout (e.g. the sky into the UMAP map),
+// staggered by the layout's own stagger.
+export const LAYOUT_TWEEN_MS = 1600;
+// With prefers-reduced-motion, every animated change to the songs is a
+// crossfade this long instead (see stepCrossfade), and the camera jumps.
+export const REDUCED_MOTION_FADE_MS = 200;
 // Points moving because the map's frame changed (e.g. the text box above
 // it grew), within one layout.
 export const FRAME_TWEEN_MS = 400;

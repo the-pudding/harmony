@@ -30,14 +30,14 @@
 		parseMapScene
 	} from "$components/storymap/mapScene";
 	import { chordify } from "$utils/chordify";
-	import { setContext } from "svelte";
+	import { onMount, setContext } from "svelte";
 	import { storyMedia } from "$runes/storyMedia.svelte";
 	import { videoCues } from "$data/videoCues";
 	import { createExplore } from "$runes/explore.svelte";
 	import { sameClusterName } from "$data/clusterName";
 	import { spanStyle } from "$routes/demo/record/timelineStyles";
 	import { audio, stopAllAudio } from "$runes/audio.svelte";
-	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (1/3): ?slide=N URL persistence. See
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (1/4): ?slide=N URL persistence. See
 	// src/utils/slideParam.js for full removal instructions. Delete this import.
 	import { readSlideParam, writeSlideParam } from "$utils/slideParam";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (muted 1/3): ?muted=true|false URL
@@ -74,11 +74,19 @@
 		.map((d, i) => d.slides.map((s) => ({ ...s, section: i })))
 		.flat();
 
-	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (2/3): when removing, change the next line
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (2/4): when removing, change the next line
 	// to `$state(0)`.
 	let slideI = $state(readSlideParam(allSlides.length));
-	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (3/3): delete the next line entirely.
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (3/4): delete the next line entirely.
 	$effect(() => writeSlideParam(slideI));
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (4/4): the server always renders slide
+	// 0, and hydration keeps its text's {@html}, so with ?slide=N the text is
+	// rendered again once mounted. Delete these lines and the
+	// `{#key textRemount}` wrapper around the slide text below.
+	let textRemount = $state(false);
+	onMount(() => {
+		if (slideI !== 0) textRemount = true;
+	});
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (muted 2/3): delete these two lines.
 	const initialMuted = readMutedParam();
 	if (initialMuted !== undefined) audio.muted = initialMuted;
@@ -175,10 +183,14 @@
 	let textHeight = $state();
 	// The text box as drawn, which lags textHeight while its height animates.
 	let textBoxHeight = $state(0);
+	// The incoming slide's text alone. textHeight also holds the outgoing
+	// text while it fades out (they share a grid cell), so it's the taller
+	// of the two for a moment.
+	let incomingTextHeight = $state(0);
+	// .text-inner's padding, top and bottom.
+	const TEXT_PADDING = 32;
 	let clusterFrameEl = $state();
 	let clusterFrameHeight = $state(0);
-	// Where the cluster frame ends up once the text box finishes resizing, so
-	// the map frames the cluster once instead of chasing the animation.
 	// Consecutive slides showing the same stage component: the text box keeps
 	// the height of the longest of their texts, so the stage (the room left
 	// under the text) stays the same size while it steps through them.
@@ -209,19 +221,28 @@
 		Math.max(textHeight ?? 0, reservedTextHeight) || null
 	);
 
-	let textBoxGrowth = $derived(
-		text.length && textBoxTarget && textBoxHeight
-			? textBoxTarget - textBoxHeight
-			: 0
-	);
-	let focusFrame = $derived(
-		clusterFrameEl && clusterFrameHeight - textBoxGrowth > 0
-			? {
-					top: clusterFrameEl.offsetTop + textBoxGrowth,
-					height: clusterFrameHeight - textBoxGrowth
-				}
-			: null
-	);
+	let textBoxEl = $state();
+	// Where the cluster frame ends up once the text box finishes resizing
+	// for the incoming text (or a stage run's reserved height), so the map
+	// frames it once, from the start, instead of chasing the animation (or
+	// the outgoing text). Re-measured
+	// as the box resizes, from unrounded rects read together (rounded
+	// offsets and heights would make the sum wobble by a pixel), then
+	// rounded, so it holds still while the box animates.
+	let focusFrame = $derived.by(() => {
+		void textBoxHeight;
+		void clusterFrameHeight;
+		if (!clusterFrameEl) return null;
+		const frameRect = clusterFrameEl.getBoundingClientRect();
+		const growth =
+			text.length && incomingTextHeight && textBoxEl
+				? Math.max(incomingTextHeight + TEXT_PADDING, reservedTextHeight) -
+					textBoxEl.getBoundingClientRect().height
+				: 0;
+		const top = Math.round(frameRect.top + growth);
+		const height = Math.round(frameRect.bottom) - top;
+		return height > 0 ? { top, height } : null;
+	});
 	// The rect framed map layouts (e.g. the timeline) fill, as insets from
 	// the map's edges: a gap below the text box, and room at the bottom
 	// for an axis label. (The map never puts songs closer than its own
@@ -433,6 +454,7 @@
 		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 		<div
 			class="text frosted"
+			bind:this={textBoxEl}
 			onclick={onTextClick}
 			style:height={textBoxTarget ? `${textBoxTarget}px` : null}
 			bind:clientHeight={textBoxHeight}
@@ -443,14 +465,18 @@
 				bind:this={textInnerEl}
 				bind:clientHeight={textHeight}
 			>
-				{#key text}
-					<div
-						in:fade={{ delay: 200, duration: 250 }}
-						out:fade={{ duration: 150 }}
-						{@attach chordify}
-					>
-						<CMS content={text} {components} />
-					</div>
+				<!-- DEV-ONLY-REMOVE-BEFORE-PUBLISH (4/4): unwrap this key block -->
+				{#key textRemount}
+					{#key text}
+						<div
+							in:fade={{ delay: 200, duration: 250 }}
+							out:fade={{ duration: 150 }}
+							bind:clientHeight={incomingTextHeight}
+							{@attach chordify}
+						>
+							<CMS content={text} {components} />
+						</div>
+					{/key}
 				{/key}
 			</div>
 		</div>

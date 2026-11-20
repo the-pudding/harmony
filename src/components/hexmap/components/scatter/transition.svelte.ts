@@ -4,21 +4,32 @@ import {
 	beginTransition,
 	copyChannels,
 	createChannels,
+	stepCrossfade,
 	stepTransition,
 	type Channels
 } from "./transitionMath.js";
 
 // Where every song should be, by song index: x and y (0–1 across the plot;
 // NaN = not placed, so it fades out where it is), alpha (0 = hidden), mix
-// (0 = star white, 1 = region color) and an optional stagger (0–1 per song; see STAGGER_SPAN).
-export type TransitionTarget = Channels & { stagger?: Float32Array | null };
+// (0 = star white, 1 = region color) and an optional stagger (0–1 per song;
+// see STAGGER_SPAN), with an optional window each song runs over (see
+// staggerStart).
+export type TransitionTarget = Channels & {
+	stagger?: Float32Array | null;
+	staggerWindow?: number | null;
+};
 
 // How songs move to a target: over durationMs, after holding still for
-// delayMs (e.g. while hexes fade out), or at once when instant.
+// delayMs (e.g. while hexes fade out), or at once when instant; with the
+// target's stagger unless staggered is false. crossfade (for reduced
+// motion) fades moving songs out and back in at their new places instead
+// of flying them, with no stagger (see stepCrossfade).
 export type TransitionTiming = {
 	durationMs: number;
 	instant?: boolean;
 	delayMs?: number;
+	staggered?: boolean;
+	crossfade?: boolean;
 };
 
 // Animates every song's x, y and alpha from what's drawn to each new
@@ -57,6 +68,7 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 	// Songs with a stagger start later; this is the whole transition, for
 	// things that fade with it (guides).
 	let progress = 1;
+	let window: number | null = null;
 
 	const finish = () => {
 		positionsVersion++;
@@ -80,13 +92,15 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 		const fresh = current.x.length !== count;
 		if (fresh) resize(count);
 
+		window = target.stagger ? (target.staggerWindow ?? null) : null;
 		const changed = beginTransition(
 			current,
 			target,
 			target.stagger ?? null,
 			from,
 			to,
-			startAt
+			startAt,
+			window
 		);
 		if (!changed) {
 			if (!settled) finish();
@@ -102,6 +116,11 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 			return;
 		}
 
+		const crossfade = timing.crossfade === true;
+		if (timing.staggered === false || crossfade) {
+			startAt.fill(0);
+			window = null;
+		}
 		settled = false;
 		progress = 0;
 		const durationMs = Math.max(1, timing.durationMs);
@@ -114,7 +133,10 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 			}
 			const t = Math.min(1, elapsed / durationMs);
 			progress = t;
-			stepTransition(from, to, current, startAt, t, easeCubicInOut);
+			if (crossfade) stepCrossfade(from, to, current, t);
+			else {
+				stepTransition(from, to, current, startAt, t, easeCubicInOut, window);
+			}
 			if (t >= 1) finish();
 			input.onFrame();
 			if (t < 1) frame = requestAnimationFrame(step);

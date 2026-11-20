@@ -27,6 +27,10 @@ _Fill in during commit 2, then after commits 4, 5 and 8._
 | after commit 5          | desktop | Section 2 cluster → cluster | 1.4–3.2  | 1.3–7.2   | 59–61 |
 | after commit 5          | phone   | Section 2 cluster → cluster |          |           |       |
 | after commit 8          | phone   | UMAP ↔ sky                  |          |           |       |
+| after commit 16         | desktop | sky → UMAP reveal (4 → 5)   | 3.0–4.0  | 4.3–6.1   | 60–61 |
+| after commit 16         | desktop | UMAP → sky (5 → 4)          | 3.9–4.1  | 4.7–5.3   | 61    |
+| after commit 16         | desktop | lone dot → sky (0 → 1)      | 1.7–2.2  | 2.4–2.5   | 120   |
+| after commit 16         | phone   | sky → UMAP reveal (4 → 5)   |          |           |       |
 
 Notes on the numbers:
 
@@ -78,6 +82,17 @@ Notes on the numbers:
     and ~7,100 dots in a handful of batches, every frame for 700ms; frames
     stayed at ~16.7ms (one run's first flip read 53 fps with its p95 at 7.7).
     Phone rows still need a real device.
+- Commit 16 (the intro's choreography), desktop, headless Chrome 1280×800,
+  three runs each: `?perf=1&slide=4` (or `slide=0`), then ArrowRight /
+  ArrowLeft, reading the overlay 1.7s (2s for 0 → 1) after each press, so
+  the last 120 draws are the transition. 4 → 5 is the 1.6s year-staggered
+  flight of ~7,260 dots from the sky into UMAP (color mix and point radius
+  moving too, markers left out), then the 0.5s hex fade-in; 5 → 4 is the
+  same back. Frames held at ~16.7ms throughout (frame p95 ≤ 17.8ms). On
+  0 → 1 the overlay reads 120 "fps" because the camera's zoom events and
+  the transition's frames each call draw() once per frame; the draws are
+  cheap there (1.7–2.2ms p50), so it wasn't worth coalescing. Phone rows
+  still need a real device.
 - From commit 4 on, the overlay's "dots" counts the plain dots actually
   painted (on screen, not hidden, not markers) rather than every song.
 - A CPU profile of that drag puts the biggest single draw cost in

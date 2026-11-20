@@ -37,6 +37,10 @@ export type EmbeddingScatterProps = {
 	// layout's own, and the change it comes with moves over
 	// SCRIPTED_FOCUS_TRANSITION_MS, in step with a scripted camera move.
 	revealStagger?: Float32Array | null;
+	// The song a reveal ripples from: spotlit, without fading the rest,
+	// while the reveal runs, so the dot the slide was about stays marked as
+	// the others appear around it (and shrinks into them once it's done).
+	revealOriginSongKey?: string | null;
 	inYearSongKeys?: Set<string> | null;
 	axisLabels?: ScatterAxisLabels | null;
 	method: EmbeddingMethod;

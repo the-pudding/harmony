@@ -17,7 +17,8 @@
 //          its `.perf-overlay` style
 //
 //   3. src/components/HexMap.svelte: delete the `readLayoutParam` import and
-//      the `devLayout` line (marked "dev layout"), and use `layout` directly.
+//      the `devLayout` line (marked "dev layout"), and use `scene.layout.name`
+//      directly.
 //      (readLayoutParam below goes away with this file.)
 //
 // What ?layout=<name> does: forces the main map's layout (e.g.

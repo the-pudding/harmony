@@ -5,6 +5,7 @@ import { applyPurityRadialLayout } from "$components/hexmap/embedding/layout/pur
 import { POINT_RADIUS } from "$components/hexmap/components/scatter/constants.js";
 import { normalizePoints } from "$components/hexmap/components/scatter/normalizePoints.js";
 import type { ScatterPoint } from "$components/hexmap/components/scatterPoint.js";
+import { yearStagger } from "./stagger.js";
 import type { Layout } from "./types.js";
 
 export type UmapParams = {
@@ -60,7 +61,10 @@ export const umapLayout: Layout<UmapParams> = {
 			aggregate: "hex",
 			color: "region",
 			pointRadius: POINT_RADIUS,
-			guides: []
+			guides: [],
+			// The sky (or anything else) organizes into the map oldest songs
+			// first, sweeping through time.
+			stagger: yearStagger(songs)
 		};
 	}
 };

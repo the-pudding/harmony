@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount, untrack } from "svelte";
+	import { prefersReducedMotion } from "svelte/motion";
 	import { zoomIdentity, type ZoomTransform } from "d3";
 	import { createDelayedHoverTooltip } from "../../../routes/demo/shared/delayedHoverTooltip.svelte.js";
 	import { createClickAfterDragGuard } from "../../../routes/demo/shared/clickAfterDragGuard.js";
@@ -28,9 +29,12 @@
 		HEX_THEME_COLORS,
 		MAX_PIXEL_RATIO,
 		TWEEN_DURATION_MS,
+		LAYOUT_TWEEN_MS,
+		REDUCED_MOTION_FADE_MS,
 		FRAME_TWEEN_MS,
 		DIMMED_SONG_ALPHA,
 		SCRIPTED_FOCUS_TRANSITION_MS,
+		REVEAL_STAGGER_WINDOW,
 		HEX_FADE_IN_MS,
 		HEX_FADE_OUT_MS
 	} from "./scatter/constants.js";
@@ -127,6 +131,7 @@
 		visibleSongKeys = null,
 		dimExceptSongKeys = null,
 		revealStagger = null,
+		revealOriginSongKey = null,
 		inYearSongKeys = null,
 		axisLabels = null,
 		method,
@@ -351,11 +356,32 @@
 		height: number;
 	};
 
+	const sameFrame = (a: MapFrame | null, b: MapFrame | null): boolean =>
+		a === b ||
+		(a !== null &&
+			b !== null &&
+			a.top === b.top &&
+			a.right === b.right &&
+			a.bottom === b.bottom &&
+			a.left === b.left);
+
+	// mapFrame, as the same object while its insets don't change, so a
+	// parent re-measuring it (e.g. every frame of the text box resizing)
+	// doesn't retarget the songs.
+	let placedFrame: MapFrame | null = null;
+	const frame = $derived.by((): MapFrame => {
+		if (placedFrame === null || !sameFrame(mapFrame, placedFrame)) {
+			placedFrame = mapFrame;
+		}
+		return placedFrame;
+	});
+
 	const transitionTarget = $derived.by((): PlacedTarget => {
 		const placed = {
 			alpha: targetAlpha,
 			mix: targetMix,
 			stagger: revealStagger ?? layout.stagger ?? null,
+			staggerWindow: revealStagger ? REVEAL_STAGGER_WINDOW : null,
 			revealing: revealStagger !== null,
 			layoutName: layout.name
 		};
@@ -373,36 +399,33 @@
 		const x = new Float32Array(songs.count);
 		const y = new Float32Array(songs.count);
 		for (let index = 0; index < songs.count; index++) {
-			const position = view.framedToPlot(size, mapFrame, {
+			const position = view.framedToPlot(size, frame, {
 				nx: layout.x[index],
 				ny: layout.y[index]
 			});
 			x[index] = position.nx;
 			y[index] = position.ny;
 		}
-		return { ...placed, x, y, frame: mapFrame, width, height };
+		return { ...placed, x, y, frame, width, height };
 	});
 
-	const sameFrame = (a: MapFrame | null, b: MapFrame | null): boolean =>
-		a === b ||
-		(a !== null &&
-			b !== null &&
-			a.top === b.top &&
-			a.right === b.right &&
-			a.bottom === b.bottom &&
-			a.left === b.left);
-
 	// With instantFocus everything jumps, so a map that's about to appear
-	// is already in place. A window resize jumps; a reveal (revealStagger)
-	// moves with the scripted camera, also while it's retargeted mid-way
-	// (e.g. the frame settling); a frame change within one layout moves
-	// songs quickly; anything else (a new layout, songs shown or hidden) at
-	// the usual pace. Hexes showing fade out (HEX_FADE_OUT_MS from fully
-	// shown) before songs move out from under them.
+	// is already in place. A window resize jumps. A reveal (revealStagger)
+	// moves with the scripted camera, and a new layout over
+	// LAYOUT_TWEEN_MS, both staggered, and both keep their pace and stagger
+	// while they're retargeted mid-way (e.g. the frame settling). Otherwise
+	// a frame change within one layout moves songs quickly, and anything
+	// else (songs shown or hidden) at the usual pace, all at once. Hexes
+	// showing fade out (HEX_FADE_OUT_MS from fully shown) before songs move
+	// out from under them. With reduced motion, every change is a short
+	// crossfade.
+	let layoutFlight = false;
 	const transitionTiming = (
 		next: PlacedTarget,
 		previous: PlacedTarget | null
 	): TransitionTiming => {
+		const inFlight = layoutFlight && !transition.settled;
+		layoutFlight = false;
 		if (instantFocus) return { durationMs: 0, instant: true };
 		const delayMs =
 			hexZoomLevel(transform.k, HEX_ZOOM).kind === "hex"
@@ -412,22 +435,24 @@
 			previous !== null &&
 			next.layoutName === previous.layoutName &&
 			(next.width !== previous.width || next.height !== previous.height);
+		if (resized) return { durationMs: 0, instant: true };
+		if (prefersReducedMotion.current) {
+			return { durationMs: REDUCED_MOTION_FADE_MS, delayMs, crossfade: true };
+		}
 		if (
 			next.revealing &&
-			!resized &&
 			(next.stagger !== previous?.stagger || !transition.settled)
 		) {
 			return { durationMs: SCRIPTED_FOCUS_TRANSITION_MS, delayMs };
 		}
-		if (previous && next.layoutName === previous.layoutName) {
-			if (next.width !== previous.width || next.height !== previous.height) {
-				return { durationMs: 0, instant: true };
-			}
-			if (!sameFrame(next.frame, previous.frame)) {
-				return { durationMs: FRAME_TWEEN_MS, delayMs };
-			}
+		if ((previous && next.layoutName !== previous.layoutName) || inFlight) {
+			layoutFlight = true;
+			return { durationMs: LAYOUT_TWEEN_MS, delayMs };
 		}
-		return { durationMs: TWEEN_DURATION_MS, delayMs };
+		if (previous && !sameFrame(next.frame, previous.frame)) {
+			return { durationMs: FRAME_TWEEN_MS, delayMs, staggered: false };
+		}
+		return { durationMs: TWEEN_DURATION_MS, delayMs, staggered: false };
 	};
 
 	// A song the layout places and visibleSongKeys keeps, by index.
@@ -568,10 +593,6 @@
 	const toScreen = (position: Position) => view.toScreen(viewport, position);
 	const homeTransform = $derived(view.homeTransform(viewSize.offsetY));
 
-	const spotlightSongKey = $derived(
-		playingSongKey ?? openSongId ?? zoomSongKey ?? spotlitSongKey
-	);
-
 	let watercolorCanvas: HTMLCanvasElement | null = null;
 	const watercolorLayer = (): HTMLCanvasElement => {
 		watercolorCanvas ??= document.createElement("canvas");
@@ -616,7 +637,7 @@
 			themeColors: hexColors
 		});
 		drawAxisLabels(scene, axisLabels);
-		drawGuides(scene, guideSets(), mapFrame);
+		drawGuides(scene, guideSets(), frame);
 		// At hex zoom, hexes cover the dots by hexOpacity: none while songs
 		// move, all once they've settled in a hex layout, and crossfading
 		// with the dots in between.
@@ -633,7 +654,10 @@
 			hexOpacity < 1
 				? drawDotFrame(
 						hexOpacity === 0 ? scene : fadedScene(scene, 1 - hexOpacity),
-						hexOpacity === 0
+						hexOpacity === 0,
+						// markers belong to a hex layout's dot zoom, not to its
+						// dots flying in or fading under hexes
+						!(hexMode && zoomLevel?.kind === "hex")
 					)
 				: 0;
 		if (zoomLevel?.kind === "hex" && hexOpacity > 0) {
@@ -784,23 +808,49 @@
 		};
 	};
 
+	// A plain dot's radius: the layout's, moving from the previous
+	// layout's with the transition (sky stars are smaller than UMAP dots).
+	let radiusLayoutName: string | null = null;
+	let radiusFrom = POINT_RADIUS;
+	let drawnRadius = POINT_RADIUS;
+	const dotRadius = (): number => {
+		if (radiusLayoutName !== layout.name) {
+			radiusFrom = radiusLayoutName === null ? layout.pointRadius : drawnRadius;
+			radiusLayoutName = layout.name;
+		}
+		const { progress } = transition;
+		drawnRadius =
+			progress >= 1
+				? layout.pointRadius
+				: radiusFrom + (layout.pointRadius - radiusFrom) * progress;
+		return drawnRadius;
+	};
+
+	const NO_SPOTLIGHT = { emphasis: new Map<string, number>(), fade: 0 };
+
 	// Dots (at any zoom in other layouts, at dot zoom in hex ones): cluster
 	// outlines, dots, marked songs and their labels, then rings around the
-	// selected and hovered songs. Cluster outlines and titles belong to the
-	// hex map's dot zoom: they're left out in other layouts, under fading
-	// hexes (when the dots aren't alone) and while songs move. Returns how
-	// many plain dots it drew.
-	const drawDotFrame = (scene: Scene, alone: boolean): number => {
+	// selected and hovered songs. Markers, cluster outlines and titles
+	// belong to the hex map's dot zoom (markers): at its hex zoom they're
+	// left out of the dots flying in or fading under hexes. Outlines and
+	// titles are also left out in other layouts, under fading hexes (when
+	// the dots aren't alone) and while songs move. Returns how many plain
+	// dots it drew.
+	const drawDotFrame = (
+		scene: Scene,
+		alone: boolean,
+		markers: boolean
+	): number => {
 		const outlined =
-			showClusterOutlines && hexMode && alone && transition.settled;
+			showClusterOutlines && hexMode && alone && markers && transition.settled;
 		const gradient = hexMode
 			? gradientStrengthForZoom(transform.k, HEX_ZOOM, HEX_MIN_SHARE_FADE)
 			: 0;
 		const songRegionFill = hexMode ? songRegionFillAt(gradient) : null;
 		const style = createPointStyle({
-			pointRadius: layout.pointRadius,
-			spotlight: spotlight.current,
-			outlinedSongKeys,
+			pointRadius: dotRadius(),
+			spotlight: markers ? spotlight.current : NO_SPOTLIGHT,
+			outlinedSongKeys: markers ? outlinedSongKeys : null,
 			smallOutlinedSongKeys,
 			hoveredSongKey,
 			selectedSongKey,
@@ -1085,14 +1135,28 @@
 		onFrame: () => draw()
 	});
 
+	// A reveal's origin, while the reveal runs.
+	const revealSpotlightSongKey = $derived(
+		revealStagger !== null && !transition.settled ? revealOriginSongKey : null
+	);
+
+	const spotlightSongKey = $derived(
+		playingSongKey ??
+			openSongId ??
+			zoomSongKey ??
+			spotlitSongKey ??
+			revealSpotlightSongKey
+	);
+
 	const spotlight = createSpotlightTween({
 		get songKey() {
 			return spotlightSongKey;
 		},
-		// spotlitSongKey may leave the rest as they are; the others always
-		// fade them.
+		// spotlitSongKey may leave the rest as they are, and a reveal's
+		// origin always does; the others always fade them.
 		get fadesOthers() {
-			return spotlightFadesOthers || spotlightSongKey !== spotlitSongKey;
+			if (spotlightSongKey === spotlitSongKey) return spotlightFadesOthers;
+			return spotlightSongKey !== revealSpotlightSongKey;
 		},
 		onFrame: () => draw()
 	});

@@ -3,6 +3,7 @@
 // key, so a year isn't a vertical stripe, and a reload gives the same sky.
 // (There are no release months in the snapshot.)
 import { hashUnit } from "./seededRandom.js";
+import { yearStagger } from "./stagger.js";
 import type { Layout } from "./types.js";
 
 export const TIMELINE_FIRST_YEAR = 1958;
@@ -60,6 +61,8 @@ export const timelineLayout: Layout<TimelineParams> = {
 			color: "star",
 			pointRadius:
 				frame.width < PHONE_MAX_FRAME_WIDTH ? PHONE_STAR_RADIUS : STAR_RADIUS,
+			// Songs fill the sky oldest first, from the left.
+			stagger: yearStagger(songs),
 			guides:
 				axisLabel === null
 					? []

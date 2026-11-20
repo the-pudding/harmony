@@ -231,6 +231,12 @@
 		scene.songs.only === null ? null : new Set(scene.songs.only)
 	);
 
+	// A song shown alone (slide 0's dot) is spotlit: drawn big, glowing and
+	// labeled.
+	const loneSongKey = $derived(
+		scene.songs.only?.length === 1 ? scene.songs.only[0] : null
+	);
+
 	// songs.dimmed: every song without a marker is faint.
 	const dimExceptSongKeys = $derived(
 		scene.songs.dimmed ? (outlinedSongKeys ?? new Set<string>()) : null
@@ -411,6 +417,13 @@
 			: DEFAULT_TIMELINE_PARAMS.axisLabel
 	);
 
+	// Only for finding your way around the UMAP map: not on other layouts
+	// (e.g. zoomed in on slide 0's lone star), nor on a map the reader
+	// can't move.
+	const insetShown = $derived(
+		viewTransform.k >= INSET_MIN_ZOOM && layoutName === "umap" && movable
+	);
+
 	// The main map's arrangement (the inset below always stays UMAP).
 	const mainResult = $derived(
 		songs
@@ -434,7 +447,7 @@
 	// headed to; null for any other change (the layout's own stagger, if
 	// any, applies).
 	let previousOnly: readonly string[] | null | undefined = undefined;
-	const revealStagger = $derived.by(() => {
+	const reveal = $derived.by(() => {
 		const only = scene.songs.only;
 		const before = previousOnly;
 		previousOnly = only;
@@ -446,10 +459,13 @@
 		const originIndex = songs.indexOf.get(origin);
 		const layout = untrack(() => mainResult);
 		if (originIndex === undefined || !layout) return null;
-		return rippleFrom(songs, layout, originIndex, {
-			frame: untrack(() => layoutFrame),
-			order: lone(before) === origin ? "closestFirst" : "farthestFirst"
-		});
+		return {
+			stagger: rippleFrom(songs, layout, originIndex, {
+				frame: untrack(() => layoutFrame),
+				order: lone(before) === origin ? "closestFirst" : "farthestFirst"
+			}),
+			originSongKey: origin
+		};
 	});
 
 	const umapResult = $derived(
@@ -508,11 +524,14 @@
 				{instantFocus}
 				{visibleSongKeys}
 				{dimExceptSongKeys}
-				{revealStagger}
+				revealStagger={reveal?.stagger ?? null}
+				revealOriginSongKey={reveal?.originSongKey ?? null}
 				selectedClusterName={explorable ? exploredClusterName : null}
 				zoomSongKey={explorable ? searchZoomSongKey : null}
-				spotlitSongKey={spotlitSongKey ?? (explorable ? searchedSongKey : null)}
-				spotlightFadesOthers={spotlitSongKey === null}
+				spotlitSongKey={spotlitSongKey ??
+					loneSongKey ??
+					(explorable ? searchedSongKey : null)}
+				spotlightFadesOthers={spotlitSongKey === null && loneSongKey === null}
 				accentSongKeys={outsideHub?.songKeys ?? null}
 				accentFillColor={outsideHub?.color ?? null}
 				{focusFrame}
@@ -541,7 +560,7 @@
 			{#if width > 0 && height > 0}
 				<div
 					class="inset"
-					class:visible={viewTransform.k >= INSET_MIN_ZOOM}
+					class:visible={insetShown}
 					aria-hidden="true"
 					style:width="{width * insetScale}px"
 					style:height="{height * insetScale}px"
