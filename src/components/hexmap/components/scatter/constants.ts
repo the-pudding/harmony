@@ -29,6 +29,8 @@ export const FOCUS_TRANSITION_MS = 900;
 // Scripted focus changes (focusClusterName / focusSongKey) move slower,
 // since they happen without the user asking to move the map.
 export const SCRIPTED_FOCUS_TRANSITION_MS = 2000;
+// Scripted zoom out to the full map: slow enough to read as dots, then hexes.
+export const ZOOM_OUT_TRANSITION_MS = 3200;
 // How much of the screen a focused cluster fills. Its bounding box is
 // scaled to fit within this fraction of both the viewport's width and
 // height, leaving breathing room around the edge.
@@ -69,9 +71,11 @@ export const REDUCED_MOTION_FADE_MS = 200;
 export const FRAME_RESIZE_TWEEN_MS = 400;
 // Songs not marked on a dimmed slide are drawn at this alpha.
 export const DIMMED_SONG_ALPHA = 0.35;
-// Hexes fade in after songs settle, and out before songs move away.
+// Hexes fade in after songs settle and the camera stops, and out before
+// songs move away. Hex labels fade in once the hexes are in.
 export const HEX_FADE_IN_MS = 500;
 export const HEX_FADE_OUT_MS = 200;
+export const HEX_LABEL_FADE_IN_MS = 400;
 // Pixel ratio cap: no visible gain beyond 2x on 3px dots.
 export const MAX_PIXEL_RATIO = 2;
 

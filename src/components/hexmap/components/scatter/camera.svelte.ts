@@ -11,6 +11,7 @@ import {
 	MAX_ZOOM,
 	MIN_ZOOM,
 	SCRIPTED_FOCUS_TRANSITION_MS,
+	ZOOM_OUT_TRANSITION_MS,
 	ZOOM_SONG_HEX_FACTOR
 } from "./constants.js";
 import type { FocusFrame, Point2D, ViewSize } from "./types.js";
@@ -45,6 +46,8 @@ export type CameraInput = {
 	onZoom: (transform: ZoomTransform, byUser: boolean) => void;
 	onGestureStart: () => void;
 	onGestureEnd: () => void;
+	// True from a scripted move's start until it ends.
+	onScriptedMoveChange: (moving: boolean) => void;
 };
 
 // Pan and zoom: d3's zoom behavior on the canvas (user gestures, only when
@@ -121,8 +124,14 @@ export const createCamera = (input: CameraInput) => {
 				if (event.ctrlKey && event.type !== "wheel") return false;
 				return !event.button;
 			})
-			.on("start", () => input.onGestureStart())
-			.on("end", () => input.onGestureEnd())
+			.on("start", (event) => {
+				input.onGestureStart();
+				if (!event.sourceEvent) input.onScriptedMoveChange(true);
+			})
+			.on("end", () => {
+				input.onGestureEnd();
+				input.onScriptedMoveChange(false);
+			})
 			// Scripted zooms have no sourceEvent.
 			.on("zoom", (event) =>
 				input.onZoom(event.transform, !!event.sourceEvent)
@@ -185,7 +194,14 @@ export const createCamera = (input: CameraInput) => {
 			jumpTo(canvas, constrain(target));
 			return;
 		}
-		animateTo(canvas, constrain(target), SCRIPTED_FOCUS_TRANSITION_MS);
+		animateTo(
+			canvas,
+			constrain(target),
+			focus === null ? ZOOM_OUT_TRANSITION_MS : SCRIPTED_FOCUS_TRANSITION_MS
+		);
+		if (!untrack(() => prefersReducedMotion.current)) {
+			input.onScriptedMoveChange(true);
+		}
 	});
 
 	// Fits selectedClusterName, again whenever the frame or size changes

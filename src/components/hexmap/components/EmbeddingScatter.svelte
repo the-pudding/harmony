@@ -42,7 +42,8 @@
 		STAGED_REVEAL_PAUSE_MS,
 		STAGED_REVEAL_WAITING_ALPHA,
 		HEX_FADE_IN_MS,
-		HEX_FADE_OUT_MS
+		HEX_FADE_OUT_MS,
+		HEX_LABEL_FADE_IN_MS
 	} from "./scatter/constants.js";
 	import type { EmbeddingScatterProps as Props } from "./scatter/props.js";
 	import type {
@@ -695,7 +696,8 @@
 			drawHexFrame(scene, zoomLevel.radius, hexOpacity, pixelRatio);
 		}
 		context.globalAlpha = 1;
-		const labelsOpacity = hexFade.current === 1 ? "" : String(hexFade.current);
+		const labelsOpacity =
+			hexLabelFade.current === 1 ? "" : String(hexLabelFade.current);
 		if (rotatingLabelsEl && rotatingLabelsEl.style.opacity !== labelsOpacity) {
 			rotatingLabelsEl.style.opacity = labelsOpacity;
 		}
@@ -786,20 +788,21 @@
 			hoveredRegionId: hoveredHex?.region.id ?? null,
 			watercolorLayer
 		});
+		if (fadeContext && hexFadeCanvas) {
+			mainScene.context.globalAlpha = opacity;
+			mainScene.context.drawImage(hexFadeCanvas, 0, 0, width, height);
+		}
+		mainScene.context.globalAlpha = hexLabelFade.current;
 		setLabelSpots(
 			showLabels || showRotatingLabels
-				? drawHexRegionLabels(scene, {
+				? drawHexRegionLabels(mainScene, {
 						layout,
-						draw: showLabels,
+						draw: showLabels && hexLabelFade.current > 0,
 						isAllowed: (name) =>
 							labelNameSet === null || labelNameSet.has(normalizeName(name))
 					})
 				: []
 		);
-		if (fadeContext && hexFadeCanvas) {
-			mainScene.context.globalAlpha = opacity;
-			mainScene.context.drawImage(hexFadeCanvas, 0, 0, width, height);
-		}
 	};
 
 	const mixFill = $derived(
@@ -1140,7 +1143,11 @@
 		}
 	});
 
-	const hexFadeTarget = () => (hexMode && transition.settled ? 1 : 0);
+	let cameraMovingByScript = $state(false);
+	const hexFadeTarget = () =>
+		hexMode && transition.settled && !cameraMovingByScript ? 1 : 0;
+	// Flips only when the hexes reach or leave full opacity.
+	let hexesFullyShown = $state(hexFadeTarget() === 1);
 	const hexFade = createFade({
 		get target() {
 			return hexFadeTarget();
@@ -1148,9 +1155,18 @@
 		riseMs: HEX_FADE_IN_MS,
 		fallMs: HEX_FADE_OUT_MS,
 		onFrame: () => {
+			hexesFullyShown = hexFade.current === 1;
 			draw();
 			endStagedRevealOnceShown();
 		}
+	});
+	const hexLabelFade = createFade({
+		get target() {
+			return hexesFullyShown ? 1 : 0;
+		},
+		riseMs: HEX_LABEL_FADE_IN_MS,
+		fallMs: HEX_FADE_OUT_MS,
+		onFrame: draw
 	});
 
 	const revealSpotlightSongKey = $derived(
@@ -1246,7 +1262,8 @@
 			hoveredHex = null;
 		},
 		onGestureStart: () => delayedTooltip.startDrag(),
-		onGestureEnd: () => delayedTooltip.endDrag()
+		onGestureEnd: () => delayedTooltip.endDrag(),
+		onScriptedMoveChange: (moving) => (cameraMovingByScript = moving)
 	});
 
 	// Repaints whenever anything draw() reads changes.
@@ -1365,7 +1382,7 @@
 			: null}
 	/>
 
-	<!-- faded with the hexes in draw() -->
+	<!-- faded with the hex labels in draw() -->
 	<div class="rotating-labels" bind:this={rotatingLabelsEl}>
 		<RotatingLabels
 			labels={rotating.labels}
