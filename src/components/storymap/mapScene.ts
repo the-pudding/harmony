@@ -4,7 +4,14 @@ import type { CopyMap } from "$data/copy.json";
 
 export type MapScene = {
 	// offstage is only for STAGE_SCENE; no `{.map}` block can ask for it.
-	layout: { name: "umap" } | { name: "timeline" } | { name: "offstage" };
+	layout: {
+		name:
+			| "umap"
+			| "timeline"
+			| "offstage"
+			| "effectiveProgressions"
+			| "effectiveProgressionsByDecade";
+	};
 	// Where framed layouts sit: below the story text, or the whole screen.
 	frame: "text" | "full";
 	camera:
@@ -38,9 +45,10 @@ export type MapScene = {
 		tooltip: "full" | "basic";
 	};
 	player: { hidden: boolean };
-	// Arriving from another layout, these clusters' songs move first, one
-	// cluster at a time in order, then everyone else.
-	reveal: { clusters: readonly string[] };
+	// Arriving from another layout, these songs move first (together), then
+	// these clusters' songs, one cluster at a time in order, then everyone
+	// else.
+	reveal: { songs: readonly string[]; clusters: readonly string[] };
 };
 
 // What a block with no keys but `visible` parses to.
@@ -53,7 +61,7 @@ export const DEFAULT_MAP_SCENE: MapScene = {
 	labels: { hidden: false, only: null, rotate: false },
 	interaction: { movable: true, hoverable: true, tooltip: "full" },
 	player: { hidden: false },
-	reveal: { clusters: [] }
+	reveal: { songs: [], clusters: [] }
 };
 
 // Behind a slide with no `{.map}` block: the map is hidden, and every song
@@ -67,7 +75,7 @@ export const STAGE_SCENE: MapScene = {
 	labels: { hidden: true, only: null, rotate: false },
 	interaction: { movable: false, hoverable: false, tooltip: "full" },
 	player: { hidden: true },
-	reveal: { clusters: [] }
+	reveal: { songs: [], clusters: [] }
 };
 
 const KNOWN_KEYS = new Set<string>([
@@ -90,10 +98,16 @@ const KNOWN_KEYS = new Set<string>([
 	"hoverable",
 	"tooltip",
 	"hidePlayer",
+	"revealSongs",
 	"revealClusters"
 ] satisfies (keyof CopyMap)[]);
 
-const LAYOUT_NAMES = ["umap", "timeline"] as const;
+const LAYOUT_NAMES = [
+	"umap",
+	"timeline",
+	"effectiveProgressions",
+	"effectiveProgressionsByDecade"
+] as const;
 const FRAME_NAMES = ["text", "full"] as const;
 const TOOLTIP_NAMES = ["full", "basic"] as const;
 
@@ -130,10 +144,9 @@ export const parseMapScene = (
 	}
 
 	const layoutName = parseText(copyMap.layout) ?? "umap";
-	const knownLayout = (LAYOUT_NAMES as readonly string[]).includes(layoutName);
+	const knownLayout = LAYOUT_NAMES.find((name) => name === layoutName);
 	if (!knownLayout) warn(`unknown layout "${layoutName}" (using umap)`);
-	const layout: MapScene["layout"] =
-		layoutName === "timeline" ? { name: "timeline" } : { name: "umap" };
+	const layout: MapScene["layout"] = { name: knownLayout ?? "umap" };
 
 	const frameName = parseText(copyMap.frame) ?? "text";
 	const frame = FRAME_NAMES.find((name) => name === frameName) ?? "text";
@@ -182,6 +195,9 @@ export const parseMapScene = (
 			tooltip
 		},
 		player: { hidden: parseBoolean(copyMap.hidePlayer) ?? false },
-		reveal: { clusters: parseList(copyMap.revealClusters) ?? [] }
+		reveal: {
+			songs: parseList(copyMap.revealSongs) ?? [],
+			clusters: parseList(copyMap.revealClusters) ?? []
+		}
 	};
 };

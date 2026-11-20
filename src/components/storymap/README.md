@@ -23,6 +23,12 @@ dev. Song keys are the dataset's (e.g. `journey__dont-stop-believin`), and
 Booleans are the strings `true` / `false`.
 `revealClusters` stages the arrival from another layout: each listed cluster
 flies in alone, then everyone else, then the hexes, then the slide's stage.
+`revealSongs` puts its songs in a stage of their own before the clusters
+(slide 29 lands the previous slide's two anchored songs first).
+
+Section 3's charts are layouts too (`layouts/effectiveProgressions.ts`): the
+songs stack into bars by effective-progression band, and the labels and the
+≈1 boxes are the layout's guides (`label`, `box`).
 
 ```
 {.map}

@@ -11,7 +11,7 @@ import { songScreen, type Scene } from "./scene.js";
 export type DotFill = (songKey: string, index: number) => string;
 
 // A plain dot's fill: emphasis color, else the star-to-region mix, else
-// accent color, else star white.
+// accent color, else the layout's fill for it, else star white.
 export const createDotFill = ({
 	emphasisFillColor,
 	emphasizedSongKeys,
@@ -19,7 +19,8 @@ export const createDotFill = ({
 	regionFill,
 	mixFill,
 	accentFillColor,
-	isAccented
+	isAccented,
+	starFill = null
 }: {
 	emphasisFillColor: string | null;
 	emphasizedSongKeys: Set<string> | null;
@@ -29,6 +30,8 @@ export const createDotFill = ({
 	mixFill: (songKey: string, step: number) => string;
 	accentFillColor: string | null;
 	isAccented: (songKey: string) => boolean;
+	// By song index (see LayoutResult.fill).
+	starFill?: readonly (string | null)[] | null;
 }): DotFill => {
 	return (songKey, index) => {
 		if (emphasisFillColor && emphasizedSongKeys?.has(songKey)) {
@@ -38,7 +41,7 @@ export const createDotFill = ({
 		if (step === COLOR_MIX_STEPS) return regionFill(songKey);
 		if (step > 0) return mixFill(songKey, step);
 		if (accentFillColor && isAccented(songKey)) return accentFillColor;
-		return STAR_FILL;
+		return starFill?.[index] ?? STAR_FILL;
 	};
 };
 

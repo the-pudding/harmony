@@ -438,12 +438,16 @@
 	// retargeted mid-way. Showing hexes fade out before songs move from under
 	// them.
 	let layoutFlight = false;
+	// The stages of the layout change in flight, if it's staged.
+	let flightStages: StagePlan | null = null;
 	const transitionTiming = (
 		next: PlacedTarget,
 		previous: PlacedTarget | null
 	): TransitionTiming => {
 		const inFlight = layoutFlight && !transition.settled;
+		const stagesInFlight = inFlight ? flightStages : null;
 		layoutFlight = false;
+		flightStages = null;
 		if (instantLayout) return { durationMs: 0, instant: true };
 		const delayMs =
 			hexZoomLevel(transform.k, HEX_ZOOM).kind === "hex"
@@ -468,9 +472,13 @@
 			previous &&
 			next.layoutName !== previous.layoutName
 		) {
-			layoutFlight = true;
-			const stages = stagePlan(next.revealStages);
-			return { durationMs: stagedDurationMs(stages), delayMs, stages };
+			return stagedFlight(stagePlan(next.revealStages), delayMs);
+		}
+		// Retargeted mid-way through a staged reveal (e.g. a framed layout
+		// refitting as the slide's text settles): start its stages over from
+		// where songs are, rather than flying everyone at once.
+		if (stagesInFlight && next.layoutName === previous?.layoutName) {
+			return stagedFlight(stagesInFlight, delayMs);
 		}
 		if ((previous && next.layoutName !== previous.layoutName) || inFlight) {
 			layoutFlight = true;
@@ -480,6 +488,15 @@
 			return { durationMs: FRAME_RESIZE_TWEEN_MS, delayMs, staggered: false };
 		}
 		return { durationMs: TWEEN_DURATION_MS, delayMs, staggered: false };
+	};
+
+	const stagedFlight = (
+		stages: StagePlan,
+		delayMs: number
+	): TransitionTiming => {
+		layoutFlight = true;
+		flightStages = stages;
+		return { durationMs: stagedDurationMs(stages), delayMs, stages };
 	};
 
 	const stagePlan = ({ stageOf, count }: RevealStages): StagePlan => ({
@@ -944,7 +961,8 @@
 				regionFill: songRegionFill ?? songRegionFillAt(1),
 				mixFill,
 				accentFillColor,
-				isAccented
+				isAccented,
+				starFill: layout.fill ?? null
 			})
 		});
 

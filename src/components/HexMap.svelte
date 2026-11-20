@@ -98,7 +98,8 @@
 		spotlitSongKey?: string | null;
 		// Small inert markers with no labels, kept bright on a dimmed scene.
 		litSongKeys?: readonly string[];
-		// Called with true while the scene's staged reveal (revealClusters)
+		// Called with true while the scene's staged reveal (revealSongs,
+		// revealClusters)
 		// plays, and false once its hexes are in.
 		onStagedRevealChange?: (running: boolean) => void;
 		// Called with where the explored cluster's title goes at dot zoom
@@ -404,17 +405,15 @@
 		viewTransform.k >= INSET_MIN_ZOOM && layoutName === "umap" && movable
 	);
 
-	const mainResult = $derived(
-		songs
-			? layoutName === "timeline"
-				? computeLayout("timeline", {}, { songs, frame: layoutFrame })
-				: computeLayout(
-						layoutName === "offstage" ? "offstage" : "umap",
-						{ purityLayout, pureThreshold },
-						{ songs, frame: layoutFrame }
-					)
-			: null
-	);
+	// UMAP and offstage (which leaves from UMAP) take the purity settings;
+	// the framed layouts take none.
+	const mainResult = $derived.by(() => {
+		if (!songs) return null;
+		const context = { songs, frame: layoutFrame };
+		return layoutName === "umap" || layoutName === "offstage"
+			? computeLayout(layoutName, { purityLayout, pureThreshold }, context)
+			: computeLayout(layoutName, {}, context);
+	});
 
 	// Ripple for songs.only going from one song to every song (reversed on the
 	// way back); computed once per scene, null for any other change.
@@ -441,7 +440,7 @@
 	});
 
 	const sceneRevealStages = $derived(
-		songs ? revealStages(songs, scene.reveal.clusters) : null
+		songs ? revealStages(songs, scene.reveal) : null
 	);
 
 	const umapResult = $derived(

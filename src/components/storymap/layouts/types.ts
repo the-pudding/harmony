@@ -5,7 +5,8 @@ export type LayoutFrame = { width: number; height: number };
 
 export type LayoutContext = { songs: SongTable; frame: LayoutFrame };
 
-// Axis labels, ticks and column labels drawn with a layout.
+// Axis labels, ticks, labels and boxes drawn with a layout. Positions are
+// 0–1 across the frame, y up.
 export type Guide =
 	| {
 			kind: "axisLabel";
@@ -13,7 +14,18 @@ export type Guide =
 			at: "bottom-right" | "bottom-left" | "left-top";
 	  }
 	| { kind: "tick"; text: string; x: number }
-	| { kind: "columnLabel"; text: string; x: number; y: number };
+	// Centered vertically on y; muted gray unless given a color.
+	| {
+			kind: "label";
+			text: string;
+			x: number;
+			y: number;
+			align: "left" | "center" | "right";
+			color?: string;
+			weight?: "regular" | "bold";
+	  }
+	// An outline; (x, y) is its bottom-left corner.
+	| { kind: "box"; x: number; y: number; width: number; height: number };
 
 export type LayoutResult = {
 	name: string;
@@ -26,6 +38,8 @@ export type LayoutResult = {
 	// "hex" bins into hexes when zoomed out; "none" draws dots.
 	aggregate: "hex" | "none";
 	color: "star" | "region";
+	// Per song, a color drawn instead of star white (null keeps it white).
+	fill?: readonly (string | null)[];
 	// Dot radius at 1×, in screen px.
 	pointRadius: number;
 	guides: readonly Guide[];

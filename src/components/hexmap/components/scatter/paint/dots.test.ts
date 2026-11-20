@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { zoomIdentity } from "d3";
+import { STAR_FILL } from "../colorMix.js";
 import { HEX_THEME_COLORS } from "../constants.js";
 import { createPointStyle } from "../pointStyle.js";
-import { drawDots } from "./dots.js";
+import { createDotFill, drawDots } from "./dots.js";
 import { createScene } from "./scene.js";
 
 // Records each fill() with its style and its path's dot count.
@@ -124,5 +125,27 @@ describe("drawDots", () => {
 		});
 		expect(drawn).toBe(2);
 		expect(fills[0].dots).toBe(2);
+	});
+});
+
+describe("createDotFill starFill", () => {
+	const fill = (starFill?: (string | null)[]) =>
+		createDotFill({
+			emphasisFillColor: null,
+			emphasizedSongKeys: null,
+			mix: new Float32Array(3),
+			regionFill: () => "region",
+			mixFill: () => "mix",
+			accentFillColor: null,
+			isAccented: () => false,
+			starFill
+		});
+
+	it("uses the per-index color, and star white where it is null or absent", () => {
+		const withColors = fill(["#ff0000", null]);
+		expect(withColors("a", 0)).toBe("#ff0000");
+		expect(withColors("b", 1)).toBe(STAR_FILL);
+		expect(withColors("c", 2)).toBe(STAR_FILL);
+		expect(fill()("a", 0)).toBe(STAR_FILL);
 	});
 });

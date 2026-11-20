@@ -9,7 +9,9 @@ declare module "$data/copy.json" {
 	export type CopyMap = {
 		// "true" shows the map on the slide.
 		visible?: string;
-		// The arrangement: "umap" (the default) or "timeline".
+		// The arrangement: "umap" (the default), "timeline", or section 3's
+		// charts of songs by effective progressions, "effectiveProgressions"
+		// (one bar) and "effectiveProgressionsByDecade" (a bar per decade).
 		layout?: string;
 		// "text" (default) sits below the story text; "full" fills the screen.
 		frame?: string;
@@ -38,6 +40,10 @@ declare module "$data/copy.json" {
 		// "full" (default), or "basic" (title, year and artist only).
 		tooltip?: string;
 		hidePlayer?: string;
+		// Song keys: arriving from another layout, these move first,
+		// together, before revealClusters (e.g. songs the previous slide's
+		// stage anchored, so they land before everyone else fills in).
+		revealSongs?: CopyList;
 		// Cluster names (exact): arriving from another layout (or from a
 		// slide without a map), each one's songs move in turn, in this
 		// order, then everyone else; the slide's stage waits until they're in.

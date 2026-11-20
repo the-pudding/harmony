@@ -589,8 +589,19 @@
               "value": "There’s a pretty even split between songs with few progressions and songs with a lot of progressions."
             }
           ],
-          "stage": {
-            "component": "EffectiveBar"
+          "map": {
+            "visible": "true",
+            "layout": "effectiveProgressions",
+            "highlightSongs": [
+              "olivia-rodrigo__drop-dead",
+              "olivia-rodrigo__drivers-license"
+            ],
+            "revealSongs": [
+              "olivia-rodrigo__drop-dead",
+              "olivia-rodrigo__drivers-license"
+            ],
+            "movable": "false",
+            "tooltip": "basic"
           }
         },
         {
@@ -608,8 +619,15 @@
               "value": "So even though it’s not the case that most songs are just 1 loop, songs are getting loopier. The Axis of Awesome boys had their finger on something real."
             }
           ],
-          "stage": {
-            "component": "EffectiveDecades"
+          "map": {
+            "visible": "true",
+            "layout": "effectiveProgressionsByDecade",
+            "highlightSongs": [
+              "olivia-rodrigo__drop-dead",
+              "olivia-rodrigo__drivers-license"
+            ],
+            "movable": "false",
+            "tooltip": "basic"
           }
         }
       ]

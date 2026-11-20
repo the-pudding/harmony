@@ -3,12 +3,17 @@ import type { ScatterAxisLabels } from "../../scatterPoint.js";
 import {
 	AXIS_LABEL_COLOR,
 	AXIS_LABEL_FONT,
+	CHART_BOX_COLOR,
+	CHART_BOX_WIDTH,
+	CHART_LABEL_COLOR,
+	CHART_LABEL_SIZE_PX,
 	GUIDE_BOTTOM_RIGHT_CLEARANCE,
 	GUIDE_FADE_FRACTION,
 	GUIDE_LABEL_GAP,
 	PLOT_MARGIN
 } from "../constants.js";
 import { frameRect } from "../viewport.js";
+import { SONG_LABEL_FONT_FAMILY } from "../../songLabelText.js";
 import type { MapFrame } from "../types.js";
 import type { Scene } from "./scene.js";
 
@@ -72,12 +77,28 @@ export const drawGuides = (
 						bottom + GUIDE_LABEL_GAP
 					);
 					break;
-				case "columnLabel":
-					context.textAlign = "center";
+				case "label":
+					context.fillStyle = guide.color ?? CHART_LABEL_COLOR;
+					context.font = `${guide.weight === "bold" ? 600 : 400} ${CHART_LABEL_SIZE_PX}px ${SONG_LABEL_FONT_FAMILY}`;
+					context.textAlign = guide.align;
+					context.textBaseline = "middle";
 					context.fillText(
 						guide.text,
 						left + guide.x * rect.width,
 						top + (1 - guide.y) * rect.height
+					);
+					context.fillStyle = AXIS_LABEL_COLOR;
+					context.font = AXIS_LABEL_FONT;
+					context.textBaseline = "alphabetic";
+					break;
+				case "box":
+					context.strokeStyle = CHART_BOX_COLOR;
+					context.lineWidth = CHART_BOX_WIDTH;
+					context.strokeRect(
+						left + guide.x * rect.width,
+						top + (1 - guide.y - guide.height) * rect.height,
+						guide.width * rect.width,
+						guide.height * rect.height
 					);
 					break;
 			}

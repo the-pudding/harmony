@@ -1,8 +1,9 @@
 // The stage each song moves in when the map arrives at a scene's layout:
-// each listed cluster's songs in turn, then everyone else. Names match
-// exactly; a song in several listed clusters goes with the first.
+// the listed songs together, then each listed cluster's songs in turn, then
+// everyone else. Cluster names match exactly; a song in several stages goes
+// with the first.
 import type { SongTable } from "./songTable.js";
-import { warn } from "./mapScene.js";
+import { warn, type MapScene } from "./mapScene.js";
 
 export type RevealStages = {
 	// Per song, 0 first; everyone else is in the last stage, count - 1.
@@ -10,25 +11,36 @@ export type RevealStages = {
 	count: number;
 };
 
-// Null when no listed cluster exists; unknown names warn in dev.
+// Null when no listed song or cluster exists; unknown ones warn in dev.
 export const revealStages = (
 	songs: SongTable,
-	clusterNames: readonly string[]
+	reveal: MapScene["reveal"]
 ): RevealStages | null => {
-	const known = clusterNames.filter((name) => {
+	const songIndexes = reveal.songs.flatMap((songKey) => {
+		const index = songs.indexOf.get(songKey);
+		if (index !== undefined) return [index];
+		warn(`unknown revealSongs song "${songKey}" (ignored)`);
+		return [];
+	});
+	const clusters = reveal.clusters.filter((name) => {
 		const exists = songs.clusterNames.includes(name);
 		if (!exists) warn(`unknown revealClusters cluster "${name}" (ignored)`);
 		return exists;
 	});
-	if (known.length === 0) return null;
-	const stageOf = new Uint8Array(songs.count).fill(known.length);
-	known.forEach((name, stage) => {
-		songs.clusterNames.forEach((clusterName, cluster) => {
-			if (clusterName !== name) return;
-			for (const index of songs.clusterMembers[cluster]) {
-				stageOf[index] = Math.min(stageOf[index], stage);
-			}
-		});
+	const stages: (readonly number[])[] = [
+		...(songIndexes.length > 0 ? [songIndexes] : []),
+		...clusters.map((name) =>
+			songs.clusterNames.flatMap((clusterName, cluster) =>
+				clusterName === name ? songs.clusterMembers[cluster] : []
+			)
+		)
+	];
+	if (stages.length === 0) return null;
+	const stageOf = new Uint8Array(songs.count).fill(stages.length);
+	stages.forEach((members, stage) => {
+		for (const index of members) {
+			stageOf[index] = Math.min(stageOf[index], stage);
+		}
 	});
-	return { stageOf, count: known.length + 1 };
+	return { stageOf, count: stages.length + 1 };
 };

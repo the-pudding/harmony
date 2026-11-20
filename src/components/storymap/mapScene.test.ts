@@ -77,7 +77,8 @@ const NEW_KEYS = [
 	"dimmed",
 	"followVideo",
 	"litVideoSongs",
-	"revealClusters"
+	"revealClusters",
+	"revealSongs"
 ];
 const usesNewKeys = (map: Record<string, unknown>) =>
 	NEW_KEYS.some((key) => key in map);
@@ -117,7 +118,7 @@ describe("parseMapScene on the real copy", () => {
 			camera: { kind: "home", centered: true },
 			labels: { hidden: false, only: null, rotate: true },
 			interaction: { movable: false, hoverable: false, tooltip: "basic" },
-			reveal: { clusters: ["doo wop", "axis of awesome"] }
+			reveal: { songs: [], clusters: ["doo wop", "axis of awesome"] }
 		});
 		const focused = mapBlocks.find((map) => map.focusCluster);
 		expect(parseMapScene(focused)!.camera).toEqual({
@@ -191,6 +192,12 @@ describe("parseMapScene", () => {
 	it("reads layout", () => {
 		expect(parse({ layout: "timeline" }).layout).toEqual({ name: "timeline" });
 		expect(parse({ layout: "umap" }).layout).toEqual({ name: "umap" });
+		expect(parse({ layout: "effectiveProgressions" }).layout).toEqual({
+			name: "effectiveProgressions"
+		});
+		expect(parse({ layout: "effectiveProgressionsByDecade" }).layout).toEqual({
+			name: "effectiveProgressionsByDecade"
+		});
 	});
 
 	it("reads frame: text by default, full on request", () => {
@@ -259,13 +266,25 @@ describe("parseMapScene", () => {
 	});
 
 	it("reads revealClusters as a list, empty by default", () => {
-		expect(parse({}).reveal).toEqual({ clusters: [] });
+		expect(parse({}).reveal).toEqual({ songs: [], clusters: [] });
 		expect(
 			parse({ revealClusters: ["doo wop", " axis of awesome "] }).reveal
-		).toEqual({ clusters: ["doo wop", "axis of awesome"] });
+		).toEqual({ songs: [], clusters: ["doo wop", "axis of awesome"] });
 		expect(parse({ revealClusters: "doo wop" }).reveal.clusters).toEqual([
 			"doo wop"
 		]);
+	});
+
+	it("reads revealSongs as a list, parsed like revealClusters", () => {
+		expect(parse({ revealSongs: ["a", " b "] }).reveal.songs).toEqual([
+			"a",
+			"b"
+		]);
+		expect(parse({ revealSongs: "a, b" }).reveal.songs).toEqual(["a", "b"]);
+		expect(parse({ revealSongs: "a", revealClusters: "x" }).reveal).toEqual({
+			songs: ["a"],
+			clusters: ["x"]
+		});
 	});
 
 	it("reads labels, interaction, centered and the player", () => {

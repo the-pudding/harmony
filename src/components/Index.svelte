@@ -12,9 +12,7 @@
 	import SongChordsDrawer from "$components/song-chords-drawer/SongChordsDrawer.svelte";
 	import UltimateGuitar from "$components/UltimateGuitar.svelte";
 	import RomanNumerals from "$components/RomanNumerals.svelte";
-	import EffectiveBar from "$components/EffectiveBar.svelte";
 	import ChordShares from "$components/ChordShares.svelte";
-	import EffectiveDecades from "$components/EffectiveDecades.svelte";
 	import ClusterPercentOverTime from "$components/ClusterPercentOverTime.svelte";
 	import EffectiveProgressions from "$components/EffectiveProgressions.svelte";
 	import Signatures from "$components/Signatures.svelte";
@@ -49,9 +47,7 @@
 		Landing,
 		Video,
 		List,
-		EffectiveBar,
 		ChordShares,
-		EffectiveDecades,
 		ClusterPercentOverTime,
 		Signatures,
 		UltimateGuitar,
@@ -134,7 +130,7 @@
 		if (scene === null) return null;
 		const staged = movedForward
 			? scene
-			: { ...scene, reveal: { clusters: [] } };
+			: { ...scene, reveal: { songs: [], clusters: [] } };
 		return textFocusCluster === undefined
 			? staged
 			: { ...staged, camera: { kind: "cluster", name: textFocusCluster } };
@@ -158,11 +154,17 @@
 		if (!followedCues || storyMedia.cueIndex <= 0) return [];
 		return songKeysOf(followedCues.slice(0, storyMedia.cueIndex));
 	});
-	// A slide's stage waits for the map's staged reveal (revealClusters), and
-	// one that arrives going forward also for its songs' dots to reach it.
+	// A slide's stage waits for the map's staged reveal (revealSongs,
+	// revealClusters), and one that arrives going forward also for its songs'
+	// dots to reach it.
 	let mapRevealRunning = $state(false);
+	let mapRevealStaged = $derived(
+		(mapScene?.reveal.songs.length ?? 0) +
+			(mapScene?.reveal.clusters.length ?? 0) >
+			0
+	);
 	let stageWaits = $derived(
-		(mapRevealRunning && (mapScene?.reveal.clusters.length ?? 0) > 0) ||
+		(mapRevealRunning && mapRevealStaged) ||
 			(stageArrivesForward && !songDots.arrived)
 	);
 	let focusedCluster = $derived(
