@@ -2,7 +2,7 @@
 	import {
 		committedSyncedSongClusters,
 		committedSyncedSongs,
-		SYNCED_SONG_AUDIO_DIRECTORY,
+		FULL_SYNCED_SONG_DIRECTORY,
 		SYNCED_SONG_DATA_DIRECTORY,
 		type SyncedSongAudio,
 		type SyncedSongFile
@@ -74,10 +74,8 @@
 		<ol>
 			<li>
 				Pick a song and the cluster it belongs to. Its audio comes from
-				<code
-					>static/{SYNCED_SONG_AUDIO_DIRECTORY}/{"{artist}__{song}"}.mp3</code
-				>
-				(or <code>.mp4</code>).
+				<code>{FULL_SYNCED_SONG_DIRECTORY}/{"{artist}__{song}"}.mp3</code>, the
+				full song.
 			</li>
 			<li>
 				Check the <strong>key</strong>. It starts as the corpus's key for the
@@ -108,13 +106,17 @@
 				works under <code>npm run dev</code>. Until you save, edits stay in this
 				browser.
 			</li>
+			<li>
+				Run <code>npm run clean-mp3</code> to cut the clip the site plays (and commit
+				it with the song's data). Until you do, the song won't play outside this page.
+			</li>
 		</ol>
 	</details>
 
 	{#if audioOptions.length === 0}
 		<p class="message">
 			No audio yet. Add <code>{"{artist}__{song}"}.mp3</code> files to
-			<code>static/{SYNCED_SONG_AUDIO_DIRECTORY}/</code> and reload.
+			<code>{FULL_SYNCED_SONG_DIRECTORY}/</code> and reload.
 		</p>
 	{:else}
 		<div class="pickers">

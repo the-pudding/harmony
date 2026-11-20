@@ -14,7 +14,7 @@
 		"charts": "vite-node tasks/build-charts.ts",
 		"style": "node tasks/style-dictionary.js",
 		"vtt": "node tasks/vtt-timer.js",
-		"audio:cbr": "node tasks/fix-vbr-audio.js",
+		"clean-mp3": "vite-node tasks/clean-mp3.ts",
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",

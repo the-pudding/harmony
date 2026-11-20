@@ -18,6 +18,7 @@
 		SYNCED_SONG_AUDIO_DIRECTORY,
 		syncedSongReferenceRows
 	} from "$data/syncedSongs";
+	import { clipOffsetSeconds } from "$data/syncedSongClips.js";
 	import { signatureSongs } from "$data/signatureSongs";
 	import { loadHexMapSnapshot } from "$data/hexMapSnapshot.js";
 	import { toCalendarYear } from "$data/songYear.js";
@@ -125,6 +126,8 @@
 					songKey: song.songKey,
 					audioFile: data.audioFile,
 					chords: data.chords,
+					// where its audio file starts in the song (see syncedSongClips.ts)
+					fileOffsetSeconds: clipOffsetSeconds(song.songKey),
 					startSeconds:
 						song.startSeconds ?? row?.startSeconds ?? data.region.startSeconds,
 					endSeconds:
@@ -140,7 +143,10 @@
 
 	let audioEl = $state();
 	let paused = $state(true);
+	// in the song's seconds, as the clip's times are
 	let currentTime = $state(0);
+	const songTime = () =>
+		(audioEl?.currentTime ?? 0) + (clip?.fileOffsetSeconds ?? 0);
 
 	const playingChordIndex = $derived(
 		clip && !paused
@@ -160,7 +166,7 @@
 		// lets the <audio> pick up the clip's src first
 		await nextTick();
 		if (!audioEl || !clip) return;
-		audioEl.currentTime = clip.startSeconds;
+		audioEl.currentTime = clip.startSeconds - clip.fileOffsetSeconds;
 		currentTime = clip.startSeconds;
 		audioEl.play();
 	};
@@ -172,7 +178,7 @@
 			return;
 		}
 		audio.muted = false;
-		const t = audioEl?.currentTime ?? 0;
+		const t = songTime();
 		if (i === clipIndex && clip && t > clip.startSeconds && t < clip.endSeconds)
 			audioEl.play();
 		else playClip(i);
@@ -191,7 +197,7 @@
 	};
 
 	const onTimeUpdate = () => {
-		if (clip && !paused && audioEl.currentTime >= clip.endSeconds) finishClip();
+		if (clip && !paused && songTime() >= clip.endSeconds) finishClip();
 	};
 
 	// a new decade stops the last one's song
@@ -207,7 +213,7 @@
 		if (!audioEl || paused) return;
 		let frame;
 		const step = () => {
-			currentTime = audioEl.currentTime;
+			currentTime = songTime();
 			frame = requestAnimationFrame(step);
 		};
 		frame = requestAnimationFrame(step);

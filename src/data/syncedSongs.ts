@@ -1,9 +1,11 @@
 // Time-synced chord data recorded in the Record tab of /demo/record.
 // One file per song at src/data/synced-songs/{songKey}.json, listing each
-// chord change heard in its audio at static/assets/audio/synced-songs/
-// {audioFile}: when it starts (seconds into the audio), the chord, and its
+// chord change heard in its full song at full-synced-songs/
+// {audioFile}: when it starts (seconds into the song), the chord, and its
 // roman numeral in the song's key. Only the region has chord data; the last
-// chord lasts until region.endSeconds.
+// chord lasts until region.endSeconds. The app plays a clip of each song
+// cut by npm run clean-mp3, at static/assets/audio/synced-songs/{audioFile}
+// (see syncedSongClips.ts).
 import { SCALE_INTERVALS } from "../chord-processing/scale-intervals.js";
 import type { MusicalKey } from "../chord-processing/chordInKey.js";
 import syncedSongReference from "./synced-songs/reference.csv";
@@ -33,13 +35,17 @@ export type SyncedSongFile = {
 	chords: SyncedSongChord[];
 };
 
-// An audio file in static/assets/audio/synced-songs, named {artist}__{song}.
+// A full song in full-synced-songs, named {artist}__{song}.
 export type SyncedSongAudio = {
 	songKey: string;
 	audioFile: string;
 };
 
+// The clips the app plays, under static/.
 export const SYNCED_SONG_AUDIO_DIRECTORY = "assets/audio/synced-songs";
+// The full songs, which the Record tab plays. Not published: the dev server
+// serves them (see vite.config.js).
+export const FULL_SYNCED_SONG_DIRECTORY = "full-synced-songs";
 export const SYNCED_SONG_DATA_DIRECTORY = "src/data/synced-songs";
 
 const AUDIO_FILE_PATTERN = /^([^_/\\.][^/\\]*?__[^/\\]+)\.(mp3|mp4)$/i;

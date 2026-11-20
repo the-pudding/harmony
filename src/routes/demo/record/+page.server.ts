@@ -2,20 +2,16 @@ import fs from "fs";
 import path from "path";
 import {
 	parseSyncedSongAudioFile,
-	SYNCED_SONG_AUDIO_DIRECTORY,
+	FULL_SYNCED_SONG_DIRECTORY,
 	type SyncedSongAudio
 } from "$data/syncedSongs.js";
 import { loadClusterIdeas } from "./loadClusterIdeas.server.js";
 import { loadMapClusterNames } from "./mapClusters.server.js";
 import type { PageServerLoad } from "./$types.js";
 
-const AUDIO_DIRECTORY = path.join(
-	process.cwd(),
-	"static",
-	SYNCED_SONG_AUDIO_DIRECTORY
-);
+const AUDIO_DIRECTORY = path.join(process.cwd(), FULL_SYNCED_SONG_DIRECTORY);
 
-// Every song with audio in static/assets/audio/synced-songs, one per song
+// Every full song in full-synced-songs, one per song
 // key. Read at prerender time for the static build, and per request in dev
 // so newly added files show up on reload.
 const listSyncedSongAudio = (): SyncedSongAudio[] => {

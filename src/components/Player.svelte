@@ -6,6 +6,7 @@
 		featuredSongsOf
 	} from "$data/featuredClusters.js";
 	import { attachAudio, audio } from "$runes/audio.svelte";
+	import { clipOffsetSeconds } from "$data/syncedSongClips.js";
 
 	let {
 		cluster = undefined,
@@ -44,9 +45,18 @@
 	const currentSong = $derived(songs.find((d) => d.songKey === playingSongKey));
 	const currentTimeData = $derived(currentSong?.data?.chords);
 
+	// Each song's audio is a clip starting partway into it (see
+	// syncedSongClips.ts); its times, and currentTime, are the song's.
+	const songTimeOf = (song) =>
+		audioEls[song.songKey].currentTime + clipOffsetSeconds(song.songKey);
+	const seekTo = (song, seconds) => {
+		audioEls[song.songKey].currentTime =
+			seconds - clipOffsetSeconds(song.songKey);
+	};
+
 	const playFromStart = (song) => {
 		const audioEl = audioEls[song.songKey];
-		audioEl.currentTime = song.startSeconds;
+		seekTo(song, song.startSeconds);
 		currentTime = song.startSeconds;
 		// a browser may refuse to play before the reader has interacted
 		audioEl.play().catch(() => {});
@@ -60,7 +70,7 @@
 				playFromStart(song);
 			} else {
 				audioEl.pause();
-				audioEl.currentTime = song.startSeconds;
+				seekTo(song, song.startSeconds);
 			}
 		}
 	};
@@ -83,7 +93,7 @@
 	const stopAtEnd = (song) => {
 		const audioEl = audioEls[song.songKey];
 		if (song.songKey !== playingSongKey) return;
-		if (audioEl.currentTime >= song.endSeconds) {
+		if (songTimeOf(song) >= song.endSeconds) {
 			audioEl.pause();
 			advance();
 		}
@@ -99,7 +109,7 @@
 		}
 		let frame;
 		const tick = () => {
-			currentTime = audioEl.currentTime;
+			currentTime = currentSong ? songTimeOf(currentSong) : 0;
 			audio.clipProgressFraction = currentSong
 				? Math.min(
 						1,

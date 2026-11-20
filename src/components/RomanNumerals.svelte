@@ -11,6 +11,7 @@
 		committedSyncedSongs,
 		SYNCED_SONG_AUDIO_DIRECTORY
 	} from "$data/syncedSongs";
+	import { clipOffsetSeconds } from "$data/syncedSongClips.js";
 	import { romanTokensToProgressionInKey } from "../chord-processing/scales.js";
 	import {
 		MAJOR,
@@ -139,8 +140,10 @@
 		return Math.min(1, playTime / (endSeconds - startSeconds));
 	};
 
-	// Where a clip's audio is, where it starts and stops, and when each chord
-	// starts in playTime seconds (null for the evenly spaced progressions).
+	// Where a clip's audio is, where it starts and stops, where its file starts
+	// in those seconds (a song's audio is cut from partway in, see
+	// syncedSongClips.ts), and when each chord starts in playTime seconds
+	// (null for the evenly spaced progressions).
 	const clipFor = (id) => {
 		if (id.startsWith("song:")) {
 			const { synced } = songFor(id.slice("song:".length));
@@ -149,6 +152,7 @@
 				src: `${base}/${SYNCED_SONG_AUDIO_DIRECTORY}/${synced.audioFile}`,
 				startSeconds,
 				endSeconds,
+				fileOffsetSeconds: clipOffsetSeconds(synced.songKey),
 				chordTimes: [
 					...synced.chords.map(({ seconds }) => seconds - startSeconds),
 					endSeconds - startSeconds
@@ -159,6 +163,7 @@
 			src: `${base}/assets/audio/progression/${id}_${progression.join("-")}.mp3`,
 			startSeconds: CHORD_OFFSET,
 			endSeconds: null,
+			fileOffsetSeconds: 0,
 			chordTimes: null
 		};
 	};
@@ -195,7 +200,10 @@
 		}
 		playingKey = id;
 		const el = audioFor(id);
-		el.currentTime = id.startsWith("song:") ? clipFor(id).startSeconds : 0;
+		const { startSeconds, fileOffsetSeconds } = clipFor(id);
+		el.currentTime = id.startsWith("song:")
+			? startSeconds - fileOffsetSeconds
+			: 0;
 		el.play().catch(() => {
 			if (playingKey === id) playingKey = null;
 		});
@@ -213,14 +221,15 @@
 		if (!playingKey) return;
 		const id = playingKey;
 		const el = audioFor(id);
-		const { startSeconds, endSeconds } = clipFor(id);
+		const { startSeconds, endSeconds, fileOffsetSeconds } = clipFor(id);
 		let frame;
 		const tick = () => {
-			if (endSeconds !== null && el.currentTime >= endSeconds) {
+			const seconds = el.currentTime + fileOffsetSeconds;
+			if (endSeconds !== null && seconds >= endSeconds) {
 				untrack(stop);
 				return;
 			}
-			playTime = el.currentTime - startSeconds;
+			playTime = seconds - startSeconds;
 			frame = requestAnimationFrame(tick);
 		};
 		tick();

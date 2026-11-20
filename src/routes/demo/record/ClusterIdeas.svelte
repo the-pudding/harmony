@@ -18,7 +18,7 @@
 		ideas: ClusterIdeasByMode;
 		// The clusters the map draws, biggest first.
 		clusterNames: string[];
-		// Songs with audio in static/, ready to record.
+		// Songs with a full song in full-synced-songs/, ready to record.
 		audioSongKeys: string[];
 	};
 

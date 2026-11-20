@@ -12,5 +12,8 @@ functions
 # over GitHub's 50 MB warning size; only /demo uses it
 /docs/data/songs.json
 
-# originals kept by npm run audio:cbr
+# originals kept by npm run clean-mp3
 /.audio-backups/
+
+# full synced songs, kept local (npm run clean-mp3 cuts the clips the site plays)
+/full-synced-songs/

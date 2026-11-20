@@ -1,0 +1,662 @@
+{
+	"a-great-big-world-christina-aguilera__say-something": {
+		"offsetSeconds": 96.702,
+		"endSeconds": 129.115,
+		"fullSongSha1": "0a7c45d5980c5eeb89096b374b0fa21b76d197cd",
+		"bitrate": "160k"
+	},
+	"adele__rolling-in-the-deep": {
+		"offsetSeconds": 57.289,
+		"endSeconds": 79.098,
+		"fullSongSha1": "1140007ff7d4b6d999eb923cccce101216ff108c",
+		"bitrate": "160k"
+	},
+	"adele__send-my-love-to-your-new-lover": {
+		"offsetSeconds": 112.357,
+		"endSeconds": 138.064,
+		"fullSongSha1": "a333626dbe1e614a1c00022dffcea0a9205fe3ea",
+		"bitrate": "160k"
+	},
+	"adele__someone-like-you": {
+		"offsetSeconds": 72.454,
+		"endSeconds": 110.893,
+		"fullSongSha1": "c4a0e3eafcd846c70cd646ee0808d2b901d05eea",
+		"bitrate": "160k"
+	},
+	"al-green__sha-la-la-make-me-happy": {
+		"offsetSeconds": 17.153,
+		"endSeconds": 36.884,
+		"fullSongSha1": "5171a081811744ef4b0559970f57be719c718be8",
+		"bitrate": "160k"
+	},
+	"alicia-keys__no-one": {
+		"offsetSeconds": 33.579,
+		"endSeconds": 67.813,
+		"fullSongSha1": "7907164d5c0646d51fc84f231c16961a1f6f1664",
+		"bitrate": "160k"
+	},
+	"backstreet-boys__everybody-backstreet-s-back": {
+		"offsetSeconds": 158.311,
+		"endSeconds": 178.926,
+		"fullSongSha1": "4f169886df7a3501a9bbb5bfe4cbd8fc4bdfd719",
+		"bitrate": "160k"
+	},
+	"bad-bunny__voy-a-llevarte-pa-pr": {
+		"offsetSeconds": 10.35,
+		"endSeconds": 32.337,
+		"fullSongSha1": "643916df29294ee9bdc2010bb3b5e9218485130e",
+		"bitrate": "160k"
+	},
+	"ben-e-king__stand-by-me": {
+		"offsetSeconds": 14.556,
+		"endSeconds": 47.273,
+		"fullSongSha1": "c5717873fe2d2b31a01100b711c10bb8d44c4b2a",
+		"bitrate": "160k"
+	},
+	"beyonce__halo": {
+		"offsetSeconds": 11.423,
+		"endSeconds": 38.481,
+		"fullSongSha1": "d85a5d85af0e4c0f15b6478e5e04463595d74463",
+		"bitrate": "160k"
+	},
+	"beyonce__if-i-were-a-boy": {
+		"offsetSeconds": 47.364,
+		"endSeconds": 72.366,
+		"fullSongSha1": "779621b32f9a4fe83d0d7c7944483c8d7712937f",
+		"bitrate": "160k"
+	},
+	"billie-eilish__what-was-i-made-for": {
+		"offsetSeconds": 0,
+		"endSeconds": 26.137,
+		"fullSongSha1": "1db0b24838f1e3a94a8f246df79e8185bb15f14f",
+		"bitrate": "160k"
+	},
+	"bobby-vee__rubber-ball": {
+		"offsetSeconds": 0,
+		"endSeconds": 10.465,
+		"fullSongSha1": "2de0ecf76785e0ed7d5a4ac7a40f13026558c9d5",
+		"bitrate": "160k"
+	},
+	"brandy-monica__the-boy-is-mine": {
+		"offsetSeconds": 20.67,
+		"endSeconds": 43.586,
+		"fullSongSha1": "a639466c142d2bde9188623fc0cbc69a7e165a85",
+		"bitrate": "160k"
+	},
+	"bruno-mars__just-the-way-you-are": {
+		"offsetSeconds": 65.587,
+		"endSeconds": 104.888,
+		"fullSongSha1": "71ca819427384af0c8c3f2a0e22e1895cd6ee0f5",
+		"bitrate": "160k"
+	},
+	"calvin-harris__sweet-nothing": {
+		"offsetSeconds": 53.877,
+		"endSeconds": 86.407,
+		"fullSongSha1": "8fe0414993168f0fffd965d17a62f9889f337513",
+		"bitrate": "160k"
+	},
+	"camila-cabello-featuring-dababy__my-oh-my": {
+		"offsetSeconds": 56.784,
+		"endSeconds": 77.368,
+		"fullSongSha1": "589710571022789b2290c76273f7a2cf97c07ee1",
+		"bitrate": "160k"
+	},
+	"carpenters__please-mr-postman": {
+		"offsetSeconds": 8.433,
+		"endSeconds": 39.335,
+		"fullSongSha1": "f4c43e832eb287f79af5e4be6d500839666aa0d7",
+		"bitrate": "160k"
+	},
+	"carrie-underwood__before-he-cheats": {
+		"offsetSeconds": 13.388,
+		"endSeconds": 35.034,
+		"fullSongSha1": "0616308e6c3bbe351f51f2d637407e704de047e0",
+		"bitrate": "160k"
+	},
+	"chappell-roan__good-luck-babe": {
+		"offsetSeconds": 35.959,
+		"endSeconds": 54.76,
+		"fullSongSha1": "5ca7a6265b2ba7870968028d66f75b2155b40398",
+		"bitrate": "160k"
+	},
+	"chappell-roan__pink-pony-club": {
+		"offsetSeconds": 76.627,
+		"endSeconds": 96.817,
+		"fullSongSha1": "7c769c898e22c4f52857e83391cabcf1902b5f7f",
+		"bitrate": "160k"
+	},
+	"christina-aguilera__genie-in-a-bottle": {
+		"offsetSeconds": 45.53,
+		"endSeconds": 69.544,
+		"fullSongSha1": "5d391bfe173cd4d8195f8511c3dc02b9ef1c2d05",
+		"bitrate": "160k"
+	},
+	"coldplay__paradise": {
+		"offsetSeconds": 118.713,
+		"endSeconds": 135.041,
+		"fullSongSha1": "9c25a2cf7e1af1cb095a3f00159be1530dce7f95",
+		"bitrate": "160k"
+	},
+	"coldplay__viva-la-vida": {
+		"offsetSeconds": 12.592,
+		"endSeconds": 36.583,
+		"fullSongSha1": "47c4ef20a08ae4904b94d75ea392f191e9e4531f",
+		"bitrate": "160k"
+	},
+	"dababy-featuring-roddy-ricch__rockstar": {
+		"offsetSeconds": 0,
+		"endSeconds": 17.329,
+		"fullSongSha1": "c65529e10752e596340ab0c132a479482042a0e1",
+		"bitrate": "160k"
+	},
+	"darius-rucker__wagon-wheel": {
+		"offsetSeconds": 63.307,
+		"endSeconds": 72.185,
+		"fullSongSha1": "c3b674897244558deecd5f27020e5b42daf443dc",
+		"bitrate": "160k"
+	},
+	"deep-blue-something__breakfast-at-tiffany-s": {
+		"offsetSeconds": 0,
+		"endSeconds": 27.361,
+		"fullSongSha1": "f478fca24226765bb6724f498e70a3f4141e1131",
+		"bitrate": "160k"
+	},
+	"demi-lovato__cool-for-the-summer": {
+		"offsetSeconds": 9.904,
+		"endSeconds": 37.469,
+		"fullSongSha1": "198968e1ccd7e54736b813f07638206c48761c81",
+		"bitrate": "160k"
+	},
+	"disney-s-friends-for-change__send-it-on": {
+		"offsetSeconds": 33.568,
+		"endSeconds": 50.136,
+		"fullSongSha1": "9ddc4d52593e65d1b5ca96d728f0aa38a13397da",
+		"bitrate": "160k"
+	},
+	"don-mclean__american-pie": {
+		"offsetSeconds": 220.289,
+		"endSeconds": 233.134,
+		"fullSongSha1": "370de97859ec790d813ad8725745b3a63c82b030",
+		"bitrate": "160k"
+	},
+	"dr-dre__dre-day": {
+		"offsetSeconds": 19.761,
+		"endSeconds": 42.594,
+		"fullSongSha1": "e7c54a36a78a09f8b40bb5a6b7a21d70a46a7b9e",
+		"bitrate": "160k"
+	},
+	"duran-duran__come-undone": {
+		"offsetSeconds": 38.163,
+		"endSeconds": 62.33,
+		"fullSongSha1": "c63271e2e5530a5c12662647fa72042d4104cb63",
+		"bitrate": "160k"
+	},
+	"ed-sheeran__shivers": {
+		"offsetSeconds": 62.544,
+		"endSeconds": 91.978,
+		"fullSongSha1": "fe23fb2cd227c01a2ab365127d05560f9f437586",
+		"bitrate": "160k"
+	},
+	"eddie-rabbitt__i-love-a-rainy-night": {
+		"offsetSeconds": 42.783,
+		"endSeconds": 59.85,
+		"fullSongSha1": "7c3c94f0e094ad671fc7e2f5acaffc6f448acabd",
+		"bitrate": "160k"
+	},
+	"enrique-iglesias__hero": {
+		"offsetSeconds": 61.844,
+		"endSeconds": 89.577,
+		"fullSongSha1": "b26e94bbbee3c62144a862c83b4a8a8f87bffcd4",
+		"bitrate": "160k"
+	},
+	"eurythmics__sweet-dreams---are-made-of-this": {
+		"offsetSeconds": 48.919,
+		"endSeconds": 66.553,
+		"fullSongSha1": "86ab6b92d595e97a821b4f2ae5d2ca0337d5f84c",
+		"bitrate": "160k"
+	},
+	"fine-young-cannibals__she-drives-me-crazy": {
+		"offsetSeconds": 56.921,
+		"endSeconds": 76.948,
+		"fullSongSha1": "6edeccbeff4ee457f4c7e360519a026b930ae0d7",
+		"bitrate": "160k"
+	},
+	"fleetwood-mac__go-your-own-way": {
+		"offsetSeconds": 30.86,
+		"endSeconds": 54.143,
+		"fullSongSha1": "fd35c65f2a2d9363113e00183d6ef1a83c2ad7e2",
+		"bitrate": "160k"
+	},
+	"flo-rida__good-feeling": {
+		"offsetSeconds": 21.32,
+		"endSeconds": 38.537,
+		"fullSongSha1": "d696182c141aee50ec79658eda404253e902638e",
+		"bitrate": "160k"
+	},
+	"harry-styles__daylight": {
+		"offsetSeconds": 65.646,
+		"endSeconds": 90.172,
+		"fullSongSha1": "6ff99dcc40eafc985de8e3de713f14f012f9874e",
+		"bitrate": "160k"
+	},
+	"heart__alone": {
+		"offsetSeconds": 48.022,
+		"endSeconds": 66.929,
+		"fullSongSha1": "b65070a237e3be15a92f106f1b063d49bae50b1d",
+		"bitrate": "160k"
+	},
+	"henry-lee-summer__i-wish-i-had-a-girl": {
+		"offsetSeconds": 38.044,
+		"endSeconds": 70.624,
+		"fullSongSha1": "a1de079f9f6cf147de40ab9678d4b365597afe15",
+		"bitrate": "160k"
+	},
+	"imagine-dragons__believer": {
+		"offsetSeconds": 76.473,
+		"endSeconds": 100.959,
+		"fullSongSha1": "c4a6b9d50345a8bdb57e8394ad0ad272015c4c4d",
+		"bitrate": "160k"
+	},
+	"jason-derulo__whatcha-say": {
+		"offsetSeconds": 43.896,
+		"endSeconds": 73.215,
+		"fullSongSha1": "cdc65c5f63eb4b7652c834018945c4e000aec11e",
+		"bitrate": "160k"
+	},
+	"jay-sean__down": {
+		"offsetSeconds": 60.364,
+		"endSeconds": 85.332,
+		"fullSongSha1": "9314e10f06803b01adc195627f96d75542a2ccbf",
+		"bitrate": "160k"
+	},
+	"jelly-roll__need-a-favor": {
+		"offsetSeconds": 48.109,
+		"endSeconds": 74.598,
+		"fullSongSha1": "2d85b13506a1bde0d5f59b5cb5de009bb194e9c8",
+		"bitrate": "160k"
+	},
+	"joan-jett-the-blackhearts__i-love-rock-n-roll": {
+		"offsetSeconds": 68.205,
+		"endSeconds": 81.489,
+		"fullSongSha1": "fd031982d25610bc703dced0539c70d2aa9f7428",
+		"bitrate": "160k"
+	},
+	"john-lennon-plastic-ono-band__imagine": {
+		"offsetSeconds": 13.018,
+		"endSeconds": 40.297,
+		"fullSongSha1": "44a5e3e842706f7121d81d693dbbe640ad5d4588",
+		"bitrate": "160k"
+	},
+	"journey__dont-stop-believin": {
+		"offsetSeconds": 15.638,
+		"endSeconds": 26.7,
+		"fullSongSha1": "f114fd30569a4e4926e1a41bc1a65d60450a55d3",
+		"bitrate": "160k"
+	},
+	"juice-wrld-the-weeknd__smile": {
+		"offsetSeconds": 10.667,
+		"endSeconds": 37.822,
+		"fullSongSha1": "256a42e9126ad520f59bcbc8a25c3bf84a21506d",
+		"bitrate": "160k"
+	},
+	"julia-michaels__issues": {
+		"offsetSeconds": 29.387,
+		"endSeconds": 57.031,
+		"fullSongSha1": "c4d71d695b4df23cce439edbdc3afb8b9eaf1ff4",
+		"bitrate": "160k"
+	},
+	"katy-perry__the-one-that-got-away": {
+		"offsetSeconds": 46.903,
+		"endSeconds": 79.369,
+		"fullSongSha1": "56b27caa035b28dd571a4de6ef947ae4320c6af7",
+		"bitrate": "160k"
+	},
+	"katy-perry__wide-awake": {
+		"offsetSeconds": 11.086,
+		"endSeconds": 37.849,
+		"fullSongSha1": "8adee2e6910a640a53cb90f9fa6746c8f79c2c71",
+		"bitrate": "160k"
+	},
+	"kelly-clarkson__stronger-what-doesn-t-kill-you": {
+		"offsetSeconds": 41.422,
+		"endSeconds": 70.261,
+		"fullSongSha1": "aa372d3124da1fa41bb30ca2c6927a7d4f53fae7",
+		"bitrate": "160k"
+	},
+	"lady-gaga__poker-face": {
+		"offsetSeconds": 55.522,
+		"endSeconds": 73.9,
+		"fullSongSha1": "f206f88064c1dc07c84554ef1ab7bb4475382c02",
+		"bitrate": "160k"
+	},
+	"laura-branigan__self-control": {
+		"offsetSeconds": 23.039,
+		"endSeconds": 42.852,
+		"fullSongSha1": "733fb30cbf0785c83b66e3397529ec4d619f5305",
+		"bitrate": "160k"
+	},
+	"los-lobos__la-bamba": {
+		"offsetSeconds": 54.476,
+		"endSeconds": 76.847,
+		"fullSongSha1": "aed12c879e099061c05541cd1efa176ccb0e415f",
+		"bitrate": "160k"
+	},
+	"lou-reed__walk-on-the-wild-side": {
+		"offsetSeconds": 9.654,
+		"endSeconds": 30.572,
+		"fullSongSha1": "ec50fa3ccd7d90bcb7073a4e53544129b074e0b8",
+		"bitrate": "160k"
+	},
+	"maroon-5__payphone": {
+		"offsetSeconds": 90.756,
+		"endSeconds": 128.973,
+		"fullSongSha1": "e6b298759020163a174b2412343cfb73bbb01280",
+		"bitrate": "160k"
+	},
+	"maroon-5-featuring-cardi-b__girls-like-you": {
+		"offsetSeconds": 37.878,
+		"endSeconds": 63.191,
+		"fullSongSha1": "5acae225e74d7c0562a118dbfe9f9d93ac404ae1",
+		"bitrate": "160k"
+	},
+	"meghan-trainor__dear-future-husband": {
+		"offsetSeconds": 35.532,
+		"endSeconds": 61.809,
+		"fullSongSha1": "c14bd45e5fa2e523f96aaef240bcf9ca87fc7e27",
+		"bitrate": "160k"
+	},
+	"michael-jackson__beat-it": {
+		"offsetSeconds": 99.768,
+		"endSeconds": 115.856,
+		"fullSongSha1": "4f6648071a8b6e74b4327a7ef4aa8df19496862c",
+		"bitrate": "160k"
+	},
+	"michael-jackson__dirty-diana": {
+		"offsetSeconds": 31.579,
+		"endSeconds": 49.029,
+		"fullSongSha1": "73b1aa46c63d37c1e149185427892da890ea8b53",
+		"bitrate": "160k"
+	},
+	"miley-cyrus__used-to-be-young": {
+		"offsetSeconds": 75.749,
+		"endSeconds": 104.278,
+		"fullSongSha1": "7bcd05a7c0660703f95628d3255728952a44d65c",
+		"bitrate": "160k"
+	},
+	"miley-cyrus__we-can-t-stop": {
+		"offsetSeconds": 108.856,
+		"endSeconds": 135.175,
+		"fullSongSha1": "934e234eaaf2ef066e5e83a58f73d3f93e86ce28",
+		"bitrate": "160k"
+	},
+	"morgan-wallen__more-than-my-hometown": {
+		"offsetSeconds": 48.453,
+		"endSeconds": 81.97,
+		"fullSongSha1": "e3754aca02ff87f75f13095f9380ba401a1245b7",
+		"bitrate": "160k"
+	},
+	"nelly__just-a-dream": {
+		"offsetSeconds": 19.287,
+		"endSeconds": 43.872,
+		"fullSongSha1": "b74713fe87821c2ed0d4ff2a9133cdb526dc1a45",
+		"bitrate": "160k"
+	},
+	"noah-kahan__stick-season": {
+		"offsetSeconds": 50.062,
+		"endSeconds": 84.946,
+		"fullSongSha1": "15f53160e70db2c8ad22d58100f185448d228801",
+		"bitrate": "160k"
+	},
+	"olivia-rodrigo__drop-dead": {
+		"offsetSeconds": 49.482,
+		"endSeconds": 81.112,
+		"fullSongSha1": "28a9dceb508ab2922eae7b55053ec45a84ef28b1",
+		"bitrate": "160k"
+	},
+	"onerepublic__counting-stars": {
+		"offsetSeconds": 21.704,
+		"endSeconds": 47.196,
+		"fullSongSha1": "45081e51a1d25dfbf5cdc7eec23cd75b79b7f2a3",
+		"bitrate": "160k"
+	},
+	"phil-collins__in-the-air-tonight": {
+		"offsetSeconds": 117.882,
+		"endSeconds": 140.213,
+		"fullSongSha1": "826d8bc8e9b2a564da41b79d4366b308a3cd88e4",
+		"bitrate": "160k"
+	},
+	"pitbull__timber-feat-kesha": {
+		"offsetSeconds": 81.324,
+		"endSeconds": 106.191,
+		"fullSongSha1": "5322fa281598da221f60a3050875a83caefae8bf",
+		"bitrate": "160k"
+	},
+	"plain-white-t-s__hey-there-delilah": {
+		"offsetSeconds": 45.768,
+		"endSeconds": 66.434,
+		"fullSongSha1": "20129ecb625ab73ec171bbc08f000b0ff0e7b0f8",
+		"bitrate": "160k"
+	},
+	"prince__i-could-never-take-the-place-of-your-man": {
+		"offsetSeconds": 33.871,
+		"endSeconds": 53.418,
+		"fullSongSha1": "58938bd65a9e08ff8b700b6591785368300a7513",
+		"bitrate": "160k"
+	},
+	"r-e-m__bang-and-blame": {
+		"offsetSeconds": 7.883,
+		"endSeconds": 34.006,
+		"fullSongSha1": "eded485891ecc198749ff8fced8857285961df22",
+		"bitrate": "160k"
+	},
+	"ray-charles-and-his-orchestra-with-the-raelettes__hit-the-road-jack": {
+		"offsetSeconds": 0,
+		"endSeconds": 18.026,
+		"fullSongSha1": "7355d99752e3c4d1e626b0bf6e7d7a4482cdcf49",
+		"bitrate": "160k"
+	},
+	"rihanna__stay": {
+		"offsetSeconds": 67.554,
+		"endSeconds": 86.93,
+		"fullSongSha1": "2f04b307c5ccbbb234ced1265d66f3832ad84a07",
+		"bitrate": "160k"
+	},
+	"rihanna-featuring-calvin-harris__we-found-love": {
+		"offsetSeconds": 148.146,
+		"endSeconds": 180.319,
+		"fullSongSha1": "2160bfbab50503b8aa1ae60a3239d59d244d569c",
+		"bitrate": "160k"
+	},
+	"rihanna-kanye-west-paul-mccartney__fourfiveseconds": {
+		"offsetSeconds": 8.333,
+		"endSeconds": 28.896,
+		"fullSongSha1": "27b128d526bc546b1e3d852f2eb418314921b86d",
+		"bitrate": "160k"
+	},
+	"saja-boys-andrew-choi-neckwav-danny-chung-kevin-woo-samuil-lee__soda-pop": {
+		"offsetSeconds": 24.101,
+		"endSeconds": 41.449,
+		"fullSongSha1": "c10b8f3ac7f9eaf0f1123bc590143efae3eed7cc",
+		"bitrate": "160k"
+	},
+	"salt-n-pepa__push-it": {
+		"offsetSeconds": 50.309,
+		"endSeconds": 67.937,
+		"fullSongSha1": "5cec2e704ef4c177611cb6a11f88f6fed249baa2",
+		"bitrate": "160k"
+	},
+	"sean-kingston__beautiful-girls": {
+		"offsetSeconds": 30.359,
+		"endSeconds": 63.126,
+		"fullSongSha1": "eb1bc7748eca0215e60be76f1415e6e4662519a8",
+		"bitrate": "160k"
+	},
+	"shania-twain__you-re-still-the-one": {
+		"offsetSeconds": 15.645,
+		"endSeconds": 46.384,
+		"fullSongSha1": "9970cd351c1d777046d260bbd8069273ef9764c9",
+		"bitrate": "160k"
+	},
+	"sheryl-crow__strong-enough": {
+		"offsetSeconds": 2.779,
+		"endSeconds": 33.19,
+		"fullSongSha1": "72e0f28a89f9f9aae0007ae245dbc16223d6d1b1",
+		"bitrate": "160k"
+	},
+	"spin-doctors__little-miss-can-t-be-wrong": {
+		"offsetSeconds": 49.648,
+		"endSeconds": 68.369,
+		"fullSongSha1": "225017260ba36224899fb12ed20f23e885754b60",
+		"bitrate": "160k"
+	},
+	"t-i-featuring-rihanna__live-your-life": {
+		"offsetSeconds": 35.905,
+		"endSeconds": 62.82,
+		"fullSongSha1": "9899c32c788a679fb83a986aa1c0a26642fed3eb",
+		"bitrate": "160k"
+	},
+	"taylor-swift__all-too-well-taylor-s-version": {
+		"offsetSeconds": 86.949,
+		"endSeconds": 119.957,
+		"fullSongSha1": "3ed9289d4fadbba33e883f9fb285b025709c50bf",
+		"bitrate": "160k"
+	},
+	"taylor-swift__bad-blood-taylor-s-version": {
+		"offsetSeconds": 55.808,
+		"endSeconds": 69.491,
+		"fullSongSha1": "dc234b6b8789b4ad3a50c703045bddc89b1345ae",
+		"bitrate": "160k"
+	},
+	"taylor-swift__lover": {
+		"offsetSeconds": 42.669,
+		"endSeconds": 65.803,
+		"fullSongSha1": "6cfb1c28c9ec8f49e8567a3062a1eb921749f740",
+		"bitrate": "160k"
+	},
+	"taylor-swift__my-tears-ricochet": {
+		"offsetSeconds": 51.464,
+		"endSeconds": 83.397,
+		"fullSongSha1": "5f49a205270c1d0840f21ff2f8918be7a159a114",
+		"bitrate": "160k"
+	},
+	"taylor-swift__we-are-never-ever-getting-back-together": {
+		"offsetSeconds": 41.551,
+		"endSeconds": 60.561,
+		"fullSongSha1": "f4cc2b195b4b0dc3b844f725a832176eefdc08b2",
+		"bitrate": "160k"
+	},
+	"taylor-swift__you-belong-with-me": {
+		"offsetSeconds": 156.305,
+		"endSeconds": 176.615,
+		"fullSongSha1": "8de6a6df2777008d1796e1ed4430e723a60e2a2a",
+		"bitrate": "160k"
+	},
+	"taylor-swift__you-re-on-your-own-kid": {
+		"offsetSeconds": 124.113,
+		"endSeconds": 158.167,
+		"fullSongSha1": "9ebf7022390f048557cbd8015b75bc216aa90b9d",
+		"bitrate": "160k"
+	},
+	"the-beatles__let-it-be": {
+		"offsetSeconds": 13.544,
+		"endSeconds": 22.305,
+		"fullSongSha1": "8a97cacef491b262837a916ec30eb4fe0acd731e",
+		"bitrate": "160k"
+	},
+	"the-beatles__twist-and-shout": {
+		"offsetSeconds": 5.993,
+		"endSeconds": 30.594,
+		"fullSongSha1": "3fbbaa9f292c17fb1f6daf6370ce30f97059f3e3",
+		"bitrate": "160k"
+	},
+	"the-drifters__there-goes-my-baby": {
+		"offsetSeconds": 14.254,
+		"endSeconds": 45.99,
+		"fullSongSha1": "de7f46e369f7eb2af901cc71cee81433618ddabb",
+		"bitrate": "160k"
+	},
+	"the-human-beinz__nobody-but-me": {
+		"offsetSeconds": 19.75,
+		"endSeconds": 35.765,
+		"fullSongSha1": "688e6d6047c88710050963ae0ebd61a8855c2dba",
+		"bitrate": "160k"
+	},
+	"the-jimi-hendrix-experience__all-along-the-watchtower": {
+		"offsetSeconds": 17.816,
+		"endSeconds": 37.282,
+		"fullSongSha1": "c36b5624221bb76e8715ae3b44ac6bc178570f54",
+		"bitrate": "160k"
+	},
+	"the-killers__mr-brightside": {
+		"offsetSeconds": 61.035,
+		"endSeconds": 89.19,
+		"fullSongSha1": "21089d2b4f2eae40e2994f2c2d4cc475ee5eff3f",
+		"bitrate": "160k"
+	},
+	"the-police__wrapped-around-your-finger": {
+		"offsetSeconds": 38.775,
+		"endSeconds": 63.625,
+		"fullSongSha1": "d8e9239ed83c45a41f3fdc3ece6ee70b9c620be4",
+		"bitrate": "160k"
+	},
+	"the-tokens__the-lion-sleeps-tonight": {
+		"offsetSeconds": 47.248,
+		"endSeconds": 65.095,
+		"fullSongSha1": "be3e0705fdd98c81fc6398a5d699016bd40dfddc",
+		"bitrate": "160k"
+	},
+	"the-turtles__happy-together": {
+		"offsetSeconds": 6.517,
+		"endSeconds": 40.836,
+		"fullSongSha1": "3da5a8f786ec310e6e1bb73b47bc8d0f685bc133",
+		"bitrate": "160k"
+	},
+	"tom-petty__free-fallin": {
+		"offsetSeconds": 2.088,
+		"endSeconds": 26.98,
+		"fullSongSha1": "44a9c4beff9a70188b134eda84c378b258c04ce1",
+		"bitrate": "160k"
+	},
+	"toto__africa": {
+		"offsetSeconds": 68.539,
+		"endSeconds": 85.826,
+		"fullSongSha1": "481a186edd1f9882f7f9759730f61baffe0d20c6",
+		"bitrate": "160k"
+	},
+	"tracy-chapman__fast-car": {
+		"offsetSeconds": 20.795,
+		"endSeconds": 41.792,
+		"fullSongSha1": "04455f0edefc0e1dd468d8a30df8e13ce8e0f7b4",
+		"bitrate": "160k"
+	},
+	"train__drops-of-jupiter-tell-me": {
+		"offsetSeconds": 10.693,
+		"endSeconds": 37.276,
+		"fullSongSha1": "dfda1ba98e14e96c3c1a97721a083de68f70a250",
+		"bitrate": "160k"
+	},
+	"usher-and-alicia-keys__my-boo": {
+		"offsetSeconds": 106.564,
+		"endSeconds": 131.505,
+		"fullSongSha1": "124177f79d0b961242257a7dc6057ac8d0e1e1e5",
+		"bitrate": "160k"
+	},
+	"van-morrison__brown-eyed-girl": {
+		"offsetSeconds": 13.092,
+		"endSeconds": 34.386,
+		"fullSongSha1": "39516a5a98bf22a5d2defb57a2caebc899316a6f",
+		"bitrate": "160k"
+	},
+	"walk-the-moon__shut-up-and-dance": {
+		"offsetSeconds": 65.103,
+		"endSeconds": 82.871,
+		"fullSongSha1": "db6f13a7723ec87047ef87f8e15aff892ca1daa3",
+		"bitrate": "160k"
+	},
+	"wings__silly-love-songs": {
+		"offsetSeconds": 60.894,
+		"endSeconds": 78.52,
+		"fullSongSha1": "f6f303b33dadd0e2777162abeb4f2aa6791bdde5",
+		"bitrate": "160k"
+	}
+}

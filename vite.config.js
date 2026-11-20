@@ -5,6 +5,7 @@ import { timeFormat } from "d3";
 import path from "path";
 import svg from "vite-plugin-svgstring";
 import dsv from "@rollup/plugin-dsv";
+import sirv from "sirv";
 
 const { version } = JSON.parse(readFileSync("package.json", "utf8"));
 const timestamp = timeFormat("%Y-%m-%d-%H:%M")(new Date());
@@ -14,7 +15,22 @@ export default defineConfig({
 		__VERSION__: JSON.stringify(version),
 		__TIMESTAMP__: JSON.stringify(timestamp)
 	},
-	plugins: [sveltekit(), dsv(), svg()],
+	plugins: [
+		sveltekit(),
+		dsv(),
+		svg(),
+		// The full synced songs, for /demo/record in dev; the site itself
+		// only publishes their clips (npm run clean-mp3).
+		{
+			name: "serve-full-synced-songs",
+			configureServer(server) {
+				server.middlewares.use(
+					"/full-synced-songs",
+					sirv("full-synced-songs", { dev: true })
+				);
+			}
+		}
+	],
 	resolve: {
 		alias: {
 			$actions: path.resolve("./src/actions"),

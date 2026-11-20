@@ -3,7 +3,7 @@ import { applyHandReviewedCorrections } from "$data/applyHandReviewedCorrections
 import { songShardFor, songShardUrl } from "$data/hexMapSnapshot.js";
 import { groupSongs } from "$data/songBrowser.js";
 import {
-	SYNCED_SONG_AUDIO_DIRECTORY,
+	FULL_SYNCED_SONG_DIRECTORY,
 	SYNCED_VIDEO_DIRECTORY,
 	type SyncedSongAudio,
 	type SyncedVideo
@@ -30,8 +30,9 @@ export type RecordSong = {
 
 export const DEFAULT_KEY: MusicalKey = { tonic: "C", scale: "major" };
 
+// The full song, served by the dev server only (see vite.config.js).
 export const audioSrcOf = (audioFile: string): string =>
-	`${base}/${SYNCED_SONG_AUDIO_DIRECTORY}/${encodeURIComponent(audioFile)}`;
+	`${base}/${FULL_SYNCED_SONG_DIRECTORY}/${encodeURIComponent(audioFile)}`;
 
 const titleCase = (slug: string): string =>
 	slug
