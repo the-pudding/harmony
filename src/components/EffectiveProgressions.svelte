@@ -68,27 +68,27 @@
 	{#each analyses as analysis (analysis.songKey)}
 		{@const { songKey, song, homogeneity } = analysis}
 		<section class="song">
+			<header>
+				<div class="title-row">
+					<SongAnchor {songKey} size="title" label="beside" labelPx={20} />
+				</div>
+				{#if effectiveVisible && homogeneity}
+					<div class="count">
+						<strong
+							>{formatEffectiveProgressionCount(
+								homogeneity.effectiveProgressionCount
+							)}</strong
+						>
+						<span class="muted">effective progressions</span>
+					</div>
+				{/if}
+			</header>
+
 			{#if song === undefined}
 				<p class="muted">Loading…</p>
 			{:else if song === null}
 				<p class="muted">Couldn’t find {songKey}</p>
 			{:else}
-				<header>
-					<div class="title-row">
-						<SongAnchor {songKey} size="title" label="beside" labelPx={20} />
-					</div>
-					{#if effectiveVisible && homogeneity}
-						<div class="count">
-							<strong
-								>{formatEffectiveProgressionCount(
-									homogeneity.effectiveProgressionCount
-								)}</strong
-							>
-							<span class="muted">effective progressions</span>
-						</div>
-					{/if}
-				</header>
-
 				<div class="bar">
 					<ProgressionShareBar
 						segments={segmentsFor(analysis)}

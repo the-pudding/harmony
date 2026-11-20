@@ -40,6 +40,14 @@ describe("poseAt", () => {
 		expect(landed(pin, 0)).toBe(true);
 		expect(poseAt(pin, 0, pose(10, 10))).toEqual(pose(10, 10));
 	});
+
+	it("holds its frozen pose through a delay", () => {
+		const pin = createPin(pose(0, 0, 3), 1000, 900, 700);
+		expect(poseAt(pin, 1700, pose(100, 50))).toEqual(pose(0, 0, 3));
+		expect(poseAt(pin, 2150, pose(100, 50))).toEqual(pose(50, 25, 6.5));
+		expect(landed(pin, 2599)).toBe(false);
+		expect(landed(pin, 2600)).toBe(true);
+	});
 });
 
 describe("retarget", () => {

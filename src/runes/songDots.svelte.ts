@@ -1,3 +1,4 @@
+import { untrack } from "svelte";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import type { SongSummary } from "$components/hexmap/components/scatter/paint/outlinedLabels.js";
 
@@ -30,6 +31,8 @@ const stacks = new Map<string, DotAnchor[]>();
 const active = new SvelteMap<string, DotAnchor>();
 // Songs whose mark hasn't reached its anchor yet.
 const travelling = new SvelteSet<string>();
+// Maps drawing the marks; without one, no mark can travel.
+let painters = $state(0);
 let summaries = $state.raw<ReadonlyMap<string, SongSummary>>(new Map());
 
 const activate = (songKey: string) => {
@@ -65,9 +68,16 @@ export const songDots = {
 		};
 	},
 
-	// True once every anchored song's mark has reached its anchor.
+	// True once every anchored song's mark has reached its anchor, or when
+	// no map is drawing them.
 	get arrived(): boolean {
-		return travelling.size === 0;
+		return painters === 0 || travelling.size === 0;
+	},
+
+	// Called by a map that draws the marks; returns the disconnect function.
+	connectPainter(): () => void {
+		untrack(() => painters++);
+		return () => untrack(() => painters--);
 	},
 
 	// Called by the map when a song's mark reaches its anchor.

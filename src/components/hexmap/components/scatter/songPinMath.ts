@@ -17,6 +17,8 @@ export type Pin = {
 	current: PinPose;
 	startMs: number;
 	durationMs: number;
+	// How long it holds its from pose before setting off.
+	delayMs: number;
 };
 
 export type AnchorRect = {
@@ -29,13 +31,18 @@ export type AnchorRect = {
 export const createPin = (
 	from: PinPose,
 	nowMs: number,
-	durationMs: number
-): Pin => ({ from, current: from, startMs: nowMs, durationMs });
+	durationMs: number,
+	delayMs = 0
+): Pin => ({ from, current: from, startMs: nowMs, durationMs, delayMs });
 
-const progressAt = (pin: Pin, nowMs: number): number =>
-	pin.durationMs <= 0
-		? 1
-		: Math.min(1, Math.max(0, (nowMs - pin.startMs) / pin.durationMs));
+const progressAt = (pin: Pin, nowMs: number): number => {
+	const elapsedMs = nowMs - pin.startMs - pin.delayMs;
+	return pin.durationMs <= 0
+		? elapsedMs >= 0
+			? 1
+			: 0
+		: Math.min(1, Math.max(0, elapsedMs / pin.durationMs));
+};
 
 export const landed = (pin: Pin, nowMs: number): boolean =>
 	progressAt(pin, nowMs) === 1;
@@ -59,8 +66,9 @@ export const poseAt = (pin: Pin, nowMs: number, target: PinPose): PinPose => {
 export const retarget = (
 	pin: Pin,
 	nowMs: number,
-	durationMs = pin.durationMs
-): Pin => ({ ...pin, from: pin.current, startMs: nowMs, durationMs });
+	durationMs = pin.durationMs,
+	delayMs = 0
+): Pin => ({ ...pin, from: pin.current, startMs: nowMs, durationMs, delayMs });
 
 // The label's line height and its gap from the dot, at a title size.
 export const labelMetrics = (labelPx: number) => {

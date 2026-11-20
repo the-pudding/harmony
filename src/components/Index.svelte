@@ -112,14 +112,29 @@
 		}
 	});
 
+	// The slide this one was reached from (null on the first one shown).
+	let previousSlideI = $state(null);
+	let movedForward = $derived(
+		previousSlideI === null || slideI > previousSlideI
+	);
+	let stageIsNew = $derived(
+		previousSlideI === null ||
+			allSlides[previousSlideI].stage?.component !== stageComponentName
+	);
+
 	// a <button><strong class=progression> in the text refocuses the map on
 	// that cluster; the slide's own focusCluster comes back on the next visit
 	let textFocusCluster = $state();
+	// Going back, the map moves in one go, without the staged reveal.
 	let mapScene = $derived.by(() => {
 		const scene = parseMapScene(map);
-		return scene === null || textFocusCluster === undefined
+		if (scene === null) return null;
+		const staged = movedForward
 			? scene
-			: { ...scene, camera: { kind: "cluster", name: textFocusCluster } };
+			: { ...scene, reveal: { clusters: [] } };
+		return textFocusCluster === undefined
+			? staged
+			: { ...staged, camera: { kind: "cluster", name: textFocusCluster } };
 	});
 	// While followVideo plays: its current cue's song is spotlit and earlier
 	// cues' songs stay lit.
@@ -145,6 +160,8 @@
 	let contentAwaitsMap = $derived(
 		mapRevealRunning && (mapScene?.reveal.clusters.length ?? 0) > 0
 	);
+	// A stage that arrives going forward waits for its songs' dots to reach it.
+	let stageWaits = $derived(movedForward && stageIsNew && !songDots.arrived);
 	let focusedCluster = $derived(
 		mapScene?.camera.kind === "cluster" ? mapScene.camera.name : undefined
 	);
@@ -299,6 +316,7 @@
 	const goToSlide = (i) => {
 		if (i === slideI) return;
 		enteredWithoutMap = mapScene === null;
+		previousSlideI = slideI;
 		slideI = i;
 		textFocusCluster = undefined;
 		explore.reset();
@@ -496,12 +514,20 @@
 			bind:this={clusterFrameEl}
 			bind:clientHeight={clusterFrameHeight}
 		>
-			{#if StageComponent}
-				<!-- a fresh <video>/<track> per video, or the old track's cues linger -->
-				{#key stageProps.videoId}
-					<StageComponent {...stageProps} onStage />
-				{/key}
-			{/if}
+			{#key StageComponent}
+				<div
+					class="stage-slot"
+					class:awaiting-map={stageWaits}
+					out:fade={{ duration: 250 }}
+				>
+					{#if StageComponent}
+						<!-- a fresh <video>/<track> per video, or the old track's cues linger -->
+						{#key stageProps.videoId}
+							<StageComponent {...stageProps} onStage />
+						{/key}
+					{/if}
+				</div>
+			{/key}
 		</div>
 
 		{#if showClusterPanel}
@@ -671,13 +697,23 @@
 		flex-direction: column;
 	}
 
+	/* one cell, so an outgoing stage fades out over the incoming one */
 	.main {
 		flex: 1;
+		min-height: 0;
+		display: grid;
+		grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+		transition: opacity 400ms ease;
+	}
+
+	.stage-slot {
+		grid-area: 1 / 1;
 		min-height: 0;
 		transition: opacity 400ms ease;
 	}
 
-	.main.awaiting-map {
+	.main.awaiting-map,
+	.stage-slot.awaiting-map {
 		transition: none;
 	}
 

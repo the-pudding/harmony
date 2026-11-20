@@ -1,3 +1,4 @@
+import { untrack } from "svelte";
 import { prefersReducedMotion } from "svelte/motion";
 import { songDots, type DotAnchor } from "$runes/songDots.svelte.js";
 import type { SongLabelLine } from "../songLabelText.js";
@@ -62,6 +63,9 @@ export const createSongPins = ({
 	// Changes only when a song is pinned or let go, so the map redraws then.
 	let pinnedSongKeys = $state.raw<ReadonlySet<string>>(new Set());
 	let paintedSignature = "";
+	// Songs already anchored when this map starts drawing get their marks
+	// there at once, without travelling.
+	let placeAtOnce = false;
 
 	const travelMs = () => (prefersReducedMotion.current ? 0 : PIN_TRAVEL_MS);
 
@@ -100,7 +104,7 @@ export const createSongPins = ({
 
 		let song = pinned.get(songKey);
 		if (!song) {
-			const from = mapPoseOf(songKey);
+			const from = placeAtOnce ? null : mapPoseOf(songKey);
 			song = {
 				pin: createPin(from ?? target, nowMs, from ? travelMs() : 0),
 				anchor,
@@ -230,12 +234,19 @@ export const createSongPins = ({
 		const frames = [...songKeys].flatMap(
 			(songKey) => frameFor(context, songKey, nowMs) ?? []
 		);
+		placeAtOnce = false;
 		syncPinnedSongKeys();
 		const signature = signatureOf(frames);
 		if (signature === paintedSignature) return;
 		paintedSignature = signature;
 		paint(frames);
 	};
+
+	$effect(() => {
+		if (!canvas) return;
+		placeAtOnce = untrack(() => songDots.anchors.size > 0);
+		return songDots.connectPainter();
+	});
 
 	$effect(() => {
 		if (!canvas) return;
