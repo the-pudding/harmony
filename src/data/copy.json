@@ -12,10 +12,6 @@
             {
               "type": "text",
               "value": "This is one pop hit, represented with a dot."
-            },
-            {
-              "type": "AudioGate",
-              "value": {}
             }
           ],
           "map": {
