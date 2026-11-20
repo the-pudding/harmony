@@ -13,6 +13,7 @@ import { boxAround, placeMarkerLabels } from "../labelPlacement.js";
 import type { PointStyle } from "../pointStyle.js";
 import { isOnScreen } from "../viewport.js";
 import { drawnIndexOf, screenOfIndex, type Scene } from "./scene.js";
+import { drawSongLabel } from "./songMark.js";
 
 export type SongSummary = {
 	title: string;
@@ -90,32 +91,26 @@ export const drawOutlinedSongLabels = (
 		}
 	);
 
-	context.textAlign = "left";
-	context.textBaseline = "middle";
-	context.lineJoin = "round";
-	context.lineWidth = 3;
-	context.strokeStyle = themeColors.labelHalo;
-	context.fillStyle = themeColors.labelText;
 	for (const {
-		item: { songKey, alpha, lines },
+		item: { songKey, screen, alpha, lines },
 		box
 	} of labels) {
-		const songAlpha = style.alphaFor(songKey) * alpha;
-		const rowY = (row: number) =>
-			box.top +
-			OUTLINED_LABEL_PADDING +
-			(row + 0.5) * OUTLINED_LABEL_LINE_HEIGHT;
-		const left = box.left + OUTLINED_LABEL_PADDING;
-		lines.forEach((line, index) => {
-			let x = left;
-			for (const { role, text } of line) {
-				context.globalAlpha = songAlpha * SONG_LABEL_STYLE[role].opacity;
-				context.font = canvasFontFor(role);
-				context.strokeText(text, x, rowY(index));
-				context.fillText(text, x, rowY(index));
-				x += context.measureText(text).width;
+		drawSongLabel(
+			context,
+			{
+				x: screen.x,
+				y: screen.y,
+				labelDx: box.left + OUTLINED_LABEL_PADDING - screen.x,
+				labelDy: box.top + OUTLINED_LABEL_PADDING - screen.y,
+				labelPx: SONG_LABEL_STYLE.title.fontSizePx
+			},
+			{
+				lines,
+				alpha: style.alphaFor(songKey) * alpha,
+				textColor: themeColors.labelText,
+				haloColor: themeColors.labelHalo
 			}
-		});
+		);
 	}
 };
 

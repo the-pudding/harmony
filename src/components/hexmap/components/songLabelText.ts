@@ -18,9 +18,9 @@ export const SONG_LABEL_STYLE: Record<
 	artist: { fontWeight: 500, fontSizePx: 10, opacity: 1 }
 };
 
-export const canvasFontFor = (role: SongLabelRole): string => {
+export const canvasFontFor = (role: SongLabelRole, scale = 1): string => {
 	const { fontWeight, fontSizePx } = SONG_LABEL_STYLE[role];
-	return `${fontWeight} ${fontSizePx}px ${SONG_LABEL_FONT_FAMILY}`;
+	return `${fontWeight} ${fontSizePx * scale}px ${SONG_LABEL_FONT_FAMILY}`;
 };
 
 export const songLabelLines = ({
