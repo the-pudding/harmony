@@ -4,14 +4,24 @@
 	import { attachAudio, onStopAll } from "$runes/audio.svelte";
 	import SyncedChords from "$components/SyncedChords.svelte";
 	import { committedSyncedVideos, syncedVideos } from "$data/syncedSongs";
+	import { cueAt, videoCues } from "$data/videoCues";
+	import { storyMedia } from "$runes/storyMedia.svelte";
 
-	let { videoId, caption } = $props();
+	// dock: "corner" pins the video to the bottom-left as a card, so the map
+	// can fill the rest of the screen.
+	let { videoId, caption, dock = null } = $props();
 
 	const appState = getContext("state");
 
 	let videoEl = $state();
 	let paused = $state(true);
 	let currentTime = $state(0);
+
+	const docked = $derived(dock === "corner");
+	const cues = $derived(videoCues[videoId]);
+	// The cue showing at the current time (the first one while paused at 0).
+	const cueIndex = $derived(cues ? cueAt(cues, currentTime) : -1);
+	let cardHeight = $state(0);
 
 	const sync = $derived(committedSyncedVideos[videoId]);
 	const cluster = $derived(
@@ -20,7 +30,7 @@
 
 	// timeupdate only fires ~4x/sec, too coarse for chord changes
 	$effect(() => {
-		if (!sync || !videoEl || paused) return;
+		if (!(sync || cues) || !videoEl || paused) return;
 		let frame;
 		const tick = () => {
 			currentTime = videoEl.currentTime;
@@ -35,6 +45,25 @@
 		videoEl.pause();
 		videoEl.currentTime = 0;
 		currentTime = 0;
+		storyMedia.clearCue();
+	});
+
+	// Tell the map which cue is current while the clip plays or is paused
+	// part-way; paused at the start means no cue.
+	$effect(() => {
+		if (!cues) return;
+		if (paused && currentTime === 0) storyMedia.clearCue();
+		else storyMedia.setCue(videoId, cueIndex);
+	});
+
+	// The docked card's height, for the map's frame.
+	$effect(() => {
+		storyMedia.setDockHeight(docked ? cardHeight : 0);
+	});
+
+	$effect(() => () => {
+		storyMedia.clearCue();
+		storyMedia.setDockHeight(0);
 	});
 
 	const positionCues = (track) => {
@@ -50,50 +79,9 @@
 		track.addEventListener("load", apply);
 		return () => track.removeEventListener("load", apply);
 	};
-
-	const songs = [
-		{ artist: "Journey", song: "Don't Stop Believing" },
-		{ artist: "James Blunt", song: "You're Beautiful" },
-		{ artist: "Alphaville", song: "Forever Young" },
-		{ artist: "Jason Mraz", song: "I'm Yours" },
-		{ artist: "Mika", song: "Happy Ending" },
-		{ artist: "Alex Lloyd", song: "Amazing" },
-		{ artist: "The Calling", song: "Wherever You Will Go" },
-		{ artist: "Elton John", song: "Can You Feel The Love Tonight" },
-		{ artist: "Maroon 5", song: "She Will Be Loved" },
-		{ artist: "The Last Goodnight", song: "Pictures Of You" },
-		{ artist: "U2", song: "With Or Without You" },
-		{ artist: "Crowded House", song: "Fall At Your Feet" },
-		{ artist: "Kasey Chambers", song: "Not Pretty Enough" },
-		{ artist: "The Beatles", song: "Let It Be" },
-		{ artist: "Red Hot Chili Peppers", song: "Under The Bridge" },
-		{ artist: "Daryl Braithwaite", song: "The Horses" },
-		{ artist: "Bob Marley", song: "No Woman No Cry" },
-		{ artist: "Marcy Playground", song: "Sex And Candy" },
-		{ artist: "Men At Work", song: "Land Down Under" },
-		{ artist: "Banjo Paterson", song: "Waltzing Matilda" },
-		{ artist: "A-ha", song: "Take On Me" },
-		{ artist: "Green Day", song: "When I Come Around" },
-		{ artist: "Eagle Eye Cherry", song: "Save Tonight" },
-		{ artist: "Toto", song: "Africa" },
-		{ artist: "Beyoncé", song: "If I Were A Boy" },
-		{ artist: "The Offspring", song: "Self Esteem" },
-		{ artist: "The Offspring", song: "You're Gonna Go Far, Kid" },
-		{ artist: "Pink", song: "You And Your Hand" },
-		{ artist: "Lady Gaga", song: "Poker Face" },
-		{ artist: "Aqua", song: "Barbie Girl" },
-		{ artist: "The Fray", song: "You Found Me" },
-		{ artist: "3OH!3", song: "Don't Trust Me" },
-		{ artist: "MGMT", song: "Kids" },
-		{ artist: "Tim Minchin", song: "Canvas Bags" },
-		{ artist: "Natalie Imbruglia", song: "Torn" },
-		{ artist: "Five For Fighting", song: "Superman" },
-		{ artist: "Axis Of Awesome", song: "Birdplane" },
-		{ artist: "Missy Higgins", song: "Scar" }
-	];
 </script>
 
-<figure>
+<figure class:docked bind:offsetHeight={cardHeight}>
 	<div class="video-wrapper">
 		<video
 			{@attach attachAudio}
@@ -130,16 +118,13 @@
 		{/if}
 	</div>
 
-	{#if videoId === "examples"}
-		<div class="scrolling">
+	{#if cues}
+		<!-- ~3 rows: the current cue centered and bold, the list sliding under it -->
+		<div class="cue-list" style:--index={Math.max(cueIndex, 0)}>
 			<div class="track">
-				{#each [0, 1] as copy}
-					<div aria-hidden={copy === 1}>
-						{#each songs as { artist, song }}
-							<div class="row">
-								<strong class="song-name">{song}</strong> by {artist}
-							</div>
-						{/each}
+				{#each cues as { artist, song }, i}
+					<div class="row" class:current={i === cueIndex}>
+						<strong class="song-name">{song}</strong> by {artist}
 					</div>
 				{/each}
 			</div>
@@ -149,6 +134,7 @@
 
 <style>
 	figure {
+		--dock-inset: 16px;
 		height: 100%;
 		max-width: var(--col-width);
 		margin: 0 auto;
@@ -204,22 +190,85 @@
 		}
 	}
 
-	.scrolling {
-		position: relative;
-		z-index: -1;
+	.cue-list {
+		--row: 1.6rem;
+		height: calc(var(--row) * 3);
+		margin-top: 0.5rem;
+		overflow: hidden;
+		mask-image: linear-gradient(
+			to bottom,
+			transparent,
+			black 30%,
+			black 70%,
+			transparent
+		);
 	}
 
 	.track {
-		animation: scroll-up 40s linear infinite;
+		/* row 0 sits in the middle slot when --index is 0 */
+		transform: translateY(calc(var(--row) * (1 - var(--index))));
+		transition: transform 0.4s ease;
 	}
 
 	.row {
+		height: var(--row);
+		line-height: var(--row);
 		text-align: center;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 		font-size: var(--12px);
+		opacity: 0.55;
+		transition: opacity 0.4s ease;
+	}
+
+	.row.current {
+		opacity: 1;
 	}
 
 	.song-name {
 		font-size: var(--16px);
+		font-weight: 400;
+	}
+
+	.row.current .song-name {
+		font-weight: 700;
+	}
+
+	/* pinned bottom-left, under the map; the map's frame leaves room for it */
+	figure.docked {
+		position: fixed;
+		left: var(--dock-inset);
+		bottom: var(--dock-inset);
+		z-index: 5;
+		width: min(40vw, 360px);
+		height: auto;
+		max-width: none;
+		margin: 0;
+		padding: 0.5rem 0.5rem 0.25rem;
+		background: color-mix(in srgb, var(--color-bg, #0a0a0c) 92%, transparent);
+		border: 1px solid var(--color-gray-700, #333);
+		border-radius: 6px;
+		pointer-events: auto;
+	}
+
+	figure.docked video {
+		width: 100%;
+	}
+
+	@media (max-width: 600px) {
+		figure.docked {
+			left: 0;
+			bottom: 0;
+			width: 100%;
+			max-height: 35svh;
+			border-radius: 6px 6px 0 0;
+		}
+
+		figure.docked video {
+			max-height: 20svh;
+			margin: 0 auto;
+		}
 	}
 
 	.shania-player {
@@ -234,14 +283,5 @@
 
 	.shania-player.faded {
 		opacity: 0.4;
-	}
-
-	@keyframes scroll-up {
-		from {
-			transform: translateY(0%);
-		}
-		to {
-			transform: translateY(-50%);
-		}
 	}
 </style>

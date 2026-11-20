@@ -31,6 +31,7 @@
 	} from "$components/storymap/mapScene";
 	import { chordify } from "$utils/chordify";
 	import { setContext } from "svelte";
+	import { storyMedia } from "$runes/storyMedia.svelte";
 	import { createExplore } from "$runes/explore.svelte";
 	import { sameClusterName } from "$data/clusterName";
 	import { spanStyle } from "$routes/demo/record/timelineStyles";
@@ -206,10 +207,19 @@
 	// margin to an edge either.)
 	const MAP_FRAME_GAP = 16;
 	const MAP_FRAME_BOTTOM = 48;
+	// A docked video card (bottom-left, 16px from the edges) pushes the
+	// bottom up above it.
+	const DOCK_INSET = 16;
 	let mapFrame = $derived({
 		top: focusFrame ? focusFrame.top + MAP_FRAME_GAP : 0,
 		right: 0,
-		bottom: MAP_FRAME_BOTTOM,
+		bottom:
+			storyMedia.dockHeight > 0
+				? Math.max(
+						MAP_FRAME_BOTTOM,
+						storyMedia.dockHeight + DOCK_INSET + MAP_FRAME_GAP
+					)
+				: MAP_FRAME_BOTTOM,
 		left: 0
 	});
 	// What's explored, playing and open (see explore.svelte.ts). On the
