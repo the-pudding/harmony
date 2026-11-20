@@ -9,6 +9,8 @@ export type RevealStages = {
 	// Per song, 0 first; everyone else is in the last stage, count - 1.
 	stageOf: Uint8Array;
 	count: number;
+	// Stage 0 is the listed songs (revealSongs), not a cluster.
+	songsFirst: boolean;
 };
 
 // Null when no listed song or cluster exists; unknown ones warn in dev.
@@ -42,5 +44,9 @@ export const revealStages = (
 			stageOf[index] = Math.min(stageOf[index], stage);
 		}
 	});
-	return { stageOf, count: stages.length + 1 };
+	return {
+		stageOf,
+		count: stages.length + 1,
+		songsFirst: songIndexes.length > 0
+	};
 };

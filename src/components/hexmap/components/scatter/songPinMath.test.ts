@@ -18,7 +18,8 @@ const pose = (x: number, y: number, r = 10): PinPose => ({
 	labelDx: 16,
 	labelDy: -14,
 	labelPx: 12,
-	labelAlpha: 1
+	labelAlpha: 1,
+	fill: "#ffffff"
 });
 
 describe("poseAt", () => {
@@ -70,7 +71,7 @@ describe("anchorPose", () => {
 		const target = anchorPose(
 			rect,
 			{ radius: 10, label: "beside", labelPx: 20, align: "start" },
-			{ lineCount: 2, textWidth: 120 }
+			{ lineCount: 2, textWidth: 120, fill: "#ffffff" }
 		);
 		expect(target).toEqual({
 			x: 110,
@@ -79,7 +80,8 @@ describe("anchorPose", () => {
 			labelDx: 10 + gap,
 			labelDy: -lineHeight,
 			labelPx: 20,
-			labelAlpha: 1
+			labelAlpha: 1,
+			fill: "#ffffff"
 		});
 		expect(labelRoom(rect, target)).toBe(400 - 120 - gap);
 	});
@@ -89,7 +91,7 @@ describe("anchorPose", () => {
 		const target = anchorPose(
 			rect,
 			{ radius: 10, label: "beside", labelPx: 12, align: "center" },
-			{ lineCount: 2, textWidth: 100 }
+			{ lineCount: 2, textWidth: 100, fill: "#ffffff" }
 		);
 		expect(target.x).toBe(100 + (300 - (20 + gap + 100)) / 2 + 10);
 	});
@@ -98,7 +100,7 @@ describe("anchorPose", () => {
 		const target = anchorPose(
 			rect,
 			{ radius: 7, label: "none", labelPx: 12, align: "center" },
-			{ lineCount: 2, textWidth: 100 }
+			{ lineCount: 2, textWidth: 100, fill: "#ffffff" }
 		);
 		expect(target.x).toBe(250);
 		expect(target.labelAlpha).toBe(0);
@@ -111,5 +113,15 @@ describe("idlePlayIconAlpha", () => {
 		expect(idlePlayIconAlpha(10)).toBe(0);
 		expect(idlePlayIconAlpha(18)).toBe(0.5);
 		expect(idlePlayIconAlpha(26)).toBe(1);
+	});
+});
+
+describe("poseAt's fill", () => {
+	it("blends from the starting fill to the target's as the mark travels", () => {
+		const pin = createPin({ ...pose(0, 0), fill: "#000000" }, 0, 1000);
+		const target = { ...pose(100, 0), fill: "#ffffff" };
+		expect(poseAt(pin, 0, target).fill).toBe("rgb(0, 0, 0)");
+		expect(poseAt(pin, 500, target).fill).toBe("rgb(128, 128, 128)");
+		expect(poseAt(pin, 1000, target).fill).toBe("#ffffff");
 	});
 });

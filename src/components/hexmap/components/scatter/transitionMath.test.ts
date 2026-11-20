@@ -214,6 +214,29 @@ describe("staged transitions", () => {
 		return run;
 	};
 
+	it("moves an easeOut stage's songs decelerating, and the rest eased in and out", () => {
+		const easedPlan = plan([0, 2]);
+		const run = setUp(channels([0, 0], [0, 0]), channels([1, 1], [0, 0]));
+		writeStageWindows(
+			{
+				...easedPlan,
+				stages: easedPlan.stages.map((stage, index) =>
+					index === 0 ? { ...stage, easeOut: true } : stage
+				)
+			},
+			null,
+			run.windows
+		);
+		expect(Array.from(run.windows.easeOut)).toEqual([1, 0]);
+		// A quarter of the way through the first stage's move: ahead of a
+		// linear move when easing out, behind it when easing in and out.
+		const { x } = run.at(ms(75));
+		expect(x[0]).toBeGreaterThan(0.25);
+		expect(x[1]).toBe(0);
+		const last = run.at(ms(450)).x[1];
+		expect(last).toBeLessThan(0.25);
+	});
+
 	it("adds up the stages and the pauses between them", () => {
 		expect(stagedDurationMs(plan([]))).toBe(600);
 		expect(lastMoveStart(plan([]))).toBeCloseTo(ms(400));

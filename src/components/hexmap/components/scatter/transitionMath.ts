@@ -1,4 +1,5 @@
 // Transition math on typed arrays mutated in place, so frames allocate nothing.
+import { easeCubicOut } from "d3";
 
 // One value per song, by song index. mix: 0 = star white, 1 = region color.
 export type Channels = {
@@ -34,13 +35,15 @@ export const copyChannels = (source: Channels, into: Channels): void => {
 
 // Per song, as fractions of the transition: position moves over
 // [moveStart, moveEnd], color and alpha change over [tintStart, tintEnd], and
-// before that alpha eases down to at most dimAlpha over [0, dimEnd].
+// before that alpha eases down to at most dimAlpha over [0, dimEnd]. A song
+// with easeOut set moves decelerating (see Stage).
 export type SongWindows = {
 	moveStart: Float32Array;
 	moveEnd: Float32Array;
 	tintStart: Float32Array;
 	tintEnd: Float32Array;
 	dimAlpha: Float32Array;
+	easeOut: Uint8Array;
 	dimEnd: number;
 };
 
@@ -52,6 +55,7 @@ export const createWindows = (count: number): SongWindows => ({
 	tintStart: new Float32Array(count),
 	tintEnd: new Float32Array(count),
 	dimAlpha: new Float32Array(count).fill(UNDIMMED_ALPHA),
+	easeOut: new Uint8Array(count),
 	dimEnd: 0
 });
 
@@ -62,6 +66,7 @@ export const writeWholeWindows = (windows: SongWindows): void => {
 	windows.tintStart.fill(0);
 	windows.tintEnd.fill(1);
 	windows.dimAlpha.fill(UNDIMMED_ALPHA);
+	windows.easeOut.fill(0);
 	windows.dimEnd = 0;
 };
 
@@ -110,7 +115,10 @@ export const beginTransition = (
 
 // A stage's songs tint in place for tintMs, then move for moveMs; with no
 // tintMs they tint as they move.
-export type Stage = { tintMs: number; moveMs: number };
+// easeOut: songs set off at speed and slow to a stop, instead of easing in
+// and out, so ones flying in from far off screen show up at once rather
+// than spending most of their move out of sight.
+export type Stage = { tintMs: number; moveMs: number; easeOut?: boolean };
 
 // Songs move in stages, one after another and pauseMs apart. A stage's songs
 // move together, except in the last, where their stagger spreads their
@@ -163,7 +171,7 @@ export const writeStageWindows = (
 	const moveEnds = plan.stages.map(
 		({ moveMs }, stage) => moveStarts[stage] + moveMs / total
 	);
-	const { moveStart, moveEnd, tintStart, tintEnd, dimAlpha } = windows;
+	const { moveStart, moveEnd, tintStart, tintEnd, dimAlpha, easeOut } = windows;
 	for (let i = 0; i < moveStart.length; i++) {
 		const stage = Math.min(plan.stageOf[i], last);
 		const tintsWhileMoving = plan.stages[stage].tintMs <= 0;
@@ -177,6 +185,7 @@ export const writeStageWindows = (
 		tintStart[i] = tintsWhileMoving ? moveStart[i] : tintStarts[stage];
 		tintEnd[i] = tintsWhileMoving ? moveEnd[i] : moveStarts[stage];
 		dimAlpha[i] = stage > 0 ? plan.dimAlpha : UNDIMMED_ALPHA;
+		easeOut[i] = plan.stages[stage].easeOut ? 1 : 0;
 	}
 	windows.dimEnd = plan.dimMs / total;
 };
@@ -208,10 +217,15 @@ export const stepTransition = (
 		copyChannels(to, current);
 		return;
 	}
-	const { moveStart, moveEnd, tintStart, tintEnd, dimAlpha } = windows;
+	const { moveStart, moveEnd, tintStart, tintEnd, dimAlpha, easeOut } = windows;
 	const dimmed = through(t, 0, windows.dimEnd, easing);
 	for (let i = 0; i < count; i++) {
-		const moved = through(t, moveStart[i], moveEnd[i], easing);
+		const moved = through(
+			t,
+			moveStart[i],
+			moveEnd[i],
+			easeOut[i] ? easeCubicOut : easing
+		);
 		const tinted = through(t, tintStart[i], tintEnd[i], easing);
 		const waitingAlpha = Math.min(from.alpha[i], dimAlpha[i]);
 		const alpha = from.alpha[i] + (waitingAlpha - from.alpha[i]) * dimmed;

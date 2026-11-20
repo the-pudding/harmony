@@ -104,6 +104,7 @@ export const createSongPins = ({
 			anchor && rect
 				? anchorPose(rect, anchor, {
 						lineCount: look.lines.length,
+						fill: look.fill,
 						textWidth:
 							anchor.label === "beside"
 								? measureSongLabel(context, look.lines, anchor.labelPx)
@@ -164,7 +165,9 @@ export const createSongPins = ({
 			window.devicePixelRatio,
 			...frames.map(({ pose, anchor, look, maxWidth, clip }) =>
 				[
-					...Object.values(pose).map((value) => value.toFixed(2)),
+					...Object.values(pose).map((value) =>
+						typeof value === "number" ? value.toFixed(2) : value
+					),
 					Math.round(maxWidth),
 					clip && [clip.left, clip.top, clip.width, clip.height].join(),
 					anchor?.playable,
@@ -181,7 +184,7 @@ export const createSongPins = ({
 	const dotLookOf = ({ pose, anchor, look }: PinFrame): DotLook => {
 		const playing = anchor?.playing ?? false;
 		return {
-			fill: look.fill,
+			fill: pose.fill,
 			alpha: 1,
 			...markerWidths({
 				restingRadius: pose.r,

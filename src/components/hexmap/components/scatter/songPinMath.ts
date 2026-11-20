@@ -1,4 +1,4 @@
-import { easeCubicInOut } from "d3";
+import { easeCubicInOut, interpolateRgb } from "d3";
 import {
 	SONG_LABEL_LINE_HEIGHT_PX,
 	SONG_LABEL_STYLE
@@ -7,8 +7,9 @@ import { OUTLINED_LABEL_GAP, SONG_ANCHOR_RADIUS } from "./constants.js";
 import { lerp } from "./pointStyle.js";
 import type { MarkPose } from "./paint/songMark.js";
 
-// A mark's pose plus how visible its label is.
-export type PinPose = MarkPose & { labelAlpha: number };
+// A mark's pose plus how visible its label is and its dot's fill, which
+// blends between the anchor's look and the map's as it travels.
+export type PinPose = MarkPose & { labelAlpha: number; fill: string };
 
 // A pinned song's mark easing from a frozen pose to a live target, which
 // may move while it travels (an anchor being laid out, a dot on the map).
@@ -58,7 +59,11 @@ export const poseAt = (pin: Pin, nowMs: number, target: PinPose): PinPose => {
 		labelDx: lerp(from.labelDx, target.labelDx, t),
 		labelDy: lerp(from.labelDy, target.labelDy, t),
 		labelPx: lerp(from.labelPx, target.labelPx, t),
-		labelAlpha: lerp(from.labelAlpha, target.labelAlpha, t)
+		labelAlpha: lerp(from.labelAlpha, target.labelAlpha, t),
+		fill:
+			from.fill === target.fill
+				? target.fill
+				: interpolateRgb(from.fill, target.fill)(t)
 	};
 };
 
@@ -102,7 +107,11 @@ export const anchorPose = (
 		labelPx: number;
 		align: "start" | "center";
 	},
-	{ lineCount, textWidth }: { lineCount: number; textWidth: number }
+	{
+		lineCount,
+		textWidth,
+		fill
+	}: { lineCount: number; textWidth: number; fill: string }
 ): PinPose => {
 	const { lineHeight, gap } = labelMetrics(labelPx);
 	const labeled = label === "beside";
@@ -118,7 +127,8 @@ export const anchorPose = (
 		labelDx: radius + gap,
 		labelDy: -(lineCount * lineHeight) / 2,
 		labelPx,
-		labelAlpha: labeled ? 1 : 0
+		labelAlpha: labeled ? 1 : 0,
+		fill
 	};
 };
 

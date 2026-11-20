@@ -22,6 +22,7 @@ describe("revealStages", () => {
 			clusters: ["axis", "four chords"]
 		})!;
 		expect(stages.count).toBe(3);
+		expect(stages.songsFirst).toBe(false);
 		expect(stages.stageOf[16]).toBe(0);
 		expect(stages.stageOf[3]).toBe(1);
 		expect(stages.stageOf[35]).toBe(2);
@@ -60,6 +61,7 @@ describe("revealStages", () => {
 			clusters: ["axis"]
 		})!;
 		expect(stages.count).toBe(3);
+		expect(stages.songsFirst).toBe(true);
 		expect(stages.stageOf[3]).toBe(0);
 		expect(stages.stageOf[35]).toBe(0);
 		expect(stages.stageOf[16]).toBe(1);

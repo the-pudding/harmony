@@ -44,7 +44,8 @@
 		HEX_FADE_IN_MS,
 		HEX_FADE_OUT_MS,
 		HEX_LABEL_FADE_IN_MS,
-		CLUSTER_OUTLINE_DRAW_MS
+		CLUSTER_OUTLINE_DRAW_MS,
+		PIN_TRAVEL_MS
 	} from "./scatter/constants.js";
 	import type { EmbeddingScatterProps as Props } from "./scatter/props.js";
 	import type {
@@ -471,7 +472,10 @@
 			previous &&
 			next.layoutName !== previous.layoutName
 		) {
-			return stagedFlight(stagePlan(next.revealStages), delayMs);
+			return stagedFlight(
+				stagePlan(next.revealStages, previous.layoutName === "offstage"),
+				delayMs
+			);
 		}
 		// Retargeted mid-way through a staged reveal (e.g. a framed layout
 		// refitting as the slide's text settles): start its stages over from
@@ -498,17 +502,28 @@
 		return { durationMs: stagedDurationMs(stages), delayMs, stages };
 	};
 
-	const stagePlan = ({ stageOf, count }: RevealStages): StagePlan => ({
+	// Listed songs move first, untinted, in step with their pins (their
+	// marks travel on the pin canvas, so the dots under them land together).
+	// Songs arriving from off stage decelerate in, so each stage shows up
+	// right after the one before.
+	const stagePlan = (
+		{ stageOf, count, songsFirst }: RevealStages,
+		fromOffstage: boolean
+	): StagePlan => ({
 		stageOf,
-		stages: Array.from({ length: count }, (_, stage) =>
-			stage === count - 1
+		stages: Array.from({ length: count }, (_, stage) => ({
+			easeOut: fromOffstage,
+			...(stage === count - 1
 				? { tintMs: 0, moveMs: STAGED_REVEAL_LAST_MOVE_MS }
-				: {
-						tintMs: STAGED_REVEAL_CLUSTER_TINT_MS,
-						moveMs: STAGED_REVEAL_CLUSTER_MOVE_MS
-					}
-		),
-		pauseMs: STAGED_REVEAL_PAUSE_MS,
+				: stage === 0 && songsFirst
+					? { tintMs: 0, moveMs: PIN_TRAVEL_MS }
+					: {
+							tintMs: STAGED_REVEAL_CLUSTER_TINT_MS,
+							moveMs: STAGED_REVEAL_CLUSTER_MOVE_MS
+						})
+		})),
+		// Off stage, their way into view stands in for the pause.
+		pauseMs: fromOffstage ? 0 : STAGED_REVEAL_PAUSE_MS,
 		dimAlpha: STAGED_REVEAL_WAITING_ALPHA,
 		dimMs: STAGED_REVEAL_DIM_MS
 	});
@@ -895,6 +910,17 @@
 
 	const NO_SPOTLIGHT = { emphasis: new Map<string, number>(), fade: 0 };
 
+	// In hexMode, songs' region colors at the zoom's gradient (null otherwise):
+	// a marked song's fill inside its ring, else OUTLINE_COLOR.
+	const markFill = (): ((songKey: string) => string) | null =>
+		hexMode
+			? songRegionFillAt(
+					gradientStrengthForZoom(transform.k, HEX_ZOOM, HEX_MIN_SHARE_FADE)
+				)
+			: null;
+	const markInnerFillOf = (songKey: string): string =>
+		markFill()?.(songKey) ?? OUTLINE_COLOR;
+
 	// Outlines, dots, markers and labels, then selection rings. Markers are
 	// left out of dots flying in or fading under hexes; outlines and titles
 	// also while songs move. Returns how many plain dots it drew.
@@ -905,10 +931,7 @@
 	): number => {
 		const outlined =
 			showClusterOutlines && hexMode && alone && markers && transition.settled;
-		const gradient = hexMode
-			? gradientStrengthForZoom(transform.k, HEX_ZOOM, HEX_MIN_SHARE_FADE)
-			: 0;
-		const songRegionFill = hexMode ? songRegionFillAt(gradient) : null;
+		const songRegionFill = markFill();
 		const style = createPointStyle({
 			pointRadius: dotRadius(),
 			spotlight: markers ? spotlight.current : NO_SPOTLIGHT,
@@ -1200,7 +1223,14 @@
 			(placed?.label ?? null) !== null ||
 			((outlinedSongKeys?.has(songKey) ?? false) &&
 				!(smallOutlinedSongKeys?.has(songKey) ?? false));
-		const pose = { x, y, r, labelPx, labelAlpha: labeled ? 1 : 0 };
+		const pose = {
+			x,
+			y,
+			r,
+			labelPx,
+			labelAlpha: labeled ? 1 : 0,
+			fill: markInnerFillOf(songKey)
+		};
 		return placed?.label
 			? { ...pose, ...placed.label }
 			: besideLabel({ ...pose, labelDx: 0, labelDy: 0 });
