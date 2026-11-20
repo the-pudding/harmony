@@ -22,6 +22,7 @@
 		playing?: boolean;
 		// 0 to 1 through the playing clip.
 		progress?: number;
+		travelDelayMs?: number;
 	};
 
 	const {
@@ -32,7 +33,8 @@
 		align = "start",
 		onclick,
 		playing = false,
-		progress = 0
+		progress = 0,
+		travelDelayMs = 0
 	}: Props = $props();
 
 	const RADIUS = { tag: 7, title: 10, play: 26 };
@@ -94,6 +96,9 @@
 			},
 			get hovered() {
 				return hovered;
+			},
+			get travelDelayMs() {
+				return travelDelayMs;
 			}
 		});
 </script>

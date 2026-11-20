@@ -6,6 +6,7 @@
 	import { fade } from "svelte/transition";
 	import { cubicInOut } from "svelte/easing";
 	import Circle from "$components/RomanNumerals.Circle.svelte";
+	import SongAnchor from "$components/SongAnchor.svelte";
 	import {
 		committedSyncedSongs,
 		SYNCED_SONG_AUDIO_DIRECTORY
@@ -126,6 +127,14 @@
 	let playTime = $state(null);
 
 	const songId = (key) => `song:${key}`;
+
+	const SONG_LABEL_PX = 14;
+
+	const songProgress = (key) => {
+		if (playingKey !== songId(key) || playTime === null) return 0;
+		const { startSeconds, endSeconds } = clipFor(songId(key));
+		return Math.min(1, playTime / (endSeconds - startSeconds));
+	};
 
 	// Where a clip's audio is, where it starts and stops, and when each chord
 	// starts in playTime seconds (null for the evenly spaced progressions).
@@ -254,24 +263,18 @@
 			out:fade={{ duration: 200 }}
 		>
 			{#if song}
-				<button
-					class="song"
-					aria-pressed={playingKey === songId(key)}
-					aria-label="{playingKey === songId(key)
-						? 'Stop'
-						: 'Play'} {song.title} by {song.artist}"
-					onclick={() => toggle(songId(key))}
-				>
-					<svg class="icon" viewBox="0 0 10 10" aria-hidden="true">
-						{#if playingKey === songId(key)}
-							<rect x="1.5" y="1.5" width="7" height="7" />
-						{:else}
-							<path d="M2 1 L9 5 L2 9 Z" />
-						{/if}
-					</svg>
-					<span class="song-title">{song.title}</span>
-					<span class="song-artist">{song.artist}</span>
-				</button>
+				<div class="song">
+					<SongAnchor
+						songKey={song.songKey}
+						size="title"
+						label="beside"
+						labelPx={SONG_LABEL_PX}
+						align="center"
+						onclick={() => toggle(songId(key))}
+						playing={playingKey === songId(key)}
+						progress={songProgress(key)}
+					/>
+				</div>
 			{:else if hasSongs}
 				<!-- keeps the circles lined up with their neighbors' -->
 				<span class="song-spacer" aria-hidden="true"></span>
@@ -364,32 +367,9 @@
 	}
 
 	.song {
-		display: inline-flex;
+		display: flex;
 		align-items: center;
-		gap: 0.5em;
-		padding: 0 0.5rem;
-		border: none;
-		background: none;
-		color: var(--color-fg);
-		font-size: var(--14px, 0.875rem);
-		white-space: nowrap;
-	}
-
-	.song:hover {
-		background: none;
-		color: var(--color-fg);
-	}
-
-	.song .icon {
-		align-self: center;
-	}
-
-	.song-title {
-		font-weight: 600;
-	}
-
-	.song-artist {
-		opacity: 0.6;
+		width: 100%;
 	}
 
 	.icon {

@@ -12,6 +12,9 @@
 	import ProgressionShareBar from "$components/hexmap/components/ProgressionShareBar.svelte";
 	import { mapColors } from "$runes/mapColors.svelte";
 
+	// Lets the previous stage fade out before the dots leave it.
+	const STAGE_TRAVEL_DELAY_MS = 150;
+
 	let { songs = [], showEffective = true } = $props();
 
 	const effectiveVisible = $derived(
@@ -70,7 +73,13 @@
 		<section class="song">
 			<header>
 				<div class="title-row">
-					<SongAnchor {songKey} size="title" label="beside" labelPx={20} />
+					<SongAnchor
+						{songKey}
+						size="title"
+						label="beside"
+						labelPx={20}
+						travelDelayMs={STAGE_TRAVEL_DELAY_MS}
+					/>
 				</div>
 				{#if effectiveVisible && homogeneity}
 					<div class="count">

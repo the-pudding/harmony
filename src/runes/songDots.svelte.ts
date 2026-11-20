@@ -23,6 +23,8 @@ export type DotAnchor = {
 	// 0 to 1 through the playing clip.
 	progress: number;
 	hovered: boolean;
+	// How long the mark waits before travelling here.
+	travelDelayMs: number;
 };
 
 // Per song, every registered anchor, newest last: an outgoing slide's

@@ -77,6 +77,9 @@ export const createSongPins = ({
 
 	const travelMs = () => (prefersReducedMotion.current ? 0 : PIN_TRAVEL_MS);
 
+	const travelDelayOf = (anchor: DotAnchor | null) =>
+		prefersReducedMotion.current ? 0 : (anchor?.travelDelayMs ?? 0);
+
 	const syncPinnedSongKeys = () => {
 		if (
 			pinned.size === pinnedSongKeys.size &&
@@ -115,13 +118,18 @@ export const createSongPins = ({
 		if (!song) {
 			const from = placeAtOnce ? null : (mapMark?.now ?? null);
 			song = {
-				pin: createPin(from ?? target, nowMs, from ? travelMs() : 0),
+				pin: createPin(
+					from ?? target,
+					nowMs,
+					from ? travelMs() : 0,
+					from ? travelDelayOf(anchor) : 0
+				),
 				anchor,
 				settled: false
 			};
 			pinned.set(songKey, song);
 		} else if (song.anchor !== anchor) {
-			song.pin = retarget(song.pin, nowMs, travelMs());
+			song.pin = retarget(song.pin, nowMs, travelMs(), travelDelayOf(anchor));
 			song.anchor = anchor;
 			song.settled = false;
 		}
