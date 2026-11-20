@@ -43,7 +43,8 @@
 		STAGED_REVEAL_WAITING_ALPHA,
 		HEX_FADE_IN_MS,
 		HEX_FADE_OUT_MS,
-		HEX_LABEL_FADE_IN_MS
+		HEX_LABEL_FADE_IN_MS,
+		OUTLINED_LABEL_GAP
 	} from "./scatter/constants.js";
 	import type { EmbeddingScatterProps as Props } from "./scatter/props.js";
 	import type {
@@ -122,7 +123,14 @@
 	import { drawHexRegionLabels } from "./scatter/paint/hexLabels.js";
 	import * as view from "./scatter/viewport.js";
 	import { songLinks } from "$data/songLinks.js";
-	import { canvasFontFor } from "./songLabelText.js";
+	import {
+		SONG_LABEL_STYLE,
+		canvasFontFor,
+		songLabelLines
+	} from "./songLabelText.js";
+	import { createSongPins } from "./scatter/songPins.svelte.js";
+	import { labelMetrics, type PinPose } from "./scatter/songPinMath.js";
+	import { songDots } from "$runes/songDots.svelte.js";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (perf meter): see src/utils/perfParam.js.
 	import { readPerfParam, createPerfMeter } from "$utils/perfParam";
 	import {
@@ -205,7 +213,8 @@
 		linkedSongKey = null,
 		onSongHover = null,
 		mergedTitleClusterName = null,
-		onMergedTitleAnchor = null
+		onMergedTitleAnchor = null,
+		pinCanvas = null
 	}: Props = $props();
 
 	const labelNameSet = $derived(
@@ -658,6 +667,13 @@
 	let rotatingLabelsEl = $state<HTMLDivElement | null>(null);
 	let drawnDots = 0;
 
+	// Each marked song's resting radius and placed label offset, from the
+	// last frame drawn, so a pinned mark can travel back to it.
+	let placedMarks = new Map<
+		string,
+		{ r: number; label: { labelDx: number; labelDy: number } | null }
+	>();
+
 	const draw = () => {
 		const perfStart = perfMeter ? performance.now() : 0; // perf meter
 		const pixelRatio =
@@ -667,6 +683,7 @@
 			canvasEl && prepareCanvas(canvasEl, width, height, pixelRatio);
 		if (!context) return;
 		void fontsLoaded;
+		placedMarks = new Map();
 		const scene = createScene({
 			context,
 			viewport,
@@ -878,7 +895,8 @@
 			selectedSongKey,
 			coClusterSongKeys,
 			emphasizedSongKeys,
-			inYearSongKeys
+			inYearSongKeys,
+			pinnedSongKeys: songPins.pinnedSongKeys
 		});
 
 		clusterHits = outlined
@@ -933,13 +951,20 @@
 			}
 		});
 
-		if (songSummaryByKey) {
-			drawOutlinedSongLabels(scene, {
-				style,
-				summaries: songSummaryByKey,
-				titlePrefix: outlinedTitlePrefix,
-				isPrefixed: isPlayableOutlined,
-				isLabeled: (songKey) => !(smallOutlinedSongKeys?.has(songKey) ?? false)
+		const labelOffsets = songSummaryByKey
+			? drawOutlinedSongLabels(scene, {
+					style,
+					summaries: songSummaryByKey,
+					titlePrefix: outlinedTitlePrefix,
+					isPrefixed: isPlayableOutlined,
+					isLabeled: (songKey) =>
+						!(smallOutlinedSongKeys?.has(songKey) ?? false)
+				})
+			: null;
+		for (const songKey of style.markedInLabelOrder()) {
+			placedMarks.set(songKey, {
+				r: style.restingRadiusFor(songKey),
+				label: labelOffsets?.get(songKey) ?? null
 			});
 		}
 
@@ -1131,6 +1156,52 @@
 		if (!clustersAvailable) {
 			hoveredClusterHit = null;
 		}
+	});
+
+	// Where a song's mark is on the map now, for a pin travelling to or
+	// from it: its dot's screen position and resting size, and its label as
+	// placed (hidden when the map doesn't label it).
+	const mapPoseOf = (songKey: string): PinPose | null => {
+		const index = songs.indexOf.get(songKey);
+		if (index === undefined || !(transition.alpha[index] > 0)) return null;
+		const { x, y } = toScreen({
+			nx: transition.x[index],
+			ny: transition.y[index]
+		});
+		const labelPx = SONG_LABEL_STYLE.title.fontSizePx;
+		const placed = placedMarks.get(songKey);
+		const r = placed?.r ?? drawnRadius;
+		return {
+			x,
+			y,
+			r,
+			...(placed?.label ?? {
+				labelDx: r + OUTLINED_LABEL_GAP,
+				labelDy: -labelMetrics(labelPx).lineHeight
+			}),
+			labelPx,
+			labelAlpha: placed?.label ? 1 : 0
+		};
+	};
+
+	const songPins = createSongPins({
+		get canvas() {
+			return pinCanvas;
+		},
+		mapPoseOf,
+		lookOf: (songKey) => {
+			const summary = songSummaryByKey?.get(songKey);
+			return {
+				fill: fullZoomSongFill(songKey),
+				lines: summary ? songLabelLines(summary) : [],
+				textColor: hexColors.labelText,
+				haloColor: hexColors.labelHalo
+			};
+		}
+	});
+
+	$effect(() => {
+		if (pinCanvas && songSummaryByKey) songDots.summaries = songSummaryByKey;
 	});
 
 	const transition = createTransition({

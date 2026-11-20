@@ -35,6 +35,7 @@
 	import { sameClusterName } from "$data/clusterName";
 	import { spanStyle } from "$routes/demo/record/timelineStyles";
 	import { audio, stopAllAudio } from "$runes/audio.svelte";
+	import { songDots } from "$runes/songDots.svelte";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (1/4): see src/utils/slideParam.js. Delete this import.
 	import { readSlideParam, writeSlideParam } from "$utils/slideParam";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (muted 1/3): ?muted=true|false URL
@@ -309,6 +310,10 @@
 	// So: a pinch never zooms the page, and goes to the map; a plain wheel
 	// over the map's overlays or the panel does too.
 	let mapLayerEl = $state();
+	// Songs a slide anchors are drawn over the page, so the map shows
+	// whenever there are any, to let them travel to and from it.
+	let mapShown = $derived(mapScene !== null || songDots.anchors.size > 0);
+	let pinCanvasEl = $state();
 	const onWindowWheel = (event) => {
 		const canvas = mapLayerEl?.querySelector("canvas");
 		const pinch = event.ctrlKey;
@@ -377,9 +382,9 @@
 <div
 	class="map-layer"
 	bind:this={mapLayerEl}
-	class:visible={mapScene !== null}
+	class:visible={mapShown}
 	class:faded={overlay}
-	aria-hidden={mapScene === null}
+	aria-hidden={!mapShown}
 >
 	<HexMap
 		scene={mapScene ?? STAGE_SCENE}
@@ -403,6 +408,7 @@
 		{litSongKeys}
 		onStagedRevealChange={(running) => (mapRevealRunning = running)}
 		onExploredTitleAnchor={(anchor) => (titleAnchor = anchor)}
+		pinCanvas={pinCanvasEl}
 	/>
 </div>
 
@@ -545,6 +551,8 @@
 		{/if}
 	</div>
 </article>
+
+<canvas class="song-pins" bind:this={pinCanvasEl} aria-hidden="true"></canvas>
 
 {#if explore.chordsSongKey}
 	<SongChordsDrawer
@@ -689,6 +697,15 @@
 		height: auto;
 		min-height: 30svh;
 		padding-bottom: 1rem;
+	}
+
+	.song-pins {
+		position: fixed;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		z-index: calc(var(--z-top) + 1);
+		pointer-events: none;
 	}
 
 	.overlay {

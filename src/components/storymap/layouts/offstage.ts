@@ -3,8 +3,9 @@
 import { umapLayout, type UmapParams } from "./umap.js";
 import type { Layout } from "./types.js";
 
-// In plot widths: far enough that no song is on screen at any home zoom.
-export const OFFSTAGE_DISTANCE = 1.5;
+// In plot sizes: far enough that no song is on screen at any home zoom,
+// including the uncentered home view, which sits lower on the screen.
+export const OFFSTAGE_DISTANCE = 2.5;
 
 const PLOT_CENTER = 0.5;
 const MIN_DIRECTION_LENGTH = 1e-6;

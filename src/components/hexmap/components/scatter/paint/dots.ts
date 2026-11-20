@@ -56,7 +56,7 @@ export const ALPHA_STEPS = 32;
 // Radii within 1/RADIUS_KEY_STEPS px share a batch.
 const RADIUS_KEY_STEPS = 16;
 
-// Draws on-screen, unmarked songs layer by layer, one fill() per batch of
+// Draws on-screen, unmarked, unpinned songs layer by layer, one fill() per batch of
 // same-fill/alpha/radius dots. Returns how many dots it drew.
 export const drawDots = (
 	scene: Scene,
@@ -83,7 +83,7 @@ export const drawDots = (
 			const songAlpha = alpha[index];
 			if (!(songAlpha > 0)) continue;
 			const songKey = songKeys[index];
-			if (style.isMarked(songKey)) continue;
+			if (style.isMarked(songKey) || style.isPinned(songKey)) continue;
 			const sx = screenX(projection, x[index]);
 			const sy = screenY(projection, y[index]);
 			if (sx < -reach || sy < -reach || sx > right || sy > bottom) continue;

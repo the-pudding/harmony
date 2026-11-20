@@ -1,13 +1,13 @@
 <script>
 	import coreProgressionsData from "$data/core-progressions.js";
 	import { loadShardedSong } from "$data/hexMapSnapshot";
-	import { toCalendarYear } from "$data/songYear";
 	import { matchSongV2 } from "$routes/demo/match-algo-v2/match-algo-v2-logic/matchSongV2";
 	import { DEFAULT_WEIGHTS } from "$routes/demo/match-algo-v2/match-algo-v2-logic/weights";
 	import {
 		computeSongHomogeneity,
 		formatEffectiveProgressionCount
 	} from "$routes/demo/shared/progressionHomogeneity";
+	import SongAnchor from "$components/SongAnchor.svelte";
 	import FullChordsOfASong from "$components/song-chords-drawer/FullChordsOfASong.svelte";
 	import ProgressionShareBar from "$components/hexmap/components/ProgressionShareBar.svelte";
 	import { mapColors } from "$runes/mapColors.svelte";
@@ -75,11 +75,7 @@
 			{:else}
 				<header>
 					<div class="title-row">
-						<span class="title">{song.title}</span>
-						<span class="muted">
-							{song.artists.join(", ")}
-							{#if song.year !== undefined}({toCalendarYear(song.year)}){/if}
-						</span>
+						<SongAnchor {songKey} size="title" label="beside" labelPx={20} />
 					</div>
 					{#if effectiveVisible && homogeneity}
 						<div class="count">
@@ -153,13 +149,8 @@
 	}
 
 	.title-row {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.title {
-		font-weight: 600;
-		font-size: var(--20px);
+		flex: 1;
+		min-width: 0;
 	}
 
 	.muted {

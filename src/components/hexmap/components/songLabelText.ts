@@ -30,7 +30,7 @@ export const songLabelLines = ({
 	artists
 }: {
 	title: string;
-	year: number | undefined;
+	year?: number;
 	artists: readonly string[];
 }): SongLabelLine[] => {
 	const detail = [artists.join(", "), year ? `(${year})` : ""]

@@ -50,6 +50,8 @@ export type LabelLook = {
 	alpha: number;
 	textColor: string;
 	haloColor: string;
+	// Lines wider than this end in an ellipsis.
+	maxWidth?: number;
 };
 
 // A white glow, then the song's fill inside a white ring, then its icon.
@@ -85,7 +87,7 @@ export const drawSongDot = (
 export const drawSongLabel = (
 	context: CanvasRenderingContext2D,
 	{ x, y, labelDx, labelDy, labelPx }: Omit<MarkPose, "r">,
-	{ lines, alpha, textColor, haloColor }: LabelLook
+	{ lines, alpha, textColor, haloColor, maxWidth = Infinity }: LabelLook
 ) => {
 	const scale = labelPx / SONG_LABEL_STYLE.title.fontSizePx;
 	const lineHeight = OUTLINED_LABEL_LINE_HEIGHT * scale;
@@ -99,7 +101,7 @@ export const drawSongLabel = (
 	lines.forEach((line, row) => {
 		const rowY = y + labelDy + (row + 0.5) * lineHeight;
 		let left = x + labelDx;
-		for (const { role, text } of line) {
+		for (const { role, text } of fitLine(context, line, maxWidth, scale)) {
 			context.globalAlpha = alpha * SONG_LABEL_STYLE[role].opacity;
 			context.font = canvasFontFor(role, scale);
 			context.strokeText(text, left, rowY);
@@ -108,6 +110,61 @@ export const drawSongLabel = (
 		}
 	});
 	context.restore();
+};
+
+// The widest line's width, each segment in its role's font.
+export const measureSongLabel = (
+	context: CanvasRenderingContext2D,
+	lines: readonly SongLabelLine[],
+	labelPx: number = SONG_LABEL_STYLE.title.fontSizePx
+): number => {
+	const scale = labelPx / SONG_LABEL_STYLE.title.fontSizePx;
+	return Math.max(
+		0,
+		...lines.map((line) =>
+			line.reduce((lineWidth, { role, text }) => {
+				context.font = canvasFontFor(role, scale);
+				return lineWidth + context.measureText(text).width;
+			}, 0)
+		)
+	);
+};
+
+const ELLIPSIS = "…";
+
+// The line cut short with an ellipsis where it would pass maxWidth.
+const fitLine = (
+	context: CanvasRenderingContext2D,
+	line: SongLabelLine,
+	maxWidth: number,
+	scale: number
+): SongLabelLine => {
+	if (maxWidth === Infinity) return line;
+	const fitted: SongLabelLine = [];
+	let room = maxWidth;
+	for (const segment of line) {
+		context.font = canvasFontFor(segment.role, scale);
+		const width = context.measureText(segment.text).width;
+		if (width <= room) {
+			fitted.push(segment);
+			room -= width;
+			continue;
+		}
+		const fits = (length: number) =>
+			context.measureText(segment.text.slice(0, length).trimEnd() + ELLIPSIS)
+				.width <= room;
+		let low = 0;
+		let high = segment.text.length;
+		while (low < high) {
+			const middle = Math.ceil((low + high) / 2);
+			if (fits(middle)) low = middle;
+			else high = middle - 1;
+		}
+		const kept = segment.text.slice(0, low).trimEnd();
+		if (kept || fits(0)) fitted.push({ ...segment, text: kept + ELLIPSIS });
+		break;
+	}
+	return fitted;
 };
 
 // The whole mark: dot, then label.

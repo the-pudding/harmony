@@ -226,4 +226,8 @@ export type EmbeddingScatterProps = {
 	onMergedTitleAnchor?:
 		| ((anchor: { x: number; y: number } | null) => void)
 		| null;
+	// A canvas over the page, viewport-sized and click-through, where marks
+	// of songs anchored by a slide (see songDots) are drawn, pinned to
+	// their anchors. Without one, anchors are ignored.
+	pinCanvas?: HTMLCanvasElement | null;
 };

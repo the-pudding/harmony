@@ -81,6 +81,13 @@ describe("drawSongLabel", () => {
 		]);
 		expect(texts[1].args[2]).toBe(50 - 14 + 1.5 * 28);
 	});
+
+	it("ends lines wider than maxWidth in an ellipsis", () => {
+		const { context, calls } = recordingContext();
+		drawSongLabel(context, pose, { ...label, maxWidth: 10 });
+		const texts = calls.filter(({ name }) => name === "fillText");
+		expect(texts.map(({ args }) => args[0])).toEqual(["Holy", "Justin Bi…"]);
+	});
 });
 
 describe("drawSongMark", () => {

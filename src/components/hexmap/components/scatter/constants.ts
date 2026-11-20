@@ -104,6 +104,8 @@ export const PLAYING_GLOW_BLUR = 28;
 export const NOT_PLAYING_ALPHA = 0.3;
 // How long the playing marker takes to grow (and the last one to shrink).
 export const PLAYING_TWEEN_MS = 400;
+// How long a pinned song's mark takes to travel to its anchor, or back.
+export const PIN_TRAVEL_MS = 900;
 // Space between a marker's edge and its label.
 export const OUTLINED_LABEL_GAP = 6;
 export const OUTLINED_LABEL_LINE_HEIGHT = SONG_LABEL_LINE_HEIGHT_PX;

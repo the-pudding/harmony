@@ -9,6 +9,31 @@ import { isOnScreen } from "../viewport.js";
 import { drawnIndexOf, screenOfIndex, type Scene } from "./scene.js";
 import { drawSongDot, type MarkIcon, type Playback } from "./songMark.js";
 
+// A marker's glow and white ring: smaller markers get thinner ones, and
+// emphasis (0 to 1, spotlit) grows them to the playing look. A spotlit song
+// that isn't outlined has neither until it's emphasized.
+export const markerWidths = ({
+	restingRadius,
+	emphasis,
+	outlined
+}: {
+	restingRadius: number;
+	emphasis: number;
+	outlined: boolean;
+}): { glowBlur: number; outlineWidth: number } => {
+	const size = Math.min(1, restingRadius / OUTLINED_POINT_RADIUS);
+	return {
+		glowBlur: lerp(
+			outlined ? OUTLINE_GLOW_BLUR * size : 0,
+			PLAYING_GLOW_BLUR,
+			emphasis
+		),
+		outlineWidth: outlined
+			? lerp(OUTLINE_WIDTH * size, OUTLINE_WIDTH, emphasis)
+			: OUTLINE_WIDTH * emphasis
+	};
+};
+
 // Marked songs: a white glow, then the song's fill inside a white ring. A
 // hovered outlined song shows a play icon; the playing one, its progress
 // ring and a pause icon.
@@ -30,24 +55,18 @@ export const drawMarkedSongs = (
 ) => {
 	const { context, viewport } = scene;
 	for (const songKey of style.markedInDrawOrder()) {
+		if (style.isPinned(songKey)) continue;
 		const index = drawnIndexOf(scene, songKey);
 		if (index === -1) continue;
 		const screen = screenOfIndex(scene, index);
 		const radius = style.radiusFor(songKey);
 		const emphasis = style.emphasisFor(songKey);
 		const outlined = style.isOutlined(songKey);
-		const size = Math.min(
-			1,
-			style.restingRadiusFor(songKey) / OUTLINED_POINT_RADIUS
-		);
-		const glowBlur = lerp(
-			outlined ? OUTLINE_GLOW_BLUR * size : 0,
-			PLAYING_GLOW_BLUR,
-			emphasis
-		);
-		const outlineWidth = outlined
-			? lerp(OUTLINE_WIDTH * size, OUTLINE_WIDTH, emphasis)
-			: OUTLINE_WIDTH * emphasis;
+		const { glowBlur, outlineWidth } = markerWidths({
+			restingRadius: style.restingRadiusFor(songKey),
+			emphasis,
+			outlined
+		});
 		if (!isOnScreen(viewport, screen, radius + glowBlur)) continue;
 		const alpha = style.alphaFor(songKey) * scene.alpha[index];
 		const iconFor = (): MarkIcon => {

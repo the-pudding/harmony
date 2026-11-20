@@ -105,6 +105,8 @@
 		// (its top center, in viewport pixels), or null when it isn't titled
 		// on screen.
 		onExploredTitleAnchor?: (anchor: { x: number; y: number } | null) => void;
+		// Where marks of songs anchored by a slide are drawn (see songDots).
+		pinCanvas?: HTMLCanvasElement | null;
 		// (UMAP's minDist and
 		// the cluster settings are baked into the snapshot; see
 		// HEX_MAP_UMAP_MIN_DIST and hexMapClusters.ts.)
@@ -134,6 +136,7 @@
 		litSongKeys = [],
 		onStagedRevealChange = undefined,
 		onExploredTitleAnchor = undefined,
+		pinCanvas = null,
 		purityLayout = true,
 		pureThreshold = 0.9
 	}: Props = $props();
@@ -526,6 +529,7 @@
 				onSongHover={onSongHover ?? null}
 				mergedTitleClusterName={explorable ? exploredClusterName : null}
 				onMergedTitleAnchor={onExploredTitleAnchor ?? null}
+				{pinCanvas}
 			/>
 
 			{#if width > 0 && height > 0}

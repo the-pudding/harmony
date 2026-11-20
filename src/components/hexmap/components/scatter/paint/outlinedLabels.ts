@@ -1,9 +1,4 @@
-import {
-	SONG_LABEL_STYLE,
-	canvasFontFor,
-	songLabelLines,
-	type SongLabelLine
-} from "../../songLabelText.js";
+import { SONG_LABEL_STYLE, songLabelLines } from "../../songLabelText.js";
 import {
 	OUTLINED_LABEL_GAP,
 	OUTLINED_LABEL_LINE_HEIGHT,
@@ -13,7 +8,7 @@ import { boxAround, placeMarkerLabels } from "../labelPlacement.js";
 import type { PointStyle } from "../pointStyle.js";
 import { isOnScreen } from "../viewport.js";
 import { drawnIndexOf, screenOfIndex, type Scene } from "./scene.js";
-import { drawSongLabel } from "./songMark.js";
+import { drawSongLabel, measureSongLabel } from "./songMark.js";
 
 export type SongSummary = {
 	title: string;
@@ -24,6 +19,8 @@ export type SongSummary = {
 // Title and artists beside each on-screen marked song (only those isLabeled
 // picks). Placed from each marker's resting size so labels stay put as songs
 // are played and stopped; drawn after every marker so none covers a label.
+// Pinned songs' labels are placed but not drawn. Returns each placed
+// label's top-left from its song's dot.
 export const drawOutlinedSongLabels = (
 	scene: Scene,
 	{
@@ -42,7 +39,7 @@ export const drawOutlinedSongLabels = (
 		// Unlabeled songs still keep other labels clear of their markers.
 		isLabeled?: (songKey: string) => boolean;
 	}
-): void => {
+): Map<string, { labelDx: number; labelDy: number }> => {
 	const { context, viewport, themeColors } = scene;
 	const songs = style.markedInLabelOrder().flatMap((songKey) => {
 		const summary = summaries.get(songKey);
@@ -79,7 +76,7 @@ export const drawOutlinedSongLabels = (
 				item: song,
 				screen: song.screen,
 				radius: song.radius,
-				textWidth: measureLines(context, song.lines),
+				textWidth: measureSongLabel(context, song.lines),
 				textHeight: song.lines.length * OUTLINED_LABEL_LINE_HEIGHT
 			})),
 		{
@@ -91,17 +88,23 @@ export const drawOutlinedSongLabels = (
 		}
 	);
 
+	const placed = new Map<string, { labelDx: number; labelDy: number }>();
 	for (const {
 		item: { songKey, screen, alpha, lines },
 		box
 	} of labels) {
+		const offset = {
+			labelDx: box.left + OUTLINED_LABEL_PADDING - screen.x,
+			labelDy: box.top + OUTLINED_LABEL_PADDING - screen.y
+		};
+		placed.set(songKey, offset);
+		if (style.isPinned(songKey)) continue;
 		drawSongLabel(
 			context,
 			{
 				x: screen.x,
 				y: screen.y,
-				labelDx: box.left + OUTLINED_LABEL_PADDING - screen.x,
-				labelDy: box.top + OUTLINED_LABEL_PADDING - screen.y,
+				...offset,
 				labelPx: SONG_LABEL_STYLE.title.fontSizePx
 			},
 			{
@@ -112,18 +115,5 @@ export const drawOutlinedSongLabels = (
 			}
 		);
 	}
+	return placed;
 };
-
-// The widest line's width, each segment in its role's font.
-const measureLines = (
-	context: CanvasRenderingContext2D,
-	lines: readonly SongLabelLine[]
-): number =>
-	Math.max(
-		...lines.map((line) =>
-			line.reduce((lineWidth, { role, text }) => {
-				context.font = canvasFontFor(role);
-				return lineWidth + context.measureText(text).width;
-			}, 0)
-		)
-	);

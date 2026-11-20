@@ -29,6 +29,7 @@ export const createPointStyle = ({
 	spotlight,
 	outlinedSongKeys,
 	smallOutlinedSongKeys = null,
+	pinnedSongKeys = null,
 	pointRadius = POINT_RADIUS,
 	...alphaArgs
 }: Omit<ScatterPointAlphaArgs, "songKey"> & {
@@ -36,6 +37,8 @@ export const createPointStyle = ({
 	outlinedSongKeys: ReadonlySet<string> | null;
 	// Of outlinedSongKeys, ones with a smaller marker.
 	smallOutlinedSongKeys?: ReadonlySet<string> | null;
+	// Drawn pinned to a slide's anchor instead (see songPins), so left out.
+	pinnedSongKeys?: ReadonlySet<string> | null;
 	// A plain dot's radius, which the layout sets (stars are smaller).
 	pointRadius?: number;
 }) => {
@@ -49,6 +52,9 @@ export const createPointStyle = ({
 	// fading-out) song that isn't outlined.
 	const isMarked = (songKey: string): boolean =>
 		isOutlined(songKey) || emphasisFor(songKey) > 0;
+
+	const isPinned = (songKey: string): boolean =>
+		pinnedSongKeys?.has(songKey) ?? false;
 
 	// A marker's size when not spotlit. Labels are laid out from it so they
 	// stay put as songs are played and stopped.
@@ -90,6 +96,7 @@ export const createPointStyle = ({
 		emphasisFor,
 		isOutlined,
 		isMarked,
+		isPinned,
 		restingRadiusFor,
 		radiusFor,
 		alphaFor,
