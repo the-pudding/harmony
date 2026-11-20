@@ -1,14 +1,25 @@
 <script>
 	import ClusterTitle from "$components/ClusterTitle.svelte";
 	import { committedSyncedSongs } from "$data/syncedSongs";
-	import { featuredSongsOf } from "$data/featuredClusters.js";
+	import {
+		featuredClusterOf,
+		featuredSongsOf
+	} from "$data/featuredClusters.js";
 	import { progressionFor } from "$data/clusterProgression.js";
 	import { attachAudio, audio } from "$runes/audio.svelte";
 	import { appearanceFor } from "$routes/demo/design/chord-viz/chordAppearanceLookup.js";
 	import { paletteById } from "$routes/demo/design/chord-viz/chordPalettes.js";
 
 	let {
-		cluster,
+		// Plays this cluster's featured songs...
+		cluster = undefined,
+		// ...or, when given, these songs instead (those that have clips), each
+		// with its own featured cluster's tonality. Then `cluster` is only
+		// the title's.
+		songKeys = undefined,
+		// Only the <audio> elements, no title, arrows or chords: the playing
+		// dot's progress ring is the UI. The clip plays once and stops.
+		headless = false,
 		playingSongKey = $bindable(),
 		// where to draw the header and chords instead of in place, in
 		// viewport pixels (top center), e.g. under the cluster on the map
@@ -25,10 +36,16 @@
 	let audioEls = $state({});
 	let currentTime = $state(0);
 	const songs = $derived(
-		featuredSongsOf(cluster).map((d) => ({
-			...d,
-			data: committedSyncedSongs[d.songKey]
-		}))
+		(songKeys
+			? songKeys.flatMap((songKey) => {
+					const songCluster = featuredClusterOf(songKey);
+					const row = featuredSongsOf(songCluster).find(
+						(d) => d.songKey === songKey
+					);
+					return row ? [{ ...row, songCluster }] : [];
+				})
+			: featuredSongsOf(cluster).map((d) => ({ ...d, songCluster: cluster }))
+		).map((d) => ({ ...d, data: committedSyncedSongs[d.songKey] }))
 	);
 	const currentSong = $derived(songs.find((d) => d.songKey === playingSongKey));
 	const currentTimeData = $derived(currentSong?.data?.chords);
@@ -38,7 +55,7 @@
 		const song = currentSong;
 		const chords = song?.data?.chords;
 		if (!song || !chords?.length) return [];
-		const tonality = progressionFor(cluster)?.tonality ?? "major";
+		const tonality = progressionFor(song.songCluster)?.tonality ?? "major";
 		const palette = paletteById("journey-from-home");
 		const span = song.endSeconds - song.startSeconds;
 		const fraction = (seconds) =>
@@ -85,6 +102,11 @@
 	};
 
 	const playNext = () => step(1);
+	// A headless clip (one dot's) plays once; a cluster's player cycles.
+	const advance = () => {
+		if (headless) playingSongKey = undefined;
+		else playNext();
+	};
 	const playPrev = () => step(-1);
 
 	const stopAtEnd = (song) => {
@@ -92,7 +114,7 @@
 		if (song.songKey !== playingSongKey) return;
 		if (audioEl.currentTime >= song.endSeconds) {
 			audioEl.pause();
-			playNext();
+			advance();
 		}
 	};
 
@@ -124,46 +146,54 @@
 	});
 </script>
 
-<div
-	class="player"
-	class:anchored={anchor !== null}
-	style:left={anchor ? `${anchor.x}px` : null}
-	style:top={anchor ? `${anchor.y}px` : null}
-	bind:clientHeight={height}
->
-	<ClusterTitle
-		{cluster}
-		chords={currentTimeData}
-		{currentTime}
-		onPrev={songs.length > 1 ? playPrev : null}
-		onNext={songs.length > 1 ? playNext : null}
-	/>
-
-	{#if onToggleChords}
-		<!-- always takes its space, so nothing shifts when a song starts or
-		     its chords open -->
-		{@const shown = currentSong && !chordsOpen}
-		<button
-			class="full-chords"
-			class:hidden={!shown}
-			aria-hidden={!shown}
-			tabindex={shown ? 0 : -1}
-			onclick={() => shown && onToggleChords(currentSong.songKey)}
-		>
-			show full chords
-		</button>
-	{/if}
-
+{#snippet audios()}
 	{#each songs as song (song.songKey)}
 		<audio
 			{@attach attachAudio}
 			bind:this={audioEls[song.songKey]}
 			src={`assets/audio/synced-songs/${song.songKey}.mp3`}
 			ontimeupdate={() => stopAtEnd(song)}
-			onended={playNext}
+			onended={advance}
 		></audio>
 	{/each}
-</div>
+{/snippet}
+
+{#if headless}
+	{@render audios()}
+{:else}
+	<div
+		class="player"
+		class:anchored={anchor !== null}
+		style:left={anchor ? `${anchor.x}px` : null}
+		style:top={anchor ? `${anchor.y}px` : null}
+		bind:clientHeight={height}
+	>
+		<ClusterTitle
+			{cluster}
+			chords={currentTimeData}
+			{currentTime}
+			onPrev={songs.length > 1 ? playPrev : null}
+			onNext={songs.length > 1 ? playNext : null}
+		/>
+
+		{#if onToggleChords}
+			<!-- always takes its space, so nothing shifts when a song starts or
+			     its chords open -->
+			{@const shown = currentSong && !chordsOpen}
+			<button
+				class="full-chords"
+				class:hidden={!shown}
+				aria-hidden={!shown}
+				tabindex={shown ? 0 : -1}
+				onclick={() => shown && onToggleChords(currentSong.songKey)}
+			>
+				show full chords
+			</button>
+		{/if}
+
+		{@render audios()}
+	</div>
+{/if}
 
 <style>
 	.player {

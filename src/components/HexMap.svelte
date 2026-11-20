@@ -145,7 +145,11 @@
 		scene.camera.kind === "home" && scene.camera.centered
 	);
 	const movable = $derived(scene.interaction.movable);
-	const hoverable = $derived(scene.interaction.hoverable);
+	// A scene with its own playable songs (no cluster to focus) has to stay
+	// clickable even when it asks for no hovering, or they couldn't be played.
+	const hoverable = $derived(
+		scene.interaction.hoverable || scene.songs.playable.length > 0
+	);
 	const hideLabels = $derived(scene.labels.hidden);
 	const showLabels = $derived(scene.labels.only ?? undefined);
 	const rotateLabels = $derived(scene.labels.rotate);
@@ -179,15 +183,19 @@
 	// A focused cluster drawn without its player: no featured songs, no clicks.
 	const playerHidden = $derived(hidePlayer && focusCluster !== undefined);
 
-	// The featured songs drawn enlarged and labeled: all of them, or only the
-	// focused cluster's (none with hidePlayer).
-	const playableSongKeys = $derived(
-		focusCluster === undefined
-			? featuredSongKeys
-			: playerHidden
+	// The songs drawn enlarged, labeled and clickable to play: the focused
+	// cluster's featured songs (none with hidePlayer); else the scene's own
+	// playable songs; else, on the UMAP map, every featured song; else (the
+	// sky, say) none, or ~50 large markers would cover it.
+	const playableSongKeys = $derived.by(() => {
+		if (focusCluster !== undefined) {
+			return playerHidden
 				? new Set<string>()
-				: new Set(featuredSongsOf(focusCluster).map(({ songKey }) => songKey))
-	);
+				: new Set(featuredSongsOf(focusCluster).map(({ songKey }) => songKey));
+		}
+		if (scene.songs.playable.length > 0) return new Set(scene.songs.playable);
+		return layoutName === "umap" ? featuredSongKeys : new Set<string>();
+	});
 
 	const highlightedSongKeys = $derived(new Set(highlightSongs));
 

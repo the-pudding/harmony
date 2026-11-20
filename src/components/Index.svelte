@@ -365,6 +365,16 @@
 
 <svelte:window onclick={onWindowClick} />
 
+<!-- the slide's own playable songs (no cluster open), played by clicking
+     their dots; the dot's progress ring is the only UI -->
+{#if mapScene && mapScene.songs.playable.length > 0 && !showClusterPanel}
+	<Player
+		songKeys={mapScene.songs.playable}
+		headless
+		bind:playingSongKey={explore.playingSongKey}
+	/>
+{/if}
+
 <article bind:this={articleEl}>
 	<Chapters
 		activeSlide={slideI}
