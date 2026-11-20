@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { GroupedSong } from "../../../../data/songBrowser.js";
+	import { toCalendarYear } from "../../../../data/songYear.js";
 	import SongTooltip from "../../../../routes/demo/shared/SongTooltip.svelte";
 	import HexSongTooltip from "../HexSongTooltip.svelte";
 	import SongLabel from "../SongLabel.svelte";
@@ -13,6 +14,7 @@
 		song,
 		summary,
 		simple,
+		basic = false,
 		hint,
 		colorForProgression
 	}: {
@@ -20,13 +22,27 @@
 		song: GroupedSong | null;
 		summary: SongSummary | null;
 		simple: boolean;
+		// Only the song's title, year and artist.
+		basic?: boolean;
 		// What clicking the song does, for the simple card.
 		hint: string;
 		colorForProgression: (name: string) => string | undefined;
 	} = $props();
 </script>
 
-{#if simple && song}
+{#if basic && (summary || song)}
+	<TooltipCard {style}>
+		<SongLabel
+			title={summary?.title ?? song?.title ?? ""}
+			year={summary
+				? summary.year
+				: song?.year === undefined
+					? undefined
+					: toCalendarYear(song.year)}
+			artists={summary?.artists ?? song?.artists ?? []}
+		/>
+	</TooltipCard>
+{:else if simple && song}
 	<TooltipCard {style}>
 		<HexSongTooltip {song} {colorForProgression} {hint} />
 	</TooltipCard>

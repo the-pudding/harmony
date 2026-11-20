@@ -114,7 +114,7 @@ describe("parseMapScene on the real copy", () => {
 			...DEFAULT_MAP_SCENE,
 			camera: { kind: "home", centered: true },
 			labels: { hidden: false, only: null, rotate: true },
-			interaction: { movable: false, hoverable: false }
+			interaction: { movable: false, hoverable: false, tooltip: "basic" }
 		});
 		const focused = mapBlocks.find((map) => map.focusCluster);
 		expect(parseMapScene(focused)!.camera).toEqual({
@@ -141,6 +141,9 @@ describe("parseMapScene on the real copy", () => {
 			layout: { name: "timeline", axisLabel: "time →" },
 			songs: { only: null, playable: [], dimmed: false }
 		});
+		for (const scene of [dot, sky, dimmed, follow, lit]) {
+			expect(scene.interaction.tooltip).toBe("basic");
+		}
 		expect(dimmed.songs.dimmed).toBe(true);
 		expect(follow.media).toEqual({
 			followVideo: "examples",
@@ -230,6 +233,12 @@ describe("parseMapScene", () => {
 		).toEqual({ followVideo: "examples", litVideoSongs: "examples" });
 	});
 
+	it("reads the tooltip, defaulting to full", () => {
+		expect(parse({}).interaction.tooltip).toBe("full");
+		expect(parse({ tooltip: " basic " }).interaction.tooltip).toBe("basic");
+		expect(parse({ tooltip: "full" }).interaction.tooltip).toBe("full");
+	});
+
 	it("reads labels, interaction, centered and the player", () => {
 		const scene = parse({
 			hideLabels: "true",
@@ -245,7 +254,11 @@ describe("parseMapScene", () => {
 			only: ["a", "b"],
 			rotate: true
 		});
-		expect(scene.interaction).toEqual({ movable: false, hoverable: false });
+		expect(scene.interaction).toEqual({
+			movable: false,
+			hoverable: false,
+			tooltip: "full"
+		});
 		expect(scene.camera).toEqual({ kind: "home", centered: true });
 		expect(scene.player).toEqual({ hidden: true });
 	});
@@ -265,6 +278,13 @@ describe("parseMapScene warnings", () => {
 		expect(warn).toHaveBeenCalledTimes(2);
 		expect(warn.mock.calls[0][0]).toContain("focusClustr");
 		expect(warn.mock.calls[1][0]).toContain("sphere");
+	});
+
+	it("warns about an unknown tooltip and uses full", () => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const scene = parseMapScene({ visible: "true", tooltip: "fancy" });
+		expect(scene?.interaction.tooltip).toBe("full");
+		expect(warn).toHaveBeenCalledTimes(1);
 	});
 
 	it("stays quiet for known keys", () => {

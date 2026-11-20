@@ -541,6 +541,7 @@
 					: UNCENTERED_OFFSET_Y}
 				{theme}
 				simpleSongTooltip
+				tooltipDetail={scene.interaction.tooltip}
 				hexHasPlayableSongs={explorable ? hasFeaturedSongs : null}
 				onSongChordsToggle={explorable ? onSongChordsToggle : null}
 				openSongId={explorable ? chordsSongKey : null}

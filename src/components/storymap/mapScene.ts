@@ -35,7 +35,13 @@ export type MapScene = {
 		only: readonly string[] | null;
 		rotate: boolean;
 	};
-	interaction: { movable: boolean; hoverable: boolean };
+	interaction: {
+		movable: boolean;
+		hoverable: boolean;
+		// What a hovered song's tooltip shows: "basic" is title, year and
+		// artist only, for the intro, before the rest has been introduced.
+		tooltip: "full" | "basic";
+	};
 	player: { hidden: boolean };
 };
 
@@ -48,7 +54,7 @@ export const DEFAULT_MAP_SCENE: MapScene = {
 	songs: { only: null, highlighted: [], playable: [], dimmed: false },
 	media: { followVideo: null, litVideoSongs: null },
 	labels: { hidden: false, only: null, rotate: false },
-	interaction: { movable: true, hoverable: true },
+	interaction: { movable: true, hoverable: true, tooltip: "full" },
 	player: { hidden: false }
 };
 
@@ -70,10 +76,12 @@ const KNOWN_KEYS = new Set<string>([
 	"rotateLabels",
 	"movable",
 	"hoverable",
+	"tooltip",
 	"hidePlayer"
 ] satisfies (keyof CopyMap)[]);
 
 const LAYOUT_NAMES = ["umap", "timeline"] as const;
+const TOOLTIP_NAMES = ["full", "basic"] as const;
 
 // undefined stays undefined (not set), so defaults can apply.
 const parseBoolean = (value: unknown): boolean | undefined =>
@@ -125,6 +133,12 @@ export const parseMapScene = (
 			? { name: "timeline", axisLabel }
 			: { name: "umap" };
 
+	const tooltipName = parseText(copyMap.tooltip) ?? "full";
+	const tooltip = TOOLTIP_NAMES.find((name) => name === tooltipName) ?? "full";
+	if (tooltip !== tooltipName) {
+		warn(`unknown tooltip "${tooltipName}" (using full)`);
+	}
+
 	// A focused cluster wins over a focused song (as in the scatter).
 	const focusCluster = parseText(copyMap.focusCluster);
 	const focusSong = parseText(copyMap.focusSong);
@@ -158,7 +172,8 @@ export const parseMapScene = (
 		},
 		interaction: {
 			movable: parseBoolean(copyMap.movable) ?? true,
-			hoverable: parseBoolean(copyMap.hoverable) ?? true
+			hoverable: parseBoolean(copyMap.hoverable) ?? true,
+			tooltip
 		},
 		player: { hidden: parseBoolean(copyMap.hidePlayer) ?? false }
 	};

@@ -36,6 +36,9 @@ declare module "$data/copy.json" {
 		rotateLabels?: string;
 		movable?: string;
 		hoverable?: string;
+		// What a hovered song's tooltip shows: "full" (the default) or "basic"
+		// (title, year and artist only).
+		tooltip?: string;
 		hidePlayer?: string;
 	};
 

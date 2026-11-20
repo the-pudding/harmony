@@ -182,6 +182,7 @@
 		onUserMove = null,
 		pixelRatio: pixelRatioOverride = null,
 		simpleSongTooltip = false,
+		tooltipDetail = "full",
 		hexHasPlayableSongs = null,
 		onSongChordsToggle = null,
 		onProgressionColors = null,
@@ -1259,8 +1260,14 @@
 		}
 	});
 
+	// The basic tooltip is just a few short lines.
+	const BASIC_TOOLTIP_WIDTH = 260;
 	const tooltipStyle = $derived(
-		hoverCardStyle(delayedTooltip.tooltipAnchor, width)
+		hoverCardStyle(
+			delayedTooltip.tooltipAnchor,
+			width,
+			tooltipDetail === "basic" ? BASIC_TOOLTIP_WIDTH : undefined
+		)
 	);
 
 	// What clicking the hovered song does, for the simple tooltip.
@@ -1358,6 +1365,7 @@
 			song={tooltip.song}
 			summary={tooltip.summary}
 			simple={simpleSongTooltip}
+			basic={tooltipDetail === "basic"}
 			hint={songTooltipHint}
 			colorForProgression={(name) => regionColorByProgressionName.get(name)}
 		/>

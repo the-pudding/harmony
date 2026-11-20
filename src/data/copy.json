@@ -30,7 +30,8 @@
               "journey__dont-stop-believin"
             ],
             "movable": "false",
-            "hoverable": "false"
+            "hoverable": "false",
+            "tooltip": "basic"
           }
         },
         {
@@ -48,7 +49,8 @@
             "visible": "true",
             "layout": "timeline",
             "axisLabel": "time →",
-            "movable": "false"
+            "movable": "false",
+            "tooltip": "basic"
           }
         },
         {
@@ -64,7 +66,8 @@
             "axisLabel": "time →",
             "dimmed": "true",
             "movable": "false",
-            "hoverable": "false"
+            "hoverable": "false",
+            "tooltip": "basic"
           },
           "stage": {
             "component": "Video",
@@ -84,7 +87,8 @@
             "layout": "timeline",
             "axisLabel": "time →",
             "followVideo": "examples",
-            "movable": "false"
+            "movable": "false",
+            "tooltip": "basic"
           },
           "stage": {
             "component": "Video",
@@ -122,7 +126,8 @@
             "layout": "timeline",
             "axisLabel": "time →",
             "litVideoSongs": "examples",
-            "movable": "false"
+            "movable": "false",
+            "tooltip": "basic"
           }
         },
         {
@@ -132,7 +137,8 @@
             "movable": "false",
             "hoverable": "false",
             "rotateLabels": "true",
-            "centered": "true"
+            "centered": "true",
+            "tooltip": "basic"
           },
           "stage": {
             "component": "Landing",

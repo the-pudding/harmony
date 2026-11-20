@@ -218,6 +218,8 @@ export type EmbeddingScatterProps = {
 	pixelRatio?: number | null;
 	// Hex mode: a simpler song tooltip (see HexSongTooltip).
 	simpleSongTooltip?: boolean;
+	// How much a song tooltip shows: "basic" is only title, year and artist.
+	tooltipDetail?: "full" | "basic";
 	// Hex mode: whether a region, by name, has playable songs; its tooltip
 	// then shows outlinedTitlePrefix before the name.
 	hexHasPlayableSongs?: ((regionName: string) => boolean) | null;
