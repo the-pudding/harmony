@@ -52,11 +52,11 @@ export const HEX_CLICK_ZOOM_MS = 450;
 export const REVEAL_STAGGER_WINDOW = 0.35;
 // Points animating between layouts.
 export const TWEEN_DURATION_MS = 700;
-export const LAYOUT_TWEEN_MS = 1600;
+export const LAYOUT_CHANGE_TWEEN_MS = 1600;
 // Crossfade used instead of motion under prefers-reduced-motion.
 export const REDUCED_MOTION_FADE_MS = 200;
 // Points moving because the map frame changed within one layout.
-export const FRAME_TWEEN_MS = 400;
+export const FRAME_RESIZE_TWEEN_MS = 400;
 // Songs not marked on a dimmed slide are drawn at this alpha.
 export const DIMMED_SONG_ALPHA = 0.35;
 // Hexes fade in after songs settle, and out before songs move away.

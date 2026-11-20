@@ -29,9 +29,9 @@
 		HEX_THEME_COLORS,
 		MAX_PIXEL_RATIO,
 		TWEEN_DURATION_MS,
-		LAYOUT_TWEEN_MS,
+		LAYOUT_CHANGE_TWEEN_MS,
 		REDUCED_MOTION_FADE_MS,
-		FRAME_TWEEN_MS,
+		FRAME_RESIZE_TWEEN_MS,
 		DIMMED_SONG_ALPHA,
 		SCRIPTED_FOCUS_TRANSITION_MS,
 		REVEAL_STAGGER_WINDOW,
@@ -430,10 +430,10 @@
 		}
 		if ((previous && next.layoutName !== previous.layoutName) || inFlight) {
 			layoutFlight = true;
-			return { durationMs: LAYOUT_TWEEN_MS, delayMs };
+			return { durationMs: LAYOUT_CHANGE_TWEEN_MS, delayMs };
 		}
 		if (previous && !sameFrame(next.frame, previous.frame)) {
-			return { durationMs: FRAME_TWEEN_MS, delayMs, staggered: false };
+			return { durationMs: FRAME_RESIZE_TWEEN_MS, delayMs, staggered: false };
 		}
 		return { durationMs: TWEEN_DURATION_MS, delayMs, staggered: false };
 	};

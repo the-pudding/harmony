@@ -156,13 +156,13 @@
 
 	// After a first focus the home camera zooms out (null) instead of undefined;
 	// undefined while on a song, which the scatter would rank second to the cluster.
-	let hasFocused = false;
+	let hasEverFocused = false;
 	const focusClusterName = $derived.by(() => {
 		if (focusCluster !== undefined || focusSongKey !== undefined) {
-			hasFocused = true;
+			hasEverFocused = true;
 		}
 		if (focusSongKey !== undefined) return undefined;
-		return focusCluster ?? (hasFocused ? null : undefined);
+		return focusCluster ?? (hasEverFocused ? null : undefined);
 	});
 
 	// A focused cluster locks the view. Derived rather than a prop default,
