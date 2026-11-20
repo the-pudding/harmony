@@ -118,19 +118,6 @@
 			</div>
 		{/if}
 	</div>
-
-	{#if cues}
-		<!-- ~3 rows: the current cue centered and bold, the list sliding under it -->
-		<div class="cue-list" style:--index={Math.max(cueIndex, 0)}>
-			<div class="track">
-				{#each cues as { artist, song }, i}
-					<div class="row" class:current={i === cueIndex}>
-						<strong class="song-name">{song}</strong> by {artist}
-					</div>
-				{/each}
-			</div>
-		</div>
-	{/if}
 </figure>
 
 <style>
@@ -191,51 +178,6 @@
 		}
 	}
 
-	.cue-list {
-		--row: 1.6rem;
-		height: calc(var(--row) * 3);
-		margin-top: 0.5rem;
-		overflow: hidden;
-		mask-image: linear-gradient(
-			to bottom,
-			transparent,
-			black 30%,
-			black 70%,
-			transparent
-		);
-	}
-
-	.track {
-		/* row 0 sits in the middle slot when --index is 0 */
-		transform: translateY(calc(var(--row) * (1 - var(--index))));
-		transition: transform 0.4s ease;
-	}
-
-	.row {
-		height: var(--row);
-		line-height: var(--row);
-		text-align: center;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		font-size: var(--12px);
-		opacity: 0.55;
-		transition: opacity 0.4s ease;
-	}
-
-	.row.current {
-		opacity: 1;
-	}
-
-	.song-name {
-		font-size: var(--16px);
-		font-weight: 400;
-	}
-
-	.row.current .song-name {
-		font-weight: 700;
-	}
-
 	/* pinned bottom-left, under the map; the map's frame leaves room for it */
 	figure.docked {
 		position: fixed;
@@ -269,13 +211,6 @@
 		figure.docked video {
 			max-height: 20svh;
 			margin: 0 auto;
-		}
-
-		/* clear of the mute toggle fixed over the card's bottom-right corner
-		   (2.5rem wide, 1rem from the edge), on both sides so it stays
-		   centered */
-		figure.docked .cue-list {
-			padding-inline: 3.5rem;
 		}
 	}
 
