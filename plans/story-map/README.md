@@ -43,14 +43,14 @@ This folder:
 
 ## Decisions made (from the planning conversation)
 
-| Question                                     | Decision                                                                                                                                            |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Where does the audio gate go?                | **Slide 0.** "Start with audio / Stay muted" buttons sit under slide 0's text. The title slide (now slide 5) is title and byline only.              |
-| What happens to the "dead-simple" video?     | **Kept.** It gets its own slide (slide 2), carrying the existing "In 2009, the Australian comedy group…" text, before the examples video.           |
-| What happens to "To find out, we gathered…"? | Kept, unchanged, right after the title slide (slide 6), still with UltimateGuitar. _(Assumed: see open questions.)_                                 |
-| Video vs. map on the video slides            | **The video docks to a corner card.** The sky stays full screen; the timeline shrinks out of the card's way (see "frames" in the architecture doc). |
-| Video songs missing from the dataset         | **Only matched songs light up.** 21 of the 38 are in the dataset. They light up as the clip names them and stay lit. M = 21.                        |
-| Copy                                         | **Reuse the existing intro text** wherever it overlaps the new outline. New text only where a new visual needs it. See [03-copy.md](03-copy.md).    |
+| Question                                     | Decision                                                                                                                                                                            |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Where does the audio gate go?                | **Superseded: no gate.** The buttons were removed; `IntroHints` shows two callouts on slide 0 (next arrow, mute toggle) 3 s in. The title slide (slide 5) is title and byline only. |
+| What happens to the "dead-simple" video?     | **Kept.** It gets its own slide (slide 2), carrying the existing "In 2009, the Australian comedy group…" text, before the examples video.                                           |
+| What happens to "To find out, we gathered…"? | Kept, unchanged, right after the title slide (slide 6), still with UltimateGuitar. _(Assumed: see open questions.)_                                                                 |
+| Video vs. map on the video slides            | **The video docks to a corner card.** The sky stays full screen; the timeline shrinks out of the card's way (see "frames" in the architecture doc).                                 |
+| Video songs missing from the dataset         | **Only matched songs light up.** 21 of the 38 are in the dataset. They light up as the clip names them and stay lit. M = 21.                                                        |
+| Copy                                         | **Reuse the existing intro text** wherever it overlaps the new outline. New text only where a new visual needs it. See [03-copy.md](03-copy.md).                                    |
 
 ## The new intro, slide by slide
 
@@ -100,9 +100,8 @@ detail for each is in [02-intro-commits.md](02-intro-commits.md).
 1. **Slide 6 ("To find out…").** Kept unchanged by default. Slide 1 now also
    says "all [7,260] Billboard top-20 hits", so the first sentence repeats it.
    Trim it, or keep the repeat as a deliberate callback?
-2. **Audio gate buttons.** Default: "Start with audio" unmutes _and_ starts
-   Journey's clip, which shows what clicking a dot does; "Stay muted" only
-   mutes. Neither moves to the next slide. Should either one advance?
+2. **Audio gate buttons.** Resolved: replaced by two hint callouts
+   (`IntroHints.svelte`); the mute state still defaults to muted.
 3. **Slide 0 player UI.** Default: audio only. The dot's progress ring, colored
    by chord, is the only playback UI. Alternatively, show the chord readout
    (`ClusterTitle`) under the dot, as Section 2's player does.

@@ -53,7 +53,7 @@
           "text": [
             {
               "type": "text",
-              "value": "In 2009, the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of pop songs – from Journey’s “Don’t Stop Believin’” to Beyoncé’s “If I Were A Boy” – are built off of the same four chords."
+              "value": "This belief went mainstream in 2009, when the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of pop songs – from Journey’s “Don’t Stop Believin’” to Beyoncé’s “If I Were A Boy” – are built off of the same four chords."
             }
           ],
           "map": {
@@ -96,15 +96,7 @@
           "text": [
             {
               "type": "text",
-              "value": "Ok, but that was [21] examples. What about the other [7,239]?"
-            },
-            {
-              "type": "text",
-              "value": "But is it true?"
-            },
-            {
-              "type": "text",
-              "value": "Is pop music really:"
+              "value": "Axis of Awesome helped cement 3 big beliefs about pop:"
             },
             {
               "type": "ol",
@@ -115,6 +107,10 @@
                   "and recycled decade after decade? 🗓️"
                 ]
               }
+            },
+            {
+              "type": "text",
+              "value": "Ok, but they cited just [21] examples. What about the other [7,239]? Do these claims hold up?"
             }
           ],
           "map": {
