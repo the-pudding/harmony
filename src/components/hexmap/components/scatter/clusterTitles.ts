@@ -15,6 +15,8 @@ export type ClusterTitleSpot = {
 	x: number;
 	y: number;
 	songCount: number;
+	// Faded with the cluster's outline while another cluster's song plays.
+	opacity: number;
 };
 
 // Rough title sizes, since titles are placed before they're rendered:
@@ -33,9 +35,11 @@ const TITLE_PADDING = 8;
 // (possibly rotated) outline.
 export const clusterTitleSpots = (
 	hits: readonly ClusterHit[],
-	names: ReadonlyMap<string, string>
+	names: ReadonlyMap<string, string>,
+	opacityFor: (hit: ClusterHit) => number = () => 1
 ): ClusterTitleSpot[] =>
-	hits.flatMap(({ cluster, geometry }) => {
+	hits.flatMap((hit) => {
+		const { cluster, geometry } = hit;
 		const name = names.get(cluster.hash);
 		if (!name) return [];
 		const { centroid, semiAxisX, semiAxisY, rotationRadians } = geometry;
@@ -49,7 +53,8 @@ export const clusterTitleSpots = (
 				name,
 				x: centroid.x,
 				y: centroid.y + halfHeight + CLUSTER_LABEL_GAP,
-				songCount: cluster.songKeys.length
+				songCount: cluster.songKeys.length,
+				opacity: opacityFor(hit)
 			}
 		];
 	});

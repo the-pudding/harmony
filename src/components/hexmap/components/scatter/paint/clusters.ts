@@ -16,8 +16,10 @@ import {
 	CLUSTER_STROKE_COLOR,
 	CLUSTER_STROKE_WIDTH,
 	CLUSTER_UNNAMED_STROKE_ALPHA,
-	FAMILY_INVOLVEMENT_THRESHOLD
+	FAMILY_INVOLVEMENT_THRESHOLD,
+	NOT_PLAYING_ALPHA
 } from "../constants.js";
+import { lerp, type Spotlight } from "../pointStyle.js";
 import type { ClusterHit, Point2D } from "../types.js";
 import { screenOfIndex, type Scene } from "./scene.js";
 
@@ -34,6 +36,23 @@ export type ClusterOutlineOptions = {
 	countClusterHash: string | null;
 	// How much of each ellipse is drawn, 0 to 1, as it draws on.
 	drawnFraction: number;
+	// Fades clusters without the spotlit song along with their dots.
+	spotlight: Spotlight;
+};
+
+// How much a cluster's annotations fade while a song is spotlit, like its
+// dots: not at all if the spotlit song is one of its own.
+export const clusterSpotlightAlpha = (
+	cluster: DensityCluster,
+	spotlight: Spotlight
+): number => {
+	if (spotlight.fade === 0) return 1;
+	let spotlitEmphasis = 0;
+	for (const songKey of cluster.songKeys) {
+		const emphasis = spotlight.emphasis.get(songKey) ?? 0;
+		if (emphasis > spotlitEmphasis) spotlitEmphasis = emphasis;
+	}
+	return lerp(1, NOT_PLAYING_ALPHA, spotlight.fade * (1 - spotlitEmphasis));
 };
 
 // Dashed ellipses around each cluster, fit to its songs' current screen
@@ -49,7 +68,8 @@ export const drawClusterOutlines = (
 		familyEmphasisSongKeys,
 		showNames,
 		countClusterHash,
-		drawnFraction
+		drawnFraction,
+		spotlight
 	}: ClusterOutlineOptions
 ): ClusterHit[] => {
 	const { context } = scene;
@@ -80,14 +100,15 @@ export const drawClusterOutlines = (
 				FAMILY_INVOLVEMENT_THRESHOLD;
 
 		const name = heavilyInvolvesFamily ? names.get(cluster.hash) : undefined;
-		const strokeAlpha = !heavilyInvolvesFamily
-			? CLUSTER_DEEMPHASIZED_STROKE_ALPHA
-			: clusterAnnotationAlpha(
-					emphasizedClusterHashes,
-					cluster.hash,
-					name !== undefined,
-					CLUSTER_UNNAMED_STROKE_ALPHA
-				);
+		const strokeAlpha =
+			(!heavilyInvolvesFamily
+				? CLUSTER_DEEMPHASIZED_STROKE_ALPHA
+				: clusterAnnotationAlpha(
+						emphasizedClusterHashes,
+						cluster.hash,
+						name !== undefined,
+						CLUSTER_UNNAMED_STROKE_ALPHA
+					)) * clusterSpotlightAlpha(cluster, spotlight);
 
 		context.globalAlpha = strokeAlpha;
 		context.setLineDash(CLUSTER_DASH_PATTERN);

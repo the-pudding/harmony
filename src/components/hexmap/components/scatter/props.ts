@@ -136,11 +136,6 @@ export type EmbeddingScatterProps = {
 	playingSongKey?: string | null;
 	// 0 to 1 through the playing song's clip; draws a ring and pause icon.
 	playingClipProgressFraction?: number;
-	playingChordColorSegments?: {
-		startFraction: number;
-		endFraction: number;
-		chordColor: string;
-	}[];
 	// How hex bins are painted (layout.aggregate hex; needs progressionSharesBySongKey).
 	hexStyle?: "hex" | "watercolor" | "hex-watercolor";
 	// Each song's progressions with their share of its matched chords.

@@ -108,7 +108,10 @@
 		type GuideSet
 	} from "./scatter/paint/guides.js";
 	import { createMixFill } from "./scatter/colorMix.js";
-	import { drawClusterOutlines } from "./scatter/paint/clusters.js";
+	import {
+		clusterSpotlightAlpha,
+		drawClusterOutlines
+	} from "./scatter/paint/clusters.js";
 	import {
 		createDotFill,
 		drawDots,
@@ -189,7 +192,6 @@
 		smallOutlinedSongKeys = null,
 		playingSongKey = null,
 		playingClipProgressFraction = 0,
-		playingChordColorSegments = [],
 		hexStyle = "hex",
 		progressionSharesBySongKey = null,
 		clusterRegionBySongKey = null,
@@ -915,12 +917,18 @@
 					countClusterHash: hexMode
 						? null
 						: (hoveredClusterHit?.cluster.hash ?? null),
-					drawnFraction: outlineDraw.current
+					drawnFraction: outlineDraw.current,
+					spotlight: markers ? spotlight.current : NO_SPOTLIGHT
 				})
 			: [];
 		setTitleSpots(
 			hexMode && showClusterNames && outlined
-				? clusterTitleSpots(clusterHits, resolvedClusterNames)
+				? clusterTitleSpots(clusterHits, resolvedClusterNames, ({ cluster }) =>
+						clusterSpotlightAlpha(
+							cluster,
+							markers ? spotlight.current : NO_SPOTLIGHT
+						)
+					)
 				: []
 		);
 
@@ -949,10 +957,7 @@
 					? hoveredSongKey
 					: null,
 			playingSongKey,
-			playback: {
-				progressFraction: playingClipProgressFraction,
-				chordSegments: playingChordColorSegments
-			}
+			playback: { progressFraction: playingClipProgressFraction }
 		});
 
 		const labelOffsets = songSummaryByKey

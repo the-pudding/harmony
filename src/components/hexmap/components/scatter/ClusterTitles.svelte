@@ -20,6 +20,7 @@
 			class="title"
 			style:left="{title.x}px"
 			style:top="{title.y}px"
+			style:--fade={title.opacity}
 			aria-label="Explore {title.name}"
 			onclick={(event) => {
 				// the map underneath would treat it as a background click
@@ -30,7 +31,12 @@
 			<ClusterTitle cluster={title.name} size="small" />
 		</button>
 	{:else}
-		<div class="title" style:left="{title.x}px" style:top="{title.y}px">
+		<div
+			class="title"
+			style:left="{title.x}px"
+			style:top="{title.y}px"
+			style:--fade={title.opacity}
+		>
 			<ClusterTitle cluster={title.name} size="small" />
 		</div>
 	{/if}
@@ -41,6 +47,7 @@
 		position: absolute;
 		transform: translateX(-50%);
 		pointer-events: none;
+		opacity: var(--fade, 1);
 	}
 
 	button.title {
@@ -50,11 +57,11 @@
 		pointer-events: auto;
 		cursor: pointer;
 		border-radius: 0.5rem;
-		transition: opacity 150ms ease;
+		opacity: var(--fade, 1);
 	}
 
 	button.title:hover {
-		opacity: 0.8;
+		opacity: calc(var(--fade, 1) * 0.8);
 	}
 
 	button.title:focus-visible {

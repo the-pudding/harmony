@@ -5,10 +5,7 @@
 		featuredClusterOf,
 		featuredSongsOf
 	} from "$data/featuredClusters.js";
-	import { progressionFor } from "$data/clusterProgression.js";
 	import { attachAudio, audio } from "$runes/audio.svelte";
-	import { appearanceFor } from "$routes/demo/design/chord-viz/chordAppearanceLookup.js";
-	import { paletteById } from "$routes/demo/design/chord-viz/chordPalettes.js";
 
 	let {
 		cluster = undefined,
@@ -46,29 +43,6 @@
 	);
 	const currentSong = $derived(songs.find((d) => d.songKey === playingSongKey));
 	const currentTimeData = $derived(currentSong?.data?.chords);
-
-	// The clip split by which chord is playing, colored as in Chord.svelte.
-	const segments = $derived.by(() => {
-		const song = currentSong;
-		const chords = song?.data?.chords;
-		if (!song || !chords?.length) return [];
-		const tonality = progressionFor(song.songCluster)?.tonality ?? "major";
-		const palette = paletteById("journey-from-home");
-		const span = song.endSeconds - song.startSeconds;
-		const fraction = (seconds) =>
-			Math.min(1, Math.max(0, (seconds - song.startSeconds) / span));
-		return chords.flatMap(({ seconds, roman }, i) => {
-			const startFraction = fraction(seconds);
-			const endFraction = fraction(chords[i + 1]?.seconds ?? song.endSeconds);
-			if (endFraction <= startFraction) return [];
-			const chordColor = appearanceFor(tonality, roman, palette).colors.fill;
-			return [{ startFraction, endFraction, chordColor }];
-		});
-	});
-
-	$effect(() => {
-		audio.chordColorSegments = segments;
-	});
 
 	const playFromStart = (song) => {
 		const audioEl = audioEls[song.songKey];

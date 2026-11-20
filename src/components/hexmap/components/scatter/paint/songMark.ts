@@ -5,16 +5,9 @@ import {
 } from "../../songLabelText.js";
 import { OUTLINE_COLOR, OUTLINED_LABEL_LINE_HEIGHT } from "../constants.js";
 
-export type ChordColorSegment = {
-	startFraction: number;
-	endFraction: number;
-	chordColor: string;
-};
-
 export type Playback = {
 	// 0 to 1 through the playing song's clip.
 	progressFraction: number;
-	chordSegments: readonly ChordColorSegment[];
 };
 
 // Where a song's mark stands, in canvas px.
@@ -197,8 +190,7 @@ const drawPlayIcon = (
 	context.restore();
 };
 
-// A ring on the dot's edge filling with the clip's progress, colored by
-// the chord playing in each stretch (white without chord colors), plus a
+// A white ring on the dot's edge filling with the clip's progress, plus a
 // pause icon.
 const drawPlaybackRing = (
 	context: CanvasRenderingContext2D,
@@ -206,7 +198,7 @@ const drawPlaybackRing = (
 	y: number,
 	radius: number,
 	emphasis: number,
-	{ progressFraction, chordSegments }: Playback
+	{ progressFraction }: Playback
 ) => {
 	context.save();
 	context.globalAlpha = emphasis;
@@ -227,11 +219,7 @@ const drawPlaybackRing = (
 	context.lineWidth = 4;
 	context.lineCap = "butt";
 	arc(0, 1, "rgba(0, 0, 0, 0.35)");
-	if (chordSegments.length === 0) arc(0, progressFraction, "white");
-	for (const { startFraction, endFraction, chordColor } of chordSegments) {
-		if (startFraction >= progressFraction) break;
-		arc(startFraction, Math.min(endFraction, progressFraction), chordColor);
-	}
+	arc(0, progressFraction, "white");
 	context.fillStyle = "white";
 	const barWidth = radius * 0.2;
 	const barHeight = radius * 0.7;

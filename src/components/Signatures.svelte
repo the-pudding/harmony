@@ -32,8 +32,6 @@
 		PLAYING_POINT_RADIUS,
 		PLAYING_TWEEN_MS
 	} from "$components/hexmap/components/scatter/constants.js";
-	import { appearanceFor } from "$routes/demo/design/chord-viz/chordAppearanceLookup.js";
-	import { paletteById } from "$routes/demo/design/chord-viz/chordPalettes.js";
 
 	// focus: the decade label to show ("2020s", "1950s-60s", …); defaults to the newest
 	let { focus = null } = $props();
@@ -397,33 +395,13 @@
 
 	const playingIndex = $derived(paused ? null : clipIndex);
 
-	// the playing clip's progress ring, split by chord and colored as in
-	// Chord.svelte (as in Player.svelte)
+	// the playing clip's progress ring, white as on the map
 	const RING_RADIUS = PLAYING_POINT_RADIUS - 2;
 	const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
-	const progressSegments = $derived.by(() => {
-		if (!clip || paused) return [];
+	const progressFraction = $derived.by(() => {
+		if (!clip || paused) return 0;
 		const span = clip.endSeconds - clip.startSeconds;
-		const fraction = (seconds) =>
-			Math.min(1, Math.max(0, (seconds - clip.startSeconds) / span));
-		const progress = fraction(currentTime);
-		const tonality = slide.scale === "minor" ? "minor" : "major";
-		const palette = paletteById("journey-from-home");
-		return clip.chords.flatMap(({ seconds, roman }, i) => {
-			const from = fraction(seconds);
-			const to = Math.min(
-				progress,
-				fraction(clip.chords[i + 1]?.seconds ?? clip.endSeconds)
-			);
-			if (to <= from) return [];
-			return [
-				{
-					from,
-					to,
-					color: appearanceFor(tonality, roman, palette).colors.fill
-				}
-			];
-		});
+		return Math.min(1, Math.max(0, (currentTime - clip.startSeconds) / span));
 	});
 
 	// the play icon (a triangle) and pause icon (two bars), as on the map
@@ -579,17 +557,16 @@
 							{#if playing}
 								<g class="progress" transform="rotate(-90 {dot.x} {dot.y})">
 									<circle class="track" cx={dot.x} cy={dot.y} r={RING_RADIUS} />
-									{#each progressSegments as segment, s (s)}
+									{#if progressFraction > 0}
 										<circle
+											class="bar"
 											cx={dot.x}
 											cy={dot.y}
 											r={RING_RADIUS}
-											stroke={segment.color}
-											stroke-dasharray="{(segment.to - segment.from) *
+											stroke-dasharray="{progressFraction *
 												RING_LENGTH} {RING_LENGTH}"
-											stroke-dashoffset={-segment.from * RING_LENGTH}
 										/>
-									{/each}
+									{/if}
 								</g>
 								{#each [-1, 1] as side (side)}
 									<rect
@@ -698,6 +675,10 @@
 
 	.progress .track {
 		stroke: rgba(0, 0, 0, 0.35);
+	}
+
+	.progress .bar {
+		stroke: #fff;
 	}
 
 	.icon {

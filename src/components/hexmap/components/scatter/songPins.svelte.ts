@@ -193,8 +193,7 @@ export const createSongPins = ({
 						kind: "playing",
 						emphasis: 1,
 						playback: {
-							progressFraction: anchor?.progress ?? 0,
-							chordSegments: []
+							progressFraction: anchor?.progress ?? 0
 						}
 					}
 				: anchor?.playable

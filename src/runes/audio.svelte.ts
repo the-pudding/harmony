@@ -1,16 +1,9 @@
 import { untrack } from "svelte";
 
-export type ChordColorSegment = {
-	startFraction: number;
-	endFraction: number;
-	chordColor: string;
-};
-
 export const audio = $state({
 	muted: false,
 	stops: 0,
-	clipProgressFraction: 0,
-	chordColorSegments: [] as ChordColorSegment[]
+	clipProgressFraction: 0
 });
 
 export const AUDIO_VOLUME = 0.3;

@@ -139,7 +139,7 @@ describe("drawSongMark", () => {
 				icon: {
 					kind: "playing",
 					emphasis: 0.5,
-					playback: { progressFraction: 0.25, chordSegments: [] }
+					playback: { progressFraction: 0.25 }
 				}
 			},
 			label: null

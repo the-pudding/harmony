@@ -42,7 +42,8 @@ describe("placeClusterTitles", () => {
 		name,
 		x,
 		y,
-		songCount
+		songCount,
+		opacity: 1
 	});
 	const view = { width: 1000, height: 800 };
 

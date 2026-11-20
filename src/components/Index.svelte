@@ -419,7 +419,6 @@
 		theme="dark"
 		playingSongKey={explore.playingSongKey ?? null}
 		playingClipProgressFraction={audio.clipProgressFraction}
-		playingChordColorSegments={audio.chordColorSegments}
 		onSampleClick={explore.playSong}
 		exploredClusterName={explore.clusterName ?? null}
 		searchedSongKey={explore.searchedSongKey ?? null}

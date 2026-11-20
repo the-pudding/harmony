@@ -17,7 +17,6 @@
 		hasFeaturedSongs
 	} from "$data/featuredClusters.js";
 	import { sameClusterName } from "$data/clusterName.js";
-	import type { ChordColorSegment } from "$runes/audio.svelte.js";
 	import { mapColors } from "$runes/mapColors.svelte.js";
 	import { onMount, untrack } from "svelte";
 	import { fade } from "svelte/transition";
@@ -67,7 +66,6 @@
 		// progress ring and pause icon on its dot.
 		playingClipProgressFraction?: number;
 		// Colors the progress ring in stretches, e.g. by chord.
-		playingChordColorSegments?: ChordColorSegment[];
 
 		// The rest only apply while the map is explorable (movable, with no
 		// focusCluster).
@@ -126,7 +124,6 @@
 		onSampleClick = undefined,
 		playingSongKey = null,
 		playingClipProgressFraction = 0,
-		playingChordColorSegments = [],
 		exploredClusterName = null,
 		searchedSongKey = null,
 		onClusterPick = undefined,
@@ -487,7 +484,6 @@
 				outlinedTitlePrefix="🎧"
 				{playingSongKey}
 				{playingClipProgressFraction}
-				{playingChordColorSegments}
 				movable={explorable}
 				{hoverable}
 				clickable={!playerHidden}
