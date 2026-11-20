@@ -7,9 +7,11 @@
 	import { cueAt, videoCues } from "$data/videoCues";
 	import { storyMedia } from "$runes/storyMedia.svelte";
 
-	// dock: "corner" pins the video to the bottom-left as a card, so the map
-	// can fill the rest of the screen.
-	let { videoId, caption, dock = null } = $props();
+	// onStage: the video is a slide's stage, centered directly under the story
+	// text and sized to leave a band of the map (the sky) below it, instead
+	// of filling the space like a video inside the text. Its bottom edge is
+	// published for the map's frame.
+	let { videoId, caption, onStage = false } = $props();
 
 	const appState = getContext("state");
 
@@ -17,11 +19,10 @@
 	let paused = $state(true);
 	let currentTime = $state(0);
 
-	const docked = $derived(dock === "corner");
 	const cues = $derived(videoCues[videoId]);
 	// The cue showing at the current time (the first one while paused at 0).
 	const cueIndex = $derived(cues ? cueAt(cues, currentTime) : -1);
-	let cardHeight = $state(0);
+	let figureEl = $state();
 
 	const sync = $derived(committedSyncedVideos[videoId]);
 	const cluster = $derived(
@@ -56,15 +57,30 @@
 		else storyMedia.setCue(videoId, cueIndex);
 	});
 
-	// The docked card's height, for the map's frame.
+	// How far below the figure's top the video ends, for the map's frame (the
+	// sky starts below it). Measured relative to the figure, so it holds
+	// still while the text above resizes and moves the whole stage; it
+	// changes only when the video does (metadata loading, the window).
 	$effect(() => {
-		storyMedia.setDockHeight(docked ? cardHeight : 0);
+		if (!onStage || !figureEl || !videoEl) return;
+		const publish = () => {
+			const video = videoEl.getBoundingClientRect();
+			const offset =
+				video.height > 0
+					? video.bottom - figureEl.getBoundingClientRect().top
+					: 0;
+			storyMedia.setVideoBottomOffset(offset);
+		};
+		publish();
+		const observer = new ResizeObserver(publish);
+		observer.observe(videoEl);
+		return () => {
+			observer.disconnect();
+			storyMedia.setVideoBottomOffset(0);
+		};
 	});
 
-	$effect(() => () => {
-		storyMedia.clearCue();
-		storyMedia.setDockHeight(0);
-	});
+	$effect(() => () => storyMedia.clearCue());
 
 	const positionCues = (track) => {
 		const apply = () => {
@@ -81,7 +97,7 @@
 	};
 </script>
 
-<figure class:docked bind:offsetHeight={cardHeight}>
+<figure class:stage={onStage} bind:this={figureEl}>
 	<div class="video-wrapper">
 		<video
 			{@attach attachAudio}
@@ -122,7 +138,6 @@
 
 <style>
 	figure {
-		--dock-inset: 16px;
 		height: 100%;
 		max-width: var(--col-width);
 		margin: 0 auto;
@@ -160,6 +175,24 @@
 		transition: opacity 0.3s ease;
 	}
 
+	/* a slow pulse while the button is showing, so it reads as clickable */
+	.play:not(.hidden) {
+		animation: pulse 1.8s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		50% {
+			opacity: 0.7;
+			scale: 1.1;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.play:not(.hidden) {
+			animation: none;
+		}
+	}
+
 	.play.hidden {
 		opacity: 0;
 		pointer-events: none;
@@ -178,40 +211,24 @@
 		}
 	}
 
-	/* pinned bottom-left, under the map; the map's frame leaves room for it */
-	figure.docked {
-		position: fixed;
-		left: var(--dock-inset);
-		bottom: var(--dock-inset);
-		z-index: 5;
-		width: min(40vw, 360px);
+	/* the slide's stage: centered under the text, small enough to leave sky
+	   below it */
+	figure.stage {
 		height: auto;
-		max-width: none;
-		margin: 0;
-		padding: 0.5rem 0.5rem 0.25rem;
-		background: color-mix(in srgb, var(--color-bg, #0a0a0c) 92%, transparent);
-		border: 1px solid var(--color-gray-700, #333);
-		border-radius: 6px;
-		pointer-events: auto;
+		padding: 0.5rem 1rem 0;
+		overflow: visible;
 	}
 
-	figure.docked video {
-		width: 100%;
+	figure.stage .video-wrapper {
+		width: fit-content;
+		max-width: min(480px, 90vw);
+		margin: 0 auto;
 	}
 
-	@media (max-width: 600px) {
-		figure.docked {
-			left: 0;
-			bottom: 0;
-			width: 100%;
-			max-height: 35svh;
-			border-radius: 6px 6px 0 0;
-		}
-
-		figure.docked video {
-			max-height: 20svh;
-			margin: 0 auto;
-		}
+	figure.stage video {
+		max-width: min(480px, 90vw);
+		max-height: 30svh;
+		margin: 0 auto;
 	}
 
 	.shania-player {

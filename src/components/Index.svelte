@@ -243,24 +243,19 @@
 		return height > 0 ? { top, height } : null;
 	});
 	// The rect framed map layouts (e.g. the timeline) fill, as insets from
-	// the map's edges: a gap below the text box, and room at the bottom
-	// for an axis label. (The map never puts songs closer than its own
-	// margin to an edge either.)
+	// the map's edges: a gap below the text box, or below the stage video
+	// when there is one (it sits right under the text), and room at the
+	// bottom for an axis label.
 	const MAP_FRAME_GAP = 16;
 	const MAP_FRAME_BOTTOM = 48;
-	// A docked video card (bottom-left, 16px from the edges) pushes the
-	// bottom up above it.
-	const DOCK_INSET = 16;
 	let mapFrame = $derived({
-		top: focusFrame ? focusFrame.top + MAP_FRAME_GAP : 0,
+		top: focusFrame
+			? focusFrame.top +
+				(storyMedia.videoBottomOffset > 0 ? storyMedia.videoBottomOffset : 0) +
+				MAP_FRAME_GAP
+			: 0,
 		right: 0,
-		bottom:
-			storyMedia.dockHeight > 0
-				? Math.max(
-						MAP_FRAME_BOTTOM,
-						storyMedia.dockHeight + DOCK_INSET + MAP_FRAME_GAP
-					)
-				: MAP_FRAME_BOTTOM,
+		bottom: MAP_FRAME_BOTTOM,
 		left: 0
 	});
 	// What's explored, playing and open (see explore.svelte.ts). On the
@@ -504,7 +499,7 @@
 			{#if StageComponent}
 				<!-- a fresh <video>/<track> per video, or the old track's cues linger -->
 				{#key stageProps.videoId}
-					<StageComponent {...stageProps} />
+					<StageComponent {...stageProps} onStage />
 				{/key}
 			{/if}
 		</div>

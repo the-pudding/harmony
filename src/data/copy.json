@@ -67,8 +67,7 @@
           },
           "stage": {
             "component": "Video",
-            "videoId": "dead-simple",
-            "dock": "corner"
+            "videoId": "dead-simple"
           }
         },
         {
@@ -88,8 +87,7 @@
           },
           "stage": {
             "component": "Video",
-            "videoId": "examples",
-            "dock": "corner"
+            "videoId": "examples"
           }
         },
         {
