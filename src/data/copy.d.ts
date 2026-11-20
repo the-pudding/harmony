@@ -38,6 +38,9 @@ declare module "$data/copy.json" {
 		// "full" (default), or "basic" (title, year and artist only).
 		tooltip?: string;
 		hidePlayer?: string;
+		// Cluster names (exact): arriving from another layout, each one's
+		// songs move in turn, in this order, then everyone else.
+		revealClusters?: CopyList;
 	};
 
 	// A slide's `{.stage}` block: a component and its props, all text or

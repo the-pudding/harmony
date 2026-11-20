@@ -28,6 +28,7 @@ describe("buildSongTable", () => {
 		expect(table.clusterName[20]).toBe("axis");
 		expect(table.clusterName[35]).toBeNull();
 		expect(table.clusterMembers).toHaveLength(2);
+		expect(table.clusterNames).toEqual(["four chords", "axis"]);
 		expect(table.clusterMembers[1][0]).toBe(15);
 	});
 

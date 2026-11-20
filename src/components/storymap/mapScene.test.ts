@@ -71,7 +71,8 @@ const NEW_KEYS = [
 	"playableSongs",
 	"dimmed",
 	"followVideo",
-	"litVideoSongs"
+	"litVideoSongs",
+	"revealClusters"
 ];
 const usesNewKeys = (map: Record<string, unknown>) =>
 	NEW_KEYS.some((key) => key in map);
@@ -110,7 +111,8 @@ describe("parseMapScene on the real copy", () => {
 			...DEFAULT_MAP_SCENE,
 			camera: { kind: "home", centered: true },
 			labels: { hidden: false, only: null, rotate: true },
-			interaction: { movable: false, hoverable: false, tooltip: "basic" }
+			interaction: { movable: false, hoverable: false, tooltip: "basic" },
+			reveal: { clusters: ["doo wop", "axis of awesome"] }
 		});
 		const focused = mapBlocks.find((map) => map.focusCluster);
 		expect(parseMapScene(focused)!.camera).toEqual({
@@ -249,6 +251,16 @@ describe("parseMapScene", () => {
 		expect(parse({}).interaction.tooltip).toBe("full");
 		expect(parse({ tooltip: " basic " }).interaction.tooltip).toBe("basic");
 		expect(parse({ tooltip: "full" }).interaction.tooltip).toBe("full");
+	});
+
+	it("reads revealClusters as a list, empty by default", () => {
+		expect(parse({}).reveal).toEqual({ clusters: [] });
+		expect(
+			parse({ revealClusters: ["doo wop", " axis of awesome "] }).reveal
+		).toEqual({ clusters: ["doo wop", "axis of awesome"] });
+		expect(parse({ revealClusters: "doo wop" }).reveal.clusters).toEqual([
+			"doo wop"
+		]);
 	});
 
 	it("reads labels, interaction, centered and the player", () => {

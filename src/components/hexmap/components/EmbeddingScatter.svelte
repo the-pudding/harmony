@@ -35,6 +35,9 @@
 		DIMMED_SONG_ALPHA,
 		SCRIPTED_FOCUS_TRANSITION_MS,
 		REVEAL_STAGGER_WINDOW,
+		STAGED_REVEAL_CLUSTER_STAGE_MS,
+		STAGED_REVEAL_LAST_STAGE_MS,
+		STAGED_REVEAL_PAUSE_MS,
 		HEX_FADE_IN_MS,
 		HEX_FADE_OUT_MS
 	} from "./scatter/constants.js";
@@ -69,6 +72,11 @@
 		type TransitionTarget,
 		type TransitionTiming
 	} from "./scatter/transition.svelte.js";
+	import {
+		stagedDurationMs,
+		type StagePlan
+	} from "./scatter/transitionMath.js";
+	import type { RevealStages } from "$components/storymap/revealStages.js";
 	import { createFade } from "./scatter/fade.svelte.js";
 	import { createSpotlightTween } from "./scatter/spotlightTween.svelte.js";
 	import { createCamera } from "./scatter/camera.svelte.js";
@@ -132,6 +140,8 @@
 		dimExceptSongKeys = null,
 		revealStagger = null,
 		revealOriginSongKey = null,
+		revealStages = null,
+		onStagedRevealChange = null,
 		inYearSongKeys = null,
 		axisLabels = null,
 		method,
@@ -341,6 +351,7 @@
 	type PlacedTarget = TransitionTarget & {
 		layoutName: string;
 		revealing: boolean;
+		revealStages: RevealStages | null;
 		// Framed layouts only (null and 0 otherwise).
 		frame: MapFrame | null;
 		width: number;
@@ -373,6 +384,7 @@
 			stagger: revealStagger ?? layout.stagger ?? null,
 			staggerWindow: revealStagger ? REVEAL_STAGGER_WINDOW : null,
 			revealing: revealStagger !== null,
+			revealStages,
 			layoutName: layout.name
 		};
 		if (!layout.framed) {
@@ -428,6 +440,15 @@
 		) {
 			return { durationMs: SCRIPTED_FOCUS_TRANSITION_MS, delayMs };
 		}
+		if (
+			next.revealStages &&
+			previous &&
+			next.layoutName !== previous.layoutName
+		) {
+			layoutFlight = true;
+			const stages = stagePlan(next.revealStages);
+			return { durationMs: stagedDurationMs(stages), delayMs, stages };
+		}
 		if ((previous && next.layoutName !== previous.layoutName) || inFlight) {
 			layoutFlight = true;
 			return { durationMs: LAYOUT_CHANGE_TWEEN_MS, delayMs };
@@ -437,6 +458,33 @@
 		}
 		return { durationMs: TWEEN_DURATION_MS, delayMs, staggered: false };
 	};
+
+	const stagePlan = ({ stageOf, count }: RevealStages): StagePlan => ({
+		stageOf,
+		stageMs: Array.from({ length: count }, (_, stage) =>
+			stage === count - 1
+				? STAGED_REVEAL_LAST_STAGE_MS
+				: STAGED_REVEAL_CLUSTER_STAGE_MS
+		),
+		pauseMs: STAGED_REVEAL_PAUSE_MS
+	});
+
+	// From a staged transition's start until its songs settle and hexes are in.
+	let stagedRevealRunning = $state(false);
+	const endStagedRevealOnceShown = () => {
+		if (
+			stagedRevealRunning &&
+			transition.settled &&
+			hexFade.current === hexFadeTarget()
+		) {
+			stagedRevealRunning = false;
+		}
+	};
+	$effect(() => {
+		if (!stagedRevealRunning) return;
+		onStagedRevealChange?.(true);
+		return () => onStagedRevealChange?.(false);
+	});
 
 	const isDrawnIndex = (index: number | undefined): index is number =>
 		index !== undefined &&
@@ -1073,17 +1121,28 @@
 		get target() {
 			return transitionTarget;
 		},
-		timing: transitionTiming,
-		onFrame: () => draw()
+		timing: (next, previous) => {
+			const timing = transitionTiming(next, previous);
+			stagedRevealRunning = timing.stages != null;
+			return timing;
+		},
+		onFrame: () => {
+			draw();
+			endStagedRevealOnceShown();
+		}
 	});
 
+	const hexFadeTarget = () => (hexMode && transition.settled ? 1 : 0);
 	const hexFade = createFade({
 		get target() {
-			return hexMode && transition.settled ? 1 : 0;
+			return hexFadeTarget();
 		},
 		riseMs: HEX_FADE_IN_MS,
 		fallMs: HEX_FADE_OUT_MS,
-		onFrame: () => draw()
+		onFrame: () => {
+			draw();
+			endStagedRevealOnceShown();
+		}
 	});
 
 	const revealSpotlightSongKey = $derived(

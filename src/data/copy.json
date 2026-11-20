@@ -127,7 +127,11 @@
             "hoverable": "false",
             "rotateLabels": "true",
             "centered": "true",
-            "tooltip": "basic"
+            "tooltip": "basic",
+            "revealClusters": [
+              "doo wop",
+              "axis of awesome"
+            ]
           },
           "stage": {
             "component": "Landing",

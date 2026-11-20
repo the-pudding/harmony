@@ -26,6 +26,7 @@
 	import { buildSongTable } from "$components/storymap/songTable.js";
 	import { computeLayout } from "$components/storymap/layouts/cache.js";
 	import { revealStagger as rippleFrom } from "$components/storymap/revealStagger.js";
+	import { revealStages } from "$components/storymap/revealStages.js";
 	import {
 		DEFAULT_FOCUS_SCALE,
 		SONG_FOCUS_SCALE
@@ -97,6 +98,9 @@
 		spotlitSongKey?: string | null;
 		// Small inert markers with no labels, kept bright on a dimmed scene.
 		litSongKeys?: readonly string[];
+		// Called with true while the scene's staged reveal (revealClusters)
+		// plays, and false once its hexes are in.
+		onStagedRevealChange?: (running: boolean) => void;
 		// Called with where the explored cluster's title goes at dot zoom
 		// (its top center, in viewport pixels), or null when it isn't titled
 		// on screen.
@@ -128,6 +132,7 @@
 		onSongHover = undefined,
 		spotlitSongKey = null,
 		litSongKeys = [],
+		onStagedRevealChange = undefined,
 		onExploredTitleAnchor = undefined,
 		purityLayout = true,
 		pureThreshold = 0.9
@@ -425,6 +430,10 @@
 		};
 	});
 
+	const sceneRevealStages = $derived(
+		songs ? revealStages(songs, scene.reveal.clusters) : null
+	);
+
 	const umapResult = $derived(
 		songs
 			? computeLayout(
@@ -483,6 +492,8 @@
 				{dimExceptSongKeys}
 				revealStagger={reveal?.stagger ?? null}
 				revealOriginSongKey={reveal?.originSongKey ?? null}
+				revealStages={sceneRevealStages}
+				onStagedRevealChange={onStagedRevealChange ?? null}
 				selectedClusterName={explorable ? exploredClusterName : null}
 				zoomSongKey={explorable ? searchZoomSongKey : null}
 				spotlitSongKey={spotlitSongKey ??

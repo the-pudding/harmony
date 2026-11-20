@@ -53,6 +53,11 @@ export const REVEAL_STAGGER_WINDOW = 0.35;
 // Points animating between layouts.
 export const TWEEN_DURATION_MS = 700;
 export const LAYOUT_CHANGE_TWEEN_MS = 1600;
+// A staged arrival at a layout (see revealStages): each listed cluster's
+// stage, the pause before the next stage, and the last stage (everyone else).
+export const STAGED_REVEAL_CLUSTER_STAGE_MS = 1100;
+export const STAGED_REVEAL_PAUSE_MS = 250;
+export const STAGED_REVEAL_LAST_STAGE_MS = LAYOUT_CHANGE_TWEEN_MS;
 // Crossfade used instead of motion under prefers-reduced-motion.
 export const REDUCED_MOTION_FADE_MS = 200;
 // Points moving because the map frame changed within one layout.

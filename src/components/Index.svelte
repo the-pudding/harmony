@@ -142,6 +142,11 @@
 		if (!followedCues || storyMedia.cueIndex <= 0) return [];
 		return songKeysOf(followedCues.slice(0, storyMedia.cueIndex));
 	});
+	// A slide with a staged map reveal holds its text and stage until it's in.
+	let mapRevealRunning = $state(false);
+	let contentAwaitsMap = $derived(
+		mapRevealRunning && (mapScene?.reveal.clusters.length ?? 0) > 0
+	);
 	let focusedCluster = $derived(
 		mapScene?.camera.kind === "cluster" ? mapScene.camera.name : undefined
 	);
@@ -399,6 +404,7 @@
 		onSongHover={(songKey) => (hoveredOnMap = songKey)}
 		spotlitSongKey={mediaSpotlitSongKey}
 		{litSongKeys}
+		onStagedRevealChange={(running) => (mapRevealRunning = running)}
 		onExploredTitleAnchor={(anchor) => (titleAnchor = anchor)}
 	/>
 </div>
@@ -432,6 +438,7 @@
 		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 		<div
 			class="text frosted"
+			class:awaiting-map={contentAwaitsMap}
 			bind:this={textBoxEl}
 			onclick={onTextClick}
 			style:height={textBoxTarget ? `${textBoxTarget}px` : null}
@@ -482,6 +489,7 @@
 	<div class="stage">
 		<div
 			class="main"
+			class:awaiting-map={contentAwaitsMap}
 			bind:this={clusterFrameEl}
 			bind:clientHeight={clusterFrameHeight}
 		>
@@ -618,7 +626,19 @@
 		pointer-events: auto;
 		font-size: clamp(0.875rem, min(2.5svh, 4vw), 1.25rem);
 		flex: none;
+		transition:
+			height 400ms ease,
+			opacity 400ms ease;
+	}
+
+	/* hidden at once, then faded in when the map's reveal is done */
+	.text.awaiting-map {
 		transition: height 400ms ease;
+	}
+
+	.awaiting-map {
+		opacity: 0;
+		visibility: hidden;
 	}
 
 	.text-measure {
@@ -649,6 +669,11 @@
 	.main {
 		flex: 1;
 		min-height: 0;
+		transition: opacity 400ms ease;
+	}
+
+	.main.awaiting-map {
+		transition: none;
 	}
 
 	.panel {

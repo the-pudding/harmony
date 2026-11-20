@@ -5,6 +5,7 @@ import type { EmbeddingMethod } from "../../embedding/reducers/types.js";
 import type { ScatterAxisLabels } from "../scatterPoint.js";
 import type { LayoutResult } from "../../../storymap/layouts/types.js";
 import type { SongTable } from "../../../storymap/songTable.js";
+import type { RevealStages } from "../../../storymap/revealStages.js";
 import type { MapFrame } from "./types.js";
 import type {
 	ClusterRegion,
@@ -33,6 +34,11 @@ export type EmbeddingScatterProps = {
 	revealStagger?: Float32Array | null;
 	// The song a reveal ripples from; spotlit without fading the rest.
 	revealOriginSongKey?: string | null;
+	// Arriving at this layout from another, songs move in these stages.
+	revealStages?: RevealStages | null;
+	// Called with true when a staged arrival starts, and false once its songs
+	// have settled and its hexes faded in (or it's interrupted).
+	onStagedRevealChange?: ((running: boolean) => void) | null;
 	inYearSongKeys?: Set<string> | null;
 	axisLabels?: ScatterAxisLabels | null;
 	method: EmbeddingMethod;

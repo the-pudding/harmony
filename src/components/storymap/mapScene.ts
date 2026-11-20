@@ -35,6 +35,9 @@ export type MapScene = {
 		tooltip: "full" | "basic";
 	};
 	player: { hidden: boolean };
+	// Arriving from another layout, these clusters' songs move first, one
+	// cluster at a time in order, then everyone else.
+	reveal: { clusters: readonly string[] };
 };
 
 // What a block with no keys but `visible` parses to.
@@ -46,7 +49,8 @@ export const DEFAULT_MAP_SCENE: MapScene = {
 	media: { followVideo: null, litVideoSongs: null },
 	labels: { hidden: false, only: null, rotate: false },
 	interaction: { movable: true, hoverable: true, tooltip: "full" },
-	player: { hidden: false }
+	player: { hidden: false },
+	reveal: { clusters: [] }
 };
 
 const KNOWN_KEYS = new Set<string>([
@@ -68,7 +72,8 @@ const KNOWN_KEYS = new Set<string>([
 	"movable",
 	"hoverable",
 	"tooltip",
-	"hidePlayer"
+	"hidePlayer",
+	"revealClusters"
 ] satisfies (keyof CopyMap)[]);
 
 const LAYOUT_NAMES = ["umap", "timeline"] as const;
@@ -94,7 +99,7 @@ const parseList = (value: unknown): string[] | null => {
 	return items.length > 0 ? items : null;
 };
 
-const warn = (message: string) => {
+export const warn = (message: string) => {
 	if (import.meta.env.DEV) console.warn(`[map] ${message}`);
 };
 
@@ -159,6 +164,7 @@ export const parseMapScene = (
 			hoverable: parseBoolean(copyMap.hoverable) ?? true,
 			tooltip
 		},
-		player: { hidden: parseBoolean(copyMap.hidePlayer) ?? false }
+		player: { hidden: parseBoolean(copyMap.hidePlayer) ?? false },
+		reveal: { clusters: parseList(copyMap.revealClusters) ?? [] }
 	};
 };

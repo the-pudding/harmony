@@ -31,6 +31,8 @@ export type SongTable = {
 	readonly clusterName: readonly (string | null)[];
 	// Song indexes per cluster, largest first.
 	readonly clusterMembers: readonly (readonly number[])[];
+	// Each cluster's name, in clusterMembers' order.
+	readonly clusterNames: readonly string[];
 	readonly coverageBySongKey: ReadonlyMap<string, ProgressionCoverage[]>;
 	readonly homogeneityBySongKey: ReadonlyMap<string, SongHomogeneity | null>;
 	readonly songSummaryByKey: ReadonlyMap<string, SongSummary>;
@@ -87,6 +89,7 @@ export const buildSongTable = (snapshot: HexMapSnapshot): SongTable => {
 		homogeneity,
 		clusterName,
 		clusterMembers,
+		clusterNames: snapshot.clusters.map(({ name }) => name),
 		coverageBySongKey,
 		homogeneityBySongKey,
 		songSummaryByKey
