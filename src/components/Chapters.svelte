@@ -1,10 +1,21 @@
 <script>
+	import Motif from "$components/motifs/Motif.svelte";
+	import { MOTIF_SPAN_RE, isMotifName } from "$components/motifs/motifs";
+
 	let { activeSlide, sections, onselect } = $props();
 
 	const NOT_CHAPTERS = ["Landing", "Intro"];
 	let visibleSections = $derived(
 		sections.filter((d) => !NOT_CHAPTERS.includes(d.title))
 	);
+	// "Getting loopier <span class=motif>loop</span>" -> text + motif parts
+	const titleParts = (title) =>
+		title
+			.split(MOTIF_SPAN_RE)
+			.map((part, i) =>
+				i % 2 ? { motif: isMotifName(part) ? part : null } : { text: part }
+			);
+	const plainTitle = (title) => title.replace(MOTIF_SPAN_RE, "").trim();
 	let visible = $derived(
 		visibleSections.some((d) => d.slides.some((s) => s.i === activeSlide))
 	);
@@ -15,7 +26,13 @@
 		{@const chapterActive = slides.some((s) => s.i === activeSlide)}
 		<div class="chapter" class:active={chapterActive}>
 			<button class="text" onclick={() => onselect?.(slides[0].i)}>
-				{i + 1}<span class="title"> — {title}</span>
+				{i + 1}<span class="title">
+					— {#each titleParts(title) as { text, motif }}{#if motif}{#if chapterActive}<Motif
+									name={motif}
+									compact
+									delay={300}
+								/>{/if}{:else}{text}{/if}{/each}</span
+				>
 			</button>
 			{#if chapterActive}
 				{#each slides as slide, j}
@@ -23,7 +40,7 @@
 					<button
 						class="block"
 						class:active
-						aria-label="Slide {j + 1} of {title}"
+						aria-label="Slide {j + 1} of {plainTitle(title)}"
 						aria-current={active ? "step" : undefined}
 						onclick={() => onselect?.(slide.i)}
 					></button>
@@ -31,7 +48,7 @@
 			{:else}
 				<button
 					class="block"
-					aria-label="Go to chapter {i + 1}: {title}"
+					aria-label="Go to chapter {i + 1}: {plainTitle(title)}"
 					onclick={() => onselect?.(slides[0].i)}
 				></button>
 			{/if}

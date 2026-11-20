@@ -1,6 +1,8 @@
 import { mount, unmount } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import Chord from "$components/Chord.svelte";
+import Motif from "$components/motifs/Motif.svelte";
+import { isMotifName } from "$components/motifs/motifs";
 import type { KeyTonality } from "$routes/demo/design/chord-viz/diatonicChords.js";
 
 // roman numeral w/ optional accidental, quality, extension, or secondary (e.g. bVII, ii7, vii°, V/V)
@@ -70,6 +72,17 @@ export const chordify: Attachment<HTMLElement> = (node) => {
 			el.dataset.chords = romans.join("-");
 			fill(el, romans);
 			glue(el);
+		});
+
+	// span.motif ("loop") becomes the matching animated icon (see motifs/)
+	node
+		.querySelectorAll<HTMLElement>("span.motif:not([data-motif])")
+		.forEach((el) => {
+			const name = el.textContent?.trim() ?? "";
+			if (!isMotifName(name)) return;
+			el.dataset.motif = name;
+			el.textContent = "";
+			instances.push(mount(Motif, { target: el, props: { name } }));
 		});
 
 	return () => instances.forEach((instance) => unmount(instance));

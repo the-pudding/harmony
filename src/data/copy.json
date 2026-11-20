@@ -101,9 +101,9 @@
               "type": "ol",
               "value": {
                 "li": [
-                  "built on a single four-chord progression 🧱",
-                  "looped for the entire song 🔁",
-                  "and recycled decade after decade? 🗓️"
+                  "built on a single four-chord progression <span class=motif>progression-names</span>",
+                  "looped for the entire song <span class=motif>loop</span>",
+                  "and recycled decade after decade? <span class=motif>timeline</span>"
                 ]
               }
             },
@@ -289,7 +289,7 @@
       ]
     },
     {
-      "title": "Lots of journeys 🧱",
+      "title": "Lots of journeys <span class=motif>progression</span>",
       "slides": [
         {
           "text": [
@@ -543,7 +543,7 @@
       ]
     },
     {
-      "title": "Getting loopier 🔁",
+      "title": "Getting loopier <span class=motif>loop</span>",
       "slides": [
         {
           "text": [
@@ -555,9 +555,9 @@
               "type": "ol",
               "value": {
                 "li": [
-                  "<s><span class=\"sr-only\">crossed out: </span>built on a single four-chord progression 🧱</s>",
-                  "looped for the entire song 🔁",
-                  "and recycled decade after decade? 🗓️"
+                  "<s><span class=\"sr-only\">crossed out: </span>built on a single four-chord progression <span class=motif>progression</span></s>",
+                  "looped for the entire song <span class=motif>loop</span>",
+                  "and recycled decade after decade? <span class=motif>timeline</span>"
                 ]
               }
             }
@@ -624,7 +624,7 @@
       ]
     },
     {
-      "title": "Era definers 🗓️",
+      "title": "Era definers <span class=motif>timeline</span>",
       "slides": [
         {
           "text": [
@@ -636,9 +636,9 @@
               "type": "ol",
               "value": {
                 "li": [
-                  "<s><span class=\"sr-only\">crossed out: </span>built on a single four-chord progression 🧱</s>",
-                  "<s><span class=\"sr-only\">crossed out: </span>looped for the entire song 🔁</s>",
-                  "and recycled decade after decade? 🗓️"
+                  "<s><span class=\"sr-only\">crossed out: </span>built on a single four-chord progression <span class=motif>progression</span></s>",
+                  "<s><span class=\"sr-only\">crossed out: </span>looped for the entire song <span class=motif>loop</span></s>",
+                  "and recycled decade after decade? <span class=motif>timeline</span>"
                 ]
               }
             }
@@ -733,9 +733,9 @@
               "type": "ol",
               "value": {
                 "li": [
-                  "<s><span class=\"sr-only\">crossed out: </span>built on a single four-chord progression 🧱</s>",
-                  "<s><span class=\"sr-only\">crossed out: </span>looped for the entire song 🔁</s>",
-                  "<s>and recycled decade after decade? 🗓️</s>"
+                  "<s><span class=\"sr-only\">crossed out: </span>built on a single four-chord progression <span class=motif>progression</span></s>",
+                  "<s><span class=\"sr-only\">crossed out: </span>looped for the entire song <span class=motif>loop</span></s>",
+                  "<s>and recycled decade after decade? <span class=motif>timeline</span></s>"
                 ]
               }
             }

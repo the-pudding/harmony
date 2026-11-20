@@ -21,13 +21,16 @@
 		tonality?: KeyTonality;
 		palette?: ChordPalette;
 		settings?: WatercolorSettings;
+		// shown instead of the roman numeral, e.g. "Am"
+		label?: string;
 	};
 
 	let {
 		chord,
 		tonality = "major",
 		palette = paletteById("journey-from-home"),
-		settings = DEFAULT_WATERCOLOR_SETTINGS
+		settings = DEFAULT_WATERCOLOR_SETTINGS,
+		label
 	}: Props = $props();
 
 	const rowChords = $derived(
@@ -51,4 +54,4 @@
 	});
 </script>
 
-<WatercolorChord chord={vizChord} {settings} {palette} />
+<WatercolorChord chord={vizChord} {settings} {palette} {label} />

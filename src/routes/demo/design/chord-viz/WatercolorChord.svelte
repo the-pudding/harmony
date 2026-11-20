@@ -14,9 +14,11 @@
 		chord: VizChord;
 		settings: WatercolorSettings;
 		palette: ChordPalette;
+		// text shown on the chord instead of its roman numeral (e.g. "Am")
+		label?: string;
 	};
 
-	let { chord, settings, palette }: Props = $props();
+	let { chord, settings, palette, label }: Props = $props();
 
 	const uid = $props.id();
 	const ids = watercolorFilterIdsFor(uid);
@@ -31,7 +33,7 @@
 	viewBox={CHORD_VIEWBOX}
 	style:--chord-size="{CHORD_SIZE}px"
 	role="img"
-	aria-label={chord.roman}
+	aria-label={label ?? chord.roman}
 >
 	<defs>
 		<WatercolorFilters {ids} seed={chord.seed} {settings} />
@@ -44,7 +46,7 @@
 		/>
 	</g>
 	<path class="pencil" d={appearance.path} filter="url(#{ids.pencil})" />
-	<text class="label" fill={appearance.colors.text}>{chord.roman}</text>
+	<text class="label" fill={appearance.colors.text}>{label ?? chord.roman}</text>
 </svg>
 
 <style>
