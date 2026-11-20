@@ -6,6 +6,7 @@ import {
 	effectiveProgressionsByDecadeLayout,
 	effectiveProgressionsLayout
 } from "./effectiveProgressions.js";
+import { progressionOverTimeLayout } from "./progressionOverTime.js";
 import type { Layout } from "./types.js";
 
 export const layouts = {
@@ -13,7 +14,8 @@ export const layouts = {
 	timeline: timelineLayout,
 	offstage: offstageLayout,
 	effectiveProgressions: effectiveProgressionsLayout,
-	effectiveProgressionsByDecade: effectiveProgressionsByDecadeLayout
+	effectiveProgressionsByDecade: effectiveProgressionsByDecadeLayout,
+	progressionOverTime: progressionOverTimeLayout
 } satisfies Record<string, Layout<any>>;
 
 export type LayoutName = keyof typeof layouts;

@@ -1,6 +1,7 @@
 // A slide's map, typed. parseMapScene turns the flat `{.map}` keys from the
 // copy (all strings) into a MapScene.
 import type { CopyMap } from "$data/copy.json";
+import type { YearSpan } from "./layouts/progressionOverTime.js";
 
 export type MapScene = {
 	// offstage is only for STAGE_SCENE; no `{.map}` block can ask for it.
@@ -10,8 +11,12 @@ export type MapScene = {
 			| "timeline"
 			| "offstage"
 			| "effectiveProgressions"
-			| "effectiveProgressionsByDecade";
+			| "effectiveProgressionsByDecade"
+			| "progressionOverTime";
 	};
+	// What a chart layout features: its progression's songs, and the years
+	// it highlights. Set by the slide's stage (see withStageMap).
+	chart: { progression: string | null; highlight: YearSpan | null };
 	// Where framed layouts sit: below the story text, or the whole screen.
 	frame: "text" | "full";
 	camera:
@@ -52,8 +57,11 @@ export type MapScene = {
 };
 
 // What a block with no keys but `visible` parses to.
+const NO_CHART: MapScene["chart"] = { progression: null, highlight: null };
+
 export const DEFAULT_MAP_SCENE: MapScene = {
 	layout: { name: "umap" },
+	chart: NO_CHART,
 	frame: "text",
 	camera: { kind: "home", centered: false },
 	songs: { only: null, highlighted: [], playable: [], dimmed: false },
@@ -68,6 +76,7 @@ export const DEFAULT_MAP_SCENE: MapScene = {
 // waits off stage until a slide that shows the map brings it back.
 export const STAGE_SCENE: MapScene = {
 	layout: { name: "offstage" },
+	chart: NO_CHART,
 	frame: "text",
 	camera: { kind: "stay" },
 	songs: { only: null, highlighted: [], playable: [], dimmed: false },
@@ -106,7 +115,8 @@ const LAYOUT_NAMES = [
 	"umap",
 	"timeline",
 	"effectiveProgressions",
-	"effectiveProgressionsByDecade"
+	"effectiveProgressionsByDecade",
+	"progressionOverTime"
 ] as const;
 const FRAME_NAMES = ["text", "full"] as const;
 const TOOLTIP_NAMES = ["full", "basic"] as const;
@@ -172,6 +182,7 @@ export const parseMapScene = (
 
 	return {
 		layout,
+		chart: NO_CHART,
 		frame,
 		camera,
 		songs: {
@@ -198,6 +209,28 @@ export const parseMapScene = (
 		reveal: {
 			songs: parseList(copyMap.revealSongs) ?? [],
 			clusters: parseList(copyMap.revealClusters) ?? []
+		}
+	};
+};
+
+// What the slide's stage component asks of the map (see stageMap.svelte.ts):
+// the chart it features, and its own songs, playable on the map.
+export type StageMapRequest = {
+	chart: MapScene["chart"] | null;
+	songKeys: readonly string[];
+};
+
+export const withStageMap = (
+	scene: MapScene,
+	{ chart, songKeys }: StageMapRequest
+): MapScene => {
+	if (chart === null && songKeys.length === 0) return scene;
+	return {
+		...scene,
+		chart: chart ?? scene.chart,
+		songs: {
+			...scene.songs,
+			playable: [...new Set([...scene.songs.playable, ...songKeys])]
 		}
 	};
 };

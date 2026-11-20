@@ -29,13 +29,8 @@ export type ClickAction =
 	| { kind: "select"; songKey: string | null };
 
 export const resolveClick = (input: ClickInput): ClickAction[] => {
-	const {
-		atHexZoom,
-		hexMode,
-		outlinedSongKey,
-		songKey,
-		playingSongKey
-	} = input;
+	const { atHexZoom, hexMode, outlinedSongKey, songKey, playingSongKey } =
+		input;
 
 	const atHexDots = hexMode && !atHexZoom;
 	const songIsActive = playingSongKey !== null || input.openSongId !== null;
@@ -50,7 +45,10 @@ export const resolveClick = (input: ClickInput): ClickAction[] => {
 	}
 
 	const actions: ClickAction[] = [];
-	if (outlinedSongKey !== null || songKey === null) {
+	// Off hexes (a chart, the timeline), a plain dot is as good as the
+	// background: it stops what's playing.
+	const plainDotStops = !hexMode && playingSongKey !== null;
+	if (outlinedSongKey !== null || songKey === null || plainDotStops) {
 		actions.push({ kind: "outlinedSongClick", songKey: outlinedSongKey });
 	}
 

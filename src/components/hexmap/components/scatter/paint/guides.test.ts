@@ -244,4 +244,70 @@ describe("transitionGuides", () => {
 			{ guides: incoming, opacity: 1 }
 		]);
 	});
+	it("moves boxes with the same id, and crossfades boxes without one", () => {
+		const box = (
+			id: string | undefined,
+			x: number,
+			y: number,
+			width: number,
+			height: number
+		): Guide => ({ kind: "box", id, x, y, width, height });
+		const outgoing = [
+			box("b", 0, 0.2, 0.2, 0.4),
+			box(undefined, 0.1, 0.1, 0.1, 0.1)
+		];
+		const incoming = [
+			box("b", 0.4, 0.6, 0.6, 0.8),
+			box(undefined, 0.5, 0.5, 0.2, 0.2)
+		];
+		const [leaving, appearing, moving] = transitionGuides(
+			outgoing,
+			incoming,
+			0.5
+		);
+		// easeCubicInOut(0.5) is exactly 0.5.
+		expect(moving.opacity).toBe(1);
+		expect(moving.guides).toHaveLength(1);
+		const moved = moving.guides[0] as Extract<Guide, { kind: "box" }>;
+		expect(moved.kind).toBe("box");
+		expect(moved.x).toBeCloseTo(0.2);
+		expect(moved.y).toBeCloseTo(0.4);
+		expect(moved.width).toBeCloseTo(0.4);
+		expect(moved.height).toBeCloseTo(0.6);
+		expect(leaving.guides).toEqual([outgoing[1]]);
+		expect(appearing.guides).toEqual([incoming[1]]);
+	});
+
+	it("morphs lines with the same id and point count, point by point", () => {
+		const from: Guide = {
+			kind: "line",
+			id: "trend",
+			color: "red",
+			points: [
+				{ x: 0, y: 0 },
+				{ x: 1, y: 0.2 }
+			]
+		};
+		const to: Guide = {
+			...from,
+			points: [
+				{ x: 0, y: 0.4 },
+				{ x: 1, y: 0.6 }
+			]
+		};
+		const sets = transitionGuides([from], [to], 0.5);
+		const moving = sets.find(({ opacity }) => opacity === 1)!.guides;
+		expect(moving).toEqual([
+			{
+				...to,
+				points: [
+					{ x: 0, y: 0.2 },
+					{ x: 1, y: 0.4 }
+				]
+			}
+		]);
+		const longer: Guide = { ...to, points: [...to.points, { x: 2, y: 0 }] };
+		const crossfaded = transitionGuides([from], [longer], 0.5);
+		expect(crossfaded.find(({ opacity }) => opacity === 1)!.guides).toEqual([]);
+	});
 });

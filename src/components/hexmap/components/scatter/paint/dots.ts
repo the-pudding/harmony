@@ -30,8 +30,8 @@ export const createDotFill = ({
 	mixFill: (songKey: string, step: number) => string;
 	accentFillColor: string | null;
 	isAccented: (songKey: string) => boolean;
-	// By song index (see LayoutResult.fill).
-	starFill?: readonly (string | null)[] | null;
+	// By song index (see LayoutResult.fill); null keeps star white.
+	starFill?: ((index: number) => string | null) | null;
 }): DotFill => {
 	return (songKey, index) => {
 		if (emphasisFillColor && emphasizedSongKeys?.has(songKey)) {
@@ -41,7 +41,7 @@ export const createDotFill = ({
 		if (step === COLOR_MIX_STEPS) return regionFill(songKey);
 		if (step > 0) return mixFill(songKey, step);
 		if (accentFillColor && isAccented(songKey)) return accentFillColor;
-		return starFill?.[index] ?? STAR_FILL;
+		return starFill?.(index) ?? STAR_FILL;
 	};
 };
 

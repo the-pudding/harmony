@@ -660,8 +660,15 @@
             }
           ],
           "stage": {
-            "component": "ClusterPercentOverTime",
-            "cluster": "axis of awesome"
+            "component": "Signatures",
+            "focus": "2000s",
+            "navigable": "false"
+          },
+          "map": {
+            "visible": "true",
+            "layout": "progressionOverTime",
+            "movable": "false",
+            "tooltip": "basic"
           }
         },
         {
@@ -677,6 +684,12 @@
           ],
           "stage": {
             "component": "Signatures"
+          },
+          "map": {
+            "visible": "true",
+            "layout": "progressionOverTime",
+            "movable": "false",
+            "tooltip": "basic"
           }
         },
         {
@@ -693,6 +706,12 @@
           "stage": {
             "component": "Signatures",
             "focus": "1950s-60s"
+          },
+          "map": {
+            "visible": "true",
+            "layout": "progressionOverTime",
+            "movable": "false",
+            "tooltip": "basic"
           }
         },
         {

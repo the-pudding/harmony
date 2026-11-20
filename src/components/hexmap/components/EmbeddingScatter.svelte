@@ -107,7 +107,11 @@
 		transitionGuides,
 		type GuideSet
 	} from "./scatter/paint/guides.js";
-	import { createMixFill } from "./scatter/colorMix.js";
+	import {
+		createFillBlend,
+		createMixFill,
+		STAR_FILL
+	} from "./scatter/colorMix.js";
 	import {
 		clusterSpotlightAlpha,
 		drawClusterOutlines
@@ -773,13 +777,15 @@
 	// Current and previous layouts' guides, moved or crossfaded by
 	// transitionGuides until the songs arrive.
 	const NO_GUIDES: readonly Guide[] = [];
-	let guideLayoutName: string | null = null;
+	// Any new layout result counts, so a chart's guides also move when only
+	// its params change (e.g. the progression it features).
+	let guideLayout: LayoutResult | null = null;
 	let guidesBefore = NO_GUIDES;
 	let outgoingGuides = NO_GUIDES;
 	const guideSets = (): readonly GuideSet[] => {
-		if (guideLayoutName !== layout.name) {
+		if (guideLayout !== layout) {
 			outgoingGuides = guidesBefore;
-			guideLayoutName = layout.name;
+			guideLayout = layout;
 		}
 		guidesBefore = layout.guides;
 		if (transition.progress >= 1) outgoingGuides = NO_GUIDES;
@@ -902,6 +908,35 @@
 		return drawnRadius;
 	};
 
+	// The layout's per-song fills, blended from the previous layout's (star
+	// white where either has none) until the songs arrive.
+	const blendFill = createFillBlend();
+	// A layout without fills is all star white.
+	const STAR_FILLS: readonly (string | null)[] = [];
+	let fillLayout: LayoutResult | null = null;
+	let fillsBefore = STAR_FILLS;
+	let outgoingFills: readonly (string | null)[] | null = null;
+	const layoutFill = (): ((index: number) => string | null) | null => {
+		const incoming = layout.fill ?? STAR_FILLS;
+		if (fillLayout !== layout) {
+			if (fillLayout !== null) outgoingFills = fillsBefore;
+			fillLayout = layout;
+		}
+		fillsBefore = incoming;
+		const { progress } = transition;
+		if (progress >= 1 || outgoingFills === incoming) outgoingFills = null;
+		const outgoing = outgoingFills;
+		if (outgoing === null) {
+			return incoming === STAR_FILLS ? null : (index) => incoming[index];
+		}
+		return (index) =>
+			blendFill(
+				outgoing[index] ?? STAR_FILL,
+				incoming[index] ?? STAR_FILL,
+				progress
+			);
+	};
+
 	const NO_SPOTLIGHT = { emphasis: new Map<string, number>(), fade: 0 };
 
 	// In hexMode, songs' region colors at the zoom's gradient (null otherwise):
@@ -982,7 +1017,7 @@
 				mixFill,
 				accentFillColor,
 				isAccented,
-				starFill: layout.fill ?? null
+				starFill: layoutFill()
 			})
 		});
 

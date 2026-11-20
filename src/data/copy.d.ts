@@ -11,7 +11,10 @@ declare module "$data/copy.json" {
 		visible?: string;
 		// The arrangement: "umap" (the default), "timeline", or section 3's
 		// charts of songs by effective progressions, "effectiveProgressions"
-		// (one bar) and "effectiveProgressionsByDecade" (a bar per decade).
+		// (one bar) and "effectiveProgressionsByDecade" (a bar per decade),
+		// or section 4's "progressionOverTime" (a 100% stack of each year's
+		// songs, the featured progression's at the bottom; the Signatures
+		// stage picks the progression and the decade it highlights).
 		layout?: string;
 		// "text" (default) sits below the story text; "full" fills the screen.
 		frame?: string;

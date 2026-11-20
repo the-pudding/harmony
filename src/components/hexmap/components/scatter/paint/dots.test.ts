@@ -138,7 +138,7 @@ describe("createDotFill starFill", () => {
 			mixFill: () => "mix",
 			accentFillColor: null,
 			isAccented: () => false,
-			starFill
+			starFill: starFill ? (index) => starFill[index] ?? null : null
 		});
 
 	it("uses the per-index color, and star white where it is null or absent", () => {

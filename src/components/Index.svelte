@@ -13,7 +13,6 @@
 	import UltimateGuitar from "$components/UltimateGuitar.svelte";
 	import RomanNumerals from "$components/RomanNumerals.svelte";
 	import ChordShares from "$components/ChordShares.svelte";
-	import ClusterPercentOverTime from "$components/ClusterPercentOverTime.svelte";
 	import EffectiveProgressions from "$components/EffectiveProgressions.svelte";
 	import Signatures from "$components/Signatures.svelte";
 	import ExploreControls from "$components/ExploreControls.svelte";
@@ -24,7 +23,11 @@
 	import CMS from "$components/helpers/CMS.svelte";
 	import { fade } from "svelte/transition";
 	import copy from "$data/copy.json";
-	import { parseMapScene, STAGE_SCENE } from "$components/storymap/mapScene";
+	import {
+		parseMapScene,
+		STAGE_SCENE,
+		withStageMap
+	} from "$components/storymap/mapScene";
 	import { chordify } from "$utils/chordify";
 	import { onMount, setContext } from "svelte";
 	import { storyMedia } from "$runes/storyMedia.svelte";
@@ -34,6 +37,7 @@
 	import { spanStyle } from "$routes/demo/record/timelineStyles";
 	import { audio, stopAllAudio } from "$runes/audio.svelte";
 	import { songDots } from "$runes/songDots.svelte";
+	import { stageMap } from "$runes/stageMap.svelte";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (1/4): see src/utils/slideParam.js. Delete this import.
 	import { readSlideParam, writeSlideParam } from "$utils/slideParam";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (muted 1/3): ?muted=true|false URL
@@ -48,7 +52,6 @@
 		Video,
 		List,
 		ChordShares,
-		ClusterPercentOverTime,
 		Signatures,
 		UltimateGuitar,
 		RomanNumerals,
@@ -125,7 +128,7 @@
 	// that cluster; the slide's own focusCluster comes back on the next visit
 	let textFocusCluster = $state();
 	// Going back, the map moves in one go, without the staged reveal.
-	let mapScene = $derived.by(() => {
+	let copyScene = $derived.by(() => {
 		const scene = parseMapScene(map);
 		if (scene === null) return null;
 		const staged = movedForward
@@ -135,6 +138,16 @@
 			? staged
 			: { ...staged, camera: { kind: "cluster", name: textFocusCluster } };
 	});
+	// What the slide's stage asks of the map: the chart it features and its
+	// own songs, which it plays when their dots are clicked.
+	let mapScene = $derived(
+		copyScene &&
+			withStageMap(copyScene, {
+				chart: stageMap.chart,
+				songKeys: stageMap.songKeys
+			})
+	);
+	let stagePlays = $derived(stageMap.onSongClick !== null);
 	// While followVideo plays: its current cue's song is spotlit and earlier
 	// cues' songs stay lit.
 	let followedCues = $derived(
@@ -267,7 +280,7 @@
 			mapScene?.frame === "full" || !focusFrame
 				? mapEdge
 				: focusFrame.top +
-					Math.max(0, storyMedia.videoBottomOffset) +
+					Math.max(0, storyMedia.videoBottomOffset, stageMap.frameTop) +
 					MAP_FRAME_GAP,
 		right: mapEdge,
 		bottom: mapEdge,
@@ -419,9 +432,13 @@
 		instantCamera={cameraJumps}
 		instantLayout={layoutJumps}
 		theme="dark"
-		playingSongKey={explore.playingSongKey ?? null}
-		playingClipProgressFraction={audio.clipProgressFraction}
-		onSampleClick={explore.playSong}
+		playingSongKey={stagePlays
+			? stageMap.playingSongKey
+			: (explore.playingSongKey ?? null)}
+		playingClipProgressFraction={stagePlays
+			? stageMap.progressFraction
+			: audio.clipProgressFraction}
+		onSampleClick={stageMap.onSongClick ?? explore.playSong}
 		exploredClusterName={explore.clusterName ?? null}
 		searchedSongKey={explore.searchedSongKey ?? null}
 		onClusterPick={explore.pickCluster}
@@ -441,9 +458,9 @@
 <svelte:window onclick={onWindowClick} />
 
 <!-- Played by clicking their dots; the progress ring is the only UI -->
-{#if mapScene && mapScene.songs.playable.length > 0 && !showClusterPanel}
+{#if copyScene && copyScene.songs.playable.length > 0 && !showClusterPanel}
 	<Player
-		songKeys={mapScene.songs.playable}
+		songKeys={copyScene.songs.playable}
 		headless
 		bind:playingSongKey={explore.playingSongKey}
 	/>

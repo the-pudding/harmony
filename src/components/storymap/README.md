@@ -30,6 +30,15 @@ Section 3's charts are layouts too (`layouts/effectiveProgressions.ts`): the
 songs stack into bars by effective-progression band, and the labels and the
 ≈1 boxes are the layout's guides (`label`, `box`).
 
+Section 4's chart is `layouts/progressionOverTime.ts`: a column per year,
+each a 100% stack of that year's songs, with the featured progression's songs
+at the bottom in its color. The slide's stage picks the progression through
+`src/runes/stageMap.svelte.ts`, which is how a stage component talks to the
+map beyond its `{.map}` block: the chart it features (`scene.chart`, merged
+by `withStageMap`), its own songs (playable on the map, played by the stage)
+and where the map's frame starts below it. Signatures (slides 32–34) stays
+mounted across the three slides, so the chart only ever updates in place.
+
 ```
 {.map}
 visible: true

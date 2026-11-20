@@ -34,13 +34,26 @@ export type Guide =
 			size?: "regular" | "medium" | "large" | "xlarge";
 			layer?: GuideLayer;
 	  }
-	// An outline; (x, y) is its bottom-left corner.
+	// An outline (the default) or a faint shade; (x, y) is its bottom-left
+	// corner. Like a label, it moves to the next layout's box with its id.
 	| {
 			kind: "box";
+			id?: string;
+			style?: "outline" | "shade";
 			x: number;
 			y: number;
 			width: number;
 			height: number;
+			layer?: GuideLayer;
+	  }
+	// A smooth line through points (y up), over the songs unless layered
+	// under. It morphs into the next layout's line with its id when both
+	// have as many points.
+	| {
+			kind: "line";
+			id?: string;
+			points: readonly { x: number; y: number }[];
+			color: string;
 			layer?: GuideLayer;
 	  };
 

@@ -35,6 +35,7 @@
 		NO_MAP_FRAME
 	} from "$components/hexmap/components/scatter/viewport.js";
 	import type { MapFrame } from "$components/hexmap/components/scatter/types.js";
+	import { DEFAULT_PROGRESSION_OVER_TIME_PARAMS } from "$components/storymap/layouts/progressionOverTime.js";
 	import {
 		DEFAULT_MAP_SCENE,
 		type MapScene
@@ -405,14 +406,33 @@
 		viewTransform.k >= INSET_MIN_ZOOM && layoutName === "umap" && movable
 	);
 
-	// UMAP and offstage (which leaves from UMAP) take the purity settings;
-	// the framed layouts take none.
+	// The scene's chart, with its progression in its map color (white until
+	// the map has colors, or when no cluster is built on it).
+	const chartParams = $derived({
+		progression: scene.chart.progression,
+		color:
+			(scene.chart.progression &&
+				mapColors.byProgression.get(scene.chart.progression)) ||
+			DEFAULT_PROGRESSION_OVER_TIME_PARAMS.color,
+		highlight: scene.chart.highlight
+	});
+
+	// UMAP and offstage (which leaves from UMAP) take the purity settings,
+	// the progression chart its chart; the other framed layouts take none.
 	const mainResult = $derived.by(() => {
 		if (!songs) return null;
 		const context = { songs, frame: layoutFrame };
-		return layoutName === "umap" || layoutName === "offstage"
-			? computeLayout(layoutName, { purityLayout, pureThreshold }, context)
-			: computeLayout(layoutName, {}, context);
+		if (layoutName === "umap" || layoutName === "offstage") {
+			return computeLayout(
+				layoutName,
+				{ purityLayout, pureThreshold },
+				context
+			);
+		}
+		if (layoutName === "progressionOverTime") {
+			return computeLayout(layoutName, chartParams, context);
+		}
+		return computeLayout(layoutName, {}, context);
 	});
 
 	// Ripple for songs.only going from one song to every song (reversed on the

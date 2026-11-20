@@ -1,4 +1,4 @@
-import { rgb } from "d3";
+import { interpolateRgb, rgb } from "d3";
 import { COLOR_MIX_STEPS, STAR_ALPHA, STAR_FILL_RGB } from "./constants.js";
 
 // Dot fill between star white and region color; mix is 0 = star, 1 = region.
@@ -47,6 +47,26 @@ export const createMixFill = (regionFill: (songKey: string) => string) => {
 				Math.round((STAR_ALPHA + (1 - STAR_ALPHA) * t) * 1000) / 1000;
 			fill = `rgba(${lerp(STAR_FILL_RGB[0], colors.r)},${lerp(STAR_FILL_RGB[1], colors.g)},${lerp(STAR_FILL_RGB[2], colors.b)},${alpha})`;
 			colors.fills[step] = fill;
+		}
+		return fill;
+	};
+};
+
+// fill(from, to, t): a CSS color t (0–1) of the way from one to the other,
+// rounded to COLOR_MIX_STEPS and cached, for fills that change between
+// layouts.
+export const createFillBlend = () => {
+	const cache = new Map<string, string>();
+	return (from: string, to: string, t: number): string => {
+		if (from === to) return to;
+		const step = mixStep(t);
+		if (step === 0) return from;
+		if (step === COLOR_MIX_STEPS) return to;
+		const key = `${from}|${to}|${step}`;
+		let fill = cache.get(key);
+		if (fill === undefined) {
+			fill = interpolateRgb(from, to)(step / COLOR_MIX_STEPS);
+			cache.set(key, fill);
 		}
 		return fill;
 	};

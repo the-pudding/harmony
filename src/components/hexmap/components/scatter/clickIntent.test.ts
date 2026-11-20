@@ -30,6 +30,15 @@ const hexZoomClick: ClickInput = {
 };
 
 describe("resolveClick", () => {
+	it("stops what's playing when a plain dot is clicked off hexes", () => {
+		expect(
+			resolveClick({ ...dotsClick, songKey: "a", playingSongKey: "b" })
+		).toEqual([
+			{ kind: "outlinedSongClick", songKey: null },
+			{ kind: "select", songKey: "a" }
+		]);
+	});
+
 	it("selects a song in dots mode, and deselects it on a second click", () => {
 		expect(resolveClick({ ...dotsClick, songKey: "a" })).toEqual([
 			{ kind: "select", songKey: "a" }

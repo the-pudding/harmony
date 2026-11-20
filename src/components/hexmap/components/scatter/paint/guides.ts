@@ -1,4 +1,4 @@
-import { easeCubicInOut } from "d3";
+import { curveMonotoneX, easeCubicInOut, line } from "d3";
 import type { Guide, GuideLayer } from "$components/storymap/layouts/types.js";
 import type { ScatterAxisLabels } from "../../scatterPoint.js";
 import {
@@ -11,6 +11,9 @@ import {
 	CHART_LABEL_HALO,
 	CHART_LABEL_HALO_WIDTH,
 	CHART_LABEL_SIZE_PX,
+	CHART_LINE_HALO_WIDTH,
+	CHART_LINE_WIDTH,
+	CHART_SHADE_FILL,
 	GUIDE_BOTTOM_RIGHT_CLEARANCE,
 	GUIDE_FADE_FRACTION,
 	GUIDE_LABEL_GAP,
@@ -39,12 +42,57 @@ export type GuideSet = { guides: readonly Guide[]; opacity: number };
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-const labelIdOf = (guide: Guide): string | undefined =>
-	guide.kind === "label" ? guide.id : undefined;
+const idOf = (guide: Guide): string | undefined =>
+	guide.kind === "label" || guide.kind === "box" || guide.kind === "line"
+		? guide.id
+		: undefined;
+
+// Lines are over the songs unless layered under; everything else is under.
+const layerOf = (guide: Guide): GuideLayer => {
+	switch (guide.kind) {
+		case "label":
+		case "box":
+			return guide.layer ?? "under";
+		case "line":
+			return guide.layer ?? "over";
+		default:
+			return "under";
+	}
+};
+
+// A guide partway (t, 0–1) from its outgoing self to its incoming one.
+const between = (from: Guide, to: Guide, t: number): Guide | null => {
+	if (to.kind === "label" && from.kind === "label") {
+		return { ...to, x: lerp(from.x, to.x, t), y: lerp(from.y, to.y, t) };
+	}
+	if (to.kind === "box" && from.kind === "box") {
+		return {
+			...to,
+			x: lerp(from.x, to.x, t),
+			y: lerp(from.y, to.y, t),
+			width: lerp(from.width, to.width, t),
+			height: lerp(from.height, to.height, t)
+		};
+	}
+	if (
+		to.kind === "line" &&
+		from.kind === "line" &&
+		from.points.length === to.points.length
+	) {
+		return {
+			...to,
+			points: to.points.map((point, i) => ({
+				x: lerp(from.points[i].x, point.x, t),
+				y: lerp(from.points[i].y, point.y, t)
+			}))
+		};
+	}
+	return null;
+};
 
 // The outgoing and incoming layouts' guides at a transition's progress
-// (0–1): a label with the same id in both moves from its old spot to its
-// new one; the rest crossfade by guideOpacities.
+// (0–1): a label, box or line with the same id in both moves from its old
+// spot to its new one; the rest crossfade by guideOpacities.
 export const transitionGuides = (
 	outgoing: readonly Guide[],
 	incoming: readonly Guide[],
@@ -56,7 +104,7 @@ export const transitionGuides = (
 	}
 	const fromById = new Map<string, Guide>();
 	for (const guide of outgoing) {
-		const id = labelIdOf(guide);
+		const id = idOf(guide);
 		if (id !== undefined) fromById.set(id, guide);
 	}
 	const t = easeCubicInOut(Math.min(1, Math.max(0, progress)));
@@ -64,21 +112,18 @@ export const transitionGuides = (
 	const moving: Guide[] = [];
 	const appearing: Guide[] = [];
 	for (const guide of incoming) {
-		const id = labelIdOf(guide);
+		const id = idOf(guide);
 		const from = id === undefined ? undefined : fromById.get(id);
-		if (guide.kind === "label" && from?.kind === "label") {
+		const partway = from === undefined ? null : between(from, guide, t);
+		if (partway) {
 			moved.add(id!);
-			moving.push({
-				...guide,
-				x: lerp(from.x, guide.x, t),
-				y: lerp(from.y, guide.y, t)
-			});
+			moving.push(partway);
 		} else {
 			appearing.push(guide);
 		}
 	}
 	const leaving = outgoing.filter((guide) => {
-		const id = labelIdOf(guide);
+		const id = idOf(guide);
 		return id === undefined || !moved.has(id);
 	});
 	return [
@@ -109,11 +154,7 @@ export const drawGuides = (
 		if (!(opacity > 0)) continue;
 		context.globalAlpha = opacity;
 		for (const guide of guides) {
-			const guideLayer =
-				guide.kind === "label" || guide.kind === "box"
-					? (guide.layer ?? "under")
-					: "under";
-			if (guideLayer !== layer) continue;
+			if (layerOf(guide) !== layer) continue;
 			switch (guide.kind) {
 				case "axisLabel":
 					if (guide.at === "bottom-right") {
@@ -165,12 +206,34 @@ export const drawGuides = (
 						guide.width * rect.width,
 						guide.height * rect.height
 					] as const;
-					context.fillStyle = CHART_BOX_FILL;
-					context.fillRect(...box);
-					context.strokeStyle = CHART_BOX_COLOR;
-					context.lineWidth = CHART_BOX_WIDTH;
-					context.strokeRect(...box);
+					if (guide.style === "shade") {
+						context.fillStyle = CHART_SHADE_FILL;
+						context.fillRect(...box);
+					} else {
+						context.fillStyle = CHART_BOX_FILL;
+						context.fillRect(...box);
+						context.strokeStyle = CHART_BOX_COLOR;
+						context.lineWidth = CHART_BOX_WIDTH;
+						context.strokeRect(...box);
+					}
 					context.fillStyle = AXIS_LABEL_COLOR;
+					break;
+				}
+				case "line": {
+					context.beginPath();
+					line<{ x: number; y: number }>()
+						.x(({ x }) => left + x * rect.width)
+						.y(({ y }) => top + (1 - y) * rect.height)
+						.curve(curveMonotoneX)
+						.context(context)(guide.points);
+					context.lineJoin = "round";
+					context.lineCap = "round";
+					context.strokeStyle = CHART_LABEL_HALO;
+					context.lineWidth = CHART_LINE_HALO_WIDTH;
+					context.stroke();
+					context.strokeStyle = guide.color;
+					context.lineWidth = CHART_LINE_WIDTH;
+					context.stroke();
 					break;
 				}
 			}

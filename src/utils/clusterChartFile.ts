@@ -1,5 +1,5 @@
 // Shared by tasks/build-charts.ts (which writes the per-cluster % over time
-// files) and ClusterPercentOverTime.svelte (which globs them), so a file is
+// files) and Signatures.svelte (which globs their names), so a file is
 // always found by its cluster name, or by its decade for decade signatures.
 // Files are named `{slug}_by_year.csv`, optionally prefixed with a decade
 // label (`1990s_{slug}_by_year.csv`, or `1950s-60s_…` for the pooled early

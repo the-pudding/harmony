@@ -137,6 +137,11 @@ export const CHART_LABEL_HALO_WIDTH = 4;
 export const CHART_BOX_COLOR = "#f4f4f5";
 export const CHART_BOX_WIDTH = 3;
 export const CHART_BOX_FILL = "rgba(255, 255, 255, 0.1)";
+// A "shade" box: a faint band behind the songs, with no outline.
+export const CHART_SHADE_FILL = "rgba(255, 255, 255, 0.07)";
+// A line guide, over a dark halo so it reads against the songs.
+export const CHART_LINE_WIDTH = 2;
+export const CHART_LINE_HALO_WIDTH = 6;
 
 // ── Cluster outlines (dot mode) ───────────────────────────────────────
 // Density clustering is only meaningful over layouts UMAP actually produced

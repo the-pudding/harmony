@@ -5,6 +5,7 @@ import {
 	DEFAULT_MAP_SCENE,
 	parseMapScene,
 	STAGE_SCENE,
+	withStageMap,
 	type MapScene
 } from "./mapScene.js";
 
@@ -354,5 +355,43 @@ describe("STAGE_SCENE", () => {
 		expect(
 			parseMapScene({ visible: "true", layout: "offstage" })!.layout
 		).toEqual({ name: "umap" });
+	});
+});
+
+describe("withStageMap", () => {
+	const scene: MapScene = {
+		...DEFAULT_MAP_SCENE,
+		songs: { ...DEFAULT_MAP_SCENE.songs, playable: ["a", "b"] }
+	};
+	const chart = {
+		progression: "I V vi IV",
+		highlight: { start: 1980, end: 1990 }
+	};
+
+	it("returns the same scene when there is nothing to add", () => {
+		expect(withStageMap(scene, { chart: null, songKeys: [] })).toBe(scene);
+	});
+
+	it("sets the chart", () => {
+		const result = withStageMap(scene, { chart, songKeys: [] });
+		expect(result.chart).toEqual(chart);
+		expect(result.songs.playable).toEqual(["a", "b"]);
+		expect(scene.chart).toEqual(DEFAULT_MAP_SCENE.chart);
+	});
+
+	it("appends song keys to playable without duplicates", () => {
+		const result = withStageMap(scene, {
+			chart: null,
+			songKeys: ["b", "c", "c", "d"]
+		});
+		expect(result.songs.playable).toEqual(["a", "b", "c", "d"]);
+		expect(scene.songs.playable).toEqual(["a", "b"]);
+	});
+
+	it("keeps the scene's chart when chart is null", () => {
+		const withChart: MapScene = { ...scene, chart };
+		const result = withStageMap(withChart, { chart: null, songKeys: ["c"] });
+		expect(result.chart).toBe(chart);
+		expect(result.songs.playable).toEqual(["a", "b", "c"]);
 	});
 });
