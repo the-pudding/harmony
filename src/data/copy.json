@@ -33,7 +33,7 @@
           "text": [
             {
               "type": "text",
-              "value": "Here are all [7,260] Billboard top-20 hits from 1958 to 2026. Laid out like this, they look like a night sky, where every “star” (song) looks the same. People love to claim that they <em>sound</em> the same, too."
+              "value": "Here are all [7,260] Billboard top-20 hits from 1958 to 2026, sorted chronologically from left to right. Laid out like this, they look like a night sky, where every “star” (song) looks the same. People love to claim that they <em>sound</em> the same, too."
             },
             {
               "type": "text",
@@ -44,6 +44,9 @@
             "visible": "true",
             "layout": "timeline",
             "frame": "full",
+            "playableSongs": [
+              "journey__dont-stop-believin"
+            ],
             "movable": "false",
             "tooltip": "basic"
           }

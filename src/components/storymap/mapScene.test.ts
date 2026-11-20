@@ -141,7 +141,12 @@ describe("parseMapScene on the real copy", () => {
 		expect(sky).toMatchObject({
 			layout: { name: "timeline" },
 			frame: "full",
-			songs: { only: null, playable: [], dimmed: false }
+			// Journey's dot stays labeled after the reveal
+			songs: {
+				only: null,
+				playable: ["journey__dont-stop-believin"],
+				dimmed: false
+			}
 		});
 		expect(dimmed.frame).toBe("text");
 		for (const scene of [dot, sky, dimmed, follow, lit]) {
