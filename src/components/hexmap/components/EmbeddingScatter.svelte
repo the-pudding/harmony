@@ -299,17 +299,15 @@
 	// hit-testing don't refit them on every mousemove.
 	let clusterHits: ClusterHit[] = [];
 
-	// The last layout that bins into hexes (or the first layout, before
-	// one has). Region colors come from it, so hexes keep their colors while
-	// they fade out for another layout, and come back the same.
+	// Last hex-binning layout, so hexes keep their region colors while
+	// fading out for another layout.
 	let lastHexLayout: LayoutResult | null = null;
 	const regionLayout = $derived.by(() => {
 		if (layout.aggregate === "hex") lastHexLayout = layout;
 		return lastHexLayout ?? layout;
 	});
 
-	// Where that layout puts each song it places, by song key, for the
-	// region colors (worked out once per layout, not per frame).
+	// Computed once per layout, not per frame.
 	const restingPoints = $derived.by(() => {
 		const { x, y } = regionLayout;
 		return songs.keys.flatMap((songKey, index) =>
@@ -319,9 +317,7 @@
 		);
 	});
 
-	// 1 for every song that should be drawn, 0 for the ones visibleSongKeys
-	// leaves out, DIMMED_SONG_ALPHA for the ones dimExceptSongKeys doesn't
-	// keep bright; the transition fades between them.
+	// 0 = hidden by visibleSongKeys, DIMMED_SONG_ALPHA = dimmed by dimExceptSongKeys.
 	const targetAlpha = $derived.by(() => {
 		const alpha = new Float32Array(songs.count);
 		for (let index = 0; index < songs.count; index++) {
@@ -336,22 +332,16 @@
 		return alpha;
 	});
 
-	// Every song's color goal: its region color in a layout that colors by
-	// region, star white in one that doesn't.
 	const targetMix = $derived(
 		new Float32Array(songs.count).fill(layout.color === "region" ? 1 : 0)
 	);
 
-	// Where every song is headed: where the layout puts it, across the
-	// plot (a framed layout's 0–1 is converted from the frame rect), and
-	// how visible, plus what it was placed for, so the transition can tell
-	// a window resize or a frame change from a new layout.
+	// Carries what the target was placed for, so timing can tell a resize or
+	// frame change from a new layout.
 	type PlacedTarget = TransitionTarget & {
 		layoutName: string;
-		// Whether the stagger is revealStagger.
 		revealing: boolean;
-		// Framed layouts only (null and 0 for the rest, which don't move
-		// when these change).
+		// Framed layouts only (null and 0 otherwise).
 		frame: MapFrame | null;
 		width: number;
 		height: number;
@@ -366,9 +356,8 @@
 			a.bottom === b.bottom &&
 			a.left === b.left);
 
-	// mapFrame, as the same object while its insets don't change, so a
-	// parent re-measuring it (e.g. every frame of the text box resizing)
-	// doesn't retarget the songs.
+	// Stable identity while the insets are unchanged, so a parent re-measuring
+	// mapFrame doesn't retarget the songs.
 	let placedFrame: MapFrame | null = null;
 	const frame = $derived.by((): MapFrame => {
 		if (placedFrame === null || !sameFrame(mapFrame, placedFrame)) {
@@ -410,16 +399,9 @@
 		return { ...placed, x, y, frame, width, height };
 	});
 
-	// With instantFocus everything jumps, so a map that's about to appear
-	// is already in place. A window resize jumps. A reveal (revealStagger)
-	// moves with the scripted camera, and a new layout over
-	// LAYOUT_TWEEN_MS, both staggered, and both keep their pace and stagger
-	// while they're retargeted mid-way (e.g. the frame settling). Otherwise
-	// a frame change within one layout moves songs quickly, and anything
-	// else (songs shown or hidden) at the usual pace, all at once. Hexes
-	// showing fade out (HEX_FADE_OUT_MS from fully shown) before songs move
-	// out from under them. With reduced motion, every change is a short
-	// crossfade.
+	// Reveals and layout changes are staggered and keep their pace when
+	// retargeted mid-way. Showing hexes fade out before songs move from under
+	// them.
 	let layoutFlight = false;
 	const transitionTiming = (
 		next: PlacedTarget,
@@ -456,7 +438,6 @@
 		return { durationMs: TWEEN_DURATION_MS, delayMs, staggered: false };
 	};
 
-	// A song the layout places and visibleSongKeys keeps, by index.
 	const isDrawnIndex = (index: number | undefined): index is number =>
 		index !== undefined &&
 		targetAlpha[index] > 0 &&
@@ -465,7 +446,7 @@
 	const isDrawn = (songKey: string): boolean =>
 		isDrawnIndex(songs.indexOf.get(songKey));
 
-	// Where a song rests in this layout, in base pixels, or null.
+	// Base (unzoomed) pixels, or null when not placed.
 	const restingBasePixel = (index: number | undefined): Point2D | null =>
 		index === undefined || Number.isNaN(transitionTarget.x[index])
 			? null
@@ -557,8 +538,7 @@
 			: outlinedSongKeys
 	);
 
-	// Song indexes in the layers dots are drawn in: accented songs last, so
-	// they sit on top of the dots around them.
+	// Accented songs last, so they sit on top.
 	const dotLayers = $derived.by(() => {
 		const plain: number[] = [];
 		const accented: number[] = [];
@@ -568,7 +548,6 @@
 		return [Int32Array.from(plain), Int32Array.from(accented)];
 	});
 
-	// Each cluster's songs by index, for drawing outlines every frame.
 	const clusterMemberIndexes = $derived(
 		clusters.map((cluster) =>
 			cluster.songKeys.flatMap((songKey) => {
@@ -608,9 +587,7 @@
 		labelSpots = spots;
 	};
 
-	// Repaints the whole canvas from the current state. The effect below
-	// re-runs it whenever anything it reads changes; the transition and the
-	// spotlight tween also run it on each of their frames.
+	// Repaints the whole canvas; also run on each transition and tween frame.
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (perf meter): the main map only, not the inset.
 	const perfMeter = $derived(
 		pixelRatioOverride === null && readPerfParam() ? createPerfMeter() : null
@@ -639,9 +616,6 @@
 		});
 		drawAxisLabels(scene, axisLabels);
 		drawGuides(scene, guideSets(), frame);
-		// At hex zoom, hexes cover the dots by hexOpacity: none while songs
-		// move, all once they've settled in a hex layout, and crossfading
-		// with the dots in between.
 		const zoomLevel =
 			hexMode || hexFade.current > 0
 				? hexZoomLevel(transform.k, HEX_ZOOM)
@@ -676,10 +650,7 @@
 		}
 	};
 
-	// The layout's guides (axis labels...) and those of the layout before it,
-	// which fade out as the songs start to move while the new ones fade in
-	// as they arrive (see guideOpacities). Guides only change with the
-	// layout's name, so a new frame size just updates them.
+	// Current and previous layouts' guides, crossfaded by guideOpacities.
 	const NO_GUIDES: readonly Guide[] = [];
 	const guideSetList: GuideSet[] = [
 		{ guides: NO_GUIDES, opacity: 0 },
@@ -703,8 +674,7 @@
 		return guideSetList;
 	};
 
-	// The same scene with every song's alpha scaled by opacity, in a buffer
-	// kept across frames.
+	// Reuses one alpha buffer across frames.
 	let fadedAlpha = new Float32Array(0);
 	const fadedScene = (scene: Scene, opacity: number): Scene => {
 		const { alpha } = scene;
@@ -717,13 +687,10 @@
 		return { ...scene, alpha: fadedAlpha };
 	};
 
-	// Hexes fading in or out are painted here at full strength, then laid
-	// over the canvas at their opacity, so overlapping hexes don't show
-	// seams.
+	// Hexes paint here at full strength, then composite at their opacity so
+	// overlaps leave no seams.
 	let hexFadeCanvas: HTMLCanvasElement | null = null;
 
-	// Zoomed out in hex mode: the binned map and its region labels, at
-	// opacity over whatever's drawn below.
 	const drawHexFrame = (
 		mainScene: Scene,
 		radius: number,
@@ -779,15 +746,11 @@
 		}
 	};
 
-	// Colors between star white and each song's region color, for dots
-	// moving between layouts that color differently.
 	const mixFill = $derived(
 		createMixFill((songKey) => regionFills.songRegionFill(songKey, 1))
 	);
 
-	// Each song's region fill at one gradient strength, kept across frames
-	// while the fills and gradient hold (at dot zoom the gradient is
-	// constant), so dots don't re-interpolate their colors every frame.
+	// Avoids re-interpolating colors every frame while fills and gradient hold.
 	let songFillCache: {
 		fills: RegionFills | null;
 		gradient: number;
@@ -809,8 +772,7 @@
 		};
 	};
 
-	// A plain dot's radius: the layout's, moving from the previous
-	// layout's with the transition (sky stars are smaller than UMAP dots).
+	// Eases from the previous layout's radius (sky stars are smaller than UMAP dots).
 	let radiusLayoutName: string | null = null;
 	let radiusFrom = POINT_RADIUS;
 	let drawnRadius = POINT_RADIUS;
@@ -829,14 +791,9 @@
 
 	const NO_SPOTLIGHT = { emphasis: new Map<string, number>(), fade: 0 };
 
-	// Dots (at any zoom in other layouts, at dot zoom in hex ones): cluster
-	// outlines, dots, marked songs and their labels, then rings around the
-	// selected and hovered songs. Markers, cluster outlines and titles
-	// belong to the hex map's dot zoom (markers): at its hex zoom they're
-	// left out of the dots flying in or fading under hexes. Outlines and
-	// titles are also left out in other layouts, under fading hexes (when
-	// the dots aren't alone) and while songs move. Returns how many plain
-	// dots it drew.
+	// Outlines, dots, markers and labels, then selection rings. Markers are
+	// left out of dots flying in or fading under hexes; outlines and titles
+	// also while songs move. Returns how many plain dots it drew.
 	const drawDotFrame = (
 		scene: Scene,
 		alone: boolean,
@@ -889,9 +846,7 @@
 				emphasisFillColor,
 				emphasizedSongKeys,
 				mix: transition.mix,
-				// Settled in a hex layout, or on the way to one (hexMode), dots
-				// take region colors at the zoom's gradient, and otherwise at
-				// full strength.
+				// In hexMode, region colors follow the zoom's gradient.
 				regionFill: songRegionFill ?? songRegionFillAt(1),
 				mixFill,
 				accentFillColor,
@@ -914,8 +869,6 @@
 			}
 		});
 
-		// Marked songs: outlined ones, and a spotlit one even when nothing is
-		// outlined.
 		if (songSummaryByKey) {
 			drawOutlinedSongLabels(scene, {
 				style,
@@ -956,7 +909,6 @@
 				)
 			: null;
 
-	// Plain dots that can be hovered, by index.
 	const pickableIndexes = $derived.by(() => {
 		const indexes: number[] = [];
 		for (let index = 0; index < songs.count; index++) {
@@ -1125,8 +1077,6 @@
 		onFrame: () => draw()
 	});
 
-	// How much hexes cover the dots: 1 while songs rest in a hex layout,
-	// fading out before they move and back in once they settle.
 	const hexFade = createFade({
 		get target() {
 			return hexMode && transition.settled ? 1 : 0;
@@ -1136,7 +1086,6 @@
 		onFrame: () => draw()
 	});
 
-	// A reveal's origin, while the reveal runs.
 	const revealSpotlightSongKey = $derived(
 		revealStagger !== null && !transition.settled ? revealOriginSongKey : null
 	);
@@ -1153,8 +1102,8 @@
 		get songKey() {
 			return spotlightSongKey;
 		},
-		// spotlitSongKey may leave the rest as they are, and a reveal's
-		// origin always does; the others always fade them.
+		// spotlitSongKey follows spotlightFadesOthers; a reveal's origin never
+		// fades the rest.
 		get fadesOthers() {
 			if (spotlightSongKey === spotlitSongKey) return spotlightFadesOthers;
 			return spotlightSongKey !== revealSpotlightSongKey;

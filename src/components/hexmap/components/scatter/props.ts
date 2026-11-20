@@ -12,8 +12,7 @@ import type {
 } from "../../embedding/layout/hexBins.js";
 
 export type EmbeddingScatterProps = {
-	// Every song, by index, and where the layout puts each one (0–1 across
-	// the plot, by the same index). Changing the layout animates the dots.
+	// Layout positions are 0–1 across the plot, indexed like songs.
 	songs: SongTable;
 	layout: LayoutResult;
 	songByKey: Map<string, GroupedSong>;
@@ -26,20 +25,13 @@ export type EmbeddingScatterProps = {
 	> | null;
 	selectedSongKey: string | null;
 	coClusterSongKeys: Set<string>;
-	// Only these songs are drawn (and hovered); the rest fade out where they
-	// are. Null (the default) for every song.
+	// Only these songs are drawn and hoverable; null shows all.
 	visibleSongKeys?: ReadonlySet<string> | null;
-	// When set, every drawn song not in it is faint (DIMMED_SONG_ALPHA);
-	// null (the default) draws every song at full alpha.
+	// Drawn songs not in this set are dimmed to DIMMED_SONG_ALPHA.
 	dimExceptSongKeys?: ReadonlySet<string> | null;
-	// A per-song stagger (0–1, see STAGGER_SPAN) for songs appearing or
-	// disappearing together, e.g. rippling out from one song: wins over the
-	// layout's own, and the change it comes with moves over
-	// SCRIPTED_FOCUS_TRANSITION_MS, in step with a scripted camera move.
+	// Per-song stagger (0–1, see STAGGER_SPAN) for a reveal; overrides the layout's own.
 	revealStagger?: Float32Array | null;
-	// The song a reveal ripples from: spotlit, without fading the rest,
-	// while the reveal runs, so the dot the slide was about stays marked as
-	// the others appear around it (and shrinks into them once it's done).
+	// The song a reveal ripples from; spotlit without fading the rest.
 	revealOriginSongKey?: string | null;
 	inYearSongKeys?: Set<string> | null;
 	axisLabels?: ScatterAxisLabels | null;
@@ -59,8 +51,7 @@ export type EmbeddingScatterProps = {
 	// as focusSongKey; takes priority over it when both are set.
 	focusClusterName?: string | null;
 	// Scripted focus changes (focusClusterName, focusSongKey) jump straight
-	// to the new view instead of animating, e.g. while the map is hidden;
-	// so do songs moving or fading to a new layout or visibility.
+	// to the new view instead of animating; so do layout and visibility changes.
 	instantFocus?: boolean;
 	// A cluster the user picked (by name, like focusClusterName): the view
 	// animates to fit it when it's set, and again when focusFrame changes,
@@ -78,9 +69,7 @@ export type EmbeddingScatterProps = {
 	// A song to spotlight (when nothing above is) without moving the view
 	// or changing what clicks do, e.g. one picked in search.
 	spotlitSongKey?: string | null;
-	// Whether a spotlit song fades every other song back (true), or only
-	// grows its own marker (e.g. a song a video names, where the rest of
-	// the map should stay as it is).
+	// Whether the spotlit song fades the others back, or only grows its own marker.
 	spotlightFadesOthers?: boolean;
 	// The part of the canvas a focused cluster should fill, in screen
 	// pixels from its top (e.g. the space below text over the map). In
@@ -89,12 +78,9 @@ export type EmbeddingScatterProps = {
 	focusFrame?: { top: number; height: number } | null;
 	// Shifts the resting view and focus targets down by this many screen
 	// pixels, e.g. to leave room for text over the top of the map.
-	// Changing it animates the view to the new resting position. Unframed
-	// layouts (UMAP) only; framed ones keep clear of the text with mapFrame.
+	// Unframed layouts only; framed ones use mapFrame.
 	offsetY?: number;
-	// Insets from the canvas's edges for the rect framed layouts
-	// (layout.framed) fill, e.g. below the text and above docked media.
-	// Changing it moves their songs; unframed layouts ignore it.
+	// Rect framed layouts (layout.framed) fill; unframed layouts ignore it.
 	mapFrame?: MapFrame;
 	// Optional blanket emphasis set (used by /story to highlight a whole
 	// progression family rather than one song's cluster). When set,
@@ -116,11 +102,7 @@ export type EmbeddingScatterProps = {
 	// with outlines on doesn't also mute every other cluster's outline.
 	// Omit (or null) for normal treatment of every cluster.
 	familyEmphasisSongKeys?: Set<string> | null;
-	// Fill color for a song in emphasizedSongKeys, overriding its region
-	// color / STAR_FILL_COLOR so those dots stand out. Opt-in per caller
-	// (e.g. an artist mode) — omit (or null) to leave emphasized dots
-	// colored normally, distinguished only by alpha (e.g. /story's family
-	// highlights).
+	// Overrides the fill of songs in emphasizedSongKeys; null keeps their normal color.
 	emphasisFillColor?: string | null;
 	// Fill color for songs in accentSongKeys. Unlike emphasizedSongKeys it
 	// dims nothing, so the rest of the map keeps its structure. Accented
@@ -139,9 +121,7 @@ export type EmbeddingScatterProps = {
 	// Of outlinedSongKeys, ones drawn the same but not playable: no
 	// outlinedTitlePrefix, and clicks treat them as plain dots.
 	inertOutlinedSongKeys?: Set<string> | null;
-	// Of inertOutlinedSongKeys, ones drawn as smaller markers with no label
-	// (e.g. songs a video has already named, which would crowd the map
-	// with labels).
+	// Of inertOutlinedSongKeys, ones drawn as small markers with no label.
 	smallOutlinedSongKeys?: Set<string> | null;
 	// One of outlinedSongKeys to call out above the rest (e.g. the song
 	// playing): drawn bigger and on top, with the others faded.
@@ -153,13 +133,7 @@ export type EmbeddingScatterProps = {
 		endFraction: number;
 		chordColor: string;
 	}[];
-	// How bins are painted when the layout groups songs into hexagons
-	// (layout.aggregate "hex"; needs progressionSharesBySongKey). Their
-	// size follows the zoom: big when zoomed out, smaller as you zoom in,
-	// plain dots near max zoom. "hex" fills each hexagon with the color of
-	// its main progression, faded when the hex is only partly that
-	// progression. "watercolor" bins and colors the same way, but paints
-	// each bin as a soft blob so neighboring regions bleed into each other.
+	// How hex bins are painted (layout.aggregate hex; needs progressionSharesBySongKey).
 	hexStyle?: "hex" | "watercolor" | "hex-watercolor";
 	// Each song's progressions with their share of its matched chords.
 	progressionSharesBySongKey?: ReadonlyMap<
@@ -218,7 +192,7 @@ export type EmbeddingScatterProps = {
 	pixelRatio?: number | null;
 	// Hex mode: a simpler song tooltip (see HexSongTooltip).
 	simpleSongTooltip?: boolean;
-	// How much a song tooltip shows: "basic" is only title, year and artist.
+	// "basic" shows only title, year and artist.
 	tooltipDetail?: "full" | "basic";
 	// Hex mode: whether a region, by name, has playable songs; its tooltip
 	// then shows outlinedTitlePrefix before the name.

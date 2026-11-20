@@ -1,12 +1,10 @@
-// Layouts are pure, so they're memoized in one place, never inside a layout:
-// by name, params (by value), frame size (framed layouts only, so resizing
-// the window never recomputes UMAP) and the song table (by identity).
+// Memoizes layouts by name, params, frame size (framed layouts only, so
+// resizing never recomputes UMAP) and song table identity.
 import { layouts, type LayoutName, type LayoutParams } from "./index.js";
 import type { LayoutContext, LayoutResult } from "./types.js";
 import type { SongTable } from "../songTable.js";
 
-// Frame sizes churn while a window is resized; keep only the few most
-// recently used.
+// Frame sizes churn during a resize; keep only the most recent.
 const MAX_ENTRIES_PER_TABLE = 8;
 
 const caches = new WeakMap<SongTable, Map<string, LayoutResult>>();
@@ -30,7 +28,7 @@ export const computeLayout = <Name extends LayoutName>(
 	const key = `${name}|${JSON.stringify(params)}|${frameKey}`;
 	const hit = cache.get(key);
 	if (hit) {
-		// Most recently used last, so eviction drops the stalest.
+		// Re-insert so the stalest entry is first.
 		cache.delete(key);
 		cache.set(key, hit);
 		return hit;

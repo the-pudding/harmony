@@ -1,5 +1,4 @@
-// A small, deterministic snapshot for the storymap tests: 40 songs in two
-// clusters plus some strays, with mixed and pure progression coverage.
+// 40 deterministic songs: two clusters plus strays, mixed and pure coverage.
 import type { HexMapSnapshot } from "$data/hexMapSnapshot.js";
 import { hashUnit } from "./layouts/seededRandom.js";
 
@@ -18,7 +17,6 @@ export const fixtureSnapshot = (): HexMapSnapshot => {
 			(key, i) => (i < 15 ? 0 : i < 30 ? 8 : -6) + hashUnit(key, "y") * 3
 		),
 		progressionNames,
-		// Every third song is pure; the rest mix two progressions.
 		progressions: songKeys.map((key, i) =>
 			i % 3 === 0
 				? [i % 3, 90]

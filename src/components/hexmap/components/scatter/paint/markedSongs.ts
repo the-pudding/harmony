@@ -22,11 +22,9 @@ export type Playback = {
 	chordSegments: readonly ChordColorSegment[];
 };
 
-// Marked songs: a white glow, then the song's fill inside a white ring, so
-// they stand out from the dots around them. A song that isn't outlined
-// grows its ring and glow in with its emphasis; a smaller marker has a
-// thinner ring and glow, in proportion. A hovered outlined song
-// shows a play icon; the playing one, its progress ring and a pause icon.
+// Marked songs: a white glow, then the song's fill inside a white ring. A
+// hovered outlined song shows a play icon; the playing one, its progress
+// ring and a pause icon.
 export const drawMarkedSongs = (
 	scene: Scene,
 	{

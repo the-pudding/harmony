@@ -1,6 +1,5 @@
 // Types for copy.json (built from the Google Doc by `npm run gdoc`). ArchieML
-// gives strings, lists of strings and objects only, so every `map` value is
-// still text; storymap/mapScene.ts turns it into typed values.
+// yields only strings, lists and objects; storymap/mapScene.ts types `map`.
 declare module "$data/copy.json" {
 	// A list in the doc, or one comma-separated string.
 	export type CopyList = string | string[];
@@ -12,8 +11,7 @@ declare module "$data/copy.json" {
 		visible?: string;
 		// The arrangement: "umap" (the default) or "timeline".
 		layout?: string;
-		// Where a framed layout (the timeline) sits: "text" (the default) is
-		// below the story text; "full" fills the screen, under the text too.
+		// "text" (default) sits below the story text; "full" fills the screen.
 		frame?: string;
 		// Zoom in on this cluster (by name), or on this one song (by key).
 		focusCluster?: string;
@@ -37,8 +35,7 @@ declare module "$data/copy.json" {
 		rotateLabels?: string;
 		movable?: string;
 		hoverable?: string;
-		// What a hovered song's tooltip shows: "full" (the default) or "basic"
-		// (title, year and artist only).
+		// "full" (default), or "basic" (title, year and artist only).
 		tooltip?: string;
 		hidePlayer?: string;
 	};

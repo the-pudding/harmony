@@ -7,10 +7,8 @@
 	import { cueAt, videoCues } from "$data/videoCues";
 	import { storyMedia } from "$runes/storyMedia.svelte";
 
-	// onStage: the video is a slide's stage, centered directly under the story
-	// text and sized to leave a band of the map (the sky) below it, instead
-	// of filling the space like a video inside the text. Its bottom edge is
-	// published for the map's frame.
+	// onStage: centered under the story text, leaving a band of map below it;
+	// its bottom edge is published for the map's frame.
 	let { videoId, caption, onStage = false } = $props();
 
 	const appState = getContext("state");
@@ -20,7 +18,6 @@
 	let currentTime = $state(0);
 
 	const cues = $derived(videoCues[videoId]);
-	// The cue showing at the current time (the first one while paused at 0).
 	const cueIndex = $derived(cues ? cueAt(cues, currentTime) : -1);
 	let figureEl = $state();
 
@@ -49,18 +46,15 @@
 		storyMedia.clearCue();
 	});
 
-	// Tell the map which cue is current while the clip plays or is paused
-	// part-way; paused at the start means no cue.
+	// Paused at the start means no cue.
 	$effect(() => {
 		if (!cues) return;
 		if (paused && currentTime === 0) storyMedia.clearCue();
 		else storyMedia.setCue(videoId, cueIndex);
 	});
 
-	// How far below the figure's top the video ends, for the map's frame (the
-	// sky starts below it). Measured relative to the figure, so it holds
-	// still while the text above resizes and moves the whole stage; it
-	// changes only when the video does (metadata loading, the window).
+	// Offset is relative to the figure so it holds still while the text above
+	// resizes; it changes only when the video does.
 	$effect(() => {
 		if (!onStage || !figureEl || !videoEl) return;
 		const publish = () => {
@@ -175,7 +169,6 @@
 		transition: opacity 0.3s ease;
 	}
 
-	/* a slow pulse while the button is showing, so it reads as clickable */
 	.play:not(.hidden) {
 		animation: pulse 1.8s ease-in-out infinite;
 	}
@@ -211,8 +204,7 @@
 		}
 	}
 
-	/* the slide's stage: centered under the text, small enough to leave sky
-	   below it */
+	/* centered under the text, leaving sky below */
 	figure.stage {
 		height: auto;
 		padding: 0.5rem 1rem 0;

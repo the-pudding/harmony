@@ -1,10 +1,7 @@
-// Per-song staggers (0–1, see STAGGER_SPAN) for layouts to hand to
-// transitions into them: which songs set off first when the map changes
-// arrangement.
+// Per-song transition staggers (0–1) that layouts hand to transitions.
 import type { SongTable } from "../songTable.js";
 
-// By release year, oldest first, so a change sweeps through time (left to
-// right on the sky). Undated songs go first.
+// Oldest first; undated songs go first.
 export const yearStagger = (songs: SongTable): Float32Array => {
 	const stagger = new Float32Array(songs.count);
 	let first = Infinity;

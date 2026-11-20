@@ -51,7 +51,7 @@ export const fromBasePixel = (
 	};
 };
 
-// No insets asked for: the plot itself (the margin PLOT_MARGIN on each side).
+// No insets: the plot itself.
 export const NO_MAP_FRAME: MapFrame = {
 	top: PLOT_MARGIN,
 	right: PLOT_MARGIN,
@@ -59,8 +59,7 @@ export const NO_MAP_FRAME: MapFrame = {
 	left: PLOT_MARGIN
 };
 
-// The rect a framed layout fills, in base pixels: the canvas inset by the
-// frame. (Not held to PLOT_MARGIN, so a frame can nearly fill the screen.)
+// The rect a framed layout fills, in base pixels. Ignores PLOT_MARGIN.
 export const frameRect = (
 	{ width, height }: Pick<ViewSize, "width" | "height">,
 	frame: MapFrame
@@ -77,11 +76,7 @@ export const frameRect = (
 	};
 };
 
-// A framed layout's position (0–1 across the frame rect, y up) as a
-// position across the plot, which is what everything downstream draws.
-// Framed layouts are converted once when they're placed, so the camera,
-// painters and hit-testing keep working in plot positions, and songs
-// moving between a framed and an unframed layout never jump.
+// Converts a position across the frame rect (y up) to one across the plot.
 export const framedToPlot = (
 	size: Pick<ViewSize, "width" | "height">,
 	frame: MapFrame,
@@ -102,9 +97,7 @@ export const toScreen = (viewport: Viewport, position: Position): Point2D => {
 	};
 };
 
-// toScreen as plain numbers, for loops over every song: a position's
-// screen pixel is screenX(projection, nx), screenY(projection, ny), with
-// the same arithmetic as toScreen and nothing allocated.
+// toScreen without allocation, for loops over every song.
 export type ScreenProjection = {
 	margin: number;
 	plotWidth: number;

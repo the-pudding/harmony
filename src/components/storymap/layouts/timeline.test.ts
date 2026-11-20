@@ -91,7 +91,6 @@ describe("timelineLayout", () => {
 		expect(result.aggregate).toBe("none");
 		expect(result.color).toBe("star");
 		expect(result.pointRadius).toBe(STAR_RADIUS);
-		// no axis: the story's text says what the sky is
 		expect(result.guides).toEqual([]);
 	});
 

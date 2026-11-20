@@ -56,8 +56,7 @@ export const createCamera = (input: CameraInput) => {
 	const constrain = (t: ZoomTransform) =>
 		view.constrainTransform(input.viewSize, t);
 
-	// With prefers-reduced-motion, every camera move jumps (the songs
-	// crossfade instead; see the scatter's transition timing).
+	// Under prefers-reduced-motion every move jumps.
 	const animateTo = (
 		canvas: HTMLCanvasElement,
 		target: ZoomTransform,

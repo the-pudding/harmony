@@ -38,8 +38,7 @@
 	import { sameClusterName } from "$data/clusterName";
 	import { spanStyle } from "$routes/demo/record/timelineStyles";
 	import { audio, stopAllAudio } from "$runes/audio.svelte";
-	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (1/4): ?slide=N URL persistence. See
-	// src/utils/slideParam.js for full removal instructions. Delete this import.
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (1/4): see src/utils/slideParam.js. Delete this import.
 	import { readSlideParam, writeSlideParam } from "$utils/slideParam";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (muted 1/3): ?muted=true|false URL
 	// persistence. See src/utils/mutedParam.js for removal instructions. Delete
@@ -79,10 +78,9 @@
 	let slideI = $state(readSlideParam(allSlides.length));
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (3/4): delete the next line entirely.
 	$effect(() => writeSlideParam(slideI));
-	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (4/4): the server always renders slide
-	// 0, and hydration keeps its text's {@html}, so with ?slide=N the text is
-	// rendered again once mounted. Delete these lines and the
-	// `{#key textRemount}` wrapper around the slide text below.
+	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (4/4): the server renders slide 0 and
+	// hydration keeps its {@html}, so ?slide=N re-renders the text once mounted.
+	// Delete these lines and the `{#key textRemount}` wrapper below.
 	let textRemount = $state(false);
 	onMount(() => {
 		if (slideI !== 0) textRemount = true;
@@ -125,9 +123,8 @@
 			? scene
 			: { ...scene, camera: { kind: "cluster", name: textFocusCluster } };
 	});
-	// The video the map follows (followVideo), while it's the one playing:
-	// the song its current cue names is spotlit, and the songs named before
-	// it stay lit. litVideoSongs starts with every song a video names lit.
+	// While followVideo plays: its current cue's song is spotlit and earlier
+	// cues' songs stay lit.
 	let followedCues = $derived(
 		mapScene?.media.followVideo != null &&
 			mapScene.media.followVideo === storyMedia.videoId
@@ -145,7 +142,6 @@
 		if (!followedCues || storyMedia.cueIndex <= 0) return [];
 		return songKeysOf(followedCues.slice(0, storyMedia.cueIndex));
 	});
-	// The cluster the map is focused on, if any.
 	let focusedCluster = $derived(
 		mapScene?.camera.kind === "cluster" ? mapScene.camera.name : undefined
 	);
@@ -183,11 +179,8 @@
 	let textHeight = $state();
 	// The text box as drawn, which lags textHeight while its height animates.
 	let textBoxHeight = $state(0);
-	// The incoming slide's text alone. textHeight also holds the outgoing
-	// text while it fades out (they share a grid cell), so it's the taller
-	// of the two for a moment.
+	// Incoming text only; textHeight also includes the outgoing text while it fades.
 	let incomingTextHeight = $state(0);
-	// .text-inner's padding, top and bottom.
 	const TEXT_PADDING = 32;
 	let clusterFrameEl = $state();
 	let clusterFrameHeight = $state(0);
@@ -222,13 +215,9 @@
 	);
 
 	let textBoxEl = $state();
-	// Where the cluster frame ends up once the text box finishes resizing
-	// for the incoming text (or a stage run's reserved height), so the map
-	// frames it once, from the start, instead of chasing the animation (or
-	// the outgoing text). Re-measured
-	// as the box resizes, from unrounded rects read together (rounded
-	// offsets and heights would make the sum wobble by a pixel), then
-	// rounded, so it holds still while the box animates.
+	// Where the cluster frame ends once the text box finishes resizing, so the
+	// map frames once instead of chasing the animation. Unrounded rects are read
+	// together, then rounded, to avoid a pixel of wobble.
 	let focusFrame = $derived.by(() => {
 		void textBoxHeight;
 		void clusterFrameHeight;
@@ -243,11 +232,8 @@
 		const height = Math.round(frameRect.bottom) - top;
 		return height > 0 ? { top, height } : null;
 	});
-	// The rect framed map layouts (e.g. the timeline) fill, as insets from
-	// the map's edges: a small margin on the sides and bottom (a bit less on
-	// phones), and a gap below the text box, or below the stage video when
-	// there is one (it sits right under the text). A "full" frame ignores
-	// the text and fills the screen, stretching under it.
+	// Insets for rect-framed layouts: margin on the sides and bottom, gap below
+	// the text box (or the stage video, which sits under it). "full" fills the screen.
 	const MAP_FRAME_GAP = 12;
 	const phone = new MediaQuery("(max-width: 600px)", false);
 	let mapEdge = $derived(phone.current ? 8 : 14);
@@ -419,8 +405,7 @@
 
 <svelte:window onclick={onWindowClick} />
 
-<!-- the slide's own playable songs (no cluster open), played by clicking
-     their dots; the dot's progress ring is the only UI -->
+<!-- Played by clicking their dots; the progress ring is the only UI -->
 {#if mapScene && mapScene.songs.playable.length > 0 && !showClusterPanel}
 	<Player
 		songKeys={mapScene.songs.playable}

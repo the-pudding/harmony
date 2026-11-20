@@ -12,7 +12,7 @@ const snapshot = fixtureSnapshot();
 const songs = buildSongTable(snapshot);
 const frame = { width: 1000, height: 700 };
 
-// HexMap's pipeline before layouts existed.
+// The pre-layouts HexMap pipeline.
 const oldNormalized = (purityLayout: boolean, pureThreshold: number) => {
 	const points = snapshot.songKeys.map((songKey, index) => ({
 		songKey,
@@ -93,7 +93,6 @@ describe("computeLayout", () => {
 				{ songs, frame }
 			)
 		).not.toBe(a);
-		// UMAP isn't framed, so the frame's size doesn't matter.
 		expect(
 			computeLayout("umap", DEFAULT_UMAP_PARAMS, {
 				songs,

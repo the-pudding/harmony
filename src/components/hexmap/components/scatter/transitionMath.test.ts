@@ -22,7 +22,6 @@ const channels = (
 	mix: Float32Array.from(mix)
 });
 
-// A transition from current to target, ready to step.
 const setUp = (
 	current: Channels,
 	target: Channels,

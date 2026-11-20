@@ -11,14 +11,11 @@
 	import { paletteById } from "$routes/demo/design/chord-viz/chordPalettes.js";
 
 	let {
-		// Plays this cluster's featured songs...
 		cluster = undefined,
-		// ...or, when given, these songs instead (those that have clips), each
-		// with its own featured cluster's tonality. Then `cluster` is only
-		// the title's.
+		// Overrides cluster's songs (only those with clips), each with its own
+		// featured cluster's tonality; cluster is then only the title's.
 		songKeys = undefined,
-		// Only the <audio> elements, no title, arrows or chords: the playing
-		// dot's progress ring is the UI. The clip plays once and stops.
+		// Audio elements only, played once; the playing dot's progress ring is the UI.
 		headless = false,
 		playingSongKey = $bindable(),
 		// where to draw the header and chords instead of in place, in
@@ -103,7 +100,6 @@
 	};
 
 	const playNext = () => step(1);
-	// A headless clip (one dot's) plays once; a cluster's player cycles.
 	const advance = () => {
 		if (headless) playingSongKey = undefined;
 		else playNext();

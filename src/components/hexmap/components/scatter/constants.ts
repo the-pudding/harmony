@@ -23,8 +23,7 @@ export const HEX_ZOOM = {
 // ── Focus & camera moves ──────────────────────────────────────────────
 // Zoom used when focusing a single song.
 export const DEFAULT_FOCUS_SCALE = 8;
-// Zoom for a slide's scripted focus on one song (camera "song"): how far the
-// lone dot is zoomed in before the map pulls back to everything.
+// Zoom for a scripted focus on one song.
 export const SONG_FOCUS_SCALE = 10;
 export const FOCUS_TRANSITION_MS = 900;
 // Scripted focus changes (focusClusterName / focusSongKey) move slower,
@@ -49,29 +48,21 @@ export const FLY_TO_ZOOM_OUT_FACTOR = 0.75;
 export const FLY_TO_TRANSITION_MS = 1300;
 // Clicking a hex zooms in, around the click, to HEX_FOCUS_SCALE.
 export const HEX_CLICK_ZOOM_MS = 450;
-// In a reveal (revealStagger), each song fades in or out over this
-// fraction of the transition, starting at its stagger, so a front ripples
-// out from the origin rather than every song finishing together.
+// Fraction of a reveal transition each song takes to fade, from its stagger.
 export const REVEAL_STAGGER_WINDOW = 0.35;
 // Points animating between layouts.
 export const TWEEN_DURATION_MS = 700;
-// Points flying to a different layout (e.g. the sky into the UMAP map),
-// staggered by the layout's own stagger.
 export const LAYOUT_TWEEN_MS = 1600;
-// With prefers-reduced-motion, every animated change to the songs is a
-// crossfade this long instead (see stepCrossfade), and the camera jumps.
+// Crossfade used instead of motion under prefers-reduced-motion.
 export const REDUCED_MOTION_FADE_MS = 200;
-// Points moving because the map's frame changed (e.g. the text box above
-// it grew), within one layout.
+// Points moving because the map frame changed within one layout.
 export const FRAME_TWEEN_MS = 400;
 // Songs not marked on a dimmed slide are drawn at this alpha.
 export const DIMMED_SONG_ALPHA = 0.35;
-// Hexes fade in this long after songs settle in a hex layout, and fade out
-// this fast (from fully shown) before songs move away.
+// Hexes fade in after songs settle, and out before songs move away.
 export const HEX_FADE_IN_MS = 500;
 export const HEX_FADE_OUT_MS = 200;
-// The canvas's pixel ratio is capped here: a 3× phone canvas has 2.25× the
-// pixels of a 2× one for no visible gain on 3px dots.
+// Pixel ratio cap: no visible gain beyond 2x on 3px dots.
 export const MAX_PIXEL_RATIO = 2;
 
 // ── Points ────────────────────────────────────────────────────────────
@@ -79,20 +70,15 @@ export const POINT_RADIUS = 3;
 export const SELECTED_POINT_RADIUS = 6;
 export const HOVER_PICK_RADIUS = 12;
 export const RING_WIDTH = 1.5;
-// Plain dots outside hex mode — a star-like white so a highlighted
-// song/family reads clearly against an otherwise uncolored field.
 export const STAR_FILL_COLOR = "#e4e4e7";
 export const STAR_FILL_RGB = [228, 228, 231] as const;
-// Stars are a little see-through, so dense patches of them build up.
 export const STAR_ALPHA = 0.85;
-// A song's fill moving between star and region colors (see colorMix.ts) is
-// quantized to this many steps, so dots still fall into few batches.
+// Quantization of the star-to-region fill mix, to keep dots in few batches.
 export const COLOR_MIX_STEPS = 24;
 
 // ── Outlined (called-out) songs & their labels ────────────────────────
 export const OUTLINE_COLOR = "#ffffff";
 export const OUTLINED_POINT_RADIUS = 10;
-// Small markers (smallOutlinedSongKeys): ring and glow scale down with them.
 export const SMALL_OUTLINED_POINT_RADIUS = 5;
 export const OUTLINE_WIDTH = 3;
 export const OUTLINE_GLOW_BLUR = 10;
@@ -113,14 +99,10 @@ export const OUTLINED_LABEL_PADDING = 3;
 // ── Axes ──────────────────────────────────────────────────────────────
 export const AXIS_LABEL_COLOR = "rgba(161, 161, 170, 0.7)";
 export const AXIS_LABEL_FONT = '10px "JetBrains Mono", ui-monospace, monospace';
-// A layout's guides fade out over this fraction of the start of a
-// transition into another layout, and the next layout's fade in over the
-// same fraction of its end.
+// Fraction of a layout transition over which guides fade out, then in.
 export const GUIDE_FADE_FRACTION = 0.3;
-// Distance from the bottom of the frame to a guide's text baseline.
 export const GUIDE_LABEL_GAP = 24;
-// A bottom-right label stops this far short of the frame's right edge, to
-// clear the page's fixed audio button.
+// Keeps a bottom-right guide label clear of the fixed audio button.
 export const GUIDE_BOTTOM_RIGHT_CLEARANCE = 56;
 
 // ── Cluster outlines (dot mode) ───────────────────────────────────────

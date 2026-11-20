@@ -1,7 +1,6 @@
 <script>
 	let { activeSlide, sections, onselect } = $props();
 
-	// The title and intro slides aren't chapters.
 	const NOT_CHAPTERS = ["Landing", "Intro"];
 	let visibleSections = $derived(
 		sections.filter((d) => !NOT_CHAPTERS.includes(d.title))

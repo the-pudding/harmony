@@ -2,9 +2,7 @@ import { easeCubicInOut } from "d3";
 import { PLAYING_TWEEN_MS } from "./constants.js";
 import { lerp, type Spotlight } from "./pointStyle.js";
 
-// Eases each song's spotlight emphasis, and how far the rest fade (unless
-// fadesOthers is false), toward the spotlit song, from wherever they are (mid-tween included), calling
-// onFrame after every step. Not reactive, since onFrame redraws.
+// Eases song emphasis toward the spotlit song, calling onFrame each step. Not reactive.
 export const createSpotlightTween = (input: {
 	readonly songKey: string | null;
 	readonly fadesOthers: boolean;

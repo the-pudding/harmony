@@ -12,10 +12,8 @@ import { frameRect } from "../viewport.js";
 import type { MapFrame } from "../types.js";
 import type { Scene } from "./scene.js";
 
-// How visible a layout's guides are while the map moves between layouts,
-// by how far through the transition it is (0–1): the outgoing layout's
-// fade out over the first GUIDE_FADE_FRACTION, the incoming layout's fade
-// in over the last. At rest (progress 1) only the incoming ones show.
+// Guide opacity by transition progress (0–1): outgoing guides fade out over
+// the first GUIDE_FADE_FRACTION, incoming ones fade in over the last.
 export const guideOpacities = (
 	progress: number
 ): { outgoing: number; incoming: number } => {
@@ -28,13 +26,10 @@ export const guideOpacities = (
 	};
 };
 
-// A set of guides and how visible they are.
 export type GuideSet = { guides: readonly Guide[]; opacity: number };
 
-// Each set's guides, in frame coordinates (0–1 across the rect framed
-// layouts fill, y up) and fixed on the screen, so an axis label stays put
-// while the camera zooms. The frame's own inset leaves room under it for
-// them.
+// Frame coordinates (0–1 across the framed rect, y up), fixed on screen so
+// axis labels stay put while the camera zooms.
 export const drawGuides = (
 	{ context, viewport: { width, height } }: Scene,
 	sets: readonly GuideSet[],
@@ -91,8 +86,7 @@ export const drawGuides = (
 	context.globalAlpha = 1;
 };
 
-// The x label centered under the plot, the y label rotated along its left.
-// (The scatter's own axisLabels prop; layouts' guides are drawn above.)
+// x label centered under the plot, y label rotated along its left.
 export const drawAxisLabels = (
 	{ context, viewport: { width, height } }: Scene,
 	axisLabels: ScatterAxisLabels | null

@@ -1,10 +1,6 @@
-// The pure math behind the map's transitions (see transition.svelte.ts):
-// every song's x, y and alpha move from where they were to where they're
-// going, as typed arrays mutated in place, so a frame allocates nothing.
+// Transition math on typed arrays mutated in place, so frames allocate nothing.
 
-// One value per song, by song index, for each animated channel. mix is how
-// far the song's color is from star white (0) to its region color (1); it
-// eases with the song's position, so colors drain or fill in as dots fly.
+// One value per song, by song index. mix: 0 = star white, 1 = region color.
 export type Channels = {
 	x: Float32Array;
 	y: Float32Array;
@@ -14,14 +10,11 @@ export type Channels = {
 
 export type Easing = (t: number) => number;
 
-// With a stagger, song i starts this fraction of the way into the
-// transition at most (stagger[i] = 1), then runs over the rest of it.
+// Latest start, as a fraction of the transition, for stagger[i] = 1.
 export const STAGGER_SPAN = 0.4;
 
-// A stagger can instead give every song the same window (a fraction of the
-// transition) to run over: song i starts at stagger[i] × (1 − window) and
-// is done by stagger[i] × (1 − window) + window, so a front sweeps across
-// the songs (a ripple) instead of them all landing together.
+// With a window, every song runs over the same fraction of the transition,
+// so a front sweeps across the songs.
 export const staggerStart = (stagger: number, window: number | null): number =>
 	stagger * (window === null ? STAGGER_SPAN : 1 - window);
 
@@ -39,12 +32,9 @@ export const copyChannels = (source: Channels, into: Channels): void => {
 	into.mix.set(source.mix);
 };
 
-// Sets up a transition from what's drawn now (current) to target, writing
-// its endpoints into from and to and each song's start time into startAt
-// (a fraction of the duration). A song the target doesn't place (NaN x or
-// y) stays where it is and fades out; a song with no position yet starts
-// at its target (so it fades in there rather than flying in). Returns
-// whether anything will move.
+// Writes endpoints into from/to and each song's start fraction into startAt.
+// A song the target doesn't place (NaN) fades out in place; a song with no
+// position yet fades in at its target. Returns whether anything will move.
 export const beginTransition = (
 	current: Channels,
 	target: Channels,
@@ -79,9 +69,7 @@ export const beginTransition = (
 	return changed;
 };
 
-// Writes every song's value at t (0–1 through the transition) into
-// current: song i holds still until startAt[i], then eases to its target
-// by t = 1, or within window of its start when there's one.
+// Writes each song's value at t (0–1) into current.
 export const stepTransition = (
 	from: Channels,
 	to: Channels,
@@ -112,10 +100,8 @@ export const stepTransition = (
 	}
 };
 
-// The reduced-motion version of stepTransition: nothing flies. A song that
-// moves fades out where it was over the first half, then fades in where
-// it's going over the second (taking its new color with it); a song that
-// stays put fades straight to its new alpha. Linear, with no stagger.
+// Reduced-motion stepTransition: a moving song fades out in place, then in at
+// its destination; a stationary one fades to its new alpha.
 export const stepCrossfade = (
 	from: Channels,
 	to: Channels,

@@ -70,7 +70,6 @@ describe("revealStagger", () => {
 
 	it("measures a framed layout in the frame's px", () => {
 		const layout = lineLayout(true);
-		// Song 1 is a little right of the origin; put song 2 a little above.
 		layout.x[2] = layout.x[0];
 		layout.y[2] = layout.y[0] - (layout.x[1] - layout.x[0]);
 		const square = revealStagger(songs, layout, 0);

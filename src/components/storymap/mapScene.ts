@@ -1,18 +1,12 @@
-// What a slide wants the map to be, as one typed object. Writers keep
-// editing flat keys in the Google Doc's `{.map}` block (friendlier in
-// ArchieML); parseMapScene turns them into a MapScene, where string →
-// boolean, comma lists, trimming and defaults happen. Index passes the scene
-// to HexMap instead of loose props. The scene is static per slide; what the
-// reader is doing (exploring, playing, hovering) is passed alongside it.
+// A slide's map, typed. parseMapScene turns the flat `{.map}` keys from the
+// copy (all strings) into a MapScene.
 import type { CopyMap } from "$data/copy.json";
 
 export type MapScene = {
 	layout: { name: "umap" } | { name: "timeline" };
-	// Where framed layouts (the timeline) sit: "text" is below the story
-	// text (and any video under it); "full" is the whole screen, stretching
-	// under the text. UMAP ignores it.
+	// Where framed layouts sit: below the story text, or the whole screen.
 	frame: "text" | "full";
-	camera: // The whole map (a bit low to leave room for text, unless centered).
+	camera:
 		| { kind: "home"; centered: boolean }
 		| { kind: "cluster"; name: string }
 		| { kind: "song"; songKey: string };
@@ -26,8 +20,7 @@ export type MapScene = {
 		// Everything not highlighted is drawn faint.
 		dimmed: boolean;
 	};
-	// Video ids: the map follows what's playing, or starts with a video's
-	// songs already lit.
+	// Video ids.
 	media: { followVideo: string | null; litVideoSongs: string | null };
 	labels: {
 		hidden: boolean;
@@ -38,16 +31,13 @@ export type MapScene = {
 	interaction: {
 		movable: boolean;
 		hoverable: boolean;
-		// What a hovered song's tooltip shows: "basic" is title, year and
-		// artist only, for the intro, before the rest has been introduced.
+		// "basic" is title, year and artist only.
 		tooltip: "full" | "basic";
 	};
 	player: { hidden: boolean };
 };
 
-// A map with nothing asked of it: what a block with no keys but `visible`
-// parses to, and what the map shows on slides without a block (it stays
-// mounted, just hidden).
+// What a block with no keys but `visible` parses to.
 export const DEFAULT_MAP_SCENE: MapScene = {
 	layout: { name: "umap" },
 	frame: "text",
@@ -85,7 +75,6 @@ const LAYOUT_NAMES = ["umap", "timeline"] as const;
 const FRAME_NAMES = ["text", "full"] as const;
 const TOOLTIP_NAMES = ["full", "basic"] as const;
 
-// undefined stays undefined (not set), so defaults can apply.
 const parseBoolean = (value: unknown): boolean | undefined =>
 	value === undefined ? undefined : String(value).trim() === "true";
 
@@ -109,9 +98,7 @@ const warn = (message: string) => {
 	if (import.meta.env.DEV) console.warn(`[map] ${message}`);
 };
 
-// The scene for a slide's `map` block, or null when the slide shows no map
-// (no block, or visible isn't "true"). Unknown keys and layouts are a
-// console.warn in dev, so a typo in the doc is noticed.
+// Null when the slide shows no map. Unknown keys and values warn in dev.
 export const parseMapScene = (
 	copyMap: CopyMap | null | undefined
 ): MapScene | null => {
@@ -136,7 +123,6 @@ export const parseMapScene = (
 		warn(`unknown tooltip "${tooltipName}" (using full)`);
 	}
 
-	// A focused cluster wins over a focused song (as in the scatter).
 	const focusCluster = parseText(copyMap.focusCluster);
 	const focusSong = parseText(copyMap.focusSong);
 	if (focusCluster !== undefined && focusSong !== undefined) {

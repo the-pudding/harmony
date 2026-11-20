@@ -10,11 +10,8 @@ import { songScreen, type Scene } from "./scene.js";
 
 export type DotFill = (songKey: string, index: number) => string;
 
-// A plain dot's fill, in priority order: the emphasis color for an
-// emphasized song, its color between star white and its region color (mix
-// by song index, 0 to 1: region once settled in a hex layout, star white in
-// the sky, and in between while it moves), the accent color for an accented
-// song, then star white.
+// A plain dot's fill: emphasis color, else the star-to-region mix, else
+// accent color, else star white.
 export const createDotFill = ({
 	emphasisFillColor,
 	emphasizedSongKeys,
@@ -26,12 +23,9 @@ export const createDotFill = ({
 }: {
 	emphasisFillColor: string | null;
 	emphasizedSongKeys: Set<string> | null;
+	// 0 = star white, 1 = region color, by song index.
 	mix: Float32Array;
-	// A song's region color, once its mix is 1 (in hex mode, at the current
-	// zoom).
 	regionFill: (songKey: string) => string;
-	// A song's color at a step between star and region, 1 to
-	// COLOR_MIX_STEPS − 1.
 	mixFill: (songKey: string, step: number) => string;
 	accentFillColor: string | null;
 	isAccented: (songKey: string) => boolean;
@@ -48,26 +42,22 @@ export const createDotFill = ({
 	};
 };
 
-// Dots sharing a fill, alpha step and radius, drawn with one fill() call.
 type DotBatch = {
 	fill: string;
-	// The first dot's alpha; the rest round to the same 1/ALPHA_STEPS step.
 	alpha: number;
 	radius: number;
 	// Screen x, y pairs.
 	centers: number[];
 };
 
-// Alphas this close (1/32) share a batch.
+// Dots whose alphas round to the same 1/ALPHA_STEPS share a batch.
 export const ALPHA_STEPS = 32;
 
-// Radii are only told apart to 1/16px when batching (drawn exactly).
+// Radii within 1/RADIUS_KEY_STEPS px share a batch.
 const RADIUS_KEY_STEPS = 16;
 
-// Every drawn, on-screen song that isn't drawn as a marker. Each layer (song
-// indexes) is drawn over the one before; within a layer, dots are batched
-// by fill, alpha (in ALPHA_STEPS) and radius, each batch one path and one
-// fill() instead of one per dot. Returns how many dots it drew.
+// Draws on-screen, unmarked songs layer by layer, one fill() per batch of
+// same-fill/alpha/radius dots. Returns how many dots it drew.
 export const drawDots = (
 	scene: Scene,
 	{
@@ -88,7 +78,6 @@ export const drawDots = (
 	const bottom = viewport.height + reach;
 	let drawn = 0;
 	for (const layer of layers) {
-		// fill → (radius and alpha step) → batch, in first-seen order.
 		const batches = new Map<string, Map<number, DotBatch>>();
 		for (const index of layer) {
 			const songAlpha = alpha[index];

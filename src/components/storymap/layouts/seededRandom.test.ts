@@ -38,8 +38,6 @@ describe("hashUnit", () => {
 	});
 });
 
-// jitterFor keeps its original hash (a different one from hashUnit's) so the
-// UMAP map doesn't move; pin its output.
 describe("jitterFor", () => {
 	it("keeps its exact current output", () => {
 		expect(jitterFor("a")).toEqual(PINNED_JITTER.a);

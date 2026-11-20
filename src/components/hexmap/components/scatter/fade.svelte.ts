@@ -1,10 +1,7 @@
 import { untrack } from "svelte";
 import { stepFade } from "./transitionMath.js";
 
-// One value (e.g. the hexes' opacity) moving straight toward its target,
-// rising over riseMs and falling over fallMs, calling onFrame after every
-// step. It starts at its first target. Like the transition, the value
-// isn't reactive: onFrame does the redrawing.
+// A value moving linearly to its target over riseMs/fallMs, calling onFrame each step.
 export const createFade = (input: {
 	readonly target: number;
 	readonly riseMs: number;
@@ -33,7 +30,6 @@ export const createFade = (input: {
 	$effect(() => () => cancelAnimationFrame(frame));
 
 	return {
-		// Not reactive: read it while drawing.
 		get current(): number {
 			return current;
 		}

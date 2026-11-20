@@ -27,9 +27,7 @@ export const nearestSongAt = (
 	return hit;
 };
 
-// nearestSongAt over songs by index, for scans over every song: the index
-// among these nearest the anchor, if any drawn one (alpha above 0) is
-// closer than maxDistance pixels, else -1.
+// nearestSongAt by index: the nearest drawn song's index, or -1.
 export const nearestIndexAt = (
 	anchor: Point2D,
 	indexes: ArrayLike<number>,

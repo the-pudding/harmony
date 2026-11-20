@@ -1,11 +1,8 @@
 import { rgb } from "d3";
 import { COLOR_MIX_STEPS, STAR_ALPHA, STAR_FILL_RGB } from "./constants.js";
 
-// A song's dot fill while it moves between star white and its region color.
-// Each song's `mix` (0 = star, 1 = region) is rounded to COLOR_MIX_STEPS
-// steps, and the fill strings are cached per song and step, so a frame
-// allocates nothing once the colors have been seen and the dots still fall
-// into few batches.
+// Dot fill between star white and region color; mix is 0 = star, 1 = region.
+// Rounded to COLOR_MIX_STEPS and cached so frames allocate nothing.
 
 const star = (alpha: number) =>
 	`rgba(${STAR_FILL_RGB[0]},${STAR_FILL_RGB[1]},${STAR_FILL_RGB[2]},${alpha})`;
@@ -25,10 +22,8 @@ type SongColors = {
 	fills: (string | undefined)[];
 };
 
-// Makes fill(songKey, step) for steps 1 to COLOR_MIX_STEPS − 1: a color
-// between star and the song's region color (regionFill, any CSS color).
-// Make a new one when the region colors change. Step 0 is STAR_FILL, and
-// the last is the region color itself, which callers take from regionFill.
+// fill(songKey, step) for steps 1 to COLOR_MIX_STEPS − 1; callers handle the
+// endpoints. Make a new one when region colors change.
 export const createMixFill = (regionFill: (songKey: string) => string) => {
 	const bySong = new Map<string, SongColors>();
 	return (songKey: string, step: number): string => {

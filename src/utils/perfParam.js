@@ -1,39 +1,18 @@
 // =============================================================================
 // DEV-ONLY-REMOVE-BEFORE-PUBLISH
 //
-// INSTRUCTIONS FOR AGENTS / HUMANS: this feature must NOT ship. When the piece
-// is being published (or the user asks to "remove dev-only code" / "clean up
-// the perf param"), remove ALL of the following, then verify with
-// `grep -rn "DEV-ONLY-REMOVE-BEFORE-PUBLISH" src` that nothing is left:
+// Must not ship. Delete this file and everything marked "perf meter" in
+// EmbeddingScatter.svelte and "dev layout" in HexMap.svelte (use
+// `scene.layout.name` directly), then check
+// `grep -rn "DEV-ONLY-REMOVE-BEFORE-PUBLISH" src` finds nothing.
 //
-//   1. Delete this file (src/utils/perfParam.js).
-//   2. src/components/hexmap/components/EmbeddingScatter.svelte (4 spots,
-//      each marked "perf meter"):
-//        - delete the `import { readPerfParam, createPerfMeter }` line
-//        - delete the `perfMeter` / `perfEl` declarations
-//        - in `draw()`, delete the timing lines (`perfStart` and the
-//          `perfMeter?.record(...)` call) and the `drawnDots` bookkeeping
-//        - delete the `{#if perfMeter}<pre class="perf-overlay">` block and
-//          its `.perf-overlay` style
-//
-//   3. src/components/HexMap.svelte: delete the `readLayoutParam` import and
-//      the `devLayout` line (marked "dev layout"), and use `scene.layout.name`
-//      directly.
-//      (readLayoutParam below goes away with this file.)
-//
-// What ?layout=<name> does: forces the main map's layout (e.g.
-// ?layout=timeline for the night sky) whatever the slide asks for, to look
-// at layouts before the copy uses them.
-//
-// What it does: with ?perf=1 in the URL, the main map shows a small overlay
-// (top-left) with how long each draw() takes (p50/p95 over the last 120
-// frames), frames per second over the last second, and the dots drawn. It
-// only changes while frames are being drawn; there is no idle loop.
+// ?perf=1 shows an overlay with draw() and frame timings, fps and dot count.
+// ?layout=<name> forces the main map's layout.
 // =============================================================================
 
 const KEY = "perf";
 const RING_SIZE = 120;
-// A gap this long means the map was idle, not slow; it's not a frame interval.
+// A longer gap means the map was idle, not slow.
 const IDLE_GAP_MS = 500;
 const TEXT_REFRESH_MS = 200;
 
@@ -42,7 +21,6 @@ export const readPerfParam = () => {
 	return new URL(window.location.href).searchParams.get(KEY) === "1";
 };
 
-// ?layout=timeline (any registered layout name), or null.
 export const readLayoutParam = () => {
 	if (typeof window === "undefined") return null;
 	return new URL(window.location.href).searchParams.get("layout");
@@ -53,9 +31,8 @@ const percentile = (sorted, p) =>
 		? 0
 		: sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))];
 
-// Ring buffers of the last RING_SIZE draws' duration and spacing. record()
-// is called after every draw; it returns the overlay text when it's due for a
-// refresh (so the DOM is touched ~5 times a second) and null otherwise.
+// record() runs after every draw; it returns overlay text only when due for a
+// refresh (about 5 per second), else null.
 export const createPerfMeter = () => {
 	const drawMs = new Float64Array(RING_SIZE);
 	const intervalMs = new Float64Array(RING_SIZE);

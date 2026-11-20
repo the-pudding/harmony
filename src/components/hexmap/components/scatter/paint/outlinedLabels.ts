@@ -20,12 +20,9 @@ export type SongSummary = {
 	year?: number;
 };
 
-// Each on-screen marked song's title (or only those isLabeled picks), with
-// its artists under it, beside
-// its marker (see placeMarkerLabels). Placed fresh each draw from each
-// marker's resting size, so labels never cover each other or a marker and
-// stay put as songs are played and stopped. Drawn after every marker so
-// none covers a label.
+// Title and artists beside each on-screen marked song (only those isLabeled
+// picks). Placed from each marker's resting size so labels stay put as songs
+// are played and stopped; drawn after every marker so none covers a label.
 export const drawOutlinedSongLabels = (
 	scene: Scene,
 	{
@@ -41,8 +38,7 @@ export const drawOutlinedSongLabels = (
 		titlePrefix: string | null;
 		// Which outlined songs get titlePrefix (default: all of them).
 		isPrefixed?: (songKey: string) => boolean;
-		// Which marked songs get a label (default: all of them). The rest
-		// still keep labels clear of their markers.
+		// Unlabeled songs still keep other labels clear of their markers.
 		isLabeled?: (songKey: string) => boolean;
 	}
 ): void => {

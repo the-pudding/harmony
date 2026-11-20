@@ -40,9 +40,8 @@ export type HexLayoutInput = {
 	songKeys: readonly string[];
 	x: Float32Array;
 	y: Float32Array;
-	// Bumped whenever songs come to rest somewhere new (see createTransition):
-	// the cache keys on it instead of the arrays, which change in place, so
-	// frames mid-transition reuse the last bins.
+	// Bumped when songs come to rest somewhere new; the cache keys on it
+	// because the arrays change in place.
 	positionsVersion: number;
 	// Which songs are binned, by index (above 0 = binned).
 	visible: Float32Array;

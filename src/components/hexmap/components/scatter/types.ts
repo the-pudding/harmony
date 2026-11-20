@@ -27,8 +27,7 @@ export type Viewport = ViewSize & { transform: ZoomTransform };
 // pixels from its top.
 export type FocusFrame = { top: number; height: number };
 
-// Insets from the canvas's edges, in pixels, for the rect framed layouts
-// fill (e.g. below the text over the map). NO_MAP_FRAME is the plot itself.
+// Insets in pixels from the canvas edges; framed layouts fill the rect inside.
 export type MapFrame = {
 	top: number;
 	right: number;

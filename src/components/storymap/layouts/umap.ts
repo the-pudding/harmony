@@ -1,6 +1,5 @@
-// Today's map: the snapshot's UMAP positions, rearranged by the purity radial
-// layout inside each cluster, then scaled into 0–1 (plus each song's tiny
-// stable jitter, so songs with identical vectors stay pickable).
+// The snapshot's UMAP positions, rearranged by the purity radial layout
+// inside each cluster, then scaled into 0–1.
 import { applyPurityRadialLayout } from "$components/hexmap/embedding/layout/purityRadialLayout.js";
 import { POINT_RADIUS } from "$components/hexmap/components/scatter/constants.js";
 import { normalizePoints } from "$components/hexmap/components/scatter/normalizePoints.js";
@@ -62,8 +61,6 @@ export const umapLayout: Layout<UmapParams> = {
 			color: "region",
 			pointRadius: POINT_RADIUS,
 			guides: [],
-			// The sky (or anything else) organizes into the map oldest songs
-			// first, sweeping through time.
 			stagger: yearStagger(songs)
 		};
 	}

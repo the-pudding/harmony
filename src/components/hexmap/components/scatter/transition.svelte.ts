@@ -9,21 +9,16 @@ import {
 	type Channels
 } from "./transitionMath.js";
 
-// Where every song should be, by song index: x and y (0–1 across the plot;
-// NaN = not placed, so it fades out where it is), alpha (0 = hidden), mix
-// (0 = star white, 1 = region color) and an optional stagger (0–1 per song;
-// see STAGGER_SPAN), with an optional window each song runs over (see
-// staggerStart).
+// Per-song targets by song index: x, y (0–1 across the plot; NaN = not
+// placed, fades out in place), alpha, mix (0 = star white, 1 = region color),
+// plus optional stagger (0–1 per song) and staggerWindow.
 export type TransitionTarget = Channels & {
 	stagger?: Float32Array | null;
 	staggerWindow?: number | null;
 };
 
-// How songs move to a target: over durationMs, after holding still for
-// delayMs (e.g. while hexes fade out), or at once when instant; with the
-// target's stagger unless staggered is false. crossfade (for reduced
-// motion) fades moving songs out and back in at their new places instead
-// of flying them, with no stagger (see stepCrossfade).
+// delayMs holds songs still before moving; crossfade (reduced motion) fades
+// instead of flying; staggered false ignores the target's stagger.
 export type TransitionTiming = {
 	durationMs: number;
 	instant?: boolean;
@@ -32,22 +27,11 @@ export type TransitionTiming = {
 	crossfade?: boolean;
 };
 
-// Animates every song's x, y and alpha from what's drawn to each new
-// target, calling onFrame after every step. Positions live in preallocated
-// typed arrays mutated in place, outside Svelte's graph; onFrame does the
-// redrawing. Only `settled` is reactive, and it's written only when a
-// transition starts or ends.
-//
-// - The first target (and any target for a new number of songs) appears at
-//   once, as does any target timed `instant`.
-// - A new target mid-flight starts from where songs are drawn, so fast
-//   changes never jump.
-// - timing(next, previous) is asked how to move each time a target arrives
-//   that changes what's drawn (not for the first target or a new song
-//   count), with the target before it (null at first), so callers can tell
-//   apart what changed (e.g. a window resize jumps). Its delayMs holds
-//   songs where they are before they move; a new target during the delay
-//   restarts it.
+// Animates songs to each new target, calling onFrame per step. Channels are
+// typed arrays mutated in place outside Svelte's graph; only `settled` is
+// reactive. The first target, a new song count, or `instant` timing appears
+// at once. A new target mid-flight starts from where songs are drawn.
+// timing(next, previous) is asked for each target that changes what's drawn.
 export const createTransition = <Target extends TransitionTarget>(input: {
 	readonly target: Target | null;
 	timing: (next: Target, previous: Target | null) => TransitionTiming;
@@ -59,14 +43,10 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 	let startAt = new Float32Array(0);
 	let frame = 0;
 	let settled = $state(true);
-	// Bumped when songs come to rest at new positions (a transition settling
-	// or an instant jump), never mid-flight, so caches of resting positions
-	// (hex bins) can key on it.
+	// Bumped when songs come to rest at new positions, never mid-flight.
 	let positionsVersion = 0;
 	let previousTarget: Target | null = null;
-	// How far through the latest transition the clock is, 0–1 (1 at rest).
-	// Songs with a stagger start later; this is the whole transition, for
-	// things that fade with it (guides).
+	// Whole-transition progress, 0–1 (1 at rest), ignoring per-song stagger.
 	let progress = 1;
 	let window: number | null = null;
 
@@ -155,7 +135,6 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 	$effect(() => () => cancelAnimationFrame(frame));
 
 	return {
-		// What's drawn now, by song index; mutated in place every frame.
 		get x(): Float32Array {
 			return current.x;
 		},
@@ -165,7 +144,6 @@ export const createTransition = <Target extends TransitionTarget>(input: {
 		get alpha(): Float32Array {
 			return current.alpha;
 		},
-		// How much each song's color is its region color (the rest is star).
 		get mix(): Float32Array {
 			return current.mix;
 		},

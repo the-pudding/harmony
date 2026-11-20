@@ -1,6 +1,5 @@
-// Deterministic "randomness" for layouts: no Math.random(), so a reload gives
-// the same arrangement. Same FNV-1a as songShardFor, with the salt hashed
-// first so different salts give independent values for the same song.
+// Deterministic hash-based randomness, so a reload gives the same layout.
+// FNV-1a as in songShardFor; the salt is hashed first so salts are independent.
 const FNV_OFFSET = 0x811c9dc5;
 const FNV_PRIME = 0x01000193;
 
@@ -12,7 +11,6 @@ const fnv1a = (hash: number, text: string): number => {
 	return hash;
 };
 
-// A number in [0, 1) that depends only on the song key and the salt.
 export const hashUnit = (songKey: string, salt = ""): number => {
 	let hash = fnv1a(FNV_OFFSET, salt);
 	hash = fnv1a(hash ^ 0xff, songKey);

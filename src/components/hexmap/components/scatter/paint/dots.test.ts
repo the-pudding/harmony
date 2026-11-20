@@ -5,8 +5,7 @@ import { createPointStyle } from "../pointStyle.js";
 import { drawDots } from "./dots.js";
 import { createScene } from "./scene.js";
 
-// A canvas context that records each fill() with its style and how many
-// dots its path holds.
+// Records each fill() with its style and its path's dot count.
 const recordingContext = () => {
 	const fills: { fillStyle: string; globalAlpha: number; dots: number }[] = [];
 	let dots = 0;

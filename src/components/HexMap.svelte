@@ -2,9 +2,7 @@
 	// The story's hex map: no settings bar, legend or
 	// inspector. Draws the prebuilt snapshot from `npm run hexmap` (positions
 	// progression coverage and clusters) and fills its parent; layout runs
-	// here, since it depends on the props below. What the slide wants (layout,
-	// camera, labels, interaction) is one `scene` (see storymap/mapScene.ts);
-	// the rest are what the reader is doing.
+	// here, since it depends on the props below.
 	import {
 		loadHexMapSnapshot,
 		loadShardedSong,
@@ -45,20 +43,14 @@
 	import { readLayoutParam } from "$utils/perfParam";
 
 	type Props = {
-		// What the slide wants the map to be, from the copy's `map` block. Its
-		// media settings are turned into spotlitSongKey and litSongKeys by
-		// Index, which knows what's playing; the rest is used here.
+		// Media settings are converted to spotlitSongKey and litSongKeys by Index.
 		scene?: MapScene;
-		// Changes to the camera, layout and which songs show jump straight to
-		// the new view instead of animating (e.g. when the map is about to
-		// appear).
+		// Skip animating changes to camera, layout and shown songs.
 		instantFocus?: boolean;
 		// The part of the map, in pixels from its top, that a focused cluster
 		// is zoomed to almost fill the height of and centered in.
 		focusFrame?: { top: number; height: number } | null;
-		// Insets, in pixels from the map's edges, for the rect framed layouts
-		// fill (clear of the text over the map and any docked media). UMAP
-		// isn't framed; it sits by centered instead.
+		// Insets in pixels for rect-framed layouts; UMAP isn't framed.
 		mapFrame?: MapFrame;
 		// "dark" draws on a near-black background; "light" has no background
 		// of its own and uses lighter grays between colored hexes.
@@ -101,12 +93,9 @@
 		linkedSongKey?: string | null;
 		// Called with the song the pointer hovers on the map, or null.
 		onSongHover?: (songKey: string | null) => void;
-		// A song the story calls out (e.g. the one a video names right now):
-		// enlarged and labeled, without fading the rest. Wins over
-		// searchedSongKey.
+		// Enlarged and labeled without fading the rest; wins over searchedSongKey.
 		spotlitSongKey?: string | null;
-		// Songs the story has already called out (e.g. that a video named):
-		// small inert markers with no labels, kept bright on a dimmed scene.
+		// Small inert markers with no labels, kept bright on a dimmed scene.
 		litSongKeys?: readonly string[];
 		// Called with where the explored cluster's title goes at dot zoom
 		// (its top center, in viewport pixels), or null when it isn't titled
@@ -144,7 +133,6 @@
 		pureThreshold = 0.9
 	}: Props = $props();
 
-	// The scene's settings, under the names the rest of this file uses.
 	const focusCluster = $derived(
 		scene.camera.kind === "cluster" ? scene.camera.name : undefined
 	);
@@ -152,8 +140,7 @@
 		scene.camera.kind === "home" && scene.camera.centered
 	);
 	const movable = $derived(scene.interaction.movable);
-	// A scene with its own playable songs (no cluster to focus) has to stay
-	// clickable even when it asks for no hovering, or they couldn't be played.
+	// Stays clickable without hovering, or its songs couldn't be played.
 	const hoverable = $derived(
 		scene.interaction.hoverable || scene.songs.playable.length > 0
 	);
@@ -163,16 +150,12 @@
 	const hidePlayer = $derived(scene.player.hidden);
 	const highlightSongs = $derived(scene.songs.highlighted);
 
-	// The song the camera is on (camera "song"), zoomed in to
-	// SONG_FOCUS_SCALE.
 	const focusSongKey = $derived(
 		scene.camera.kind === "song" ? scene.camera.songKey : undefined
 	);
 
-	// Once a cluster or song has been focused, the home camera zooms back
-	// out (null) instead of leaving the scatter's scripted zoom off
-	// (undefined). Undefined while on a song, which the scatter would
-	// otherwise put second to the cluster.
+	// After a first focus the home camera zooms out (null) instead of undefined;
+	// undefined while on a song, which the scatter would rank second to the cluster.
 	let hasFocused = false;
 	const focusClusterName = $derived.by(() => {
 		if (focusCluster !== undefined || focusSongKey !== undefined) {
@@ -190,10 +173,8 @@
 	// A focused cluster drawn without its player: no featured songs, no clicks.
 	const playerHidden = $derived(hidePlayer && focusCluster !== undefined);
 
-	// The songs drawn enlarged, labeled and clickable to play: the focused
-	// cluster's featured songs (none with hidePlayer); else the scene's own
-	// playable songs; else, on the UMAP map, every featured song; else (the
-	// sky, say) none, or ~50 large markers would cover it.
+	// Focused cluster's featured songs, else the scene's own, else (UMAP only)
+	// every featured song; ~50 large markers would cover other layouts.
 	const playableSongKeys = $derived.by(() => {
 		if (focusCluster !== undefined) {
 			return playerHidden
@@ -206,7 +187,6 @@
 
 	const litSongKeySet = $derived(new Set(litSongKeys));
 
-	// Lit songs are highlighted too, as smaller markers.
 	const highlightedSongKeys = $derived(
 		new Set([...highlightSongs, ...litSongKeys])
 	);
@@ -225,18 +205,14 @@
 		)
 	);
 
-	// songs.only: everyone else fades out and can't be picked.
 	const visibleSongKeys = $derived(
 		scene.songs.only === null ? null : new Set(scene.songs.only)
 	);
 
-	// A song shown alone (slide 0's dot) is spotlit: drawn big, glowing and
-	// labeled.
 	const loneSongKey = $derived(
 		scene.songs.only?.length === 1 ? scene.songs.only[0] : null
 	);
 
-	// songs.dimmed: every song without a marker is faint.
 	const dimExceptSongKeys = $derived(
 		scene.songs.dimmed ? (outlinedSongKeys ?? new Set<string>()) : null
 	);
@@ -290,7 +266,6 @@
 		};
 	});
 
-	// Every song, once, by index (see storymap/songTable.ts).
 	const songs = $derived(snapshot ? buildSongTable(snapshot) : null);
 
 	// Each song's progression coverage, decoded from the snapshot's columns.
@@ -396,8 +371,7 @@
 		)
 	);
 
-	// The size of the rect framed layouts fill. Only framed layouts are
-	// recomputed when it changes (see layouts/cache.ts).
+	// Only framed layouts recompute when this changes (see layouts/cache.ts).
 	const layoutFrame = $derived.by(() => {
 		const rect = frameRect({ width, height }, mapFrame);
 		return { width: rect.width, height: rect.height };
@@ -410,14 +384,11 @@
 			? devLayout
 			: scene.layout.name
 	);
-	// Only for finding your way around the UMAP map: not on other layouts
-	// (e.g. zoomed in on slide 0's lone star), nor on a map the reader
-	// can't move.
+	// Not on other layouts (e.g. slide 0's lone star) or on an immovable map.
 	const insetShown = $derived(
 		viewTransform.k >= INSET_MIN_ZOOM && layoutName === "umap" && movable
 	);
 
-	// The main map's arrangement (the inset below always stays UMAP).
 	const mainResult = $derived(
 		songs
 			? layoutName === "timeline"
@@ -430,11 +401,8 @@
 			: null
 	);
 
-	// The ripple when songs.only goes from one song to every song: the
-	// others appear from it outward, or, going back, fade out toward it
-	// (farthest first). Worked out once per scene, in the layout it's
-	// headed to; null for any other change (the layout's own stagger, if
-	// any, applies).
+	// Ripple for songs.only going from one song to every song (reversed on the
+	// way back); computed once per scene, null for any other change.
 	let previousOnly: readonly string[] | null | undefined = undefined;
 	const reveal = $derived.by(() => {
 		const only = scene.songs.only;

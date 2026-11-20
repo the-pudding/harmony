@@ -1,20 +1,16 @@
-// Cue data for the story's videos: what the clip shows when, so the docked
-// card's list and the map (commit 15) can follow the video.
+// What each video shows when, so the docked card and the map can follow it.
 
 export type VideoCue = {
 	artist: string;
 	song: string;
-	// The dataset's song key, or null for songs that never made the Billboard
-	// top 20 (17 of the examples video's 38).
+	// Null for songs not in the dataset.
 	songKey: string | null;
 	startSeconds: number;
 };
 
 const EXAMPLES_SECONDS = 33.218;
 
-// PLACEHOLDER timings: the cues are spread evenly over the clip, not the real
-// moments each song starts. Replace `startSeconds` with real timestamps later;
-// nothing else needs to change.
+// PLACEHOLDER timings: spread evenly, not the real start of each song.
 const examples = (
 	[
 		["Journey", "Don't Stop Believing", "journey__dont-stop-believin"],
@@ -81,12 +77,11 @@ const examples = (
 	})
 );
 
-// Keyed by the stage's `videoId`. Videos without cues (dead-simple) are absent.
+// Keyed by the stage's `videoId`.
 export const videoCues: Record<string, VideoCue[]> = { examples };
 
-// The index of the cue showing at `seconds`: the last one that has started
-// (the first one before it starts), or -1 when there are no cues. `cues` must
-// be sorted by `startSeconds`.
+// Index of the last cue started at `seconds` (the first before any starts),
+// or -1. `cues` must be sorted by `startSeconds`.
 export const cueAt = (
 	cues: readonly Pick<VideoCue, "startSeconds">[],
 	seconds: number

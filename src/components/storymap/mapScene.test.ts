@@ -3,7 +3,7 @@ import copy from "$data/copy.json";
 import type { CopyMap } from "$data/copy.json";
 import { DEFAULT_MAP_SCENE, parseMapScene, type MapScene } from "./mapScene.js";
 
-// Index's mapPropsFromCopy before scenes existed, verbatim.
+// Index's old mapPropsFromCopy.
 const parseBoolean = (value: unknown) =>
 	value === undefined ? undefined : String(value).trim() === "true";
 
@@ -35,7 +35,6 @@ const legacyMapProps = (map: Record<string, any>) => {
 	);
 };
 
-// What HexMap did with each prop when Index left it out.
 const HEXMAP_DEFAULTS = {
 	focusCluster: undefined,
 	showLabels: undefined,
@@ -48,7 +47,6 @@ const HEXMAP_DEFAULTS = {
 	highlightSongs: []
 };
 
-// A scene as the props HexMap used to be given.
 const propsFromScene = (scene: MapScene) => ({
 	focusCluster: scene.camera.kind === "cluster" ? scene.camera.name : undefined,
 	showLabels: scene.labels.only ?? undefined,
@@ -64,8 +62,7 @@ const propsFromScene = (scene: MapScene) => ({
 const slides = copy.sections.flatMap((section) => section.slides);
 const mapBlocks = slides.flatMap((slide) => (slide.map ? [slide.map] : []));
 
-// Keys added by the story map; blocks using none of them still parse to what
-// HexMap was given before scenes existed.
+// Blocks using none of these keys must parse as the old props did.
 const NEW_KEYS = [
 	"layout",
 	"frame",
@@ -95,7 +92,6 @@ describe("parseMapScene on the real copy", () => {
 				...HEXMAP_DEFAULTS,
 				...legacyMapProps(map)
 			});
-			// These blocks use none of the new keys.
 			expect(scene!.layout).toEqual({ name: "umap" });
 			expect(scene!.songs).toMatchObject({
 				only: null,
@@ -141,7 +137,6 @@ describe("parseMapScene on the real copy", () => {
 		expect(sky).toMatchObject({
 			layout: { name: "timeline" },
 			frame: "full",
-			// Journey's dot stays labeled after the reveal
 			songs: {
 				only: null,
 				playable: ["journey__dont-stop-believin"],

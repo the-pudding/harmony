@@ -1,17 +1,12 @@
-// The ripple when the map goes from one song to every song (and back): each
-// song's stagger (0–1, see STAGGER_SPAN) is its distance from that song in
-// the layout, over the farthest song's, so songs appear from the origin
-// outward. Hiding them again runs the other way, farthest first, so the
-// others close in on it.
+// Ripple from one song: each song's stagger (0–1) is its distance from the
+// origin over the farthest song's, or the reverse for "farthestFirst".
 import type { SongTable } from "./songTable.js";
 import type { LayoutFrame, LayoutResult } from "./layouts/types.js";
 
 export type RippleOrder = "closestFirst" | "farthestFirst";
 
-// Distances are measured in the frame's px for a framed layout when the
-// frame is given (its 0–1 is stretched to the frame's shape), else in the
-// layout's 0–1. Songs the layout doesn't place, and every song when the
-// origin isn't placed, get 0.
+// Distances are in frame px for a framed layout, else in layout units. Songs
+// the layout doesn't place, and all songs when the origin isn't placed, get 0.
 export const revealStagger = (
 	table: SongTable,
 	layout: LayoutResult,
