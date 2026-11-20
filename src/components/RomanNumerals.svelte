@@ -25,7 +25,8 @@
 		sameRotation = false,
 		// draw the progression's arrows in the accent color
 		highlightShape = false,
-		progression = ["I", "V", "vi", "IV"]
+		progression = ["I", "V", "vi", "IV"],
+		arrivingForward = false
 	} = $props();
 
 	// copy.json passes "false" as a string
@@ -129,6 +130,8 @@
 	const songId = (key) => `song:${key}`;
 
 	const SONG_LABEL_PX = 14;
+	// Arriving, the dots wait for the previous stage to fade out first.
+	const ARRIVAL_TRAVEL_DELAY_MS = 150;
 
 	const songProgress = (key) => {
 		if (playingKey !== songId(key) || playTime === null) return 0;
@@ -273,6 +276,7 @@
 						onclick={() => toggle(songId(key))}
 						playing={playingKey === songId(key)}
 						progress={songProgress(key)}
+						travelDelayMs={arrivingForward ? ARRIVAL_TRAVEL_DELAY_MS : 0}
 					/>
 				</div>
 			{:else if hasSongs}

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	anchorPose,
 	createPin,
+	idlePlayIconAlpha,
 	labelMetrics,
 	labelRoom,
 	landed,
@@ -101,5 +102,14 @@ describe("anchorPose", () => {
 		);
 		expect(target.x).toBe(250);
 		expect(target.labelAlpha).toBe(0);
+	});
+});
+
+describe("idlePlayIconAlpha", () => {
+	it("hides the icon at a title's size and shows it at a play button's", () => {
+		expect(idlePlayIconAlpha(7)).toBe(0);
+		expect(idlePlayIconAlpha(10)).toBe(0);
+		expect(idlePlayIconAlpha(18)).toBe(0.5);
+		expect(idlePlayIconAlpha(26)).toBe(1);
 	});
 });

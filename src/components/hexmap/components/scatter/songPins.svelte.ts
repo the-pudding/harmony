@@ -14,6 +14,7 @@ import {
 import {
 	anchorPose,
 	createPin,
+	idlePlayIconAlpha,
 	labelRoom,
 	landed,
 	poseAt,
@@ -196,8 +197,11 @@ export const createSongPins = ({
 							chordSegments: []
 						}
 					}
-				: anchor?.playable && anchor.hovered
-					? { kind: "play" }
+				: anchor?.playable
+					? {
+							kind: "play",
+							alpha: anchor.hovered ? 1 : idlePlayIconAlpha(pose.r)
+						}
 					: { kind: "none" }
 		};
 	};

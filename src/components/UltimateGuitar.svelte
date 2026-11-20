@@ -1,10 +1,13 @@
 <script>
 	import { base } from "$app/paths";
-	import PlayButton from "$components/PlayButton.svelte";
+	import { prefersReducedMotion } from "svelte/motion";
+	import { fade } from "svelte/transition";
+	import SongAnchor from "$components/SongAnchor.svelte";
 	import { committedSyncedSongs } from "$data/syncedSongs";
 	import { attachAudio, onStopAll } from "$runes/audio.svelte";
+	import { songDots } from "$runes/songDots.svelte";
 
-	let { songs = 3 } = $props();
+	let { songs = 3, arrivingForward = false } = $props();
 
 	const SONG_KEY = "journey__dont-stop-believin";
 	const song = committedSyncedSongs[SONG_KEY];
@@ -149,15 +152,30 @@
 	});
 
 	const images = [
-		{ id: "let-it-be", aspect: IMAGE_W / IMAGE_H, rotate: -6, yOff: 0.04, z: 1 },
+		{
+			id: "let-it-be",
+			songKey: "the-beatles__let-it-be",
+			aspect: IMAGE_W / IMAGE_H,
+			rotate: -6,
+			yOff: 0.04,
+			z: 1
+		},
 		{
 			id: "dont-stop-believin",
+			songKey: SONG_KEY,
 			aspect: IMAGE_W / IMAGE_H,
 			rotate: 0,
 			yOff: -0.03,
 			z: 3
 		},
-		{ id: "wagon-wheel", aspect: IMAGE_W / IMAGE_H, rotate: 5, yOff: 0.05, z: 2 }
+		{
+			id: "wagon-wheel",
+			songKey: "darius-rucker__wagon-wheel",
+			aspect: IMAGE_W / IMAGE_H,
+			rotate: 5,
+			yOff: 0.05,
+			z: 2
+		}
 	];
 	const FEATURED = "dont-stop-believin";
 	const PAD_Y = 24;
@@ -225,10 +243,11 @@
 		});
 	});
 
+	const slotTransform = (pos) =>
+		`translate(${pos.x}px, ${pos.y}px) rotate(${pos.rotate}deg)`;
+
 	const transformFor = (pos, i) => {
-		if (i < enteredCount) {
-			return `translate(${pos.x}px, ${pos.y}px) rotate(${pos.rotate}deg)`;
-		}
+		if (i < enteredCount) return slotTransform(pos);
 		// start below the stage, tilted, before the intro
 		const tilt = (i - 1) * 18 + (i === 1 ? -8 : 0);
 		return `translate(${pos.x}px, ${height + 80}px) rotate(${tilt}deg)`;
@@ -241,9 +260,16 @@
 	let introStarted = false;
 	let introTimers = [];
 
+	// Arriving, the songs hold their place on the map while everything else
+	// leaves it, then their dots travel to the cards' corners; the cards fly
+	// in once the dots are there.
+	const TAG_TRAVEL_DELAY_MS = 700;
+	let tagTravelDelayMs = $derived(arrivingForward ? TAG_TRAVEL_DELAY_MS : 0);
+
 	$effect(() => {
 		// wait for a measured layout + painted start position before flying in
 		if (!width || !height || introStarted) return;
+		if (arrivingForward && !songDots.arrived) return;
 		introStarted = true;
 		requestAnimationFrame(() => {
 			requestAnimationFrame(() => {
@@ -255,19 +281,32 @@
 	});
 
 	$effect(() => () => introTimers.forEach(clearTimeout));
+
+	let controlsFade = $derived(
+		prefersReducedMotion.current
+			? { duration: 0 }
+			: { duration: 300, delay: 500 }
+	);
 </script>
 
 <div class="ultimate-guitar">
 	{#if +songs === 1}
 		<div class="controls">
-			<PlayButton
-				{paused}
-				{progress}
-				label="Don't Stop Believin'"
-				onclick={togglePlay}
-			/>
+			<div class="play">
+				<SongAnchor
+					songKey={SONG_KEY}
+					size="play"
+					onclick={togglePlay}
+					playing={!paused}
+					{progress}
+				/>
+				<span class="caption" aria-hidden="true" in:fade={controlsFade}>
+					{paused ? "Play" : "Pause"}
+				</span>
+			</div>
 
 			<div
+				in:fade={controlsFade}
 				class="modes"
 				role="radiogroup"
 				aria-label="Parts to hear"
@@ -303,6 +342,28 @@
 	{/if}
 
 	<div class="stage" bind:clientWidth={width} bind:clientHeight={height}>
+		<!-- each song's dot sits on its card's top-left corner, where the card
+		     lands, so the dot can get there before the card flies in -->
+		{#each images as d, i (d.id)}
+			{#if !single || d.id !== FEATURED}
+				{@const slot = layout[i]}
+				<div
+					class="slot"
+					style:width="{slot.w}px"
+					style:height="{slot.h}px"
+					style:transform={slotTransform(slot)}
+				>
+					<span class="corner">
+						<SongAnchor
+							songKey={d.songKey}
+							size="tag"
+							travelDelayMs={tagTravelDelayMs}
+						/>
+					</span>
+				</div>
+			{/if}
+		{/each}
+
 		{#if width && height}
 			{#each images as d, i (d.id)}
 				{@const pos = layout[i]}
@@ -402,6 +463,26 @@
 			opacity 600ms ease;
 	}
 
+	/* the card's box, without the card */
+	.slot {
+		position: absolute;
+		top: 0;
+		left: 0;
+		transform-origin: center;
+		pointer-events: none;
+		transition:
+			transform 900ms cubic-bezier(0.22, 1, 0.36, 1),
+			width 900ms cubic-bezier(0.22, 1, 0.36, 1),
+			height 900ms cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	.corner {
+		position: absolute;
+		top: 0;
+		left: 0;
+		transform: translate(-50%, -50%);
+	}
+
 	img {
 		display: block;
 		width: 100%;
@@ -463,6 +544,22 @@
 		margin: 0 auto;
 		padding: 0 1rem 0.5rem;
 		font-family: var(--font-mono);
+	}
+
+	.play {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.caption {
+		margin-top: 4px;
+		color: var(--color-gray-50, #fff);
+		font-size: var(--12px, 0.75rem);
+		line-height: 1;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
 	}
 
 	/* one segmented control for the three listening modes */
@@ -561,6 +658,10 @@
 	@media (prefers-reduced-motion: reduce) {
 		.card {
 			transition: opacity 300ms ease;
+		}
+
+		.slot {
+			transition: none;
 		}
 
 		.pill,

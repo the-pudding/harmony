@@ -3,6 +3,7 @@
 	// over (see songDots). It draws nothing itself; clicks, focus and the
 	// accessible name are its own.
 	import { songDots } from "$runes/songDots.svelte";
+	import { SONG_ANCHOR_RADIUS } from "$components/hexmap/components/scatter/constants";
 	import {
 		SONG_LABEL_LINE_HEIGHT_PX,
 		SONG_LABEL_STYLE
@@ -37,11 +38,10 @@
 		travelDelayMs = 0
 	}: Props = $props();
 
-	const RADIUS = { tag: 7, title: 10, play: 26 };
 	// The label's title and the "Artist (year)" line beneath it.
 	const LABEL_LINES = 2;
 
-	const radius = $derived(RADIUS[size]);
+	const radius = $derived(SONG_ANCHOR_RADIUS[size]);
 	const height = $derived(
 		label === "beside"
 			? Math.max(

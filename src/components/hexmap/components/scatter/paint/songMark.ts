@@ -32,7 +32,7 @@ export type MarkPose = {
 
 export type MarkIcon =
 	| { kind: "none" }
-	| { kind: "play" }
+	| { kind: "play"; alpha?: number }
 	// emphasis (0 to 1) fades the ring and pause icon in.
 	| { kind: "playing"; emphasis: number; playback: Playback };
 
@@ -76,7 +76,7 @@ export const drawSongDot = (
 	context.fillStyle = fill;
 	context.fill();
 
-	if (icon.kind === "play") drawPlayIcon(context, x, y, r);
+	if (icon.kind === "play") drawPlayIcon(context, x, y, r, icon.alpha ?? 1);
 	if (icon.kind === "playing") {
 		drawPlaybackRing(context, x, y, r, icon.emphasis, icon.playback);
 	}
@@ -181,10 +181,12 @@ const drawPlayIcon = (
 	context: CanvasRenderingContext2D,
 	x: number,
 	y: number,
-	radius: number
+	radius: number,
+	alpha: number
 ) => {
 	const size = radius * 0.6;
 	context.save();
+	context.globalAlpha *= alpha;
 	context.fillStyle = "white";
 	context.beginPath();
 	context.moveTo(x - size * 0.35, y - size * 0.55);

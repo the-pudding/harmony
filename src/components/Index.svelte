@@ -121,6 +121,9 @@
 		previousSlideI === null ||
 			allSlides[previousSlideI].stage?.component !== stageComponentName
 	);
+	// A new stage reached going forward waits, hidden, for its songs' dots
+	// to reach it (stageWaits).
+	let stageArrivesForward = $derived(movedForward && stageIsNew);
 
 	// a <button><strong class=progression> in the text refocuses the map on
 	// that cluster; the slide's own focusCluster comes back on the next visit
@@ -160,7 +163,7 @@
 	let mapRevealRunning = $state(false);
 	let stageWaits = $derived(
 		(mapRevealRunning && (mapScene?.reveal.clusters.length ?? 0) > 0) ||
-			(movedForward && stageIsNew && !songDots.arrived)
+			(stageArrivesForward && !songDots.arrived)
 	);
 	let focusedCluster = $derived(
 		mapScene?.camera.kind === "cluster" ? mapScene.camera.name : undefined
@@ -525,7 +528,11 @@
 					{#if StageComponent}
 						<!-- a fresh <video>/<track> per video, or the old track's cues linger -->
 						{#key stageProps.videoId}
-							<StageComponent {...stageProps} onStage />
+							<StageComponent
+								{...stageProps}
+								onStage
+								arrivingForward={stageArrivesForward}
+							/>
 						{/key}
 					{/if}
 				</div>

@@ -3,7 +3,7 @@ import {
 	SONG_LABEL_LINE_HEIGHT_PX,
 	SONG_LABEL_STYLE
 } from "../songLabelText.js";
-import { OUTLINED_LABEL_GAP } from "./constants.js";
+import { OUTLINED_LABEL_GAP, SONG_ANCHOR_RADIUS } from "./constants.js";
 import { lerp } from "./pointStyle.js";
 import type { MarkPose } from "./paint/songMark.js";
 
@@ -118,3 +118,10 @@ export const anchorPose = (
 // How wide the label may be before it leaves the anchor's box.
 export const labelRoom = (rect: AnchorRect, pose: PinPose): number =>
 	rect.left + rect.width - (pose.x + pose.labelDx);
+
+// A play button always shows its play icon; it fades in as a mark grows
+// from a title's dot to a play button's, and out as it shrinks back.
+export const idlePlayIconAlpha = (r: number): number => {
+	const { title, play } = SONG_ANCHOR_RADIUS;
+	return Math.min(1, Math.max(0, (r - title) / (play - title)));
+};

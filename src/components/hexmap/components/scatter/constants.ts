@@ -108,6 +108,8 @@ export const NOT_PLAYING_ALPHA = 0.3;
 export const PLAYING_TWEEN_MS = 400;
 // How long a pinned song's mark takes to travel to its anchor, or back.
 export const PIN_TRAVEL_MS = 900;
+// A pinned mark's dot radius at each size of anchor (see SongAnchor).
+export const SONG_ANCHOR_RADIUS = { tag: 7, title: 10, play: 26 } as const;
 // Space between a marker's edge and its label.
 export const OUTLINED_LABEL_GAP = 6;
 export const OUTLINED_LABEL_LINE_HEIGHT = SONG_LABEL_LINE_HEIGHT_PX;
