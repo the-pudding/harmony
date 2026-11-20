@@ -28,7 +28,15 @@ export type EmbeddingScatterProps = {
 	coClusterSongKeys: Set<string>;
 	// Only these songs are drawn (and hovered); the rest fade out where they
 	// are. Null (the default) for every song.
-	visibleSongKeys?: Set<string> | null;
+	visibleSongKeys?: ReadonlySet<string> | null;
+	// When set, every drawn song not in it is faint (DIMMED_SONG_ALPHA);
+	// null (the default) draws every song at full alpha.
+	dimExceptSongKeys?: ReadonlySet<string> | null;
+	// A per-song stagger (0–1, see STAGGER_SPAN) for songs appearing or
+	// disappearing together, e.g. rippling out from one song: wins over the
+	// layout's own, and the change it comes with moves over
+	// SCRIPTED_FOCUS_TRANSITION_MS, in step with a scripted camera move.
+	revealStagger?: Float32Array | null;
 	inYearSongKeys?: Set<string> | null;
 	axisLabels?: ScatterAxisLabels | null;
 	method: EmbeddingMethod;
@@ -47,7 +55,8 @@ export type EmbeddingScatterProps = {
 	// as focusSongKey; takes priority over it when both are set.
 	focusClusterName?: string | null;
 	// Scripted focus changes (focusClusterName, focusSongKey) jump straight
-	// to the new view instead of animating, e.g. while the map is hidden.
+	// to the new view instead of animating, e.g. while the map is hidden;
+	// so do songs moving or fading to a new layout or visibility.
 	instantFocus?: boolean;
 	// A cluster the user picked (by name, like focusClusterName): the view
 	// animates to fit it when it's set, and again when focusFrame changes,

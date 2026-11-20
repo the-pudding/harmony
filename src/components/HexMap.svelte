@@ -21,12 +21,17 @@
 	import { sameClusterName } from "$data/clusterName.js";
 	import type { ChordColorSegment } from "$runes/audio.svelte.js";
 	import { mapColors } from "$runes/mapColors.svelte.js";
-	import { onMount } from "svelte";
+	import { onMount, untrack } from "svelte";
 	import { fade } from "svelte/transition";
 	import { zoomIdentity, type ZoomTransform } from "d3";
 	import EmbeddingScatter from "$components/hexmap/components/EmbeddingScatter.svelte";
 	import { buildSongTable } from "$components/storymap/songTable.js";
 	import { computeLayout } from "$components/storymap/layouts/cache.js";
+	import { revealStagger as rippleFrom } from "$components/storymap/revealStagger.js";
+	import {
+		DEFAULT_FOCUS_SCALE,
+		SONG_FOCUS_SCALE
+	} from "$components/hexmap/components/scatter/constants.js";
 	import {
 		frameRect,
 		NO_MAP_FRAME
@@ -42,13 +47,13 @@
 
 	type Props = {
 		// What the slide wants the map to be, from the copy's `map` block. Its
-		// layout and camera (home, or a focused cluster; a focused song comes
-		// with the camera work), labels, interaction and highlighted songs are
-		// used here; the other song and media settings are read by later
-		// features.
+		// layout, camera, labels, interaction, and highlighted, only and
+		// dimmed songs are used here; playable songs and media settings are
+		// read by later features.
 		scene?: MapScene;
-		// Changes to the focused cluster jump straight to the new view instead of
-		// animating (e.g. when the map is about to appear).
+		// Changes to the camera, layout and which songs show jump straight to
+		// the new view instead of animating (e.g. when the map is about to
+		// appear).
 		instantFocus?: boolean;
 		// The part of the map, in pixels from its top, that a focused cluster
 		// is zoomed to almost fill the height of and centered in.
@@ -147,12 +152,23 @@
 	const hidePlayer = $derived(scene.player.hidden);
 	const highlightSongs = $derived(scene.songs.highlighted);
 
-	// Once a cluster has been focused, clearing focusCluster zooms back out
-	// (null) instead of leaving the scatter's scripted zoom off (undefined).
-	let hasFocusedCluster = false;
+	// The song the camera is on (camera "song"), zoomed in to
+	// SONG_FOCUS_SCALE.
+	const focusSongKey = $derived(
+		scene.camera.kind === "song" ? scene.camera.songKey : undefined
+	);
+
+	// Once a cluster or song has been focused, the home camera zooms back
+	// out (null) instead of leaving the scatter's scripted zoom off
+	// (undefined). Undefined while on a song, which the scatter would
+	// otherwise put second to the cluster.
+	let hasFocused = false;
 	const focusClusterName = $derived.by(() => {
-		if (focusCluster !== undefined) hasFocusedCluster = true;
-		return focusCluster ?? (hasFocusedCluster ? null : undefined);
+		if (focusCluster !== undefined || focusSongKey !== undefined) {
+			hasFocused = true;
+		}
+		if (focusSongKey !== undefined) return undefined;
+		return focusCluster ?? (hasFocused ? null : undefined);
 	});
 
 	// A focused cluster locks the view. Derived rather than a prop default,
@@ -187,6 +203,16 @@
 				(songKey) => !playableSongKeys.has(songKey)
 			)
 		)
+	);
+
+	// songs.only: everyone else fades out and can't be picked.
+	const visibleSongKeys = $derived(
+		scene.songs.only === null ? null : new Set(scene.songs.only)
+	);
+
+	// songs.dimmed: every song without a marker is faint.
+	const dimExceptSongKeys = $derived(
+		scene.songs.dimmed ? (outlinedSongKeys ?? new Set<string>()) : null
 	);
 
 	// A focused cluster isn't labeled.
@@ -381,6 +407,30 @@
 			: null
 	);
 
+	// The ripple when songs.only goes from one song to every song: the
+	// others appear from it outward, or, going back, fade out toward it
+	// (farthest first). Worked out once per scene, in the layout it's
+	// headed to; null for any other change (the layout's own stagger, if
+	// any, applies).
+	let previousOnly: readonly string[] | null | undefined = undefined;
+	const revealStagger = $derived.by(() => {
+		const only = scene.songs.only;
+		const before = previousOnly;
+		previousOnly = only;
+		if (!songs || before === undefined) return null;
+		const lone = (list: readonly string[] | null) =>
+			list !== null && list.length === 1 ? list[0] : null;
+		const origin = lone(before) ?? lone(only);
+		if (origin === null || lone(before) === lone(only)) return null;
+		const originIndex = songs.indexOf.get(origin);
+		const layout = untrack(() => mainResult);
+		if (originIndex === undefined || !layout) return null;
+		return rippleFrom(songs, layout, originIndex, {
+			frame: untrack(() => layoutFrame),
+			order: lone(before) === origin ? "closestFirst" : "farthestFirst"
+		});
+	});
+
 	const umapResult = $derived(
 		songs
 			? computeLayout(
@@ -429,7 +479,14 @@
 				labelNames={showLabels ?? null}
 				showClusterNames={labelsVisible}
 				{focusClusterName}
+				{focusSongKey}
+				focusScale={focusSongKey === undefined
+					? DEFAULT_FOCUS_SCALE
+					: SONG_FOCUS_SCALE}
 				{instantFocus}
+				{visibleSongKeys}
+				{dimExceptSongKeys}
+				{revealStagger}
 				selectedClusterName={explorable ? exploredClusterName : null}
 				zoomSongKey={explorable ? searchZoomSongKey : null}
 				spotlitSongKey={explorable ? searchedSongKey : null}

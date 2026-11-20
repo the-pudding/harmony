@@ -23,6 +23,9 @@ export const HEX_ZOOM = {
 // ── Focus & camera moves ──────────────────────────────────────────────
 // Zoom used when focusing a single song.
 export const DEFAULT_FOCUS_SCALE = 8;
+// Zoom for a slide's scripted focus on one song (camera "song"): how far the
+// lone dot is zoomed in before the map pulls back to everything.
+export const SONG_FOCUS_SCALE = 10;
 export const FOCUS_TRANSITION_MS = 900;
 // Scripted focus changes (focusClusterName / focusSongKey) move slower,
 // since they happen without the user asking to move the map.
@@ -51,6 +54,8 @@ export const TWEEN_DURATION_MS = 700;
 // Points moving because the map's frame changed (e.g. the text box above
 // it grew), within one layout.
 export const FRAME_TWEEN_MS = 400;
+// Songs not marked on a dimmed slide are drawn at this alpha.
+export const DIMMED_SONG_ALPHA = 0.35;
 // Hexes fade in this long after songs settle in a hex layout, and fade out
 // this fast (from fully shown) before songs move away.
 export const HEX_FADE_IN_MS = 500;

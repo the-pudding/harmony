@@ -29,6 +29,8 @@
 		MAX_PIXEL_RATIO,
 		TWEEN_DURATION_MS,
 		FRAME_TWEEN_MS,
+		DIMMED_SONG_ALPHA,
+		SCRIPTED_FOCUS_TRANSITION_MS,
 		HEX_FADE_IN_MS,
 		HEX_FADE_OUT_MS
 	} from "./scatter/constants.js";
@@ -123,6 +125,8 @@
 		selectedSongKey,
 		coClusterSongKeys,
 		visibleSongKeys = null,
+		dimExceptSongKeys = null,
+		revealStagger = null,
 		inYearSongKeys = null,
 		axisLabels = null,
 		method,
@@ -308,14 +312,18 @@
 	});
 
 	// 1 for every song that should be drawn, 0 for the ones visibleSongKeys
-	// leaves out; the transition fades between them.
+	// leaves out, DIMMED_SONG_ALPHA for the ones dimExceptSongKeys doesn't
+	// keep bright; the transition fades between them.
 	const targetAlpha = $derived.by(() => {
 		const alpha = new Float32Array(songs.count);
 		for (let index = 0; index < songs.count; index++) {
+			const songKey = songs.keys[index];
 			alpha[index] =
-				visibleSongKeys === null || visibleSongKeys.has(songs.keys[index])
-					? 1
-					: 0;
+				visibleSongKeys !== null && !visibleSongKeys.has(songKey)
+					? 0
+					: dimExceptSongKeys !== null && !dimExceptSongKeys.has(songKey)
+						? DIMMED_SONG_ALPHA
+						: 1;
 		}
 		return alpha;
 	});
@@ -332,6 +340,8 @@
 	// a window resize or a frame change from a new layout.
 	type PlacedTarget = TransitionTarget & {
 		layoutName: string;
+		// Whether the stagger is revealStagger.
+		revealing: boolean;
 		// Framed layouts only (null and 0 for the rest, which don't move
 		// when these change).
 		frame: MapFrame | null;
@@ -343,7 +353,8 @@
 		const placed = {
 			alpha: targetAlpha,
 			mix: targetMix,
-			stagger: layout.stagger ?? null,
+			stagger: revealStagger ?? layout.stagger ?? null,
+			revealing: revealStagger !== null,
 			layoutName: layout.name
 		};
 		if (!layout.framed) {
@@ -379,18 +390,33 @@
 			a.bottom === b.bottom &&
 			a.left === b.left);
 
-	// A window resize jumps; a frame change within one layout moves songs
-	// quickly; anything else (a new layout, songs shown or hidden) at the
-	// usual pace. Hexes showing fade out (HEX_FADE_OUT_MS from fully shown)
-	// before songs move out from under them.
+	// With instantFocus everything jumps, so a map that's about to appear
+	// is already in place. A window resize jumps; a reveal (revealStagger)
+	// moves with the scripted camera, also while it's retargeted mid-way
+	// (e.g. the frame settling); a frame change within one layout moves
+	// songs quickly; anything else (a new layout, songs shown or hidden) at
+	// the usual pace. Hexes showing fade out (HEX_FADE_OUT_MS from fully
+	// shown) before songs move out from under them.
 	const transitionTiming = (
 		next: PlacedTarget,
 		previous: PlacedTarget | null
 	): TransitionTiming => {
+		if (instantFocus) return { durationMs: 0, instant: true };
 		const delayMs =
 			hexZoomLevel(transform.k, HEX_ZOOM).kind === "hex"
 				? hexFade.current * HEX_FADE_OUT_MS
 				: 0;
+		const resized =
+			previous !== null &&
+			next.layoutName === previous.layoutName &&
+			(next.width !== previous.width || next.height !== previous.height);
+		if (
+			next.revealing &&
+			!resized &&
+			(next.stagger !== previous?.stagger || !transition.settled)
+		) {
+			return { durationMs: SCRIPTED_FOCUS_TRANSITION_MS, delayMs };
+		}
 		if (previous && next.layoutName === previous.layoutName) {
 			if (next.width !== previous.width || next.height !== previous.height) {
 				return { durationMs: 0, instant: true };
@@ -854,9 +880,10 @@
 	};
 
 	// Hit-testing against the last frame drawn.
+	// Songs fading out (e.g. everyone but songs.only) can't be picked.
 	const songScreen = (songKey: string): Point2D | null => {
 		const index = songs.indexOf.get(songKey);
-		if (index === undefined || !(transition.alpha[index] > 0)) return null;
+		if (!isDrawnIndex(index) || !(transition.alpha[index] > 0)) return null;
 		return toScreen({ nx: transition.x[index], ny: transition.y[index] });
 	};
 
