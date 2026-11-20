@@ -13,9 +13,9 @@
 	import { mapColors } from "$runes/mapColors.svelte";
 
 	// Lets the previous stage fade out before the dots leave it.
-	const STAGE_TRAVEL_DELAY_MS = 150;
+	const ARRIVAL_TRAVEL_DELAY_MS = 150;
 
-	let { songs = [], showEffective = true } = $props();
+	let { songs = [], showEffective = true, arrivingForward = false } = $props();
 
 	const effectiveVisible = $derived(
 		showEffective !== false && showEffective !== "false"
@@ -78,7 +78,7 @@
 						size="title"
 						label="beside"
 						labelPx={20}
-						travelDelayMs={STAGE_TRAVEL_DELAY_MS}
+						travelDelayMs={arrivingForward ? ARRIVAL_TRAVEL_DELAY_MS : 0}
 					/>
 				</div>
 				{#if effectiveVisible && homogeneity}

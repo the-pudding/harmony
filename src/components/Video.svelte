@@ -114,12 +114,7 @@
 
 		<!-- hidden while playing, back (dimmed) on hover so you can pause -->
 		<div class="play" class:hidden={!paused}>
-			<PlayButton
-				{paused}
-				label="video"
-				showLabel={false}
-				onclick={() => (paused = !paused)}
-			/>
+			<PlayButton {paused} label="video" onclick={() => (paused = !paused)} />
 		</div>
 
 		{#if sync}

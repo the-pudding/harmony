@@ -32,3 +32,14 @@ onlySongs: journey__dont-stop-believin
 focusSong: journey__dont-stop-believin
 {}
 ```
+
+## Song anchors and the stage
+
+A stage component renders `<SongAnchor songKey … />` where a song's dot should
+stand; the map draws the dot, label and play ring there via the pin canvas.
+The `songDots` registry is `src/runes/songDots.svelte.ts`; pins are in
+`hexmap/components/scatter/songPins.svelte.ts`.
+A slide with no `{.map}` block uses `STAGE_SCENE`: other stars go offstage and
+only anchored songs stay.
+Stage components get `arrivingForward`; a forward-arriving new stage waits
+until its dots arrive.

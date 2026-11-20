@@ -2,14 +2,7 @@
 	import playSvg from "$svg/play.svg";
 
 	// progress (0–1) fills a ring around the button while playing
-	let {
-		paused = true,
-		progress = 0,
-		label,
-		showLabel = true,
-		onclick,
-		...rest
-	} = $props();
+	let { paused = true, progress = 0, label, onclick } = $props();
 </script>
 
 <button
@@ -18,7 +11,6 @@
 	style:--progress={progress}
 	aria-label="{paused ? 'Play' : 'Pause'}{label ? ` ${label}` : ''}"
 	{onclick}
-	{...rest}
 >
 	<span class="circle">
 		{#if paused}
@@ -30,23 +22,16 @@
 			</svg>
 		{/if}
 	</span>
-	{#if showLabel}
-		<span class="label" aria-hidden="true">{paused ? "Play" : "Pause"}</span>
-	{/if}
 </button>
 
 <style>
 	button.play {
 		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.4rem;
 		flex-shrink: 0;
 		padding: 0;
 		border: none;
 		background: none;
 		color: var(--color-gray-50, #fff);
-		font-family: var(--font-mono);
 		cursor: pointer;
 	}
 
@@ -100,16 +85,6 @@
 
 	button.play:active .circle {
 		transform: scale(0.97);
-	}
-
-	.label {
-		font-size: var(--12px, 0.75rem);
-		line-height: 1;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		margin-top: 4px;
-		/* stays legible over video */
-		text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
 	}
 
 	.icon {
