@@ -99,7 +99,7 @@ export const problematicSongs: ProblematicSong[] = [
 	{
 		id: "destiny-s-child__survivor",
 		chordProgressionIssues:
-			"is not a \"sweet dreams\". Data has every section as i-VI-V in E minor, which lands it in that cluster"
+			'is not a "sweet dreams". Data has every section as i-VI-V in E minor, which lands it in that cluster'
 	},
 	{
 		id: "aaliyah__miss-you",
@@ -197,6 +197,21 @@ export const keyTonalityIssues: KeyTonalityIssue[] = [
 		id: "john-mellencamp__pop-singer",
 		keyTonalityIssues:
 			"I think it's actually in a minor key (B minor), so i-IV instead of ii-V. Data has every section as Bm-E in A major."
+	},
+	{
+		id: "the-yardbirds__i-m-a-man",
+		keyTonalityIssues:
+			"Notated like it's in C, but it sounds like it's in G, really going between I and IV. Data has every section labeled G major, alternating G and D (I-V)."
+	},
+	{
+		id: "billie-eilish__therefore-i-am",
+		keyTonalityIssues:
+			"Should be i-V back and forth in a minor key, not major. Data has every section as Dm-A (i-V) in D minor, so check where it shows as major."
+	},
+	{
+		id: "the-floaters__float-on",
+		keyTonalityIssues:
+			"I think it's actually in D major, so IV-I instead of I-V. Data has its one section as G-D in G major."
 	}
 ];
 
