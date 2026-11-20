@@ -1,43 +1,54 @@
 <script lang="ts">
+	import { untrack } from "svelte";
 	import { MediaQuery } from "svelte/reactivity";
 	import { fade } from "svelte/transition";
 	import { audio } from "$runes/audio.svelte";
 
 	// Two callouts for the very first slide: one pointing at the "next"
-	// arrow, a quieter one at the mute toggle. They fade in a few seconds
-	// after the slide shows, and go away when the reader moves on (for good:
-	// they've found the arrows) or, for the audio one, when they touch the
-	// mute toggle. Neither catches clicks.
+	// arrow, a quieter one at the mute toggle. Every time the reader is on
+	// slide 0 they appear: after a few seconds on the first visit, at once
+	// on any return. They go away when the reader moves on and, for the
+	// audio one, when they touch the mute toggle during that visit. Neither
+	// catches clicks.
 	let { slideI }: { slideI: number } = $props();
 
-	const SHOW_AFTER_MS = 3000;
+	const FIRST_VISIT_DELAY_MS = 3000;
 
 	// Touch screens have no arrow keys, and tap the screen's sides instead.
 	const touch = new MediaQuery("(pointer: coarse)", false);
 
 	let ready = $state(false);
-	let left = $state(false);
 	let audioTouched = $state(false);
+	// Whether the hints have been shown once already (not reactive: only
+	// read when a visit starts).
+	let shownBefore = false;
+	// The mute state when this visit to slide 0 began.
+	let mutedAtVisit = audio.muted;
 
 	const onFirstSlide = $derived(slideI === 0);
-	const showNext = $derived(ready && onFirstSlide && !left);
+	const showNext = $derived(ready && onFirstSlide);
 	const showAudio = $derived(showNext && !audioTouched);
 
 	$effect(() => {
-		if (!onFirstSlide) {
-			left = true;
+		if (!onFirstSlide) return;
+		mutedAtVisit = untrack(() => audio.muted);
+		const timer = setTimeout(
+			() => {
+				ready = true;
+				shownBefore = true;
+			},
+			shownBefore ? 0 : FIRST_VISIT_DELAY_MS
+		);
+		return () => {
+			clearTimeout(timer);
 			ready = false;
-			return;
-		}
-		if (left) return;
-		const timer = setTimeout(() => (ready = true), SHOW_AFTER_MS);
-		return () => clearTimeout(timer);
+			audioTouched = false;
+		};
 	});
 
 	// the mute toggle is the only thing that changes this on slide 0
-	let mutedAtStart = audio.muted;
 	$effect(() => {
-		if (audio.muted !== mutedAtStart) audioTouched = true;
+		if (onFirstSlide && audio.muted !== mutedAtVisit) audioTouched = true;
 	});
 </script>
 
@@ -82,9 +93,14 @@
 		clip-path: polygon(100% 0, 100% 100%, 0 100%);
 	}
 
-	/* purple, pointing right at the next arrow (a 64px target at the edge) */
+	/* purple, pointing right at the next arrow. The arrow is a 64px target at
+	   the edge (Tap.svelte), centered vertically, but its 24px icon sits at
+	   the target's top left, so the icon's center is 14px above the
+	   viewport's middle and 40px in from the right edge. */
 	.next {
-		top: 50%;
+		--icon-center-y: calc(50% - 14px);
+		--icon-center-from-right: 40px;
+		top: var(--icon-center-y);
 		right: calc(64px + 0.25rem);
 		translate: 0 -50%;
 		max-width: min(15rem, calc(100vw - 64px - 2rem));
@@ -157,7 +173,7 @@
 		.next .bubble::after {
 			top: auto;
 			bottom: -0.3125rem;
-			right: calc(32px - 0.75rem - 0.3125rem);
+			right: calc(var(--icon-center-from-right) - 0.75rem - 0.3125rem);
 			translate: none;
 			rotate: 45deg;
 		}
