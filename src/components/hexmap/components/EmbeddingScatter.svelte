@@ -1210,26 +1210,21 @@
 	bind:clientHeight={height}
 	{...interactive ? { role: "button", tabindex: 0 } : { role: "img" }}
 	aria-label="Song embedding scatter plot"
-	onmousemove={interactive ? handlePointerMove : undefined}
-	onpointerdown={interactive
-		? (event) => clickGuard.onPointerDown(event)
-		: undefined}
-	onpointerup={interactive ? () => clickGuard.onPointerUp() : undefined}
-	onpointercancel={interactive ? () => clickGuard.onPointerUp() : undefined}
-	onmouseleave={interactive ? handlePointerLeave : undefined}
-	onclick={interactive ? handleClick : undefined}
-	onkeydown={interactive
-		? (event) => {
-				if (event.key === "Enter" || event.key === " ") {
-					if (clickable && hoveredSongKey !== null) {
-						onSelect(
-							hoveredSongKey === selectedSongKey ? null : hoveredSongKey
-						);
-					}
-				}
-				if (event.key === "Escape") onSelect(null);
+	onmousemove={(event) => interactive && handlePointerMove(event)}
+	onpointerdown={(event) => interactive && clickGuard.onPointerDown(event)}
+	onpointerup={() => interactive && clickGuard.onPointerUp()}
+	onpointercancel={() => interactive && clickGuard.onPointerUp()}
+	onmouseleave={() => interactive && handlePointerLeave()}
+	onclick={(event) => interactive && handleClick(event)}
+	onkeydown={(event) => {
+		if (!interactive) return;
+		if (event.key === "Enter" || event.key === " ") {
+			if (clickable && hoveredSongKey !== null) {
+				onSelect(hoveredSongKey === selectedSongKey ? null : hoveredSongKey);
 			}
-		: undefined}
+		}
+		if (event.key === "Escape") onSelect(null);
+	}}
 >
 	<!-- DEV-ONLY-REMOVE-BEFORE-PUBLISH (perf meter) -->
 	{#if perfMeter}

@@ -5,28 +5,51 @@
   },
   "sections": [
     {
-      "title": "Landing",
-      "slides": [
-        {
-          "text": [],
-          "map": {
-            "visible": "true",
-            "movable": "false",
-            "hoverable": "false",
-            "rotateLabels": "true",
-            "centered": "true"
-          },
-          "stage": {
-            "component": "Landing",
-            "hed": "Mapping every pop hit’s chords",
-            "byline": "By <a href=https://pudding.cool/author/michelle-pera-mcghee/ target=_blank>Michelle Pera-McGhee</a> and <a href=https://pudding.cool/author/david-mora/ target=_blank>David Mora</a>"
-          }
-        }
-      ]
-    },
-    {
       "title": "Intro",
       "slides": [
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "This is one pop hit, represented with a dot."
+            },
+            {
+              "type": "AudioGate",
+              "value": {}
+            }
+          ],
+          "map": {
+            "visible": "true",
+            "layout": "timeline",
+            "focusSong": "journey__dont-stop-believin",
+            "onlySongs": [
+              "journey__dont-stop-believin"
+            ],
+            "playableSongs": [
+              "journey__dont-stop-believin"
+            ],
+            "movable": "false",
+            "hoverable": "false"
+          }
+        },
+        {
+          "text": [
+            {
+              "type": "text",
+              "value": "Here are all [7,260] Billboard top-20 hits from 1958 to 2026. Laid out like this, they look like a night sky, where every “star” (song) looks the same. People love to claim that they <em>sound</em> the same, too."
+            },
+            {
+              "type": "text",
+              "value": "[TK: Rick Beato quotes, etc.]"
+            }
+          ],
+          "map": {
+            "visible": "true",
+            "layout": "timeline",
+            "axisLabel": "time →",
+            "movable": "false"
+          }
+        },
         {
           "text": [
             {
@@ -34,9 +57,18 @@
               "value": "In 2009, the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of pop songs – from Journey’s “Don’t Stop Believin’” to Beyoncé’s “If I Were A Boy” – are built off of the same four chords."
             }
           ],
+          "map": {
+            "visible": "true",
+            "layout": "timeline",
+            "axisLabel": "time →",
+            "dimmed": "true",
+            "movable": "false",
+            "hoverable": "false"
+          },
           "stage": {
             "component": "Video",
-            "videoId": "dead-simple"
+            "videoId": "dead-simple",
+            "dock": "corner"
           }
         },
         {
@@ -46,13 +78,25 @@
               "value": "People cite this video as proof that all pop music is formulaic and sounds the same. The sheer volume of songs built on this foundation makes a compelling case."
             }
           ],
+          "map": {
+            "visible": "true",
+            "layout": "timeline",
+            "axisLabel": "time →",
+            "followVideo": "examples",
+            "movable": "false"
+          },
           "stage": {
             "component": "Video",
-            "videoId": "examples"
+            "videoId": "examples",
+            "dock": "corner"
           }
         },
         {
           "text": [
+            {
+              "type": "text",
+              "value": "Ok, but that was [21] examples. What about the other [7,239]?"
+            },
             {
               "type": "text",
               "value": "But is it true?"
@@ -71,7 +115,29 @@
                 ]
               }
             }
-          ]
+          ],
+          "map": {
+            "visible": "true",
+            "layout": "timeline",
+            "axisLabel": "time →",
+            "litVideoSongs": "examples",
+            "movable": "false"
+          }
+        },
+        {
+          "text": [],
+          "map": {
+            "visible": "true",
+            "movable": "false",
+            "hoverable": "false",
+            "rotateLabels": "true",
+            "centered": "true"
+          },
+          "stage": {
+            "component": "Landing",
+            "hed": "Mapping every pop hit’s chords",
+            "byline": "By <a href=https://pudding.cool/author/michelle-pera-mcghee/ target=_blank>Michelle Pera-McGhee</a> and <a href=https://pudding.cool/author/david-mora/ target=_blank>David Mora</a>"
+          }
         },
         {
           "text": [

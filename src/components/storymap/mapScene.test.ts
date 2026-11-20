@@ -64,12 +64,29 @@ const propsFromScene = (scene: MapScene) => ({
 const slides = copy.sections.flatMap((section) => section.slides);
 const mapBlocks = slides.flatMap((slide) => (slide.map ? [slide.map] : []));
 
+// Keys added by the story map; blocks using none of them still parse to what
+// HexMap was given before scenes existed.
+const NEW_KEYS = [
+	"layout",
+	"axisLabel",
+	"focusSong",
+	"onlySongs",
+	"playableSongs",
+	"dimmed",
+	"followVideo",
+	"litVideoSongs"
+];
+const usesNewKeys = (map: Record<string, unknown>) =>
+	NEW_KEYS.some((key) => key in map);
+const legacyBlocks = mapBlocks.filter((map) => !usesNewKeys(map));
+const sceneBlocks = mapBlocks.filter(usesNewKeys);
+
 describe("parseMapScene on the real copy", () => {
 	it("finds the map blocks", () => {
 		expect(mapBlocks.length).toBeGreaterThan(10);
 	});
 
-	it.each(mapBlocks.map((map, index) => [index, map] as const))(
+	it.each(legacyBlocks.map((map, index) => [index, map] as const))(
 		"block %i parses to what mapPropsFromCopy gave HexMap",
 		(_, map) => {
 			const scene = parseMapScene(map);
@@ -78,7 +95,7 @@ describe("parseMapScene on the real copy", () => {
 				...HEXMAP_DEFAULTS,
 				...legacyMapProps(map)
 			});
-			// Nothing in today's copy uses the new keys yet.
+			// These blocks use none of the new keys.
 			expect(scene!.layout).toEqual({ name: "umap" });
 			expect(scene!.songs).toMatchObject({
 				only: null,
@@ -90,8 +107,10 @@ describe("parseMapScene on the real copy", () => {
 	);
 
 	it("parses a spot check of today's copy", () => {
-		const first = parseMapScene(slides[0].map);
-		expect(first).toEqual({
+		const landing = slides.find(
+			(slide) => slide.stage?.component === "Landing"
+		);
+		expect(parseMapScene(landing!.map)).toEqual({
 			...DEFAULT_MAP_SCENE,
 			camera: { kind: "home", centered: true },
 			labels: { hidden: false, only: null, rotate: true },
@@ -102,6 +121,32 @@ describe("parseMapScene on the real copy", () => {
 			kind: "cluster",
 			name: focused!.focusCluster!.trim()
 		});
+	});
+
+	it("parses the intro's story-map blocks", () => {
+		expect(sceneBlocks.length).toBeGreaterThanOrEqual(5);
+		const [dot, sky, dimmed, follow, lit] = sceneBlocks.map(
+			(map) => parseMapScene(map)!
+		);
+		expect(dot).toMatchObject({
+			layout: { name: "timeline" },
+			camera: { kind: "song", songKey: "journey__dont-stop-believin" },
+			songs: {
+				only: ["journey__dont-stop-believin"],
+				playable: ["journey__dont-stop-believin"]
+			},
+			interaction: { movable: false, hoverable: false }
+		});
+		expect(sky).toMatchObject({
+			layout: { name: "timeline", axisLabel: "time →" },
+			songs: { only: null, playable: [], dimmed: false }
+		});
+		expect(dimmed.songs.dimmed).toBe(true);
+		expect(follow.media).toEqual({
+			followVideo: "examples",
+			litVideoSongs: null
+		});
+		expect(lit.media).toEqual({ followVideo: null, litVideoSongs: "examples" });
 	});
 
 	it("shows no map for slides without a visible block", () => {
