@@ -1,7 +1,9 @@
+import { interpolateRgb } from "d3";
 import {
 	SONG_LABEL_STYLE,
 	canvasFontFor,
-	type SongLabelLine
+	type SongLabelLine,
+	type SongLabelRole
 } from "../../songLabelText.js";
 import { OUTLINE_COLOR, OUTLINED_LABEL_LINE_HEIGHT } from "../constants.js";
 
@@ -90,12 +92,18 @@ export const drawSongLabel = (
 	context.lineJoin = "round";
 	context.lineWidth = 3;
 	context.strokeStyle = haloColor;
-	context.fillStyle = textColor;
+	context.globalAlpha = alpha;
+	const fillOf = (role: SongLabelRole) => {
+		const { textMix } = SONG_LABEL_STYLE[role];
+		return textMix === 1
+			? textColor
+			: interpolateRgb(haloColor, textColor)(textMix);
+	};
 	lines.forEach((line, row) => {
 		const rowY = y + labelDy + (row + 0.5) * lineHeight;
 		let left = x + labelDx;
 		for (const { role, text } of fitLine(context, line, maxWidth, scale)) {
-			context.globalAlpha = alpha * SONG_LABEL_STYLE[role].opacity;
+			context.fillStyle = fillOf(role);
 			context.font = canvasFontFor(role, scale);
 			context.strokeText(text, left, rowY);
 			context.fillText(text, left, rowY);

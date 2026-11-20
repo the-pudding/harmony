@@ -19,16 +19,19 @@ export type Guide =
 			at: "bottom-right" | "bottom-left" | "left-top";
 	  }
 	| { kind: "tick"; text: string; x: number }
-	// Centered vertically on y; muted gray unless given a color.
+	// Centered vertically on y; muted gray unless given a color. Going to
+	// another layout, a label moves to the one there with the same id
+	// instead of fading out while it fades in.
 	| {
 			kind: "label";
+			id?: string;
 			text: string;
 			x: number;
 			y: number;
 			align: "left" | "center" | "right";
 			color?: string;
 			weight?: "regular" | "bold";
-			size?: "regular" | "medium" | "large";
+			size?: "regular" | "medium" | "large" | "xlarge";
 			layer?: GuideLayer;
 	  }
 	// An outline; (x, y) is its bottom-left corner.

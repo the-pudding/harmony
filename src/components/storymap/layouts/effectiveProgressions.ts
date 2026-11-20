@@ -32,6 +32,10 @@ const SINGLE_BAR_FOOTER_PX = 20;
 const DECADE_FOOTER_PX = 24;
 // Between stacked bands, and between decade bars.
 const BAND_GAP_PX = 3;
+// Above ≈1, wide enough to still show between its box's thick border and
+// the band above.
+const LOOP_GAP_PX = 10;
+const gapAbove = (band: number) => (band === 0 ? LOOP_GAP_PX : BAND_GAP_PX);
 const DECADE_GAP_PX = { phone: 4, wide: 14 };
 // A dot's radius as a share of the spacing between dots.
 const RADIUS_PER_SPACING = 0.36;
@@ -97,7 +101,14 @@ const packBar = (
 	const byBand = HOMOGENEITY_BANDS.map(() => [] as number[]);
 	for (const index of songs) byBand[bandIndex[index]].push(index);
 	const stackHeight =
-		rect.height - BAND_GAP_PX * (HOMOGENEITY_BANDS.length - 1);
+		rect.height -
+		byBand
+			.slice(0, -1)
+			.reduce(
+				(total, members, band) =>
+					total + (members.length > 0 ? gapAbove(band) : 0),
+				0
+			);
 	const spacing = Math.sqrt(
 		(rect.width * stackHeight) / Math.max(1, songs.length)
 	);
@@ -111,7 +122,7 @@ const packBar = (
 			height: stackHeight * share
 		};
 		if (members.length > 0) {
-			bottom += segment.height + BAND_GAP_PX;
+			bottom += segment.height + gapAbove(band);
 			const rows = Math.max(1, Math.round(segment.height / spacing));
 			const columns = Math.ceil(members.length / rows);
 			const cellWidth = segment.width / columns;
@@ -129,6 +140,7 @@ const packBar = (
 const percent = (share: number) => `${Math.round(share * 100)}%`;
 
 type GutterLine = {
+	id?: string;
 	text: string;
 	color?: string;
 	weight?: "regular" | "bold";
@@ -167,11 +179,21 @@ const bandLabel = (
 	{ explained, withShare }: { explained: boolean; withShare: boolean }
 ): Guide[] =>
 	gutterLabel(frame, rect, [
-		{ text: band.shortLabel, color: band.color, weight: "bold", size: "large" },
+		{
+			id: `${band.id}:name`,
+			text: band.shortLabel,
+			color: band.color,
+			weight: "bold",
+			size: "large"
+		},
 		...(explained
 			? [
-					{ text: "effective", color: band.color },
-					{ text: "progressions", color: band.color }
+					{ id: `${band.id}:effective`, text: "effective", color: band.color },
+					{
+						id: `${band.id}:progressions`,
+						text: "progressions",
+						color: band.color
+					}
 				]
 			: []),
 		...(withShare ? [{ text: percent(share), size: "medium" as const }] : []),
@@ -336,7 +358,7 @@ export const effectiveProgressionsByDecadeLayout: Layout<EffectiveProgressionsPa
 								color: LOOP_BAND.color,
 								weight: "bold",
 								// Wider than a phone's bars at the large size.
-								size: phone ? "regular" : "large",
+								size: phone ? "medium" : "xlarge",
 								layer: "over"
 							},
 							{

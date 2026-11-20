@@ -3,11 +3,12 @@ import { zoomIdentity } from "d3";
 import type { Guide } from "$components/storymap/layouts/types.js";
 import {
 	CHART_BOX_COLOR,
+	CHART_BOX_FILL,
 	CHART_BOX_WIDTH,
 	CHART_LABEL_COLOR,
 	HEX_THEME_COLORS
 } from "../constants.js";
-import { drawGuides, guideOpacities } from "./guides.js";
+import { drawGuides, guideOpacities, transitionGuides } from "./guides.js";
 import { createScene } from "./scene.js";
 
 describe("guideOpacities", () => {
@@ -103,6 +104,7 @@ describe("drawGuides label and box", () => {
 			strokeStyle: string;
 			lineWidth: number;
 		}[] = [];
+		const fills: { args: number[]; fillStyle: string }[] = [];
 		const context = {
 			globalAlpha: 1,
 			textAlign: "left",
@@ -120,6 +122,9 @@ describe("drawGuides label and box", () => {
 					fillStyle: this.fillStyle,
 					baseline: this.textBaseline
 				});
+			},
+			fillRect(...args: number[]) {
+				fills.push({ args, fillStyle: this.fillStyle });
 			},
 			strokeRect(...args: number[]) {
 				boxes.push({
@@ -150,7 +155,7 @@ describe("drawGuides label and box", () => {
 			bottom: 48,
 			left: 40
 		});
-		return { texts, boxes, context };
+		return { texts, boxes, fills, context };
 	};
 
 	it("draws a label at its frame position, y up, centered on the line", () => {
@@ -193,8 +198,8 @@ describe("drawGuides label and box", () => {
 		expect(texts[1].baseline).toBe("alphabetic");
 	});
 
-	it("strokes a box from its bottom-left corner, y up", () => {
-		const { boxes } = draw([
+	it("fills and strokes a box from its bottom-left corner, y up", () => {
+		const { boxes, fills } = draw([
 			{ kind: "box", x: 0.25, y: 0.5, width: 0.5, height: 0.25 }
 		]);
 		expect(boxes).toHaveLength(1);
@@ -205,5 +210,38 @@ describe("drawGuides label and box", () => {
 		expect(y).toBeCloseTo(100 + (1 - 0.5 - 0.25) * 452);
 		expect(width).toBeCloseTo(360);
 		expect(height).toBeCloseTo(113);
+		expect(fills).toEqual([{ args: boxes[0].args, fillStyle: CHART_BOX_FILL }]);
+	});
+});
+
+describe("transitionGuides", () => {
+	const label = (id: string | undefined, x: number, y: number): Guide => ({
+		kind: "label",
+		id,
+		text: id ?? "plain",
+		x,
+		y,
+		align: "right"
+	});
+
+	it("moves labels with the same id, and crossfades the rest", () => {
+		const outgoing = [label("a", 0, 0), label(undefined, 0.5, 0.5)];
+		const incoming = [label("a", 1, 1), label("b", 0.2, 0.2)];
+		const [leaving, appearing, moving] = transitionGuides(
+			outgoing,
+			incoming,
+			0.5
+		);
+		expect(leaving.guides).toEqual([outgoing[1]]);
+		expect(appearing.guides).toEqual([incoming[1]]);
+		expect(moving.opacity).toBe(1);
+		expect(moving.guides).toEqual([{ ...incoming[0], x: 0.5, y: 0.5 }]);
+	});
+
+	it("shows only the incoming guides when nothing is going out", () => {
+		const incoming = [label("a", 1, 1)];
+		expect(transitionGuides([], incoming, 1)).toEqual([
+			{ guides: incoming, opacity: 1 }
+		]);
 	});
 });

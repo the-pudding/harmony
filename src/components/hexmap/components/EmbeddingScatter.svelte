@@ -104,7 +104,7 @@
 	import {
 		drawAxisLabels,
 		drawGuides,
-		guideOpacities,
+		transitionGuides,
 		type GuideSet
 	} from "./scatter/paint/guides.js";
 	import { createMixFill } from "./scatter/colorMix.js";
@@ -768,12 +768,9 @@
 		}
 	};
 
-	// Current and previous layouts' guides, crossfaded by guideOpacities.
+	// Current and previous layouts' guides, moved or crossfaded by
+	// transitionGuides until the songs arrive.
 	const NO_GUIDES: readonly Guide[] = [];
-	const guideSetList: GuideSet[] = [
-		{ guides: NO_GUIDES, opacity: 0 },
-		{ guides: NO_GUIDES, opacity: 0 }
-	];
 	let guideLayoutName: string | null = null;
 	let guidesBefore = NO_GUIDES;
 	let outgoingGuides = NO_GUIDES;
@@ -783,13 +780,8 @@
 			guideLayoutName = layout.name;
 		}
 		guidesBefore = layout.guides;
-		const { outgoing, incoming } = guideOpacities(transition.progress);
-		if (outgoing === 0) outgoingGuides = NO_GUIDES;
-		guideSetList[0].guides = outgoingGuides;
-		guideSetList[0].opacity = outgoing;
-		guideSetList[1].guides = layout.guides;
-		guideSetList[1].opacity = incoming;
-		return guideSetList;
+		if (transition.progress >= 1) outgoingGuides = NO_GUIDES;
+		return transitionGuides(outgoingGuides, layout.guides, transition.progress);
 	};
 
 	// Reuses one alpha buffer across frames.

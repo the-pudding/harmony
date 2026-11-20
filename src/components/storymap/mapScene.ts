@@ -41,7 +41,7 @@ export type MapScene = {
 	interaction: {
 		movable: boolean;
 		hoverable: boolean;
-		// "basic" is title, year and artist only.
+		// "basic" is title, year, artist and the bar of progressions.
 		tooltip: "full" | "basic";
 	};
 	player: { hidden: boolean };

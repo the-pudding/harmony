@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { drawSongLabel, drawSongMark, type MarkPose } from "./songMark.js";
 
-type Call = { name: string; args: unknown[]; alpha: number; font: string };
+type Call = {
+	name: string;
+	args: unknown[];
+	alpha: number;
+	font: string;
+	fillStyle: string;
+};
 
 const recordingContext = () => {
 	const calls: Call[] = [];
-	const state = { globalAlpha: 1, font: "" };
+	const state = { globalAlpha: 1, font: "", fillStyle: "" };
 	const stack: (typeof state)[] = [];
 	const record =
 		(name: string) =>
@@ -14,7 +20,8 @@ const recordingContext = () => {
 				name,
 				args,
 				alpha: state.globalAlpha,
-				font: state.font
+				font: state.font,
+				fillStyle: state.fillStyle
 			});
 		};
 	const context = new Proxy(state, {
@@ -68,7 +75,10 @@ describe("drawSongLabel", () => {
 			["600", "12px"],
 			["400", "10px"]
 		]);
-		expect(texts.map(({ alpha }) => alpha)).toEqual([0.5, 0.5 * 0.6]);
+		// Never translucent: the detail line is a quieter, opaque color.
+		expect(texts.map(({ alpha }) => alpha)).toEqual([0.5, 0.5]);
+		expect(texts[0].fillStyle).toBe("white");
+		expect(texts[1].fillStyle).toBe("rgb(179, 179, 179)");
 	});
 
 	it("scales fonts and line height with labelPx", () => {

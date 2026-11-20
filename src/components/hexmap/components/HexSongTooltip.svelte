@@ -2,7 +2,7 @@
 	// A pared-down song tooltip for the hex map: title, year and artist, one
 	// bar splitting the song by matched progression (in each progression's
 	// map color, labeled where it belongs to a cluster), and a hint at what
-	// clicking does.
+	// clicking does. basic leaves out the summary and the hint.
 	import coreProgressionsData from "$data/core-progressions.js";
 	import type { GroupedSong } from "../../../data/songBrowser.js";
 	import { toCalendarYear } from "../../../data/songYear.js";
@@ -22,9 +22,10 @@
 		colorForProgression: (name: string) => string | undefined;
 		// What clicking the song does; nothing is shown when empty.
 		hint: string;
+		basic?: boolean;
 	};
 
-	const { song, colorForProgression, hint }: Props = $props();
+	const { song, colorForProgression, hint, basic = false }: Props = $props();
 
 	const result = $derived(
 		matchSongV2(song, coreProgressionsData, DEFAULT_WEIGHTS)
@@ -52,18 +53,20 @@
 
 	<ProgressionShareBar {segments} />
 
-	<div class="summary">
-		<strong>{result.explainedPercent}%</strong> of song matched
-		{#if homogeneity}
-			with <strong
-				>{formatEffectiveProgressionCount(
-					homogeneity.effectiveProgressionCount
-				)}</strong
-			> effective progressions
-		{/if}
-	</div>
+	{#if !basic}
+		<div class="summary">
+			<strong>{result.explainedPercent}%</strong> of song matched
+			{#if homogeneity}
+				with <strong
+					>{formatEffectiveProgressionCount(
+						homogeneity.effectiveProgressionCount
+					)}</strong
+				> effective progressions
+			{/if}
+		</div>
+	{/if}
 
-	{#if hint}
+	{#if hint && !basic}
 		<div class="hint">{hint}</div>
 	{/if}
 </div>

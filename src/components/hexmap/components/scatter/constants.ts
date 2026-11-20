@@ -117,7 +117,7 @@ export const OUTLINED_LABEL_LINE_HEIGHT = SONG_LABEL_LINE_HEIGHT_PX;
 export const OUTLINED_LABEL_PADDING = 3;
 
 // ── Axes ──────────────────────────────────────────────────────────────
-export const AXIS_LABEL_COLOR = "rgba(161, 161, 170, 0.7)";
+export const AXIS_LABEL_COLOR = "#7a7a81";
 export const AXIS_LABEL_FONT = '10px "JetBrains Mono", ui-monospace, monospace';
 // Fraction of a layout transition over which guides fade out, then in.
 export const GUIDE_FADE_FRACTION = 0.3;
@@ -125,12 +125,18 @@ export const GUIDE_LABEL_GAP = 24;
 // Keeps a bottom-right guide label clear of the fixed audio button.
 export const GUIDE_BOTTOM_RIGHT_CLEARANCE = 56;
 // Chart labels, in the story's sans.
-export const CHART_LABEL_COLOR = "rgba(212, 212, 216, 0.75)";
-export const CHART_LABEL_SIZE_PX = { regular: 12, medium: 14, large: 18 };
+export const CHART_LABEL_COLOR = "#a9a9ad";
+export const CHART_LABEL_SIZE_PX = {
+	regular: 12,
+	medium: 14,
+	large: 18,
+	xlarge: 24
+};
 export const CHART_LABEL_HALO = "rgba(9, 9, 11, 0.9)";
 export const CHART_LABEL_HALO_WIDTH = 4;
 export const CHART_BOX_COLOR = "#f4f4f5";
 export const CHART_BOX_WIDTH = 3;
+export const CHART_BOX_FILL = "rgba(255, 255, 255, 0.1)";
 
 // ── Cluster outlines (dot mode) ───────────────────────────────────────
 // Density clustering is only meaningful over layouts UMAP actually produced
@@ -151,7 +157,7 @@ export const CLUSTER_DASH_PATTERN = [7, 5];
 // outline fades to CLUSTER_DEEMPHASIZED_STROKE_ALPHA and its name hides.
 export const FAMILY_INVOLVEMENT_THRESHOLD = 0.5;
 export const CLUSTER_DEEMPHASIZED_STROKE_ALPHA = 0.15;
-export const CLUSTER_LABEL_COLOR = "rgba(244, 244, 245, 0.9)";
+export const CLUSTER_LABEL_COLOR = "#dcdcde";
 export const CLUSTER_LABEL_FONT =
 	'10px "JetBrains Mono", ui-monospace, monospace';
 // Cluster names use the story's serif (Gooper), like the player's title.

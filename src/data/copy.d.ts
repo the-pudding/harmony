@@ -37,7 +37,8 @@ declare module "$data/copy.json" {
 		rotateLabels?: string;
 		movable?: string;
 		hoverable?: string;
-		// "full" (default), or "basic" (title, year and artist only).
+		// "full" (default), or "basic" (title, year, artist and the bar of
+		// progressions, without the summary or click hint).
 		tooltip?: string;
 		hidePlayer?: string;
 		// Song keys: arriving from another layout, these move first,

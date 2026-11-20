@@ -1,9 +1,11 @@
+import { easeCubicInOut } from "d3";
 import type { Guide, GuideLayer } from "$components/storymap/layouts/types.js";
 import type { ScatterAxisLabels } from "../../scatterPoint.js";
 import {
 	AXIS_LABEL_COLOR,
 	AXIS_LABEL_FONT,
 	CHART_BOX_COLOR,
+	CHART_BOX_FILL,
 	CHART_BOX_WIDTH,
 	CHART_LABEL_COLOR,
 	CHART_LABEL_HALO,
@@ -34,6 +36,57 @@ export const guideOpacities = (
 };
 
 export type GuideSet = { guides: readonly Guide[]; opacity: number };
+
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+const labelIdOf = (guide: Guide): string | undefined =>
+	guide.kind === "label" ? guide.id : undefined;
+
+// The outgoing and incoming layouts' guides at a transition's progress
+// (0–1): a label with the same id in both moves from its old spot to its
+// new one; the rest crossfade by guideOpacities.
+export const transitionGuides = (
+	outgoing: readonly Guide[],
+	incoming: readonly Guide[],
+	progress: number
+): GuideSet[] => {
+	const opacities = guideOpacities(progress);
+	if (outgoing.length === 0) {
+		return [{ guides: incoming, opacity: opacities.incoming }];
+	}
+	const fromById = new Map<string, Guide>();
+	for (const guide of outgoing) {
+		const id = labelIdOf(guide);
+		if (id !== undefined) fromById.set(id, guide);
+	}
+	const t = easeCubicInOut(Math.min(1, Math.max(0, progress)));
+	const moved = new Set<string>();
+	const moving: Guide[] = [];
+	const appearing: Guide[] = [];
+	for (const guide of incoming) {
+		const id = labelIdOf(guide);
+		const from = id === undefined ? undefined : fromById.get(id);
+		if (guide.kind === "label" && from?.kind === "label") {
+			moved.add(id!);
+			moving.push({
+				...guide,
+				x: lerp(from.x, guide.x, t),
+				y: lerp(from.y, guide.y, t)
+			});
+		} else {
+			appearing.push(guide);
+		}
+	}
+	const leaving = outgoing.filter((guide) => {
+		const id = labelIdOf(guide);
+		return id === undefined || !moved.has(id);
+	});
+	return [
+		{ guides: leaving, opacity: opacities.outgoing },
+		{ guides: appearing, opacity: opacities.incoming },
+		{ guides: moving, opacity: 1 }
+	];
+};
 
 // Frame coordinates (0–1 across the framed rect, y up), fixed on screen so
 // axis labels stay put while the camera zooms. Draws the guides in one
@@ -105,16 +158,21 @@ export const drawGuides = (
 					context.textBaseline = "alphabetic";
 					break;
 				}
-				case "box":
-					context.strokeStyle = CHART_BOX_COLOR;
-					context.lineWidth = CHART_BOX_WIDTH;
-					context.strokeRect(
+				case "box": {
+					const box = [
 						left + guide.x * rect.width,
 						top + (1 - guide.y - guide.height) * rect.height,
 						guide.width * rect.width,
 						guide.height * rect.height
-					);
+					] as const;
+					context.fillStyle = CHART_BOX_FILL;
+					context.fillRect(...box);
+					context.strokeStyle = CHART_BOX_COLOR;
+					context.lineWidth = CHART_BOX_WIDTH;
+					context.strokeRect(...box);
+					context.fillStyle = AXIS_LABEL_COLOR;
 					break;
+				}
 			}
 		}
 	}
