@@ -47,9 +47,8 @@
 
 	type Props = {
 		// What the slide wants the map to be, from the copy's `map` block. Its
-		// layout, camera, labels, interaction, and highlighted, only and
-		// dimmed songs are used here; playable songs and media settings are
-		// read by later features.
+		// media settings are turned into spotlitSongKey and litSongKeys by
+		// Index, which knows what's playing; the rest is used here.
 		scene?: MapScene;
 		// Changes to the camera, layout and which songs show jump straight to
 		// the new view instead of animating (e.g. when the map is about to
@@ -103,6 +102,13 @@
 		linkedSongKey?: string | null;
 		// Called with the song the pointer hovers on the map, or null.
 		onSongHover?: (songKey: string | null) => void;
+		// A song the story calls out (e.g. the one a video names right now):
+		// enlarged and labeled, without fading the rest. Wins over
+		// searchedSongKey.
+		spotlitSongKey?: string | null;
+		// Songs the story has already called out (e.g. that a video named):
+		// small inert markers with no labels, kept bright on a dimmed scene.
+		litSongKeys?: readonly string[];
 		// Called with where the explored cluster's title goes at dot zoom
 		// (its top center, in viewport pixels), or null when it isn't titled
 		// on screen.
@@ -132,6 +138,8 @@
 		chordsSongKey = null,
 		linkedSongKey = null,
 		onSongHover = undefined,
+		spotlitSongKey = null,
+		litSongKeys = [],
 		onExploredTitleAnchor = undefined,
 		purityLayout = true,
 		pureThreshold = 0.9
@@ -197,7 +205,12 @@
 		return layoutName === "umap" ? featuredSongKeys : new Set<string>();
 	});
 
-	const highlightedSongKeys = $derived(new Set(highlightSongs));
+	const litSongKeySet = $derived(new Set(litSongKeys));
+
+	// Lit songs are highlighted too, as smaller markers.
+	const highlightedSongKeys = $derived(
+		new Set([...highlightSongs, ...litSongKeys])
+	);
 
 	// highlightSongs are drawn the same, but aren't playable unless featured.
 	const outlinedSongKeys = $derived(
@@ -474,6 +487,7 @@
 				{clusterNames}
 				{outlinedSongKeys}
 				{inertOutlinedSongKeys}
+				smallOutlinedSongKeys={litSongKeySet}
 				{hoverableSongKeys}
 				outlinedTitlePrefix="🎧"
 				{playingSongKey}
@@ -497,7 +511,8 @@
 				{revealStagger}
 				selectedClusterName={explorable ? exploredClusterName : null}
 				zoomSongKey={explorable ? searchZoomSongKey : null}
-				spotlitSongKey={explorable ? searchedSongKey : null}
+				spotlitSongKey={spotlitSongKey ?? (explorable ? searchedSongKey : null)}
+				spotlightFadesOthers={spotlitSongKey === null}
 				accentSongKeys={outsideHub?.songKeys ?? null}
 				accentFillColor={outsideHub?.color ?? null}
 				{focusFrame}

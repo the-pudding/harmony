@@ -2,17 +2,19 @@ import { easeCubicInOut } from "d3";
 import { PLAYING_TWEEN_MS } from "./constants.js";
 import { lerp, type Spotlight } from "./pointStyle.js";
 
-// Eases each song's spotlight emphasis, and how far the rest fade, toward
-// the spotlit song, from wherever they are (mid-tween included), calling
+// Eases each song's spotlight emphasis, and how far the rest fade (unless
+// fadesOthers is false), toward the spotlit song, from wherever they are (mid-tween included), calling
 // onFrame after every step. Not reactive, since onFrame redraws.
 export const createSpotlightTween = (input: {
 	readonly songKey: string | null;
+	readonly fadesOthers: boolean;
 	onFrame: () => void;
 }) => {
 	let spotlight: Spotlight = { emphasis: new Map(), fade: 0 };
 
 	$effect(() => {
 		const target = input.songKey;
+		const fadeTarget = target && input.fadesOthers ? 1 : 0;
 		const from = spotlight;
 		const songKeys = new Set([...from.emphasis.keys()]);
 		if (target) songKeys.add(target);
@@ -38,7 +40,7 @@ export const createSpotlightTween = (input: {
 						])
 						.filter(([, emphasis]) => emphasis > 0)
 				),
-				fade: lerp(from.fade, target ? 1 : 0, eased)
+				fade: lerp(from.fade, fadeTarget, eased)
 			};
 			input.onFrame();
 			if (progress < 1) frame = requestAnimationFrame(step);

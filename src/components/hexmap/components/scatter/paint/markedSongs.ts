@@ -2,6 +2,7 @@ import {
 	OUTLINE_COLOR,
 	OUTLINE_GLOW_BLUR,
 	OUTLINE_WIDTH,
+	OUTLINED_POINT_RADIUS,
 	PLAYING_GLOW_BLUR
 } from "../constants.js";
 import { lerp, type PointStyle } from "../pointStyle.js";
@@ -23,7 +24,8 @@ export type Playback = {
 
 // Marked songs: a white glow, then the song's fill inside a white ring, so
 // they stand out from the dots around them. A song that isn't outlined
-// grows its ring and glow in with its emphasis. A hovered outlined song
+// grows its ring and glow in with its emphasis; a smaller marker has a
+// thinner ring and glow, in proportion. A hovered outlined song
 // shows a play icon; the playing one, its progress ring and a pause icon.
 export const drawMarkedSongs = (
 	scene: Scene,
@@ -49,12 +51,18 @@ export const drawMarkedSongs = (
 		const radius = style.radiusFor(songKey);
 		const emphasis = style.emphasisFor(songKey);
 		const outlined = style.isOutlined(songKey);
+		const size = Math.min(
+			1,
+			style.restingRadiusFor(songKey) / OUTLINED_POINT_RADIUS
+		);
 		const glowBlur = lerp(
-			outlined ? OUTLINE_GLOW_BLUR : 0,
+			outlined ? OUTLINE_GLOW_BLUR * size : 0,
 			PLAYING_GLOW_BLUR,
 			emphasis
 		);
-		const outlineWidth = outlined ? OUTLINE_WIDTH : OUTLINE_WIDTH * emphasis;
+		const outlineWidth = outlined
+			? lerp(OUTLINE_WIDTH * size, OUTLINE_WIDTH, emphasis)
+			: OUTLINE_WIDTH * emphasis;
 		if (!isOnScreen(viewport, screen, radius + glowBlur)) continue;
 		const alpha = style.alphaFor(songKey) * scene.alpha[index];
 

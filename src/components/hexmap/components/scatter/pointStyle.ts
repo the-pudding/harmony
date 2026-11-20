@@ -7,7 +7,8 @@ import {
 	OUTLINED_POINT_RADIUS,
 	PLAYING_POINT_RADIUS,
 	POINT_RADIUS,
-	SELECTED_POINT_RADIUS
+	SELECTED_POINT_RADIUS,
+	SMALL_OUTLINED_POINT_RADIUS
 } from "./constants.js";
 
 export const lerp = (from: number, to: number, t: number): number =>
@@ -27,11 +28,14 @@ export type PointStyle = ReturnType<typeof createPointStyle>;
 export const createPointStyle = ({
 	spotlight,
 	outlinedSongKeys,
+	smallOutlinedSongKeys = null,
 	pointRadius = POINT_RADIUS,
 	...alphaArgs
 }: Omit<ScatterPointAlphaArgs, "songKey"> & {
 	spotlight: Spotlight;
 	outlinedSongKeys: ReadonlySet<string> | null;
+	// Of outlinedSongKeys, ones with a smaller marker.
+	smallOutlinedSongKeys?: ReadonlySet<string> | null;
 	// A plain dot's radius, which the layout sets (stars are smaller).
 	pointRadius?: number;
 }) => {
@@ -49,7 +53,11 @@ export const createPointStyle = ({
 	// A marker's size when not spotlit. Labels are laid out from it so they
 	// stay put as songs are played and stopped.
 	const restingRadiusFor = (songKey: string): number =>
-		isOutlined(songKey) ? OUTLINED_POINT_RADIUS : pointRadius;
+		isOutlined(songKey)
+			? smallOutlinedSongKeys?.has(songKey)
+				? SMALL_OUTLINED_POINT_RADIUS
+				: OUTLINED_POINT_RADIUS
+			: pointRadius;
 
 	const radiusFor = (songKey: string): number => {
 		if (isMarked(songKey)) {

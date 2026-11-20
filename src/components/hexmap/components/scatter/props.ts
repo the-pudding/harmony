@@ -74,6 +74,10 @@ export type EmbeddingScatterProps = {
 	// A song to spotlight (when nothing above is) without moving the view
 	// or changing what clicks do, e.g. one picked in search.
 	spotlitSongKey?: string | null;
+	// Whether a spotlit song fades every other song back (true), or only
+	// grows its own marker (e.g. a song a video names, where the rest of
+	// the map should stay as it is).
+	spotlightFadesOthers?: boolean;
 	// The part of the canvas a focused cluster should fill, in screen
 	// pixels from its top (e.g. the space below text over the map). In
 	// hex mode the cluster is scaled to almost fill its height and
@@ -131,6 +135,10 @@ export type EmbeddingScatterProps = {
 	// Of outlinedSongKeys, ones drawn the same but not playable: no
 	// outlinedTitlePrefix, and clicks treat them as plain dots.
 	inertOutlinedSongKeys?: Set<string> | null;
+	// Of inertOutlinedSongKeys, ones drawn as smaller markers with no label
+	// (e.g. songs a video has already named, which would crowd the map
+	// with labels).
+	smallOutlinedSongKeys?: Set<string> | null;
 	// One of outlinedSongKeys to call out above the rest (e.g. the song
 	// playing): drawn bigger and on top, with the others faded.
 	playingSongKey?: string | null;

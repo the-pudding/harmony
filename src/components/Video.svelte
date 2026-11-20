@@ -89,6 +89,7 @@
 			src="assets/video/{videoId}.mp4"
 			playsinline
 			bind:paused
+			onseeked={() => (currentTime = videoEl.currentTime)}
 			onclick={() => (paused = !paused)}
 		>
 			<track

@@ -141,6 +141,7 @@
 		zoomSongKey = null,
 		openSongId = null,
 		spotlitSongKey = null,
+		spotlightFadesOthers = true,
 		focusFrame = null,
 		offsetY = 0,
 		mapFrame = view.NO_MAP_FRAME,
@@ -154,6 +155,7 @@
 		outlinedSongKeys = null,
 		outlinedTitlePrefix = null,
 		inertOutlinedSongKeys = null,
+		smallOutlinedSongKeys = null,
 		playingSongKey = null,
 		playingClipProgressFraction = 0,
 		playingChordColorSegments = [],
@@ -799,6 +801,7 @@
 			pointRadius: layout.pointRadius,
 			spotlight: spotlight.current,
 			outlinedSongKeys,
+			smallOutlinedSongKeys,
 			hoveredSongKey,
 			selectedSongKey,
 			coClusterSongKeys,
@@ -860,12 +863,15 @@
 			}
 		});
 
-		if (outlinedSongKeys && songSummaryByKey) {
+		// Marked songs: outlined ones, and a spotlit one even when nothing is
+		// outlined.
+		if (songSummaryByKey) {
 			drawOutlinedSongLabels(scene, {
 				style,
 				summaries: songSummaryByKey,
 				titlePrefix: outlinedTitlePrefix,
-				isPrefixed: isPlayableOutlined
+				isPrefixed: isPlayableOutlined,
+				isLabeled: (songKey) => !(smallOutlinedSongKeys?.has(songKey) ?? false)
 			});
 		}
 
@@ -1082,6 +1088,11 @@
 	const spotlight = createSpotlightTween({
 		get songKey() {
 			return spotlightSongKey;
+		},
+		// spotlitSongKey may leave the rest as they are; the others always
+		// fade them.
+		get fadesOthers() {
+			return spotlightFadesOthers || spotlightSongKey !== spotlitSongKey;
 		},
 		onFrame: () => draw()
 	});

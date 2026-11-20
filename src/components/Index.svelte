@@ -32,6 +32,7 @@
 	import { chordify } from "$utils/chordify";
 	import { setContext } from "svelte";
 	import { storyMedia } from "$runes/storyMedia.svelte";
+	import { videoCues } from "$data/videoCues";
 	import { createExplore } from "$runes/explore.svelte";
 	import { sameClusterName } from "$data/clusterName";
 	import { spanStyle } from "$routes/demo/record/timelineStyles";
@@ -115,6 +116,26 @@
 		return scene === null || textFocusCluster === undefined
 			? scene
 			: { ...scene, camera: { kind: "cluster", name: textFocusCluster } };
+	});
+	// The video the map follows (followVideo), while it's the one playing:
+	// the song its current cue names is spotlit, and the songs named before
+	// it stay lit. litVideoSongs starts with every song a video names lit.
+	let followedCues = $derived(
+		mapScene?.media.followVideo != null &&
+			mapScene.media.followVideo === storyMedia.videoId
+			? (videoCues[storyMedia.videoId] ?? null)
+			: null
+	);
+	let mediaSpotlitSongKey = $derived(
+		followedCues?.[storyMedia.cueIndex]?.songKey ?? null
+	);
+	const songKeysOf = (cues) =>
+		cues.flatMap(({ songKey }) => (songKey === null ? [] : [songKey]));
+	let litSongKeys = $derived.by(() => {
+		const litVideo = mapScene?.media.litVideoSongs;
+		if (litVideo) return songKeysOf(videoCues[litVideo] ?? []);
+		if (!followedCues || storyMedia.cueIndex <= 0) return [];
+		return songKeysOf(followedCues.slice(0, storyMedia.cueIndex));
 	});
 	// The cluster the map is focused on, if any.
 	let focusedCluster = $derived(
@@ -376,6 +397,8 @@
 		onSongChordsToggle={onExploreSlide ? explore.toggleChords : undefined}
 		linkedSongKey={hoveredInBeeswarm}
 		onSongHover={(songKey) => (hoveredOnMap = songKey)}
+		spotlitSongKey={mediaSpotlitSongKey}
+		{litSongKeys}
 		onExploredTitleAnchor={(anchor) => (titleAnchor = anchor)}
 	/>
 </div>

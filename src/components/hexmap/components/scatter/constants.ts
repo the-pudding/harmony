@@ -82,6 +82,8 @@ export const COLOR_MIX_STEPS = 24;
 // ── Outlined (called-out) songs & their labels ────────────────────────
 export const OUTLINE_COLOR = "#ffffff";
 export const OUTLINED_POINT_RADIUS = 10;
+// Small markers (smallOutlinedSongKeys): ring and glow scale down with them.
+export const SMALL_OUTLINED_POINT_RADIUS = 5;
 export const OUTLINE_WIDTH = 3;
 export const OUTLINE_GLOW_BLUR = 10;
 // The spotlit song (playingSongKey, else zoomSongKey) gets a bigger
