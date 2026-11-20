@@ -82,6 +82,7 @@
             "visible": "true",
             "layout": "timeline",
             "followVideo": "examples",
+            "dimmed": "true",
             "movable": "false",
             "tooltip": "basic"
           },
@@ -115,6 +116,7 @@
             "visible": "true",
             "layout": "timeline",
             "litVideoSongs": "examples",
+            "dimmed": "true",
             "movable": "false",
             "tooltip": "basic"
           }

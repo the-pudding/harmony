@@ -224,7 +224,12 @@
 	);
 
 	const dimExceptSongKeys = $derived(
-		scene.songs.dimmed ? (outlinedSongKeys ?? new Set<string>()) : null
+		scene.songs.dimmed
+			? new Set([
+					...(outlinedSongKeys ?? []),
+					...(spotlitSongKey === null ? [] : [spotlitSongKey])
+				])
+			: null
 	);
 
 	// A focused cluster isn't labeled.
