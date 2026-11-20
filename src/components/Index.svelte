@@ -18,6 +18,7 @@
 	import EffectiveProgressions from "$components/EffectiveProgressions.svelte";
 	import Signatures from "$components/Signatures.svelte";
 	import ExploreControls from "$components/ExploreControls.svelte";
+	import AudioGate from "$components/AudioGate.svelte";
 	import List from "$components/List.svelte";
 	import Footer from "$components/Footer.svelte";
 	import Methods from "$components/Methods.svelte";
@@ -57,6 +58,7 @@
 		RomanNumerals,
 		EffectiveProgressions,
 		ExploreControls,
+		AudioGate,
 		Methods,
 		Footer
 	};
@@ -245,6 +247,11 @@
 		pickSong: (songKey, clusterName) =>
 			explore.searchSong(songKey, clusterName),
 		pickCluster: (clusterName) => explore.pickCluster(clusterName),
+		playSong: explore.playSong,
+		// The song the slide's map plays when asked to (AudioGate's button).
+		get firstPlayableSongKey() {
+			return mapScene?.songs.playable[0] ?? null;
+		},
 		get searchedSongKey() {
 			return explore.searchedSongKey;
 		}
@@ -376,11 +383,7 @@
 {/if}
 
 <article bind:this={articleEl}>
-	<Chapters
-		activeSlide={slideI}
-		sections={sections.slice(1)}
-		onselect={goToSlide}
-	/>
+	<Chapters activeSlide={slideI} {sections} onselect={goToSlide} />
 
 	<div
 		class="overlay"
