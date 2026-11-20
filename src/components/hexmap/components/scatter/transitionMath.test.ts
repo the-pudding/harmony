@@ -4,7 +4,8 @@ import {
 	STAGGER_SPAN,
 	beginTransition,
 	createChannels,
-	lastStageStart,
+	createWindows,
+	lastMoveStart,
 	stagedDurationMs,
 	stepCrossfade,
 	stepFade,
@@ -34,22 +35,13 @@ const setUp = (
 	const count = current.x.length;
 	const from = createChannels(count);
 	const to = createChannels(count);
-	const startAt = new Float32Array(count);
-	const endAt = new Float32Array(count);
-	const changed = beginTransition(
-		current,
-		target,
-		stagger,
-		from,
-		to,
-		startAt,
-		endAt
-	);
+	const windows = createWindows(count);
+	const changed = beginTransition(current, target, stagger, from, to, windows);
 	const at = (t: number) => {
-		stepTransition(from, to, current, startAt, endAt, t, easeCubicInOut);
+		stepTransition(from, to, current, windows, t, easeCubicInOut);
 		return current;
 	};
-	return { from, to, startAt, endAt, changed, at };
+	return { from, to, windows, changed, at };
 };
 
 describe("stepTransition", () => {
@@ -79,9 +71,9 @@ describe("stepTransition", () => {
 	it("holds a staggered song still until its start, then catches up by the end", () => {
 		const current = channels([0, 0], [0, 0]);
 		const stagger = Float32Array.from([0, 1]);
-		const { startAt, at } = setUp(current, channels([1, 1], [0, 0]), stagger);
-		expect(startAt[0]).toBe(0);
-		expect(startAt[1]).toBeCloseTo(STAGGER_SPAN);
+		const { windows, at } = setUp(current, channels([1, 1], [0, 0]), stagger);
+		expect(windows.moveStart[0]).toBe(0);
+		expect(windows.moveStart[1]).toBeCloseTo(STAGGER_SPAN);
 		const early = at(STAGGER_SPAN * 0.9);
 		expect(early.x[0]).toBeGreaterThan(0);
 		expect(early.x[1]).toBe(0);
@@ -176,24 +168,22 @@ describe("a stagger window", () => {
 		const count = 2;
 		const from = createChannels(count);
 		const to = createChannels(count);
-		const startAt = new Float32Array(count);
-		const endAt = new Float32Array(count);
+		const windows = createWindows(count);
 		beginTransition(
 			current,
 			target,
 			Float32Array.from([0, 1]),
 			from,
 			to,
-			startAt,
-			endAt,
+			windows,
 			0.25
 		);
-		expect(startAt[0]).toBe(0);
-		expect(startAt[1]).toBeCloseTo(0.75);
-		expect(endAt[0]).toBeCloseTo(0.25);
-		expect(endAt[1]).toBeCloseTo(1);
+		expect(windows.moveStart[0]).toBe(0);
+		expect(windows.moveStart[1]).toBeCloseTo(0.75);
+		expect(windows.moveEnd[0]).toBeCloseTo(0.25);
+		expect(windows.moveEnd[1]).toBeCloseTo(1);
 		const at = (t: number) => {
-			stepTransition(from, to, current, startAt, endAt, t, (x) => x);
+			stepTransition(from, to, current, windows, t, (x) => x);
 			return [...current.alpha];
 		};
 		expect(at(0.125)[0]).toBeCloseTo(0.5);
@@ -203,47 +193,111 @@ describe("a stagger window", () => {
 });
 
 describe("staged transitions", () => {
-	// Stages of 100, 100 and 200 ms, 50 ms apart: 500 ms in all.
+	// Two cluster stages (tint 50, move 100) and a last stage (move 200),
+	// 50 ms apart; songs waiting dim to 0.3 over the first 50 ms. 600 ms in all.
 	const plan = (stageOf: number[]): StagePlan => ({
 		stageOf: Uint8Array.from(stageOf),
-		stageMs: [100, 100, 200],
-		pauseMs: 50
+		stages: [
+			{ tintMs: 50, moveMs: 100 },
+			{ tintMs: 50, moveMs: 100 },
+			{ tintMs: 0, moveMs: 200 }
+		],
+		pauseMs: 50,
+		dimAlpha: 0.3,
+		dimMs: 50
 	});
+	const ms = (value: number) => value / 600;
+
+	const staged = (current: Channels, target: Channels, stageOf: number[]) => {
+		const run = setUp(current, target);
+		writeStageWindows(plan(stageOf), null, run.windows);
+		return run;
+	};
 
 	it("adds up the stages and the pauses between them", () => {
-		expect(stagedDurationMs(plan([]))).toBe(500);
-		expect(lastStageStart(plan([]))).toBeCloseTo(0.6);
+		expect(stagedDurationMs(plan([]))).toBe(600);
+		expect(lastMoveStart(plan([]))).toBeCloseTo(ms(400));
 	});
 
-	it("gives each song its stage's window, and spreads only the last by stagger", () => {
-		const startAt = new Float32Array(4);
-		const endAt = new Float32Array(4);
+	it("tints a cluster stage before moving it, and spreads only the last by stagger", () => {
+		const windows = createWindows(4);
 		const stagger = Float32Array.from([1, 1, 0, 1]);
-		writeStageWindows(plan([0, 1, 2, 9]), stagger, startAt, endAt);
-		expect([startAt[0], endAt[0]]).toEqual([0, expect.closeTo(0.2)]);
-		expect(startAt[1]).toBeCloseTo(0.3);
-		expect(endAt[1]).toBeCloseTo(0.5);
-		expect(startAt[2]).toBeCloseTo(0.6);
-		expect(startAt[3]).toBeCloseTo(0.6 + STAGGER_SPAN * 0.4);
-		expect(endAt[2]).toBe(1);
-		expect(endAt[3]).toBe(1);
+		writeStageWindows(plan([0, 1, 2, 9]), stagger, windows);
+		const { moveStart, moveEnd, tintStart, tintEnd } = windows;
+		expect([tintStart[0], tintEnd[0]]).toEqual([0, expect.closeTo(ms(50))]);
+		expect([moveStart[0], moveEnd[0]]).toEqual([
+			expect.closeTo(ms(50)),
+			expect.closeTo(ms(150))
+		]);
+		expect(tintStart[1]).toBeCloseTo(ms(200));
+		expect(moveStart[1]).toBeCloseTo(ms(250));
+		expect(moveEnd[1]).toBeCloseTo(ms(350));
+		expect(moveStart[2]).toBeCloseTo(ms(400));
+		expect(moveStart[3]).toBeCloseTo(ms(400 + STAGGER_SPAN * 200));
+		expect([tintStart[3], tintEnd[3]]).toEqual([moveStart[3], moveEnd[3]]);
+		expect(moveEnd[2]).toBe(1);
+		expect(moveEnd[3]).toBe(1);
 	});
 
-	it("holds a song exactly as it was until its stage, then eases it there", () => {
-		const current = channels([0, 0], [0, 0], [0.85, 0.85], [0, 0]);
+	it("colors a cluster stage in place, then moves it already colored", () => {
+		const current = channels([0], [0], [1], [0]);
+		const { at } = staged(current, channels([1], [1], [1], [1]), [0]);
+		const tinting = at(ms(25));
+		expect(tinting.x[0]).toBe(0);
+		expect(tinting.mix[0]).toBeGreaterThan(0);
+		expect(tinting.mix[0]).toBeLessThan(1);
+		const tinted = at(ms(50));
+		expect([tinted.x[0], tinted.mix[0]]).toEqual([0, 1]);
+		const moving = at(ms(100));
+		expect(moving.x[0]).toBeGreaterThan(0);
+		expect(moving.mix[0]).toBe(1);
+		expect(at(ms(150)).x[0]).toBe(1);
+	});
+
+	it("dims songs waiting for a later stage, and holds them dim until it", () => {
+		const current = channels([0, 0, 0], [0, 0, 0], [1, 1, 0.2], [0, 0, 0]);
+		const target = channels([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]);
+		const { at } = staged(current, target, [0, 1, 2]);
+		const dimming = at(ms(25));
+		expect(dimming.alpha[0]).toBe(1);
+		expect(dimming.alpha[1]).toBeLessThan(1);
+		expect(dimming.alpha[1]).toBeGreaterThan(0.3);
+		const waiting = at(ms(199));
+		expect(waiting.alpha[0]).toBe(1);
+		expect(waiting.alpha[1]).toBeCloseTo(0.3);
+		expect(waiting.alpha[2]).toBeCloseTo(0.2);
+		expect([waiting.x[1], waiting.mix[1]]).toEqual([0, 0]);
+		const clusterTinted = at(ms(250));
+		expect([clusterTinted.alpha[1], clusterTinted.mix[1]]).toEqual([1, 1]);
+		expect(clusterTinted.x[1]).toBeCloseTo(0, 5);
+		expect(clusterTinted.alpha[2]).toBeCloseTo(0.2);
+		const lastMoving = at(ms(500));
+		expect(lastMoving.alpha[2]).toBeGreaterThan(0.2);
+		expect(lastMoving.alpha[2]).toBeLessThan(1);
+		expect(lastMoving.mix[2]).toBeCloseTo(lastMoving.x[2], 5);
+	});
+
+	it("ends exactly at the target", () => {
+		const current = channels([0, 0, 0], [0, 0, 0], [1, 1, 1], [0, 0, 0]);
+		const target = channels(
+			[0.1, 0.2, 0.3],
+			[0.4, 0.5, 0.6],
+			[1, 0.5, 0],
+			[1, 1, 0.5]
+		);
+		const end = staged(current, target, [0, 1, 2]).at(1);
+		expect(end).toEqual(target);
+	});
+
+	it("leaves the next transition undimmed", () => {
+		const current = channels([0, 0], [0, 0], [1, 1], [0, 0]);
 		const target = channels([1, 1], [1, 1], [1, 1], [1, 1]);
-		const { startAt, endAt, at } = setUp(current, target);
-		writeStageWindows(plan([0, 2]), null, startAt, endAt);
-		const firstStageDone = at(0.25);
-		expect([firstStageDone.x[0], firstStageDone.mix[0]]).toEqual([1, 1]);
-		expect(firstStageDone.x[1]).toBe(0);
-		expect(firstStageDone.alpha[1]).toBeCloseTo(0.85);
-		expect(firstStageDone.mix[1]).toBe(0);
-		const lastStage = at(0.8);
-		expect(lastStage.x[1]).toBeGreaterThan(0);
-		expect(lastStage.x[1]).toBeLessThan(1);
-		expect(lastStage.mix[1]).toBeCloseTo(lastStage.x[1], 5);
-		expect([...at(1).x]).toEqual([1, 1]);
+		staged(current, target, [0, 1]).at(ms(100));
+		const { at } = setUp(current, channels([0, 0], [0, 0], [1, 1], [0, 0]));
+		const midway = at(0.5);
+		expect(midway.alpha[0]).toBe(1);
+		expect(midway.alpha[1]).toBeGreaterThan(0.3);
+		expect(at(1).alpha[1]).toBe(1);
 	});
 });
 

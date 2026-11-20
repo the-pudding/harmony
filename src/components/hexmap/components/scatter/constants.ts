@@ -53,11 +53,16 @@ export const REVEAL_STAGGER_WINDOW = 0.35;
 // Points animating between layouts.
 export const TWEEN_DURATION_MS = 700;
 export const LAYOUT_CHANGE_TWEEN_MS = 1600;
-// A staged arrival at a layout (see revealStages): each listed cluster's
-// stage, the pause before the next stage, and the last stage (everyone else).
-export const STAGED_REVEAL_CLUSTER_STAGE_MS = 1100;
+// A staged arrival at a layout (see revealStages). Songs waiting for a later
+// stage first dim; each listed cluster's songs then take their color in
+// place and fly to it; a pause separates stages; everyone else then colors
+// as it flies.
+export const STAGED_REVEAL_WAITING_ALPHA = 0.3;
+export const STAGED_REVEAL_DIM_MS = 300;
+export const STAGED_REVEAL_CLUSTER_TINT_MS = 400;
+export const STAGED_REVEAL_CLUSTER_MOVE_MS = 1000;
 export const STAGED_REVEAL_PAUSE_MS = 250;
-export const STAGED_REVEAL_LAST_STAGE_MS = LAYOUT_CHANGE_TWEEN_MS;
+export const STAGED_REVEAL_LAST_MOVE_MS = LAYOUT_CHANGE_TWEEN_MS;
 // Crossfade used instead of motion under prefers-reduced-motion.
 export const REDUCED_MOTION_FADE_MS = 200;
 // Points moving because the map frame changed within one layout.

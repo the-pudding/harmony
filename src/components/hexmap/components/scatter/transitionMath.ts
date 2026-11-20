@@ -32,21 +32,55 @@ export const copyChannels = (source: Channels, into: Channels): void => {
 	into.mix.set(source.mix);
 };
 
-// Writes endpoints into from/to and each song's [start, end] fraction of the
-// transition into startAt/endAt. A song the target doesn't place (NaN) fades
-// out in place; a song with no position yet fades in at its target. Returns
-// whether anything will move.
+// Per song, as fractions of the transition: position moves over
+// [moveStart, moveEnd], color and alpha change over [tintStart, tintEnd], and
+// before that alpha eases down to at most dimAlpha over [0, dimEnd].
+export type SongWindows = {
+	moveStart: Float32Array;
+	moveEnd: Float32Array;
+	tintStart: Float32Array;
+	tintEnd: Float32Array;
+	dimAlpha: Float32Array;
+	dimEnd: number;
+};
+
+const UNDIMMED_ALPHA = Infinity;
+
+export const createWindows = (count: number): SongWindows => ({
+	moveStart: new Float32Array(count),
+	moveEnd: new Float32Array(count),
+	tintStart: new Float32Array(count),
+	tintEnd: new Float32Array(count),
+	dimAlpha: new Float32Array(count).fill(UNDIMMED_ALPHA),
+	dimEnd: 0
+});
+
+// Every song changes everything over the whole transition.
+export const writeWholeWindows = (windows: SongWindows): void => {
+	windows.moveStart.fill(0);
+	windows.moveEnd.fill(1);
+	windows.tintStart.fill(0);
+	windows.tintEnd.fill(1);
+	windows.dimAlpha.fill(UNDIMMED_ALPHA);
+	windows.dimEnd = 0;
+};
+
+// Writes endpoints into from/to and each song's windows, tinting as it moves.
+// A song the target doesn't place (NaN) fades out in place; a song with no
+// position yet fades in at its target. Returns whether anything will move.
 export const beginTransition = (
 	current: Channels,
 	target: Channels,
 	stagger: Float32Array | null,
 	from: Channels,
 	to: Channels,
-	startAt: Float32Array,
-	endAt: Float32Array,
+	windows: SongWindows,
 	window: number | null = null
 ): boolean => {
 	let changed = false;
+	const { moveStart, moveEnd, tintStart, tintEnd } = windows;
+	windows.dimAlpha.fill(UNDIMMED_ALPHA);
+	windows.dimEnd = 0;
 	for (let i = 0; i < current.x.length; i++) {
 		const placed = !Number.isNaN(target.x[i]) && !Number.isNaN(target.y[i]);
 		const hasPosition = !Number.isNaN(current.x[i]);
@@ -58,8 +92,10 @@ export const beginTransition = (
 		from.alpha[i] = current.alpha[i];
 		to.mix[i] = target.mix[i];
 		from.mix[i] = hasPosition ? current.mix[i] : to.mix[i];
-		startAt[i] = stagger ? staggerStart(clamp01(stagger[i]), window) : 0;
-		endAt[i] = window === null || !stagger ? 1 : startAt[i] + window;
+		moveStart[i] = stagger ? staggerStart(clamp01(stagger[i]), window) : 0;
+		moveEnd[i] = window === null || !stagger ? 1 : moveStart[i] + window;
+		tintStart[i] = moveStart[i];
+		tintEnd[i] = moveEnd[i];
 		if (
 			from.x[i] !== to.x[i] ||
 			from.y[i] !== to.y[i] ||
@@ -72,60 +108,98 @@ export const beginTransition = (
 	return changed;
 };
 
+// A stage's songs tint in place for tintMs, then move for moveMs; with no
+// tintMs they tint as they move.
+export type Stage = { tintMs: number; moveMs: number };
+
 // Songs move in stages, one after another and pauseMs apart. A stage's songs
-// move together, except in the last, where their stagger spreads their starts.
+// move together, except in the last, where their stagger spreads their
+// starts. Songs waiting for a later stage dim to dimAlpha over the first
+// dimMs, and brighten as their stage tints them.
 export type StagePlan = {
 	// Per song, the stage (0 first) it moves in; beyond the last means the last.
 	stageOf: Uint8Array;
-	stageMs: readonly number[];
+	stages: readonly Stage[];
 	pauseMs: number;
+	dimAlpha: number;
+	dimMs: number;
 };
 
-export const stagedDurationMs = ({ stageMs, pauseMs }: StagePlan): number =>
-	stageMs.reduce((total, ms) => total + ms, 0) +
-	pauseMs * Math.max(0, stageMs.length - 1);
+const stageMs = ({ tintMs, moveMs }: Stage): number => tintMs + moveMs;
 
-const stageStartMs = ({ stageMs, pauseMs }: StagePlan, stage: number): number =>
-	stageMs.slice(0, stage).reduce((total, ms) => total + ms + pauseMs, 0);
+export const stagedDurationMs = ({ stages, pauseMs }: StagePlan): number =>
+	stages.reduce((total, stage) => total + stageMs(stage), 0) +
+	pauseMs * Math.max(0, stages.length - 1);
 
-// As a fraction of the whole staged transition.
-export const lastStageStart = (plan: StagePlan): number =>
-	stageStartMs(plan, plan.stageMs.length - 1) /
-	Math.max(1, stagedDurationMs(plan));
+const stageStartMs = ({ stages, pauseMs }: StagePlan, stage: number): number =>
+	stages
+		.slice(0, stage)
+		.reduce((total, previous) => total + stageMs(previous) + pauseMs, 0);
 
-// Writes each song's [start, end] fraction of the staged transition.
+// When the last stage's songs start moving, as a fraction of the whole staged
+// transition.
+export const lastMoveStart = (plan: StagePlan): number => {
+	const last = plan.stages.length - 1;
+	return (
+		(stageStartMs(plan, last) + plan.stages[last].tintMs) /
+		Math.max(1, stagedDurationMs(plan))
+	);
+};
+
+// Writes each song's windows for the staged transition.
 export const writeStageWindows = (
 	plan: StagePlan,
 	stagger: Float32Array | null,
-	startAt: Float32Array,
-	endAt: Float32Array
+	windows: SongWindows
 ): void => {
 	const total = Math.max(1, stagedDurationMs(plan));
-	const last = plan.stageMs.length - 1;
-	const starts = plan.stageMs.map(
+	const last = plan.stages.length - 1;
+	const tintStarts = plan.stages.map(
 		(_, stage) => stageStartMs(plan, stage) / total
 	);
-	const ends = plan.stageMs.map((ms, stage) => starts[stage] + ms / total);
-	for (let i = 0; i < startAt.length; i++) {
+	const moveStarts = plan.stages.map(
+		({ tintMs }, stage) => tintStarts[stage] + tintMs / total
+	);
+	const moveEnds = plan.stages.map(
+		({ moveMs }, stage) => moveStarts[stage] + moveMs / total
+	);
+	const { moveStart, moveEnd, tintStart, tintEnd, dimAlpha } = windows;
+	for (let i = 0; i < moveStart.length; i++) {
 		const stage = Math.min(plan.stageOf[i], last);
-		const start = starts[stage];
+		const tintsWhileMoving = plan.stages[stage].tintMs <= 0;
 		const spread =
 			stage === last && stagger
-				? staggerStart(clamp01(stagger[i]), null) * (ends[stage] - start)
+				? staggerStart(clamp01(stagger[i]), null) *
+					(moveEnds[stage] - moveStarts[stage])
 				: 0;
-		startAt[i] = start + spread;
-		endAt[i] = ends[stage];
+		moveStart[i] = moveStarts[stage] + spread;
+		moveEnd[i] = moveEnds[stage];
+		tintStart[i] = tintsWhileMoving ? moveStart[i] : tintStarts[stage];
+		tintEnd[i] = tintsWhileMoving ? moveEnd[i] : moveStarts[stage];
+		dimAlpha[i] = stage > 0 ? plan.dimAlpha : UNDIMMED_ALPHA;
 	}
+	windows.dimEnd = plan.dimMs / total;
+};
+
+// Eased progress through [start, end] at t; a zero-length window is a step.
+const through = (
+	t: number,
+	start: number,
+	end: number,
+	easing: Easing
+): number => {
+	const span = end - start;
+	const local = span > 0 ? (t - start) / span : t < start ? 0 : 1;
+	return local <= 0 ? 0 : local >= 1 ? 1 : easing(local);
 };
 
 // Writes each song's value at t (0–1) into current; a song holds its from
-// values until its start and reaches its to values at its end.
+// values until its windows open and reaches its to values as they close.
 export const stepTransition = (
 	from: Channels,
 	to: Channels,
 	current: Channels,
-	startAt: Float32Array,
-	endAt: Float32Array,
+	windows: SongWindows,
 	t: number,
 	easing: Easing
 ): void => {
@@ -134,15 +208,17 @@ export const stepTransition = (
 		copyChannels(to, current);
 		return;
 	}
+	const { moveStart, moveEnd, tintStart, tintEnd, dimAlpha } = windows;
+	const dimmed = through(t, 0, windows.dimEnd, easing);
 	for (let i = 0; i < count; i++) {
-		const start = startAt[i];
-		const span = endAt[i] - start;
-		const local = span > 0 ? (t - start) / span : t < start ? 0 : 1;
-		const eased = local <= 0 ? 0 : local >= 1 ? 1 : easing(local);
-		current.x[i] = from.x[i] + (to.x[i] - from.x[i]) * eased;
-		current.y[i] = from.y[i] + (to.y[i] - from.y[i]) * eased;
-		current.alpha[i] = from.alpha[i] + (to.alpha[i] - from.alpha[i]) * eased;
-		current.mix[i] = from.mix[i] + (to.mix[i] - from.mix[i]) * eased;
+		const moved = through(t, moveStart[i], moveEnd[i], easing);
+		const tinted = through(t, tintStart[i], tintEnd[i], easing);
+		const waitingAlpha = Math.min(from.alpha[i], dimAlpha[i]);
+		const alpha = from.alpha[i] + (waitingAlpha - from.alpha[i]) * dimmed;
+		current.x[i] = from.x[i] + (to.x[i] - from.x[i]) * moved;
+		current.y[i] = from.y[i] + (to.y[i] - from.y[i]) * moved;
+		current.alpha[i] = alpha + (to.alpha[i] - alpha) * tinted;
+		current.mix[i] = from.mix[i] + (to.mix[i] - from.mix[i]) * tinted;
 	}
 };
 

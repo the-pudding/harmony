@@ -35,9 +35,12 @@
 		DIMMED_SONG_ALPHA,
 		SCRIPTED_FOCUS_TRANSITION_MS,
 		REVEAL_STAGGER_WINDOW,
-		STAGED_REVEAL_CLUSTER_STAGE_MS,
-		STAGED_REVEAL_LAST_STAGE_MS,
+		STAGED_REVEAL_CLUSTER_MOVE_MS,
+		STAGED_REVEAL_CLUSTER_TINT_MS,
+		STAGED_REVEAL_DIM_MS,
+		STAGED_REVEAL_LAST_MOVE_MS,
 		STAGED_REVEAL_PAUSE_MS,
+		STAGED_REVEAL_WAITING_ALPHA,
 		HEX_FADE_IN_MS,
 		HEX_FADE_OUT_MS
 	} from "./scatter/constants.js";
@@ -461,12 +464,17 @@
 
 	const stagePlan = ({ stageOf, count }: RevealStages): StagePlan => ({
 		stageOf,
-		stageMs: Array.from({ length: count }, (_, stage) =>
+		stages: Array.from({ length: count }, (_, stage) =>
 			stage === count - 1
-				? STAGED_REVEAL_LAST_STAGE_MS
-				: STAGED_REVEAL_CLUSTER_STAGE_MS
+				? { tintMs: 0, moveMs: STAGED_REVEAL_LAST_MOVE_MS }
+				: {
+						tintMs: STAGED_REVEAL_CLUSTER_TINT_MS,
+						moveMs: STAGED_REVEAL_CLUSTER_MOVE_MS
+					}
 		),
-		pauseMs: STAGED_REVEAL_PAUSE_MS
+		pauseMs: STAGED_REVEAL_PAUSE_MS,
+		dimAlpha: STAGED_REVEAL_WAITING_ALPHA,
+		dimMs: STAGED_REVEAL_DIM_MS
 	});
 
 	// From a staged transition's start until its songs settle and hexes are in.
