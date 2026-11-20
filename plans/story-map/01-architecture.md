@@ -161,7 +161,8 @@ object. Index passes that object to the map instead of ~10 loose props.
 
 ```ts
 export type MapScene = {
-	layout: { name: "umap" } | { name: "timeline"; axisLabel: string | null };
+	layout: { name: "umap" } | { name: "timeline" };
+	frame: "text" | "full"; // framed layouts: below the text (default) or full screen
 	camera:
 		| { kind: "home"; centered: boolean } // today's default (+ `centered`)
 		| { kind: "cluster"; name: string } // today's focusCluster
@@ -185,7 +186,7 @@ Copy keys → scene. Legacy keys keep working, so Sections 2–6 don't change.
 | ------------------------------------ | -------------------------- | ------------------------------------------------------ |
 | `visible: true`                      | (scene exists)             | unchanged                                              |
 | `layout: timeline`                   | `layout.name`              | **new**, default `umap`                                |
-| `axisLabel: time →`                  | `layout.axisLabel`         | **new**, timeline only                                 |
+| `frame: full`                        | `frame`                    | **new**, framed layouts: `text` (default) or `full`    |
 | `focusCluster`                       | `camera: {kind:"cluster"}` | unchanged                                              |
 | `focusSong`                          | `camera: {kind:"song"}`    | **new**                                                |
 | `centered`                           | `camera.centered`          | unchanged                                              |
@@ -282,19 +283,20 @@ gets its colors as dots land.
 
 Today UMAP fills the whole viewport and is nudged down with `offsetY` (280px)
 to clear the text. New layouts instead fill a **frame**: a rect Index measures
-from the page, currently the viewport below the text box and above any
-docked media or panel. Index already measures the text box and the stage
+from the page, currently the viewport below the text box (and the video under it). Index already measures the text box and the stage
 (`focusFrame`, `clusterFrameEl`); the frame is the same idea, generalized.
 
 ```ts
 type MapFrame = { top: number; right: number; bottom: number; left: number }; // insets, px
 ```
 
-- The timeline puts its 0–1 inside the frame, so `time →` sits right above
-  the bottom inset, and docked media on slides 2–3 never covers lit dots.
+- The timeline puts its 0–1 inside the frame, which keeps small margins
+  (14px, 8px on phones) from the screen's edges and starts below the text, or
+  below the video on slides 2–3 (`frame: full` ignores the text). It draws no
+  axis; `guides` stays for later sections.
 - UMAP keeps its current behavior (`offsetY`, `centered`) unchanged. Its frame
   is the whole viewport, so Section 2 doesn't move.
-- When the frame changes (text box resizes, docked card appears), layouts
+- When the frame changes (text box resizes, a video appears), layouts
   re-run and dots move with a normal short transition. On window resize they
   jump.
 

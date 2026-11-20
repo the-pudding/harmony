@@ -47,13 +47,12 @@ title: Intro
 	{.map}
 		visible: true
 		layout: timeline
-		axisLabel:
 		focusSong: journey__dont-stop-believin
 		[.onlySongs]
-		*journey__dont-stop-believin
+			*journey__dont-stop-believin
 		[]
 		[.playableSongs]
-		*journey__dont-stop-believin
+			*journey__dont-stop-believin
 		[]
 		movable: false
 		hoverable: false
@@ -61,13 +60,16 @@ title: Intro
 	{}
 
 	[.+text]
-		Here are all [7,260] Billboard top-20 hits from 1958 to 2026. Laid out like this, they look like a night sky, where every “star” (song) looks the same. People love to claim that they <em>sound</em> the same, too.
+		Here are all [7,260] Billboard top-20 hits from 1958 to 2026, sorted chronologically from left to right. Laid out like this, they look like a night sky, where every “star” (song) looks the same. People love to claim that they <em>sound</em> the same, too.
 		[TK: Rick Beato quotes, etc.]
 	[]
 	{.map}
 		visible: true
 		layout: timeline
-		axisLabel: time →
+		frame: full
+		[.playableSongs]
+			*journey__dont-stop-believin
+		[]
 		movable: false
 		tooltip: basic
 	{}
@@ -78,7 +80,6 @@ title: Intro
 	{.map}
 		visible: true
 		layout: timeline
-		axisLabel: time →
 		dimmed: true
 		movable: false
 		hoverable: false
@@ -87,7 +88,6 @@ title: Intro
 	{.stage}
 		component: Video
 		videoId: dead-simple
-		dock: corner
 	{}
 
 	[.+text]
@@ -96,7 +96,6 @@ title: Intro
 	{.map}
 		visible: true
 		layout: timeline
-		axisLabel: time →
 		followVideo: examples
 		movable: false
 		tooltip: basic
@@ -104,24 +103,22 @@ title: Intro
 	{.stage}
 		component: Video
 		videoId: examples
-		dock: corner
 	{}
 
 	[.+text]
 		Axis of Awesome helped cement 3 big beliefs about pop:
 		{.ol}
-		[.li]
-		*built on a single four-chord progression 🧱
-		*looped for the entire song 🔁
-		*and recycled decade after decade? 🗓️
-		[]
+			[.li]
+				*built on a single four-chord progression 🧱
+				*looped for the entire song 🔁
+				*and recycled decade after decade? 🗓️
+			[]
 		{}
 		Ok, but they cited just [21] examples. What about the other [7,239]? Do these claims hold up?
 	[]
 	{.map}
 		visible: true
 		layout: timeline
-		axisLabel: time →
 		litVideoSongs: examples
 		movable: false
 		tooltip: basic
@@ -160,7 +157,7 @@ title: Intro
 Notes for pasting:
 
 - The block is tab-indented (one tab for each slide's `[.+text]`, `{.map}` and
-  `{.stage}`, two inside them), which ArchieML ignores. In the doc, `{.map}` and `{.stage}` blocks follow their `[.+text]` block
+  `{.stage}`, two inside them, three inside a list nested in them), which ArchieML ignores. In the doc, `{.map}` and `{.stage}` blocks follow their `[.+text]` block
   inside the same slide, as they do today.
 - Slide 5's empty `[.+text]` / `[]` keeps it text-less, exactly like today's
   Landing.
