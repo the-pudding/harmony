@@ -122,6 +122,7 @@
 	import { drawHexRegionLabels } from "./scatter/paint/hexLabels.js";
 	import * as view from "./scatter/viewport.js";
 	import { songLinks } from "$data/songLinks.js";
+	import { canvasFontFor } from "./songLabelText.js";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (perf meter): see src/utils/perfParam.js.
 	import { readPerfParam, createPerfMeter } from "$utils/perfParam";
 	import {
@@ -302,7 +303,11 @@
 	// Canvas labels use web fonts, which may arrive after the first paint.
 	let fontsLoaded = $state(0);
 	onMount(() => {
-		void document.fonts.load(HEX_LABEL_FONT).then(() => fontsLoaded++);
+		void Promise.all(
+			[HEX_LABEL_FONT, canvasFontFor("title"), canvasFontFor("detail")].map(
+				(font) => document.fonts.load(font)
+			)
+		).then(() => fontsLoaded++);
 	});
 
 	const resolvedClusterNames = $derived(

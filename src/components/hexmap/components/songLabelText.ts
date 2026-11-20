@@ -1,21 +1,21 @@
-export type SongLabelRole = "title" | "year" | "artist";
+export type SongLabelRole = "title" | "detail";
 
 export type SongLabelSegment = { role: SongLabelRole; text: string };
 
 export type SongLabelLine = SongLabelSegment[];
 
+// The story's sans (--font-sans).
 export const SONG_LABEL_FONT_FAMILY =
-	"'JetBrains Mono', ui-monospace, monospace";
+	"'Atlas Grotesk', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
-export const SONG_LABEL_LINE_HEIGHT_PX = 13;
+export const SONG_LABEL_LINE_HEIGHT_PX = 14;
 
 export const SONG_LABEL_STYLE: Record<
 	SongLabelRole,
 	{ fontWeight: number; fontSizePx: number; opacity: number }
 > = {
-	title: { fontWeight: 700, fontSizePx: 11, opacity: 1 },
-	year: { fontWeight: 400, fontSizePx: 11, opacity: 0.6 },
-	artist: { fontWeight: 500, fontSizePx: 10, opacity: 1 }
+	title: { fontWeight: 600, fontSizePx: 12, opacity: 1 },
+	detail: { fontWeight: 400, fontSizePx: 10, opacity: 0.6 }
 };
 
 export const canvasFontFor = (role: SongLabelRole, scale = 1): string => {
@@ -23,6 +23,7 @@ export const canvasFontFor = (role: SongLabelRole, scale = 1): string => {
 	return `${fontWeight} ${fontSizePx * scale}px ${SONG_LABEL_FONT_FAMILY}`;
 };
 
+// The title, then "Artist, Artist (year)" beneath it.
 export const songLabelLines = ({
 	title,
 	year,
@@ -32,11 +33,10 @@ export const songLabelLines = ({
 	year: number | undefined;
 	artists: readonly string[];
 }): SongLabelLine[] => {
-	const titleLine: SongLabelLine = [{ role: "title", text: title }];
-	if (year) titleLine.push({ role: "year", text: ` ${year}` });
-	const lines = [titleLine];
-	if (artists.length > 0) {
-		lines.push([{ role: "artist", text: artists.join(", ") }]);
-	}
+	const detail = [artists.join(", "), year ? `(${year})` : ""]
+		.filter(Boolean)
+		.join(" ");
+	const lines: SongLabelLine[] = [[{ role: "title", text: title }]];
+	if (detail) lines.push([{ role: "detail", text: detail }]);
 	return lines;
 };

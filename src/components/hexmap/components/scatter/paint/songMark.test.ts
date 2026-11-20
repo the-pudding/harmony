@@ -39,16 +39,13 @@ const pose: MarkPose = {
 	y: 50,
 	r: 10,
 	labelDx: 16,
-	labelDy: -13,
-	labelPx: 11
+	labelDy: -14,
+	labelPx: 12
 };
 
 const lines = [
-	[
-		{ role: "title" as const, text: "Holy" },
-		{ role: "year" as const, text: " 2020" }
-	],
-	[{ role: "artist" as const, text: "Justin Bieber" }]
+	[{ role: "title" as const, text: "Holy" }],
+	[{ role: "detail" as const, text: "Justin Bieber (2020)" }]
 ];
 
 const label = {
@@ -64,28 +61,25 @@ describe("drawSongLabel", () => {
 		drawSongLabel(context, pose, label);
 		const texts = calls.filter(({ name }) => name === "fillText");
 		expect(texts.map(({ args }) => args)).toEqual([
-			["Holy", 116, 50 - 13 + 6.5],
-			[" 2020", 116 + 4, 50 - 13 + 6.5],
-			["Justin Bieber", 116, 50 - 13 + 13 + 6.5]
+			["Holy", 116, 50 - 14 + 7],
+			["Justin Bieber (2020)", 116, 50 - 14 + 14 + 7]
 		]);
-		expect(texts.map(({ font }) => font.split(" ")[1])).toEqual([
-			"11px",
-			"11px",
-			"10px"
+		expect(texts.map(({ font }) => font.split(" ").slice(0, 2))).toEqual([
+			["600", "12px"],
+			["400", "10px"]
 		]);
-		expect(texts.map(({ alpha }) => alpha)).toEqual([0.5, 0.5 * 0.6, 0.5]);
+		expect(texts.map(({ alpha }) => alpha)).toEqual([0.5, 0.5 * 0.6]);
 	});
 
 	it("scales fonts and line height with labelPx", () => {
 		const { context, calls } = recordingContext();
-		drawSongLabel(context, { ...pose, labelPx: 22 }, label);
+		drawSongLabel(context, { ...pose, labelPx: 24 }, label);
 		const texts = calls.filter(({ name }) => name === "fillText");
 		expect(texts.map(({ font }) => font.split(" ")[1])).toEqual([
-			"22px",
-			"22px",
+			"24px",
 			"20px"
 		]);
-		expect(texts[2].args[2]).toBe(50 - 13 + 1.5 * 26);
+		expect(texts[1].args[2]).toBe(50 - 14 + 1.5 * 28);
 	});
 });
 
