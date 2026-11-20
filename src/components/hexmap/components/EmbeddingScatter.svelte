@@ -748,13 +748,15 @@
 						hexOpacity === 0,
 						// markers belong to a hex layout's dot zoom, not to its
 						// dots flying in or fading under hexes
-						!(hexMode && zoomLevel?.kind === "hex")
+						!(hexMode && zoomLevel?.kind === "hex"),
+						// under song marks and labels
+						() => drawGuides(scene, guides, frame, "over")
 					)
 				: 0;
 		if (zoomLevel?.kind === "hex" && hexOpacity > 0) {
 			drawHexFrame(scene, zoomLevel.radius, hexOpacity, pixelRatio);
 		}
-		drawGuides(scene, guides, frame, "over");
+		if (hexOpacity >= 1) drawGuides(scene, guides, frame, "over");
 		context.globalAlpha = 1;
 		const labelsOpacity =
 			hexLabelFade.current === 1 ? "" : String(hexLabelFade.current);
@@ -913,13 +915,15 @@
 	const markInnerFillOf = (songKey: string): string =>
 		markFill()?.(songKey) ?? OUTLINE_COLOR;
 
-	// Outlines, dots, markers and labels, then selection rings. Markers are
-	// left out of dots flying in or fading under hexes; outlines and titles
-	// also while songs move. Returns how many plain dots it drew.
+	// Outlines, dots, overDots (e.g. chart boxes), markers and labels, then
+	// selection rings, so song marks and labels are drawn over everything.
+	// Markers are left out of dots flying in or fading under hexes; outlines
+	// and titles also while songs move. Returns how many plain dots it drew.
 	const drawDotFrame = (
 		scene: Scene,
 		alone: boolean,
-		markers: boolean
+		markers: boolean,
+		overDots: () => void
 	): number => {
 		const outlined =
 			showClusterOutlines && hexMode && alone && markers && transition.settled;
@@ -981,6 +985,8 @@
 				starFill: layout.fill ?? null
 			})
 		});
+
+		overDots();
 
 		drawMarkedSongs(scene, {
 			style,

@@ -5,8 +5,8 @@ export type LayoutFrame = { width: number; height: number };
 
 export type LayoutContext = { songs: SongTable; frame: LayoutFrame };
 
-// Under the songs (the default), or over them; text over them is haloed so
-// it reads against the dots. Guides are painted, so they never catch the
+// Under the songs (the default), or over their dots but still under song
+// marks and labels; text over the dots is haloed so it reads against them. Guides are painted, so they never catch the
 // pointer.
 export type GuideLayer = "under" | "over";
 
