@@ -1,0 +1,20 @@
+{
+	"songKey": "sheryl-crow__the-first-cut-is-the-deepest",
+	"audioFile": "sheryl-crow__the-first-cut-is-the-deepest.mp3",
+	"key": { "tonic": "D", "scale": "major" },
+	"region": { "startSeconds": 43.328, "endSeconds": 61.475 },
+	"chords": [
+		{ "seconds": 43.465, "chord": "D", "roman": "I" },
+		{ "seconds": 44.935, "chord": "A", "roman": "V" },
+		{ "seconds": 46.434, "chord": "G", "roman": "IV" },
+		{ "seconds": 47.939, "chord": "A", "roman": "V" },
+		{ "seconds": 49.448, "chord": "D", "roman": "I" },
+		{ "seconds": 50.926, "chord": "A", "roman": "V" },
+		{ "seconds": 52.435, "chord": "G", "roman": "IV" },
+		{ "seconds": 53.923, "chord": "A", "roman": "V" },
+		{ "seconds": 55.427, "chord": "D", "roman": "I" },
+		{ "seconds": 56.905, "chord": "A", "roman": "V" },
+		{ "seconds": 58.427, "chord": "G", "roman": "IV" },
+		{ "seconds": 59.915, "chord": "A", "roman": "V" }
+	]
+}

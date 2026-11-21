@@ -233,6 +233,12 @@
 		"fullSongSha1": "d696182c141aee50ec79658eda404253e902638e",
 		"bitrate": "160k"
 	},
+	"hanson__mmmbop": {
+		"offsetSeconds": 17.394,
+		"endSeconds": 33.219,
+		"fullSongSha1": "6e904e3e51b68aa184acba4400270fd495394ff6",
+		"bitrate": "160k"
+	},
 	"harry-styles__daylight": {
 		"offsetSeconds": 65.646,
 		"endSeconds": 90.172,
@@ -275,10 +281,22 @@
 		"fullSongSha1": "2d85b13506a1bde0d5f59b5cb5de009bb194e9c8",
 		"bitrate": "160k"
 	},
+	"jessica-simpson__take-my-breath-away": {
+		"offsetSeconds": 10.773,
+		"endSeconds": 32.378,
+		"fullSongSha1": "6db4453d2f8ca22d8706d352049968d9d938383d",
+		"bitrate": "160k"
+	},
 	"joan-jett-the-blackhearts__i-love-rock-n-roll": {
 		"offsetSeconds": 68.205,
 		"endSeconds": 81.489,
 		"fullSongSha1": "fd031982d25610bc703dced0539c70d2aa9f7428",
+		"bitrate": "160k"
+	},
+	"john-cougar__jack-diane": {
+		"offsetSeconds": 27.612,
+		"endSeconds": 48.057,
+		"fullSongSha1": "e055bb7637f0cacc39a51f629bba8634abe16b91",
 		"bitrate": "160k"
 	},
 	"john-lennon-plastic-ono-band__imagine": {
@@ -501,6 +519,12 @@
 		"offsetSeconds": 2.779,
 		"endSeconds": 33.19,
 		"fullSongSha1": "72e0f28a89f9f9aae0007ae245dbc16223d6d1b1",
+		"bitrate": "160k"
+	},
+	"sheryl-crow__the-first-cut-is-the-deepest": {
+		"offsetSeconds": 42.328,
+		"endSeconds": 62.475,
+		"fullSongSha1": "784baf0cd5d097d7af4a1ebc74d412423c8cd351",
 		"bitrate": "160k"
 	},
 	"spin-doctors__little-miss-can-t-be-wrong": {

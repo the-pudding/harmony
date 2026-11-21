@@ -18,7 +18,8 @@ export const problematicSongs: ProblematicSong[] = [
 	},
 	{
 		id: "carly-rae-jepsen__call-me-maybe",
-		chordProgressionIssues: "not happy with the chorus, should be IV-vi-V-ish"
+		chordProgressionIssues:
+			"chords look wrong overall. not happy with the chorus, should be IV-vi-V-ish. Data has the verses as I-vi-IV-V (G-Em-C-D) and the choruses, bridge and outro mostly as I-V-IV-V (G-D-C-D) in G major"
 	},
 	{
 		id: "psy__gangnam-style",
@@ -159,6 +160,16 @@ export const problematicSongs: ProblematicSong[] = [
 		id: "omarion__ice-box",
 		chordProgressionIssues:
 			"looks like I-II-iii-vi? (C-D-Em-Am). Data has the verses and choruses as I-iii-vi-IV (C-Em-Am-F) and the bridges as vi-V-I-III (Am-G-C-E) in C major"
+	},
+	{
+		id: "bts__blue-grey",
+		chordProgressionIssues:
+			"this is actually a 4 chord cycle, not 3 chord. Data has most sections as a 3 chord IV-V-I loop (G-A-D) in D major"
+	},
+	{
+		id: "prince__kiss",
+		chordProgressionIssues:
+			"missing many sections. Data has just one unnamed section, I-V-IV-V-IV-Vsus4 (A-E-D-E-D-Esus4) in A major"
 	}
 ];
 
@@ -212,6 +223,16 @@ export const keyTonalityIssues: KeyTonalityIssue[] = [
 		id: "the-floaters__float-on",
 		keyTonalityIssues:
 			"I think it's actually in D major, so IV-I instead of I-V. Data has its one section as G-D in G major."
+	},
+	{
+		id: "sam-smith__stay-with-me",
+		keyTonalityIssues:
+			'Seems to be in a major key (C major), so vi-IV-I instead of i-VI-III. Data has every section as Am-F-C in A minor. Fixing it might remove the "stay with me" cluster.'
+	},
+	{
+		id: "calvin-harris-featuring-john-newman__blame",
+		keyTonalityIssues:
+			"I think it's probably in a minor key (A minor), so VI-i-VII(-iv) instead of IV-vi-V(-ii). Data has every section as F-Am-G(-Dm) in C major and never lands on C."
 	}
 ];
 
@@ -227,6 +248,11 @@ export const clusterKeyTonalityIssues: ClusterKeyTonalityIssue[] = [
 		clusterName: "ii-V vamp",
 		keyTonalityIssues:
 			"Check every song in this cluster: a lot of them might be minor in disguise (i-IV labeled as ii-V in the relative major), like john-mellencamp__pop-singer. As of 2026-11-18, 30 of its 100 songs never land on I."
+	},
+	{
+		clusterName: "IV-vi-V",
+		keyTonalityIssues:
+			"Check every song in this cluster: a lot of them might be minor in disguise (VI-i-VII labeled as IV-vi-V in the relative major), like calvin-harris-featuring-john-newman__blame. As of 2026-11-20, 9 of its 21 songs never land on I."
 	}
 ];
 

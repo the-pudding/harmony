@@ -10,7 +10,7 @@ rank,name,chordProgression,scale,group,avgCoveragePercent,songCount,songSharePer
 9,happy walk down,IV-V-I,major,"Happy, major-y progressions",0.9,566,7.796
 10,we found love,i-VI-III-VII,minor,Minor-y progressions,0.835,102,1.405
 11,V-IV vamp,V-IV-V-IV,major,"Happy, major-y progressions",0.751,252,3.471
-12,major-y,I-V-IV-V,major,"Happy, major-y progressions",0.686,197,2.713
+12,mmmbop,I-V-IV-V,major,"Happy, major-y progressions",0.686,197,2.713
 13,i VI VII,i-VI-VII,minor,Minor-y progressions,0.656,181,2.493
 14,jazz doo wop,I-vi-ii-V,major,Jazzy progressions,0.641,165,2.273
 15,beat it,i-VII-i-VII,minor,Minor-y progressions,0.591,130,1.791

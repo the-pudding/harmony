@@ -1,0 +1,26 @@
+{
+	"songKey": "john-cougar__jack-diane",
+	"audioFile": "john-cougar__jack-diane.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 28.612, "endSeconds": 47.057 },
+	"chords": [
+		{ "seconds": 28.706, "chord": "A", "roman": "I" },
+		{ "seconds": 29.547, "chord": "E", "roman": "V" },
+		{ "seconds": 30.998, "chord": "D", "roman": "IV" },
+		{ "seconds": 31.86, "chord": "E", "roman": "V" },
+		{ "seconds": 33.308, "chord": "A", "roman": "I" },
+		{ "seconds": 34.182, "chord": "E", "roman": "V" },
+		{ "seconds": 35.665, "chord": "D", "roman": "IV" },
+		{ "seconds": 36.103, "chord": "E", "roman": "V" },
+		{ "seconds": 36.527, "chord": "A", "roman": "I" },
+		{ "seconds": 37.979, "chord": "A", "roman": "I" },
+		{ "seconds": 38.874, "chord": "E", "roman": "V" },
+		{ "seconds": 40.284, "chord": "D", "roman": "IV" },
+		{ "seconds": 41.202, "chord": "E", "roman": "V" },
+		{ "seconds": 42.615, "chord": "A", "roman": "I" },
+		{ "seconds": 43.477, "chord": "E", "roman": "V" },
+		{ "seconds": 44.973, "chord": "D", "roman": "IV" },
+		{ "seconds": 45.396, "chord": "E", "roman": "V" },
+		{ "seconds": 45.83, "chord": "A", "roman": "I" }
+	]
+}

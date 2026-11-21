@@ -1,0 +1,21 @@
+{
+	"songKey": "hanson__mmmbop",
+	"audioFile": "hanson__mmmbop.mp3",
+	"key": { "tonic": "A", "scale": "major" },
+	"region": { "startSeconds": 18.394, "endSeconds": 32.219 },
+	"chords": [
+		{ "seconds": 18.487, "chord": "A", "roman": "I" },
+		{ "seconds": 19.873, "chord": "E", "roman": "V" },
+		{ "seconds": 20.753, "chord": "D", "roman": "IV" },
+		{ "seconds": 22.177, "chord": "E", "roman": "V" },
+		{ "seconds": 23.064, "chord": "A", "roman": "I" },
+		{ "seconds": 24.448, "chord": "E", "roman": "V" },
+		{ "seconds": 25.31, "chord": "D", "roman": "IV" },
+		{ "seconds": 26.765, "chord": "E", "roman": "V" },
+		{ "seconds": 27.617, "chord": "A", "roman": "I" },
+		{ "seconds": 29.039, "chord": "E", "roman": "V" },
+		{ "seconds": 29.897, "chord": "D", "roman": "IV" },
+		{ "seconds": 31.31, "chord": "E", "roman": "V" },
+		{ "seconds": 32.17, "chord": "A", "roman": "I" }
+	]
+}

@@ -1,0 +1,16 @@
+{
+	"songKey": "jessica-simpson__take-my-breath-away",
+	"audioFile": "jessica-simpson__take-my-breath-away.mp3",
+	"key": { "tonic": "G", "scale": "major" },
+	"region": { "startSeconds": 11.773, "endSeconds": 31.378 },
+	"chords": [
+		{ "seconds": 12.422, "chord": "G", "roman": "I" },
+		{ "seconds": 14.588, "chord": "D", "roman": "V" },
+		{ "seconds": 17.06, "chord": "C", "roman": "IV" },
+		{ "seconds": 19.401, "chord": "D", "roman": "V" },
+		{ "seconds": 21.842, "chord": "G", "roman": "I" },
+		{ "seconds": 24.267, "chord": "D", "roman": "V" },
+		{ "seconds": 26.661, "chord": "C", "roman": "IV" },
+		{ "seconds": 29.048, "chord": "D", "roman": "V" }
+	]
+}
