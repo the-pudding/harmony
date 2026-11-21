@@ -16,7 +16,7 @@
           ],
           "map": {
             "visible": "true",
-            "layout": "timeline",
+            "layout": "sky",
             "focusSong": "journey__dont-stop-believin",
             "onlySongs": [
               "journey__dont-stop-believin"
@@ -26,14 +26,14 @@
             ],
             "movable": "false",
             "hoverable": "false",
-            "tooltip": "basic"
+            "tooltip": "label"
           }
         },
         {
           "text": [
             {
               "type": "text",
-              "value": "Here are all [7,260] Billboard top-20 hits from 1958 to 2026, sorted chronologically from left to right. Laid out like this, they look like a night sky, where every “star” (song) looks the same. People love to claim that they <em>sound</em> the same, too."
+              "value": "Here are all [7,260] Billboard top-20 hits from 1958 to 2026. Scattered like this, they look like a night sky, where every “star” (song) looks the same. People love to claim that they <em>sound</em> the same, too."
             },
             {
               "type": "text",
@@ -42,13 +42,12 @@
           ],
           "map": {
             "visible": "true",
-            "layout": "timeline",
-            "frame": "full",
+            "layout": "sky",
             "playableSongs": [
               "journey__dont-stop-believin"
             ],
             "movable": "false",
-            "tooltip": "basic"
+            "tooltip": "label"
           }
         },
         {
@@ -60,11 +59,11 @@
           ],
           "map": {
             "visible": "true",
-            "layout": "timeline",
+            "layout": "sky",
             "dimmed": "true",
             "movable": "false",
             "hoverable": "false",
-            "tooltip": "basic"
+            "tooltip": "label"
           },
           "stage": {
             "component": "Video",
@@ -80,11 +79,11 @@
           ],
           "map": {
             "visible": "true",
-            "layout": "timeline",
+            "layout": "sky",
             "followVideo": "examples",
             "dimmed": "true",
             "movable": "false",
-            "tooltip": "basic"
+            "tooltip": "label"
           },
           "stage": {
             "component": "Video",
@@ -114,26 +113,22 @@
           ],
           "map": {
             "visible": "true",
-            "layout": "timeline",
+            "layout": "sky",
             "litVideoSongs": "examples",
             "dimmed": "true",
             "movable": "false",
-            "tooltip": "basic"
+            "tooltip": "label"
           }
         },
         {
           "text": [],
           "map": {
             "visible": "true",
+            "layout": "sky",
             "movable": "false",
-            "hoverable": "false",
-            "rotateLabels": "true",
-            "centered": "true",
-            "tooltip": "basic",
-            "revealClusters": [
-              "doo wop",
-              "axis of awesome"
-            ]
+            "hoverable": "true",
+            "tooltip": "label",
+            "cycleSongs": "true"
           },
           "stage": {
             "component": "Landing",
@@ -523,7 +518,9 @@
             }
           ],
           "map": {
-            "visible": "true"
+            "visible": "true",
+            "hoverable": "false",
+            "movable": "false"
           }
         },
         {
@@ -660,15 +657,8 @@
             }
           ],
           "stage": {
-            "component": "Signatures",
-            "focus": "2000s",
-            "navigable": "false"
-          },
-          "map": {
-            "visible": "true",
-            "layout": "progressionOverTime",
-            "movable": "false",
-            "tooltip": "basic"
+            "component": "ClusterPercentOverTime",
+            "cluster": "axis of awesome"
           }
         },
         {
@@ -684,12 +674,6 @@
           ],
           "stage": {
             "component": "Signatures"
-          },
-          "map": {
-            "visible": "true",
-            "layout": "progressionOverTime",
-            "movable": "false",
-            "tooltip": "basic"
           }
         },
         {
@@ -706,12 +690,6 @@
           "stage": {
             "component": "Signatures",
             "focus": "1950s-60s"
-          },
-          "map": {
-            "visible": "true",
-            "layout": "progressionOverTime",
-            "movable": "false",
-            "tooltip": "basic"
           }
         },
         {

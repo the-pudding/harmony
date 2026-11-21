@@ -16,6 +16,7 @@
 		summary,
 		simple,
 		basic = false,
+		labelOnly = false,
 		hint,
 		colorForProgression
 	}: {
@@ -25,13 +26,23 @@
 		simple: boolean;
 		// Only the song's title, year, artist and bar of progressions.
 		basic?: boolean;
+		// Only the song's title, year and artist.
+		labelOnly?: boolean;
 		// What clicking the song does, for the simple card.
 		hint: string;
 		colorForProgression: (name: string) => string | undefined;
 	} = $props();
 </script>
 
-{#if (simple || basic) && song}
+{#if labelOnly && (song || summary)}
+	<TooltipCard {style}>
+		<SongLabel
+			title={summary?.title ?? song?.title ?? ""}
+			year={summary?.year}
+			artists={summary?.artists ?? song?.artists ?? []}
+		/>
+	</TooltipCard>
+{:else if (simple || basic) && song}
 	<TooltipCard {style}>
 		<HexSongTooltip {song} {colorForProgression} {hint} {basic} />
 	</TooltipCard>

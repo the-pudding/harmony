@@ -42,6 +42,7 @@
 	} from "$components/storymap/mapScene.js";
 	// DEV-ONLY-REMOVE-BEFORE-PUBLISH (dev layout): see src/utils/perfParam.js.
 	import { readLayoutParam } from "$utils/perfParam";
+	import { SKY_CYCLE_SONGS } from "$data/skySongs.js";
 
 	type Props = {
 		// Media settings are converted to spotlitSongKey and litSongKeys by Index.
@@ -220,6 +221,40 @@
 	const visibleSongKeys = $derived(
 		scene.songs.only === null ? null : new Set(scene.songs.only)
 	);
+
+	// scene.songs.cycle: the sky's named songs, spotlit one after another.
+	const CYCLE_START_MS = 1500;
+	const CYCLE_BEAT_MS = 3000;
+	// Each one fades out over a couple of beats, so two or three overlap.
+	const CYCLE_FADE_IN_MS = 1000;
+	const CYCLE_FADE_OUT_MS = 6500;
+	let cycleIndex = 0;
+	let cycleSongKey = $state<string | null>(null);
+	const cycling = $derived(scene.songs.cycle);
+	$effect(() => {
+		if (!cycling || !songs) {
+			cycleSongKey = null;
+			return;
+		}
+		const table = songs;
+		const cycleSongs = SKY_CYCLE_SONGS.filter((songKey) =>
+			table.indexOf.has(songKey)
+		);
+		if (cycleSongs.length === 0) return;
+		const next = () => {
+			cycleSongKey = cycleSongs[cycleIndex++ % cycleSongs.length];
+		};
+		let interval = 0;
+		const start = setTimeout(() => {
+			next();
+			interval = window.setInterval(next, CYCLE_BEAT_MS);
+		}, CYCLE_START_MS);
+		return () => {
+			clearTimeout(start);
+			clearInterval(interval);
+			cycleSongKey = null;
+		};
+	});
 
 	const loneSongKey = $derived(
 		scene.songs.only?.length === 1 ? scene.songs.only[0] : null
@@ -527,8 +562,13 @@
 				zoomSongKey={explorable ? searchZoomSongKey : null}
 				spotlitSongKey={spotlitSongKey ??
 					loneSongKey ??
+					cycleSongKey ??
 					(explorable ? searchedSongKey : null)}
-				spotlightFadesOthers={spotlitSongKey === null && loneSongKey === null}
+				spotlightFadesOthers={spotlitSongKey === null &&
+					loneSongKey === null &&
+					cycleSongKey === null}
+				spotlightFadeInMs={cycling ? CYCLE_FADE_IN_MS : undefined}
+				spotlightFadeOutMs={cycling ? CYCLE_FADE_OUT_MS : undefined}
 				accentSongKeys={outsideHub?.songKeys ?? null}
 				accentFillColor={outsideHub?.color ?? null}
 				{focusFrame}

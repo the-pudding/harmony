@@ -79,6 +79,10 @@ export type EmbeddingScatterProps = {
 	spotlitSongKey?: string | null;
 	// Whether the spotlit song fades the others back, or only grows its own marker.
 	spotlightFadesOthers?: boolean;
+	// How long a spotlit song takes to grow in and to shrink back (default
+	// PLAYING_TWEEN_MS); a long fade-out overlaps one song with the next.
+	spotlightFadeInMs?: number;
+	spotlightFadeOutMs?: number;
 	// The part of the canvas a focused cluster should fill, in screen
 	// pixels from its top (e.g. the space below text over the map). In
 	// hex mode the cluster is scaled to almost fill its height and
@@ -196,7 +200,7 @@ export type EmbeddingScatterProps = {
 	// Hex mode: a simpler song tooltip (see HexSongTooltip).
 	simpleSongTooltip?: boolean;
 	// "basic" shows only title, year and artist.
-	tooltipDetail?: "full" | "basic";
+	tooltipDetail?: "full" | "basic" | "label";
 	// Hex mode: whether a region, by name, has playable songs; its tooltip
 	// then shows outlinedTitlePrefix before the name.
 	hexHasPlayableSongs?: ((regionName: string) => boolean) | null;

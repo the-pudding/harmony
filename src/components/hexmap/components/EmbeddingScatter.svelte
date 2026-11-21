@@ -180,6 +180,8 @@
 		openSongId = null,
 		spotlitSongKey = null,
 		spotlightFadesOthers = true,
+		spotlightFadeInMs = undefined,
+		spotlightFadeOutMs = undefined,
 		focusFrame = null,
 		offsetY = 0,
 		mapFrame = view.NO_MAP_FRAME,
@@ -1395,6 +1397,12 @@
 			if (spotlightSongKey === spotlitSongKey) return spotlightFadesOthers;
 			return spotlightSongKey !== revealSpotlightSongKey;
 		},
+		get fadeInMs() {
+			return spotlightFadeInMs;
+		},
+		get fadeOutMs() {
+			return spotlightFadeOutMs;
+		},
 		onFrame: () => draw()
 	});
 
@@ -1503,7 +1511,7 @@
 		hoverCardStyle(
 			delayedTooltip.tooltipAnchor,
 			width,
-			tooltipDetail === "basic" ? BASIC_TOOLTIP_WIDTH : undefined
+			tooltipDetail === "full" ? undefined : BASIC_TOOLTIP_WIDTH
 		)
 	);
 
@@ -1603,6 +1611,7 @@
 			summary={tooltip.summary}
 			simple={simpleSongTooltip}
 			basic={tooltipDetail === "basic"}
+			labelOnly={tooltipDetail === "label"}
 			hint={songTooltipHint}
 			colorForProgression={(name) => regionColorByProgressionName.get(name)}
 		/>

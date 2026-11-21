@@ -9,7 +9,8 @@ declare module "$data/copy.json" {
 	export type CopyMap = {
 		// "true" shows the map on the slide.
 		visible?: string;
-		// The arrangement: "umap" (the default), "timeline", or section 3's
+		// The arrangement: "umap" (the default), "timeline", "sky" (the
+		// drifting night sky; fills the screen by default), or section 3's
 		// charts of songs by effective progressions, "effectiveProgressions"
 		// (one bar) and "effectiveProgressionsByDecade" (a bar per decade),
 		// or section 4's "progressionOverTime" (a 100% stack of each year's
@@ -30,6 +31,9 @@ declare module "$data/copy.json" {
 		playableSongs?: CopyList;
 		// Everything not highlighted is drawn faint.
 		dimmed?: string;
+		// "true" on the sky: spotlights its big hits and the piece's example
+		// songs, one after another (see skySongs.ts).
+		cycleSongs?: string;
 		// A video's id (see videoCues.ts): the map follows it as it plays.
 		followVideo?: string;
 		// A video's id whose songs start out already lit.
@@ -40,8 +44,9 @@ declare module "$data/copy.json" {
 		rotateLabels?: string;
 		movable?: string;
 		hoverable?: string;
-		// "full" (default), or "basic" (title, year, artist and the bar of
-		// progressions, without the summary or click hint).
+		// "full" (default), "basic" (title, year, artist and the bar of
+		// progressions, without the summary or click hint), or "label"
+		// (title, year and artist only).
 		tooltip?: string;
 		hidePlayer?: string;
 		// Song keys: arriving from another layout, these move first,

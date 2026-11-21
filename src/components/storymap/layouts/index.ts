@@ -1,6 +1,7 @@
 // Layout registry.
 import { umapLayout } from "./umap.js";
 import { timelineLayout } from "./timeline.js";
+import { skyLayout } from "./sky.js";
 import { offstageLayout } from "./offstage.js";
 import {
 	effectiveProgressionsByDecadeLayout,
@@ -12,6 +13,7 @@ import type { Layout } from "./types.js";
 export const layouts = {
 	umap: umapLayout,
 	timeline: timelineLayout,
+	sky: skyLayout,
 	offstage: offstageLayout,
 	effectiveProgressions: effectiveProgressionsLayout,
 	effectiveProgressionsByDecade: effectiveProgressionsByDecadeLayout,

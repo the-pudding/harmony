@@ -9,6 +9,7 @@ export type MapScene = {
 		name:
 			| "umap"
 			| "timeline"
+			| "sky"
 			| "offstage"
 			| "effectiveProgressions"
 			| "effectiveProgressionsByDecade"
@@ -34,6 +35,8 @@ export type MapScene = {
 		playable: readonly string[];
 		// Everything not highlighted is drawn faint.
 		dimmed: boolean;
+		// Spotlights the sky's named songs in turn (SKY_CYCLE_SONGS).
+		cycle: boolean;
 	};
 	// Video ids.
 	media: { followVideo: string | null; litVideoSongs: string | null };
@@ -46,8 +49,9 @@ export type MapScene = {
 	interaction: {
 		movable: boolean;
 		hoverable: boolean;
-		// "basic" is title, year, artist and the bar of progressions.
-		tooltip: "full" | "basic";
+		// "basic" is title, year, artist and the bar of progressions;
+		// "label" just the title, year and artist.
+		tooltip: "full" | "basic" | "label";
 	};
 	player: { hidden: boolean };
 	// Arriving from another layout, these songs move first (together), then
@@ -64,7 +68,13 @@ export const DEFAULT_MAP_SCENE: MapScene = {
 	chart: NO_CHART,
 	frame: "text",
 	camera: { kind: "home", centered: false },
-	songs: { only: null, highlighted: [], playable: [], dimmed: false },
+	songs: {
+		only: null,
+		highlighted: [],
+		playable: [],
+		dimmed: false,
+		cycle: false
+	},
 	media: { followVideo: null, litVideoSongs: null },
 	labels: { hidden: false, only: null, rotate: false },
 	interaction: { movable: true, hoverable: true, tooltip: "full" },
@@ -79,7 +89,13 @@ export const STAGE_SCENE: MapScene = {
 	chart: NO_CHART,
 	frame: "text",
 	camera: { kind: "stay" },
-	songs: { only: null, highlighted: [], playable: [], dimmed: false },
+	songs: {
+		only: null,
+		highlighted: [],
+		playable: [],
+		dimmed: false,
+		cycle: false
+	},
 	media: { followVideo: null, litVideoSongs: null },
 	labels: { hidden: true, only: null, rotate: false },
 	interaction: { movable: false, hoverable: false, tooltip: "full" },
@@ -98,6 +114,7 @@ const KNOWN_KEYS = new Set<string>([
 	"highlightSongs",
 	"playableSongs",
 	"dimmed",
+	"cycleSongs",
 	"followVideo",
 	"litVideoSongs",
 	"hideLabels",
@@ -114,12 +131,13 @@ const KNOWN_KEYS = new Set<string>([
 const LAYOUT_NAMES = [
 	"umap",
 	"timeline",
+	"sky",
 	"effectiveProgressions",
 	"effectiveProgressionsByDecade",
 	"progressionOverTime"
 ] as const;
 const FRAME_NAMES = ["text", "full"] as const;
-const TOOLTIP_NAMES = ["full", "basic"] as const;
+const TOOLTIP_NAMES = ["full", "basic", "label"] as const;
 
 const parseBoolean = (value: unknown): boolean | undefined =>
 	value === undefined ? undefined : String(value).trim() === "true";
@@ -158,7 +176,9 @@ export const parseMapScene = (
 	if (!knownLayout) warn(`unknown layout "${layoutName}" (using umap)`);
 	const layout: MapScene["layout"] = { name: knownLayout ?? "umap" };
 
-	const frameName = parseText(copyMap.frame) ?? "text";
+	// The sky fills the screen unless told otherwise.
+	const frameName =
+		parseText(copyMap.frame) ?? (layout.name === "sky" ? "full" : "text");
 	const frame = FRAME_NAMES.find((name) => name === frameName) ?? "text";
 	if (frame !== frameName) warn(`unknown frame "${frameName}" (using text)`);
 
@@ -189,7 +209,8 @@ export const parseMapScene = (
 			only: parseList(copyMap.onlySongs),
 			highlighted: parseList(copyMap.highlightSongs) ?? [],
 			playable: parseList(copyMap.playableSongs) ?? [],
-			dimmed: parseBoolean(copyMap.dimmed) ?? false
+			dimmed: parseBoolean(copyMap.dimmed) ?? false,
+			cycle: parseBoolean(copyMap.cycleSongs) ?? false
 		},
 		media: {
 			followVideo: parseText(copyMap.followVideo) ?? null,

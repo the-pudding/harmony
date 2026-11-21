@@ -117,7 +117,11 @@ export const drawOutlinedSongLabels = (
 			},
 			{
 				lines,
-				alpha: style.alphaFor(songKey) * alpha,
+				// a spotlit song's label fades in and out with it
+				alpha:
+					style.alphaFor(songKey) *
+					alpha *
+					(style.isOutlined(songKey) ? 1 : style.emphasisFor(songKey)),
 				textColor: themeColors.labelText,
 				haloColor: themeColors.labelHalo
 			}

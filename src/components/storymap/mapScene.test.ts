@@ -116,10 +116,10 @@ describe("parseMapScene on the real copy", () => {
 		);
 		expect(parseMapScene(landing!.map)).toEqual({
 			...DEFAULT_MAP_SCENE,
-			camera: { kind: "home", centered: true },
-			labels: { hidden: false, only: null, rotate: true },
-			interaction: { movable: false, hoverable: false, tooltip: "basic" },
-			reveal: { songs: [], clusters: ["doo wop", "axis of awesome"] }
+			layout: { name: "sky" },
+			frame: "full",
+			songs: { ...DEFAULT_MAP_SCENE.songs, cycle: true },
+			interaction: { movable: false, hoverable: true, tooltip: "label" }
 		});
 		const focused = mapBlocks.find((map) => map.focusCluster);
 		expect(parseMapScene(focused)!.camera).toEqual({
@@ -134,8 +134,8 @@ describe("parseMapScene on the real copy", () => {
 			(map) => parseMapScene(map)!
 		);
 		expect(dot).toMatchObject({
-			layout: { name: "timeline" },
-			frame: "text",
+			layout: { name: "sky" },
+			frame: "full",
 			camera: { kind: "song", songKey: "journey__dont-stop-believin" },
 			songs: {
 				only: ["journey__dont-stop-believin"],
@@ -144,7 +144,7 @@ describe("parseMapScene on the real copy", () => {
 			interaction: { movable: false, hoverable: false }
 		});
 		expect(sky).toMatchObject({
-			layout: { name: "timeline" },
+			layout: { name: "sky" },
 			frame: "full",
 			songs: {
 				only: null,
@@ -152,9 +152,9 @@ describe("parseMapScene on the real copy", () => {
 				dimmed: false
 			}
 		});
-		expect(dimmed.frame).toBe("text");
 		for (const scene of [dot, sky, dimmed, follow, lit]) {
-			expect(scene.interaction.tooltip).toBe("basic");
+			expect(scene.frame).toBe("full");
+			expect(scene.interaction.tooltip).toBe("label");
 		}
 		expect(dimmed.songs.dimmed).toBe(true);
 		expect(follow.media).toEqual({
