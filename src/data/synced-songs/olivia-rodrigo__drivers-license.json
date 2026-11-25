@@ -1,0 +1,17 @@
+{
+	"songKey": "olivia-rodrigo__drivers-license",
+	"audioFile": "olivia-rodrigo__drivers-license.mp3",
+	"key": { "tonic": "Bb", "scale": "major" },
+	"region": { "startSeconds": 217.482, "endSeconds": 229.844 },
+	"chords": [
+		{ "seconds": 217.489, "chord": "Bb", "roman": "I" },
+		{ "seconds": 218.033, "chord": "Gm", "roman": "vi" },
+		{ "seconds": 218.842, "chord": "F", "roman": "V" },
+		{ "seconds": 219.686, "chord": "Dm", "roman": "iii" },
+		{ "seconds": 220.595, "chord": "F", "roman": "V" },
+		{ "seconds": 221.402, "chord": "Eb", "roman": "IV" },
+		{ "seconds": 224.598, "chord": "Cm", "roman": "ii" },
+		{ "seconds": 226.323, "chord": "F", "roman": "V" },
+		{ "seconds": 227.952, "chord": "Bb", "roman": "I" }
+	]
+}

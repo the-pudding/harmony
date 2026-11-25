@@ -7,6 +7,7 @@
 		type SyncedSongAudio,
 		type SyncedSongFile
 	} from "$data/syncedSongs.js";
+	import { NO_CLUSTER } from "$data/syncedSongReference.js";
 	import LabeledSelect from "./LabeledSelect.svelte";
 	import SongPicker from "./SongPicker.svelte";
 	import SyncedSongPlayer from "./SyncedSongPlayer.svelte";
@@ -41,7 +42,7 @@
 	);
 
 	const clusterOptions = $derived(
-		clusterNames.map((name) => ({ value: name, label: name }))
+		[NO_CLUSTER, ...clusterNames].map((name) => ({ value: name, label: name }))
 	);
 	// Cluster rows in reference.csv by song key, including ones saved since
 	// the page loaded, and clusters picked but not saved yet, per song so
@@ -52,7 +53,10 @@
 	let pickedClusters = $state<Record<string, string>>({});
 	const selectedSongKey = $derived(selection.selectedSongKey);
 	const savedCluster = $derived(
-		selectedSongKey ? (savedClusters[selectedSongKey] ?? "") : ""
+		selectedSongKey
+			? (savedClusters[selectedSongKey] ??
+					(committedSyncedSongs[selectedSongKey] ? NO_CLUSTER : ""))
+			: ""
 	);
 	const cluster = $derived(
 		selectedSongKey ? (pickedClusters[selectedSongKey] ?? savedCluster) : ""

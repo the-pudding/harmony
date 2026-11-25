@@ -672,5 +672,29 @@ export const handCorrectedSongs: HandCorrectedSong[] = [
 				vivaLaVidaSection("Outro", repeatNTimes(vivaLaVidaTurnaround, 2))
 			]
 		}
+	},
+	{
+		id: "olivia-rodrigo__drivers-license",
+		technicalNotes:
+			"HT's Instrumental tab is the whole song minus melody, so it just repeats the other sections (and its imagine-like I-IV-I-IV chords landed the song in that cluster). Dropped it; the other sections are HT's, with extensions and inversions simplified to plain triads.",
+		correctedSongContents: {
+			sections: [
+				...[
+					["Intro", ["I", "vi", "IV", "I"]],
+					[
+						"Pre-Chorus",
+						repeatNTimes(["IV", "IV", "IV", "IV", "I", "I", "I"], 2)
+					],
+					["Chorus", ["vi", "I", "I", "iii", "IV", "ii", "V", "I"]],
+					["Bridge", repeatNTimes(["vi", "IV", "I", "V"], 2)],
+					["Outro", ["ii", "V", "I", "ii", "V", "vi"]]
+				].map(([name, romanTokens]) => ({
+					name: name as string,
+					key: "Bb",
+					scale: "major",
+					romanTokens: romanTokens as string[]
+				}))
+			]
+		}
 	}
 ];

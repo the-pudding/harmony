@@ -14,6 +14,7 @@
 	import { formatChordName } from "../../../chord-processing/formatChordDisplay.js";
 	import { createMidiNoteInput } from "../shared/midiNoteInput.svelte.js";
 	import { createChordRecorder } from "./chordRecorder.svelte.js";
+	import { isTypingTarget } from "./playerShortcuts.js";
 	import type { RecordedChord } from "./syncedTimings.js";
 
 	type Props = {
@@ -113,7 +114,17 @@
 	});
 
 	onMount(() => void midi.connect());
+
+	// Space pauses the song (see SyncedSongPlayer); while recording it ends
+	// the recording pass too.
+	const onKeydown = (event: KeyboardEvent) => {
+		if (event.key !== " " || event.repeat || event.defaultPrevented) return;
+		if (isTypingTarget(event.target) || !recorder.recording) return;
+		recorder.stop();
+	};
 </script>
+
+<svelte:window onkeydown={onKeydown} />
 
 <div class="recorder">
 	<span class="heading">Record chords</span>

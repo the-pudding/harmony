@@ -14,6 +14,7 @@ import {
 	parseReferenceRows,
 	REFERENCE_COLUMNS,
 	reorderClusterRows,
+	removeReferenceRow,
 	upsertReferenceRow,
 	type FeaturedSongSetting
 } from "$data/syncedSongReference.js";
@@ -62,7 +63,12 @@ export const POST: RequestHandler = async ({ request }) => {
 		fs.writeFileSync(videoFilePath, await formatJsonLikeRepo(file));
 		return json({ path: path.relative(process.cwd(), videoFilePath) });
 	}
-	if (typeof cluster !== "string" || !loadMapClusterNames().includes(cluster)) {
+	// An empty cluster saves the song's file alone, in no cluster.
+	const hasCluster = cluster !== "";
+	if (
+		typeof cluster !== "string" ||
+		(hasCluster && !loadMapClusterNames().includes(cluster))
+	) {
 		return json({ error: "unknown cluster" }, { status: 400 });
 	}
 
@@ -74,11 +80,13 @@ export const POST: RequestHandler = async ({ request }) => {
 	fs.mkdirSync(DATA_DIRECTORY, { recursive: true });
 	fs.writeFileSync(filePath, await formatJsonLikeRepo(file));
 	writeReferenceRows(
-		upsertReferenceRow(readReferenceRows(), {
-			cluster,
-			songKey: file.songKey,
-			...file.region
-		})
+		hasCluster
+			? upsertReferenceRow(readReferenceRows(), {
+					cluster,
+					songKey: file.songKey,
+					...file.region
+				})
+			: removeReferenceRow(readReferenceRows(), file.songKey)
 	);
 	return json({ path: path.relative(process.cwd(), filePath) });
 };

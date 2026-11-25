@@ -12,6 +12,10 @@ export type SyncedSongReferenceRow = {
 	visible: boolean;
 };
 
+// The picker's choice for a song that belongs to no cluster: it's saved
+// with its own file only, with no row in reference.csv.
+export const NO_CLUSTER = "(no cluster)";
+
 export const REFERENCE_COLUMNS: (keyof SyncedSongReferenceRow)[] = [
 	"cluster",
 	"songKey",
@@ -31,7 +35,10 @@ export const parseReferenceRows = (
 		songKey: String(row.songKey ?? ""),
 		startSeconds: Number(row.startSeconds),
 		endSeconds: Number(row.endSeconds),
-		visible: String(row.visible ?? "true").trim().toLowerCase() !== "false"
+		visible:
+			String(row.visible ?? "true")
+				.trim()
+				.toLowerCase() !== "false"
 	}));
 
 // Groups rows by cluster, alphabetically, keeping each cluster's order.
@@ -39,6 +46,12 @@ export const sortByCluster = (
 	rows: SyncedSongReferenceRow[]
 ): SyncedSongReferenceRow[] =>
 	[...rows].sort((a, b) => a.cluster.localeCompare(b.cluster));
+
+// Saving a song with no cluster: drops its row, if it had one.
+export const removeReferenceRow = (
+	rows: SyncedSongReferenceRow[],
+	songKey: string
+): SyncedSongReferenceRow[] => rows.filter((row) => row.songKey !== songKey);
 
 // Saving a song: updates its row where it is, keeping its place and
 // visibility, or, if it's new or changed cluster, adds it visible at the

@@ -1,0 +1,16 @@
+{
+	"songKey": "justin-bieber-featuring-chance-the-rapper__holy",
+	"audioFile": "justin-bieber-featuring-chance-the-rapper__holy.mp3",
+	"key": { "tonic": "F#", "scale": "major" },
+	"region": { "startSeconds": 88.509, "endSeconds": 99.53 },
+	"chords": [
+		{ "seconds": 88.483, "chord": "F#", "roman": "I" },
+		{ "seconds": 89.644, "chord": "C#", "roman": "V" },
+		{ "seconds": 91.262, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 92.44, "chord": "B", "roman": "IV" },
+		{ "seconds": 94.012, "chord": "F#", "roman": "I" },
+		{ "seconds": 95.374, "chord": "C#", "roman": "V" },
+		{ "seconds": 96.788, "chord": "Ebm", "roman": "vi" },
+		{ "seconds": 98.195, "chord": "B", "roman": "IV" }
+	]
+}

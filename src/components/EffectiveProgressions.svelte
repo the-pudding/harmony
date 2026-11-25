@@ -1,4 +1,12 @@
 <script>
+	import { base } from "$app/paths";
+	import { getContext, untrack } from "svelte";
+	import { audio, createAudio, onStopAll } from "$runes/audio.svelte";
+	import {
+		committedSyncedSongs,
+		SYNCED_SONG_AUDIO_DIRECTORY
+	} from "$data/syncedSongs";
+	import { clipOffsetSeconds } from "$data/syncedSongClips.js";
 	import coreProgressionsData from "$data/core-progressions.js";
 	import { loadShardedSong } from "$data/hexMapSnapshot";
 	import { matchSongV2 } from "$routes/demo/match-algo-v2/match-algo-v2-logic/matchSongV2";
@@ -20,6 +28,105 @@
 	const effectiveVisible = $derived(
 		showEffective !== false && showEffective !== "false"
 	);
+
+	// Songs with a synced clip play from their dot; others stay inert.
+	const clipFor = (songKey) => {
+		const synced = committedSyncedSongs[songKey];
+		if (!synced) return null;
+		return {
+			src: `${base}/${SYNCED_SONG_AUDIO_DIRECTORY}/${synced.audioFile}`,
+			startSeconds: synced.region.startSeconds,
+			endSeconds: synced.region.endSeconds,
+			fileOffsetSeconds: clipOffsetSeconds(songKey)
+		};
+	};
+
+	let playingKey = $state(null);
+	let playTime = $state(null);
+	const audioBySong = new Map();
+
+	const audioFor = (songKey) => {
+		const { src } = clipFor(songKey);
+		let el = audioBySong.get(songKey);
+		if (!el) {
+			el = createAudio(src);
+			el.onended = () => {
+				if (playingKey === songKey) playingKey = null;
+			};
+			audioBySong.set(songKey, el);
+		}
+		return el;
+	};
+
+	const stopAll = () =>
+		audioBySong.forEach((el) => {
+			el.pause();
+			el.currentTime = 0;
+		});
+
+	const stop = () => {
+		stopAll();
+		playingKey = null;
+	};
+
+	const toggle = (songKey) => {
+		stopAll();
+		if (playingKey === songKey) {
+			playingKey = null;
+			return;
+		}
+		audio.muted = false;
+		playingKey = songKey;
+		const { startSeconds, fileOffsetSeconds } = clipFor(songKey);
+		const el = audioFor(songKey);
+		el.currentTime = startSeconds - fileOffsetSeconds;
+		el.play().catch(() => {
+			if (playingKey === songKey) playingKey = null;
+		});
+	};
+
+	const progressOf = (songKey) => {
+		if (playingKey !== songKey || playTime === null) return 0;
+		const { startSeconds, endSeconds } = clipFor(songKey);
+		return Math.min(1, playTime / (endSeconds - startSeconds));
+	};
+
+	$effect(() => {
+		const { muted } = audio;
+		audioBySong.forEach((el) => (el.muted = muted));
+	});
+
+	// track the clock for the progress ring; stop at the clip's end
+	$effect(() => {
+		if (!playingKey) return;
+		const songKey = playingKey;
+		const el = audioFor(songKey);
+		const { startSeconds, endSeconds, fileOffsetSeconds } = clipFor(songKey);
+		let frame;
+		const tick = () => {
+			const seconds = el.currentTime + fileOffsetSeconds;
+			if (seconds >= endSeconds) {
+				untrack(stop);
+				return;
+			}
+			playTime = seconds - startSeconds;
+			frame = requestAnimationFrame(tick);
+		};
+		tick();
+		return () => {
+			cancelAnimationFrame(frame);
+			playTime = null;
+		};
+	});
+
+	$effect(() => stopAll);
+	onStopAll(stop);
+
+	const appState = getContext("state");
+	$effect(() => {
+		appState?.slideI;
+		untrack(stop);
+	});
 
 	let loaded = $state({});
 	let expanded = $state({});
@@ -78,6 +185,9 @@
 						size="title"
 						label="beside"
 						labelPx={20}
+						onclick={clipFor(songKey) ? () => toggle(songKey) : undefined}
+						playing={playingKey === songKey}
+						progress={progressOf(songKey)}
 						travelDelayMs={arrivingForward ? ARRIVAL_TRAVEL_DELAY_MS : 0}
 					/>
 				</div>

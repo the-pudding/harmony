@@ -81,6 +81,7 @@ export const createChordRecorder = ({
 			return ignoredOutsideRegion;
 		},
 		toggle,
+		stop,
 		noteOn,
 		follow
 	};

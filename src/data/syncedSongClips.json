@@ -323,6 +323,12 @@
 		"fullSongSha1": "c4d71d695b4df23cce439edbdc3afb8b9eaf1ff4",
 		"bitrate": "160k"
 	},
+	"justin-bieber-featuring-chance-the-rapper__holy": {
+		"offsetSeconds": 87.483,
+		"endSeconds": 100.53,
+		"fullSongSha1": "6a76daae46167be61aec468baa0ebd57587dbb06",
+		"bitrate": "160k"
+	},
 	"katy-perry__the-one-that-got-away": {
 		"offsetSeconds": 46.903,
 		"endSeconds": 79.369,
@@ -365,16 +371,16 @@
 		"fullSongSha1": "ec50fa3ccd7d90bcb7073a4e53544129b074e0b8",
 		"bitrate": "160k"
 	},
-	"maroon-5__payphone": {
-		"offsetSeconds": 90.756,
-		"endSeconds": 128.973,
-		"fullSongSha1": "e6b298759020163a174b2412343cfb73bbb01280",
-		"bitrate": "160k"
-	},
 	"maroon-5-featuring-cardi-b__girls-like-you": {
 		"offsetSeconds": 37.878,
 		"endSeconds": 63.191,
 		"fullSongSha1": "5acae225e74d7c0562a118dbfe9f9d93ac404ae1",
+		"bitrate": "160k"
+	},
+	"maroon-5__payphone": {
+		"offsetSeconds": 90.756,
+		"endSeconds": 128.973,
+		"fullSongSha1": "e6b298759020163a174b2412343cfb73bbb01280",
 		"bitrate": "160k"
 	},
 	"meghan-trainor__dear-future-husband": {
@@ -425,6 +431,12 @@
 		"fullSongSha1": "15f53160e70db2c8ad22d58100f185448d228801",
 		"bitrate": "160k"
 	},
+	"olivia-rodrigo__drivers-license": {
+		"offsetSeconds": 216.482,
+		"endSeconds": 230.844,
+		"fullSongSha1": "14662ac93c2c40995c7e12a8a912ce7fff0b41f0",
+		"bitrate": "160k"
+	},
 	"olivia-rodrigo__drop-dead": {
 		"offsetSeconds": 49.482,
 		"endSeconds": 81.112,
@@ -473,12 +485,6 @@
 		"fullSongSha1": "7355d99752e3c4d1e626b0bf6e7d7a4482cdcf49",
 		"bitrate": "160k"
 	},
-	"rihanna__stay": {
-		"offsetSeconds": 67.554,
-		"endSeconds": 86.93,
-		"fullSongSha1": "2f04b307c5ccbbb234ced1265d66f3832ad84a07",
-		"bitrate": "160k"
-	},
 	"rihanna-featuring-calvin-harris__we-found-love": {
 		"offsetSeconds": 148.146,
 		"endSeconds": 180.319,
@@ -489,6 +495,12 @@
 		"offsetSeconds": 8.333,
 		"endSeconds": 28.896,
 		"fullSongSha1": "27b128d526bc546b1e3d852f2eb418314921b86d",
+		"bitrate": "160k"
+	},
+	"rihanna__stay": {
+		"offsetSeconds": 67.554,
+		"endSeconds": 86.93,
+		"fullSongSha1": "2f04b307c5ccbbb234ced1265d66f3832ad84a07",
 		"bitrate": "160k"
 	},
 	"saja-boys-andrew-choi-neckwav-danny-chung-kevin-woo-samuil-lee__soda-pop": {

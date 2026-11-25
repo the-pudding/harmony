@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { base } from "$app/paths";
 	import type { SyncedSongFile } from "$data/syncedSongs.js";
+	import { NO_CLUSTER } from "$data/syncedSongReference.js";
 	import useClipboard from "$runes/useClipboard.svelte.js";
 	import { formatJsonLikeRepo } from "./formatJsonLikeRepo.js";
 
@@ -53,7 +54,10 @@
 				body: JSON.stringify(
 					videoId
 						? { file: savedFile, videoId }
-						: { file: savedFile, cluster: savedFileCluster }
+						: {
+								file: savedFile,
+								cluster: savedFileCluster === NO_CLUSTER ? "" : savedFileCluster
+							}
 				)
 			});
 			if (!response.ok) {
@@ -84,7 +88,9 @@
 			!(videoId || cluster) ||
 			!(hasLocalEdits || hasUnsavedCluster) ||
 			saving}
-		title={videoId || cluster ? undefined : "Pick a cluster to save"}
+		title={videoId || cluster
+			? undefined
+			: "Pick a cluster (or no cluster) to save"}
 		onclick={save}>{saving ? "Saving…" : "Save"}</button
 	>
 	<button type="button" disabled={!canSave} onclick={copyJson}
