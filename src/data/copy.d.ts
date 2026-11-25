@@ -1,7 +1,8 @@
-// Types for copy.json (built from the Google Doc by `npm run gdoc`). ArchieML
-// yields only strings, lists and objects; storymap/mapScene.ts types `map`.
+// Types for copy.json, the hand-edited source of truth for the story text.
+// Values are only strings, lists and objects (booleans are strings);
+// storymap/mapScene.ts types `map`.
 declare module "$data/copy.json" {
-	// A list in the doc, or one comma-separated string.
+	// A list, or one comma-separated string.
 	export type CopyList = string | string[];
 
 	// A slide's `{.map}` block: what the map behind the text should be.

@@ -2,7 +2,6 @@
 	"name": "svelte-starter",
 	"version": "6.23.0",
 	"scripts": {
-		"gdoc": "node tasks/fetch-google.js",
 		"songs": "vite-node tasks/build-songs.cli.js && npm run hexmap && npm run charts",
 		"keys:flag": "vite-node tasks/key-review/flag-keys.ts",
 		"keys:apply": "vite-node tasks/key-review/apply-key-decisions.ts",
@@ -35,7 +34,6 @@
 		"@types/lodash.debounce": "^4.0.9",
 		"@types/node": "^22.15.29",
 		"@types/three": "^0.185.4",
-		"archieml": "^0.5.0",
 		"autoprefixer": "^10.4.27",
 		"bits-ui": "^2.16.3",
 		"d3": "^7.9.0",

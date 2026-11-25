@@ -134,7 +134,6 @@ This [starter template](https://github.com/the-pudding/svelte-starter) aims to q
 
 ### Features
 
-- [ArchieML](http://archieml.org/) for micro-CMS powered by Google Docs and Sheets
 - [Lucide Icons](https://lucide.dev/) for simple/easy svg icons
 - [Style Dictionary](https://amzn.github.io/style-dictionary/) for CSS/JS style parity
 - [Runed](https://runed.dev/docs) for svelte5 rune utilities
@@ -217,15 +216,9 @@ Run `npm run style` to regenerate the style dictionary.
 
 For locally hosted fonts, simply add the font to the `static/assets` folder and include a reference in `src/styles/font.css`, making sure the url starts with `"assets/..."`.
 
-## Google Docs and Sheets
+## Copy
 
-- Create a Google Doc or Sheet
-- Click `Share` -> `Advanced` -> `Change...` -> `Anyone with this link`
-- In the address bar, grab the ID - eg. "...com/document/d/**1IiA5a5iCjbjOYvZVgPcjGzMy5PyfCzpPF-LnQdCdFI0**/edit"
-- paste in the ID above into `google.config.js`, and set the filepath to where you want the file saved
-- If you want to do a Google Sheet, be sure to include the `gid` value in the url as well
-
-Running `npm run gdoc` at any point (even in new tab while server is running) will fetch the latest from all Docs and Sheets.
+The story text lives in `src/data/copy.json`, which is the source of truth. Edit it directly.
 
 ## Structural Overview
 
