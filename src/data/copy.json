@@ -7,152 +7,146 @@
     {
       "title": "Intro",
       "slides": [
-        {
-          "text": [
-            {
-              "type": "text",
-              "value": "This is one pop hit, represented with a dot."
-            }
-          ],
-          "map": {
-            "visible": "true",
-            "layout": "sky",
-            "focusSong": "journey__dont-stop-believin",
-            "onlySongs": [
-              "journey__dont-stop-believin"
-            ],
-            "playableSongs": [
-              "journey__dont-stop-believin"
-            ],
-            "movable": "false",
-            "hoverable": "false",
-            "tooltip": "label"
-          }
-        },
-        {
-          "text": [
-            {
-              "type": "text",
-              "value": "Here are all [7,260] Billboard top-20 hits from 1958 to 2026. Scattered like this, they look like a night sky, where every “star” (song) looks the same. People love to claim that they <em>sound</em> the same, too."
-            },
-            {
-              "type": "text",
-              "value": "[TK: Rick Beato quotes, etc.]"
-            }
-          ],
-          "map": {
-            "visible": "true",
-            "layout": "sky",
-            "playableSongs": [
-              "journey__dont-stop-believin"
-            ],
-            "movable": "false",
-            "tooltip": "label"
-          }
-        },
-        {
-          "text": [
-            {
-              "type": "text",
-              "value": "This belief went mainstream in 2009, when the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of pop songs – from Journey’s “Don’t Stop Believin’” to Beyoncé’s “If I Were A Boy” – are built off of the same four chords."
-            }
-          ],
-          "map": {
-            "visible": "true",
-            "layout": "sky",
-            "dimmed": "true",
-            "movable": "false",
-            "hoverable": "false",
-            "tooltip": "label"
-          },
-          "stage": {
-            "component": "Video",
-            "videoId": "dead-simple"
-          }
-        },
-        {
-          "text": [
-            {
-              "type": "text",
-              "value": "People cite this video as proof that all pop music is formulaic and sounds the same. The sheer volume of songs built on this foundation makes a compelling case."
-            }
-          ],
-          "map": {
-            "visible": "true",
-            "layout": "sky",
-            "followVideo": "examples",
-            "dimmed": "true",
-            "movable": "false",
-            "tooltip": "label"
-          },
-          "stage": {
-            "component": "Video",
-            "videoId": "examples"
-          }
-        },
-        {
-          "text": [
-            {
-              "type": "text",
-              "value": "Axis of Awesome helped cement 3 big beliefs about pop:"
-            },
-            {
-              "type": "ol",
-              "value": {
-                "li": [
-                  "built on a single four-chord progression <span class=motif>progression-names</span>",
-                  "looped for the entire song <span class=motif>loop</span>",
-                  "and recycled decade after decade? <span class=motif>timeline</span>"
-                ]
-              }
-            },
-            {
-              "type": "text",
-              "value": "Ok, but they cited just [21] examples. What about the other [7,239]? Do these claims hold up?"
-            }
-          ],
-          "map": {
-            "visible": "true",
-            "layout": "sky",
-            "litVideoSongs": "examples",
-            "dimmed": "true",
-            "movable": "false",
-            "tooltip": "label"
-          }
-        },
-        {
-          "text": [],
-          "map": {
-            "visible": "true",
-            "layout": "sky",
-            "movable": "false",
-            "hoverable": "true",
-            "tooltip": "label",
-            "cycleSongs": "true"
-          },
-          "stage": {
-            "component": "Landing",
-            "hed": "Mapping every pop hit’s chords",
-            "byline": "By <a href=https://pudding.cool/author/michelle-pera-mcghee/ target=_blank>Michelle Pera-McGhee</a> and <a href=https://pudding.cool/author/david-mora/ target=_blank>David Mora</a>"
-          }
-        },
-        {
-          "text": [
-            {
-              "type": "text",
-              "value": "To find out, we gathered every Billboard top-20 hit since 1958, [7,300] songs, and found their chord progressions on popular online chord sites."
-            },
-            {
-              "type": "text",
-              "value": "But to compare thousands of songs, we first need a way to tell when two of them are doing the same thing."
-            }
-          ],
-          "stage": {
-            "component": "UltimateGuitar",
-            "songs": "3"
-          }
-        }
-      ]
+				{
+					"text": [
+						{
+							"type": "text",
+							"value": "This is one pop hit, represented with a dot. Click to hear a snippet."
+						}
+					],
+					"map": {
+						"visible": "true",
+						"layout": "sky",
+						"focusSong": "journey__dont-stop-believin",
+						"onlySongs": ["journey__dont-stop-believin"],
+						"playableSongs": ["journey__dont-stop-believin"],
+						"movable": "false",
+						"hoverable": "false",
+						"tooltip": "label"
+					}
+				},
+				{
+					"text": [
+						{
+							"type": "text",
+							"value": "Here it is alongside all [7,260] Billboard top-20 hits from 1958 to 2026."
+						},
+						{
+							"type": "text",
+							"value": "[TK: Rick Beato quotes, etc.]"
+						}
+					],
+					"map": {
+						"visible": "true",
+						"layout": "sky",
+						"playableSongs": ["journey__dont-stop-believin"],
+						"movable": "false",
+						"tooltip": "label"
+					}
+				},
+				{
+					"text": [
+						{
+							"type": "text",
+							"value": "In 2009, when the Australian comedy group “Axis of Awesome” performed a viral sketch showing that a surprising number of these pop songs – from Journey’s “Don’t Stop Believin’” to Beyoncé’s “If I Were A Boy” – are built off of the same four chords."
+						}
+					],
+					"map": {
+						"visible": "true",
+						"layout": "sky",
+						"dimmed": "true",
+						"movable": "false",
+						"hoverable": "false",
+						"tooltip": "label"
+					},
+					"stage": {
+						"component": "Video",
+						"videoId": "dead-simple"
+					}
+				},
+				{
+					"text": [
+						{
+							"type": "text",
+							"value": "People cite this video as proof that all pop music is formulaic and sounds the same. The sheer volume of songs built on this foundation makes a compelling case."
+						}
+					],
+					"map": {
+						"visible": "true",
+						"layout": "sky",
+						"followVideo": "examples",
+						"dimmed": "true",
+						"movable": "false",
+						"tooltip": "label"
+					},
+					"stage": {
+						"component": "Video",
+						"videoId": "examples"
+					}
+				},
+				{
+					"text": [
+						{
+							"type": "text",
+							"value": "Axis of Awesome helped cement 3 big beliefs about pop. Namely, that most pop songs are:"
+						},
+						{
+							"type": "ol",
+							"value": {
+								"li": [
+									"built on a single four-chord progression <span class=motif>progression-names</span>",
+									"looped for the entire song <span class=motif>loop</span>",
+									"and recycled decade after decade? <span class=motif>timeline</span>"
+								]
+							}
+						},
+						{
+							"type": "text",
+							"value": "Axis of Awesome cited [21] examples. What about the other [7,239]? Do these claims hold up?"
+						}
+					],
+					"map": {
+						"visible": "true",
+						"layout": "sky",
+						"litVideoSongs": "examples",
+						"dimmed": "true",
+						"movable": "false",
+						"tooltip": "label"
+					}
+				},
+				{
+					"text": [],
+					"map": {
+						"visible": "true",
+						"layout": "sky",
+						"movable": "false",
+						"hoverable": "true",
+						"tooltip": "label",
+						"cycleSongs": "true"
+					},
+					"stage": {
+						"component": "Landing",
+						"hed": "Mapping every pop hit’s chords",
+						"byline": "By <a href=https://pudding.cool/author/michelle-pera-mcghee/ target=_blank>Michelle Pera-McGhee</a> and <a href=https://pudding.cool/author/david-mora/ target=_blank>David Mora</a>"
+					}
+				},
+				{
+					"text": [
+						{
+							"type": "text",
+							"value": "To find out, we gathered every Billboard top-20 hit since 1958, [7,300] songs, and found their chord progressions on popular online chord sites."
+						},
+						{
+							"type": "text",
+							"value": "But to compare thousands of songs, we first need a way to tell when two of them are doing the same thing."
+						}
+					],
+					"stage": {
+						"component": "UltimateGuitar",
+						"songs": "3"
+					}
+				}
+			]
     },
     {
       "title": "What is a chord progression?",

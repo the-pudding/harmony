@@ -35,7 +35,7 @@ export const markerWidths = ({
 };
 
 // Marked songs: a white glow, then the song's fill inside a white ring. A
-// hovered outlined song shows a play icon; the playing one, its progress
+// playable song shows a play icon; the playing one, its progress
 // ring and a pause icon.
 export const drawMarkedSongs = (
 	scene: Scene,
@@ -43,12 +43,15 @@ export const drawMarkedSongs = (
 		style,
 		innerFill,
 		hoveredSongKey,
+		isPlayable,
 		playingSongKey,
 		playback
 	}: {
 		style: PointStyle;
 		innerFill: (songKey: string) => string;
 		hoveredSongKey: string | null;
+		// Playable songs always show a play icon (brighter when hovered).
+		isPlayable: (songKey: string) => boolean;
 		playingSongKey: string | null;
 		playback: Playback;
 	}
@@ -75,8 +78,8 @@ export const drawMarkedSongs = (
 					? { kind: "playing", emphasis, playback }
 					: { kind: "none" };
 			}
-			return outlined && songKey === hoveredSongKey
-				? { kind: "play" }
+			return outlined && isPlayable(songKey)
+				? { kind: "play", alpha: songKey === hoveredSongKey ? 1 : 0.7 }
 				: { kind: "none" };
 		};
 

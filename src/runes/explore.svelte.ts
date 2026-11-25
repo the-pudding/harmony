@@ -52,8 +52,10 @@ export const createExplore = (options: { readonly exploreSlide: boolean }) => {
 			state.playingSongKey = result.playingSongKey;
 		},
 
-		// A sample's dot clicked on the map (or null to stop): plays it.
+		// A sample's dot clicked on the map (or null to stop): plays it, or
+		// stops it if it's already playing.
 		playSong(songKey: string | null) {
+			if (songKey !== null && songKey === state.playingSongKey) songKey = null;
 			if (songKey !== state.searchedSongKey) state.searchedSongKey = undefined;
 			state.chordsSongKey = undefined;
 			state.playingSongKey = songKey ?? undefined;

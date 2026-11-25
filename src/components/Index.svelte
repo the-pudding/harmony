@@ -415,6 +415,8 @@
 				...(slideI === allSlides.length - 1 ? ["right"] : [])
 			]}
 	arrowStroke="#fff"
+	notch
+	pan={slideI === 0}
 	enableKeyboard={true}
 />
 

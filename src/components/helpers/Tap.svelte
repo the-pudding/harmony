@@ -16,6 +16,11 @@
 		arrowStroke?: string;
 		arrowStrokeWidth?: string;
 		arrowPosition?: "start" | "center" | "end";
+		// Edge tabs (as in the Kevin Bacon story) instead of bare chevrons; a
+		// disabled tab is hidden, keeping its box.
+		notch?: boolean;
+		// Pans the right tab to ask for a press.
+		pan?: boolean;
 		ontap?: (dir: Direction) => void;
 	}
 
@@ -31,6 +36,8 @@
 		arrowStroke = "#000",
 		arrowStrokeWidth = "2",
 		arrowPosition = "center", // start, center, end
+		notch = false,
+		pan = false,
 		ontap
 	}: Props = $props();
 
@@ -70,6 +77,8 @@
 			aria-label={dir}
 			class="{dir} {arrowPosition}"
 			class:full
+			class:notch
+			class:pan={pan && dir === "right"}
 			disabled={disable.includes(dir)}
 		>
 			{#if visibleArrows.includes(dir)}
@@ -119,6 +128,69 @@
 	button:disabled {
 		opacity: 0.2;
 		cursor: not-allowed;
+	}
+
+	/* A tab attached to its screen edge, as in the Kevin Bacon story: a dark
+	   plate with a light border, so the chevron stands out over the map. */
+	button.notch {
+		--bleed: 3px;
+		width: calc(40px + var(--bleed)) !important;
+		height: 3.5rem !important;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-aubergine, #13051d);
+		border: 1px solid var(--color-gray-300);
+		color: #fff;
+	}
+
+	button.notch.left {
+		left: calc(-1 * var(--bleed));
+		padding-left: var(--bleed);
+		border-left: none;
+		border-radius: 0 var(--radius-md) var(--radius-md) 0;
+	}
+
+	button.notch.right {
+		right: calc(-1 * var(--bleed));
+		padding-right: var(--bleed);
+		border-right: none;
+		border-radius: var(--radius-md) 0 0 var(--radius-md);
+	}
+
+	button.notch:disabled {
+		opacity: 1;
+		visibility: hidden;
+	}
+
+	button.notch:not(:disabled):hover {
+		background: oklch(0.106 0.053 309.2);
+	}
+
+	button.notch span {
+		display: flex;
+		width: 1.25rem;
+		height: 1.25rem;
+		font-size: 1.25rem !important;
+		opacity: 1;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		button.notch.pan {
+			animation: notch-pan 2.6s ease-in-out infinite;
+		}
+	}
+
+	@keyframes notch-pan {
+		0%,
+		100% {
+			translate: 0 0;
+		}
+		25% {
+			translate: calc(-1 * var(--bleed)) 0;
+		}
+		75% {
+			translate: var(--bleed) 0;
+		}
 	}
 
 	/* button:hover {

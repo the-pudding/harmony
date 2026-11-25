@@ -1028,11 +1028,8 @@
 		drawMarkedSongs(scene, {
 			style,
 			innerFill: songRegionFill ?? (() => OUTLINE_COLOR),
-			// only playable songs get the play icon on hover
-			hoveredSongKey:
-				hoveredSongKey !== null && isPlayableOutlined(hoveredSongKey)
-					? hoveredSongKey
-					: null,
+			hoveredSongKey,
+			isPlayable: isPlayableOutlined,
 			playingSongKey,
 			playback: { progressFraction: playingClipProgressFraction }
 		});

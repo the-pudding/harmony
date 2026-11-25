@@ -3,6 +3,9 @@
 	import { MediaQuery } from "svelte/reactivity";
 	import { fade } from "svelte/transition";
 	import { audio } from "$runes/audio.svelte";
+	import PointerIcon from "$components/PointerIcon.svelte";
+	import ChevronLeft from "@lucide/svelte/icons/chevron-left";
+	import ChevronRight from "@lucide/svelte/icons/chevron-right";
 
 	// Callouts for slide 0: delayed on the first visit, immediate on returns;
 	// dismissed on leaving (the audio one also on touching the mute toggle).
@@ -46,12 +49,21 @@
 </script>
 
 {#if showNext}
+	<!-- sits under the next tab (Tap.svelte), which a click on is the step -->
 	<div class="hint next" transition:fade={{ duration: 400 }}>
-		<div class="bubble">
-			{touch.current
-				? "Tap the left/right side of the screen to advance"
-				: "Click or use left/right arrow keys to advance"}
-		</div>
+		<span class="nav-cue-body">
+			<span class="nav-cue-row">
+				<strong>{touch.current ? "Tap" : "Click"} to continue with audio</strong>
+				<span class="nav-cue-icon"><PointerIcon /></span>
+			</span>
+			{#if !touch.current}
+				<span class="nav-keys">
+					Or use the keyboard
+					<span class="key"><ChevronLeft /></span>
+					<span class="key"><ChevronRight /></span>
+				</span>
+			{/if}
+		</span>
 	</div>
 {/if}
 
@@ -85,37 +97,71 @@
 		clip-path: polygon(100% 0, 100% 100%, 0 100%);
 	}
 
-	/* points at the next arrow's icon: its center is 14px above the viewport's
-	   middle and 40px in from the right edge (Tap.svelte's 64px target) */
+	/* under the next tab (Tap.svelte: centered on the viewport's height, 3.5rem
+	   tall), right-aligned a little in from the edge */
 	.next {
-		--icon-center-y: calc(50% - 14px);
-		--icon-center-from-right: 40px;
-		top: var(--icon-center-y);
-		right: calc(64px + 0.25rem);
-		translate: 0 -50%;
-		max-width: min(15rem, calc(100vw - 64px - 2rem));
-	}
-
-	.next .bubble {
-		padding: 0.625rem 0.875rem;
-		border-radius: 0.5rem;
-		background: var(--color-purple);
+		--art-pointer-fill: #fff;
+		--art-pointer-tick: #f368ff;
+		--art-pointer-ink: #000;
+		top: calc(50% + 2rem);
+		right: 0.75rem;
+		width: max-content;
+		max-width: min(70%, calc(100vw - 1.5rem));
+		font-weight: 700;
+		text-align: right;
 		color: #fff;
-		font-size: 0.9375rem;
-		font-weight: 600;
-		box-shadow:
-			0 0 0 1px rgb(255 255 255 / 0.18) inset,
-			0 6px 24px color-mix(in srgb, var(--color-purple) 55%, transparent);
-		animation: nudge 1.6s ease-in-out infinite;
+		text-shadow: 0 0 6px rgb(0 0 0 / 0.8);
 	}
 
-	.next .bubble::after {
-		top: 50%;
-		right: -0.3125rem;
-		rotate: -45deg;
-		translate: 0 -50%;
-		clip-path: polygon(100% 0, 100% 100%, 0 100%);
-		border: 0;
+	.nav-cue-body {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 0.375rem;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	.nav-cue-body strong {
+		font-size: 1rem;
+		line-height: 1.1;
+	}
+
+	@media (min-width: 40rem) {
+		.nav-cue-body strong {
+			font-size: 1.5rem;
+		}
+	}
+
+	.nav-cue-row {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+	}
+
+	.nav-cue-icon :global(svg) {
+		width: 1.5rem;
+		height: auto;
+	}
+
+	.nav-keys {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.75rem;
+	}
+
+	.nav-keys .key {
+		display: flex;
+		padding: 4px;
+		border-radius: 2px;
+		background: #fff;
+	}
+
+	.nav-keys .key :global(svg) {
+		width: 0.625rem;
+		height: 0.625rem;
+		stroke: #222;
+		stroke-width: 5px;
 	}
 
 	/* above the mute toggle (2.5rem square, 1rem from the corner) */
@@ -145,43 +191,4 @@
 		border-right: 1px solid var(--color-gray-700);
 	}
 
-	/* narrow screens: the dot and its label sit mid-screen, so go above the arrow */
-	@media (max-width: 600px) {
-		.next {
-			top: auto;
-			translate: none;
-			right: 0.75rem;
-			bottom: calc(50% + 3.5rem);
-		}
-
-		.next .bubble {
-			animation-name: nudge-down;
-		}
-
-		.next .bubble::after {
-			top: auto;
-			bottom: -0.3125rem;
-			right: calc(var(--icon-center-from-right) - 0.75rem - 0.3125rem);
-			translate: none;
-			rotate: 45deg;
-		}
-	}
-
-	@keyframes nudge-down {
-		50% {
-			transform: translateY(4px);
-		}
-	}
-
-	@keyframes nudge {
-		50% {
-			transform: translateX(4px);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.next .bubble {
-			animation: none;
-		}
-	}
 </style>

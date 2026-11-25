@@ -1,4 +1,4 @@
-import { interpolateRgb } from "d3";
+import { color as parseColor, interpolateRgb } from "d3";
 import {
 	SONG_LABEL_STYLE,
 	canvasFontFor,
@@ -71,9 +71,10 @@ export const drawSongDot = (
 	context.fillStyle = fill;
 	context.fill();
 
-	if (icon.kind === "play") drawPlayIcon(context, x, y, r, icon.alpha ?? 1);
+	const ink = iconInkFor(fill);
+	if (icon.kind === "play") drawPlayIcon(context, x, y, r, icon.alpha ?? 1, ink);
 	if (icon.kind === "playing") {
-		drawPlaybackRing(context, x, y, r, icon.emphasis, icon.playback);
+		drawPlaybackRing(context, x, y, r, icon.emphasis, icon.playback, ink);
 	}
 	context.restore();
 };
@@ -178,17 +179,27 @@ export const drawSongMark = (
 	if (label) drawSongLabel(context, pose, label);
 };
 
+// White on a dark dot, near-black on a light one, so the icon never
+// disappears into its dot (the outlined dots are often white).
+export const iconInkFor = (fill: string): string => {
+	const rgb = parseColor(fill)?.rgb();
+	if (!rgb) return "white";
+	const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+	return luminance > 0.6 ? "#18181b" : "white";
+};
+
 const drawPlayIcon = (
 	context: CanvasRenderingContext2D,
 	x: number,
 	y: number,
 	radius: number,
-	alpha: number
+	alpha: number,
+	ink: string
 ) => {
 	const size = radius * 0.6;
 	context.save();
 	context.globalAlpha *= alpha;
-	context.fillStyle = "white";
+	context.fillStyle = ink;
 	context.beginPath();
 	context.moveTo(x - size * 0.35, y - size * 0.55);
 	context.lineTo(x - size * 0.35, y + size * 0.55);
@@ -206,7 +217,8 @@ const drawPlaybackRing = (
 	y: number,
 	radius: number,
 	emphasis: number,
-	{ progressFraction }: Playback
+	{ progressFraction }: Playback,
+	ink: string
 ) => {
 	context.save();
 	context.globalAlpha = emphasis;
@@ -228,7 +240,7 @@ const drawPlaybackRing = (
 	context.lineCap = "butt";
 	arc(0, 1, "rgba(0, 0, 0, 0.35)");
 	arc(0, progressFraction, "white");
-	context.fillStyle = "white";
+	context.fillStyle = ink;
 	const barWidth = radius * 0.2;
 	const barHeight = radius * 0.7;
 	for (const dx of [-barWidth * 1.1, barWidth * 1.1]) {
