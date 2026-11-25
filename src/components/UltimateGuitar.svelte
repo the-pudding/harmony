@@ -1,10 +1,20 @@
 <script>
 	import { base } from "$app/paths";
+	import { untrack } from "svelte";
 	import { prefersReducedMotion } from "svelte/motion";
 	import { fade } from "svelte/transition";
 	import SongAnchor from "$components/SongAnchor.svelte";
-	import { committedSyncedSongs } from "$data/syncedSongs";
-	import { attachAudio, onStopAll } from "$runes/audio.svelte";
+	import {
+		committedSyncedSongs,
+		SYNCED_SONG_AUDIO_DIRECTORY
+	} from "$data/syncedSongs";
+	import {
+		attachAudio,
+		audio,
+		createAudio,
+		onStopAll
+	} from "$runes/audio.svelte";
+	import { clipOffsetSeconds } from "$data/syncedSongClips.js";
 	import { songDots } from "$runes/songDots.svelte";
 
 	let { songs = 3, arrivingForward = false } = $props();
@@ -125,10 +135,80 @@
 	};
 
 	onStopAll(() => {
+		stopCardSong();
 		if (!audioEl) return;
 		audioEl.pause();
 		audioEl.currentTime = 0;
 	});
+
+	// With all three cards, each song's dot plays its synced clip (see
+	// RomanNumerals); clicking the playing one stops it.
+	let playingSongKey = $state(null);
+	let songProgress = $state(0);
+	const songAudio = new Map();
+	const audioFor = (songKey) => {
+		let el = songAudio.get(songKey);
+		if (!el) {
+			const synced = committedSyncedSongs[songKey];
+			el = createAudio(
+				`${base}/${SYNCED_SONG_AUDIO_DIRECTORY}/${synced.audioFile}`
+			);
+			el.onended = () => {
+				if (playingSongKey === songKey) stopCardSong();
+			};
+			songAudio.set(songKey, el);
+		}
+		return el;
+	};
+	function stopCardSong() {
+		songAudio.forEach((el) => {
+			el.pause();
+			el.currentTime = 0;
+		});
+		playingSongKey = null;
+		songProgress = 0;
+	}
+	const toggleCardSong = (songKey) => {
+		const wasPlaying = playingSongKey === songKey;
+		stopCardSong();
+		if (wasPlaying) return;
+		// the card song replaces the stems playing in the single view
+		audioEl?.pause();
+		audio.muted = false;
+		playingSongKey = songKey;
+		const el = audioFor(songKey);
+		el.muted = false;
+		el.currentTime =
+			committedSyncedSongs[songKey].region.startSeconds -
+			clipOffsetSeconds(songKey);
+		el.play().catch(() => {
+			if (playingSongKey === songKey) stopCardSong();
+		});
+	};
+	$effect(() => {
+		const { muted } = audio;
+		songAudio.forEach((el) => (el.muted = muted));
+	});
+	$effect(() => {
+		if (!playingSongKey) return;
+		const songKey = playingSongKey;
+		const el = audioFor(songKey);
+		const { startSeconds, endSeconds } = committedSyncedSongs[songKey].region;
+		const offset = clipOffsetSeconds(songKey);
+		let frame;
+		const tick = () => {
+			const seconds = el.currentTime + offset;
+			if (seconds >= endSeconds) {
+				stopCardSong();
+				return;
+			}
+			songProgress = (seconds - startSeconds) / (endSeconds - startSeconds);
+			frame = requestAnimationFrame(tick);
+		};
+		tick();
+		return () => cancelAnimationFrame(frame);
+	});
+	$effect(() => stopCardSong);
 
 	const stopAtEnd = () => {
 		if (audioEl.currentTime < CLIP_END) return;
@@ -149,6 +229,7 @@
 
 	$effect(() => {
 		if (!single) audioEl?.pause();
+		else untrack(stopCardSong);
 	});
 
 	const images = [
@@ -165,7 +246,7 @@
 			songKey: SONG_KEY,
 			aspect: IMAGE_W / IMAGE_H,
 			rotate: 0,
-			yOff: -0.03,
+			yOff: 0.02,
 			z: 3
 		},
 		{
@@ -178,6 +259,7 @@
 		}
 	];
 	const FEATURED = "dont-stop-believin";
+	const SONG_LABEL_PX = 14;
 	const PAD_Y = 24;
 	const PAD_X = 72; // keep clear of the 64px left/right tap arrows
 	const FLY_OUT = 48; // how far past the edge the outer cards travel when hidden
@@ -196,7 +278,7 @@
 		const avgAspect =
 			images.reduce((sum, d) => sum + d.aspect, 0) / images.length;
 		const cardH = Math.min(
-			availH * 0.85,
+			availH * 0.76,
 			availW / (avgAspect * (1 + 2 * STEP)) / 1.05
 		);
 		const dx = cardH * avgAspect * STEP;
@@ -342,8 +424,9 @@
 	{/if}
 
 	<div class="stage" bind:clientWidth={width} bind:clientHeight={height}>
-		<!-- each song's dot sits on its card's top-left corner, where the card
-		     lands, so the dot can get there before the card flies in -->
+		<!-- each song's dot and label sit just above its card's top edge, at
+		     the card's angle, where the card lands, so the dot can get there
+		     before the card flies in -->
 		{#each images as d, i (d.id)}
 			{#if !single || d.id !== FEATURED}
 				{@const slot = layout[i]}
@@ -356,7 +439,13 @@
 					<span class="corner">
 						<SongAnchor
 							songKey={d.songKey}
-							size="tag"
+							size="title"
+							label="beside"
+							align="center"
+							labelPx={SONG_LABEL_PX}
+							onclick={() => toggleCardSong(d.songKey)}
+							playing={playingSongKey === d.songKey}
+							progress={playingSongKey === d.songKey ? songProgress : 0}
 							travelDelayMs={tagTravelDelayMs}
 						/>
 					</span>
@@ -476,11 +565,14 @@
 			height 900ms cubic-bezier(0.22, 1, 0.36, 1);
 	}
 
+	/* centered above the card's top edge, turned with it */
 	.corner {
 		position: absolute;
-		top: 0;
+		bottom: 100%;
 		left: 0;
-		transform: translate(-50%, -50%);
+		width: 100%;
+		margin-bottom: 1.5rem;
+		pointer-events: auto;
 	}
 
 	img {
